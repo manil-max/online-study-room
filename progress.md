@@ -18,8 +18,10 @@
 
 ## Proje Gerçekleri
 
-- ✅ **Migration gerçeği (2026-08-01):** repo/local/staging/production üçü de
-  **`0116`**. Staging `0115–0116` apply run `30700266897`, production
+- ✅ **Migration gerçeği (2026-08-01):** repo head **`0119`**; staging ve
+  production **`0116`**. `0117–0119` hiçbir remote ortama uygulanmadı; yerel
+  Docker replay bu hostta çalışmadığı için bu üç migration `Replay bekliyor`.
+  Staging `0115–0116` apply run `30700266897`, production
   `0101–0116` apply run `30700518285`; iki post-check de
   `local|remote|file = 0116` verdi. v57 stable release run `30700647563`
   tamamen yeşil ve tag SHA'sı `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`.
@@ -100,7 +102,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-476** (2026-08-01). WP-429 release kilidi tamamlandı;
+- **Son WP numarası:** **WP-488** (2026-08-01). WP-429 release kilidi tamamlandı;
   WP-430…WP-467 PLAN 5 uygulama, kabul ve teslim zinciridir. WP-468…WP-473
   (bölüm `5.K`) 2026-07-31 tur kapanış denetiminden doğdu: kapı onarımı ve
   turun bıraktığı sessiz borcun kapatılması. Ürün zinciri onlardan sonra sürer.
@@ -5822,10 +5824,12 @@ tekrar tutulmaz.
   **9 test** · tam paket **1590/1590 yeşil** (öncesi 1581) · `flutter analyze`
   0 uyarı · l10n OK.
 
-#### WP-482 — Ana ekran widget'ı çoklu cihaz senkronunu almıyor (tanı, salt-okunur)
+#### WP-482 — Ana ekran widget'ı çoklu cihaz senkronunu almıyor
 
-- **Durum / bağımlılık:** [ ] Bekliyor · **Sahibin iki cihazını gerektirir.**
-  Bu kart **kod yazmaz**; çıktısı teşhis ve düzeltme kartının kapsamıdır.
+- **Durum / bağımlılık:** [~] Kod + cihazsız otomatik kapılar tamam ·
+  **`Replay bekliyor`** · **iki fiziksel cihaz kabulü bekliyor.** Sahip bu turda
+  cihaz testi dışındaki bütün güvenli işi yapma yetkisi verdi; doğrulanan kusurlar
+  aynı kartta ileri-düzeltmeye çevrildi.
 - **Belirti (V57-N06):** "Bildirimde çift cihazda çalışıyor ama Android ana ekran
   widget'ında olmuyor; o senkronu bozdu."
 - **Neden önce tanı:** V56-S01 turunda "kısa yama" denemesi üç ayrı yüzde geri
@@ -5864,13 +5868,29 @@ tekrar tutulmaz.
   görünümü; ayna cihazda widget metni. Her satır için: widget ne gösterdi,
   `timer_active_started_at_ms` var mıydı, zarf kuyruğa yazıldı mı, sunucuya
   ne zaman gitti.
-- **Kapsam:** Salt-okunur. Kod değişikliği, migration ve yeni test **yok**;
-  çıktı `docs/qa/` altında kanıt dosyası + hangi şüphelinin doğrulandığı.
+- **Kapsam (güncellendi):** Tanı + doğrulanan cihazsız kök nedenlerin kod,
+  migration ve regresyon testi. Remote apply/release yok.
 - **Sahip yollar:** `docs/qa/V57-WIDGET-SYNC-EVIDENCE.md` (yeni), `progress.md`
   (yalnız bu kart).
 - **Kabul (DoD):** Üç şüpheliden her biri için **doğrulandı / elendi** kararı ve
   onu veren gözlem · belirti tekrar üretildi ya da üretilemediği kaydedildi ·
   düzeltme kartının kapsamı tek cümleyle yazıldı.
+- **Sonuç (2026-08-01):** Dört kusur ayrıştırıldı. (1) `seen state_version`
+  duplicate kısa devresi, soğuk açılışta temizlenen aynayı yeniden kurmuyordu;
+  yerel projection eksikse aynı snapshot artık tekrar uygulanıyor. (2) 150 sn
+  controller lease'i açık çalışma niyetiyle karıştırılıyordu; `0119` terminal
+  abandonment'ı 12 saatlik bounded recovery grace sonrasına aldı. (3) hide/pause
+  öncesi ve resume'da immediate, in-flight tekilleştirilmiş heartbeat eklendi.
+  (4) countdown/pomodoro widget'ın `00:00` dalı hedef saniye + native countdown
+  Chronometer ile kapandı.
+- **Test sistemi onarımı:** `scripts/test_all.py` artık varsayılan T2 turunda
+  `android-unit` kapısını çalıştırır. Eski tester Flutter/Dart paketini ölçüyor,
+  `StudyWidgetProviders.kt` davranışını hiç derlemiyordu.
+- **Kanıt:** `docs/qa/V57-WIDGET-SYNC-EVIDENCE.md` · hedefli Flutter **26/26** ·
+  Kotlin JVM testi geçti · analyze 0 · tam cihazsız tester turu **16 kapı:
+  13 geçti, 0 kırmızı, 3 ortam nedeniyle atlandı** (Deno x2, Docker pgTAP) ·
+  kapsam genel **%65.23**, kritik **%58.92**. Kalan: `0117–0119` staging replay,
+  iki-cihaz/OEM matrisi, release build ve soak.
 
 #### WP-483 — Dürtme susturmanın grup yüzeyinde tetikleyicisi yok (ölü özellik)
 
@@ -6095,8 +6115,8 @@ tekrar tutulmaz.
 
 #### WP-486 — Yönetici yüzeyi: arayüz ve akış revizyonu
 
-- **Durum / bağımlılık:** [ ] Bekliyor · **WP-485 kapandıktan sonra.** Sistem
-  hatası dururken arayüz düzeltmek kanıtı bulandırır.
+- **Durum / bağımlılık:** [~] Yedi sekme envanteri tamam · ilk uygulama sırası
+  ürün sahibi seçimi bekliyor. WP-485 kodu tamam; remote replay/cihaz kanıtı ayrı.
 - **Sahip talebi (V57-N09 ikinci yarısı, aynen):** "Admin tarafında iyileştirmeler
   var ama hâlâ sorunlar var; arayüzden tut sisteme kadar bunlarda daha iyi
   profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
@@ -6121,6 +6141,14 @@ tekrar tutulmaz.
 - **Kabul (DoD):** Envanter yedi sekmeyi de kapsıyor · her satırda "sorun mu,
   tercih mi" ayrımı var · sahip sırayı seçti · seçilen ilk iş için ayrı kabul
   ölçütü yazıldı.
+- **Sonuç (2026-08-01):** `docs/qa/V57-ADMIN-INVENTORY.md` yedi sekmenin veri
+  yolu, loading/error/empty hali, dar ekran davranışı ve yıkıcı eylem onayını
+  çıkardı. P0 bulgu: duyuru silme tek dokunuşla/onaysız; group/user hedefi boş
+  kalabiliyor; boş alanlar sessiz no-op; dialog controller'ları dispose edilmiyor.
+  Ortak P1'ler: standart scrollable retry/empty bileşeni, arama/filtre/sayfalama,
+  audit tarih/kimlik okunabilirliği. Önerilen ilk kart **WP-486A duyuru güvenlik
+  kapısı** ve kabul ölçütleri envanterde hazır. Kozmetik/navigation tercihi,
+  sahibi müsait olmadığından kodlanmadı.
 
 #### WP-487 — Grup üye satırı: ünvan satırı şişirmesin
 
@@ -6251,8 +6279,8 @@ tekrar tutulmaz.
   `0091` tabloyu benzersiz kısıtsız kurduğu için `on conflict do nothing` bu
   satırları korumaz; idempotenslik `where not exists` ile sağlandı ve pgTAP
   testi tekrar apply'ın kopya üretmediğini de ölçüyor.
-- **Head üç yerde `0118`:** `deploy-contract.json` `local_migration_head` ·
-  `001_schema_contract.test.sql` (118 / `0118`) · `guard.tests.ps1` notu.
+- **WP-488 teslimindeki head üç yerde `0118` idi;** WP-482 ileri-düzeltmesi
+  sonrasında güncel repo head'i üç yerde **`0119`** oldu.
   Staging/production **`0116`da** bırakıldı; dört bayrak `false`.
 - **Etkilenen mevcut test düzeltildi:** `edit_mode_sticky_panel_test` düzenleme
   moduna düzenle butonuna dokunarak giriyordu; uzun basmaya çevrildi.
@@ -6266,22 +6294,22 @@ tekrar tutulmaz.
 
 ### Faz F4 sırası
 
-**Şimdi verilebilir (bağımsız, çakışmayan):** WP-477 · WP-478 · WP-480 · WP-481 ·
-WP-485 · WP-487 · WP-488.
+**Kod/otomatik kapıları tamam:** WP-477 · WP-478 · WP-479 · WP-480 · WP-481 ·
+WP-483 · WP-484 · WP-485 · WP-487 · WP-488. WP-482 cihazsız düzeltmeleri
+tamam, fiziksel kabul bekliyor; WP-486 envanteri tamam, ürün sırası bekliyor.
 
-**Beklemeli:** WP-479 (WP-478'den sonra — aynı dosya) · WP-483 ve WP-484
-(WP-477'den sonra; üçü de `class_detail_screen.dart`'a dokunduğu için
-WP-487 · WP-483 · WP-484 **art arda**, asla aynı anda) · WP-486 (WP-485'ten
-sonra) · WP-482 (sahibin iki cihazı hazır olunca).
+**Beklemeli:** WP-482 fiziksel iki-cihaz/OEM kabulü · WP-486 seçilen ilk
+profesyonelleştirme kartı. Remote `0117–0119` staging replay olmadan hiçbir
+release kapısı açılmaz.
 
 🔴 **Sıcak dosya:** `class_detail_screen.dart` bu fazda **üç** kart tarafından
 sahiplenilir (WP-483 · WP-484 · WP-487). Tek ajan modelinde lane kilidi yok, ama
 bu üç kart aynı commit'e karışırsa hangi düzeltmenin neyi bozduğu okunamaz —
 her biri ayrı commit, sırayla.
 
-**Migration:** yalnız iki kart üretir — WP-485 (`0117`, realtime + push) ve
-WP-488 (SSS satırı; numara uygulama anında en yüksek olan). İkisi de head'i
-**üç yerde birden** ilerletir ve `Replay bekliyor` etiketiyle teslim edilir.
+**Migration:** WP-485 (`0117`, realtime + push), WP-488 (`0118`, SSS satırı) ve
+WP-482 (`0119`, global timer lease recovery grace). Üçü de head'i
+**üç yerde birden** ilerletti ve `Replay bekliyor` etiketiyle teslim edilir.
 Hiçbir F4 kartı production/stable kapısı açmaz.
 
 ## Bekleyen Uygulanabilir WP'ler
