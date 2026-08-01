@@ -5771,7 +5771,7 @@ tekrar tutulmaz.
 
 #### WP-483 — Dürtme susturmanın grup yüzeyinde tetikleyicisi yok (ölü özellik)
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
 - **Belirti (V57-N07):** "Muted kısmı var ayarlarda ama grupta mute işaretini
   bulamadım; eklememiş de olabilirsin."
 - **Kök neden (kodda doğrulandı — sahip haklı, gerçekten eklenmemiş):**
@@ -5802,6 +5802,32 @@ tekrar tutulmaz.
   işaretli görünüyor · ayarlardaki liste yeni kaydı gösteriyor · gönderen
   tarafında hiçbir fark yok (yan-kanal iddiası test edilir) · `muteNudgesFrom`
   artık `lib/` içinden çağrılıyor (bu, "ölü özellik" regresyonunun bekçisidir).
+- **Sonuç (2026-08-01):** Grup üye satırına `_MuteNudgeButton` eklendi;
+  susturma/geri alma aynı düğmede. Susturulmuş üyenin **görünür işareti** dolu
+  `Icons.notifications_off` + `colorScheme.error` tonu, tooltip da
+  `safetyUnmuteNudges`e dönüyor. `mutedNudgeSenderIdsProvider` ve
+  `nudgeMutesProvider` işlem sonrası tazeleniyor, yani ayarlardaki liste anında
+  yeni kaydı gösteriyor. **Yeni l10n anahtarı yazılmadı** — kartın istediği gibi
+  mevcut `safetyMuteNudges` / `safetyUnmuteNudges` / `safetyNudgesMuted`
+  anahtarları kullanıldı; `safetyMuteNudges` ilk kez bir kod yolundan çağrılıyor.
+- **Ölü özellik kapandı:** `grep muteNudgesFrom app/lib` artık tanımların yanında
+  gerçek bir **çağrı yeri** gösteriyor
+  ([class_detail_screen.dart:1169](app/lib/features/classroom/widgets/class_detail_screen.dart:1169));
+  eskiden yalnız iki test dosyası çağırıyordu.
+- **Yan kanal korundu:** Susturma tercihi hesap kapsamlı olduğu için karşı
+  tarafın ekranında hiçbir işaret çıkmıyor; test bunu ikinci bir izleyiciyle
+  (susturulan üyenin kendi görünümü) doğruluyor. Gönderim yolu hiç değişmedi.
+- **Ölçüm:** yeni `app/test/features/classroom/nudge_mute_trigger_test.dart`
+  **4 test** (biri gerçek çağrıyı sayan spy repository ile) · tam paket
+  **1563/1563 yeşil** (öncesi 1559) · `flutter analyze` 0 uyarı ·
+  `python scripts/l10n_audit.py` OK.
+- **Kapsam notu:** Kartın "dürtme bildirimi yüzeyi" maddesi uygulanmadı çünkü
+  **uygulamada gelen dürtmeleri listeleyen bir ekran yok** — `receivedNudgesProvider`
+  yalnız `nudge_notification_listener` tarafından tüketiliyor, dürtme sistem
+  bildirimi olarak çıkıyor. `notification_center_screen` bir tercih ekranıdır,
+  kişi listesi taşımaz; ayarlardaki susturulanlar listesine giriş zaten
+  `settings_screen.dart:292`de var. Eylem bu yüzden tek gerçek yüzeye (grup üye
+  satırı) kondu.
 
 #### WP-484 — Çalışan üyeyi dürtme denemesi sessiz kalıyor
 

@@ -859,6 +859,9 @@ class _MembersCard extends ConsumerWidget {
           in ref.watch(groupPresenceProvider).value ?? const <Presence>[])
         if (presence.status == PresenceStatus.studying) presence.userId,
     };
+    // WP-483: yalnız **kendi** susturma tercihim. Karşı taraf bunu okuyamaz.
+    final mutedIds =
+        ref.watch(mutedNudgeSenderIdsProvider).value ?? const <String>{};
     return Card(
       child: StreamBuilder<List<Profile>>(
         stream: repo.watchMembers(group.id),
@@ -914,6 +917,11 @@ class _MembersCard extends ConsumerWidget {
                                       currentUser,
                                       m,
                                     ),
+                            ),
+                            _MuteNudgeButton(
+                              key: ValueKey('mute-${m.id}'),
+                              memberId: m.id,
+                              isMuted: mutedIds.contains(m.id),
                             ),
                             // 🔴 WP-446: bu iki eylem aynı görünüyordu ama
                             // sonuçları farklı. Çıkarma geri dönülebilir
@@ -1117,6 +1125,90 @@ class _NudgeButtonState extends State<_NudgeButton> {
           : l10n.classroomDurt,
       icon: const Icon(Icons.notifications_active_outlined),
       onPressed: widget.onSend == null ? null : _handlePressed,
+    );
+  }
+}
+
+/// WP-483: grup üye satırındaki "dürtmesini sustur" eylemi.
+///
+/// `muteNudgesFrom` WP-444'te arayüze, iki repository'ye, RLS'e ve testlere
+/// yazıldı ama `app/lib` içinden **hiçbir yerden çağrılmıyordu**: kullanıcının
+/// birini susturmasının yolu yoktu ve ayarlardaki liste tanımı gereği hep
+/// boştu. Testler InMemory katmanını sürdüğü için boşluk yeşil göründü.
+///
+/// 🔴 Yan kanal kuralı (WP-444): susturma yalnız **susturan kişinin kendi**
+/// ekranında görünür. Susturulmuş alıcıya gönderim başarılı görünmeye devam
+/// eder ve gönderen tercihi okuyamaz.
+class _MuteNudgeButton extends ConsumerStatefulWidget {
+  const _MuteNudgeButton({
+    super.key,
+    required this.memberId,
+    required this.isMuted,
+  });
+
+  final String memberId;
+  final bool isMuted;
+
+  @override
+  ConsumerState<_MuteNudgeButton> createState() => _MuteNudgeButtonState();
+}
+
+class _MuteNudgeButtonState extends ConsumerState<_MuteNudgeButton> {
+  bool _busy = false;
+
+  Future<void> _toggle() async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(nudgeRepositoryProvider);
+    final wasMuted = widget.isMuted;
+    setState(() => _busy = true);
+    try {
+      if (wasMuted) {
+        await repo.unmuteNudgesFrom(widget.memberId);
+      } else {
+        await repo.muteNudgesFrom(widget.memberId);
+      }
+      // Ayarlardaki liste aynı tercihten besleniyor; iki sağlayıcı da tazelenir.
+      ref.invalidate(mutedNudgeSenderIdsProvider);
+      ref.invalidate(nudgeMutesProvider);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            wasMuted ? l10n.safetyNudgesUnmuted : l10n.safetyNudgesMuted,
+          ),
+        ),
+      );
+    } on NudgeException catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return IconButton(
+      tooltip: widget.isMuted
+          ? l10n.safetyUnmuteNudges
+          : l10n.safetyMuteNudges,
+      // Susturulmuş üyenin satırdaki görünür işareti: dolu simge + vurgu rengi.
+      // Sahip "grupta mute işaretini bulamadım" derken göstergeyi de kastetti.
+      icon: _busy
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(
+              widget.isMuted
+                  ? Icons.notifications_off
+                  : Icons.notifications_off_outlined,
+              color: widget.isMuted ? theme.colorScheme.error : null,
+            ),
+      onPressed: _busy ? null : _toggle,
     );
   }
 }
