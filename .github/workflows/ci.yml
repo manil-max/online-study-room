@@ -28,6 +28,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 🔴 WP-373 (cihaz senkronu WP-341'den beri ölü), WP-449/450 (`p_interval_days`
+  # sunucuda yoktu) ve `get_user_study_summary` (WP-152'den beri tanımsız, veri
+  # dışa aktarımındaki `summary` hep null) aynı sınıfın üç örneğidir: Dart ucu
+  # ile SQL ucu birbirinden habersiz kayıyor. Dart testlerinin tamamı
+  # `InMemory*Repository` kullandığı, `Supabase*Repository` sınıflarının hiçbiri
+  # hiçbir testte örneklenmediği için kopukluk yeşil kapıların arkasında
+  # saklanıyordu. Bu kapı 91 çağrıyı 213 sunucu imzasına karşı doğrular.
+  #
+  # Saniyeler sürer ve Flutter kurulumu gerektirmez, bu yüzden ayrı ve önce.
+  backend-contract:
+    name: Dart/Edge ↔ SQL sözleşme kapısı
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Sözleşme denetimi
+        run: python scripts/backend_contract_audit.py
+
+      # Yeşil bir denetim, denetimin çalıştığını kanıtlamaz. Bu adım geçici
+      # olarak tanımsız bir RPC ve olmayan bir sütun ekler, kapının KIRMIZIYA
+      # döndüğünü doğrular ve probu siler. Kapı sessizce etkisiz hâle gelirse
+      # (regex bozulur, muafiyet fazla genişler) bu adım düşer.
+      - name: Kapının gerçekten reddettiğini kanıtla
+        run: python scripts/backend_contract_audit.py --self-test
+
   analyze-and-test:
     name: analyze + full test suite
     runs-on: ubuntu-latest
@@ -62,7 +91,17 @@ jobs:
 
       # Golden baseline'ları Windows'ta üretildi. Linux raster çıktısı ile
       # karşılaştırmak platform farkını ürün regresyonu diye raporlar.
-      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
+      #
+      # `--coverage` aşağıdaki kapsam ratchet'i için gerekli; testlerin
+      # kendisini değiştirmez, yalnız lcov üretir.
+      - run: flutter test --exclude-tags=golden --coverage --dart-define-from-file=env.json
+
+      # 🔴 Bu repoda uzun süre HİÇBİR kapsam ölçümü yoktu: 1399 test yeşildi
+      # ama hangi kodun hiç çalıştırılmadığı bilinmiyordu. Ratchet yeni kodun
+      # testsiz girmesini engeller; eşik yalnız bilerek yükseltilir.
+      - name: Kapsam ratchet
+        working-directory: .
+        run: python scripts/coverage_audit.py
 
   # 🔴 WP-465 bulgusu: `app/integration_test/v8_critical_flows_test.dart` HİÇBİR
   # kapıda koşmuyordu. `flutter test` varsayılan olarak yalnız `test/` dizinini

@@ -68,3 +68,6 @@ app/test/**/failures/
 
 test.zip
 flutter_run_*.log
+
+# Kapi betikleri (scripts/*.py) calisirken uretilir; artefakt commitlenmez.
+scripts/__pycache__/
