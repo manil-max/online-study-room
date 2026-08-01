@@ -5422,6 +5422,478 @@ tekrar tutulmaz.
   mevcut sorun) · ⏳ cihaz kabulü: 2 gruplu hesapta uyarı + nokta görülüyor,
   seçim sonrası ikisi de kayboluyor.
 
+## 🗺️ Faz F4 — v57 sahip geri bildirimi (WP-477…WP-486)
+
+> **Kaynak:** `docs/V57-SAHIP-GERI-BILDIRIM-RAPORU.md` (1 Ağustos 2026, ham kayıt
+> V57-N01…N09). Bu faz o raporun **teşhis edilmiş** karşılığıdır: her kart
+> belirtiyi değil, kodda doğrulanmış kök nedeni taşır.
+>
+> 🔴 **Faz açılırken kapı durumu:** migration head üç ortamda da `0116`;
+> production/stable deploy kapıları `deploy-contract.json` içinde fail-closed.
+> Bu fazın hiçbir kartı kapı açmaz. Yeni migration (WP-485) `0117` olur ve
+> **head üç yerde birden** ilerletilir (`deploy-contract.json` ·
+> `supabase/tests/001_schema_contract.test.sql` · `tooling/supabase/guard.tests.ps1`).
+> Yerel replay bu hostta Docker kalkmadığı için koşamaz; kart `Replay bekliyor`
+> etiketiyle teslim edilir, kanıt Database Gates workflow'unun local replay
+> job'ından alınır.
+
+### Fazın üç sistemik bulgusu (tek tek yama değil, sınıf hatası)
+
+1. **l10n kapısı veri katmanını hiç görmüyor.** `scripts/l10n_audit.py` prose
+   taramasını bilinçli olarak **widget yuvalarıyla** sınırlar (`UI_SLOT`:
+   `Text(`, `title:`, `tooltip:` …) ve ayrıca `PROSE_RE` yalnız **büyük harfle
+   başlayan** cümleyi yakalar. Repository/provider katmanındaki kullanıcıya
+   dönen hata metinleri bu ağın tamamen dışındadır: ölçüm, `app/lib` içinde
+   (l10n çıktısı ve yorumlar hariç) **28 dosyada 217 gömülü Türkçe literal**
+   buldu. V57-N01 ve V57-N08'in dil yarısı bu boşluğun iki örneğidir.
+2. **Üç ayrı "seri" tanımı aynı geçmişte farklı sayı veriyor.** Bu WP-455
+   kartında zaten `Kapanmayan kabul` olarak duruyordu; sahip artık kararı verdi
+   (chess.com modeli), yani karar kapandı, iş açıldı.
+3. **Bitmiş backend + hiç bağlanmamış UI.** Aynı desen üç yerde: `GoalStreakFlame`
+   (`lib/` içinde çağrı yeri yok), `muteNudgesFrom` (yalnız testlerden çağrılıyor),
+   `feedback_ticket_messages` realtime yayını (tabloya hiç eklenmemiş). Üçünde de
+   testler yeşil, çünkü testler InMemory/widget katmanını sürüyor; **kablo yok**.
+
+---
+
+#### WP-477 — Veri katmanı hata metinlerini l10n'a bağla ve kapıyı genişlet
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız; ilk verilecek kart.
+- **Belirti (V57-N01, V57-N08 dil yarısı):** İngilizce arayüzde "Aynı kişiye 20
+  dakikada bir dürtme gönderebilirsin." ve "Bu kişi şu an çalışıyor; odağını
+  bölmemek için dürtme kapalı." Türkçe çıkıyor.
+- **Kök neden (kodda doğrulandı):** metinler l10n kataloğunda değil, repository
+  sabitleri:
+  [`nudge_repository.dart:14`](app/lib/data/repositories/nudge_repository.dart:14)
+  (`nudgeCooldownMessage()`),
+  [`nudge_repository.dart:18`](app/lib/data/repositories/nudge_repository.dart:18)
+  (`kNudgeRecipientStudyingMessage`),
+  [`nudge_repository.dart:71`](app/lib/data/repositories/nudge_repository.dart:71)
+  (120 karakter uyarısı) ve
+  [`supabase_nudge_repository.dart:129-156`](app/lib/data/repositories/supabase/supabase_nudge_repository.dart:129)
+  `_friendlyMessage` / `_friendlyMuteMessage` dallarının tamamı.
+- **🔴 Kök nedenin kökü — kapı bu sınıfı taramıyor:** `scripts/l10n_audit.py`
+  `UI_SLOT` düzenli ifadesiyle yalnız widget yuvalarına bakar; repository
+  sabitleri hiç okunmaz. Ayrıca `PROSE_RE` büyük harf şartı yüzünden
+  `'hedef serisi'` ([`goal_card.dart:220`](app/lib/features/home/widgets/goal_card.dart:220))
+  ve `'grup serisi'` ([`group_goal_card.dart:280`](app/lib/features/home/widgets/group_goal_card.dart:280))
+  gibi **`Text(` içindeki** küçük harfli literaller de kaçıyor. Yani kapı iki
+  ayrı nedenle kör.
+- **Ölçüm:** 28 dosya, 217 gömülü TR literal. En yoğunu
+  `supabase_group_repository.dart` (29), `supabase_auth_repository.dart` (25),
+  `in_memory_group_repository.dart` (24), `supabase_admin_repository.dart` (22).
+- **Yapılacak:**
+  1. Hata metinlerini `AppException` alt sınıflarında **kod** (`nudge_cooldown`,
+     `recipient_is_studying`, …) olarak taşı; metne çeviriyi **sunum katmanı**
+     yapsın. Repository `BuildContext`/`AppLocalizations` almaz — katman ihlali
+     olur; bu yüzden çeviri `NudgeException.code → l10n` eşlemesiyle
+     `class_detail_screen` tarafında yapılır.
+  2. `nudgeCooldownMessage()` sayıyı metne gömüyor; l10n anahtarı
+     placeholder'lı (`{minutes}`) olmalı, aksi hâlde `kNudgeCooldown` değişince
+     EN katalog geride kalır.
+  3. `l10n_audit.py`: prose taramasına **veri katmanı** kapsamı ekle
+     (`app/lib/data/**`, `app/lib/core/**` içinde `throw`/`return` ile kullanıcıya
+     dönen literaller) ve `PROSE_RE`'nin büyük harf şartını kaldır/gevşet.
+     Yanlış pozitif patlamasını önlemek için muafiyetler
+     `LITERAL_EXEMPTIONS`'a **gerekçesiyle** yazılır.
+  4. Kapıyı **kasten kırık girdiyle sına**: bir dosyaya gömülü TR metin ekle,
+     denetimin kırmızıya döndüğünü göster, sonra geri al. (Kapı "yeşil
+     sanılmaz, doğrulanır".)
+- **Kapsam:** Yalnız **dürtme** yüzeyinin metinleri bu kartta çevrilir. Kalan
+  ~200 literal kapı tarafından **raporlanır** ve muafiyet listesine gerekçeyle
+  alınır; hepsini bir kartta çevirmek 28 dosyaya dokunur ve regresyon riski
+  faydayı aşar. Sırayla temizlenmesi WP-486 ve sonrasına bırakılır.
+- **Sahip yollar:** `app/lib/data/repositories/nudge_repository.dart`,
+  `app/lib/data/repositories/supabase/supabase_nudge_repository.dart`,
+  `app/lib/data/repositories/in_memory/in_memory_nudge_repository.dart`,
+  `app/lib/features/classroom/widgets/class_detail_screen.dart` (yalnız hata
+  gösterimi), `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`,
+  `scripts/l10n_audit.py`, ilgili testler.
+- **Kabul (DoD):** EN dilde üç dürtme hatası da İngilizce · `{minutes}`
+  placeholder iki katalogda da var · genişletilmiş `l10n_audit.py` kasten
+  eklenen gömülü metinle **kırmızı** döner (kanıt turda gösterilir) ·
+  `flutter analyze` temiz · tam test paketi yeşil.
+
+#### WP-478 — Ünvan seçimi ekrandan çıkınca kayboluyor (profil önbelleği tazelenmiyor)
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. WP-479 ile **aynı anda
+  verilmez** (ikisi de `achievement_showcase.dart`'a dokunur).
+- **Belirti (V57-N02 birinci yarısı):** Ünvan seçiliyor, grup listesinde doğru
+  görünüyor, ama Başarımlar ekranına tekrar girince "No title selected" yazıyor.
+- **Kök neden (kodda doğrulandı):** Ünvan sunucuya **yazılıyor**, istemci
+  önbelleği **tazelenmiyor**.
+  [`supabase_auth_repository.dart:436-457`](app/lib/data/repositories/supabase/supabase_auth_repository.dart:436)
+  `updateTitle` satırı günceller ve `_current`'ı yeniler, ama
+  `authStateChanges()` akışı **yalnız iki yerde** yayın yapıyor: ilk okuma
+  ([`:44-45`](app/lib/data/repositories/supabase/supabase_auth_repository.dart:44))
+  ve auth durumu değişimi
+  ([`:61-62`](app/lib/data/repositories/supabase/supabase_auth_repository.dart:61)).
+  Profil mutasyonlarının hiçbiri yeni değer yaymaz. `authStateProvider` bu
+  akıştan beslendiği için
+  ([`auth_providers.dart:43`](app/lib/data/providers/auth_providers.dart:43)),
+  `AchievementsScreen` ekranı `ref.watch(authStateProvider).value` ile **bayat
+  profili** okur ([`achievements_screen.dart:14`](app/lib/features/profile/achievements_screen.dart:14))
+  ve `SocialProfileScreen.initState` `_selectedTitleId`'yi o bayat profilden
+  kurar ([`social_profile_screen.dart:68`](app/lib/features/profile/social_profile_screen.dart:68)).
+- **🔴 Bu tek bir alanın hatası değil.** Aynı yayınsız desen `updateDisplayName`
+  (`:410`), `updateDailyGoal` (`:422`), `updateAnimal` (`:432`),
+  `updateMonthlyReportOptIn` (`:467`) ve avatar (`:497`) için de geçerli. Bugün
+  görünmemelerinin sebebi ilgili ekranların yerel `setState` tutması; ünvan
+  farklı çünkü **iki ayrı ekran** aynı gerçeği okuyor.
+- **Neden mevcut testler yakalamadı:** `initState`'teki tazeleme listesi
+  başarım/gamification/ödül sağlayıcılarını içeriyor ama **profil sağlayıcısını
+  içermiyor** ([`social_profile_screen.dart:70-80`](app/lib/features/profile/social_profile_screen.dart:70));
+  InMemory repository ise `_current`'ı doğrudan döndürdüğü için testte fark
+  görünmez.
+- **Yapılacak:** `SupabaseAuthRepository`'ye profil mutasyonlarından sonra
+  yayın yapan tek bir nokta ekle (broadcast controller ya da `_emit(_current)`)
+  ve `updateTitle` dahil altı mutasyonu ona bağla. Ekran tarafında ek `invalidate`
+  ile **maskeleme yapılmaz** — kök neden repository katmanındadır.
+- **Kapsam dışı:** Ünvan seçici yerleşimi (WP-479), yeni l10n anahtarı,
+  migration, `0115` ünvan-doğrulama trigger'ı.
+- **Sahip yollar:** `app/lib/data/repositories/supabase/supabase_auth_repository.dart`,
+  `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`,
+  `app/test/data/auth_profile_emission_test.dart` (yeni).
+- **Kabul (DoD):** Yeni test: `updateTitle` çağrısından sonra
+  `authStateChanges()` **yeni** profili yayar (altı mutasyon için ayrı iddia) ·
+  mutasyon kanıtı: yayını kaldır ⇒ test kırmızı · cihazda ünvan seçilip ekrandan
+  çıkılıp girildiğinde ünvan duruyor.
+
+#### WP-479 — Ünvan seçici: alt sayfa yerine butona bağlı menü, kaymayan yerleşim
+
+- **Durum / bağımlılık:** [ ] Bekliyor · WP-478 kapandıktan **sonra** (aynı dosya).
+- **Belirti (V57-N02 ikinci yarısı):** Uzun bir ünvan seçilince "Choose title"
+  butonu alt satıra kayıyor ve gereksiz yer kaplıyor.
+- **🔴 Sahip kararı (bağlayıcı, tartışmaya kapalı):** Seçici **alttan açılan kart
+  (bottom sheet) OLMAYACAK.** Ders seçimindeki gibi, **butonun bulunduğu yerde**
+  açılan seçenek listesi olacak.
+- **Kök neden (kodda doğrulandı):**
+  1. Bugün seçici gerçekten bir alt sayfadır:
+     [`achievement_showcase.dart:603-651`](app/lib/features/profile/widgets/achievement_showcase.dart:603)
+     `_showTitlePicker` → `showModalBottomSheet`.
+  2. Kayma `Wrap` yüzünden:
+     [`achievement_showcase.dart:559-600`](app/lib/features/profile/widgets/achievement_showcase.dart:559)
+     ünvan `Chip`'i ile `OutlinedButton.icon` aynı `Wrap` içinde; chip genişleyince
+     buton bir sonraki `run`'a düşer ve kart yükselir.
+- **Yapılacak:** `showModalBottomSheet` çağrısını, tetikleyen butona bağlı
+  `MenuAnchor`/`PopupMenuButton` yüzeyine çevir; referans olarak **ders seçme**
+  yüzeyi alınır (`showClockStyleMenu(iconContext, ref)` deseni
+  [`study_timer_card.dart`](app/lib/features/classroom/widgets/study_timer_card.dart:270)
+  içinde zaten kullanılıyor — aynı `Builder(iconContext)` kalıbı gerekir, yoksa
+  menü doğru yere değil ekranın köşesine açılır). Yerleşimde `Wrap` yerine
+  chip'i `Flexible` + `TextOverflow.ellipsis` ile sınırlayan tek satırlık `Row`
+  kullan; ünvan ne kadar uzun olursa olsun buton yer değiştirmez.
+- **Kapsam dışı:** Ünvan listesinin içeriği/sıralaması, "kazanılmamış ünvan"
+  kuralı, `profileRemoveTitle` davranışı.
+- **Sahip yollar:** `app/lib/features/profile/widgets/achievement_showcase.dart`,
+  `app/test/features/profile/title_picker_test.dart` (yeni/güncel).
+- **Kabul (DoD):** Testte `showModalBottomSheet` **çağrılmadığı** doğrulanır
+  (bu, sahip kararının otomatik bekçisidir; yalnız "menü açıldı" demek kararı
+  korumaz) · en uzun ünvan adıyla buton konumu değişmiyor (golden ya da konum
+  iddiası) · dar telefon genişliğinde taşma yok · analyze temiz.
+
+#### WP-480 — Görev tekrar metinleri seçilen aralığı söylesin
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız.
+- **Belirti (V57-N03):** Görevde "kaç günde bir yenilensin" seçiliyor ama metin
+  hâlâ "Refresh every day" diyor; açıklama eski.
+- **Kök neden (kodda doğrulandı):** WP-449/450 N-günlük tekrarı getirdi
+  (`upsert_user_task(p_interval_days, …)`, sunucu sözleşmesi `0109`/WP-472),
+  ama üç yüzey de **sabit günlük** metni gösteriyor:
+  [`tasks_screen.dart:746-747`](app/lib/features/clock/tasks_screen.dart:746)
+  (anahtarın başlığı + `taskListDailyRefreshHint` alt metni),
+  [`tasks_screen.dart:568`](app/lib/features/clock/tasks_screen.dart:568)
+  (liste satırı) ve
+  [`tasks_card.dart:296`](app/lib/features/home/widgets/tasks_card.dart:296)
+  (ana ekran kartı). Aralık alanı yalnız anahtar açıkken ayrı bir `TextField`
+  olarak beliriyor ([`tasks_screen.dart:754-765`](app/lib/features/clock/tasks_screen.dart:754));
+  yani veri N gün, metin 1 gün.
+- **Ek kusur:** `taskListDailyRefreshHint` "gece yarısı İstanbul'da yeniden
+  aktif olur" diyor — bu N=1 için doğru, N>1 için **yanlış bilgi**.
+- **Yapılacak:** Aralığa göre çoğullanan l10n anahtarları (`{days}` placeholder,
+  `=1` özel hâli ile). Üç yüzey de aynı anahtardan beslenir; metin üretimi tek
+  saf fonksiyona toplanır ki dördüncü bir yüzey eklendiğinde tekrar ayrışmasın.
+- **Sahip yollar:** `app/lib/features/clock/tasks_screen.dart`,
+  `app/lib/features/home/widgets/tasks_card.dart`, `app/lib/l10n/app_en.arb`,
+  `app/lib/l10n/app_tr.arb`, ilgili testler.
+- **Kabul (DoD):** N=1, N=2, N=7 için üç yüzeyde de metin aralığı doğru söylüyor ·
+  ipucu metni N>1'de "her gece yarısı" iddiasında bulunmuyor · iki katalogda
+  placeholder eşliği var (`l10n_audit.py` yeşil) · testler yeşil.
+
+#### WP-481 — Seri göstergesi: chess.com modeli, daima görünür, kişisel + grup
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız başlar; **WP-455'in açık
+  kabulünü kapatır**.
+- **🔴 Sahip kararı (bağlayıcı, V57-N04 + V57-N05):**
+  1. Rozet **her zaman görünür**, seri 0 iken bile.
+  2. Üç durum: (a) sıfırlanmış → **gri soluk alev + "0"**; (b) duraklatma →
+     **pause işareti** (dün kaçtı, bugün de kaçarsa 0); (c) bugünün hedefi
+     tamam → **renkli ateş**.
+  3. **Koruma hakkı sınırsızdır.** Gün atlayarak 100 günde 50 kez hedefi tutturan
+     kullanıcı 50 seriye sahiptir.
+  4. **Aynı model grup hedefinde de geçerlidir.**
+- **İyi haber — motor zaten var ve sahibin kuralıyla birebir:**
+  [`goal_streak_projection.dart:51-69`](app/lib/core/stats/goal_streak_projection.dart:51)
+  iki günlük boşluğu seriyi bozmadan geçirir (`inDays > 2` ⇒ sıfırla) ve beş
+  durum üretir: `completedToday` · `pendingToday` · `atRisk` · `expired` ·
+  `empty`. Sunucu karşılığı `0112`, yazıcısı yalnız `record_goal_completion`.
+  Rozet widget'ı da yazılmış:
+  [`goal_streak_flame.dart`](app/lib/features/stats/widgets/goal_streak_flame.dart:19)
+  (WP-454, 12 test + 3 golden).
+- **🔴 Kök neden: hiçbiri bağlı değil.** `GoalStreakFlame`in `app/lib` içinde
+  **tek bir çağrı yeri yok**; `goalStreakProjectionProvider` yalnız kendi tanım
+  dosyasında geçiyor. Ekranlar bunun yerine eski, **grace'siz** motoru okuyor:
+  [`currentStreakProvider`](app/lib/data/providers/study_providers.dart:161) →
+  [`currentStreak()`](app/lib/core/stats/study_stats.dart:212), ki o "tutturamadığın
+  gün sıfırlanır" der. Sahibin istediği duraklatma bu motorda **yok**.
+- **Görünürlük kapısı:** [`study_timer_card.dart:289`](app/lib/features/classroom/widgets/study_timer_card.dart:289)
+  `if (streak > 0)` — sahibin "hiç seri yokken bile görünsün" maddesinin tam
+  karşılığı. Grup tarafında `group_goal_card.dart:86` `currentStreak(const [], …)`
+  ile besleniyor, yani grup serisi de eski motordan.
+- **Yapılacak:**
+  1. `study_timer_card` sol üst rozetini `GoalStreakFlame` +
+     `goalStreakProjectionProvider(GoalStreakScope.personal(userId))` ile besle;
+     `if (streak > 0)` kapısını **kaldır** (`empty`/`expired` durumu gri alev + 0).
+  2. Aynısını grup hedef kartına `GoalStreakScope.group(...)` ile uygula.
+  3. `currentStreakProvider`'ı bu iki yüzeyden **çıkar**; iki motorun aynı ekranda
+     yaşamasına izin verme.
+  4. `pendingToday` (dün tamam, bugün henüz yapılmadı) sahibin üç durumunda
+     adlandırılmamıştır. **Karar: canlı/renkli alev** — seri yaşıyor ve risk
+     yok; `atRisk` (pause) yalnız dün kaçırıldığında gösterilir. Bu ayrım
+     testle sabitlenir, yoruma bırakılmaz.
+- **🔴 Kapatılması gereken çelişki (WP-455'ten devralındı):** Repo'da üç seri
+  tanımı aynı geçmişte farklı sayı veriyor — `goal_streak_projection` (`0112`)
+  **3**, `_achievement_metrics.streak_days` (`0025` gövdesi) **1**,
+  `currentStreakWithFreezes` (`gamification.dart`) bakiyeye göre **1 veya 3**.
+  Sahip kararı artık nettir: **kanonik olan grace'li projeksiyondur ve koruma
+  hakkı sınırsızdır**, yani tüketilebilir `streak_freezes` bakiyesi bu modelde
+  anlamsızdır. ⚠️ `streak_days`i grace'li yapmak `fire_streak` XP kademelerini
+  (7/30/150/365/730/1000) besleyen metriği değiştirir ve mevcut kullanıcıların
+  kademesini **geriye dönük yükseltir**. Bu bir ekonomi kararıdır; kart bu
+  kartın içinde **uygulanmaz**, ayrı bir migration WP'sine ayrılır. Bu kart
+  yalnız **görselin kanonik projeksiyondan okunmasını** sağlar — böylece ekranda
+  tek gerçek kalır.
+- **Sahip yollar:** `app/lib/features/classroom/widgets/study_timer_card.dart`,
+  `app/lib/features/home/widgets/group_goal_card.dart`,
+  `app/lib/features/home/widgets/goal_card.dart`,
+  `app/lib/features/stats/widgets/goal_streak_flame.dart` (yalnız gerekiyorsa),
+  ilgili widget/golden testleri.
+- **Kabul (DoD):** Seri 0 iken rozet **görünür** ve gri alev + "0" gösterir ·
+  `atRisk`'te pause işareti çıkar · `completedToday`'de renkli ateş · gün
+  atlayarak 50 kez hedef tutturan senaryo **50** verir (sahibin örneği birebir
+  test edilir) · aynı üç durum grup kapsamında da doğrulanır · `currentStreak()`
+  bu iki yüzeyin hiçbirinden çağrılmıyor (grep iddiası testle sabitlenir) ·
+  ⚠️ golden'lar **ikon değişimini göremez** (WP-454 notu: `flutter test` gerçek
+  MaterialIcons fontunu yüklemez), bu yüzden durum→ikon ayrımı `Icon.icon`
+  alanını doğrudan okuyan testle taşınır.
+
+#### WP-482 — Ana ekran widget'ı çoklu cihaz senkronunu almıyor (tanı, salt-okunur)
+
+- **Durum / bağımlılık:** [ ] Bekliyor · **Sahibin iki cihazını gerektirir.**
+  Bu kart **kod yazmaz**; çıktısı teşhis ve düzeltme kartının kapsamıdır.
+- **Belirti (V57-N06):** "Bildirimde çift cihazda çalışıyor ama Android ana ekran
+  widget'ında olmuyor; o senkronu bozdu."
+- **Neden önce tanı:** V56-S01 turunda "kısa yama" denemesi üç ayrı yüzde geri
+  gelmişti (WP-431 notları). Belirti iki farklı arızayla uyumlu ve ikisi ayrı
+  düzeltme ister; ölçmeden yazmak yanlış yeri onarır.
+- **Kodda bulunan üç somut şüpheli (hepsi doğrulandı, hiçbiri henüz kanıt değil):**
+  1. **Widget, Dart'ın yazdığı anahtarların hiçbirini okumuyor.**
+     `_syncTimerWidget()` `timer_elapsed` / `timer_status` / `timer_action`
+     alanlarını yazıyor
+     ([`study_providers.dart:2556-2600`](app/lib/data/providers/study_providers.dart:2556)),
+     ama `TimerWidgetProvider.onUpdate` bu üç anahtarı **hiç kullanmıyor**;
+     durumu tamamen native store'dan türetiyor
+     ([`StudyWidgetProviders.kt:65-107`](app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/StudyWidgetProviders.kt:65)).
+     Yani Dart tarafındaki her "widget'ı tazele" çağrısı timer widget'ı için
+     **ölü yazımdır**; widget yalnız `flutter.timer_active_started_at_ms`
+     anahtarını ve `TimerWidgets.updateAll` broadcast'ini görür.
+  2. **Kronometre yalnız stopwatch modunda akıyor.**
+     [`StudyWidgetProviders.kt:86`](app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/StudyWidgetProviders.kt:86)
+     `if (isRunning && mode == "stopwatch")`; countdown/pomodoro'da widget
+     çalışırken bile `00:00` gösterir. Ayna koşusu modu zorla `stopwatch`
+     yapıldığı için ([`study_providers.dart:1155`](app/lib/data/providers/study_providers.dart:1155))
+     bu dal ayna cihazda kapanır — ama **kaynak** cihazda pomodoro ile çalışan
+     kullanıcı için açıktır.
+  3. **Widget eylemi yalnız kuyruğa yazıyor.** Widget düğmesi native'e gider
+     ([`TimerActionReceiver.kt:23`](app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/TimerActionReceiver.kt:23)),
+     `appendV2Command(... origin="widget")` zarfı **kalıcı kuyruğa** yazılır
+     ([`TimerStateStore.kt:220-278`](app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt:220)),
+     ve sunucuya **Dart flush'ı** taşır. Uygulama süreci ölüyken (widget'tan
+     başlatma tipik olarak böyledir) komut cihazda bekler; karşı cihaz Flutter
+     motoru uyanana kadar hiçbir şey görmez. `canonicalV2Origin("native_widget")`
+     = `"widget"` olduğu için zarf üretiliyor — yani **origin çevirisi sağlam**,
+     şüphe taşıma katmanında.
+- **İstenen ölçüm (iki cihaz, her adımda journal + `pending_intervals` dökümü):**
+  A→B ayna başlatma; B widget'ından durdurma; A widget'ından durdurma;
+  uygulama süreci kapalıyken widget'tan başlatma; pomodoro modunda widget
+  görünümü; ayna cihazda widget metni. Her satır için: widget ne gösterdi,
+  `timer_active_started_at_ms` var mıydı, zarf kuyruğa yazıldı mı, sunucuya
+  ne zaman gitti.
+- **Kapsam:** Salt-okunur. Kod değişikliği, migration ve yeni test **yok**;
+  çıktı `docs/qa/` altında kanıt dosyası + hangi şüphelinin doğrulandığı.
+- **Sahip yollar:** `docs/qa/V57-WIDGET-SYNC-EVIDENCE.md` (yeni), `progress.md`
+  (yalnız bu kart).
+- **Kabul (DoD):** Üç şüpheliden her biri için **doğrulandı / elendi** kararı ve
+  onu veren gözlem · belirti tekrar üretildi ya da üretilemediği kaydedildi ·
+  düzeltme kartının kapsamı tek cümleyle yazıldı.
+
+#### WP-483 — Dürtme susturmanın grup yüzeyinde tetikleyicisi yok (ölü özellik)
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız.
+- **Belirti (V57-N07):** "Muted kısmı var ayarlarda ama grupta mute işaretini
+  bulamadım; eklememiş de olabilirsin."
+- **Kök neden (kodda doğrulandı — sahip haklı, gerçekten eklenmemiş):**
+  `muteNudgesFrom` arayüzde tanımlı
+  ([`nudge_repository.dart:61`](app/lib/data/repositories/nudge_repository.dart:61)),
+  iki repository'de de uygulanmış, **ama `app/lib` içinde hiçbir yerden
+  çağrılmıyor** — tek çağıranlar `app/test/data/nudge_mute_test.dart` ve
+  `app/test/data/group_race_matrix_wp447_test.dart`. Ayarlardaki ekran yalnız
+  **listeler ve susturmayı kaldırır**
+  ([`muted_nudges_screen.dart:91`](app/lib/features/safety/muted_nudges_screen.dart:91)
+  `unmuteNudgesFrom`). `safetyMuteNudges` ("Dürtmesini sustur" / "Mute nudges")
+  l10n anahtarının da **hiçbir kod yolundan** çağrısı yok — ölü string.
+- **Sonuç:** Kullanıcının birini susturmasının **hiçbir yolu yoktur**; ayarlardaki
+  liste tanımı gereği hep boştur. WP-444 sunucuyu, RLS'i, yan-kanal korumasını
+  ve testleri yazdı; tetikleyiciyi yazmadı ve testler InMemory katmanı sürdüğü
+  için boşluk yeşil göründü (bu fazın 3. sistemik bulgusu).
+- **Yapılacak:** Grup üye satırına ve dürtme bildirimi yüzeyine "Dürtmesini
+  sustur" eylemi ekle; mevcut `safetyMuteNudges` anahtarını kullan (yeni string
+  yazma). Susturulmuş üye satırında **görünür bir işaret** olsun — sahip "mute
+  işaretini bulamadım" derken göstergeyi de kastediyor.
+- **🔴 Yan kanal kuralı korunur:** WP-444 sözleşmesine göre susturulmuş alıcıya
+  gönderim **başarılı görünür**; gönderen tercihi okuyamaz. Susturma işareti
+  yalnız **susturan kişinin kendi** ekranında görünür, gönderende asla.
+- **Sahip yollar:** `app/lib/features/classroom/widgets/class_detail_screen.dart`,
+  `app/lib/features/notifications/notification_center_screen.dart`,
+  `app/lib/features/safety/muted_nudges_screen.dart`, ilgili testler.
+- **Kabul (DoD):** Grup üye satırından susturma yapılabiliyor · susturulan üye
+  işaretli görünüyor · ayarlardaki liste yeni kaydı gösteriyor · gönderen
+  tarafında hiçbir fark yok (yan-kanal iddiası test edilir) · `muteNudgesFrom`
+  artık `lib/` içinden çağrılıyor (bu, "ölü özellik" regresyonunun bekçisidir).
+
+#### WP-484 — Çalışan üyeyi dürtme denemesi sessiz kalıyor
+
+- **Durum / bağımlılık:** [ ] Bekliyor · WP-477 ile **aynı anda verilmez** (ikisi
+  de dürtme hata yüzeyine dokunur). Sıra: WP-477 → WP-484.
+- **Belirti (V57-N08 davranış yarısı):** "Bir kere çıktı, daha çıkmadı. Her
+  denediğinde araya bir delay koyup uyarıyı göstermek lazım."
+- **Kök neden (kodda doğrulandı):** İki farklı yol var ve ikincisi sessiz.
+  1. **Sunucu reddi:** yerel presence bayatken düğme etkin kalır, çağrı gider,
+     `recipient_is_studying` döner ve SnackBar çıkar
+     ([`class_detail_screen.dart:1056-1057`](app/lib/features/classroom/widgets/class_detail_screen.dart:1056)).
+     Sahibin **bir kez** gördüğü uyarı budur.
+  2. **İstemci kapısı:** presence güncellenince düğme `onPressed: null` olur
+     ([`class_detail_screen.dart:914-919`](app/lib/features/classroom/widgets/class_detail_screen.dart:914)).
+     Devre dışı `IconButton` dokunmaya **hiç tepki vermez**; açıklama yalnız
+     `tooltip`tedir ([`:906-908`](app/lib/features/classroom/widgets/class_detail_screen.dart:906))
+     ve tooltip mobilde **uzun basmayla** çıkar. Kullanıcı dokunur, hiçbir şey
+     olmaz. "Daha çıkmadı" bu.
+- **Yapılacak:** Düğmeyi devre dışı bırakmak yerine **etkin bırak ve dokununca
+  açıklamayı göster**; metin mevcut `classroomStudyingNudgeUnavailable`
+  anahtarından okunur (EN karşılığı katalogda var, doğrulandı — yeni string
+  gerekmez). Tekrarlı dokunuşta SnackBar kuyruğu şişmesin diye sahibin istediği
+  gecikme: aynı alıcı için kısa bir bastırma penceresi (`ScaffoldMessenger`
+  `hideCurrentSnackBar` + üye başına son gösterim zamanı). Sunucuya **çağrı
+  yapılmaz** — kapı istemcide kalır, aksi hâlde spam koruması boşa çıkar.
+- **Kapsam dışı:** Sunucu tarafı `recipient_is_studying` kuralı (`0116`),
+  cooldown süresi, dürtme dönüşüm metriği.
+- **Sahip yollar:** `app/lib/features/classroom/widgets/class_detail_screen.dart`,
+  `app/test/features/classroom/nudge_studying_feedback_test.dart` (yeni).
+- **Kabul (DoD):** Çalışan üyenin dürtme düğmesine dokunmak **her seferinde**
+  görünür açıklama veriyor · art arda dokunuşta uyarı üst üste yığılmıyor ·
+  bastırma penceresi dolunca uyarı **tekrar** çıkıyor (yalnız "bir kez göster"
+  regresyonu bu iddiayla kapanır) · çalışmayan üyede davranış değişmedi.
+
+#### WP-485 — Yönetici konuşması: gönderen kendi mesajını görmüyor, iki yönde push yok
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Migration içerir (`0117`). WP-486 ile
+  **aynı anda verilmez**.
+- **Belirti (V57-N09 sistem yarısı):** Yönetici mesaj gönderiyor, mesaj karşıya
+  gidiyor ama **kendi ekranında görünmüyor**; ayrıca ne karşı tarafa ne de
+  yöneticiye bildirim düşüyor.
+- **Kök neden 1 — tablo realtime yayınında değil (kodda doğrulandı):**
+  `watchTicketMessages` Supabase `.stream()` kullanıyor
+  ([`supabase_admin_repository.dart:459-477`](app/lib/data/repositories/supabase/supabase_admin_repository.dart:459)),
+  yani WAL olaylarına bağlıdır. Ama `public.feedback_ticket_messages`
+  **`supabase_realtime` publication'ına hiç eklenmemiş**: `0074` tabloyu ve
+  RLS'i kuruyor, `alter publication` satırı yok; `0103` ve `0114` de eklemiyor.
+  Karşılaştırma için `feedback_tickets` **eklenmiş**
+  ([`0018_admin_feedback.sql:176`](supabase/migrations/0018_admin_feedback.sql:176)),
+  `nudges` eklenmiş ([`0016_nudges.sql:118`](supabase/migrations/0016_nudges.sql:118)).
+  Sonuç: akış yalnız **ilk okumayı** verir, sonra hiç güncellenmez. Gönderen
+  kendi mesajını görmez; karşı taraf ekranı yeni açtığı için ilk okumada görür.
+  Belirtinin ikisi de tek nedenden çıkar.
+- **Kök neden 2 — mesaj için push outbox tetikleyicisi yok (kodda doğrulandı):**
+  `0066` push zincirinde yalnız iki üretici var: `nudges_enqueue_push`
+  ([`0066:325`](supabase/migrations/0066_push_notification_delivery.sql:325)) ve
+  `announcements_enqueue_push` ([`0066:376`](supabase/migrations/0066_push_notification_delivery.sql:376)).
+  `feedback_ticket_messages` için hiçbir tetikleyici yok, dolayısıyla **iki yönde
+  de** bildirim doğmaz. Bu bir teslim hatası değil, eksik yüzeydir.
+- **Yapılacak (`0117`):**
+  1. `alter publication supabase_realtime add table public.feedback_ticket_messages;`
+     — mevcut migration'lardaki koşullu (`if not exists … where pubname`) kalıbı
+     izle, aksi hâlde tekrar apply patlar.
+  2. `feedback_ticket_messages` için `after insert` push tetikleyicisi: alıcı
+     **karşı taraftır** (kullanıcı yazdıysa yönetici(ler), yönetici yazdıysa
+     bilet sahibi). Gönderene kendi mesajının push'u **gitmez**.
+  3. 🔴 `0116` dersini tekrarla: bildirim gövdesi **data-only** kalır;
+     `android.notification` bloğu eklenirse mesaj bozulur ve yanına içeriksiz
+     ikinci bildirim düşer.
+  4. Head'i **üç yerde birden** `0117`e al: `tooling/release/deploy-contract.json`,
+     `supabase/tests/001_schema_contract.test.sql`, `tooling/supabase/guard.tests.ps1`.
+- **Neden istemci yaması yeterli değil:** Gönderim sonrası elle `refetch` etmek
+  gönderenin ekranını düzeltir ama **alıcının** ekranı yine donuk kalır ve
+  bildirim hâlâ doğmaz. Kök neden sunucudadır.
+- **Sahip yollar:** `supabase/migrations/0117_feedback_message_realtime_push.sql`,
+  `supabase/tests/001_schema_contract.test.sql`,
+  `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`,
+  `supabase/tests/039_feedback_message_push.test.sql` (yeni),
+  `app/test/data/admin_repository_test.dart` (gerekirse).
+- **Kabul (DoD):** pgTAP: tablo publication üyesi · mesaj insert'i **karşı taraf
+  için** outbox satırı doğuruyor, gönderen için doğurmuyor · üç head pini hizalı
+  (`guard.tests.ps1` yeşil) · `Replay bekliyor` etiketi ve Database Gates local
+  replay job kanıtı · cihazda: yönetici mesajı kendi ekranında **anında**
+  görünüyor, karşı tarafa bildirim düşüyor.
+
+#### WP-486 — Yönetici yüzeyi: arayüz ve akış revizyonu
+
+- **Durum / bağımlılık:** [ ] Bekliyor · **WP-485 kapandıktan sonra.** Sistem
+  hatası dururken arayüz düzeltmek kanıtı bulandırır.
+- **Sahip talebi (V57-N09 ikinci yarısı, aynen):** "Admin tarafında iyileştirmeler
+  var ama hâlâ sorunlar var; arayüzden tut sisteme kadar bunlarda daha iyi
+  profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
+- **Neden ayrı kart:** Bu bir hata değil, kalite talebidir; WP-485'in kabulüne
+  karıştırılırsa ikisi de gecikir.
+- **İlk adım kod değil envanter.** Yönetici yüzeyi bugün yedi sekme
+  (`admin_dashboard` · `admin_users` · `admin_groups` · `admin_reports` ·
+  `admin_moderation` · `admin_announcements` · `admin_audit_log`) + tek kart
+  widget'ı taşıyor. Envanter her sekme için: ne yapıyor, hangi veriyi hangi
+  yoldan okuyor, hata/boş/yükleniyor durumu var mı, dar ekranda ne oluyor,
+  yıkıcı eylem onay istiyor mu.
+- **Bilinen somut girdi (bu fazda ölçüldü):** `supabase_admin_repository.dart`
+  **22**, `admin_repository.dart` **10**, `supabase_admin_moderation_repository.dart`
+  **10**, `in_memory_admin_moderation_repository.dart` **12** gömülü Türkçe
+  literal taşıyor — yönetici yüzeyi bu fazın l10n boşluğunun en yoğun bölgesi
+  (WP-477 kapsamı yalnız dürtmeyi çevirdi, burası bilerek bırakıldı).
+- **Kapsam:** Envanter + sahibin seçtiği düzeltme sırası. Kart **önce çıktı
+  üretir, sonra kod yazar**; kozmetik kararlar için sahibe önizleme gider,
+  seçilen değerler teste sabit değer olarak girer.
+- **Sahip yollar:** `docs/qa/V57-ADMIN-INVENTORY.md` (yeni), ardından sahibin
+  seçtiği `app/lib/features/admin/**` yolları.
+- **Kabul (DoD):** Envanter yedi sekmeyi de kapsıyor · her satırda "sorun mu,
+  tercih mi" ayrımı var · sahip sırayı seçti · seçilen ilk iş için ayrı kabul
+  ölçütü yazıldı.
+
+### Faz F4 sırası
+
+**Şimdi verilebilir (bağımsız, çakışmayan):** WP-477 · WP-478 · WP-480 · WP-481 ·
+WP-483 · WP-485.
+
+**Beklemeli:** WP-479 (WP-478'den sonra — aynı dosya) · WP-484 (WP-477'den sonra —
+aynı yüzey) · WP-486 (WP-485'ten sonra) · WP-482 (sahibin iki cihazı hazır olunca).
+
+Hiçbir F4 kartı production/stable kapısı açmaz. WP-485 dışında migration yoktur.
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
@@ -5450,7 +5922,10 @@ tekrar tutulmaz.
 ## Worker'a Verilecek Kısa Komutlar
 
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
-kartlar worker'a verilir. Güncel ürün sırası **Faz F3**'tür (v49 sonrası sekiz
+kartlar worker'a verilir. 🔴 **Güncel ürün sırası artık Faz F4'tür**
+(v57 sahip geri bildirimi, WP-477…WP-486); sıra ve çakışma kuralları o fazın
+**Faz F4 sırası** başlığındadır. Aşağıdaki F3 dalgaları tarihsel kayıttır
+(v49 sonrası sekiz
 sahip bulgusunun tamamı).
 
 **Dalga 1 — şimdi, dört worker'a aynı anda verilebilir:**
