@@ -36,12 +36,18 @@ class _RecordingCoordinator extends GlobalTimerCoordinator {
   /// Her yayında, yayın **anındaki** hesap bağı. `null` = bind yetişmemiş.
   final List<String?> boundAccountAtFlush = <String?>[];
   int foregroundReconcileCount = 0;
+  int heartbeatCount = 0;
 
   @override
   Future<void> flushShadow() async {
     boundAccountAtFlush.add(
       _prefs.getString(TimerV2CommandEnvelope.accountIdKey),
     );
+  }
+
+  @override
+  Future<void> heartbeat() async {
+    heartbeatCount++;
   }
 
   @override
@@ -302,5 +308,25 @@ void main() {
         reason: 'öne dönen uygulamada periyodik tur yeniden başlamalı',
       );
     });
+
+    test(
+      'arka plana gecmeden once sahip cihaz lease heartbeat yollar',
+      () async {
+        final harness = await buildRecordingHarness();
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        harness.container.read(studyTimerProvider.notifier).start();
+        await _waitUntil(
+          () => harness.coordinator.boundAccountAtFlush.isNotEmpty,
+        );
+        final before = harness.coordinator.heartbeatCount;
+
+        binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+        binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+        binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await _waitUntil(() => harness.coordinator.heartbeatCount > before);
+
+        expect(harness.coordinator.heartbeatCount, greaterThan(before));
+      },
+    );
   });
 }

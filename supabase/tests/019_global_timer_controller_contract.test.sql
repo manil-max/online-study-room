@@ -4,7 +4,7 @@ set local search_path = public, extensions;
 \ir _fixtures/base_seed.psql
 -- 12 iddia var; dosya ilk yazıldığında `plan(11)` sayılmıştı. Test hiç
 -- koşmadığı için bu sapma da görünmemişti (WP-473).
-select plan(12);
+select plan(13);
 
 -- WP-431 sunucu sözleşmesi.
 --
@@ -192,13 +192,24 @@ select count(*)::int as sessions_before
 from public.study_sessions
 where user_id = '10000000-0000-0000-0000-000000000001' \gset
 
+select is(
+  public.expire_global_timer_v2_leases(200),
+  0,
+  'a delayed heartbeat remains an open run during the recovery grace'
+);
+
+update public.live_study_runs
+set lease_expires_at = clock_timestamp() - interval '13 hours'
+where id = :'lease_run';
+
 select public.expire_global_timer_v2_leases(200);
 
-select is(
+select ok(
   (select count(*)::int from public.study_sessions
-   where user_id = '10000000-0000-0000-0000-000000000001'),
-  :'sessions_before'::int,
-  'expiring a lease abandons the run without fabricating a study session'
+   where user_id = '10000000-0000-0000-0000-000000000001') = :'sessions_before'::int
+  and (select status = 'abandoned'
+       from public.live_study_runs where id = :'lease_run'),
+  'hard-expiring a lease abandons the run without fabricating a study session'
 );
 
 -- ------------------------------- 9. hesap-geneli tek aktif koşu invariant'ı

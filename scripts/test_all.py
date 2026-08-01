@@ -113,6 +113,7 @@ def build_gates() -> list[Gate]:
     py = sys.executable
     flutter = _exe("flutter")
     deno = _exe("deno")
+    gradlew = APP / "android" / ("gradlew.bat" if os.name == "nt" else "gradlew")
     return [
         # T0 — saniyeler. Flutter/Deno kurulumu istemez.
         Gate("contract", "Dart/Edge ↔ SQL sozlesmesi", 0,
@@ -148,6 +149,18 @@ def build_gates() -> list[Gate]:
              [flutter, "test", "--exclude-tags=golden", "--coverage",
               "--dart-define-from-file=env.json"],
              cwd=APP, precondition=_needs_env_json),
+        # Native timer/widget kodu Flutter test runner'ina girmez. Flutter APK
+        # derlemesini ve environment validation'i burada bilerek dislariz: bu
+        # kapi Kotlin kaynaklarini derler ve JVM unit testlerini cihazsiz kosar.
+        Gate("android-unit", "Android native JVM testleri", 2,
+             [str(gradlew), ":app:testLocalDebugUnitTest", "--no-daemon",
+              "-x", ":app:compileFlutterBuildLocalDebug",
+              "-x", ":app:validateLocalEnvironment"],
+             cwd=APP / "android",
+             precondition=lambda: (
+                 gradlew.exists(),
+                 "Android Gradle wrapper bulunamadi",
+             )),
         Gate("coverage", "Kapsam ratchet", 2,
              [py, "scripts/coverage_audit.py"]),
 

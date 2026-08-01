@@ -56,7 +56,10 @@ GlobalTimerCommandFailure classifyGlobalTimerFailure(Object error) {
     'subject_ownership_required',
     'client_clock_skew_rejected',
   ];
-  const quarantine = <String>['authentication_required', 'active_device_required'];
+  const quarantine = <String>[
+    'authentication_required',
+    'active_device_required',
+  ];
   for (final code in terminal) {
     if (message.contains(code)) return GlobalTimerCommandFailure.terminal;
   }
@@ -392,7 +395,8 @@ class GlobalTimerCoordinator {
             event: TimerJournalEvents.commandFlushed,
             reason: TimerJournalReasons.queueReplay,
             outcome: switch (failure) {
-              GlobalTimerCommandFailure.terminal => TimerJournalOutcomes.dropped,
+              GlobalTimerCommandFailure.terminal =>
+                TimerJournalOutcomes.dropped,
               GlobalTimerCommandFailure.quarantine =>
                 TimerJournalOutcomes.deferred,
               GlobalTimerCommandFailure.retry => TimerJournalOutcomes.failed,
@@ -465,7 +469,17 @@ class GlobalTimerCoordinator {
       if (snapshot.userId != null && snapshot.userId != user.id) return null;
       final seenKey = 'global_timer_v2_seen_${user.id}_$deviceId';
       final seen = prefs.getInt(seenKey) ?? 0;
-      if (snapshot.stateVersion <= seen) {
+      final directive = planGlobalTimerForegroundApply(
+        snapshot: snapshot,
+        localRunning: localRunning,
+        localIsMirror: localIsMirror,
+        localMirrorRunId: localMirrorRunId,
+      );
+      // `seen` bir olay-dedup anahtarıdır; yerel projection doğruluğunun yerine
+      // geçemez. Soğuk açılışta ayna güvenlik gereği temizlenir. Sunucu sürümü
+      // değişmemiş olsa bile yerel ayna eksikse aynı snapshot yeniden uygulanır.
+      if (snapshot.stateVersion <= seen &&
+          directive.kind == GlobalTimerForegroundDirectiveKind.deferred) {
         await _journal.record(
           event: TimerJournalEvents.snapshotReconciled,
           reason: TimerJournalReasons.remoteSnapshot,
@@ -478,12 +492,6 @@ class GlobalTimerCoordinator {
         );
         return null;
       }
-      final directive = planGlobalTimerForegroundApply(
-        snapshot: snapshot,
-        localRunning: localRunning,
-        localIsMirror: localIsMirror,
-        localMirrorRunId: localMirrorRunId,
-      );
       final run = snapshot.run;
       await _journal.record(
         event: TimerJournalEvents.snapshotReconciled,
@@ -528,11 +536,10 @@ class GlobalTimerCoordinator {
 
   /// WP-373: çalışan koşunun sunucudaki kirasını tazeler.
   ///
-  /// Kira 150 sn'dir (`0082:296`) ve **hiç kimse yenilemiyordu**; süpürücü de
-  /// hiçbir cron'a bağlı değildi. İkisi birlikte şu anlama geliyordu: koşu
-  /// sonsuza dek `running` kalır, karşı cihaz ölü bir koşuyu aynalar. Artık
-  /// sahip cihaz kirayı tazeler, süpürücü de ölen cihazın koşusunu kapatır
-  /// (`0089_global_timer_lease_sweeper.sql`).
+  /// Kısa kira 150 sn'lik controller tazeliğidir (`0082:296`). Sahip cihaz
+  /// kirayı tazeler; `0119` sonrasında ilk kaçırılan tur açık çalışma niyetini
+  /// kapatmaz. Süpürücü ancak bounded recovery grace aşılırsa koşuyu abandoned
+  /// yapar (`0089` cron + `0119` fonksiyon gövdesi).
   ///
   /// Yalnız koşunun SAHİBİ cihaz çağırır; ayna cihazın kira üzerinde söz hakkı
   /// yoktur ([TimerV2CommandEnvelope.runIdKey] onda yazılı değildir).

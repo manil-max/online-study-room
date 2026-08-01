@@ -171,10 +171,10 @@ select ok(
   'a new run restarts run revision at one while account state version remains monotonic'
 );
 
-update public.live_study_runs set lease_expires_at = clock_timestamp() - interval '1 second'
+update public.live_study_runs set lease_expires_at = clock_timestamp() - interval '13 hours'
 where id = :'alpha_second_run'::uuid;
 select is(public.expire_global_timer_v2_leases(10), 1,
-  'locked V2 sweeper abandons one expired global run');
+  'locked V2 sweeper abandons one run beyond the recovery grace');
 select is(public.expire_global_timer_v2_leases(10), 0,
   'a second sweeper sees no duplicate terminal transition');
 select ok(

@@ -44,6 +44,7 @@ String _source(String path) =>
 
 class _RecordingRepository implements GlobalTimerRepository {
   final calls = <({String action, String? runId, int? revision})>[];
+  GlobalTimerSnapshot? snapshot;
 
   @override
   Future<GlobalTimerSnapshot> applyCommand({
@@ -74,8 +75,8 @@ class _RecordingRepository implements GlobalTimerRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<GlobalTimerSnapshot> fetchSnapshot({String? deviceId}) =>
-      throw UnimplementedError();
+  Future<GlobalTimerSnapshot> fetchSnapshot({String? deviceId}) async =>
+      snapshot ?? (throw StateError('snapshot not configured'));
 }
 
 Future<({ProviderContainer container, SharedPreferences prefs})> _harness(
@@ -149,39 +150,51 @@ void main() {
       },
     );
 
-    test('WP-431 onarimi: ayna kosusu kanonik kimlik biletini ve rolunu edinir', () {
-      // WP-430'da bu iddia TERSTI: kanonik anahtari yalniz sunucuya komut
-      // gondermis SAHIP cihaz yaziyordu, ayna hic edinmiyordu. Kimlik olmadan
-      // native durdurma zarfi kurulamiyor ve Durdur sessizce dusuyordu.
-      final notifier = _source(_notifierPath);
-      expect(
-        notifier,
-        contains('await prefs.setString(TimerV2CommandEnvelope.runIdKey, run.id)'),
-        reason: 'ayna da sunucunun verdigi kosu kimligini kanonik anahtara yazmali',
-      );
-      expect(
-        notifier,
-        contains('TimerControllerRole.mirror.name'),
-        reason: 'rol, native tarafin gorebilecegi bicimde store icinde olmali',
-      );
-    });
+    test(
+      'WP-431 onarimi: ayna kosusu kanonik kimlik biletini ve rolunu edinir',
+      () {
+        // WP-430'da bu iddia TERSTI: kanonik anahtari yalniz sunucuya komut
+        // gondermis SAHIP cihaz yaziyordu, ayna hic edinmiyordu. Kimlik olmadan
+        // native durdurma zarfi kurulamiyor ve Durdur sessizce dusuyordu.
+        final notifier = _source(_notifierPath);
+        expect(
+          notifier,
+          contains(
+            'await prefs.setString(TimerV2CommandEnvelope.runIdKey, run.id)',
+          ),
+          reason:
+              'ayna da sunucunun verdigi kosu kimligini kanonik anahtara yazmali',
+        );
+        expect(
+          notifier,
+          contains('TimerControllerRole.mirror.name'),
+          reason:
+              'rol, native tarafin gorebilecegi bicimde store icinde olmali',
+        );
+      },
+    );
 
-    test('WP-431 onarimi: native Durdur kararini giristen degil ROLDEN verir', () {
-      final service = _source(_servicePath);
-      expect(service, contains('val isMirror = TimerStateStore.isMirror(p)'));
-      expect(
-        service,
-        contains('if (recordInterval && !isMirror) {'),
-        reason: 'ayna projeksiyonu asla yerel oturum araligi yazmamali',
-      );
-      expect(
-        service,
-        contains('if (isMirror || (mode == "stopwatch" && phase == "work")) {'),
-        reason:
-            'ayna cihazda yerel mod/faz durdurma komutunu dusurmemeli - kosu '
-            'tanimi geregi global stopwatch kosusudur',
-      );
-    });
+    test(
+      'WP-431 onarimi: native Durdur kararini giristen degil ROLDEN verir',
+      () {
+        final service = _source(_servicePath);
+        expect(service, contains('val isMirror = TimerStateStore.isMirror(p)'));
+        expect(
+          service,
+          contains('if (recordInterval && !isMirror) {'),
+          reason: 'ayna projeksiyonu asla yerel oturum araligi yazmamali',
+        );
+        expect(
+          service,
+          contains(
+            'if (isMirror || (mode == "stopwatch" && phase == "work")) {',
+          ),
+          reason:
+              'ayna cihazda yerel mod/faz durdurma komutunu dusurmemeli - kosu '
+              'tanimi geregi global stopwatch kosusudur',
+        );
+      },
+    );
 
     test(
       'kimliksiz terminal niyeti sunucuya hiçbir komut göndermeden kuyrukta kalır',
@@ -324,7 +337,10 @@ void main() {
       // okuyucu eklenmeli ve soğuk açılışta tüketilmeli.
       final signalSource = _source(_syncSignalPath);
       // Anahtar yalnız yaz / karşılaştır / sil biçiminde kullanılıyor.
-      expect(signalSource, contains('await prefs.setString(pendingKey, encoded)'));
+      expect(
+        signalSource,
+        contains('await prefs.setString(pendingKey, encoded)'),
+      );
       expect(signalSource, contains('.remove(pendingKey)'));
       expect(
         signalSource,
@@ -344,6 +360,43 @@ void main() {
   });
 
   group('V56-S04 — sekiz saatlik hayalet ayna koşusu', () {
+    test('gorulmus snapshot eksik yerel aynayi yeniden kurar', () async {
+      final serverTime = DateTime.now().toUtc();
+      final repository = _RecordingRepository()
+        ..snapshot = GlobalTimerSnapshot(
+          userId: 'user-1',
+          stateVersion: 7,
+          serverTime: serverTime,
+          run: GlobalTimerRun(
+            id: 'run-reopen',
+            status: 'running',
+            revision: 2,
+            effectiveStartedAt: serverTime.subtract(
+              const Duration(minutes: 20),
+            ),
+            leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+          ),
+        );
+      final harness = await _harness({
+        'global_timer_v2_seen_user-1_device-mirror': 7,
+      }, repository);
+
+      final directive = await harness.container
+          .read(globalTimerCoordinatorProvider)
+          .reconcileForeground(
+            localRunning: false,
+            localIsMirror: false,
+            localMirrorRunId: null,
+          );
+
+      expect(
+        directive?.kind,
+        GlobalTimerForegroundDirectiveKind.mirrorStart,
+        reason:
+            'seen olay dedup bilgisi yerel projection eksigini bastirmamali',
+      );
+    });
+
     test('WP-431 onarimi: kirasi taze, makul yasli kosu HALA aynalanir', () {
       // Sinirlar hayalet kosuyu kesmeli ama GERCEK uzun calismayi degil.
       final serverTime = DateTime.now().toUtc();
@@ -366,7 +419,7 @@ void main() {
       expect(directive.kind, GlobalTimerForegroundDirectiveKind.mirrorStart);
     });
 
-    test('WP-431 onarimi: istemci modeli kirayi tasir ve olu kosuyu aynalamaz', () {
+    test('geciken heartbeat acik kosuyu recovery penceresinde korur', () {
       // WP-430'da bu iddia TERSTI: `GlobalTimerRun` kira alanini hic
       // tasimiyordu, sunucu gondermis olsa bile `fromMap` dusuruyordu.
       final serverTime = DateTime.now().toUtc();
@@ -387,8 +440,9 @@ void main() {
       expect(expiredLeaseRun.leaseExpiresAt, isNotNull);
       expect(
         expiredLeaseRun.isDisplayableAt(serverTime),
-        isFalse,
-        reason: 'kirasi dolmus kosu canli sayac olarak gosterilemez',
+        isTrue,
+        reason:
+            'kisa lease cihaz tazeligi; kullanicinin acik calisma niyeti degil',
       );
 
       final directive = planGlobalTimerForegroundApply(
@@ -403,8 +457,8 @@ void main() {
       );
       expect(
         directive.kind,
-        GlobalTimerForegroundDirectiveKind.needsReconcile,
-        reason: 'olu kosu artik canli sayac acmaz; uzlastirma gerektigi isaretlenir',
+        GlobalTimerForegroundDirectiveKind.mirrorStart,
+        reason: 'Android Dart isolate askidayken ayna sayac kaybolmamali',
       );
     });
 
@@ -418,7 +472,8 @@ void main() {
             id: 'run-ghost',
             status: 'running',
             revision: 1,
-            effectiveStartedAt: serverTime.subtract(const Duration(hours: 8)),
+            effectiveStartedAt: serverTime.subtract(const Duration(hours: 13)),
+            leaseExpiresAt: serverTime.subtract(const Duration(hours: 13)),
             leaseExpired: true,
           ),
         ),
@@ -433,32 +488,36 @@ void main() {
       );
     });
 
-    test('WP-431 onarimi: yas sinirini asan kosu kira taze olsa da aynalanmaz', () {
-      final serverTime = DateTime.now().toUtc();
-      final directive = planGlobalTimerForegroundApply(
-        snapshot: GlobalTimerSnapshot(
-          stateVersion: 14,
-          serverTime: serverTime,
-          run: GlobalTimerRun(
-            id: 'run-endless',
-            status: 'running',
-            revision: 9,
-            effectiveStartedAt: serverTime.subtract(
-              kGlobalTimerMaxMirrorRunAge + const Duration(minutes: 1),
+    test(
+      'WP-431 onarimi: yas sinirini asan kosu kira taze olsa da aynalanmaz',
+      () {
+        final serverTime = DateTime.now().toUtc();
+        final directive = planGlobalTimerForegroundApply(
+          snapshot: GlobalTimerSnapshot(
+            stateVersion: 14,
+            serverTime: serverTime,
+            run: GlobalTimerRun(
+              id: 'run-endless',
+              status: 'running',
+              revision: 9,
+              effectiveStartedAt: serverTime.subtract(
+                kGlobalTimerMaxMirrorRunAge + const Duration(minutes: 1),
+              ),
+              leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
             ),
-            leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
           ),
-        ),
-        localRunning: false,
-        localIsMirror: false,
-        localMirrorRunId: null,
-      );
-      expect(
-        directive.kind,
-        GlobalTimerForegroundDirectiveKind.needsReconcile,
-        reason: 'kira alanini tasimayan eski sunucuya karsi ikinci set: yas siniri',
-      );
-    });
+          localRunning: false,
+          localIsMirror: false,
+          localMirrorRunId: null,
+        );
+        expect(
+          directive.kind,
+          GlobalTimerForegroundDirectiveKind.needsReconcile,
+          reason:
+              'kira alanini tasimayan eski sunucuya karsi ikinci set: yas siniri',
+        );
+      },
+    );
 
     test('WP-431 onarimi: sunucu okuma yolu kirayi DEGERLENDIRIYOR', () {
       // WP-430'da `_global_timer_v2_snapshot` kirayi yalniz raporluyordu.
@@ -477,7 +536,8 @@ void main() {
       expect(
         body,
         contains('r.lease_expires_at <= clock_timestamp()'),
-        reason: 'kira gercegi istemci saatine degil sunucu saatine gore olculur',
+        reason:
+            'kira gercegi istemci saatine degil sunucu saatine gore olculur',
       );
       expect(
         migration,

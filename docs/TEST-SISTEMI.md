@@ -32,12 +32,13 @@ vardır: kapı bilerek bozulmuş bir girdiye kırmızı dönmüyorsa, kapı yokt
 |---|---|---|---|---|
 | 1 | Statik analiz | `flutter analyze` | Derleme/tip/lint | ✅ 0 uyarı |
 | 2 | Birim + widget testleri | `app/test/**` (240 dosya) | Saf mantık, UI davranışı | ✅ 1507 test yeşil |
+| 2b | Android native JVM testleri | `app/android/app/src/test/**` | Kotlin servis/widget/prefs davranışı | ✅ `android-unit` ana tester kapısında |
 | 3 | Golden testleri | `--tags=golden` (Windows job) | Tema/görsel regresyon | ✅ |
 | 4 | Entegrasyon | `app/integration_test/` (Windows job) | Kritik kullanıcı akışları | ✅ WP-465'te CI'a bağlandı |
 | 5 | Veritabanı (pgTAP) | `supabase/tests/**` (44 dosya) | RLS, invariant, RPC davranışı | ✅ 647 assertion |
 | 6 | **İstemci ↔ sunucu sözleşmesi (statik)** | `scripts/backend_contract_audit.py` | Dart/Edge çağrısı ile SQL imzasının kayması | ✅ 91 çağrı, self-test'li |
 | 6b | **Repository kablo testleri (çalışma zamanı)** | `app/test/support/supabase_wire_harness.dart` | RPC adı/yanıt ayrıştırma/hata eşlemesi | ✅ 20/22 repository |
-| 7 | **Kapsam ratchet** | `scripts/coverage_audit.py` | Testsiz kodun sessizce girmesi | ✅ genel %64.50 / kritik %56.99 |
+| 7 | **Kapsam ratchet** | `scripts/coverage_audit.py` | Testsiz kodun sessizce girmesi | ✅ genel %65.23 / kritik %58.92 |
 | 7b | **Edge Function tip denetimi + testleri** | `deno check` + `deno test` (CI job) | Sunucuda çalışan 1601 satırın derlenmemesi; purge yetkilendirmesi | ✅ 6/6 tip, 13 davranış testi |
 | 8 | l10n | `scripts/l10n_audit.py` | Katalog eşliği + gömülü metin | ✅ probe'lu |
 | 8b | **Migration zinciri + head pinleri** | `scripts/test_all.py --internal-migration-head` | Numara boşluğu, başlık kuralı, kontrat/guard head'inin ayrı düşmesi | ✅ 114 dosya kesintisiz |
@@ -102,9 +103,9 @@ paralel çalıştığı turlarda en tehlikeli boşluk budur.
 
 | Ölçü | İlk ölçüm | Bu turdan sonra |
 |---|---|---|
-| Genel satır kapsamı | %62.34 | **%64.50** (21876/33918) |
-| Kritik yollar | %46.76 | **%56.99** |
-| Hiç dokunulmamış dosya | 54 | **34** |
+| Genel satır kapsamı | %62.34 | **%65.23** (22304/34191) |
+| Kritik yollar | %46.76 | **%58.92** |
+| Hiç dokunulmamış dosya | 54 | **33** |
 
 Kritik yollar **10.2 puan** yükseldi: 20 repository'nin kablo testi
 (`supabase_wire_*_test.dart`) ve `alarm_providers` durum makinesi
@@ -154,9 +155,10 @@ ortamda purge herkese açık olmamalı.
 | G1 | Edge Function davranış testleri | Orta | 🟢 `purge-accounts` karar mantığı `_shared/purge_policy.ts`'e çıkarıldı ve 13 testle kapsandı (yetkilendirme fail-closed + hata sınıflandırma). Altısı da `deno check`ten geçiyor. **Kalan:** diğer beş fonksiyonun handler'ı hâlâ `serve()` içinde gömülü; davranış testi için aynı çıkarma deseni uygulanmalı |
 | G2 | `Supabase*Repository` kablo testleri | Düşük | 🟢 **20/22**. Kapsanmayan ikisi: `report_attachment_upload` (yardımcı, dolaylı kapsandı) ve `supabase_presence_repository` (üç modlu, ağırlıklı realtime) |
 | G3 | `alarm_providers.dart` | Düşük | 🟢 %3.1 → kapsandı. Odak: süre epoch'tan türetilir, önbellekten değil |
-| G4 | 34 dosyaya hiç dokunulmamış (54'tü) | Orta | 🟡 Çoğu ekran/widget. Liste: `--top` |
+| G4 | 33 dosyaya hiç dokunulmamış (54'tü) | Orta | 🟡 Çoğu ekran/widget. Liste: `--top` |
 | G5 | pgTAP yerel replay bu hostta koşmuyor (Docker) | Orta | 🔴 CI'da koşuyor; yerelde `Replay bekliyor` etiketi. **Host sınırı — kod değişikliğiyle kapatılamaz** |
 | G6 | Realtime (`.stream()`) yolları | Düşük | 🟡 websocket taşır; http koşum takımı görmez. Bilinçli sınır |
+| G7 | İki fiziksel cihaz + Android process/isolate yaşam döngüsü | Yüksek | 🔴 JVM/Dart testleri protokol ve saf projeksiyonu yakalar; OEM arka plan politikası, gerçek FCM ve iki cihaz görünürlüğü yalnız staging cihaz matrisiyle kanıtlanabilir. WP-482'nin kalan kapısı |
 
 ### Yeni bir Supabase repository testi nasıl yazılır
 
@@ -200,7 +202,7 @@ python scripts/test_all.py --full
 ```
 
 `--fast` yalnız saniyelik kapılar + `flutter analyze`; varsayılan tur buna tam
-test paketi ve kapsam ratchet'ini ekler; `--full` golden, Windows entegrasyon ve
+Flutter paketi, Android native JVM testleri ve kapsam ratchet'ini ekler; `--full` golden, Windows entegrasyon ve
 pgTAP yerel replay'i de koşturur. Tek kapı için `--only <anahtar>`, liste için
 `--list`.
 

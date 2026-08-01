@@ -52,6 +52,7 @@ class MainActivity : FlutterActivity() {
                         val mode = call.argument<String>("mode") ?: "stopwatch"
                         val phase = call.argument<String>("phase") ?: "work"
                         val cycle = (call.argument<Number>("cycle"))?.toInt() ?: 1
+                        val targetSeconds = (call.argument<Number>("targetSeconds"))?.toInt()
                         val subjectId = call.argument<String>("subjectId")
                         val liveRunId = call.argument<String>("liveRunId")
                         val liveRunToken = call.argument<String>("liveRunToken")
@@ -63,6 +64,7 @@ class MainActivity : FlutterActivity() {
                             mode = mode,
                             phase = phase,
                             cycle = cycle,
+                            targetSeconds = targetSeconds,
                             subjectId = subjectId,
                             liveRunId = liveRunId,
                             liveRunToken = liveRunToken,

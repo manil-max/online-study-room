@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
@@ -11,6 +12,52 @@ import com.manilmax.online_study_room.R
 import es.antonborri.home_widget.HomeWidgetProvider
 
 internal const val WIDGET_IDLE_TIMER_TEXT = "00:00"
+
+internal enum class TimerChronometerDirection { IDLE, UP, DOWN }
+
+internal data class TimerChronometerProjection(
+    val direction: TimerChronometerDirection,
+    val baseElapsedRealtimeMs: Long,
+    val running: Boolean,
+)
+
+/** Pure wall-clock -> Chronometer projection shared by the widget and JVM tests. */
+internal fun timerChronometerProjection(
+    isRunning: Boolean,
+    mode: String?,
+    startedAtMs: Long?,
+    targetSeconds: Int?,
+    nowWallClockMs: Long,
+    nowElapsedRealtimeMs: Long,
+): TimerChronometerProjection {
+    if (!isRunning || startedAtMs == null) {
+        return TimerChronometerProjection(
+            TimerChronometerDirection.IDLE,
+            nowElapsedRealtimeMs,
+            false,
+        )
+    }
+    if (mode == "stopwatch") {
+        return TimerChronometerProjection(
+            TimerChronometerDirection.UP,
+            nowElapsedRealtimeMs - (nowWallClockMs - startedAtMs).coerceAtLeast(0L),
+            true,
+        )
+    }
+    val target = targetSeconds?.takeIf { it > 0 }
+        ?: return TimerChronometerProjection(
+            TimerChronometerDirection.IDLE,
+            nowElapsedRealtimeMs,
+            false,
+        )
+    val elapsedMs = (nowWallClockMs - startedAtMs).coerceAtLeast(0L)
+    val remainingMs = (target * 1_000L - elapsedMs).coerceAtLeast(0L)
+    return TimerChronometerProjection(
+        TimerChronometerDirection.DOWN,
+        nowElapsedRealtimeMs + remainingMs,
+        remainingMs > 0L,
+    )
+}
 
 private object StudyWidgetKeys {
     const val TimerTitle = "timer_title"
@@ -71,6 +118,17 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                         ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 val mode = appPrefs.getString("flutter.timer_active_mode", null)
                 val isRunning = startMillis != null
+                val targetSeconds = appPrefs
+                    .getInt("flutter.timer_active_target_seconds", 0)
+                    .takeIf { it > 0 }
+                val projection = timerChronometerProjection(
+                    isRunning = isRunning,
+                    mode = mode,
+                    startedAtMs = startMillis,
+                    targetSeconds = targetSeconds,
+                    nowWallClockMs = System.currentTimeMillis(),
+                    nowElapsedRealtimeMs = SystemClock.elapsedRealtime(),
+                )
                 // WP-134: Chronometer HER boyutta VISIBLE (compact GONE kaldırıldı).
                 // Compact'te yalnızca punto küçülür — 1×1'de saat üstte, mini düğme altta.
                 // Chronometer yalnız kronometre modunda akar; base formülü korunur.
@@ -83,10 +141,23 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     setTextViewTextSize(R.id.timer_widget_elapsed, android.util.TypedValue.COMPLEX_UNIT_SP, 26f)
                     setTextViewTextSize(R.id.timer_widget_action, android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
                 }
-                if (isRunning && mode == "stopwatch") {
-                    val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis!!)
-                    setChronometer(R.id.timer_widget_elapsed, base, null, true)
+                if (projection.direction != TimerChronometerDirection.IDLE) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        setChronometerCountDown(
+                            R.id.timer_widget_elapsed,
+                            projection.direction == TimerChronometerDirection.DOWN,
+                        )
+                    }
+                    setChronometer(
+                        R.id.timer_widget_elapsed,
+                        projection.baseElapsedRealtimeMs,
+                        null,
+                        projection.running,
+                    )
                 } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        setChronometerCountDown(R.id.timer_widget_elapsed, false)
+                    }
                     // Idle / sıfır: native Chronometer'ın MM:SS biçimiyle hizalı.
                     setChronometer(
                         R.id.timer_widget_elapsed,

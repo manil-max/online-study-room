@@ -85,12 +85,12 @@ class SelectedStudySubjectFallbackNoticeNotifier extends Notifier<bool> {
 /// server-authoritative timer state'inde birleşmesini sağlar.
 const kGlobalTimerForegroundReconcileInterval = Duration(seconds: 5);
 
-/// WP-373: koşu kirası sunucuda 150 sn'dir; 60 sn'lik tur, tek bir kaçırılan
-/// turda bile kiranın dolmamasını garanti eder.
+/// WP-373: controller tazelik kirası sunucuda 150 sn'dir; 60 sn'lik tur normal
+/// foreground çalışmada geniş pay bırakır.
 ///
-/// Snapshot turunun aksine bu tur **arka planda da çalışır** ve çalışmalıdır:
-/// amacı ekranı güncellemek değil, sayaç koşarken sunucudaki koşunun süpürücü
-/// tarafından ölü sanılıp kapatılmasını önlemektir. Maliyeti saatte 60 istek —
+/// Snapshot turunun aksine bu tur lifecycle'da iptal edilmez; yine de Android
+/// Dart isolate'ini askıya alabilir. `0119` recovery grace bu platform gerçeğini
+/// güvenli biçimde karşılar. Maliyeti saatte 60 istek —
 /// 5 sn'lik snapshot turunun (720/saat) on ikide biri.
 const kGlobalTimerHeartbeatInterval = Duration(seconds: 60);
 
@@ -492,6 +492,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveMode = 'timer_active_mode';
   static const _kActivePhase = 'timer_active_phase';
   static const _kActiveCycle = 'timer_active_cycle';
+  static const _kActiveTargetSeconds = 'timer_active_target_seconds';
   static const _kActiveSubject = 'timer_active_subject';
   static const _kActiveAccumulated = 'timer_active_accumulated_seconds';
   static const _kActiveCommandSeq = 'timer_active_command_seq';
@@ -553,6 +554,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Future<void>? _reconcileInFlight;
   bool _reconcileAgainRequested = false;
   Future<void>? _globalTimerReconcileInFlight;
+  Future<void>? _globalTimerHeartbeatInFlight;
   String? _subjectFallbackInFlightForUserId;
 
   // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
@@ -589,19 +591,21 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     try {
       final prefs = ref.read(sharedPreferencesProvider);
       unawaited(
-        ref.read(timerDiagnosticJournalProvider).record(
-          event: event,
-          reason: reason,
-          outcome: outcome,
-          origin: origin,
-          accountId: ref.read(authStateProvider).value?.id,
-          runId: runId,
-          deviceId: prefs.getString(globalTimerDeviceIdKey),
-          runRevision: runRevision,
-          stateVersion: stateVersion,
-          queueAgeMs: queueAgeMs,
-          elapsedSeconds: elapsedSeconds,
-        ),
+        ref
+            .read(timerDiagnosticJournalProvider)
+            .record(
+              event: event,
+              reason: reason,
+              outcome: outcome,
+              origin: origin,
+              accountId: ref.read(authStateProvider).value?.id,
+              runId: runId,
+              deviceId: prefs.getString(globalTimerDeviceIdKey),
+              runRevision: runRevision,
+              stateVersion: stateVersion,
+              queueAgeMs: queueAgeMs,
+              elapsedSeconds: elapsedSeconds,
+            ),
       );
     } catch (_) {
       // Tanı kaydı ürün akışını asla kesmez (prefs/provider hazır değilse sus).
@@ -689,8 +693,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         _startGlobalTimerForegroundRefresh();
         unawaited(_onAppResumed());
       },
-      onHide: _stopGlobalTimerForegroundRefresh,
-      onPause: _stopGlobalTimerForegroundRefresh,
+      onHide: _onAppHidden,
+      onPause: _onAppHidden,
     );
     // Native foreground servis (widget/bildirim Başlat-Durdur) uygulama AÇIKKEN de
     // anında yansısın diye native taraf `reconcile` çağırır; biz bu method channel
@@ -795,7 +799,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // kadar gösterilemez. Aşağıdaki microtask yerel izi de temizler, ardından
     // ilk snapshot turu koşu hâlâ canlıysa onu yeniden benimser.
     final restoredMirrorRunId = prefs.getString(_kGlobalMirrorRunId);
-    final restoringMirror = restoredMirrorRunId != null && activeStartedAt != null;
+    final restoringMirror =
+        restoredMirrorRunId != null && activeStartedAt != null;
     final initial = StudyTimerState(
       mode: activeStartedAt == null ? mode : activeMode,
       isRunning: activeStartedAt != null && !restoringMirror,
@@ -889,7 +894,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     return initial;
   }
 
-  Future<void> _onAppResumed() => _syncBackgroundTimerState();
+  Future<void> _onAppResumed() async {
+    await _sendGlobalTimerHeartbeat();
+    await _syncBackgroundTimerState();
+  }
+
+  void _onAppHidden() {
+    _stopGlobalTimerForegroundRefresh();
+    // Android Dart zamanlayicisini askıya almadan hemen önce kirayı yenile.
+    // Aynı hide/pause geçişi iki callback üretebilir; in-flight kilidi tek isteğe indirir.
+    unawaited(_sendGlobalTimerHeartbeat());
+  }
 
   void _startGlobalTimerForegroundRefresh() {
     if (_disposed) return;
@@ -921,8 +936,22 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     }
     _globalTimerHeartbeat?.cancel();
     _globalTimerHeartbeat = Timer.periodic(kGlobalTimerHeartbeatInterval, (_) {
-      if (_disposed || !state.isRunning || state.isGlobalTimerMirror) return;
-      unawaited(ref.read(globalTimerCoordinatorProvider).heartbeat());
+      unawaited(_sendGlobalTimerHeartbeat());
+    });
+  }
+
+  Future<void> _sendGlobalTimerHeartbeat() {
+    if (_disposed || !state.isRunning || state.isGlobalTimerMirror) {
+      return Future<void>.value();
+    }
+    final active = _globalTimerHeartbeatInFlight;
+    if (active != null) return active;
+    final operation = ref.read(globalTimerCoordinatorProvider).heartbeat();
+    _globalTimerHeartbeatInFlight = operation;
+    return operation.whenComplete(() {
+      if (identical(_globalTimerHeartbeatInFlight, operation)) {
+        _globalTimerHeartbeatInFlight = null;
+      }
     });
   }
 
@@ -951,6 +980,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     required String mode,
     required String phase,
     required int cycle,
+    int? targetSeconds,
     String? subjectId,
   }) async {
     try {
@@ -967,6 +997,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         mode: mode,
         phase: phase,
         cycle: cycle,
+        targetSeconds: targetSeconds,
         subjectId: subjectId,
         startOrigin: 'dart_app',
       );
@@ -1180,6 +1211,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             mode: state.mode.name,
             phase: state.phase.name,
             cycle: state.cycle,
+            targetSeconds: state.phaseTargetSeconds,
             startOrigin: 'global_timer_mirror',
           );
           _startTick();
@@ -1496,6 +1528,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
               mode: state.mode.name,
               phase: state.phase.name,
               cycle: state.cycle,
+              targetSeconds: state.phaseTargetSeconds,
               subjectId: state.subjectId,
               liveRunId: state.liveRunId,
               liveRunToken: state.liveRunToken,
@@ -1840,6 +1873,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         mode: state.mode.name,
         phase: state.phase.name,
         cycle: state.cycle,
+        targetSeconds: state.phaseTargetSeconds,
         subjectId: state.subjectId,
       ),
     );
@@ -1928,6 +1962,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         mode: state.mode.name,
         phase: state.phase.name,
         cycle: state.cycle,
+        targetSeconds: state.phaseTargetSeconds,
         subjectId: state.subjectId,
         liveRunId: run.id,
         liveRunToken: run.runToken,
@@ -2381,6 +2416,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.setString(_kActiveMode, state.mode.name);
     prefs.setString(_kActivePhase, state.phase.name);
     prefs.setInt(_kActiveCycle, state.cycle);
+    final targetSeconds = state.phaseTargetSeconds;
+    if (targetSeconds != null && targetSeconds > 0) {
+      prefs.setInt(_kActiveTargetSeconds, targetSeconds);
+    } else {
+      prefs.remove(_kActiveTargetSeconds);
+    }
     prefs.setString(_kActiveSubject, state.subjectId ?? '');
     prefs.setInt(_kActiveAccumulated, state.accumulatedSeconds);
     prefs.setInt(_kActiveCommandSeq, state.commandSeq);
@@ -2417,6 +2458,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.remove(_kActiveMode);
     prefs.remove(_kActivePhase);
     prefs.remove(_kActiveCycle);
+    prefs.remove(_kActiveTargetSeconds);
     prefs.remove(_kActiveSubject);
     prefs.remove(_kActiveAccumulated);
     prefs.remove(_kActiveCommandSeq);

@@ -56,7 +56,7 @@ class GlobalTimerRun {
   /// kirası çoktan dolmuş bir koşuyu "çalışıyor" diye açabiliyordu (V56-S04).
   final DateTime? leaseExpiresAt;
 
-  /// Sunucunun okuma anında hesapladığı gerçek: kira doldu mu?
+  /// Sunucunun okuma anında hesapladığı gerçek: controller heartbeat'i gecikti mi?
   ///
   /// İstemci saatine güvenmeyiz — süpürücü (`0089`) ile snapshot arasındaki
   /// yarışta doğru cevap sunucununkidir (`0101`).
@@ -84,13 +84,22 @@ class GlobalTimerRun {
 
   /// Bu koşu bu cihazda **canlı** olarak gösterilebilir mi?
   ///
-  /// [maxRunAge]: sunucu saatine göre bir koşunun makul üst yaşı. Kira ölçüsü
-  /// asıl kapıdır; yaş sınırı, kira alanını taşımayan eski sunucuya karşı ikinci
-  /// settir.
+  /// [maxRunAge]: sunucu saatine göre bir koşunun makul üst yaşı. Kısa kira
+  /// controller tazeliğini ölçer; açık çalışma niyetini ancak recovery grace
+  /// aşıldığında terminal sayarız. Yaş sınırı ikinci fail-safe'tir.
   bool isDisplayableAt(DateTime serverTime, {Duration? maxRunAge}) {
-    if (status != 'running' || leaseExpired) return false;
+    if (status != 'running') return false;
     final startedAt = effectiveStartedAt;
     if (startedAt == null) return false;
+    // Android foreground service calisirken Dart isolate'i askiya alinabilir.
+    // Kisa lease gecikmesi acik calismayi kapatmaz; yalniz hard-abandonment
+    // penceresini asan gecikme hayalet kosu olarak reddedilir.
+    if (leaseExpired) {
+      final lease = leaseExpiresAt;
+      if (lease == null) return false;
+      final leaseDelay = serverTime.toUtc().difference(lease.toUtc());
+      if (leaseDelay > kGlobalTimerLeaseRecoveryGrace) return false;
+    }
     final limit = maxRunAge ?? kGlobalTimerMaxMirrorRunAge;
     return !serverTime.toUtc().difference(startedAt.toUtc()).isNegative &&
         serverTime.toUtc().difference(startedAt.toUtc()) <= limit;
@@ -99,11 +108,15 @@ class GlobalTimerRun {
 
 /// WP-431 (K2): bir ayna koşusunun sorgusuz benimsenebileceği üst yaş.
 ///
-/// Sunucu kirası 150 sn'dir ve süpürücü dakikalıktır; sağlıklı bir koşu bu
-/// pencerede sürekli tazelenir. 12 saat, "gerçekten uzun bir çalışma seansı" ile
+/// Sunucu tazelik kirası 150 sn'dir; sağlıklı bir koşu bu pencerede sürekli
+/// tazelenir. 12 saat, "gerçekten uzun bir çalışma seansı" ile
 /// "gece boyu unutulmuş hayalet koşu" arasındaki ürün sınırıdır: sahibin
 /// bildirdiği vaka ~8 saatti ve **kayıt üretmemişti**.
 const kGlobalTimerMaxMirrorRunAge = Duration(hours: 12);
+
+/// Heartbeat gecikince acik calismayi kurtarmak icin taninan ust pencere.
+/// Sunucu supurucusu de ayni esikle terminal `abandoned` karari verir.
+const kGlobalTimerLeaseRecoveryGrace = Duration(hours: 12);
 
 /// Uzak snapshot'ın yerel sayaç durumuna göre güvenli uygulanabilir sonucu.
 /// Sinyal yalnız tetikleyicidir; bu karar her zaman doğrulanmış snapshot'tan gelir.

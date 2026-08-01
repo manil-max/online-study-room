@@ -61,13 +61,15 @@ class StudyTimerService : Service() {
                     val mode = intent.getStringExtra(EXTRA_MODE) ?: "stopwatch"
                     val phase = intent.getStringExtra(EXTRA_PHASE) ?: "work"
                     val cycle = intent.getIntExtra(EXTRA_CYCLE, 1).coerceAtLeast(1)
+                    val targetSeconds = intent.getIntExtra(EXTRA_TARGET_SECONDS, 0)
+                        .takeIf { it > 0 }
                     val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
                     val liveRunId = intent.getStringExtra(EXTRA_LIVE_RUN_ID).orEmpty()
                     val liveRunToken = intent.getStringExtra(EXTRA_LIVE_RUN_TOKEN).orEmpty()
                     val startOrigin = intent.getStringExtra(EXTRA_START_ORIGIN)
                         ?: "native_notification"
                     handleStart(
-                        startedAtMs, mode, phase, cycle, subjectId,
+                        startedAtMs, mode, phase, cycle, targetSeconds, subjectId,
                         liveRunId, liveRunToken, startOrigin,
                     )
                 }
@@ -120,6 +122,7 @@ class StudyTimerService : Service() {
         mode: String,
         phase: String,
         cycle: Int,
+        targetSeconds: Int? = null,
         subjectId: String,
         liveRunId: String = "",
         liveRunToken: String = "",
@@ -134,6 +137,7 @@ class StudyTimerService : Service() {
             mode = mode,
             phase = phase,
             cycle = cycle,
+            targetSeconds = targetSeconds,
             subjectId = subjectId,
             liveRunId = liveRunId,
             liveRunToken = liveRunToken,
@@ -608,6 +612,7 @@ class StudyTimerService : Service() {
         const val EXTRA_MODE = "mode"
         const val EXTRA_PHASE = "phase"
         const val EXTRA_CYCLE = "cycle"
+        const val EXTRA_TARGET_SECONDS = "targetSeconds"
         const val EXTRA_SUBJECT_ID = "subjectId"
         const val EXTRA_LIVE_RUN_ID = "liveRunId"
         const val EXTRA_LIVE_RUN_TOKEN = "liveRunToken"
@@ -633,6 +638,7 @@ class StudyTimerService : Service() {
             mode: String? = null,
             phase: String? = null,
             cycle: Int? = null,
+            targetSeconds: Int? = null,
             subjectId: String? = null,
             liveRunId: String? = null,
             liveRunToken: String? = null,
@@ -644,6 +650,7 @@ class StudyTimerService : Service() {
                 mode?.let { putExtra(EXTRA_MODE, it) }
                 phase?.let { putExtra(EXTRA_PHASE, it) }
                 cycle?.let { putExtra(EXTRA_CYCLE, it) }
+                targetSeconds?.takeIf { it > 0 }?.let { putExtra(EXTRA_TARGET_SECONDS, it) }
                 subjectId?.let { putExtra(EXTRA_SUBJECT_ID, it) }
                 liveRunId?.let { putExtra(EXTRA_LIVE_RUN_ID, it) }
                 liveRunToken?.let { putExtra(EXTRA_LIVE_RUN_TOKEN, it) }

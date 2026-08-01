@@ -22,6 +22,7 @@ object TimerStateStore {
     const val KEY_MODE = "flutter.timer_active_mode"
     const val KEY_PHASE = "flutter.timer_active_phase"
     const val KEY_CYCLE = "flutter.timer_active_cycle"
+    const val KEY_TARGET_SECONDS = "flutter.timer_active_target_seconds"
     const val KEY_SUBJECT = "flutter.timer_active_subject"
     const val KEY_FG_MODE = "flutter.timer_fg_mode"
     const val KEY_PENDING_INTERVALS = "flutter.timer_pending_intervals"
@@ -111,6 +112,7 @@ object TimerStateStore {
         mode: String,
         phase: String,
         cycle: Int,
+        targetSeconds: Int? = null,
         subjectId: String,
         liveRunId: String = "",
         liveRunToken: String = "",
@@ -124,6 +126,13 @@ object TimerStateStore {
             .putString(KEY_MODE, mode)
             .putString(KEY_PHASE, phase)
             .putInt(KEY_CYCLE, cycle)
+            .also { editor ->
+                if (targetSeconds != null && targetSeconds > 0) {
+                    editor.putInt(KEY_TARGET_SECONDS, targetSeconds)
+                } else {
+                    editor.remove(KEY_TARGET_SECONDS)
+                }
+            }
             .putString(KEY_SUBJECT, subjectId)
             .putString(KEY_LIVE_RUN_ID, liveRunId)
             .putString(KEY_LIVE_RUN_TOKEN, liveRunToken)
@@ -140,6 +149,7 @@ object TimerStateStore {
         return p.edit()
             .remove(KEY_STARTED_AT)
             .remove(KEY_STARTED_AT_MS)
+            .remove(KEY_TARGET_SECONDS)
             .remove(KEY_LIVE_RUN_ID)
             .remove(KEY_LIVE_RUN_TOKEN)
             .remove(KEY_START_ORIGIN)
