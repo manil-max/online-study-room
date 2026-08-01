@@ -34,15 +34,15 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # tüketildi; staging ve production kapıları politika gereği yeniden HOLD'dadır.
 # 🔴 Head ve kapı durumu ÜÇ yerde pinli: kontrat, bu dosya ve
 # release-preflight.tests.ps1. Biri unutulursa CI tam buradan kırmızı düşer.
-# 2026-07-31: v57 staging apply YAPILDI (Database Gates run 30660596728);
-# 0101-0114 uygulandi, post-check local|remote|file = 0114 dedi. Tek seferlik
-# GO tuketildi ve kapi tekrar kilitlendi. Bu head artik GERCEKTEN uygulanmis
-# semayi temsil ediyor. Production HOLD'da kalir.
-Assert-Equal $contract.staging.migration_head '0114' 'staging head 0114 (v57 apply edildi)'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'staging deploy apply sonrasi tekrar HOLD'
+# 2026-08-01: v57 tek zincir yetki taslagi; exact commit sahibi tarafindan
+# yeniden onaylanip push edilmeden remote workflow calistirilmaz. Sira staging
+# 0115-0116 -> production 0101-0116 -> v57 stable; sonra iki deploy bayragi
+# yeniden false olur. Beta/release bayragi bilerek acilmaz.
+Assert-Equal $contract.staging.migration_head '0116' 'staging v57 hedef head 0116'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging v57 tek apply yetkisi'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release v56 sonrasi HOLD'
-Assert-Equal $contract.production.migration_head '0100' 'production hedef head 0100 (PLAN 4 v56 tamamlandi)'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy v56 sonrasi HOLD'
+Assert-Equal $contract.production.migration_head '0116' 'production v57 hedef head 0116'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production v57 tek apply yetkisi'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release v56 sonrasi HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
