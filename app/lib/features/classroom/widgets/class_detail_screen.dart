@@ -883,24 +883,22 @@ class _MembersCard extends ConsumerWidget {
                     avatarUrl: m.avatarUrl,
                     radius: 18,
                   ),
+                  // WP-487: ad tek satır. Sarmalanan ad + sarmalanan ünvan +
+                  // ayrı "Yönetici" satırı aynı üyeyi 5 satıra çıkarabiliyordu.
                   title: Text(
                     !m.isActive
                         ? AppLocalizations.of(context).classroomEskiGrupUyesi
                         : (m.displayName.isEmpty
                               ? AppLocalizations.of(context).classroomIsimsiz
                               : m.displayName),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: m.id == group.createdBy
-                      ? _memberSubtitle(
-                          context,
-                          isOwner: true,
-                          title: titleNames[m.titleAchievementId],
-                        )
-                      : _memberSubtitle(
-                          context,
-                          isOwner: false,
-                          title: titleNames[m.titleAchievementId],
-                        ),
+                  subtitle: _memberSubtitle(
+                    context,
+                    isOwner: m.id == group.createdBy,
+                    title: titleNames[m.titleAchievementId],
+                  ),
                   onTap: () => SocialProfileDialog.show(context, m),
                   trailing: m.isActive && m.id != currentUserId
                       ? Row(
@@ -959,25 +957,53 @@ class _MembersCard extends ConsumerWidget {
     );
   }
 
-  Widget? _memberSubtitle(
+  /// WP-487: üye satırının **tek** alt satırı.
+  ///
+  /// Eskiden ünvan ve "Yönetici" `Column` içinde iki ayrı sarmalanabilir `Text`
+  /// idi; uzun ad 2, uzun ünvan 2 satıra çıkınca aynı üye 4–5 satır kaplıyordu
+  /// ve liste satırları farklı yüksekliklerde oluyordu (V57-N11).
+  ///
+  /// Gösterilecek bir şey olmadığında da **boş bir alt satır döndürülür**:
+  /// `ListTile` yüksekliğini `subtitle`ın varlığına göre seçtiği için, `null`
+  /// dönmek ünvansız üyeleri kısa satır yapar ve düzensizlik geri gelir.
+  /// Ünvanı tamamen okumak isteyen satıra dokununca profil kartını açar.
+  Widget _memberSubtitle(
     BuildContext context, {
     required bool isOwner,
     required String? title,
   }) {
-    if (!isOwner && title == null) return null;
+    if (!isOwner && title == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
         if (title != null)
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        if (isOwner) Text(AppLocalizations.of(context).classroomYonetici),
+        if (title != null && isOwner) const SizedBox(width: 6),
+        if (isOwner)
+          // Yönetici işareti sabit genişlikte: `Flexible` olmayan bir çocuk
+          // satır genişliğini aşarsa `Row` taşar, bu yüzden üst sınırı var
+          // (yazı tipi ölçeğiyle birlikte büyür).
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.textScalerOf(context).scale(88),
+            ),
+            child: Text(
+              AppLocalizations.of(context).classroomYonetici,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
       ],
     );
   }

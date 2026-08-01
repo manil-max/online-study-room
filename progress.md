@@ -5971,8 +5971,8 @@ tekrar tutulmaz.
 
 #### WP-487 — Grup üye satırı: ünvan satırı şişirmesin
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. WP-483/WP-484 ile **aynı anda
-  verilmez** (üçü de `class_detail_screen.dart`).
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
+  WP-484 ve WP-483'ten sonra, ayrı commit.
 - **Belirti (V57-N11):** Ünvan eklendikten sonra bir üye listede dört satır
   kaplayabiliyor (`ad1 / ad2 / ünvan1 / ünvan2`).
 - **Kök neden (kodda doğrulandı):** Satırdaki **hiçbir metnin** satır sınırı yok.
@@ -5999,6 +5999,20 @@ tekrar tutulmaz.
   iken satır **iki satırı aşmıyor** · listedeki bütün satırlar aynı yükseklikte ·
   ad ve ünvan ellipsis ile kesiliyor, taşma (overflow) uyarısı yok · dar telefon
   genişliğinde ve büyük yazı tipi ölçeğinde de geçerli.
+- **Sonuç (2026-08-01):** Ad `maxLines: 1` + ellipsis. `_memberSubtitle` artık
+  `Column` değil tek `Row`: ünvan `Flexible` + ellipsis, "Yönetici" ise yazı
+  tipi ölçeğiyle büyüyen `maxWidth` sınırı içinde tek satır. Üstelik iki dallı
+  `isOwner ? … : …` çağrısı tek çağrıya indi (iki dal aynı şeyi yapıyordu).
+- **Satır yüksekliği uyumu için `null` alt satır kaldırıldı.** `ListTile`
+  yüksekliği `subtitle`ın **varlığına** göre seçiliyor; ünvansız üyeye `null`
+  dönmek o satırı 56 dp, ünvanlıyı 72 dp yapıyordu. Artık gösterilecek bir şey
+  yoksa boş bir alt satır dönüyor ve bütün satırlar aynı yükseklikte.
+- **Mutasyon kanıtı (ölçümlü):** ad `maxLines`'ı kaldırılınca yükseklikler
+  `[72.0, 72.0, 104.0]` oluyor ve iki test kırmızıya dönüyor; düzeltmeyle üçü
+  de **72.0**. Sahibin "güzel durmuyor" dediği düzensizlik tam olarak bu 32 dp.
+- **Ölçüm:** yeni `app/test/features/classroom/member_row_layout_test.dart`
+  **3 test** (360 dp normal ölçek + 320 dp / 1.6× ölçek) · tam paket
+  **1566/1566 yeşil** (öncesi 1563) · `flutter analyze` 0 uyarı · l10n OK.
 
 #### WP-488 — Ana ekran üst şeridini kaldır; düzenlemeyi uzun basmaya taşı
 
