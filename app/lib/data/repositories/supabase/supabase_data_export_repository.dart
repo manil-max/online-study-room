@@ -41,7 +41,7 @@ class SupabaseDataExportRepository implements DataExportRepository {
     UserStudySummary? summary;
     try {
       final s = await _client.rpc(
-        'get_user_study_summary',
+        'user_study_summary',
         params: {'p_user_id': userId},
       );
       // Some deployments use auth.uid only — ignore shape mismatch.
