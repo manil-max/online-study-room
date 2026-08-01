@@ -58,7 +58,9 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    // WP-488: görüntüleme modundaki düzenle butonu kaldırıldı; düzenlemeye
+    // giriş yolu artık karta uzun basmaktır.
+    await tester.longPress(find.byType(Card).first);
     await tester.pump(const Duration(milliseconds: 600));
   }
 

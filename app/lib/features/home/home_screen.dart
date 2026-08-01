@@ -27,7 +27,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
   bool _showEditHint = false;
-  final _editTourAnchor = GlobalKey();
 
   /// WP-291: Boyut panelinin bağlı olduğu seçili kart. Grid tıklamayla bildirir,
   /// sabit alt yaprak (bottomSheet) dinler.
@@ -108,9 +107,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 🔴 WP-417 (sahip): ana ekranda tek bir şey tanıtılır — kartları düzenleme.
     // Önceden Home turu bitince Sayaç turu zincirleniyordu; sahip *"sadece edit
     // kısmını gösterelim"* dedi, zincir kaldırıldı.
+    // WP-488: çapa kalktı. `TourStep.anchor` nullable ve `null` iken balon
+    // ekranın ortasında hedefsiz gösteriliyor; sahibin "tanıtım turunda ana
+    // ekrana yazsak yeter" dediği şey tam olarak bu.
     final definition = AppTours.home(
       AppLocalizations.of(context),
-      editAnchor: _editTourAnchor,
       isEmpty: layout.isEmpty,
     );
 
@@ -272,7 +273,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ] else
                         IconButton(
-                          key: _editTourAnchor,
                           tooltip: AppLocalizations.of(
                             context,
                           ).homePanoyuDuzenle,
@@ -322,13 +322,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: const Icon(Icons.add),
                 onPressed: () => showCardPicker(context),
               ),
-            ] else
-              IconButton(
-                key: _editTourAnchor,
-                tooltip: AppLocalizations.of(context).homeKartlariDuzenle,
-                icon: const Icon(Icons.dashboard_customize_outlined),
-                onPressed: () => _setEditing(true),
-              ),
+            ],
+            // 🔴 WP-488 (sahip kararı): görüntüleme modunda **hiçbir eylem
+            // yok**, bu yüzden `buildTabActionBar` `null` döner ve şerit hiç
+            // kurulmaz; gövde üst güvenli alanı kendisi taşır. Yerine yeni
+            // buton KONMAYACAK — düzenlemeye giriş yolu karta uzun basmaktır.
           ],
         ),
         body: stickyPanelBelow(body, sizeSheet),

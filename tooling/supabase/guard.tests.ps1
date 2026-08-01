@@ -37,9 +37,10 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 2026-08-01: v57 zinciri tamamlandi; staging run 30700266897 ve production
 # run 30700518285 head 0116 post-check verdi, release run 30700647563 yesil.
 # Tek seferlik GO tuketildi ve iki ortam da yeniden fail-closed HOLD'a alindi.
-# 🔴 WP-485 (Faz F4): yerel head 0117'ye ilerledi (feedback mesaji realtime +
-# push). Uzak head'ler BILEREK 0116'da kaldi - 0117 hicbir ortama uygulanmadi
-# ve bu WP hicbir kapiyi acmiyor. Yerel replay bu hostta Docker kalkmadigi icin
+# 🔴 Faz F4: yerel head 0118'e ilerledi - WP-485 (0117, feedback mesaji
+# realtime + push) ve WP-488 (0118, ana ekran duzenleme SSS satiri). Uzak
+# head'ler BILEREK 0116'da kaldi: 0117-0118 hicbir ortama uygulanmadi ve bu
+# kartlarin hicbiri kapi acmiyor. Yerel replay bu hostta Docker kalkmadigi icin
 # kosulamadi; kanit Database Gates workflow'unun local replay job'indan alinir
 # ("Replay bekliyor").
 Assert-Equal $contract.staging.migration_head '0116' 'staging gercek head 0116'

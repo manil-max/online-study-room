@@ -15,7 +15,7 @@ void main() {
     final primary = GlobalKey();
     final secondary = GlobalKey();
     return [
-      AppTours.home(l10n, editAnchor: secondary, isEmpty: !hasContent),
+      AppTours.home(l10n, isEmpty: !hasContent),
       AppTours.groups(
         l10n,
         contentAnchor: primary,
@@ -35,8 +35,9 @@ void main() {
     for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
       for (final hasContent in [true, false]) {
         final tours = definitions(l10n, hasContent: hasContent);
+        // WP-488: ana ekran turu metni davranış değiştirdiği için v2.
         expect(tours.map((tour) => tour.storageId), [
-          'home.v1',
+          'home.v2',
           'groups.v1',
           'campfire.v1',
           'profile.v1',
@@ -79,16 +80,16 @@ void main() {
 
   test('empty states never point at content that does not exist', () {
     final l10n = AppLocalizationsTr();
-    final edit = GlobalKey();
 
-    final home = AppTours.home(l10n, editAnchor: edit, isEmpty: true);
+    final home = AppTours.home(l10n, isEmpty: true);
     final campfire = AppTours.campfire(
       l10n,
       campfireAnchor: GlobalKey(),
       hasGroup: false,
     );
 
-    expect(home.steps.single.anchor, same(edit));
+    // WP-488: düzenle butonu kalktı, ana ekran adımı artık çapasız gösteriliyor.
+    expect(home.steps.single.anchor, isNull);
     expect(campfire.steps.single.anchor, isNull);
   });
 

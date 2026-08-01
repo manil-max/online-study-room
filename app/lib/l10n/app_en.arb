@@ -5940,7 +5940,7 @@
   "@groupTimeZoneUpdated": {
     "description": "Confirmation after changing a study group's time zone."
   },
-  "tourHomeEdit": "Add, move, resize, or remove cards.",
+  "tourHomeEdit": "Press and hold a card to edit.",
   "@tourHomeEdit": {
     "description": "Home introduction tour edit-card guidance."
   },

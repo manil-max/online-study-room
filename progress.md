@@ -6161,8 +6161,8 @@ tekrar tutulmaz.
 
 #### WP-488 — Ana ekran üst şeridini kaldır; düzenlemeyi uzun basmaya taşı
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. Migration içerir (SSS satırı);
-  numara **uygulama anında en yüksek** olan alınır (`0117` WP-485'e ayrıldı).
+- **Durum / bağımlılık:** [x] Kod + kapılar tamam · **`Replay bekliyor`** ·
+  `Cihazda doğrulanmalı`. Migration `0118` (`0117` WP-485'e gitti).
 - **🔴 Sahip kararı (bağlayıcı, V57-N12):** Üst şerit ve düzenle butonu
   **kalkacak**, ilk kart doğrudan üstten başlayacak. Yerine **yeni buton
   konmayacak**. Giriş yolu uzun basmadır; keşfedilebilirlik tanıtım turu + SSS
@@ -6221,6 +6221,40 @@ tekrar tutulmaz.
   giriyor · tanıtım turu adımı çapasız gösteriliyor ve metni uzun basmayı
   söylüyor · boş pano hâlinde çıkış yolu duruyor · masaüstü şeridi değişmedi ·
   SSS satırı TR + EN eklendi, head üç yerde hizalı, `Replay bekliyor` etiketi.
+- **Sonuç (2026-08-01):** Telefon `buildTabActionBar` çağrısının görüntüleme
+  modundaki **tek** eylemi kaldırıldı; sözleşme gereği `null` dönüyor ve şerit
+  hiç kurulmuyor. Yerine yeni buton **konmadı**. Test bunu "boşluk küçüldü"
+  diye değil, `find.byType(AppBar) == findsNothing` ile ölçüyor; ilk kartın
+  üstü ölçülüyor ve eski 48 dp şeridin altında olmadığı doğrulanıyor.
+- **Tanıtım turu:** `AppTours.home` imzasından `editAnchor` düştü, adım artık
+  **çapasız** (balon ekranın ortasında hedefsiz çiziliyor). Metin davranışı
+  değiştiği için tur sürümü `v1 → v2`: kullanıcı yeni yolu bir kez daha görür.
+- **🔴 Metin uzunluğu bir kapıya takıldı ve kısaltıldı.** İlk yazım
+  ("Düzenleme moduna girmek için herhangi bir karta uzun bas; sonra kart
+  ekleyebilir…") `app_tours_test` balon taşma iddiasını düşürdü: testte gerçek
+  font yüklenmediği için her glif `fontSize` genişliğinde sayılıyor ve 288 px'e
+  iki satır ≈ 40 karakter sığıyor. Son metin: TR "Karta uzun bas: düzenleme
+  açılır." · EN "Press and hold a card to edit."
+- **Kapsam dışı bırakılanlar korundu:** Düzenleme modu şeridi (Bitti / yukarı
+  topla / sıfırla / kart ekle) **yerinde**; masaüstü dalına dokunulmadı; boş
+  pano kendi eylemini taşımaya devam ediyor. Öksüz kalan `_editTourAnchor`
+  `GlobalKey`i (kendi enkazım) silindi.
+- **Migration `0118_faq_home_edit.sql`:** SSS satırı **TR + EN birlikte**.
+  `0091` tabloyu benzersiz kısıtsız kurduğu için `on conflict do nothing` bu
+  satırları korumaz; idempotenslik `where not exists` ile sağlandı ve pgTAP
+  testi tekrar apply'ın kopya üretmediğini de ölçüyor.
+- **Head üç yerde `0118`:** `deploy-contract.json` `local_migration_head` ·
+  `001_schema_contract.test.sql` (118 / `0118`) · `guard.tests.ps1` notu.
+  Staging/production **`0116`da** bırakıldı; dört bayrak `false`.
+- **Etkilenen mevcut test düzeltildi:** `edit_mode_sticky_panel_test` düzenleme
+  moduna düzenle butonuna dokunarak giriyordu; uzun basmaya çevrildi.
+- **Ölçüm:** yeni `app/test/features/home/home_action_bar_wp488_test.dart`
+  **7 test** + `supabase/tests/044_faq_home_edit.test.sql` **4 pgTAP iddiası**
+  (kart `039` demişti; 039–043 dolu olduğu için 044) · tam paket
+  **1597/1597 yeşil** (öncesi 1590) · `flutter analyze` 0 uyarı · l10n OK ·
+  `guard.tests.ps1` 75/75 · `release-preflight.tests.ps1` 8/8.
+- **🔴 `Replay bekliyor`:** Docker bu hostta kalkmıyor; `0118`in pgTAP kanıtı
+  Database Gates workflow'unun local replay job'ından alınır.
 
 ### Faz F4 sırası
 

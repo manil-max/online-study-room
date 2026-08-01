@@ -14,19 +14,21 @@ abstract final class AppTours {
   /// bakış adımı ve arkasından zincirlenen sayaç turu kaldırıldı; ana ekranda
   /// artık yalnız kartları düzenleme düğmesi tanıtılır. Boş panoda metin aynı,
   /// başlık kullanıcının o an gördüğü duruma göre değişir.
+  /// WP-488: adım artık **çapasız**. Düzenle butonu kaldırıldığı için
+  /// gösterilecek bir hedef yok; `TourStep.anchor` null iken balon ekranın
+  /// ortasında hedefsiz çiziliyor. Sürüm 1 → 2: metin davranışı değiştiği için
+  /// turu bir kez daha görmek doğrudur (eski metin butonu tarif ediyordu).
   static TourDefinition home(
     AppLocalizations l10n, {
-    required GlobalKey editAnchor,
     required bool isEmpty,
   }) => TourDefinition(
     id: 'home',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: 'edit',
         title: isEmpty ? l10n.homeAnaSayfanBos : l10n.homeKartlariDuzenle,
         text: l10n.tourHomeEdit,
-        anchor: editAnchor,
       ),
     ],
   );
