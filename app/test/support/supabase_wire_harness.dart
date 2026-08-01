@@ -68,8 +68,14 @@ class WireCall {
 }
 
 /// Sahte yanıt.
+///
+/// [body] **Dart değeri** olarak verilir ve gövdeye JSON olarak yazılır.
+/// Yani `WireResponse('already_left')` kabloya `"already_left"` koyar —
+/// PostgREST'in skaler `text` dönen bir RPC için gerçekten yaptığı şey.
+/// Dizeyi ham geçirmek, testin gerçekte olmayan bir gövdeyi doğrulamasına
+/// yol açıyordu; [rawBody] o kaçış kapısını bilinçli hâle getirir.
 class WireResponse {
-  const WireResponse(this.body, {this.status = 200});
+  const WireResponse(this.body, {this.status = 200, this.rawBody = false});
 
   /// PostgREST hata biçimi — repository'nin istisna eşlemesini sınamak için.
   factory WireResponse.error({
@@ -78,17 +84,16 @@ class WireResponse {
     String code = '',
   }) =>
       WireResponse(
-        jsonEncode({
-          'message': message,
-          'code': code,
-          'details': null,
-          'hint': null,
-        }),
+        {'message': message, 'code': code, 'details': null, 'hint': null},
         status: status,
       );
 
   final Object? body;
   final int status;
+
+  /// true ise [body] bir `String` olmalidir ve gövdeye **ham** yazilir
+  /// (bozuk JSON gibi patolojik durumlari sinamak icin).
+  final bool rawBody;
 }
 
 /// Test koşum takımı: istekleri kaydeder, kanned yanıt döndürür.
@@ -162,9 +167,7 @@ class _RecordingClient extends http.BaseClient {
 
     final response = _harness._responseFor(call);
     final encoded = utf8.encode(
-      response.body is String
-          ? response.body! as String
-          : jsonEncode(response.body),
+      response.rawBody ? response.body! as String : jsonEncode(response.body),
     );
     return http.StreamedResponse(
       Stream.value(encoded),
