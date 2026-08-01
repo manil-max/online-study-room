@@ -18,13 +18,21 @@
 
 ## Proje Gerçekleri
 
-- 🔴 **Migration gerçeği (2026-07-31, v57 turu sonrası):** repo/local **`0108`** ·
-  staging **`0100`** · production **`0100`**. v57 turunda `0101`…`0108` yazıldı
-  ama **hiçbiri replay edilmedi** (bu hostta Docker kalkmıyor, hepsi "Replay
-  bekliyor") ve **hiçbir ortama uygulanmadı**. Head pini iki yerde `0101`de
-  kaldığı için Database Gates ilk adımda kırmızı — kapanışı **WP-469**, replay
-  kanıtı **WP-473**. Staging/production `migration_head` `0100`de kalır ve
-  `deploy_enabled`/`release_enabled` dördü de `false`dır.
+- ✅ **Migration gerçeği (2026-08-01):** repo/local **`0114`** · staging
+  **`0114`** · production **`0100`**. `0101`…`0114` staging'e uygulandı
+  (Database Gates run `30660596728`; post-check local|remote|file = `0114`) ve
+  purge zinciri aktive edildi (run `30661167492`, health `configured`).
+  Database Gates **yeşil**. Production `0100`de ve **HOLD**'da — stable, o
+  apply yapılmadan mümkün değil.
+  - 🔴 **Kontrat notu:** `tooling/release/deploy-contract.json` içinde staging
+    `release_enabled` **`true`** (beta yetkisi). `tooling/supabase/guard.tests.ps1:43`
+    bu bayrağı hâlâ `false`a pinliyor, yani ikisi çelişiyor ve guard kapanıyor.
+    Beta çıkılacaksa iki yer birlikte güncellenmeli (bkz. üç yerde pinli head
+    dersi); çıkılmayacaksa kontrat `false`a dönmeli.
+  - **Tarihsel (2026-07-31, düzeltildi):** bu madde bir süre repo/local `0108`,
+    staging `0100` ve "hiçbiri replay edilmedi, Database Gates kırmızı" diyordu.
+    Üçü de bayatlamıştı; `AGENTS.md §4` release gerçeğini buradan okuttuğu
+    için yanlış karar riski taşıyordu.
 - **Önceki migration gerçeği (2026-07-28, v56):** repo/local **`0100`** · staging
   **`0100`** · production **`0100`**. Yerel replay `0001→0100` ve 377 pgTAP
   geçti; staging post-check `0100` (run `30380751277`), production post-check
