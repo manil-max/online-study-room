@@ -1915,5 +1915,11 @@
   "safetyAppealPending": "İtiraz inceleniyor",
   "safetyAppealUpheld": "İtiraz reddedildi; kısıt sürüyor.",
   "safetyAppealOverturned": "İtiraz kabul edildi; kısıt kaldırıldı.",
-  "studySelectedSubjectUnavailable": "Seçili ders artık erişilebilir değil; Genel seçildi."
+  "studySelectedSubjectUnavailable": "Seçili ders artık erişilebilir değil; Genel seçildi.",
+  "profileNoTitle": "Ünvan seçilmedi",
+  "profileChooseTitle": "Ünvan seç",
+  "profileOnlyEarnedTitles": "Yalnızca kazandığın başarımları ünvan olarak kullanabilirsin.",
+  "profileRemoveTitle": "Ünvanı kaldır",
+  "profileTitleUpdated": "Profil ünvanın güncellendi.",
+  "profileTitleUpdateFailed": "Ünvan güncellenemedi. Yalnızca kazandığın bir başarımı seçebilirsin."
 }

@@ -433,6 +433,30 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateTitle(String? achievementId) async {
+    final cur = _current;
+    if (cur == null) return;
+    final safe = achievementId?.trim();
+    final value = (safe == null || safe.isEmpty) ? null : safe;
+    try {
+      await _client
+          .from('profiles')
+          .update({'title_achievement_id': value})
+          .eq('id', cur.id);
+    } on supa.PostgrestException catch (error) {
+      // 0115 trigger'i: kazanilmamis unvan sunucuda reddedilir. Ekran bu
+      // durumu kullaniciya anlasilir gostersin diye kod korunur.
+      if (error.message.contains('title_not_earned')) {
+        throw const AuthException('title_not_earned');
+      }
+      rethrow;
+    }
+    _current = value == null
+        ? cur.copyWith(clearTitle: true)
+        : cur.copyWith(titleAchievementId: value);
+  }
+
+  @override
   Future<void> updateMonthlyReportOptIn(bool value) async {
     final cur = _current;
     if (cur == null) return;

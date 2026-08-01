@@ -59,10 +59,13 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
   final List<AchievementAward> _claimedAwards = [];
   var _claimingAll = false;
   var _capabilityRecorded = false;
+  late String? _selectedTitleId;
+  var _titleUpdating = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedTitleId = widget.profile.titleAchievementId;
     // 🔴 WP-421: Sahip "push düştü ama başarımlar ekranında rozet yok, ~2 dk
     // sonra geldi" dedi. Gecikmenin kaynağı push değil **önbellekti**: bu
     // sağlayıcılar yalnız oturum bitişi/ödül toplama gibi olaylarda
@@ -211,6 +214,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         gamification: gamification,
                         userAchievements: achs,
                         displayName: widget.profile.displayName,
+                        titleAchievementId: _selectedTitleId,
                         isSelf: isSelf,
                         compact: false,
                         showCatalog: true,
@@ -242,6 +246,8 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                                 badgeId,
                               )
                             : null,
+                        titleUpdating: _titleUpdating,
+                        onSelectTitle: isSelf ? _setTitle : null,
                       ),
                     ],
                   );
@@ -252,6 +258,30 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _setTitle(String? achievementId) async {
+    if (_titleUpdating) return;
+    setState(() => _titleUpdating = true);
+    try {
+      await ref.read(authRepositoryProvider).updateTitle(achievementId);
+      if (!mounted) return;
+      setState(() => _selectedTitleId = achievementId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).profileTitleUpdated),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).profileTitleUpdateFailed),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _titleUpdating = false);
+    }
   }
 
   void _recordRewardCapability() {

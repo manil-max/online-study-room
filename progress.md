@@ -5299,6 +5299,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 
 | WP | Ortam | Bekleyen kabul |
 | --- | --- | --- |
+| **WP-475** Başarım ünvanı | Staging `0115` + Android + Windows | Kullanıcı yalnız kazandığı başarımı ünvan seçebiliyor/kaldırabiliyor; ünvan profil ve grup üye listesinde görünüyor; kazanılmamış ünvan sunucuda reddediliyor ve engellenen üyenin ünvanı anonimleşiyor. **Migration terfisi ve cihaz kabulü bekliyor.** |
 | **WP-295** Kamp ateşi oturma/poz | Windows + Android profile | Seçilen 1–8 kişi yerleşimleri ve marshmallow erişimi görsel olarak doğru; Android profile'da `p95 ≤ 16.7 ms`, jank `≤ %1` |
 | **WP-349** Forest Cabin tema kapağı | Windows + Android | Hazır tema kartı baskın scaffold/surface paletini doğru yansıtıyor; açık/koyu preset seçimi, 360 dp iki sütun ve 48 dp dokunma hedefi gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
 | **WP-350** Telefon kamp ateşi | Android + Windows | Telefonda 1/4/8 kişi, düşük ateş, geniş halka, küçük hayvanlar/etiketler, ağaçsız arka plan ve küçük glow; masaüstü kompozisyonu korunuyor. Android profile `p95 ≤16.7 ms`, jank `≤%1` cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |

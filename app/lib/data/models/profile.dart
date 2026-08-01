@@ -15,6 +15,7 @@ class Profile {
     this.isActive = true,
     this.animal,
     this.monthlyReportOptIn = true,
+    this.titleAchievementId,
   });
 
   final String id;
@@ -32,6 +33,11 @@ class Profile {
 
   final bool monthlyReportOptIn;
 
+  /// WP-475: profilde gösterilen ünvan — kazanılmış bir başarımın kimliği.
+  /// Seçilmemişse null. "Kazanılmış mı" kontrolü sunucudadır (0115 trigger);
+  /// istemci burada yalnız gösterir.
+  final String? titleAchievementId;
+
   Profile copyWith({
     String? displayName,
     String? avatarUrl,
@@ -39,6 +45,11 @@ class Profile {
     bool? isActive,
     String? animal,
     bool? monthlyReportOptIn,
+    String? titleAchievementId,
+
+    /// Ünvanı kaldırmak için: `titleAchievementId: null` "değiştirme" demek
+    /// olduğundan temizleme ayrı bayrakla istenir.
+    bool clearTitle = false,
   }) {
     return Profile(
       id: id,
@@ -49,6 +60,9 @@ class Profile {
       isActive: isActive ?? this.isActive,
       animal: animal ?? this.animal,
       monthlyReportOptIn: monthlyReportOptIn ?? this.monthlyReportOptIn,
+      titleAchievementId: clearTitle
+          ? null
+          : (titleAchievementId ?? this.titleAchievementId),
     );
   }
 
@@ -63,6 +77,7 @@ class Profile {
       isActive: map['is_active'] as bool? ?? true,
       animal: map['animal'] as String?,
       monthlyReportOptIn: map['monthly_report_opt_in'] as bool? ?? true,
+      titleAchievementId: map['title_achievement_id'] as String?,
     );
   }
 
@@ -76,6 +91,7 @@ class Profile {
       'is_active': isActive,
       'animal': animal,
       'monthly_report_opt_in': monthlyReportOptIn,
+      'title_achievement_id': titleAchievementId,
     };
   }
 
@@ -89,9 +105,19 @@ class Profile {
       other.dailyGoalMinutes == dailyGoalMinutes &&
       other.isActive == isActive &&
       other.animal == animal &&
-      other.monthlyReportOptIn == monthlyReportOptIn;
+      other.monthlyReportOptIn == monthlyReportOptIn &&
+      other.titleAchievementId == titleAchievementId;
 
   @override
   int get hashCode => Object.hash(
-      id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive, animal, monthlyReportOptIn);
+    id,
+    displayName,
+    avatarUrl,
+    createdAt,
+    dailyGoalMinutes,
+    isActive,
+    animal,
+    monthlyReportOptIn,
+    titleAchievementId,
+  );
 }

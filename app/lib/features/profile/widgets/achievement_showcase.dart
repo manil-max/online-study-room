@@ -218,6 +218,7 @@ class AchievementShowcase extends StatefulWidget {
     required this.gamification,
     required this.userAchievements,
     this.displayName,
+    this.titleAchievementId,
     this.isSelf = false,
     this.compact = false,
     this.showCatalog = true,
@@ -235,11 +236,14 @@ class AchievementShowcase extends StatefulWidget {
     this.onClaimReward,
     this.onClaimAllRewards,
     this.onRetryRewards,
+    this.onSelectTitle,
+    this.titleUpdating = false,
   });
 
   final GamificationProfile gamification;
   final List<UserAchievement> userAchievements;
   final String? displayName;
+  final String? titleAchievementId;
   final bool isSelf;
   final bool compact;
   final bool showCatalog;
@@ -260,6 +264,8 @@ class AchievementShowcase extends StatefulWidget {
   final ValueChanged<AchievementReward>? onClaimReward;
   final VoidCallback? onClaimAllRewards;
   final VoidCallback? onRetryRewards;
+  final Future<void> Function(String? achievementId)? onSelectTitle;
+  final bool titleUpdating;
 
   @override
   State<AchievementShowcase> createState() => AchievementShowcaseState();
@@ -367,6 +373,13 @@ class AchievementShowcaseState extends State<AchievementShowcase>
     final rank = widget.gamification.crownRank;
     final bar = xpBarMetrics(xp);
     final rankColor = crownColorFor(rank, theme.colorScheme);
+    AchievementDictEntry? titleDefinition;
+    for (final definition in _dict) {
+      if (definition.id == widget.titleAchievementId) {
+        titleDefinition = definition;
+        break;
+      }
+    }
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -381,6 +394,21 @@ class AchievementShowcaseState extends State<AchievementShowcase>
             ),
           ),
           SizedBox(height: 8),
+        ],
+        if (titleDefinition != null ||
+            (widget.isSelf && widget.onSelectTitle != null)) ...[
+          _ProfileTitleRow(
+            definition: titleDefinition,
+            available: _dict
+                .where(
+                  (definition) => _userAch(definition.id)?.isUnlocked == true,
+                )
+                .toList(growable: false),
+            selectedId: widget.titleAchievementId,
+            onSelect: widget.onSelectTitle,
+            updating: widget.titleUpdating,
+          ),
+          SizedBox(height: 10),
         ],
         _CrownHeader(rank: rank, rankColor: rankColor, xp: xp),
         SizedBox(height: 12),
@@ -506,6 +534,120 @@ class AchievementShowcaseState extends State<AchievementShowcase>
       }
     }
     return widgets;
+  }
+}
+
+class _ProfileTitleRow extends StatelessWidget {
+  const _ProfileTitleRow({
+    required this.definition,
+    required this.available,
+    required this.selectedId,
+    required this.onSelect,
+    required this.updating,
+  });
+
+  final AchievementDictEntry? definition;
+  final List<AchievementDictEntry> available;
+  final String? selectedId;
+  final Future<void> Function(String? achievementId)? onSelect;
+  final bool updating;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (definition != null)
+            Chip(
+              key: const ValueKey('profile-title-chip'),
+              avatar: Icon(
+                achievementIconData(definition!.iconKey),
+                size: 17,
+                color: theme.colorScheme.primary,
+              ),
+              label: Text(definition!.name),
+              visualDensity: VisualDensity.compact,
+            )
+          else
+            Text(
+              l10n.profileNoTitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          if (onSelect != null)
+            OutlinedButton.icon(
+              key: const ValueKey('choose-profile-title'),
+              onPressed: updating || available.isEmpty
+                  ? null
+                  : () => _showTitlePicker(context),
+              icon: updating
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.edit_outlined, size: 18),
+              label: Text(l10n.profileChooseTitle),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showTitlePicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(bottom: 12),
+          children: [
+            ListTile(
+              title: Text(
+                l10n.profileChooseTitle,
+                style: Theme.of(
+                  sheetContext,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(l10n.profileOnlyEarnedTitles),
+            ),
+            if (selectedId != null)
+              ListTile(
+                key: const ValueKey('remove-profile-title'),
+                leading: const Icon(Icons.remove_circle_outline),
+                title: Text(l10n.profileRemoveTitle),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await onSelect!(null);
+                },
+              ),
+            for (final item in available)
+              ListTile(
+                key: ValueKey('profile-title-${item.id}'),
+                leading: Icon(achievementIconData(item.iconKey)),
+                title: Text(item.name),
+                trailing: item.id == selectedId
+                    ? const Icon(Icons.check_circle)
+                    : null,
+                onTap: item.id == selectedId
+                    ? null
+                    : () async {
+                        Navigator.of(sheetContext).pop();
+                        await onSelect!(item.id);
+                      },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

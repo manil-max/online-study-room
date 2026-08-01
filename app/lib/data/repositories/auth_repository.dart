@@ -166,6 +166,14 @@ abstract class AuthRepository {
   /// kimliğidir (bkz. `core/animals/camp_animal.dart`).
   Future<void> updateAnimal(String animal);
 
+  /// WP-475: profilde gösterilecek ünvanı seçer; [achievementId] null ise
+  /// ünvan kaldırılır.
+  ///
+  /// "Bu başarımı gerçekten kazandın mı" kontrolü **sunucudadır** (0115
+  /// trigger, kaynak `xp_ledger`). Ekran kilitli bir başarımı gönderirse
+  /// çağrı `title_not_earned` ile düşer; istemci kontrolü kozmetiktir.
+  Future<void> updateTitle(String? achievementId);
+
   /// Profil fotoğrafını yükler ve `avatar_url`'ı günceller (Supabase Storage gerekir).
   Future<void> updateAvatar({
     required Uint8List bytes,

@@ -6207,5 +6207,17 @@
   "safetyAppealOverturned": "Appeal accepted; the restriction was lifted.",
   "@safetyAppealOverturned": {"description": "Status shown when an appeal was accepted."},
   "studySelectedSubjectUnavailable": "That subject is no longer available; General was selected.",
-  "@studySelectedSubjectUnavailable": {"description": "Shown once when the saved study subject was deleted or became inaccessible and the selection fell back to General."}
+  "@studySelectedSubjectUnavailable": {"description": "Shown once when the saved study subject was deleted or became inaccessible and the selection fell back to General."},
+  "profileNoTitle": "No title selected",
+  "@profileNoTitle": {"description": "Shown on a profile when no achievement title is selected."},
+  "profileChooseTitle": "Choose title",
+  "@profileChooseTitle": {"description": "Action that opens the earned-achievement title picker."},
+  "profileOnlyEarnedTitles": "Only achievements you have earned can be used as your title.",
+  "@profileOnlyEarnedTitles": {"description": "Explains the eligibility rule in the profile title picker."},
+  "profileRemoveTitle": "Remove title",
+  "@profileRemoveTitle": {"description": "Action that clears the selected profile title."},
+  "profileTitleUpdated": "Your profile title was updated.",
+  "@profileTitleUpdated": {"description": "Confirmation after changing the profile title."},
+  "profileTitleUpdateFailed": "The title could not be updated. Choose an achievement you have earned.",
+  "@profileTitleUpdateFailed": {"description": "Error shown when the server rejects a profile title update."}
 }

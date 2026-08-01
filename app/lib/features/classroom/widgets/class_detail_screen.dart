@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/time_engine/group_time_zone_label.dart';
 import '../../../core/time_engine/world_clock_math.dart';
@@ -845,6 +846,11 @@ class _MembersCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(groupRepositoryProvider);
     final currentUser = ref.watch(authStateProvider).value;
+    final l10n = AppLocalizations.of(context);
+    final titleNames = {
+      for (final achievement in kAchievementDictV3(l10n))
+        achievement.id: achievement.name,
+    };
     return Card(
       child: StreamBuilder<List<Profile>>(
         stream: repo.watchMembers(group.id),
@@ -874,8 +880,16 @@ class _MembersCard extends ConsumerWidget {
                               : m.displayName),
                   ),
                   subtitle: m.id == group.createdBy
-                      ? Text(AppLocalizations.of(context).classroomYonetici)
-                      : null,
+                      ? _memberSubtitle(
+                          context,
+                          isOwner: true,
+                          title: titleNames[m.titleAchievementId],
+                        )
+                      : _memberSubtitle(
+                          context,
+                          isOwner: false,
+                          title: titleNames[m.titleAchievementId],
+                        ),
                   onTap: () => SocialProfileDialog.show(context, m),
                   trailing: m.isActive && m.id != currentUserId
                       ? Row(
@@ -930,6 +944,29 @@ class _MembersCard extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget? _memberSubtitle(
+    BuildContext context, {
+    required bool isOwner,
+    required String? title,
+  }) {
+    if (!isOwner && title == null) return null;
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (title != null)
+          Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        if (isOwner) Text(AppLocalizations.of(context).classroomYonetici),
+      ],
     );
   }
 

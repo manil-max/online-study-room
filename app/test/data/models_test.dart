@@ -10,6 +10,7 @@ void main() {
       displayName: 'Ali',
       avatarUrl: null,
       createdAt: DateTime.parse('2026-06-21T10:00:00.000Z'),
+      titleAchievementId: 'marathon_total',
     );
 
     test('toMap/fromMap roundtrip', () {
@@ -20,6 +21,11 @@ void main() {
       final updated = profile.copyWith(displayName: 'Veli');
       expect(updated.displayName, 'Veli');
       expect(updated.id, profile.id);
+      expect(updated.titleAchievementId, 'marathon_total');
+    });
+
+    test('copyWith ünvanı açıkça temizler', () {
+      expect(profile.copyWith(clearTitle: true).titleAchievementId, isNull);
     });
   });
 

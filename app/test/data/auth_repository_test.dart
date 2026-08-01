@@ -18,6 +18,17 @@ void main() {
     expect(() => repo.updateDisplayName('   '), throwsA(isA<AuthException>()));
   });
 
+  test('updateTitle ünvanı seçer ve null ile kaldırır', () async {
+    final repo = InMemoryAuthRepository();
+    await repo.signUp(email: 'a@b.com', password: '123456', displayName: 'Ali');
+
+    await repo.updateTitle('marathon_total');
+    expect(repo.currentUser?.titleAchievementId, 'marathon_total');
+
+    await repo.updateTitle(null);
+    expect(repo.currentUser?.titleAchievementId, isNull);
+  });
+
   test(
     'updateAvatar bellek-içi modda desteklenmez (Supabase gerekli)',
     () async {
@@ -74,17 +85,17 @@ void main() {
   });
 
   test('resetPasswordWithCode bilinmeyen e-postada hesap var/yok sızdırmaz',
-      () async {
-    final repo = InMemoryAuthRepository();
+    () async {
+      final repo = InMemoryAuthRepository();
 
-    // Kayıtlı olmayan e-posta: hata fırlatmadan sessizce başarılı döner.
-    await repo.resetPasswordWithCode(
-      email: 'kimse@ornek.com',
-      code: '123456',
-      newPassword: 'yeni123',
-    );
+      // Kayıtlı olmayan e-posta: hata fırlatmadan sessizce başarılı döner.
+      await repo.resetPasswordWithCode(
+        email: 'kimse@ornek.com',
+        code: '123456',
+        newPassword: 'yeni123',
+      );
 
-    expect(repo.currentUser, isNull);
+      expect(repo.currentUser, isNull);
   });
 
   test('resetPasswordWithCode boş kodu reddeder', () async {

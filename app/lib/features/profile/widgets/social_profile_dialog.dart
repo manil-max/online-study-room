@@ -93,6 +93,7 @@ class SocialProfileDialog extends ConsumerWidget {
                     data: (achs) => AchievementShowcase(
                       gamification: gamification,
                       userAchievements: achs,
+                      titleAchievementId: profile.titleAchievementId,
                       isSelf: false,
                       compact: true,
                       showCatalog: false,

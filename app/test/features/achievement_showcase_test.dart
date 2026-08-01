@@ -87,6 +87,58 @@ void main() {
     expect(find.text('Gece Kuşu'), findsOneWidget);
   });
 
+  testWidgets('ünvan seçici yalnız kazanılmış başarımları sunar', (
+    tester,
+  ) async {
+    String? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AchievementShowcase(
+              gamification: profile(),
+              userAchievements: [
+                UserAchievement(
+                  id: 'earned-1',
+                  userId: 'u1',
+                  achievementId: 'marathon_total',
+                  tier: 1,
+                  unlockedAt: now,
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+              ],
+              titleAchievementId: 'marathon_total',
+              isSelf: true,
+              showCatalog: false,
+              onSelectTitle: (value) async => selected = value,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('profile-title-chip')), findsOneWidget);
+    expect(find.text('Maratoncu'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('choose-profile-title')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('profile-title-marathon_total')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('profile-title-steel_will')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const ValueKey('remove-profile-title')));
+    await tester.pumpAndSettle();
+    expect(selected, isNull);
+  });
+
   testWidgets('başarım ayrıntısı tüm kademe şartlarını ve XPlerini gösterir', (
     tester,
   ) async {
@@ -249,32 +301,32 @@ void main() {
   testWidgets('WP-234: taç kademe sayfası tüm rütbeleri ve XP eşiklerini açar', (
     tester,
   ) async {
-    // Bronz kullanıcı "Immortal kaç XP istiyor?" sorusunu buradan yanıtlar.
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('tr'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: Builder(
-            builder: (ctx) => ElevatedButton(
-              onPressed: () => showCrownTiers(ctx, currentXp: 5000),
-              child: const Text('ac'),
+      // Bronz kullanıcı "Immortal kaç XP istiyor?" sorusunu buradan yanıtlar.
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => ElevatedButton(
+                onPressed: () => showCrownTiers(ctx, currentXp: 5000),
+                child: const Text('ac'),
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.tap(find.text('ac'));
-    await tester.pumpAndSettle();
+      );
+      await tester.tap(find.text('ac'));
+      await tester.pumpAndSettle();
 
-    // Altı rütbe de eşiğiyle görünür — kilitli olanlar dahil.
-    expect(find.text('Bronz Taç'), findsOneWidget);
-    expect(find.text('Ölümsüz Taç'), findsOneWidget);
-    expect(find.text('1000000 XP'), findsOneWidget);
-    expect(find.text('20000 XP'), findsOneWidget);
-    // 5000 XP → bronz erişildi, gümüş ve üstü kilitli.
-    expect(find.text('Kilitli'), findsNWidgets(5));
+      // Altı rütbe de eşiğiyle görünür — kilitli olanlar dahil.
+      expect(find.text('Bronz Taç'), findsOneWidget);
+      expect(find.text('Ölümsüz Taç'), findsOneWidget);
+      expect(find.text('1000000 XP'), findsOneWidget);
+      expect(find.text('20000 XP'), findsOneWidget);
+      // 5000 XP → bronz erişildi, gümüş ve üstü kilitli.
+      expect(find.text('Kilitli'), findsNWidgets(5));
   });
 
   testWidgets('pending ödül yalnız callback çağırır ve gizli adı sızdırmaz', (

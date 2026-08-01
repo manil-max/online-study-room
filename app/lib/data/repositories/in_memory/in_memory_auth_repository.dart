@@ -317,6 +317,22 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateTitle(String? achievementId) async {
+    final cur = _current;
+    if (cur == null) return;
+    final safe = achievementId?.trim();
+    final value = (safe == null || safe.isEmpty) ? null : safe;
+    final updated = value == null
+        ? cur.copyWith(clearTitle: true)
+        : cur.copyWith(titleAchievementId: value);
+    _current = updated;
+    for (final acc in _accounts.values) {
+      if (acc.profile.id == cur.id) acc.profile = updated;
+    }
+    _controller.add(updated);
+  }
+
+  @override
   Future<void> updateMonthlyReportOptIn(bool value) async {
     final cur = _current;
     if (cur == null) return;
