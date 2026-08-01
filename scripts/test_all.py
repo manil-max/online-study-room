@@ -176,7 +176,7 @@ def build_gates() -> list[Gate]:
              cwd=APP, precondition=_needs_env_json),
         Gate("pgtap", "pgTAP yerel replay", 3,
              [PWSH, "-NoProfile", "-NonInteractive", "-File",
-              "tooling/supabase/local.ps1", "-Test"],
+              "tooling/supabase/local.ps1", "-Action", "baseline"],
              precondition=_needs_docker),
     ]
 

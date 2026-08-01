@@ -156,7 +156,7 @@ ortamda purge herkese açık olmamalı.
 | G2 | `Supabase*Repository` kablo testleri | Düşük | 🟢 **20/22**. Kapsanmayan ikisi: `report_attachment_upload` (yardımcı, dolaylı kapsandı) ve `supabase_presence_repository` (üç modlu, ağırlıklı realtime) |
 | G3 | `alarm_providers.dart` | Düşük | 🟢 %3.1 → kapsandı. Odak: süre epoch'tan türetilir, önbellekten değil |
 | G4 | 33 dosyaya hiç dokunulmamış (54'tü) | Orta | 🟡 Çoğu ekran/widget. Liste: `--top` |
-| G5 | pgTAP yerel replay bu hostta koşmuyor (Docker) | Orta | 🔴 CI'da koşuyor; yerelde `Replay bekliyor` etiketi. **Host sınırı — kod değişikliğiyle kapatılamaz** |
+| G5 | pgTAP yerel replay | Düşük | 🟢 Docker Desktop başlatıldı; tester'ın eski `local.ps1 -Test` çağrısı `-Action baseline` yapıldı. `0119` dahil 48 dosya / 678 test yerelde yeşil |
 | G6 | Realtime (`.stream()`) yolları | Düşük | 🟡 websocket taşır; http koşum takımı görmez. Bilinçli sınır |
 | G7 | İki fiziksel cihaz + Android process/isolate yaşam döngüsü | Yüksek | 🔴 JVM/Dart testleri protokol ve saf projeksiyonu yakalar; OEM arka plan politikası, gerçek FCM ve iki cihaz görünürlüğü yalnız staging cihaz matrisiyle kanıtlanabilir. WP-482'nin kalan kapısı |
 

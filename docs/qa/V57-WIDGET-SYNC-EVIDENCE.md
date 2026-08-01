@@ -37,11 +37,13 @@ production'a uygulanmadı.
 - `flutter analyze`: **0 sorun**.
 - Contract, contract self-test, l10n, Android l10n, migration-head, deploy guard
   ve release preflight: **7/7 geçti**.
-- Tam cihazsız tester turu (`python scripts/test_all.py --full`): **16 kapının
-  13'ü geçti, 0 kırmızı, 3 ortam nedeniyle atlandı**. Atlananlar Deno kurulu
-  olmadığı için iki Edge kapısı ve Docker engine çalışmadığı için yerel pgTAP
-  replay'idir; yeni `0119` migration'ı bu nedenle remote/veritabanı üzerinde
-  henüz çalıştırılmış sayılmaz.
+- Tam cihazsız tester turunda ilk ölçüm **16 kapının 13'ü geçti, 0 kırmızı,
+  3 atlandı** verdi. Docker Desktop'ın yalnız kapalı olduğu anlaşılınca engine
+  başlatıldı; tester'ın geçersiz `local.ps1 -Test` çağrısı `-Action baseline`
+  olarak düzeltildi. Ardından `0119` dahil yerel reset/replay ve **48 dosyada
+  678 pgTAP testi geçti**. Güncel birleşik sonuç: **14 geçti, 0 kırmızı,
+  2 atlandı**; kalan iki kapı Deno bu hostta kurulu olmadığı için Edge
+  check/test'tir.
 - Kapsam ratchet'i geçti: genel **%65.23** (22304/34191), kritik **%58.92**;
   dokunulmamış üretim dosyası **33**.
 - `scripts/test_all.py` artık `android-unit` kapısını varsayılan T2 turunda
@@ -61,8 +63,10 @@ production'a uygulanmadı.
 
 ## Release kararı
 
-Kod ve cihazsız kapılar açısından düzeltme adayı hazırdır. Ancak WP-482 tamamlandı
-veya v58 release-ready sayılamaz: `0117–0119` staging replay, iki fiziksel cihaz
-matrisi, Android release build ve beta soak hâlâ zorunlu son kapılardır.
+Kod ve cihazsız kapılar açısından düzeltme adayı hazırdır. Ancak v58 release-ready
+sayılamaz: `0117–0119` staging replay ve Android stable release build hâlâ
+zorunlu yayın öncesi kapılardır. Proje sahibi fiziksel iki-cihaz matrisini stable
+üzerinde yapacağını belirtti; bu nedenle cihaz matrisi ve soak, açıkça kabul
+edilmiş stable-sonrası kabul/risk kapısıdır.
 İki cihazın da bu istemci düzeltmelerini alması gerektiğinden yalnız migration
 uygulamak mevcut v57 kurulumlarında snapshot/widget sorununu bütünüyle çözmez.

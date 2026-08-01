@@ -18,9 +18,9 @@
 
 ## Proje Gerçekleri
 
-- ✅ **Migration gerçeği (2026-08-01):** repo head **`0119`**; staging ve
-  production **`0116`**. `0117–0119` hiçbir remote ortama uygulanmadı; yerel
-  Docker replay bu hostta çalışmadığı için bu üç migration `Replay bekliyor`.
+- ✅ **Migration gerçeği (2026-08-01):** repo/local head **`0119`**; staging ve
+  production **`0116`**. `0117–0119` hiçbir remote ortama uygulanmadı. Docker
+  Desktop başlatıldı; yerel baseline reset/replay **48 dosya / 678 pgTAP yeşil**.
   Staging `0115–0116` apply run `30700266897`, production
   `0101–0116` apply run `30700518285`; iki post-check de
   `local|remote|file = 0116` verdi. v57 stable release run `30700647563`
@@ -5826,8 +5826,8 @@ tekrar tutulmaz.
 
 #### WP-482 — Ana ekran widget'ı çoklu cihaz senkronunu almıyor
 
-- **Durum / bağımlılık:** [~] Kod + cihazsız otomatik kapılar tamam ·
-  **`Replay bekliyor`** · **iki fiziksel cihaz kabulü bekliyor.** Sahip bu turda
+- **Durum / bağımlılık:** [~] Kod + cihazsız otomatik kapılar tamam · yerel
+  **0119 replay yeşil** · staging/production terfisi bekliyor. Sahip bu turda
   cihaz testi dışındaki bütün güvenli işi yapma yetkisi verdi; doğrulanan kusurlar
   aynı kartta ileri-düzeltmeye çevrildi.
 - **Belirti (V57-N06):** "Bildirimde çift cihazda çalışıyor ama Android ana ekran
@@ -5887,10 +5887,11 @@ tekrar tutulmaz.
   `android-unit` kapısını çalıştırır. Eski tester Flutter/Dart paketini ölçüyor,
   `StudyWidgetProviders.kt` davranışını hiç derlemiyordu.
 - **Kanıt:** `docs/qa/V57-WIDGET-SYNC-EVIDENCE.md` · hedefli Flutter **26/26** ·
-  Kotlin JVM testi geçti · analyze 0 · tam cihazsız tester turu **16 kapı:
-  13 geçti, 0 kırmızı, 3 ortam nedeniyle atlandı** (Deno x2, Docker pgTAP) ·
-  kapsam genel **%65.23**, kritik **%58.92**. Kalan: `0117–0119` staging replay,
-  iki-cihaz/OEM matrisi, release build ve soak.
+  Kotlin JVM testi geçti · analyze 0 · cihazsız birleşik sonuç **16 kapı:
+  14 geçti, 0 kırmızı, 2 Deno kapısı ortam nedeniyle atlandı** · yerel baseline
+  **48 dosya / 678 pgTAP yeşil** · kapsam genel **%65.23**, kritik **%58.92**.
+  Kalan yayın-öncesi: `0117–0119` staging replay ve stable release build. Sahip
+  iki-cihaz/OEM matrisi ile soak'ı stable üzerinde yapacağını kabul etti.
 
 #### WP-483 — Dürtme susturmanın grup yüzeyinde tetikleyicisi yok (ölü özellik)
 
@@ -6298,9 +6299,9 @@ tekrar tutulmaz.
 WP-483 · WP-484 · WP-485 · WP-487 · WP-488. WP-482 cihazsız düzeltmeleri
 tamam, fiziksel kabul bekliyor; WP-486 envanteri tamam, ürün sırası bekliyor.
 
-**Beklemeli:** WP-482 fiziksel iki-cihaz/OEM kabulü · WP-486 seçilen ilk
-profesyonelleştirme kartı. Remote `0117–0119` staging replay olmadan hiçbir
-release kapısı açılmaz.
+**Beklemeli:** WP-482 remote terfi + stable-sonrası fiziksel iki-cihaz/OEM kabulü ·
+WP-486 seçilen ilk profesyonelleştirme kartı. Remote `0117–0119` staging replay
+olmadan hiçbir release kapısı açılmaz.
 
 🔴 **Sıcak dosya:** `class_detail_screen.dart` bu fazda **üç** kart tarafından
 sahiplenilir (WP-483 · WP-484 · WP-487). Tek ajan modelinde lane kilidi yok, ama

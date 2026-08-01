@@ -146,7 +146,7 @@ select is(
 
 -- --------------------------------------------------- 9. ölü koşu gerçekten kapanır
 update public.live_study_runs
-set lease_expires_at = clock_timestamp() - interval '1 second'
+set lease_expires_at = clock_timestamp() - interval '12 hours 1 second'
 where id = :'live_run';
 select public.expire_global_timer_v2_leases(200);
 
@@ -154,7 +154,7 @@ select ok(
   (select status = 'abandoned' from public.live_study_runs where id = :'live_run')
     and (select current_run_id is null from public.user_timer_state
          where user_id = '10000000-0000-0000-0000-000000000001'),
-  'an expired run is abandoned and cleared so the mirroring device stops too'
+  'a run beyond the recovery grace is abandoned and cleared so the mirroring device stops too'
 );
 
 select * from finish();
