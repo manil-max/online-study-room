@@ -1929,5 +1929,7 @@
   "nudgeErrorMarkReadFailed": "Dürtme okundu işaretlenemedi.",
   "nudgeErrorMutesUnavailable": "Dürtme ayarları okunamadı.",
   "nudgeErrorMuteSaveFailed": "Dürtme ayarı kaydedilemedi.",
-  "nudgeErrorCannotMuteSelf": "Kendini susturamazsın."
+  "nudgeErrorCannotMuteSelf": "Kendini susturamazsın.",
+  "taskListRepeatSummary": "{days, plural, =1{Her gün yenilenir} other{{days} günde bir yenilenir}}",
+  "taskListRepeatHint": "{days, plural, =1{Tamamlama yalnız bugünü etkiler; İstanbul'da gece yarısı yeniden aktif olur.} other{Tamamlama yalnız bu turu etkiler; {days} gün sonra, İstanbul'da gece yarısı yeniden aktif olur.}}"
 }

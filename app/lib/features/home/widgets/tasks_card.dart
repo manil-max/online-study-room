@@ -289,11 +289,10 @@ class _HomeTaskTile extends StatelessWidget {
               if (task.isRecurring) ...[
                 const SizedBox(width: 6),
                 Tooltip(
-                  message: task.intervalDays > 1
-                      ? l10n.taskListRepeatEvery(task.intervalDays)
-                      : (task.completed
-                            ? l10n.taskListDailyStreakStep
-                            : l10n.taskListDailyRefresh),
+                  // WP-480: ana ekran kartı da aynı özet fonksiyonundan okur.
+                  message: task.completed && task.intervalDays == 1
+                      ? l10n.taskListDailyStreakStep
+                      : taskRecurrenceSummary(l10n, task.intervalDays),
                   child: Icon(
                     Icons.repeat,
                     size: 17,

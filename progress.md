@@ -5670,7 +5670,7 @@ tekrar tutulmaz.
 
 #### WP-480 — Görev tekrar metinleri seçilen aralığı söylesin
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
 - **Belirti (V57-N03):** Görevde "kaç günde bir yenilensin" seçiliyor ama metin
   hâlâ "Refresh every day" diyor; açıklama eski.
 - **Kök neden (kodda doğrulandı):** WP-449/450 N-günlük tekrarı getirdi
@@ -5695,6 +5695,32 @@ tekrar tutulmaz.
 - **Kabul (DoD):** N=1, N=2, N=7 için üç yüzeyde de metin aralığı doğru söylüyor ·
   ipucu metni N>1'de "her gece yarısı" iddiasında bulunmuyor · iki katalogda
   placeholder eşliği var (`l10n_audit.py` yeşil) · testler yeşil.
+- **Sonuç (2026-08-01):** İki çoğullu l10n anahtarı açıldı —
+  `taskListRepeatSummary` ve `taskListRepeatHint` (ikisi de `{days}` +
+  `=1` özel hâli, TR+EN). Metin üretimi `core/tasks/task_deadline.dart`
+  içindeki iki saf fonksiyona toplandı (`taskRecurrenceSummary`,
+  `taskRecurrenceHint`); dosya zaten `taskDueDateLabel`/`taskRemainingShort`
+  ailesini taşıyordu.
+- **Düzenleyici artık canlı izliyor:** aralık alanına yazıldıkça anahtarın
+  başlığı ve alt metni tazeleniyor (`onChanged` → `setState`). Gönderim ve metin
+  aynı `_draftIntervalDays` getter'ından okuyor; iki ayrı yerde ayrıştırılırsa
+  etiket ile kaydedilen değer birbirinden kayardı.
+- **🔴 Kartla kod arasında bir sapma bulundu (durdurmayı gerektirmedi, bildiriliyor):**
+  Kart `tasks_card.dart:296`yı "sabit günlük metin gösteren üçüncü yüzey" diye
+  yazıyor, ama o satır **zaten** `intervalDays > 1` dalını taşıyordu; aynısı
+  `tasks_screen.dart:497` rozeti için de geçerli. Yani metin üç değil **iki**
+  yüzeyde yanlıştı: düzenleyici anahtarı (başlık + ipucu) ve liste satırı alt
+  metni. Ana ekran kartı yine de ortak fonksiyona bağlandı (kartın "üç yüzey de
+  aynı anahtardan beslenir" maddesi).
+- **Kapsam dışı bırakıldı:** `_RecurrenceBadge` (liste satırındaki dar etiket)
+  kısa sözcük dağarcığını (`Her 3 günde bir` / `Günlük`) koruyor; uzun özet
+  cümlesi ikon yanındaki rozete sığmıyor ve mevcut `tasks_ia_wp450_test`
+  iddiasını gereksiz yere kırardı.
+- **Ölçüm:** yeni `app/test/features/clock/task_recurrence_text_test.dart`
+  **7 test** (6 saf fonksiyon + 1 düzenleyiciyi gerçekten süren widget testi;
+  saf fonksiyon doğru olup yüzeyin onu çağırmaması tam olarak bu fazın
+  "bitmiş backend + bağlanmamış UI" deseni) · tam paket **1581/1581 yeşil**
+  (öncesi 1574) · `flutter analyze` 0 uyarı · l10n OK (1496 anahtar).
 
 #### WP-481 — Seri göstergesi: chess.com modeli, daima görünür, kişisel + grup
 

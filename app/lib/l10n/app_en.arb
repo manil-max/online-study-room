@@ -6238,5 +6238,15 @@
   "nudgeErrorMuteSaveFailed": "The nudge setting could not be saved.",
   "@nudgeErrorMuteSaveFailed": {"description": "Failure while saving a mute/unmute preference."},
   "nudgeErrorCannotMuteSelf": "You cannot mute yourself.",
-  "@nudgeErrorCannotMuteSelf": {"description": "Mute rejected because the target is the current user."}
+  "@nudgeErrorCannotMuteSelf": {"description": "Mute rejected because the target is the current user."},
+  "taskListRepeatSummary": "{days, plural, =1{Refresh every day} other{Refresh every {days} days}}",
+  "@taskListRepeatSummary": {
+    "description": "Recurrence summary of a task. Every surface reads this key so the chosen interval is never described as daily.",
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "taskListRepeatHint": "{days, plural, =1{Completing it affects today only; it becomes active again at midnight in Istanbul.} other{Completing it affects the current cycle only; it becomes active again {days} days later, at midnight in Istanbul.}}",
+  "@taskListRepeatHint": {
+    "description": "Explains when a recurring task becomes active again. The plural form matters: the daily wording is wrong for longer intervals.",
+    "placeholders": {"days": {"type": "int"}}
+  }
 }

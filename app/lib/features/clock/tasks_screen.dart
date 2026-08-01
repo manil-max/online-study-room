@@ -494,6 +494,9 @@ class _RecurrenceBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    // WP-480 kapsamı DIŞI: bu rozet listede ikon yanında duran **dar** bir
+    // etikettir ve zaten aralığı söylüyor (`Her 3 günde bir`). Uzun özet
+    // cümlesi buraya sığmaz; kısa sözcük dağarcığı bilinçli olarak korunuyor.
     final label = task.intervalDays > 1
         ? l10n.taskListRepeatEvery(task.intervalDays)
         : (task.completed ? '+1' : l10n.taskListDailyBadge);
@@ -565,7 +568,11 @@ class _TaskRowSubtitle extends StatelessWidget {
 
     if (task.dueAt == null) {
       return Text(
-        task.isRecurring ? l10n.taskListDailyRefresh : l10n.taskListNoDue,
+        // WP-480: liste satırı aralığı söylüyor; eskiden N ne olursa olsun
+        // "Günlük yenilenen" yazıyordu.
+        task.isRecurring
+            ? taskRecurrenceSummary(l10n, task.intervalDays)
+            : l10n.taskListNoDue,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -703,17 +710,23 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
       final h = int.tryParse(_hours.text.trim()) ?? 0;
       if (h > 0) due = dueAtFromRemaining(Duration(hours: h));
     }
-    final recurring = _recurrence == UserTaskRecurrence.daily;
-    final parsedInterval = int.tryParse(_interval.text.trim()) ?? 1;
     Navigator.pop(
       context,
       _TaskDraft(
         title: title,
         dueAt: due,
         recurrence: _recurrence,
-        intervalDays: recurring ? parsedInterval.clamp(1, 365) : 1,
+        intervalDays: _draftIntervalDays,
       ),
     );
+  }
+
+  /// Formdaki geçerli tekrar aralığı. WP-480: hem gönderim hem de **metin**
+  /// buradan okur; iki ayrı yerde ayrıştırılırsa etiket ile kaydedilen değer
+  /// birbirinden kayar.
+  int get _draftIntervalDays {
+    if (_recurrence != UserTaskRecurrence.daily) return 1;
+    return (int.tryParse(_interval.text.trim()) ?? 1).clamp(1, 365);
   }
 
   @override
@@ -743,8 +756,11 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
             ),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: Text(l10n.taskListDailyRefresh),
-              subtitle: Text(l10n.taskListDailyRefreshHint),
+              // WP-480: başlık ve ipucu seçilen aralığı söylüyor. Eskiden ikisi
+              // de sabit "günlük" metniydi; ipucu N>1'de yanlış bilgi veriyordu
+              // ("gece yarısı yeniden aktif olur" yalnız N=1 için doğru).
+              title: Text(taskRecurrenceSummary(l10n, _draftIntervalDays)),
+              subtitle: Text(taskRecurrenceHint(l10n, _draftIntervalDays)),
               value: _recurrence == UserTaskRecurrence.daily,
               onChanged: (daily) => setState(() {
                 _recurrence = daily
@@ -757,6 +773,8 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
               TextField(
                 controller: _interval,
                 keyboardType: TextInputType.number,
+                // Aralık değişince üstteki özet ve ipucu da tazelenir.
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: l10n.taskListRepeatIntervalLabel,
                   border: const OutlineInputBorder(),

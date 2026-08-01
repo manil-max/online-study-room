@@ -145,3 +145,23 @@ String taskDueDateLabel(DateTime now, DateTime dueAt, String locale) {
       : DateFormat.yMMMd(locale);
   return pattern.format(d);
 }
+
+/// WP-480: tekrarlayan görevin **aralığını söyleyen** özet metni.
+///
+/// WP-449/450 N-günlük tekrarı getirdi (`upsert_user_task(p_interval_days, …)`,
+/// sunucu sözleşmesi `0109`), ama yüzeyler sabit "günlük yenilenen" metnini
+/// göstermeye devam etti: veri N gün, metin 1 gündü. Metin üretimi tek yerde
+/// toplandı ki dördüncü bir yüzey eklendiğinde tekrar ayrışmasın.
+String taskRecurrenceSummary(AppLocalizations l10n, int intervalDays) =>
+    l10n.taskListRepeatSummary(_safeIntervalDays(intervalDays));
+
+/// Tamamlandıktan sonra görevin ne zaman geri geleceğini anlatan ipucu.
+///
+/// Çoğul biçim önemli: "gece yarısı yeniden aktif olur" cümlesi yalnız N=1 için
+/// doğrudur, N>1'de **yanlış bilgi**dir.
+String taskRecurrenceHint(AppLocalizations l10n, int intervalDays) =>
+    l10n.taskListRepeatHint(_safeIntervalDays(intervalDays));
+
+/// Aralık sunucuda 1–365 aralığına kısılıyor; metin katmanı bozuk bir değerle
+/// çoğul seçemesin diye aynı sınır burada da uygulanır.
+int _safeIntervalDays(int intervalDays) => intervalDays.clamp(1, 365);
