@@ -2,7 +2,7 @@
 
 > Tarih: 2026-08-01 (Europe/Istanbul)  
 > Aday: `v58` · `1.0.58+58` · migration head `0119`  
-> Durum: **HAZIRLIK — remote terfi ve release sonuçları aşağıya işlenecek.**
+> Durum: **YAYINLANDI — v58 stable 2026-08-01'de production migration head 0119 ile cikti. Fiziksel iki-cihaz/OEM kabulu sahip tarafindan stable uzerinde yapilacak.**
 
 ## Kapsam ve sahip kararı
 
@@ -59,6 +59,8 @@ Database Gates ve Release Orchestrator girdilerinin tamamı aynı SHA'ya pinleni
 - Staging apply: run 30715755597 - post-check `local|remote|file = 0119`, push health `configured`
 - Production dry-run: run 30715879792 - yalniz `0117`, `0118`, `0119`
 - Production apply: run 30716014464 - post-check `local|remote|file = 0119`, kayitli owner no-backup waiver ile
-- Stable Release Orchestrator: _bekliyor_
-- Kapilari yeniden kilitleme: _bekliyor_
+- Stable Release Orchestrator: run 30716184775 - preflight/android/windows/finalize 6/6 basarili;
+  release https://github.com/manil-max/online-study-room/releases/tag/v58 (draft=false, prerelease=false),
+  manifest `status: complete`, SHA-256 dosyalari yuklendi
+- Kapilari yeniden kilitleme: tamam - staging/production `deploy_enabled` ve production `release_enabled` tekrar `false`
 

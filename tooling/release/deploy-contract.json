@@ -3,14 +3,14 @@
   "local_migration_head": "0119",
   "staging": {
     "migration_head": "0119",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "SCOPED V58 STAGING APPLY AUTHORIZATION (2026-08-01): apply exactly 0117-0119 after the authorization commit is pushed and CI is green. Candidate parent ea961b6 includes the v57 field-feedback fixes, WP-486A and local 0001-0119 replay with 48 files / 678 pgTAP tests passing. The owner explicitly requested finishing the chain and publishing v58 stable, with physical two-device acceptance after stable. This flag is one-shot and must be re-locked after the release chain; no beta artifact is requested."
+    "hold_reason": "RE-LOCKED after the v58 stable chain (2026-08-01): staging applied 0117-0119 (run 30715755597, post-check 0119). No further apply or release is authorized; a new scoped owner authorization is required."
   },
   "production": {
     "migration_head": "0119",
-    "deploy_enabled": true,
-    "release_enabled": true,
+    "deploy_enabled": false,
+    "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "SCOPED V58 PRODUCTION APPLY AUTHORIZATION DRAFT (2026-08-01): target 0119 and apply exactly 0117-0119 only after the exact authorization SHA is green and staging post-check reports 0119. The owner explicitly requested completing all gates and publishing stable v58; physical two-device/OEM acceptance will happen on stable. The recorded free-plan no-backup/no-PITR/no-rollback waiver remains in force. deploy_enabled is one-shot; release_enabled remains false so protected Release Orchestrator still requires exact production release GO and evidence. Re-lock both environments after publication."
+    "hold_reason": "RE-LOCKED after the v58 stable chain (2026-08-01): production applied 0117-0119 (run 30716014464, post-check 0119) and stable v58 published from 9365895642d71191a3e69ad4c1be3fe6f40c0529 (run 30716184775). The free-plan no-backup/no-PITR/no-rollback waiver stays on record. No further apply or release is authorized without a new scoped owner authorization."
   }
 }

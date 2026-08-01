@@ -44,11 +44,11 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # production apply post-check 0119 sonrasi). Zincir sonunda tum flag'ler
 # yeniden false kilitlenmelidir.
 Assert-Equal $contract.staging.migration_head '0119' 'v58 staging hedef head 0119'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v58 staging apply tek seferlik acik'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'v58 sonrasi staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0119' 'v58 production hedef head 0119'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v58 production apply tek seferlik acik'
-Assert-Equal ([bool]$contract.production.release_enabled) $true 'v58 stable release tek seferlik acik'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'v58 sonrasi production yeniden kilitli'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'v58 sonrasi stable release yeniden kilitli'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8
