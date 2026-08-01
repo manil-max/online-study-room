@@ -5537,7 +5537,7 @@ tekrar tutulmaz.
 - **Ölçüm:** `flutter test` **1555/1555 yeşil** (öncesi 1514; +41'in 9'u bu
   kartın yeni `nudge_error_l10n_test.dart` dosyası) · `flutter analyze` 0 uyarı ·
   `python scripts/l10n_audit.py` OK (1494 anahtar, borç 379/18 dosya) · commit
-  `a2f7ec6`.
+  `78d570f`.
 - **Kapsam dışı bırakılan, açıkça kalan borç:** `goal_card.dart` ·
   `group_goal_card.dart` · `study_timer_card.dart` içindeki `'hedef serisi'` /
   `'grup serisi'` metinleri kapı tarafından **ilk kez görüldü**; WP-481 o
