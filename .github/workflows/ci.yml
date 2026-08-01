@@ -57,6 +57,33 @@ jobs:
       - name: Kapının gerçekten reddettiğini kanıtla
         run: python scripts/backend_contract_audit.py --self-test
 
+  # 🔴 Altı Edge Function (1601 satır, içinde kullanıcı verisi silen
+  # `purge-accounts`) hiçbir yerde tip denetiminden geçmiyordu. Denetim ilk
+  # açıldığında **altısı da** düştü; hepsi düzeltildi (yakalananlar: `catch`
+  # bloğunda `unknown` üzerinde `error.message` — Error olmayan bir şey
+  # fırlatılırsa istemciye boş hata gövdesi gidiyordu).
+  #
+  # `deno check` derlemenin yaptığı işi CI'a taşır: bu kod sunucuda çalışır,
+  # kırıldığında Flutter kapılarının hiçbiri görmez.
+  edge-functions:
+    name: Edge Function tip denetimi
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: deno check (altı fonksiyon)
+        run: |
+          set -e
+          for file in supabase/functions/*/index.ts; do
+            echo "::group::$file"
+            deno check --no-lock "$file"
+            echo "::endgroup::"
+          done
+
   analyze-and-test:
     name: analyze + full test suite
     runs-on: ubuntu-latest

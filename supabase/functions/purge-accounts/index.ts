@@ -16,6 +16,17 @@ const corsHeaders = {
  * ayarından gönderiyor. Purge aktivasyonu `CRON_SECRET`'i döndürseydi aylık
  * rapor cron'u sessizce 401 almaya başlardı. Ayrı değişken = sıfır çakışma.
  */
+function makeAdminClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  )
+}
+
+/// `ReturnType<typeof createClient>` jenerikleri kisitlariyla ornekler ve
+/// sema tipi `never`e duser. Fabrikadan turetmek gercek tipi verir.
+type SupabaseAdminClient = ReturnType<typeof makeAdminClient>
+
 function purgeSecret(): string {
   return (Deno.env.get("PURGE_CRON_SECRET") ?? Deno.env.get("CRON_SECRET") ?? "").trim()
 }
@@ -100,7 +111,7 @@ function must<T extends { error: unknown }>(result: T, step: string): T {
 
 /** Avatar klasörünü SAYFALAYARAK siler; 100 nesne sınırı yoktur. */
 async function purgeAvatars(
-  admin: ReturnType<typeof createClient>,
+  admin: SupabaseAdminClient,
   uid: string,
 ): Promise<number> {
   let removed = 0
@@ -138,10 +149,7 @@ serve(async (req) => {
     const limit = Math.min(Number(body.limit ?? 5), 20)
     const dryRun = body.dry_run === true
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    )
+    const admin = makeAdminClient()
 
     // Aktivasyon: zamanlayıcının çalışması için `0113`teki runtime config
     // satırı yazılmalı. `dispatch-push`taki `configure_dispatch` deseninin

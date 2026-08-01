@@ -57,13 +57,13 @@ function utf8Base64Url(value: string): string {
   return base64Url(new TextEncoder().encode(value))
 }
 
-function pemToBytes(pem: string): Uint8Array {
+function pemToBytes(pem: string): Uint8Array<ArrayBuffer> {
   const clean = pem
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
     .replaceAll(/\s/g, "")
   const binary = atob(clean)
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0)) as Uint8Array<ArrayBuffer>
 }
 
 function decodeBase64Utf8(value: string): string {
