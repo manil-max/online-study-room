@@ -1,7 +1,7 @@
 {
   "_comment": "Kapsam ratchet eşiği. Yalnız `python scripts/coverage_audit.py --update-baseline` ile ve kapsamı BİLEREK yükselten bir WP kapsamında güncellenir. Elle düşürmek kapıyı etkisiz kılar.",
-  "overall": 62.34,
-  "critical": 46.76,
+  "overall": 62.56,
+  "critical": 47.96,
   "lines_total": 33918,
   "files": 372
 }

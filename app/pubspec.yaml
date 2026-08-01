@@ -72,6 +72,12 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  # Supabase repository kablo testleri icin (test/support/supabase_wire_harness.dart):
+  # SupabaseClient'a sahte bir http istemcisi verilerek GERCEK PostgREST sorgu
+  # ureticisi kosturulur. supabase uzerinden zaten geliyordu ama gecisli bir
+  # paketi import etmek analyze uyarisi uretir; acik bagimlilik sart.
+  http: ^1.6.0
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
