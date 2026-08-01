@@ -11,6 +11,13 @@
 --
 -- Yön ayrımı testin özüdür: "bildirim düşüyor" demek yetmez, yanlış tarafa
 -- düşen bildirim de bu iddiayı geçerdi.
+--
+-- 🔴 Mesajlar ÜRETİMDEKİ yoldan yazılıyor: bilet insert'i `0103` seed
+-- tetikleyicisini, yanıtlar ise `send_feedback_ticket_message` RPC'sini
+-- sürüyor. İlk yazımda mesaj satırı doğrudan insert ediliyordu ve CI bunu
+-- `client_message_id` NOT NULL kısıtından yakaladı — o kolon `0074`te değil
+-- `0103`te eklenmiş. Ham insert aynı zamanda `message_seq` sözleşmesini de
+-- atlıyordu, yani test gerçek yazma yolunu hiç sınamıyordu.
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
@@ -72,13 +79,9 @@ select ok(
 insert into public.app_admins (user_id) values (:'alpha')
 on conflict (user_id) do nothing;
 
+-- (a) Bilet acilisi: 0103 seed tetikleyicisi ilk kullanici mesajini yazar.
 insert into public.feedback_tickets (id, user_id, kind, subject, message)
 values (:'ticket', :'beta', 'bug', 'Fixture ticket', 'Bir sorun var');
-
--- (a) Kullanici yazdi -> yonetici bildirim alir, gonderen almaz.
-insert into public.feedback_ticket_messages (
-  ticket_id, sender_id, sender_role, message
-) values (:'ticket', :'beta', 'user', 'Merhaba, hala duzelmedi');
 
 select is(
   (select count(*)::integer from public.notification_outbox
@@ -93,10 +96,18 @@ select is(
   'gonderen kendi mesajinin push`unu almaz'
 );
 
--- (b) Yonetici yazdi -> bilet sahibi bildirim alir.
-insert into public.feedback_ticket_messages (
-  ticket_id, sender_id, sender_role, message
-) values (:'ticket', :'alpha', 'admin', 'Bakiyoruz, tesekkurler');
+-- (b) Yonetici yaniti: uretimdeki RPC yolu.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
+select lives_ok(
+  $$select public.send_feedback_ticket_message(
+      '40000000-0000-0000-0000-000000000001',
+      'Bakiyoruz, tesekkurler',
+      '50000000-0000-0000-0000-000000000001'
+    )$$,
+  'yonetici RPC ile yanit yazabilir'
+);
+reset role;
 
 select is(
   (select count(*)::integer from public.notification_outbox
@@ -114,7 +125,9 @@ select is(
 -- Yuk: dispatch-push genel dalindan okunacak alanlar dolu olmali, aksi halde
 -- kullanici basliksiz/govdesiz bir bildirim gorur.
 select ok(
-  (select payload ? 'title' and payload ? 'body' and payload->>'route' = 'feedback_ticket'
+  (select payload ? 'title'
+      and payload ? 'body'
+      and payload->>'route' = 'feedback_ticket'
      from public.notification_outbox
     where notification_type = 'feedback_message' and recipient_id = :'beta'
     limit 1),
