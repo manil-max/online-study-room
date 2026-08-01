@@ -40,6 +40,7 @@ vardır: kapı bilerek bozulmuş bir girdiye kırmızı dönmüyorsa, kapı yokt
 | 7 | **Kapsam ratchet** | `scripts/coverage_audit.py` | Testsiz kodun sessizce girmesi | ✅ genel %64.50 / kritik %56.99 |
 | 7b | **Edge Function tip denetimi + testleri** | `deno check` + `deno test` (CI job) | Sunucuda çalışan 1601 satırın derlenmemesi; purge yetkilendirmesi | ✅ 6/6 tip, 13 davranış testi |
 | 8 | l10n | `scripts/l10n_audit.py` | Katalog eşliği + gömülü metin | ✅ probe'lu |
+| 8b | **Migration zinciri + head pinleri** | `scripts/test_all.py --internal-migration-head` | Numara boşluğu, başlık kuralı, kontrat/guard head'inin ayrı düşmesi | ✅ 114 dosya kesintisiz |
 | 9 | Deploy/release kapıları | `tooling/supabase/guard.tests.ps1`, `tooling/release/release-preflight.tests.ps1` | Yanlış ortama apply/release | ✅ 75+8, fail-closed |
 
 Katman 1–4, 6, 6b, 7 ve 7b her push'ta `.github/workflows/ci.yml` içinde
@@ -183,14 +184,41 @@ hatasının doğru istisnaya çevrilmesi**.
 
 ## 5. Yerelde tam tur
 
+Tek komut — kapıları ucuzdan pahalıya sıralar, aynı kademedekileri paralel
+koşturur ve tek bir sonuç tablosu basar:
+
 ```bash
-python scripts/backend_contract_audit.py && python scripts/backend_contract_audit.py --self-test && python scripts/l10n_audit.py
+python scripts/test_all.py
 ```
 
 ```bash
-cd app && flutter analyze && flutter test --exclude-tags=golden --coverage --dart-define-from-file=env.json
+python scripts/test_all.py --fast
 ```
 
 ```bash
-python scripts/coverage_audit.py
+python scripts/test_all.py --full
+```
+
+`--fast` yalnız saniyelik kapılar + `flutter analyze`; varsayılan tur buna tam
+test paketi ve kapsam ratchet'ini ekler; `--full` golden, Windows entegrasyon ve
+pgTAP yerel replay'i de koşturur. Tek kapı için `--only <anahtar>`, liste için
+`--list`.
+
+**Çıkış kodu sözleşmesi:** `0` = her kapı koştu ve geçti · `1` = kırmızı var ·
+`3` = kırmızı yok ama en az bir kapı **koşmadı** (Deno kurulu değil, Docker
+kalkmıyor…). Üçüncü kodun ayrı olması bilinçlidir: bu repoda "yeşil sanılan ama
+hiç koşmayan kapı" üç kez pahalıya mal oldu (§0), o yüzden *ölçülmedi* ile
+*geçti* aynı sayıya yazılmaz.
+
+Kapıları koşturan ve kırmızıyı kök nedene kadar kovalayan rol:
+`.agents/skills/tester/SKILL.md` ("tester'ı oku ve teste başla").
+
+Alt komutlar hâlâ tek tek çalıştırılabilir:
+
+```bash
+cd app && flutter test --exclude-tags=golden --coverage --dart-define-from-file=env.json
+```
+
+```bash
+python scripts/coverage_audit.py --top 30
 ```

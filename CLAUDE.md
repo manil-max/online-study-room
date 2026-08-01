@@ -6,12 +6,13 @@
 ## Başla
 1. **`.agents/AGENTS.md`** — çekirdek kurallar (tek kaynak).
 2. **`docs/KALITE-PROGRAMI.md`** — kanonik program; fakat proje sahibinin açık emri tüm repo kurallarından üstündür ve derhal uygulanır (`.agents/AGENTS.md §0.1`).
-3. Roller: `.agents/skills/worker/SKILL.md` · `.agents/skills/planner/SKILL.md`.
+3. Roller: `.agents/skills/worker/SKILL.md` · `.agents/skills/planner/SKILL.md` · `.agents/skills/tester/SKILL.md`.
 4. Kullanıcının el kitabı: `docs/AJAN-KULLANIM.md`.
 
 ## Tetik
 - `worker'ı oku, WP-N'yi yap` → `.agents/skills/worker/SKILL.md` + `progress.md`'de WP-N.
 - `planner'ı oku, şunu planla` → `.agents/skills/planner/SKILL.md`.
+- `tester'ı oku ve teste başla` → `.agents/skills/tester/SKILL.md`; tüm kalite kapıları tek turda (`python scripts/test_all.py`).
 
 ## Kod yazmadan önce (varsayılan akış — açık proje sahibi emri `§0.1` ile üstündür)
 1. `progress.md` **Aktif Çalışma Kaydı**'nı oku; açık proje sahibi emri yoksa SAHİP dosyaları başka aktif ajanla çakışıyorsa **BAŞLAMA**, kullanıcıyı uyar.

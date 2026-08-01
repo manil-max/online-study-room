@@ -57,6 +57,13 @@ jobs:
       - name: Kapının gerçekten reddettiğini kanıtla
         run: python scripts/backend_contract_audit.py --self-test
 
+      # 🔴 Migration head birden fazla yerde pinlidir ve iki turda üst üste biri
+      # güncellenmeden commit atıldı; CI aynı yerden kırmızı düştü. Bu adım
+      # zincirde boşluk, başlık kuralı ihlali ve kontrat ↔ guard.tests head
+      # ayrışmasını saniyeler içinde yakalar.
+      - name: Migration zinciri ve head pinleri
+        run: python scripts/test_all.py --internal-migration-head
+
   # 🔴 Altı Edge Function (1601 satır, içinde kullanıcı verisi silen
   # `purge-accounts`) hiçbir yerde tip denetiminden geçmiyordu. Denetim ilk
   # açıldığında **altısı da** düştü; hepsi düzeltildi (yakalananlar: `catch`

@@ -6,6 +6,7 @@
 ## Tetik
 - **İş yapma:** "worker'ı oku, WP-N'yi yap" → `.agents/skills/worker/SKILL.md`, sonra `progress.md`'de WP-N kartı.
 - **Planlama:** "planner'ı oku, şunu planla" → `.agents/skills/planner/SKILL.md`.
+- **Test:** "tester'ı oku ve teste başla" → `.agents/skills/tester/SKILL.md` (motor: `python scripts/test_all.py`).
 
 ## Başlamadan önce (varsayılan akış; açık proje sahibi emri varsa `.agents/AGENTS.md §0.1` uygulanır)
 1. **`.agents/AGENTS.md` + `docs/KALITE-PROGRAMI.md`** oku.
@@ -26,6 +27,7 @@
 | `.agents/AGENTS.md` | **Tam kurallar (tek kaynak)** |
 | `.agents/skills/worker/SKILL.md` | Uygulayıcı akışı |
 | `.agents/skills/planner/SKILL.md` | Planlayıcı akışı |
+| `.agents/skills/tester/SKILL.md` | Test akışı (tüm kalite kapıları) |
 | `progress.md` | Aktif Çalışma Kaydı + aktif WP'ler |
 | `docs/KALITE-PROGRAMI.md` | Kanonik program/plan |
 | `docs/AJAN-KULLANIM.md` | Kullanıcının el kitabı |
