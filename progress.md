@@ -18,17 +18,17 @@
 
 ## Proje Gerçekleri
 
-- ✅ **Migration gerçeği (2026-08-01):** repo/local **`0114`** · staging
+- ✅ **Migration gerçeği (2026-08-01):** repo/local **`0116`** · staging
   **`0114`** · production **`0100`**. `0101`…`0114` staging'e uygulandı
   (Database Gates run `30660596728`; post-check local|remote|file = `0114`) ve
   purge zinciri aktive edildi (run `30661167492`, health `configured`).
-  Database Gates **yeşil**. Production `0100`de ve **HOLD**'da — stable, o
-  apply yapılmadan mümkün değil.
-  - 🔴 **Kontrat notu:** `tooling/release/deploy-contract.json` içinde staging
-    `release_enabled` **`true`** (beta yetkisi). `tooling/supabase/guard.tests.ps1:43`
-    bu bayrağı hâlâ `false`a pinliyor, yani ikisi çelişiyor ve guard kapanıyor.
-    Beta çıkılacaksa iki yer birlikte güncellenmeli (bkz. üç yerde pinli head
-    dersi); çıkılmayacaksa kontrat `false`a dönmeli.
+  `0115` (profil ünvanı) ve `0116` (dürtme odak koruması) yalnız repo/local
+  zincirindedir. Staging ve production kapıları **kapalıdır**; production
+  `0100`de ve **HOLD**'dadır — stable, production apply tamamlanmadan mümkün
+  değildir.
+  - ✅ **Kontrat notu:** `tooling/release/deploy-contract.json` içinde staging
+    ve production `deploy_enabled` / `release_enabled` değerlerinin dördü de
+    `false`; guard bu fail-closed durumu doğrular.
   - **Tarihsel (2026-07-31, düzeltildi):** bu madde bir süre repo/local `0108`,
     staging `0100` ve "hiçbiri replay edilmedi, Database Gates kırmızı" diyordu.
     Üçü de bayatlamıştı; `AGENTS.md §4` release gerçeğini buradan okuttuğu
@@ -103,7 +103,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-473** (2026-07-31). WP-429 release kilidi tamamlandı;
+- **Son WP numarası:** **WP-476** (2026-08-01). WP-429 release kilidi tamamlandı;
   WP-430…WP-467 PLAN 5 uygulama, kabul ve teslim zinciridir. WP-468…WP-473
   (bölüm `5.K`) 2026-07-31 tur kapanış denetiminden doğdu: kapı onarımı ve
   turun bıraktığı sessiz borcun kapatılması. Ürün zinciri onlardan sonra sürer.
@@ -215,12 +215,12 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 | Konu | Durum |
 | --- | --- |
 | Sürüm | **`v56` stable yayında** · release run `30384688718` · production şeması `0100` |
-| Aktif plan | **PLAN 5 / v57** · dört Codex ajan zinciri · WP-429…467 |
-| Cihaz kabulü | 🟡 v56 saha bulguları raporlandı; v57 iki-cihaz/staging kapanış matrisi WP-466 |
+| Aktif plan | **PLAN 5 / v57 stable hazırlığı** · production/stable GO bekliyor |
+| Cihaz kabulü | ⚪ **v57 için sahip muafiyeti:** beta-v5701, fiziksel cihaz QA ve 3 günlük soak 2026-08-01 kararıyla bu sürümden kaldırıldı |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v56 tesliminde analyze + 1053/1053 CI-bayraklı test + l10n + local replay/377 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local/staging/production **`0100`**; PLAN 5 ileri migration'ları localden başlar |
+| Migration | Repo/local **`0116`** · staging **`0114`** · production **`0100`** |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Remote kapıları | staging + production deploy/release dört bayrak **kapalı** (`b6b47a9`) |
@@ -5044,13 +5044,14 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-466 — Staging beta ve gerçek cihaz matrisi
 
-- **Durum / bağımlılık:** [~] 2026-07-31 — **staging apply ayağı bitti**:
+- **Durum / bağımlılık:** [x] 2026-08-01 — **staging apply ayağı bitti**:
   dry-run `30660392697` (tam 14 migration `0101`-`0114` listeledi), apply
   `30660596728`, post-check `local|remote|file = 0114`. Tek seferlik GO
   tüketildi ve kapı yeniden kilitlendi (`ec77347`). Purge aktivasyonu da
   yapıldı (`30661167492`, sağlık `configured`).
-  **Kalan:** beta artefaktı + gerçek cihaz matrisi — donanım gerektirir,
-  `release_enabled` bilerek `false` (beta çıkarmak ayrı bir karar).
+  **Sahip kararı (2026-08-01):** v57 için kalan beta-v5701, fiziksel cihaz
+  matrisi ve 3 günlük soak adımları iptal edildi. Bu tek seferlik muafiyet
+  sonraki sürümlere taşınmaz. `release_enabled` stable GO gelene kadar `false`.
 - **SAHİP:** staging apply/beta artefakt hazırlığı ve `docs/qa/DEVICE-QA-MATRIX.md`
   kanıtları. Production yok.
 - **Uygulama:** exact SHA/head/project-ref doğrula; staging dry-run/apply; beta
@@ -5066,7 +5067,10 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-467 — v57 release-ready raporu, açıkların tekilleştirilmesi ve kapı kilidi
 
-- **Durum / bağımlılık:** [ ] WP-466 + soak/kabul kanıtı.
+- **Durum / bağımlılık:** [~] Stable v57 metadata ve otomatik kanıt paketi
+  hazırlanıyor; beta/cihaz/soak bağımlılığı 2026-08-01 sahip kararıyla kaldırıldı.
+  Kalan: push + CI kanıtı, staging `0115–0116` post-check, production `0116`
+  dry-run/apply ve exact stable GO.
 - **SAHİP:** progress proje gerçekleri, v57 QA/release-ready belgesi,
   deploy contract'ın kapalı olduğunun salt-okunur/guard kanıtı.
 - **Uygulama:** bütün WP commitleri ve kabul durumları; kalan P2/P3 backlog;
@@ -5299,8 +5303,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 
 | WP | Ortam | Bekleyen kabul |
 | --- | --- | --- |
-| **WP-475** Başarım ünvanı | Staging `0116` + Android + Windows | Kullanıcı yalnız kazandığı başarımı ünvan seçebiliyor/kaldırabiliyor; ünvan profil ve grup üye listesinde görünüyor; kazanılmamış ünvan sunucuda reddediliyor ve engellenen üyenin ünvanı anonimleşiyor. **Migration terfisi ve cihaz kabulü bekliyor.** |
-| **WP-476** Dürtme odak koruması | Staging `0116` + iki cihaz | Aktif çalışan kişi dürtülemiyor; aynı kişiye cooldown 20 dakika; İlham Kaynağı yalnız dürtmeden sonraki 20 dakikada başlayan doğrulanmış canlı oturumları sayıyor, elle/geçmişe dönük session ile XP üretilemiyor. **Migration terfisi ve iki-cihaz kabulü bekliyor.** |
+| **WP-475** Başarım ünvanı | Production `0116` | Otomatik test tamam. v57 fiziksel cihaz kabulü 2026-08-01 sahip kararıyla muaf; production terfisi exact GO bekliyor. |
+| **WP-476** Dürtme odak koruması | Production `0116` | Otomatik test tamam. v57 iki-cihaz kabulü 2026-08-01 sahip kararıyla muaf; production terfisi exact GO bekliyor. |
 | **WP-295** Kamp ateşi oturma/poz | Windows + Android profile | Seçilen 1–8 kişi yerleşimleri ve marshmallow erişimi görsel olarak doğru; Android profile'da `p95 ≤ 16.7 ms`, jank `≤ %1` |
 | **WP-349** Forest Cabin tema kapağı | Windows + Android | Hazır tema kartı baskın scaffold/surface paletini doğru yansıtıyor; açık/koyu preset seçimi, 360 dp iki sütun ve 48 dp dokunma hedefi gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
 | **WP-350** Telefon kamp ateşi | Android + Windows | Telefonda 1/4/8 kişi, düşük ateş, geniş halka, küçük hayvanlar/etiketler, ağaçsız arka plan ve küçük glow; masaüstü kompozisyonu korunuyor. Android profile `p95 ≤16.7 ms`, jank `≤%1` cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |

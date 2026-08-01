@@ -3,6 +3,60 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.57",
+                         "buildNumber":  57,
+                         "channel":  "stable",
+                         "date":  "2026-08-01",
+                         "title":  "v57: sayaç güveni, izlenebilir moderasyon ve daha anlamlı ilerleme",
+                         "highlights":  [
+                                            "Uygulama, bildirim ve ana ekran widget'ındaki sayaç hareketleri artık aynı güvenli başlatma ve durdurma gerçeğini kullanıyor.",
+                                            "Geri bildirimler gerçek bir konuşma gibi ilerliyor; kullanıcı mesajları, yönetici yanıtları ve iç notlar birbirine karışmıyor.",
+                                            "Şikâyetler karar için gereken bağlamı koruyor; yaptırımlar basamaklı, geri alınabilir ve itiraz edilebilir.",
+                                            "Her N günde yinelenen görevler takvim düzenini koruyor; görevi satırından tamamlayıp geri alabiliyorsun.",
+                                            "Seri alevi kişisel ilerlemeyi grup katkısından ayırıyor ve üç anlaşılır durumda gösteriyor.",
+                                            "Kazandığın bir başarımı profil ünvanı seçebilir, profilinde ve grup listesinde gösterebilirsin.",
+                                            "Çalışan kişi dürtülemiyor; aynı kişiye bekleme süresi 20 dakika ve yalnız çalışmaya dönüşen dürtmeler ilerleme sayılıyor.",
+                                            "Yayın yüzeyi Türkçe ve İngilizceyle, tek 1×1 Başlat/Durdur widget'ıyla sadeleştirildi."
+                         ],
+                         "fixes":  [
+                                         "Çevrimdışı bitmiş veya gecikmiş bir sayaç komutu başka cihazda hayalet çalışma başlatmıyor.",
+                                         "Şikâyetin yanlış kullanıcıya ya da yanlış grup bağlamına bağlanabildiği boşluklar kapatıldı.",
+                                         "Gruptan çıkış tekrar denendiğinde çift işlem üretmiyor ve geçmiş ilerleme kayıtlarını silmiyor.",
+                                         "E-posta değiştirme yeniden doğrulama istiyor; seçili ders hesap değişikliklerinde korunuyor.",
+                                         "Özel tarih aralığının uçları güvenli sıralanıyor; kamp ateşi ve tekrar eden ekran başlıkları sadeleştirildi.",
+                                         "Hesap silme isteğinin zamanlanması ve tekrar çalıştırılması güvenli hâle getirildi."
+                         ],
+                         "notes":  [
+                                         "Bu sürüm yeni sunucu davranışları gerektirir; sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
+                                         "Güncellemeden sonra uygulamayı bir kez kapatıp açmak önerilir.",
+                                         "Sayaç eşitlemesinin iki cihazda görünmesi bağlantı ve bildirim teslim süresine bağlıdır."
+                         ],
+                         "titleEn":  "v57: trustworthy timers, accountable moderation and clearer progress",
+                         "highlightsEn":  [
+                                              "Timer actions in the app, notification and home-screen widget now share one safe start and stop truth.",
+                                              "Feedback now behaves like a real conversation; user messages, admin replies and internal notes no longer mix.",
+                                              "Reports preserve the context needed for a decision; sanctions are graduated, reversible and appealable.",
+                                              "Tasks that repeat every N days keep their calendar rhythm and can be completed or undone directly from the row.",
+                                              "The streak flame separates personal progress from group contribution and uses three clear states.",
+                                              "You can choose an achievement you earned as your profile title and show it on your profile and in the group list.",
+                                              "People who are studying cannot be nudged; the wait is 20 minutes and only nudges that lead to studying count as progress.",
+                                              "The release surface is simplified to Turkish and English with one polished 1×1 Start/Stop widget."
+                         ],
+                         "fixesEn":  [
+                                           "An offline or delayed timer command no longer starts a ghost session on another device.",
+                                           "Gaps that could attach a report to the wrong person or group context were closed.",
+                                           "Retrying group leave no longer creates duplicate work or removes historical progress.",
+                                           "Changing email now requires re-verification, while the selected subject survives account changes.",
+                                           "Custom date-range handles are safely ordered; campfire layouts and repeated screen headings are cleaner.",
+                                           "Scheduling and retrying an account-deletion request is now safer."
+                         ],
+                         "notesEn":  [
+                                           "This release needs the accompanying server behaviour; the app must not be published before server preparation is complete.",
+                                           "Closing and reopening the app once after updating is recommended.",
+                                           "How quickly timer state appears on a second device depends on connectivity and notification delivery."
+                         ]
+                     },
+                     {
                          "versionName":  "1.0.56",
                          "buildNumber":  56,
                          "channel":  "stable",

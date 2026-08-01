@@ -46,7 +46,7 @@ try {
       throw "Release HOLD: $($targetContract.hold_reason)"
     }
     if ([string]::IsNullOrWhiteSpace($ProductionEvidence)) {
-      throw 'Production release requires a non-empty staging/QA/soak evidence reference.'
+      throw 'Production release requires a non-empty release evidence or owner-waiver reference.'
     }
     $expectedConfirmation = "PRODUCTION RELEASE GO:$ExpectedGitSha`:$ExpectedMigrationHead`:$ProjectRef"
     if ($GitHubActions -ne 'true' -or $ApprovalEnvironment -ne 'production') {

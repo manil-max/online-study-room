@@ -3,6 +3,62 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.57",
+      "buildNumber": 57,
+      "channel": "stable",
+      "date": "2026-08-01",
+      "title": "v57 (PLAN 5 + WP-475/476): güven ve ilerleme, şema 0101-0116",
+      "highlights": [
+        "WP-430–WP-433 / 0101–0102: global timer komut sözleşmesi ve cihaz-kapsamlı push hedefleme.",
+        "WP-434–WP-442 / 0103–0106: feedback konuşma tek-gerçeği, rapor hedefi, basamaklı yaptırım, itiraz ve değiştirilemez denetim izi.",
+        "WP-444 / 0107: sunucu-otoriter dürtme susturma ve kullanıcı yönetim ekranı.",
+        "WP-445 / 0108: idempotent group leave komutu ve tekrar denemede tek sonuç.",
+        "WP-449–WP-453 / 0109 ve 0112: sabit fazlı görev tekrarı ile server-authoritative goal-streak projeksiyonu.",
+        "WP-443/447 / 0110–0111: moderasyon abuse matrisi ve üyelikten ayrılma guard'ı.",
+        "WP-464 / 0113–0114: hesap purge scheduler, lease/idempotency ve pseudonymous actor retention.",
+        "WP-475 / 0115: xp_ledger ile doğrulanan achievement profile title ve blocked-directory anonimizasyonu.",
+        "WP-476 / 0116: 20 dakikalık nudge cooldown, active-study guard ve verified-live conversion metriği."
+      ],
+      "fixes": [
+        "Timer command journal, stale-command rejection ve redacted observability ile ghost-run sınıfı açıklanabilir ve fail-closed hâle getirildi.",
+        "Backend contract audit + self-test, runtime Supabase wire harness ve coverage ratchet CI kapılarına eklendi.",
+        "Edge Function'ların altısı deno check ile derlenir; purge auth policy 13 davranış testiyle fail-closed doğrulanır.",
+        "Golden determinizmi duvar saatinden ayrıldı; Windows kritik akış testi gerçek CI entegrasyon kapısına bağlandı.",
+        "Kullanıcıya görünen release notes teknik WP/RPC/SQL/migration metninden ayrıldı."
+      ],
+      "notes": [
+        "Yerel release hazırlık turu: test_all.py --full, 15 kapı; 12 geçti, 0 kırmızı, 3 host-sınırlı atlandı (Deno tip/davranış ve Docker pgTAP).",
+        "Flutter package + coverage, golden ve Windows integration kapıları yerelde geçti; nihai Deno ve pgTAP kanıtı push sonrası CI'dan alınacak.",
+        "Repo/local head 0116; staging 0114; production 0100. Production apply ve stable release exact SHA/head GO gelene kadar HOLD.",
+        "Ürün sahibi 2026-08-01'de v57 için beta-v5701, fiziksel cihaz QA ve 3 günlük soak adımlarını tek seferlik kaldırdı; bu muafiyet başka sürüme taşınmaz."
+      ],
+      "titleEn": "v57 (PLAN 5 + WP-475/476): trust and progression, schema 0101-0116",
+      "highlightsEn": [
+        "WP-430-WP-433 / 0101-0102: global timer command contract and device-scoped push targeting.",
+        "WP-434-WP-442 / 0103-0106: single-truth feedback threads, report targets, graduated enforcement, appeals and immutable audit evidence.",
+        "WP-444 / 0107: server-enforced nudge muting and a user management surface.",
+        "WP-445 / 0108: idempotent group-leave command with one result across retries.",
+        "WP-449-WP-453 / 0109 and 0112: fixed-phase task recurrence and server-authoritative goal-streak projection.",
+        "WP-443/447 / 0110-0111: moderation abuse matrix and membership-departure guard.",
+        "WP-464 / 0113-0114: account-purge scheduler, lease/idempotency and pseudonymous actor retention.",
+        "WP-475 / 0115: xp_ledger-verified achievement profile titles and blocked-directory anonymisation.",
+        "WP-476 / 0116: 20-minute nudge cooldown, active-study guard and verified-live conversion metric."
+      ],
+      "fixesEn": [
+        "The timer command journal, stale-command rejection and redacted observability make ghost runs explainable and fail closed.",
+        "Backend contract audit with a self-test, runtime Supabase wire harness and coverage ratchet are now CI gates.",
+        "All six Edge Functions compile under deno check; the purge authorization policy has 13 fail-closed behaviour tests.",
+        "Golden determinism no longer reads wall-clock time, and Windows critical flows are connected to the real CI integration gate.",
+        "User-facing release notes are separated from technical WP/RPC/SQL/migration text."
+      ],
+      "notesEn": [
+        "Local release-preparation run: test_all.py --full, 15 gates; 12 passed, 0 red, 3 host-limited skips (Deno type/behaviour and Docker pgTAP).",
+        "Flutter package plus coverage, golden and Windows integration gates passed locally; final Deno and pgTAP proof will come from CI after push.",
+        "Repo/local head is 0116, staging is 0114 and production is 0100. Production apply and stable release remain on HOLD until exact SHA/head GO.",
+        "On 2026-08-01 the owner waived beta-v5701, physical-device QA and the three-day soak for v57 only; the waiver does not carry to later releases."
+      ]
+    },
+    {
       "versionName": "1.0.56",
       "buildNumber": 56,
       "channel": "stable",

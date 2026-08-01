@@ -10,7 +10,7 @@ on:
       expected_git_sha: { description: 'Tam 40 karakter SHA', required: true, type: string }
       expected_migration_head: { description: 'Tam dört haneli migration head', required: true, type: string }
       production_confirmation: { description: 'Stable: PRODUCTION RELEASE GO:<sha>:<head>:<project-ref>', required: false, type: string }
-      production_evidence: { description: 'Stable: staging/QA/soak/rollback kanıt konumu', required: false, type: string }
+      production_evidence: { description: 'Stable: release kanıtı + varsa sahip muafiyeti/rollback konumu', required: false, type: string }
 
 permissions:
   contents: write

@@ -4,6 +4,51 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v57 / 1.0.57+57] - 2026-08-01
+
+> **Güven ve ilerleme sürümü.** Sayaç, geri bildirim, moderasyon, görevler,
+> seriler ve sosyal profil aynı turda daha açıklanabilir ve güvenli hâle geldi.
+
+### Yenilikler
+- **Sayaç hareketleri tek sözleşmede.** Uygulama, bildirim ve ana ekran widget’ı
+  aynı başlatma/durdurma gerçeğini kullanıyor; gecikmiş bir cihaz komutu yeni bir
+  çalışmayı değiştiremiyor.
+- **Geri bildirim gerçek bir konuşma.** Kullanıcı ve yönetici aynı kronolojik
+  akışı görüyor; iç notlar kullanıcı mesajlarından ayrılıyor ve okunmamış
+  işaretleri profil ile ayarlarda aynı gerçeği izliyor.
+- **Moderasyon kararları izlenebilir.** Şikâyet bağlamı korunuyor; yaptırımlar
+  basamaklı, geri alınabilir ve itiraz süreci denetim iziyle birlikte çalışıyor.
+- **Görevler ve seriler daha anlaşılır.** Her N günde yinelenen görevler sabit
+  takvim fazını koruyor; görev satırından tamamlama/geri alma yapılabiliyor ve
+  seri alevi kişisel ilerleme ile grup katkısını ayırıyor.
+- **Başarımlar profil ünvanı olabiliyor.** Kazandığın bir başarımı seçip
+  profilinde ve grup üye listesinde gösterebilir, istediğinde kaldırabilirsin.
+- **Dürtme odağı bölmüyor.** Çalışan kişi dürtülemiyor; aynı kişiye bekleme
+  süresi 20 dakika ve İlham Kaynağı yalnız gerçekten çalışmaya dönüşen
+  dürtmeleri sayıyor.
+- **Yayın yüzeyi sadeleşti.** İlk mağaza kapsamı Türkçe ve İngilizceyle, tek
+  yayın kalitesindeki 1×1 Başlat/Durdur widget’ıyla sınırlandı.
+
+### Düzeltmeler
+- Çevrimdışı bitmiş veya bayat bir sayaç komutunun diğer cihazda hayalet çalışma
+  başlatması engellendi; tanısal kayıtlar hassas veri sızdırmadan nedeni gösteriyor.
+- Şikâyetin yanlış kişiye ya da bağlama bağlanabildiği hedefleme boşlukları kapandı.
+- Gruptan çıkış tekrar denendiğinde çift işlem üretmiyor; ayrılan üyenin geçmiş
+  çalışma ve ilerleme kayıtları korunuyor.
+- E-posta değiştirme yeniden doğrulamaya bağlandı; seçili ders hesap yaşam
+  döngüsünde korunuyor.
+- Özel tarih aralığı uçları güvenli sıralanıyor; kamp ateşi yerleşimleri ve
+  tekrarlanan üst başlıklar sadeleştirildi.
+- Hesap silme isteğinin zamanlanması, tekrar çalıştırılması ve denetim kaydı
+  güvenli hâle getirildi.
+
+### Notlar
+- Bu sürüm yeni sunucu davranışları gerektirir; sunucu hazırlığı tamamlanmadan
+  uygulama yayımlanmamalıdır.
+- Güncellemeden sonra uygulamayı bir kez kapatıp açmak önerilir.
+- Stable yayın kimliği `1.0.57+57` olarak ayrılmıştır; aynı derleme numarası
+  başka bir kod için yeniden kullanılmayacaktır.
+
 ## [v56 / 1.0.56+56] - 2026-07-28
 
 > Sahibin v55 saha testinden çıkan bulgular ve moderasyon yönetici tarafının

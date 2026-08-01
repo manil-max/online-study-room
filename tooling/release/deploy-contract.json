@@ -5,7 +5,7 @@
     "migration_head": "0114",
     "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "CONSUMED AND RE-LOCKED (2026-07-31): the scoped one-shot staging apply GO was used by Database Gates run 30660596728 and staging is now genuinely at migration head 0114 (0101-0114 pushed, post-check reports local|remote|file = 0114). The authorization is spent. Any further staging apply or beta release requires a new scoped contract update with its own replay, tests, target SHA/head and QA evidence. release_enabled stays false: beta release is a separate WP-466 decision. Production untouched and on HOLD."
+    "hold_reason": "V57 PREPARATION HOLD (2026-08-01): staging is genuinely at 0114; repo/local is 0116. The owner waived beta-v5701, physical-device QA and the three-day soak for v57 only. No beta artifact will be produced. Applying 0115-0116 to staging still requires a scoped target SHA/head, CI replay/tests and post-check; deploy/release stay locked until that evidence exists. Production remains untouched and on HOLD."
   },
   "production": {
     "migration_head": "0100",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "HOLD AFTER V56 (2026-07-30): production is already at migration head 0100 and the v56 stable release is complete. The explicit owner GO from 2026-07-28 was scoped only to that production apply and v56 tag and is now consumed. Any future production migration, Edge deployment or stable release requires a new concrete owner GO plus the then-current staging, device QA, soak, backup/waiver, dry-run and exact SHA/head evidence."
+    "hold_reason": "V57 STABLE HOLD (2026-08-01): production is at 0100 while the v57 candidate requires 0116. The owner waived beta-v5701, physical-device QA and the three-day soak for v57 only; this does not authorize production. Required before release: pushed final SHA, green CI including Deno and pgTAP replay, staging 0116 post-check, production dry-run/apply with the recorded no-backup/no-rollback waiver and exact GO, then a separate exact stable release GO."
   }
 }
