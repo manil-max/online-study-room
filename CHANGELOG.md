@@ -4,6 +4,39 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v58 / 1.0.58+58] - 2026-08-01
+
+> **Senkron ve saha güveni sürümü.** v57 sonrası geri bildirimler sayaç,
+> widget, profil, dürtme ve yönetici akışlarında cihazsız regresyonlarla kapandı.
+
+### Yenilikler
+- Countdown ve Pomodoro ana ekran widget'ı artık hedef süreden aşağı sayıyor;
+  kronometre davranışı değişmeden korunuyor.
+- Profil değişiklikleri hesap akışına anında yansıyor; ünvan seçimi kompakt menüye
+  taşındı ve grup satırı uzun ünvanlarda şişmiyor.
+- Seri göstergesi kişisel ve grup ilerlemesini daha açık ayırıyor; görev tekrar
+  metinleri seçilen aralığı doğrudan söylüyor.
+- Yönetici yanıtları realtime yenileniyor ve kullanıcıya push üretiyor; ana ekran
+  SSS içeriği sunucudan yönetilebiliyor.
+- Yönetici duyuruları alan bazlı doğrulama, güvenli hedef seçimi ve açık silme
+  onayı kullanıyor.
+
+### Düzeltmeler
+- Daha önce görülmüş bir sayaç snapshot'ı, yerel ayna eksikse yeniden uygulanıyor;
+  “başta görünüp sonra kaybolma” yolu kapandı.
+- Kısa heartbeat gecikmesi açık çalışmayı bitirmiyor; yaşam döngüsü geçişlerinde
+  anlık heartbeat ve sınırlı kurtarma penceresi kullanılıyor.
+- Dürtme hataları gerçek nedenini gösteriyor; susturma ve çalışan kişiyi dürtme
+  yolları sessiz kalmıyor.
+- Ana ekrandaki tekrarlanan üst şerit kaldırıldı; düzenleme uzun basmayla açılıyor.
+
+### Notlar
+- Çoklu cihaz sayaç düzeltmesi için iki cihazın da v58'e güncellenmesi gerekir.
+- Bu sürüm sunucu şeması `0119`u gerektirir; production hazırlığı tamamlanmadan
+  uygulama yayımlanamaz.
+- Fiziksel iki-cihaz ve OEM kabul testi, proje sahibinin kararıyla stable yayın
+  üzerinde yapılacaktır.
+
 ## [v57 / 1.0.57+57] - 2026-08-01
 
 > **Güven ve ilerleme sürümü.** Sayaç, geri bildirim, moderasyon, görevler,

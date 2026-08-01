@@ -3,6 +3,54 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.58",
+      "buildNumber": 58,
+      "channel": "stable",
+      "date": "2026-08-01",
+      "title": "v58 (Faz F4 + WP-482/486A): saha geri bildirimi ve şema 0117-0119",
+      "highlights": [
+        "WP-477/483/484: dürtme hata semantiği, grup susturma tetikleyicisi ve active-study görünür sonucu.",
+        "WP-478/479/487: auth invalidation, popup ünvan seçimi ve bounded grup üye satırı.",
+        "WP-480/481: recurrence metni ile kişisel/grup seri projeksiyonu.",
+        "WP-485 / 0117: yönetici feedback mesajı realtime yenileme ve idempotent kullanıcı push kuyruğu.",
+        "WP-488 / 0118: sunucu yönetimli ana ekran SSS satırı; tekrarlanan üst şerit kaldırıldı ve düzenleme uzun basmaya taşındı.",
+        "WP-482 / 0119: duplicate snapshot yeniden aynalama, 12 saatlik bounded lease recovery ve lifecycle heartbeat.",
+        "WP-486A: duyuru form doğrulaması, seçilebilir hedef, destructive confirmation ve çift işlem kilidi."
+      ],
+      "fixes": [
+        "Countdown/pomodoro hedef saniyesi Dart→platform→prefs zincirine eklendi; native Chronometer API 24+ countDown kullanıyor.",
+        "scripts/test_all.py Android JVM testlerini varsayılan T2 kapısında derliyor ve local Supabase baseline komutunu geçerli -Action baseline sözleşmesiyle çağırıyor.",
+        "Yerel 0001→0119 reset/replay: 48 SQL dosyası, 678 pgTAP testi PASS; Android native projeksiyon ve admin 320px/1.6x widget regresyonları PASS.",
+        "Kapsam ratchet: genel %65.23, kritik %58.92; flutter analyze temiz."
+      ],
+      "notes": [
+        "Repo/local head 0119; release adayı hazırlanırken staging ve production gerçek head'i 0116'dır.",
+        "Sahip 2026-08-01'de v58 stable zincirini açıkça istedi ve fiziksel iki-cihaz/OEM kabulini stable sonrası yapacağını belirtti.",
+        "Production free plan: günlük backup/PITR yok; önceki owner no-backup/no-rollback waiver kaydı geçerlidir, ancak apply/release exact SHA/head/project-ref GO ile protected CI'da yapılır."
+      ],
+      "titleEn": "v58 (Phase F4 + WP-482/486A): field feedback and schema 0117-0119",
+      "highlightsEn": [
+        "WP-477/483/484: nudge error semantics, group mute entry point and visible active-study result.",
+        "WP-478/479/487: auth invalidation, popup title selection and bounded group-member rows.",
+        "WP-480/481: recurrence copy and personal/group streak projection.",
+        "WP-485 / 0117: realtime admin feedback messages and idempotent user push queue.",
+        "WP-488 / 0118: server-managed home FAQ row; duplicate top strip removed and editing moved to long press.",
+        "WP-482 / 0119: duplicate snapshot remirroring, 12-hour bounded lease recovery and lifecycle heartbeat.",
+        "WP-486A: announcement validation, selectable targets, destructive confirmation and duplicate-operation lock."
+      ],
+      "fixesEn": [
+        "Countdown/pomodoro target seconds now flow through Dart, platform commands and prefs; native Chronometer uses countDown on API 24+.",
+        "scripts/test_all.py compiles Android JVM tests in the default T2 gate and invokes local Supabase baseline with the valid -Action baseline contract.",
+        "Local 0001→0119 reset/replay passed 48 SQL files and 678 pgTAP tests; Android projection and admin 320px/1.6x widget regressions passed.",
+        "Coverage ratchet: 65.23% overall and 58.92% critical; flutter analyze is clean."
+      ],
+      "notesEn": [
+        "Repo/local head is 0119; staging and production are genuinely at 0116 while the candidate is prepared.",
+        "On 2026-08-01 the owner explicitly requested the v58 stable chain and chose to run physical two-device/OEM acceptance after stable publication.",
+        "Production is on the free plan with no daily backup or PITR; the recorded owner no-backup/no-rollback waiver applies, while apply/release remain protected-CI operations with exact SHA/head/project-ref GO."
+      ]
+    },
+    {
       "versionName": "1.0.57",
       "buildNumber": 57,
       "channel": "stable",

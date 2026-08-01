@@ -3,6 +3,54 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.58",
+                         "buildNumber":  58,
+                         "channel":  "stable",
+                         "date":  "2026-08-01",
+                         "title":  "v58: sayaç senkronu, widget ve yönetici güvenliği",
+                         "highlights":  [
+                                            "Geri sayım ve Pomodoro ana ekran widget'ında kalan süreyi doğru gösteriyor.",
+                                            "Profil değişiklikleri anında yenileniyor; ünvan seçimi daha kompakt ve uzun ünvanlar grup satırını büyütmüyor.",
+                                            "Seri göstergesi kişisel ilerlemeyi grup katkısından daha açık ayırıyor; görev tekrar metinleri seçilen aralığı söylüyor.",
+                                            "Yönetici yanıtları canlı yenileniyor ve kullanıcıya bildirim olarak ulaşıyor.",
+                                            "Yönetici duyurularında güvenli hedef seçimi, alan doğrulama ve silme onayı var.",
+                                            "Ana ekran sadeleşti; düzenleme modu uzun basmayla açılıyor ve SSS içeriği yönetilebiliyor."
+                         ],
+                         "fixes":  [
+                                         "Diğer cihazdaki sayaç daha önce görülmüş bir durum yüzünden kaybolursa yeniden kuruluyor.",
+                                         "Telefon arka planda kısa süre sessiz kaldığında açık çalışma artık hemen kapanmıyor.",
+                                         "Uygulama arka plana geçerken ve geri gelirken sayaç durumu daha hızlı yenileniyor.",
+                                         "Dürtme başarısız olduğunda gerçek neden görünür; çalışan kişiyi dürtme ve susturma yolları sessiz kalmıyor.",
+                                         "Ana ekran widget'ında çalışan geri sayımın 00:00 göstermesi düzeltildi."
+                         ],
+                         "notes":  [
+                                         "Sayaç eşitleme düzeltmesi için iki cihazın da v58'e güncellenmesi gerekir.",
+                                         "Sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
+                                         "Fiziksel iki cihaz testi stable güncelleme kurulduktan sonra yapılacaktır."
+                         ],
+                         "titleEn":  "v58: timer sync, widgets and safer admin actions",
+                         "highlightsEn":  [
+                                              "Countdown and Pomodoro show the remaining time correctly on the home-screen widget.",
+                                              "Profile changes refresh immediately; title selection is more compact and long titles no longer enlarge group rows.",
+                                              "The streak indicator separates personal progress from group contribution more clearly, and recurring-task text states the selected interval.",
+                                              "Admin replies refresh live and reach the user as a notification.",
+                                              "Admin announcements now have safe target selection, field validation and delete confirmation.",
+                                              "The home screen is cleaner; edit mode opens with a long press and FAQ content can be managed."
+                         ],
+                         "fixesEn":  [
+                                           "A timer on another device is rebuilt when a previously seen state would otherwise make it disappear.",
+                                           "A short background heartbeat gap no longer closes an active study run immediately.",
+                                           "Timer state refreshes faster when the app moves to the background or returns.",
+                                           "A failed nudge now shows the real reason; studying-user and mute paths no longer fail silently.",
+                                           "The home-screen widget no longer shows 00:00 for an active countdown."
+                         ],
+                         "notesEn":  [
+                                           "Both devices must be updated to v58 for the timer-sync fix.",
+                                           "The app must not be published before server preparation is complete.",
+                                           "Physical two-device acceptance will be performed after installing the stable update."
+                         ]
+                     },
+                     {
                          "versionName":  "1.0.57",
                          "buildNumber":  57,
                          "channel":  "stable",

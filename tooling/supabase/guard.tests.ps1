@@ -34,22 +34,19 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # tüketildi; staging ve production kapıları politika gereği yeniden HOLD'dadır.
 # 🔴 Head ve kapı durumu ÜÇ yerde pinli: kontrat, bu dosya ve
 # release-preflight.tests.ps1. Biri unutulursa CI tam buradan kırmızı düşer.
-# 2026-08-01: v57 zinciri tamamlandi; staging run 30700266897 ve production
-# run 30700518285 head 0116 post-check verdi, release run 30700647563 yesil.
-# Tek seferlik GO tuketildi ve iki ortam da yeniden fail-closed HOLD'a alindi.
-# 🔴 Faz F4: yerel head 0119'a ilerledi - WP-485 (0117, feedback mesaji
-# realtime + push), WP-488 (0118, ana ekran duzenleme SSS satiri) ve WP-482
-# (0119, global timer lease recovery grace). Uzak head'ler BILEREK 0116'da
-# kaldi: 0117-0119 hicbir ortama uygulanmadi ve bu
-# kartlarin hicbiri kapi acmiyor. Yerel replay bu hostta Docker kalkmadigi icin
-# kosulamadi; kanit Database Gates workflow'unun local replay job'indan alinir
-# ("Replay bekliyor").
-Assert-Equal $contract.staging.migration_head '0116' 'staging gercek head 0116'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'staging v57 sonrasi HOLD'
-Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release v57 sonrasi HOLD'
-Assert-Equal $contract.production.migration_head '0116' 'production gercek head 0116'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production v57 sonrasi HOLD'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release v57 sonrasi HOLD'
+# 2026-08-01: v58 adayi 0117-0119'u tasir. Yerel baseline 48 dosya / 678
+# pgTAP ile gecti; sahip zincirin tamamlanip stable v58 yayimlanmasini istedi.
+# Staging ve production deploy flag'leri bu aday icin tek seferlik aciktir.
+# Remote gercek head apply oncesi 0116 olsa da kontrat hedefi 0119'a pinler;
+# protected workflow list/dry-run/post-check ile farki dogrular. release_enabled
+# false kalir: stable exact SHA/head/project-ref confirmation ve kanit ister.
+# Zincir sonunda iki deploy flag'i yeniden false kilitlenmelidir.
+Assert-Equal $contract.staging.migration_head '0119' 'v58 staging hedef head 0119'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v58 staging apply tek seferlik acik'
+Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
+Assert-Equal $contract.production.migration_head '0119' 'v58 production hedef head 0119'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v58 production apply tek seferlik acik'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'stable exact CI GO gerektirir'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8
