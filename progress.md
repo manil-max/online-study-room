@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-07-30** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-08-01** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. `docs/PLAN.md` artık
@@ -18,14 +18,11 @@
 
 ## Proje Gerçekleri
 
-- ✅ **Migration gerçeği (2026-08-01):** repo/local **`0116`** · staging
-  **`0114`** · production **`0100`**. `0101`…`0114` staging'e uygulandı
-  (Database Gates run `30660596728`; post-check local|remote|file = `0114`) ve
-  purge zinciri aktive edildi (run `30661167492`, health `configured`).
-  `0115` (profil ünvanı) ve `0116` (dürtme odak koruması) yalnız repo/local
-  zincirindedir. Staging ve production kapıları **kapalıdır**; production
-  `0100`de ve **HOLD**'dadır — stable, production apply tamamlanmadan mümkün
-  değildir.
+- ✅ **Migration gerçeği (2026-08-01):** repo/local/staging/production üçü de
+  **`0116`**. Staging `0115–0116` apply run `30700266897`, production
+  `0101–0116` apply run `30700518285`; iki post-check de
+  `local|remote|file = 0116` verdi. v57 stable release run `30700647563`
+  tamamen yeşil ve tag SHA'sı `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`.
   - ✅ **Kontrat notu:** `tooling/release/deploy-contract.json` içinde staging
     ve production `deploy_enabled` / `release_enabled` değerlerinin dördü de
     `false`; guard bu fail-closed durumu doğrular.
@@ -214,16 +211,16 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v56` stable yayında** · release run `30384688718` · production şeması `0100` |
-| Aktif plan | **PLAN 5 / v57 stable hazırlığı** · production/stable GO bekliyor |
+| Sürüm | **`v57` stable yayında** · release run `30700647563` · production şeması `0116` |
+| Aktif plan | **PLAN 5 / v57 tamamlandı** · deploy/release kapıları yeniden kilitli |
 | Cihaz kabulü | ⚪ **v57 için sahip muafiyeti:** beta-v5701, fiziksel cihaz QA ve 3 günlük soak 2026-08-01 kararıyla bu sürümden kaldırıldı |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | v56 tesliminde analyze + 1053/1053 CI-bayraklı test + l10n + local replay/377 pgTAP yeşil |
+| Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local **`0116`** · staging **`0114`** · production **`0100`** |
+| Migration | Repo/local/staging/production **`0116`** |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
-| Remote kapıları | staging + production deploy/release dört bayrak **kapalı** (`b6b47a9`) |
+| Remote kapıları | staging + production deploy/release dört bayrak v57 sonrası **kapalı** |
 | Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
 | Microsoft Partner Center | 🟢 **Doğrulama alındı** (2026-07-28). Ana odak Play; Microsoft PLAN 2 · Faz H'de kalır |
 
@@ -5067,10 +5064,9 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-467 — v57 release-ready raporu, açıkların tekilleştirilmesi ve kapı kilidi
 
-- **Durum / bağımlılık:** [~] Stable v57 metadata ve otomatik kanıt paketi
-  hazırlanıyor; beta/cihaz/soak bağımlılığı 2026-08-01 sahip kararıyla kaldırıldı.
-  Kalan: push + CI kanıtı, staging `0115–0116` post-check, production `0116`
-  dry-run/apply ve exact stable GO.
+- **Durum / bağımlılık:** [x] 2026-08-01 — v57 stable yayımlandı. Exact SHA
+  `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`; staging ve production `0116`,
+  release run `30700647563`; deploy/release kapıları yeniden kilitli.
 - **SAHİP:** progress proje gerçekleri, v57 QA/release-ready belgesi,
   deploy contract'ın kapalı olduğunun salt-okunur/guard kanıtı.
 - **Uygulama:** bütün WP commitleri ve kabul durumları; kalan P2/P3 backlog;

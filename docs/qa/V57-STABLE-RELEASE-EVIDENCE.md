@@ -2,7 +2,7 @@
 
 > Tarih: 2026-08-01 (Europe/Istanbul)
 > Aday: `v57` · `1.0.57+57` · migration head `0116`
-> Durum: **Yerel hazırlık tamamlanıyor; production apply/tag/release GO bekliyor.**
+> Durum: **YAYINLANDI — staging/production `0116`, v57 stable artefaktları tamam.**
 
 ## 1. Kapsam
 
@@ -114,3 +114,19 @@ Fiziksel cihaz QA ve soak sahibi kararıyla kaldırıldığı için şu riskler 
 öncesi ölçülmeyecektir: Samsung/Pixel OEM farkları, iki fiziksel cihazdaki
 bildirim gecikmesi, force-stop/reboot davranışı ve üç günlük saha regresyonu.
 Otomatik kapılar bunların tamamının yerine geçtiği iddiasında değildir.
+
+## 8. Tamamlanan stable zinciri
+
+- Exact release SHA: `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`
+- CI: `30699751144` — analyze, 1514 Flutter, 34 golden, Windows kritik akış,
+  Deno tip/davranış ve coverage ratchet geçti.
+- Database Gates: `30699751156` — temiz `0001→0116` replay, 46 dosya ve
+  663/663 pgTAP geçti.
+- Staging dry-run/apply: `30700143773` / `30700266897`; yalnız `0115–0116`,
+  post-check `0116`.
+- Production dry-run/apply: `30700396631` / `30700518285`; yalnız
+  `0101–0116`, post-check `0116`; kayıtlı backup waiver kullanıldı.
+- Stable release: `30700647563`; `v57` draft/prerelease değildir. Android APK,
+  Windows MSIX/ZIP, SHA-256 dosyaları ve complete manifest yayımlandı.
+- Tek seferlik deploy/release yetkisi tüketildi; staging ve production kapıları
+  yeniden fail-closed kilitlendi.

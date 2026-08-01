@@ -3,13 +3,13 @@
   "local_migration_head": "0116",
   "staging": {
     "migration_head": "0116",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "SCOPED V57 STAGING APPLY AUTHORIZATION (2026-08-01): target head 0116, applying only 0115-0116 after the exact authorization commit is confirmed and pushed. Candidate parent 9cf48aae44b55ae6956ca8dd485e8f50887c9314 passed CI, Deno, clean replay and 663/663 pgTAP tests. The owner explicitly requested the full v57 stable chain and waived beta-v5701, physical-device QA and the three-day soak for v57 only. This deploy flag covers exactly one staging apply and must be re-locked after the stable release chain. No beta artifact is authorized."
+    "hold_reason": "CONSUMED AND RE-LOCKED AFTER V57 (2026-08-01): staging applied exactly 0115-0116 in Database Gates run 30700266897; post-check reports local|remote|file = 0116. The one-shot deploy authorization is spent. No beta-v5701 was produced under the owner waiver. Any future staging deploy or release requires a new scoped authorization and fresh evidence."
   },
   "production": {
     "migration_head": "0116",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "SCOPED V57 PRODUCTION APPLY AUTHORIZATION DRAFT (2026-08-01): target head 0116, applying 0101-0116 only after the exact authorization commit is confirmed, pushed, green in CI and staging post-check reports 0116. Candidate parent 9cf48aae44b55ae6956ca8dd485e8f50887c9314 passed CI, Deno, clean replay and 663/663 pgTAP tests. The existing owner-accepted no-backup/no-PITR/no-rollback waiver remains in force. deploy_enabled covers one production apply; the protected workflow still requires exact SHA/head/project-ref GO. release_enabled stays false so stable publishing separately requires exact production release GO plus evidence. Both deploy flags must be re-locked immediately after v57 is published."
+    "hold_reason": "CONSUMED AND RE-LOCKED AFTER V57 (2026-08-01): production applied exactly 0101-0116 in Database Gates run 30700518285 under the recorded no-backup/no-PITR/no-rollback waiver; post-check reports local|remote|file = 0116. Stable v57 was published from exact SHA 3d1960f552165a8b8f0101f2ed357c583fd5ebe6 by Release Orchestrator run 30700647563 with Android APK, Windows MSIX/ZIP and complete manifest. The one-shot deploy/release GO is spent. Any future production mutation or stable release requires a new exact authorization."
   }
 }
