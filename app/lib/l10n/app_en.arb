@@ -6221,5 +6221,22 @@
   "profileTitleUpdateFailed": "The title could not be updated. Choose an achievement you have earned.",
   "@profileTitleUpdateFailed": {"description": "Error shown when the server rejects a profile title update."},
   "classroomStudyingNudgeUnavailable": "This person is studying; nudges are disabled to protect their focus.",
-  "@classroomStudyingNudgeUnavailable": {"description": "Tooltip shown when a studying group member cannot be nudged."}
+  "@classroomStudyingNudgeUnavailable": {"description": "Tooltip shown when a studying group member cannot be nudged."},
+  "nudgeErrorCooldown": "You can nudge the same person once every {minutes} minutes.",
+  "@nudgeErrorCooldown": {
+    "description": "Nudge rejected because the cooldown window is still open. The number comes from kNudgeCooldown, so the catalog cannot fall behind the code.",
+    "placeholders": {"minutes": {"type": "int"}}
+  },
+  "nudgeErrorBlocked": "You cannot nudge a user you have blocked.",
+  "@nudgeErrorBlocked": {"description": "Nudge rejected because sender and recipient are blocked."},
+  "nudgeErrorSendFailed": "The nudge could not be sent. Try again.",
+  "@nudgeErrorSendFailed": {"description": "Unclassified nudge send failure."},
+  "nudgeErrorMarkReadFailed": "The nudge could not be marked as read.",
+  "@nudgeErrorMarkReadFailed": {"description": "Failure while marking a nudge as read."},
+  "nudgeErrorMutesUnavailable": "Nudge settings could not be loaded.",
+  "@nudgeErrorMutesUnavailable": {"description": "Failure while reading the muted-nudges list."},
+  "nudgeErrorMuteSaveFailed": "The nudge setting could not be saved.",
+  "@nudgeErrorMuteSaveFailed": {"description": "Failure while saving a mute/unmute preference."},
+  "nudgeErrorCannotMuteSelf": "You cannot mute yourself.",
+  "@nudgeErrorCannotMuteSelf": {"description": "Mute rejected because the target is the current user."}
 }

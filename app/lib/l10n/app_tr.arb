@@ -1922,5 +1922,12 @@
   "profileRemoveTitle": "Ünvanı kaldır",
   "profileTitleUpdated": "Profil ünvanın güncellendi.",
   "profileTitleUpdateFailed": "Ünvan güncellenemedi. Yalnızca kazandığın bir başarımı seçebilirsin.",
-  "classroomStudyingNudgeUnavailable": "Bu kişi şu an çalışıyor; odağını bölmemek için dürtme kapalı."
+  "classroomStudyingNudgeUnavailable": "Bu kişi şu an çalışıyor; odağını bölmemek için dürtme kapalı.",
+  "nudgeErrorCooldown": "Aynı kişiye {minutes} dakikada bir dürtme gönderebilirsin.",
+  "nudgeErrorBlocked": "Engellediğin kullanıcıya dürtme gönderemezsin.",
+  "nudgeErrorSendFailed": "Dürtme gönderilemedi. Tekrar dene.",
+  "nudgeErrorMarkReadFailed": "Dürtme okundu işaretlenemedi.",
+  "nudgeErrorMutesUnavailable": "Dürtme ayarları okunamadı.",
+  "nudgeErrorMuteSaveFailed": "Dürtme ayarı kaydedilemedi.",
+  "nudgeErrorCannotMuteSelf": "Kendini susturamazsın."
 }

@@ -63,9 +63,9 @@ void main() {
       () => muted.sendNudge(groupId: 'g1', sender: ada, recipient: ece),
       throwsA(
         isA<NudgeException>().having(
-          (e) => e.message,
-          'message',
-          'Aynı kişiye 20 dakikada bir dürtme gönderebilirsin.',
+          (e) => e.code,
+          'code',
+          NudgeErrorCode.cooldown,
         ),
       ),
     );

@@ -5458,7 +5458,7 @@ tekrar tutulmaz.
 
 #### WP-477 — Veri katmanı hata metinlerini l10n'a bağla ve kapıyı genişlet
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız; ilk verilecek kart.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
 - **Belirti (V57-N01, V57-N08 dil yarısı):** İngilizce arayüzde "Aynı kişiye 20
   dakikada bir dürtme gönderebilirsin." ve "Bu kişi şu an çalışıyor; odağını
   bölmemek için dürtme kapalı." Türkçe çıkıyor.
@@ -5513,6 +5513,38 @@ tekrar tutulmaz.
   placeholder iki katalogda da var · genişletilmiş `l10n_audit.py` kasten
   eklenen gömülü metinle **kırmızı** döner (kanıt turda gösterilir) ·
   `flutter analyze` temiz · tam test paketi yeşil.
+- **Sonuç (2026-08-01):** `NudgeException` artık metin değil `NudgeErrorCode`
+  taşıyor (11 kod + günlüğe ayrılmış `detail`); çeviri tek noktada,
+  `core/l10n/nudge_error_text.dart` eşlemesinde. `nudgeCooldownMessage()` ve
+  `kNudgeRecipientStudyingMessage` sabitleri kalktı; süre artık
+  `nudgeErrorCooldown` anahtarının `{minutes}` placeholder'ından, `kNudgeCooldown`
+  değerinden besleniyor. Yedi yeni l10n anahtarı (TR+EN), üç ölü anahtar
+  (`commonKendineDurtmeGonderemezsin`, `commonBuGruptaDurtmeGonderme`,
+  `commonDurtmeNotuEnFazla`) ilk kez bağlandı.
+- **Kapı genişletmesi ölçümlü:** `INTERNAL_PREFIXES` (`app/lib/data/repositories/`
+  blanket muafiyeti) **kaldırıldı** — kapının kör noktası buydu. Yerine üç
+  değişiklik: (1) `PROSE_RE`'nin büyük harf şartı kalktı, (2) yeni
+  `data_layer_violations` taraması (`throw …Exception('…')` / `return` / `=>`,
+  `app/lib/data/**` + `app/lib/core/**`), (3) `DATA_LAYER_DEBT` sayım kilidi —
+  18 dosya × 379 literal gerekçeli olarak kilitlendi; dosyaya **yeni** metin
+  eklemek kapıyı kırmızıya düşürür, borç azalınca sayıyı düşürmek zorunlu
+  (cırcır). Kalan borç kapı yeşilken bile çıktıda raporlanıyor.
+- **Kapı kasten kırıldı (üç senaryo, hepsi `exit=1`):** (a) veri katmanına
+  gömülü TR metin → `hardcoded TR literal: nudge_repository.dart:90`,
+  (b) `Text('gunluk gorev ozeti')` küçük harfli metin → `hardcoded UI prose`,
+  (c) sicildeki dosyaya yeni literal → `TR literal debt grew 29 -> 30`.
+  Enjeksiyonlar geri alındı; çalışma ağacı temiz.
+- **Ölçüm:** `flutter test` **1555/1555 yeşil** (öncesi 1514; +41'in 9'u bu
+  kartın yeni `nudge_error_l10n_test.dart` dosyası) · `flutter analyze` 0 uyarı ·
+  `python scripts/l10n_audit.py` OK (1494 anahtar, borç 379/18 dosya) · commit
+  `a2f7ec6`.
+- **Kapsam dışı bırakılan, açıkça kalan borç:** `goal_card.dart` ·
+  `group_goal_card.dart` · `study_timer_card.dart` içindeki `'hedef serisi'` /
+  `'grup serisi'` metinleri kapı tarafından **ilk kez görüldü**; WP-481 o
+  rozetleri yeniden yazacağı için muafiyete gerekçeyle alındı ve WP-481 bitince
+  o üç satır silinecek. `commonAyniKisiyiTekrarDurtmek` anahtarı placeholder'sız
+  olduğu için kullanılmadı; **önceden de ölüydü**, silinmedi (§2: başkasının ölü
+  kodu ayrı WP).
 
 #### WP-478 — Ünvan seçimi ekrandan çıkınca kayboluyor (profil önbelleği tazelenmiyor)
 

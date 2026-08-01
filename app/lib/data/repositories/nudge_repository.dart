@@ -9,23 +9,46 @@ import '../models/profile.dart';
 /// pencere spam'in tam boyuydu, yani davranışı sistem üretiyordu.
 const Duration kNudgeCooldown = Duration(minutes: 20);
 
-/// Cooldown hatasının kullanıcıya gösterilen metni. Tek yerde üretilir ki
-/// süre değişince mesajdaki sayı geride kalmasın.
-String nudgeCooldownMessage() =>
-    'Aynı kişiye ${kNudgeCooldown.inMinutes} dakikada bir dürtme gönderebilirsin.';
-
-/// Alıcı şu an çalışıyorken dürtme reddedilir (sunucu `recipient_is_studying`).
-const String kNudgeRecipientStudyingMessage =
-    'Bu kişi şu an çalışıyor; odağını bölmemek için dürtme kapalı.';
 const int kMaxNudgeMessageLength = 120;
 
-class NudgeException implements Exception {
-  const NudgeException(this.message);
+/// WP-477: dürtme hatalarının **makine okunur** karşılığı.
+///
+/// Metin burada üretilmez: repository katmanı `BuildContext`/`AppLocalizations`
+/// alamaz (katman ihlali olur), bu yüzden hazır cümle döndürmek İngilizce
+/// arayüzde Türkçe metin çıkmasına yol açıyordu. Çeviriyi sunum katmanı
+/// `NudgeErrorCode` → l10n eşlemesiyle yapar (`core/l10n/nudge_error_text.dart`).
+enum NudgeErrorCode {
+  /// Aynı kişiye [kNudgeCooldown] dolmadan ikinci dürtme.
+  cooldown,
 
-  final String message;
+  /// Alıcı şu an çalışıyor; odağı bölünmesin diye sunucu reddetti.
+  recipientIsStudying,
+  cannotNudgeSelf,
+  notGroupMember,
+  blocked,
+  messageTooLong,
+  cannotMuteSelf,
+
+  /// Sınıflandırılamayan gönderim hatası.
+  sendFailed,
+  markReadFailed,
+  mutesUnavailable,
+  muteSaveFailed,
+}
+
+class NudgeException implements Exception {
+  const NudgeException(this.code, {this.detail});
+
+  final NudgeErrorCode code;
+
+  /// Sunucudan gelen ham teknik ayrıntı. Yalnız günlük/hata ayıklama içindir;
+  /// kullanıcıya gösterilen metin koddan üretilir.
+  final String? detail;
 
   @override
-  String toString() => message;
+  String toString() => detail == null
+      ? 'NudgeException(${code.name})'
+      : 'NudgeException(${code.name}): $detail';
 }
 
 abstract class NudgeRepository {
@@ -68,7 +91,7 @@ String? normalizeNudgeMessage(String? message) {
   final normalized = message?.trim();
   if (normalized == null || normalized.isEmpty) return null;
   if (normalized.length > kMaxNudgeMessageLength) {
-    throw const NudgeException('Dürtme notu en fazla 120 karakter olabilir.');
+    throw const NudgeException(NudgeErrorCode.messageTooLong);
   }
   return normalized;
 }

@@ -43,7 +43,7 @@ class SupabaseNudgeRepository implements NudgeRepository {
         senderAvatarUrl: sender.avatarUrl,
       );
     } on PostgrestException catch (e) {
-      throw NudgeException(_friendlyMessage(e.message));
+      throw NudgeException(_sendErrorCode(e.message), detail: e.message);
     }
   }
 
@@ -52,7 +52,10 @@ class SupabaseNudgeRepository implements NudgeRepository {
     try {
       await _client.rpc('mark_nudge_read', params: {'p_nudge_id': nudgeId});
     } on PostgrestException catch (e) {
-      throw NudgeException('Dürtme okundu işaretlenemedi: ${e.message}');
+      throw NudgeException(
+        NudgeErrorCode.markReadFailed,
+        detail: e.message,
+      );
     }
   }
 
@@ -65,7 +68,10 @@ class SupabaseNudgeRepository implements NudgeRepository {
           .eq('user_id', _client.auth.currentUser?.id ?? '');
       return [for (final row in rows) row['muted_sender_id'] as String];
     } on PostgrestException catch (e) {
-      throw NudgeException('Dürtme ayarları okunamadı: ${e.message}');
+      throw NudgeException(
+        NudgeErrorCode.mutesUnavailable,
+        detail: e.message,
+      );
     }
   }
 
@@ -80,7 +86,10 @@ class SupabaseNudgeRepository implements NudgeRepository {
           NudgeMute.fromMap(Map<String, dynamic>.from(row as Map)),
       ];
     } on PostgrestException catch (e) {
-      throw NudgeException('Dürtme ayarları okunamadı: ${e.message}');
+      throw NudgeException(
+        NudgeErrorCode.mutesUnavailable,
+        detail: e.message,
+      );
     }
   }
 
@@ -89,7 +98,7 @@ class SupabaseNudgeRepository implements NudgeRepository {
     try {
       await _client.rpc('mute_nudges_from', params: {'p_user_id': userId});
     } on PostgrestException catch (e) {
-      throw NudgeException(_friendlyMuteMessage(e.message));
+      throw NudgeException(_muteErrorCode(e.message), detail: e.message);
     }
   }
 
@@ -98,7 +107,7 @@ class SupabaseNudgeRepository implements NudgeRepository {
     try {
       await _client.rpc('unmute_nudges_from', params: {'p_user_id': userId});
     } on PostgrestException catch (e) {
-      throw NudgeException(_friendlyMuteMessage(e.message));
+      throw NudgeException(_muteErrorCode(e.message), detail: e.message);
     }
   }
 
@@ -126,32 +135,31 @@ class SupabaseNudgeRepository implements NudgeRepository {
     ];
   }
 
-  String _friendlyMessage(String message) {
+  /// WP-477: sunucu hata anahtarını koda çevirir; metin sunum katmanında üretilir.
+  NudgeErrorCode _sendErrorCode(String message) {
     if (message.contains('nudge_cooldown')) {
-      return nudgeCooldownMessage();
+      return NudgeErrorCode.cooldown;
     }
     // WP-476: çalışan kişi dürtülmez. Sunucu bu dalı engel kontrolünden SONRA
     // çalıştırır, yani engellenmiş biri bu hatadan karşı tarafın durumunu
     // okuyamaz.
     if (message.contains('recipient_is_studying')) {
-      return kNudgeRecipientStudyingMessage;
+      return NudgeErrorCode.recipientIsStudying;
     }
     if (message.contains('cannot_nudge_self')) {
-      return 'Kendine dürtme gönderemezsin.';
+      return NudgeErrorCode.cannotNudgeSelf;
     }
     if (message.contains('not_group_member')) {
-      return 'Bu grupta dürtme gönderme yetkin yok.';
+      return NudgeErrorCode.notGroupMember;
     }
     if (message.contains('nudge_blocked')) {
-      return 'Engellenen kullanıcıyla dürtme gönderemezsin.';
+      return NudgeErrorCode.blocked;
     }
-    return 'Dürtme gönderilemedi: $message';
+    return NudgeErrorCode.sendFailed;
   }
 
-  String _friendlyMuteMessage(String message) {
-    if (message.contains('cannot_mute_self')) {
-      return 'Kendini susturamazsın.';
-    }
-    return 'Dürtme ayarı kaydedilemedi: $message';
-  }
+  NudgeErrorCode _muteErrorCode(String message) =>
+      message.contains('cannot_mute_self')
+      ? NudgeErrorCode.cannotMuteSelf
+      : NudgeErrorCode.muteSaveFailed;
 }

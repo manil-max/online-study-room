@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../core/l10n/nudge_error_text.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/nudge_mute.dart';
@@ -95,7 +96,7 @@ class _MutedNudgeTileState extends ConsumerState<_MutedNudgeTile> {
       messenger.showSnackBar(SnackBar(content: Text(l10n.safetyNudgesUnmuted)));
     } on NudgeException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(SnackBar(content: Text(e.localize(l10n))));
     } catch (_) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(l10n.safetyActionFailed)));

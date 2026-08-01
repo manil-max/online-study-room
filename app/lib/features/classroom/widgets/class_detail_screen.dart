@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/l10n/nudge_error_text.dart';
 import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/time_engine/group_time_zone_label.dart';
@@ -1054,7 +1055,7 @@ class _MembersCard extends ConsumerWidget {
         ),
       );
     } on NudgeException catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(error.message)));
+      messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
     }
   }
 }

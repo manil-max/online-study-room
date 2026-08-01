@@ -58,7 +58,7 @@ class InMemoryNudgeRepository implements NudgeRepository {
     String? message,
   }) async {
     if (sender.id == recipient.id) {
-      throw const NudgeException('Kendine dürtme gönderemezsin.');
+      throw const NudgeException(NudgeErrorCode.cannotNudgeSelf);
     }
     final now = DateTime.now();
     final recent = _attempts.any(
@@ -69,7 +69,7 @@ class InMemoryNudgeRepository implements NudgeRepository {
           now.difference(a.createdAt) < kNudgeCooldown,
     );
     if (recent) {
-      throw NudgeException(nudgeCooldownMessage());
+      throw const NudgeException(NudgeErrorCode.cooldown);
     }
 
     final nudge = Nudge(
@@ -133,7 +133,7 @@ class InMemoryNudgeRepository implements NudgeRepository {
   @override
   Future<void> muteNudgesFrom(String userId) async {
     if (userId == currentUserId) {
-      throw const NudgeException('Kendini susturamazsın.');
+      throw const NudgeException(NudgeErrorCode.cannotMuteSelf);
     }
     _mutedSendersByAccount
         .putIfAbsent(currentUserId, () => <String>{})

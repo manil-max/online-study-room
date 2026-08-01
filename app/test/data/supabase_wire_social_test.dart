@@ -91,17 +91,18 @@ void main() {
       expect(wire.rpc('send_nudge').json.containsKey('p_message'), isTrue);
     });
 
-    // Sunucu kodu -> kullaniciya gosterilen Turkce metin eslemesi.
-    // Eslemenin her dali ayri ayri sinaniyor; biri kayarsa ham sunucu
-    // metni ekrana dusrer.
+    // WP-477: sunucu anahtari -> `NudgeErrorCode` eslemesi. Eskiden repository
+    // hazir Turkce cumle donuyordu ve Ingilizce arayuzde Turkce cikiyordu;
+    // artik metin degil KOD tasiniyor, ceviriyi sunum katmani yapiyor.
+    // Eslemenin her dali ayri sinaniyor; biri kayarsa yanlis metin gosterilir.
     for (final entry in const {
-      'nudge_cooldown': '20 dakikada bir',
-      'recipient_is_studying': 'şu an çalışıyor',
-      'cannot_nudge_self': 'Kendine dürtme',
-      'not_group_member': 'yetkin yok',
-      'nudge_blocked': 'Engellenen kullanıcıyla',
+      'nudge_cooldown': NudgeErrorCode.cooldown,
+      'recipient_is_studying': NudgeErrorCode.recipientIsStudying,
+      'cannot_nudge_self': NudgeErrorCode.cannotNudgeSelf,
+      'not_group_member': NudgeErrorCode.notGroupMember,
+      'nudge_blocked': NudgeErrorCode.blocked,
     }.entries) {
-      test('sunucu kodu `${entry.key}` Turkce mesaja cevrilir', () async {
+      test('sunucu kodu `${entry.key}` dogru koda cevrilir', () async {
         wire.failWith('send_nudge', status: 400, message: entry.key);
         final repo = SupabaseNudgeRepository(wire.client());
 
@@ -112,15 +113,26 @@ void main() {
             recipient: _recipient,
           ),
           throwsA(
-            isA<NudgeException>().having(
-              (e) => e.message,
-              'mesaj',
-              contains(entry.value),
-            ),
+            isA<NudgeException>().having((e) => e.code, 'kod', entry.value),
           ),
         );
       });
     }
+
+    test('siniflandirilamayan sunucu hatasi sendFailed olur', () async {
+      wire.failWith('send_nudge', status: 500, message: 'boom');
+      final repo = SupabaseNudgeRepository(wire.client());
+
+      await expectLater(
+        repo.sendNudge(groupId: 'g1', sender: _sender, recipient: _recipient),
+        throwsA(
+          isA<NudgeException>()
+              .having((e) => e.code, 'kod', NudgeErrorCode.sendFailed)
+              // Ham sunucu metni ayrintida kalir, kullaniciya gosterilmez.
+              .having((e) => e.detail, 'ayrinti', contains('boom')),
+        ),
+      );
+    });
 
     test('susturma listesi nudge_mute_directory RPC adiyla cekilir', () async {
       wire.respond('nudge_mute_directory', [
@@ -157,8 +169,8 @@ void main() {
 
       await expectLater(
         repo.muteNudgesFrom('u1'),
-        throwsA(isA<NudgeException>()
-            .having((e) => e.message, 'mesaj', contains('Kendini'))),
+        throwsA(isA<NudgeException>().having(
+            (e) => e.code, 'kod', NudgeErrorCode.cannotMuteSelf)),
       );
     });
 
