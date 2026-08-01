@@ -5987,8 +5987,8 @@ tekrar tutulmaz.
 
 #### WP-485 — Yönetici konuşması: realtime yok, push yok, bildirim çok geç
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Migration içerir (`0117`). WP-486 ile
-  **aynı anda verilmez**.
+- **Durum / bağımlılık:** [x] Kod + kapılar tamam · **`Replay bekliyor`** ·
+  `Cihazda doğrulanmalı`. Migration `0117`. WP-486 bundan sonra.
 - **Belirti (V57-N09 sistem yarısı + V57-N10):** Yönetici mesaj gönderiyor, mesaj
   karşıya gidiyor ama **kendi ekranında görünmüyor**; ne karşı tarafa ne de
   yöneticiye bildirim düşüyor; düşen bildirimler de **çok geç** geliyor.
@@ -6042,6 +6042,48 @@ tekrar tutulmaz.
   görünüyor, karşı tarafa bildirim düşüyor · **gecikme ölçülür**: mesaj
   gönderiminden karşı cihazda görünmesine kadar geçen süre kaydedilir (V57-N10
   yalnız bu ölçümle kapanır; "artık hızlı" demek kanıt değildir).
+- **Sonuç (2026-08-01):** `0117_feedback_message_realtime_push.sql` üç şey
+  yapıyor: (1) tabloyu `supabase_realtime` publication'ına ekliyor (0016/0018
+  ile aynı koşullu `duplicate_object` kalıbı, tekrar apply patlamaz);
+  (2) `notification_outbox` tip kısıtını `feedback_message` ile genişletiyor
+  (0083 kalıbı: adı ne olursa olsun eski CHECK düşürülüp yenisi adlandırılmış
+  eklenir); (3) `after insert` tetikleyicisi ekliyor.
+- **Yön ayrımı tetikleyicinin özü:** kullanıcı yazdıysa alıcılar `app_admins`,
+  yönetici yazdıysa bilet sahibi. `recipient.user_id is distinct from
+  new.sender_id` filtresi, yöneticinin aynı zamanda bilet sahibi olduğu
+  durumu da kapatıyor — gönderen kendi mesajının push'unu almıyor.
+- **Sessiz bir ikinci arıza yakalandı:** `_push_type_enabled` bilinmeyen tipte
+  `invalid_push_notification_type` fırlatıyor. Yalnız tetikleyici eklenseydi
+  `claim_push_deliveries` her turda patlar ve **hiçbir** bildirim gitmezdi.
+  Fonksiyon yeni tiple birlikte yeniden tanımlandı. `feedback_message` için
+  ayrı cihaz bayrağı **bilerek** açılmadı: bu bir yayın değil, kullanıcının
+  kendi açtığı biletin yanıtıdır; duyuru bayrağına bağlanırsa duyuruları
+  kapatan kullanıcı destek yanıtını da kaçırır. Sessiz saatler yine geçerli.
+- **Edge Function'a dokunulmadı.** `dispatch-push` bilinmeyen tipleri genel
+  daldan (`payload.title` / `payload.body`) üretiyor, bu yüzden yük o iki alanı
+  taşıyor. `0116` dersi korundu: **data-only**, `android.notification` bloğu
+  eklenmedi.
+- **Head üç yerde:** `deploy-contract.json` `local_migration_head` → `0117`;
+  `001_schema_contract.test.sql` → 117 / `0117`; `guard.tests.ps1` gerekçe notu.
+  🔴 Staging ve production head'leri **bilerek `0116`da bırakıldı** — `0117`
+  hiçbir ortama uygulanmadı ve bu kart hiçbir kapı açmıyor. Dört deploy/release
+  bayrağı `false`.
+- **Kapılar:** `guard.tests.ps1` **75/75** · `release-preflight.tests.ps1`
+  **8/8** (beta senaryosu "yerel head 0117 staging 0116'nın önünde" diyerek
+  doğru biçimde fail-closed düşüyor) · `flutter test` **1590/1590** ·
+  `flutter analyze` 0 uyarı · l10n OK.
+- **🔴 `Replay bekliyor`:** Docker bu hostta kalkmıyor, yerel pgTAP replay
+  koşulamadı. Kanıt Database Gates workflow'unun local replay job'ından alınır.
+- **Test dosyası adı kartla farklı:** kart `039_feedback_message_push.test.sql`
+  diyordu ama 039–042 aradan geçen WP'lerle dolmuş; dosya
+  `supabase/tests/043_feedback_message_push.test.sql` olarak açıldı (**9 pgTAP
+  iddiası**: publication üyeliği, tip kısıtı, `_push_type_enabled`, iki yönde
+  alıcı doğruluğu, gönderene gitmeme ve yük alanları).
+- **İstemci değişmedi:** `watchTicketMessages` zaten `.stream()` kullanıyor
+  ([supabase_admin_repository.dart:463](app/lib/data/repositories/supabase/supabase_admin_repository.dart:463));
+  akış tablo yayına girer girmez çalışacak. Gönderim sonrası elle `refetch`
+  eklenmedi — kök neden sunucudaydı, istemci yaması alıcının ekranını yine
+  donuk bırakırdı.
 
 #### WP-486 — Yönetici yüzeyi: arayüz ve akış revizyonu
 

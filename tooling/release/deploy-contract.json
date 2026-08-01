@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0116",
+  "local_migration_head": "0117",
   "staging": {
     "migration_head": "0116",
     "deploy_enabled": false,
