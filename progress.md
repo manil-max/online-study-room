@@ -5422,10 +5422,10 @@ tekrar tutulmaz.
   mevcut sorun) · ⏳ cihaz kabulü: 2 gruplu hesapta uyarı + nokta görülüyor,
   seçim sonrası ikisi de kayboluyor.
 
-## 🗺️ Faz F4 — v57 sahip geri bildirimi (WP-477…WP-486)
+## 🗺️ Faz F4 — v57 sahip geri bildirimi (WP-477…WP-488)
 
 > **Kaynak:** `docs/V57-SAHIP-GERI-BILDIRIM-RAPORU.md` (1 Ağustos 2026, ham kayıt
-> V57-N01…N09). Bu faz o raporun **teşhis edilmiş** karşılığıdır: her kart
+> V57-N01…N12). Bu faz o raporun **teşhis edilmiş** karşılığıdır: her kart
 > belirtiyi değil, kodda doğrulanmış kök nedeni taşır.
 >
 > 🔴 **Faz açılırken kapı durumu:** migration head üç ortamda da `0116`;
@@ -5804,13 +5804,18 @@ tekrar tutulmaz.
   bastırma penceresi dolunca uyarı **tekrar** çıkıyor (yalnız "bir kez göster"
   regresyonu bu iddiayla kapanır) · çalışmayan üyede davranış değişmedi.
 
-#### WP-485 — Yönetici konuşması: gönderen kendi mesajını görmüyor, iki yönde push yok
+#### WP-485 — Yönetici konuşması: realtime yok, push yok, bildirim çok geç
 
 - **Durum / bağımlılık:** [ ] Bekliyor · Migration içerir (`0117`). WP-486 ile
   **aynı anda verilmez**.
-- **Belirti (V57-N09 sistem yarısı):** Yönetici mesaj gönderiyor, mesaj karşıya
-  gidiyor ama **kendi ekranında görünmüyor**; ayrıca ne karşı tarafa ne de
-  yöneticiye bildirim düşüyor.
+- **Belirti (V57-N09 sistem yarısı + V57-N10):** Yönetici mesaj gönderiyor, mesaj
+  karşıya gidiyor ama **kendi ekranında görünmüyor**; ne karşı tarafa ne de
+  yöneticiye bildirim düşüyor; düşen bildirimler de **çok geç** geliyor.
+- **🔴 N10 ayrı bir arıza değil, aynı kökün üçüncü yüzü.** "Geç geliyor" denen
+  şey gecikme değil, **yokluk**tur: canlı yayın olmadığı için mesaj ancak ekran
+  yeniden veri çektiğinde (sekme değişimi, ekran açılışı, uygulama yeniden
+  başlatma) görünür. Kullanıcı bunu "geç geldi" diye okur. Ayrı kart açılmaz;
+  bu kartın kabulüne **gecikme ölçümü** eklenir.
 - **Kök neden 1 — tablo realtime yayınında değil (kodda doğrulandı):**
   `watchTicketMessages` Supabase `.stream()` kullanıyor
   ([`supabase_admin_repository.dart:459-477`](app/lib/data/repositories/supabase/supabase_admin_repository.dart:459)),
@@ -5853,7 +5858,9 @@ tekrar tutulmaz.
   için** outbox satırı doğuruyor, gönderen için doğurmuyor · üç head pini hizalı
   (`guard.tests.ps1` yeşil) · `Replay bekliyor` etiketi ve Database Gates local
   replay job kanıtı · cihazda: yönetici mesajı kendi ekranında **anında**
-  görünüyor, karşı tarafa bildirim düşüyor.
+  görünüyor, karşı tarafa bildirim düşüyor · **gecikme ölçülür**: mesaj
+  gönderiminden karşı cihazda görünmesine kadar geçen süre kaydedilir (V57-N10
+  yalnız bu ölçümle kapanır; "artık hızlı" demek kanıt değildir).
 
 #### WP-486 — Yönetici yüzeyi: arayüz ve akış revizyonu
 
@@ -5884,15 +5891,119 @@ tekrar tutulmaz.
   tercih mi" ayrımı var · sahip sırayı seçti · seçilen ilk iş için ayrı kabul
   ölçütü yazıldı.
 
+#### WP-487 — Grup üye satırı: ünvan satırı şişirmesin
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. WP-483/WP-484 ile **aynı anda
+  verilmez** (üçü de `class_detail_screen.dart`).
+- **Belirti (V57-N11):** Ünvan eklendikten sonra bir üye listede dört satır
+  kaplayabiliyor (`ad1 / ad2 / ünvan1 / ünvan2`).
+- **Kök neden (kodda doğrulandı):** Satırdaki **hiçbir metnin** satır sınırı yok.
+  `title: Text(m.displayName)` sarmalayıcısız
+  ([`class_detail_screen.dart:880-887`](app/lib/features/classroom/widgets/class_detail_screen.dart:880));
+  alt metin ise `Column` içinde ikinci bir sarmalanabilir `Text`
+  ([`class_detail_screen.dart:959-980`](app/lib/features/classroom/widgets/class_detail_screen.dart:959)).
+  Uzun ad 2 satıra, uzun ünvan 2 satıra çıkar → 4 satır. Grup sahibinde
+  `classroomYonetici` **ayrı bir üçüncü** `Text` olarak eklendiği için aynı üye
+  **5 satıra** çıkabilir.
+- **Ölçüm notu:** `ListTile` yüksekliği içeriğe göre büyüdüğü için liste
+  satırları farklı yükseklikte olur; sahibin "güzel durmuyor" dediği şey bu
+  düzensizliktir, yalnız uzunluk değil.
+- **Yapılacak:** Ad tek satır + `TextOverflow.ellipsis`. Ünvan ve "Yönetici"
+  **tek bir alt satırda** birleşsin (ünvan `Flexible` + ellipsis, yönetici
+  işareti kısa ve sabit genişlikte). Satır yüksekliği ad/ünvan uzunluğundan
+  **bağımsız** olsun. Ünvanı tamamen okumak isteyen zaten satıra dokununca
+  profil kartını açıyor (`SocialProfileDialog.show`) — bilgi kaybı yok.
+- **Kapsam dışı:** Ünvan seçimi (WP-478/479), avatar, taç göstergesi, dürtme ve
+  yönetici eylem düğmeleri.
+- **Sahip yollar:** `app/lib/features/classroom/widgets/class_detail_screen.dart`,
+  `app/test/features/classroom/member_row_layout_test.dart` (yeni).
+- **Kabul (DoD):** Çok uzun ad + çok uzun ünvan + yönetici işareti bir arada
+  iken satır **iki satırı aşmıyor** · listedeki bütün satırlar aynı yükseklikte ·
+  ad ve ünvan ellipsis ile kesiliyor, taşma (overflow) uyarısı yok · dar telefon
+  genişliğinde ve büyük yazı tipi ölçeğinde de geçerli.
+
+#### WP-488 — Ana ekran üst şeridini kaldır; düzenlemeyi uzun basmaya taşı
+
+- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. Migration içerir (SSS satırı);
+  numara **uygulama anında en yüksek** olan alınır (`0117` WP-485'e ayrıldı).
+- **🔴 Sahip kararı (bağlayıcı, V57-N12):** Üst şerit ve düzenle butonu
+  **kalkacak**, ilk kart doğrudan üstten başlayacak. Yerine **yeni buton
+  konmayacak**. Giriş yolu uzun basmadır; keşfedilebilirlik tanıtım turu + SSS
+  ile sağlanır.
+- **Kök neden (kodda doğrulandı):** Şerit `buildTabActionBar` ile kuruluyor
+  ([`home_screen.dart:300-333`](app/lib/features/home/home_screen.dart:300)) ve
+  görüntüleme modunda **tek** eylem taşıyor: düzenle simgesi
+  ([`:325-331`](app/lib/features/home/home_screen.dart:325)). `buildTabActionBar`
+  zaten "eylem yoksa `null` dön" sözleşmesine sahip
+  ([`tab_action_bar.dart:14-22`](app/lib/core/navigation/tab_action_bar.dart:14)),
+  yani tek eylemi kaldırmak şeridi **kendiliğinden** yok eder ve gövde üst güvenli
+  alanı kendisi taşır. Sahibin gördüğü boşluk bu 48 px'lik şerit + durum çubuğu
+  payıdır.
+- **Uzun basma zaten var:** Kart uzun basınca düzenleme moduna giriliyor
+  ([`home_screen.dart:780-781`](app/lib/features/home/home_screen.dart:780)
+  `onLongPress` / `onSecondaryTap` → `_setEditing(true)`), yani sahibin "menü
+  açılıyor zaten" tespiti doğru; yeni etkileşim yazılmayacak.
+- **🔴 Kaldırmanın iki sessiz sonucu — ikisi de bu kartın kapsamındadır:**
+  1. **Tanıtım turu balonunun çapası kayboluyor.** `AppTours.home(...)` adımı
+     `editAnchor` ile o butona bağlı
+     ([`home_screen.dart:113`](app/lib/features/home/home_screen.dart:113));
+     buton gidince balon çapasız kalır. `TourStep.anchor` **nullable** ve
+     `null` iken balon ekranın ortasında hedefsiz gösteriliyor
+     ([`tour_models.dart:19-21`](app/lib/core/tour/tour_models.dart:19)) — sahibin
+     "tanıtım turunda ana ekrana yazsak yeter" dediği şey tam olarak budur.
+     Adım metni "kartlara uzun bas" davranışını **açıkça** söylemeli; eski metin
+     butonu tarif ediyorsa yeniden yazılır. `AppTours.home` imzasından
+     `editAnchor` düşer.
+  2. **Boş pano hâli.** Hiç kart yokken `_EmptyDashboard(onEdit: …)` gövdenin
+     içinde kendi eylemini taşıyor
+     ([`home_screen.dart:136`](app/lib/features/home/home_screen.dart:136)),
+     yani kullanıcı kartsız durumda **kilitlenmiyor**. Bu yol korunur; aksi
+     hâlde ilk açılışta çıkış yolu kalmaz.
+- **Düzenleme modu şeridi KALIR.** Kaldırılan yalnız **görüntüleme** modundaki
+  şerittir. Düzenlemede Bitti / yukarı topla / sıfırla / kart ekle eylemleri
+  yerinde durur; onlar uzun basmayla erişilemez.
+- **Masaüstü ayrı yüzeydir.** `home_screen.dart:240-286` masaüstü/geniş ekran
+  şeridi ayrı bir daldır ve orada uzun basma birincil etkileşim değildir; **bu
+  kart masaüstü şeridine dokunmaz**. Sahibin isteği telefon ana ekranı içindir.
+- **SSS satırı:** `faq_entries` sunucudan besleniyor ve `0091` içinde
+  migration ile seed ediliyor
+  ([`0091_faq.sql:64`](supabase/migrations/0091_faq.sql:64)); yeni soru da aynı
+  yolla, **TR ve EN birlikte**, `on conflict` güvenli biçimde eklenir. Yalnız
+  TR eklemek EN kullanıcıda eksik SSS bırakır.
+- **Sahip yollar:** `app/lib/features/home/home_screen.dart`,
+  `app/lib/features/tours/app_tours.dart`, `app/lib/l10n/app_en.arb`,
+  `app/lib/l10n/app_tr.arb`,
+  `supabase/migrations/0118_faq_home_edit.sql` (numara uygulama anında
+  doğrulanır), `supabase/tests/001_schema_contract.test.sql`,
+  `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`,
+  ilgili widget/tur testleri.
+- **Kabul (DoD):** Telefon ana ekranında görüntüleme modunda **hiç app bar
+  kurulmuyor** (`buildTabActionBar` `null` döndüğü testle sabitlenir — "boşluk
+  küçüldü" demek yetmez) · ilk kart üst güvenli alanın hemen altından başlıyor ·
+  düzenleme modunda dört eylem hâlâ erişilebilir · uzun basma düzenlemeye
+  giriyor · tanıtım turu adımı çapasız gösteriliyor ve metni uzun basmayı
+  söylüyor · boş pano hâlinde çıkış yolu duruyor · masaüstü şeridi değişmedi ·
+  SSS satırı TR + EN eklendi, head üç yerde hizalı, `Replay bekliyor` etiketi.
+
 ### Faz F4 sırası
 
 **Şimdi verilebilir (bağımsız, çakışmayan):** WP-477 · WP-478 · WP-480 · WP-481 ·
-WP-483 · WP-485.
+WP-485 · WP-487 · WP-488.
 
-**Beklemeli:** WP-479 (WP-478'den sonra — aynı dosya) · WP-484 (WP-477'den sonra —
-aynı yüzey) · WP-486 (WP-485'ten sonra) · WP-482 (sahibin iki cihazı hazır olunca).
+**Beklemeli:** WP-479 (WP-478'den sonra — aynı dosya) · WP-483 ve WP-484
+(WP-477'den sonra; üçü de `class_detail_screen.dart`'a dokunduğu için
+WP-487 · WP-483 · WP-484 **art arda**, asla aynı anda) · WP-486 (WP-485'ten
+sonra) · WP-482 (sahibin iki cihazı hazır olunca).
 
-Hiçbir F4 kartı production/stable kapısı açmaz. WP-485 dışında migration yoktur.
+🔴 **Sıcak dosya:** `class_detail_screen.dart` bu fazda **üç** kart tarafından
+sahiplenilir (WP-483 · WP-484 · WP-487). Tek ajan modelinde lane kilidi yok, ama
+bu üç kart aynı commit'e karışırsa hangi düzeltmenin neyi bozduğu okunamaz —
+her biri ayrı commit, sırayla.
+
+**Migration:** yalnız iki kart üretir — WP-485 (`0117`, realtime + push) ve
+WP-488 (SSS satırı; numara uygulama anında en yüksek olan). İkisi de head'i
+**üç yerde birden** ilerletir ve `Replay bekliyor` etiketiyle teslim edilir.
+Hiçbir F4 kartı production/stable kapısı açmaz.
 
 ## Bekleyen Uygulanabilir WP'ler
 
@@ -5923,7 +6034,7 @@ Hiçbir F4 kartı production/stable kapısı açmaz. WP-485 dışında migration
 
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
 kartlar worker'a verilir. 🔴 **Güncel ürün sırası artık Faz F4'tür**
-(v57 sahip geri bildirimi, WP-477…WP-486); sıra ve çakışma kuralları o fazın
+(v57 sahip geri bildirimi, WP-477…WP-488); sıra ve çakışma kuralları o fazın
 **Faz F4 sırası** başlığındadır. Aşağıdaki F3 dalgaları tarihsel kayıttır
 (v49 sonrası sekiz
 sahip bulgusunun tamamı).

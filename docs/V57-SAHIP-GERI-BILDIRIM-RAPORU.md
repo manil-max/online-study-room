@@ -96,6 +96,35 @@ gitmedi. Bana da 'mesaj geldi' diye bildirim gelmedi bu arada. Admin tarafında
 iyileştirmeler var ama hâlâ sorunlar var; arayüzden tut sisteme kadar bunlarda
 daha iyi profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
 
+### V57-N10 — Yönetici/geri bildirim mesaj bildirimleri çok geç geliyor
+
+"Bir de geri bildirim mesajı, admin kısmı, alan bildirimleri çok geç geliyor —
+orayı adam akıllı yapacağım dedin zaten."
+
+### V57-N11 — Ünvan, grup üyeler listesinde satırı şişiriyor
+
+"Bu ünvanı ekliyoruz ya, grupta üyeler kısmında güzel durmayabiliyor. Mesela bir
+örnek:
+
+```
+ad1
+ad2
+ünvan1
+ünvan2
+```
+
+böyle 4 satır olan üye var."
+
+### V57-N12 — Ana ekranın en üstündeki boşluk ve düzenle butonu kalksın
+
+"Ana ekranın en üst kısmı boş — resme bak. Sağ üstteki 'ana ekranı düzenle'
+butonuna bir ayar çekelim, oradaki boşluğu kaldıralım, direkt kartlar başlasın.
+Kartların üstüne basılı tutunca menü açılıyor zaten. Bunu tanıtım turunda ana
+ekrana yazsak yeter bence, bir de tabii ki SSS. Ek butona gerek yok."
+
+*(Ekran görüntüsü: durum çubuğunun altında, ilk kartın üstünde yaklaşık bir
+şerit yüksekliğinde boş alan ve sağ üstte tek bir düzenle simgesi.)*
+
 ---
 
 ## 4. Normalize edilmiş belirti kaydı
@@ -114,6 +143,9 @@ daha iyi profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
 | V57-N07 | Grup yüzeyinde sessize alma göstergesi/eylemi yok | Doğrudan gözlem | Orta |
 | V57-N08 | Dürtme reddi uyarısı: dil + yalnız bir kez görünme | Doğrudan gözlem | Yüksek |
 | V57-N09 | Yönetici konuşması: gönderenin kendi mesajı görünmüyor, iki yönde push yok | Doğrudan gözlem | Kritik |
+| V57-N10 | Yönetici/geri bildirim mesaj bildirimi çok geç | Doğrudan gözlem | Kritik (N09 ile aynı kök) |
+| V57-N11 | Ünvan üye satırını 4 satıra çıkarıyor | Doğrudan gözlem | Orta |
+| V57-N12 | Ana ekran üst şeridi ve düzenle butonu kaldırılsın | Ürün kararı | Orta |
 
 ### 4.1 Sahibin bağlayıcı kararları
 
@@ -127,6 +159,10 @@ daha iyi profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
    gibi, butonun bulunduğu yerde açılan seçenek listesi olacak.
 5. **Yönetici tarafı ayrı ve titiz bir çalışma gerektirir**; tek tek yama
    yerine arayüz ve sistem birlikte ele alınacaktır.
+6. **Ana ekranda üst şerit ve düzenle butonu kaldırılacaktır.** İlk kart doğrudan
+   ekranın üstünden başlar. Düzenlemeye giriş **kartlara uzun basmakla** olur;
+   yerine yeni bir buton **konmayacaktır**. Keşfedilebilirlik tanıtım turunun ana
+   ekran adımı ve SSS ile sağlanır.
 
 ## 5. Bu rapor ne değildir
 
