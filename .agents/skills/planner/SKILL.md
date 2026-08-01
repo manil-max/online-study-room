@@ -81,7 +81,7 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 - **Ajan:** — (atanınca lane doldurur)
 - **Durum:** [ ] Bekliyor
 - **Problem:** Ne çözülüyor, kullanıcı beklentisi ne.
-- **Kapsam dışı:** Bu WP'nin YAPMAYACAĞI şeyler (scope creep kalkanı).
+- **Kapsam dışı:** Bu WP'nin YAPMAYACAĞI şeyler (scope creep kalkanı). **Boş bırakılamaz** — worker'ın diff'i bu listeye karşı denetlenir (AGENTS.md §2 Kapsam Disiplini, §3 DoD).
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/.../x.dart`
   - `supabase/migrations/00NN_ad.sql` (yeni)

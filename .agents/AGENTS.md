@@ -171,6 +171,15 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 - Local replay/test yalnız `tooling/supabase/local.ps1`; remote list/dry-run/push yalnız `tooling/supabase/remote.ps1` veya protected `Database Gates` workflow'u üzerinden yapılır. Doğrudan remote Supabase CLI komutu çalıştırıp hedef/kanıt kapılarını atlamak yasaktır.
 - `tooling/release/deploy-contract.json` içindeki HOLD veya `deploy_enabled` / `release_enabled` kapısı test ve kabul kanıtı olmadan değiştirilmez; workflow'u geçirmek için geçici bypass, sahte head/backup/GO girdisi yazılmaz.
 
+### Kapsam Disiplini (kod şişmesine karşı)
+
+- **Sadece istenen kadarı.** İstenmemiş özellik, "ileride lazım olur" parametresi, tek kullanımlık soyutlama, gerçekleşmesi imkânsız senaryo için hata yolu yazılmaz. Genişletme ihtiyacı görüyorsan kod yazma — `progress.md`'ye not düş, teslim özetinde bildir.
+- **Diff izlenebilirliği.** Değişen her satır, WP kartındaki yazılı kabul kriterlerinden birine izlenebilmelidir. İzlenemiyorsa o satır bu WP'ye ait değildir.
+- **Komşu kodu "iyileştirme" yok.** Alakasız yeniden adlandırma, formatlama, yorum düzeltme, refactor yapılmaz; beğenmediğin mevcut stili taklit et. Fark ettiğin ölü kodu/sorunu **silme, bildir**.
+- **Öksüz temizliği yalnız kendi enkazın.** Senin değişikliğinin kullanılmaz bıraktığı import/değişken/fonksiyonu kaldır; önceden var olan ölü kodu ayrı WP olmadan silme.
+- **Uzunluk bir tasarım sinyalidir.** Aynı kabul kriterini belirgin biçimde daha az kodla karşılayabiliyorsan, teslim etmeden önce yeniden yaz. "NNN satır yazdım" bir başarı ölçütü değildir.
+- Bu başlık `§0.1`'e karşı gerekçe değildir: proje sahibi açıkça geniş kapsam isterse kapsam odur.
+
 ### Dil & Stil
 - Kullanıcıya görünen metin **Türkçe**; kod/teknik isim İngilizce. Gün sınırı her yerde **Europe/Istanbul** (tek yardımcıdan).
 - Kullanıcıya yanıt: Türkçe, sade, jargonu çevir.
@@ -182,6 +191,7 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 Bir WP "Kod tamamlandı"yı geçmek için:
 - [ ] Kabul kriterleri **yazılı** ve tek tek doğrulandı (ölçülebilir; "profesyonel" gibi ifade değil — bkz. KALITE-PROGRAMI §4.4).
 - [ ] **Ölü anahtar yok** — her kontrol gerçek etki üretir.
+- [ ] **Kapsam dışı satır yok** — `git diff` içindeki her değişiklik yazılı kabul kriterlerinden birine izlenir; alakasız refactor/format/yeniden adlandırma içermez (§2 Kapsam Disiplini).
 - [ ] `flutter analyze` **0 uyarı**; ilgili `flutter test` yeşil.
 - [ ] Yeni mantık **birim/integration** testiyle örtülü; tema/görsel değişikliği **golden** ile.
 - [ ] Boş/hata/çevrimdışı durumları ele alındı.

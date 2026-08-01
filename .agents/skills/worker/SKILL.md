@@ -76,6 +76,7 @@ Her WP birinci sınıf çıktı üretir. Uygularken:
 
 - **Kabul kriterleri ölçülebilir.** "Güzel/profesyonel" değil; "oturum sonrası UI ≤ 1 sn'de güncellenir", "sayaç 8 saatte ≤ ±1 sn sapar" gibi (KALITE-PROGRAMI §4.4). Kart kabul kriteri belirsizse **netleştir, gerekirse sor.**
 - **Ölü anahtar yasak.** Eklediğin her düğme/ayar gerçekten çalışır.
+- **En az kod.** Kabul kriterinin gerektirmediği özellik/soyutlama/konfigürasyon yazılmaz; diff'teki her satır bir kabul kriterine izlenir. Alakasız komşu kodu düzeltme — gördüğün sorunu silme, teslim özetinde bildir (AGENTS.md §2 "Kapsam Disiplini").
 - **Referans kıyası.** Kıyaslanan davranışı (ör. Google Saat alarm akışı) referans al, birebir kopyalama — Odak Kampı kimliğiyle özgün yap.
 - **Platform sınırlarına saygı.** Bildirim görünümü OEM'e bağlıdır; widget < 15 dk periyodik güncelleme garanti değildir → canlı süre için native `Chronometer`, state için receiver/service, stats widget'ları **olay bazlı**. Saniyede bir Flutter yeniden çizme yok.
 - **Boş/hata/çevrimdışı** her ekranda düşünülür.
@@ -143,6 +144,11 @@ flutter analyze                       # 0 uyarı (bayraksız)
 flutter test                          # yeşil
 flutter test --tags golden            # tema/görsel değiştiyse
 ```
+```bash
+git diff --stat                       # kapsam denetimi
+```
+`git diff`'i **satır satır** oku: kabul kriterine izlenmeyen her satırı geri al (alakasız format/refactor/yeniden adlandırma dahil).
+
 Hatayla **commit atma** — önce düzelt. Mümkünse gerçek cihaz kanıtı (ekran görüntüsü/video) topla.
 
 ### 2. Durumu güncelle + LANE'İ BIRAK (iki olasılık)
@@ -194,3 +200,6 @@ Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kan
 | SQL dosyasını string-test etmek | Gerçek local PostgreSQL replay + davranış/RLS/invariant testi çalıştır |
 | Presence `group_id` | KORUNUYOR — dokunma |
 | Sıcak dosyaya (pubspec/theme/main) sessiz giriş | WP'de yazılı değilse dur ve sor |
+| İstenmeyen özellik/soyutlama eklemek | Yalnız kabul kriterinin gerektirdiği kod; fazlasını `progress.md`'ye not düş |
+| Alakasız dosyayı "toparlamak" | Diff'teki her satır kabul kriterine izlenmeli; komşu refactor ayrı WP |
+| Başkasının ölü kodunu silmek | Yalnız kendi yarattığın öksüzleri temizle; eskisini bildir, silme |
