@@ -5805,8 +5805,8 @@ tekrar tutulmaz.
 
 #### WP-484 — Çalışan üyeyi dürtme denemesi sessiz kalıyor
 
-- **Durum / bağımlılık:** [ ] Bekliyor · WP-477 ile **aynı anda verilmez** (ikisi
-  de dürtme hata yüzeyine dokunur). Sıra: WP-477 → WP-484.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
+  WP-477'den sonra yapıldı.
 - **Belirti (V57-N08 davranış yarısı):** "Bir kere çıktı, daha çıkmadı. Her
   denediğinde araya bir delay koyup uyarıyı göstermek lazım."
 - **Kök neden (kodda doğrulandı):** İki farklı yol var ve ikincisi sessiz.
@@ -5835,6 +5835,26 @@ tekrar tutulmaz.
   görünür açıklama veriyor · art arda dokunuşta uyarı üst üste yığılmıyor ·
   bastırma penceresi dolunca uyarı **tekrar** çıkıyor (yalnız "bir kez göster"
   regresyonu bu iddiayla kapanır) · çalışmayan üyede davranış değişmedi.
+- **Sonuç (2026-08-01):** Dürtme düğmesi satır içinde kurulan `IconButton`
+  olmaktan çıkıp kendi durumunu taşıyan `_NudgeButton`a dönüştü (üye kimliğiyle
+  `ValueKey`). `onPressed` artık yalnız **oturum yokken** null; çalışan üyede
+  düğme etkin ve dokununca `classroomStudyingNudgeUnavailable` SnackBar olarak
+  çıkıyor. Sunucuya çağrı yok — kapı istemcide kaldı.
+- **Bastırma penceresi sabit süre değil, uyarının kendi ömrü.** `_notice` alanı
+  ekrandaki `ScaffoldFeatureController`ı tutuyor; `notice.closed` tamamlanınca
+  temizleniyor. Böylece "yığılmasın" ile "her seferinde çıksın" aynı mekanizmadan
+  geliyor ve testte sahte saat gerekmiyor (uyarı kapanınca aynı üyeye tekrar
+  dokunmak yeniden gösteriyor).
+- **Mutasyon kanıtı:** `onPressed`'e `|| widget.isRecipientStudying` geri
+  eklendiğinde (eski davranış) yeni testin **3'ü birden kırmızı** oluyor; kod
+  geri alındı ve çalışma ağacı temiz bırakıldı.
+- **Ölçüm:** yeni `app/test/features/classroom/nudge_studying_feedback_test.dart`
+  **4 test** · tam paket **1559/1559 yeşil** (öncesi 1555) · `flutter analyze`
+  0 uyarı · `python scripts/l10n_audit.py` OK.
+- **Test tuzağı kayda geçti:** `ScaffoldMessenger` görünürlük sayacını ancak
+  giriş animasyonu bitince kuruyor. Tek büyük `pump(6 sn)` ile atlanırsa sayaç
+  hiç kurulmaz ve test "uyarı kapanmadı" diye yanlış yere düşer; önce
+  `pump(750 ms)`, sonra `pump(5 sn)` gerekiyor.
 
 #### WP-485 — Yönetici konuşması: realtime yok, push yok, bildirim çok geç
 

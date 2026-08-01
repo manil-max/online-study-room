@@ -903,16 +903,10 @@ class _MembersCard extends ConsumerWidget {
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              tooltip: studyingIds.contains(m.id)
-                                  ? l10n.classroomStudyingNudgeUnavailable
-                                  : l10n.classroomDurt,
-                              icon: const Icon(
-                                Icons.notifications_active_outlined,
-                              ),
-                              onPressed:
-                                  currentUser == null ||
-                                      studyingIds.contains(m.id)
+                            _NudgeButton(
+                              key: ValueKey('nudge-${m.id}'),
+                              isRecipientStudying: studyingIds.contains(m.id),
+                              onSend: currentUser == null
                                   ? null
                                   : () => _sendNudge(
                                       context,
@@ -1057,6 +1051,73 @@ class _MembersCard extends ConsumerWidget {
     } on NudgeException catch (error) {
       messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
     }
+  }
+}
+
+/// WP-484: grup üye satırındaki dürtme düğmesi.
+///
+/// Alıcı çalışıyorken düğme eskiden `onPressed: null` ile **devre dışıydı**.
+/// Devre dışı `IconButton` dokunmaya hiç tepki vermez ve açıklama yalnız
+/// `tooltip`te durur; tooltip ise mobilde uzun basmayla çıkar. Kullanıcı
+/// dokunuyor, hiçbir şey olmuyordu — sahibin "bir kere çıktı, daha çıkmadı"
+/// dediği davranış budur (V57-N08).
+///
+/// Düğme artık etkin ve dokununca açıklamayı gösteriyor. Sunucuya **çağrı
+/// yapılmaz**: kapı istemcide kalır, aksi hâlde spam koruması boşa çıkar.
+class _NudgeButton extends StatefulWidget {
+  const _NudgeButton({
+    super.key,
+    required this.isRecipientStudying,
+    required this.onSend,
+  });
+
+  final bool isRecipientStudying;
+
+  /// `null` ise oturum yok — düğme gerçekten devre dışıdır.
+  final VoidCallback? onSend;
+
+  @override
+  State<_NudgeButton> createState() => _NudgeButtonState();
+}
+
+class _NudgeButtonState extends State<_NudgeButton> {
+  /// Ekranda duran açıklama. Art arda dokunuşta SnackBar kuyruğunun şişmemesi
+  /// için bastırma penceresi sabit bir süre değil, **uyarının kendi ömrüdür**:
+  /// uyarı kapanır kapanmaz aynı üye için yeniden gösterilebilir.
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _notice;
+
+  void _handlePressed() {
+    final onSend = widget.onSend;
+    if (onSend == null) return;
+    if (!widget.isRecipientStudying) {
+      onSend();
+      return;
+    }
+    if (_notice != null) return;
+    final notice = ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).classroomStudyingNudgeUnavailable,
+        ),
+      ),
+    );
+    _notice = notice;
+    notice.closed.whenComplete(() {
+      if (!mounted) return;
+      if (identical(_notice, notice)) _notice = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return IconButton(
+      tooltip: widget.isRecipientStudying
+          ? l10n.classroomStudyingNudgeUnavailable
+          : l10n.classroomDurt,
+      icon: const Icon(Icons.notifications_active_outlined),
+      onPressed: widget.onSend == null ? null : _handlePressed,
+    );
   }
 }
 
