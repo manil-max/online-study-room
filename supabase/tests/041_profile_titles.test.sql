@@ -79,12 +79,12 @@ values (:'alpha', :'beta');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :'alpha', true);
-select is_null(
+select ok(
   (
     select title_achievement_id
     from public.group_member_directory(:'grp'::uuid)
     where id = :'beta'
-  ),
+  ) is null,
   'engellenen üyenin ünvanı ad ve avatarla birlikte anonimleştirilir'
 );
 select is(

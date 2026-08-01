@@ -7,8 +7,8 @@ select plan(57);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  114,
-  'all 114 migrations are recorded'
+  116,
+  'all 116 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
