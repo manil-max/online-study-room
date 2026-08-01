@@ -28,14 +28,14 @@ final _recipient = Profile(
 );
 
 Map<String, dynamic> _nudgeRow() => {
-      'id': 'n1',
-      'group_id': 'g1',
-      'sender_id': 'u1',
-      'recipient_id': 'u2',
-      'message': 'hadi',
-      'created_at': '2026-08-01T10:00:00Z',
-      'read_at': null,
-    };
+  'id': 'n1',
+  'group_id': 'g1',
+  'sender_id': 'u1',
+  'recipient_id': 'u2',
+  'message': 'hadi',
+  'created_at': '2026-08-01T10:00:00Z',
+  'read_at': null,
+};
 
 void main() {
   late SupabaseWireHarness wire;
@@ -65,17 +65,17 @@ void main() {
     // ayirt edememeli, yoksa suzgeci atlayabilir. Sunucu normal satir
     // dondurur; repository de normal davranmali.
     test('susturulmus alicida da normal durtme donulur (istemci ayirt edemez)',
-        () async {
-      wire.respond('send_nudge', _nudgeRow());
-      final repo = SupabaseNudgeRepository(wire.client());
+      () async {
+        wire.respond('send_nudge', _nudgeRow());
+        final repo = SupabaseNudgeRepository(wire.client());
 
-      final nudge = await repo.sendNudge(
-        groupId: 'g1',
-        sender: _sender,
-        recipient: _recipient,
-      );
+        final nudge = await repo.sendNudge(
+          groupId: 'g1',
+          sender: _sender,
+          recipient: _recipient,
+        );
 
-      expect(nudge.id, 'n1');
+        expect(nudge.id, 'n1');
     });
 
     test('mesajsiz durtmede p_message null gider', () async {
@@ -95,7 +95,8 @@ void main() {
     // Eslemenin her dali ayri ayri sinaniyor; biri kayarsa ham sunucu
     // metni ekrana dusrer.
     for (final entry in const {
-      'nudge_cooldown': '10 dakikada bir',
+      'nudge_cooldown': '20 dakikada bir',
+      'recipient_is_studying': 'şu an çalışıyor',
       'cannot_nudge_self': 'Kendine dürtme',
       'not_group_member': 'yetkin yok',
       'nudge_blocked': 'Engellenen kullanıcıyla',
@@ -173,29 +174,29 @@ void main() {
 
   group('SupabaseAchievementRewardRepository', () {
     Map<String, dynamic> reward(String id) => {
-          'id': id,
-          'user_id': 'u1',
-          'achievement_id': 'a1',
-          'tier': 1,
-          'xp_amount': 50,
-          'reason': null,
-          'status': 'pending',
-          'created_at': '2026-08-01T10:00:00Z',
-          'claimed_at': null,
-        };
+      'id': id,
+      'user_id': 'u1',
+      'achievement_id': 'a1',
+      'tier': 1,
+      'xp_amount': 50,
+      'reason': null,
+      'status': 'pending',
+      'created_at': '2026-08-01T10:00:00Z',
+      'claimed_at': null,
+    };
 
     // 🔴 `userId` bilerek kabloya GONDERILMEZ; RPC onu `auth.uid()`den
     // turetir. Gonderilseydi istemci baskasinin odullerini isteyebilirdi.
     test('bekleyen odul listesi userId gondermez (sunucu auth.uid kullanir)',
-        () async {
-      wire.respond('list_pending_achievement_rewards', [reward('r1')]);
-      final repo = SupabaseAchievementRewardRepository(wire.client());
+      () async {
+        wire.respond('list_pending_achievement_rewards', [reward('r1')]);
+        final repo = SupabaseAchievementRewardRepository(wire.client());
 
-      await repo.listPendingRewards(userId: 'u1', limit: 20);
+        await repo.listPendingRewards(userId: 'u1', limit: 20);
 
-      final json = wire.rpc('list_pending_achievement_rewards').json;
-      expect(json.containsKey('p_user_id'), isFalse);
-      expect(json['p_limit'], 20);
+        final json = wire.rpc('list_pending_achievement_rewards').json;
+        expect(json.containsKey('p_user_id'), isFalse);
+        expect(json['p_limit'], 20);
     });
 
     test('sayfa dolmadiginda sonraki imlec uretilmez', () async {

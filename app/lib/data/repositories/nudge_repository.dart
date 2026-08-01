@@ -2,7 +2,21 @@ import '../models/nudge.dart';
 import '../models/nudge_mute.dart';
 import '../models/profile.dart';
 
-const Duration kNudgeCooldown = Duration(minutes: 10);
+/// WP-476: aynı kişiye iki dürtme arasındaki bekleme (sunucu `send_nudge`
+/// ile birebir; migration 0116).
+///
+/// 10 dakikaydı ve kullanıcılar "görev için 10 dk'da bir dürtüyorlar" dedi —
+/// pencere spam'in tam boyuydu, yani davranışı sistem üretiyordu.
+const Duration kNudgeCooldown = Duration(minutes: 20);
+
+/// Cooldown hatasının kullanıcıya gösterilen metni. Tek yerde üretilir ki
+/// süre değişince mesajdaki sayı geride kalmasın.
+String nudgeCooldownMessage() =>
+    'Aynı kişiye ${kNudgeCooldown.inMinutes} dakikada bir dürtme gönderebilirsin.';
+
+/// Alıcı şu an çalışıyorken dürtme reddedilir (sunucu `recipient_is_studying`).
+const String kNudgeRecipientStudyingMessage =
+    'Bu kişi şu an çalışıyor; odağını bölmemek için dürtme kapalı.';
 const int kMaxNudgeMessageLength = 120;
 
 class NudgeException implements Exception {

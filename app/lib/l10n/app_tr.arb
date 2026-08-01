@@ -12,7 +12,7 @@
   "profileBasarimHaftalikGrupBirinciligiKosulu": "{count} haftada grubunda tek başına birinci ol.",
   "profileBasarimGrupHedefKosulu": "Bir grubun aktif üyesiyken {count} farklı gün çalış.",
   "profileBasarimKampAtesiKosulu": "Grubunun en az yarısı (en az 2 kişi) aynı anda çalışırken toplam {count} saat çalış.",
-  "profileBasarimDurtmeKosulu": "Arkadaşlarına {count} kez dürtme gönder.",
+  "profileBasarimDurtmeKosulu": "Dürttüğün kişi 20 dakika içinde çalışmaya başlasın; bunu {count} kez gerçekleştir.",
   "profileBasarimLokomotifKosulu": "Sen başladıktan sonraki 15 dakika içinde {count} kez bir grup arkadaşın da çalışmaya başlasın.",
   "profileBasarimGeceKusuAciklama": "Gece 00:00 ile 04:00 arasında çalışmaya başla ve en az 2 saat çalış.",
   "profileBasarimGunDogumuAciklama": "Sabah 05:00 ile 07:00 arasında çalışmaya başla ve en az 1 saat çalış.",
@@ -953,7 +953,7 @@
   "coreCelikIrade": "Çelik İrade",
   "coreTekOturumDakika": "Tek oturum dakika",
   "coreIlhamKaynagi": "İlham Kaynağı",
-  "coreDurtmeDonusumu": "Gönderdiğin dürtme sayısı",
+  "coreDurtmeDonusumu": "20 dakika içinde çalışmaya dönüşen dürtmeler",
   "profileOcak": "Ocak",
   "profileSubat": "Şubat",
   "profileMart": "Mart",
@@ -1921,5 +1921,6 @@
   "profileOnlyEarnedTitles": "Yalnızca kazandığın başarımları ünvan olarak kullanabilirsin.",
   "profileRemoveTitle": "Ünvanı kaldır",
   "profileTitleUpdated": "Profil ünvanın güncellendi.",
-  "profileTitleUpdateFailed": "Ünvan güncellenemedi. Yalnızca kazandığın bir başarımı seçebilirsin."
+  "profileTitleUpdateFailed": "Ünvan güncellenemedi. Yalnızca kazandığın bir başarımı seçebilirsin.",
+  "classroomStudyingNudgeUnavailable": "Bu kişi şu an çalışıyor; odağını bölmemek için dürtme kapalı."
 }

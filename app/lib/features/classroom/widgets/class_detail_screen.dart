@@ -14,12 +14,14 @@ import '../../../core/time_engine/group_time_zone_label.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../core/widgets/crowned_avatar.dart';
+import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/report_target.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/nudge_providers.dart';
+import '../../../data/providers/presence_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
@@ -851,6 +853,11 @@ class _MembersCard extends ConsumerWidget {
       for (final achievement in kAchievementDictV3(l10n))
         achievement.id: achievement.name,
     };
+    final studyingIds = {
+      for (final presence
+          in ref.watch(groupPresenceProvider).value ?? const <Presence>[])
+        if (presence.status == PresenceStatus.studying) presence.userId,
+    };
     return Card(
       child: StreamBuilder<List<Profile>>(
         stream: repo.watchMembers(group.id),
@@ -896,13 +903,15 @@ class _MembersCard extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: AppLocalizations.of(
-                                context,
-                              ).classroomDurt,
+                              tooltip: studyingIds.contains(m.id)
+                                  ? l10n.classroomStudyingNudgeUnavailable
+                                  : l10n.classroomDurt,
                               icon: const Icon(
                                 Icons.notifications_active_outlined,
                               ),
-                              onPressed: currentUser == null
+                              onPressed:
+                                  currentUser == null ||
+                                      studyingIds.contains(m.id)
                                   ? null
                                   : () => _sendNudge(
                                       context,

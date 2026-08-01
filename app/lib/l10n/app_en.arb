@@ -98,7 +98,7 @@
       }
     }
   },
-  "profileBasarimDurtmeKosulu": "Send {count, plural, =1 {1 nudge} other {{count} nudges}} to your friends.",
+  "profileBasarimDurtmeKosulu": "Have someone start studying within 20 minutes of your nudge, {count, plural, =1 {1 time} other {{count} times}}.",
   "@profileBasarimDurtmeKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -4095,7 +4095,7 @@
   "@coreIlhamKaynagi": {
     "description": "Core user-facing text. Source: İlham Kaynağı"
   },
-  "coreDurtmeDonusumu": "Number of nudges you send",
+  "coreDurtmeDonusumu": "Nudges that lead to studying within 20 minutes",
   "@coreDurtmeDonusumu": {
     "description": "Core user-facing text. Source: Dürtme dönüşümü"
   },
@@ -6219,5 +6219,7 @@
   "profileTitleUpdated": "Your profile title was updated.",
   "@profileTitleUpdated": {"description": "Confirmation after changing the profile title."},
   "profileTitleUpdateFailed": "The title could not be updated. Choose an achievement you have earned.",
-  "@profileTitleUpdateFailed": {"description": "Error shown when the server rejects a profile title update."}
+  "@profileTitleUpdateFailed": {"description": "Error shown when the server rejects a profile title update."},
+  "classroomStudyingNudgeUnavailable": "This person is studying; nudges are disabled to protect their focus.",
+  "@classroomStudyingNudgeUnavailable": {"description": "Tooltip shown when a studying group member cannot be nudged."}
 }

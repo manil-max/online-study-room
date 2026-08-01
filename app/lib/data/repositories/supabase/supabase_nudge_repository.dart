@@ -128,7 +128,13 @@ class SupabaseNudgeRepository implements NudgeRepository {
 
   String _friendlyMessage(String message) {
     if (message.contains('nudge_cooldown')) {
-      return 'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.';
+      return nudgeCooldownMessage();
+    }
+    // WP-476: çalışan kişi dürtülmez. Sunucu bu dalı engel kontrolünden SONRA
+    // çalıştırır, yani engellenmiş biri bu hatadan karşı tarafın durumunu
+    // okuyamaz.
+    if (message.contains('recipient_is_studying')) {
+      return kNudgeRecipientStudyingMessage;
     }
     if (message.contains('cannot_nudge_self')) {
       return 'Kendine dürtme gönderemezsin.';

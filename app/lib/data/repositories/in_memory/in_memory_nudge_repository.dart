@@ -69,9 +69,7 @@ class InMemoryNudgeRepository implements NudgeRepository {
           now.difference(a.createdAt) < kNudgeCooldown,
     );
     if (recent) {
-      throw const NudgeException(
-        'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.',
-      );
+      throw NudgeException(nudgeCooldownMessage());
     }
 
     final nudge = Nudge(

@@ -88,13 +88,9 @@ void main() {
       }
     });
 
-    test('İlham Kaynağı: metrik gönderilen dürtme sayısıdır', () {
-      // 🔴 Kod gerçeği (`0025_achievements_social_metrics.sql:162`):
-      //   select count(*) from nudges where sender_id = p_user_id
-      // Yani karşı tarafın çalışmaya başlaması **koşul değil** ve herhangi bir
-      // dakika penceresi yok. Sahip tam bunu sordu ("kaç dakika içinde?");
-      // eski metin ("dürtmenin ardından N üyenin başlamasını sağla") olmayan
-      // bir kuralı vaat ediyordu.
+    test('İlham Kaynağı: metrik 20 dakikadaki başarılı dönüşümdür', () {
+      // WP-476 / 0116: yalnız dürtmeden sonraki 20 dakikada başlayan
+      // doğrulanmış canlı oturumlar başarı metriğine girer.
       final inspiration = kAchievementDictV3().firstWhere(
         (achievement) => achievement.id == 'inspiration',
       );
@@ -110,14 +106,10 @@ void main() {
         inspiration,
         inspiration.tiers.first,
       );
-      expect(tr.toLowerCase(), contains('dürtme'));
-      expect(en.toLowerCase(), contains('nudge'));
-      expect(
-        tr.toLowerCase(),
-        isNot(contains('başlamasını')),
-        reason: 'dönüşüm vaadi geri geldi; metrik gönderilen dürtmeyi sayıyor',
-      );
-      expect(en.toLowerCase(), isNot(contains('start studying')));
+      expect(tr.toLowerCase(), contains('20 dakika'));
+      expect(en.toLowerCase(), contains('20 minutes'));
+      expect(tr.toLowerCase(), contains('çalışmaya başlasın'));
+      expect(en.toLowerCase(), contains('start studying'));
     });
 
     test('Lokomotif: 15 dakikalık takip penceresi metinde yazılı', () {

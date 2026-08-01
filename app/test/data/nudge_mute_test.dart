@@ -65,7 +65,7 @@ void main() {
         isA<NudgeException>().having(
           (e) => e.message,
           'message',
-          'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.',
+          'Aynı kişiye 20 dakikada bir dürtme gönderebilirsin.',
         ),
       ),
     );
