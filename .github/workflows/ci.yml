@@ -84,6 +84,16 @@ jobs:
             echo "::endgroup::"
           done
 
+      # Tip denetimi kodun derlendiğini söyler, DOĞRU davrandığını söylemez.
+      # `purge-accounts` kullanıcı verisini kalıcı olarak siler; yetkilendirme
+      # kararının gerçekten fail-closed olduğu burada sınanır.
+      #
+      # Saf kararlar `_shared/` altında ayrı modülde: `index.ts` en üst
+      # seviyede `serve(...)` çağırdığı için test onu import edemez (gerçek
+      # sunucu başlar, test asılır).
+      - name: deno test (Edge Function karar mantığı)
+        run: deno test --no-lock --allow-env supabase/functions/
+
   analyze-and-test:
     name: analyze + full test suite
     runs-on: ubuntu-latest

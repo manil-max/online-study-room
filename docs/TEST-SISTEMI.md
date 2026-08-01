@@ -31,19 +31,20 @@ vardır: kapı bilerek bozulmuş bir girdiye kırmızı dönmüyorsa, kapı yokt
 | # | Katman | Nerede | Ne korur | Durum |
 |---|---|---|---|---|
 | 1 | Statik analiz | `flutter analyze` | Derleme/tip/lint | ✅ 0 uyarı |
-| 2 | Birim + widget testleri | `app/test/**` (232 dosya) | Saf mantık, UI davranışı | ✅ 1399 test yeşil |
+| 2 | Birim + widget testleri | `app/test/**` (240 dosya) | Saf mantık, UI davranışı | ✅ 1507 test yeşil |
 | 3 | Golden testleri | `--tags=golden` (Windows job) | Tema/görsel regresyon | ✅ |
 | 4 | Entegrasyon | `app/integration_test/` (Windows job) | Kritik kullanıcı akışları | ✅ WP-465'te CI'a bağlandı |
 | 5 | Veritabanı (pgTAP) | `supabase/tests/**` (44 dosya) | RLS, invariant, RPC davranışı | ✅ 647 assertion |
-| 6 | **İstemci ↔ sunucu sözleşmesi (statik)** | `scripts/backend_contract_audit.py` | Dart/Edge çağrısı ile SQL imzasının kayması | 🆕 bu turda kuruldu |
-| 6b | **Repository kablo testleri (çalışma zamanı)** | `app/test/support/supabase_wire_harness.dart` | RPC adı/yanıt ayrıştırma/hata eşlemesi | 🆕 bu turda kuruldu |
-| 7 | **Kapsam ratchet** | `scripts/coverage_audit.py` | Testsiz kodun sessizce girmesi | 🆕 bu turda kuruldu |
-| 7b | **Edge Function tip denetimi** | `deno check` (CI job) | Sunucuda çalışan 1601 satırın derlenmemesi | 🆕 bu turda kuruldu |
+| 6 | **İstemci ↔ sunucu sözleşmesi (statik)** | `scripts/backend_contract_audit.py` | Dart/Edge çağrısı ile SQL imzasının kayması | ✅ 91 çağrı, self-test'li |
+| 6b | **Repository kablo testleri (çalışma zamanı)** | `app/test/support/supabase_wire_harness.dart` | RPC adı/yanıt ayrıştırma/hata eşlemesi | ✅ 20/22 repository |
+| 7 | **Kapsam ratchet** | `scripts/coverage_audit.py` | Testsiz kodun sessizce girmesi | ✅ genel %64.50 / kritik %56.99 |
+| 7b | **Edge Function tip denetimi + testleri** | `deno check` + `deno test` (CI job) | Sunucuda çalışan 1601 satırın derlenmemesi; purge yetkilendirmesi | ✅ 6/6 tip, 13 davranış testi |
 | 8 | l10n | `scripts/l10n_audit.py` | Katalog eşliği + gömülü metin | ✅ probe'lu |
 | 9 | Deploy/release kapıları | `tooling/supabase/guard.tests.ps1`, `tooling/release/release-preflight.tests.ps1` | Yanlış ortama apply/release | ✅ 75+8, fail-closed |
 
-Katman 1–4 ve 6–7 her push'ta `.github/workflows/ci.yml` içinde koşar.
-Katman 5 `database-gates.yml`, katman 8 `l10n-gate.yml` altındadır.
+Katman 1–4, 6, 6b, 7 ve 7b her push'ta `.github/workflows/ci.yml` içinde
+koşar (beş iş). Katman 5 `database-gates.yml`, katman 8 `l10n-gate.yml`
+altındadır.
 
 ---
 
@@ -53,10 +54,12 @@ Katman 5 `database-gates.yml`, katman 8 `l10n-gate.yml` altındadır.
 python scripts/backend_contract_audit.py
 ```
 
-**Neden var.** Dart testlerinin tamamı `InMemory*Repository` kullanır.
-`Supabase*Repository` sınıflarının **hiçbiri hiçbir testte örneklenmez**
-(22 dosyanın 22'si). pgTAP ise yalnız sunucu ucunu doğrular. Yani iki uç da
-yeşilken aradaki çağrı kopuk olabilir ve bu **yalnız sahada** görünür.
+**Neden var.** Bu kapı kurulmadan önce Dart testlerinin tamamı
+`InMemory*Repository` kullanıyordu; 22 `Supabase*Repository` sınıfının
+**hiçbiri hiçbir testte örneklenmiyordu**. pgTAP ise yalnız sunucu ucunu
+doğrular. İki uç da yeşilken aradaki çağrı kopuk olabiliyordu ve bu
+**yalnız sahada** görünüyordu. Statik kapı çağrının *şeklini*, katman 6b
+kablo testleri *davranışını* doğrular — ikisi ayrı katmandır.
 
 **Ne doğrular** (91 çağrı ↔ 213 sunucu imzası):
 
@@ -96,14 +99,15 @@ paralel çalıştığı turlarda en tehlikeli boşluk budur.
 
 **Ölçüm (2026-08-01):**
 
-| Ölçü | İlk ölçüm | Kablo testlerinden sonra |
+| Ölçü | İlk ölçüm | Bu turdan sonra |
 |---|---|---|
-| Genel satır kapsamı | %62.34 | **%62.56** (21220/33918) |
-| Kritik yollar | %46.76 | **%47.96** |
-| Hiç dokunulmamış dosya | 54 | **53** |
+| Genel satır kapsamı | %62.34 | **%64.50** (21876/33918) |
+| Kritik yollar | %46.76 | **%56.99** |
+| Hiç dokunulmamış dosya | 54 | **34** |
 
-İki repository'nin kablo testi kritik yolları 1.2 puan taşıdı; kalan 20
-repository aynı desenle yazıldığında bu rakam belirgin biçimde yükselir.
+Kritik yollar **10.2 puan** yükseldi: 20 repository'nin kablo testi
+(`supabase_wire_*_test.dart`) ve `alarm_providers` durum makinesi
+(`alarm_providers_wp466_test.dart`, %3.1 idi) eklendi.
 
 Eşik `tooling/quality/coverage-baseline.json` içinde tutulur. Sabit bir hedef
 (%80 gibi) yerine **ratchet** seçildi: mevcut gerçeği cezalandırmadan geriye
@@ -117,18 +121,41 @@ olduğundan yüksek çıkar.
 
 ---
 
+## 3b. Katman 7b — Edge Function kapısı
+
+```bash
+deno check --no-lock supabase/functions/<ad>/index.ts
+deno test --no-lock --allow-env supabase/functions/
+```
+
+**Neden var.** Altı Edge Function (1601 satır, içinde kullanıcı verisini
+kalıcı silen `purge-accounts`) **hiçbir yerde derlenmiyordu**. `deno check`
+ilk kez koşturulduğunda altısı da düştü; gerçek bulgu, dört fonksiyonda
+`catch` bloğunun `unknown` üzerinde `error.message` okumasıydı — `Error`
+olmayan bir şey fırlatılsa istemciye **boş hata gövdesi** gidiyordu.
+
+**Saf kararlar `_shared/` altındadır.** `index.ts` en üst seviyede
+`serve(...)` çağırır; test onu import etseydi gerçek bir sunucu başlar ve
+test asılırdı. `purge-accounts`'un yetkilendirme ve hata sınıflandırma
+kararları `_shared/purge_policy.ts`'e çıkarıldı — `serve` kablolamasına
+hiç dokunulmadan davranış test edilebilir oldu.
+
+En kritik test: **yanlış secret 401 alır ve hiçbir secret tanımlı
+değilse istek yine reddedilir** (fail-closed). Yanlış yapılandırılmış bir
+ortamda purge herkese açık olmamalı.
+
+---
+
 ## 4. Bilinen boşluklar (kapatılmadı — bilerek yazılıyor)
 
 | # | Boşluk | Risk | Durum |
 |---|---|---|---|
-| G1 | 6 Edge Function'ın **davranış** testi yok (1601 satır) | Orta | 🟡 Tip denetimi kuruldu (altısı da geçiyor), sözleşme yüzeyi katman 6'da. Davranış testi için fonksiyonların `serve()` handler'ını **export etmesi** gerekir — üçü de sunucuda çalışan kod olduğu için ayrı ve kapsamı yazılı bir WP ister |
-| G2 | `Supabase*Repository` sınıfları | Yüksek | 🟡 Kablo koşum takımı kuruldu; **2/22** repository kapsandı (`goal_streak`, `data_export`). Kalan 20'si aynı desenle yazılır |
-| G3 | `alarm_providers.dart` %3.1 kapsam (317 satır) | Yüksek | 🔴 Açık. Sayaç/alarm tarihsel olarak en çok hata çıkan alan |
-| G4 | 54 dosyaya hiç dokunulmamış | Orta | 🔴 Açık. Liste: `--top` |
-| G5 | pgTAP yerel replay bu hostta koşmuyor (Docker) | Orta | 🔴 CI'da koşuyor; yerelde `Replay bekliyor` etiketi |
-| G6 | Mutasyon testi yok | Düşük | 🟡 Kapı probe'ları bunun hedefli bir alt kümesi |
-
-Stable öncesi sıra: **G2 (kalan 20 repository) → G3 → G1**.
+| G1 | Edge Function davranış testleri | Orta | 🟢 `purge-accounts` karar mantığı `_shared/purge_policy.ts`'e çıkarıldı ve 13 testle kapsandı (yetkilendirme fail-closed + hata sınıflandırma). Altısı da `deno check`ten geçiyor. **Kalan:** diğer beş fonksiyonun handler'ı hâlâ `serve()` içinde gömülü; davranış testi için aynı çıkarma deseni uygulanmalı |
+| G2 | `Supabase*Repository` kablo testleri | Düşük | 🟢 **20/22**. Kapsanmayan ikisi: `report_attachment_upload` (yardımcı, dolaylı kapsandı) ve `supabase_presence_repository` (üç modlu, ağırlıklı realtime) |
+| G3 | `alarm_providers.dart` | Düşük | 🟢 %3.1 → kapsandı. Odak: süre epoch'tan türetilir, önbellekten değil |
+| G4 | 34 dosyaya hiç dokunulmamış (54'tü) | Orta | 🟡 Çoğu ekran/widget. Liste: `--top` |
+| G5 | pgTAP yerel replay bu hostta koşmuyor (Docker) | Orta | 🔴 CI'da koşuyor; yerelde `Replay bekliyor` etiketi. **Host sınırı — kod değişikliğiyle kapatılamaz** |
+| G6 | Realtime (`.stream()`) yolları | Düşük | 🟡 websocket taşır; http koşum takımı görmez. Bilinçli sınır |
 
 ### Yeni bir Supabase repository testi nasıl yazılır
 

@@ -1,11 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import {
+  authorizeCron,
+  classifyPurgeError,
+  corsHeaders,
+  purgeSecret,
+} from "../_shared/purge_policy.ts"
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-cron-secret",
-}
 
 /**
  * Purge'ün kendi secret'ı.
@@ -26,24 +27,6 @@ function makeAdminClient() {
 /// `ReturnType<typeof createClient>` jenerikleri kisitlariyla ornekler ve
 /// sema tipi `never`e duser. Fabrikadan turetmek gercek tipi verir.
 type SupabaseAdminClient = ReturnType<typeof makeAdminClient>
-
-function purgeSecret(): string {
-  return (Deno.env.get("PURGE_CRON_SECRET") ?? Deno.env.get("CRON_SECRET") ?? "").trim()
-}
-
-function authorizeCron(req: Request): Response | null {
-  const cronSecret = purgeSecret()
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  const headerSecret = req.headers.get("x-cron-secret") ?? ""
-  const authHeader = req.headers.get("Authorization") ?? ""
-  if (cronSecret && headerSecret === cronSecret) return null
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return null
-  if (serviceKey && authHeader === `Bearer ${serviceKey}`) return null
-  return new Response(JSON.stringify({ error: "Unauthorized" }), {
-    status: 401,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  })
-}
 
 /**
  * WP-113 / WP-127 / WP-464: süresi dolan hesap silme isteklerini işler.
@@ -73,26 +56,6 @@ function authorizeCron(req: Request): Response | null {
 const MAX_PURGE_ATTEMPTS = 5
 const LEASE_SECONDS = 1800
 const STORAGE_PAGE_SIZE = 100
-
-function classifyPurgeError(err: unknown): string {
-  const raw = String(err ?? "unknown")
-  const lower = raw.toLowerCase()
-  if (lower.includes("not authorized") || lower.includes("unauthorized") || lower.includes("401")) {
-    return "auth_unauthorized"
-  }
-  if (lower.includes("user not found") || lower.includes("not_found") || lower.includes("404")) {
-    return "user_not_found"
-  }
-  if (lower.includes("network") || lower.includes("fetch failed") || lower.includes("timeout")) {
-    return "network_error"
-  }
-  if (lower.includes("storage")) return "storage_error"
-  if (lower.includes("permission") || lower.includes("rls") || lower.includes("42501")) {
-    return "permission_error"
-  }
-  const slug = raw.replace(/\s+/g, " ").slice(0, 120)
-  return slug.length > 0 ? `purge_failed:${slug}` : "purge_failed"
-}
 
 /**
  * Ara adımların sessizce yutulmasını engeller.
