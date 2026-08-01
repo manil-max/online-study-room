@@ -5616,7 +5616,8 @@ tekrar tutulmaz.
 
 #### WP-479 — Ünvan seçici: alt sayfa yerine butona bağlı menü, kaymayan yerleşim
 
-- **Durum / bağımlılık:** [ ] Bekliyor · WP-478 kapandıktan **sonra** (aynı dosya).
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
+  WP-478'den sonra yapıldı.
 - **Belirti (V57-N02 ikinci yarısı):** Uzun bir ünvan seçilince "Choose title"
   butonu alt satıra kayıyor ve gereksiz yer kaplıyor.
 - **🔴 Sahip kararı (bağlayıcı, tartışmaya kapalı):** Seçici **alttan açılan kart
@@ -5646,6 +5647,26 @@ tekrar tutulmaz.
   (bu, sahip kararının otomatik bekçisidir; yalnız "menü açıldı" demek kararı
   korumaz) · en uzun ünvan adıyla buton konumu değişmiyor (golden ya da konum
   iddiası) · dar telefon genişliğinde taşma yok · analyze temiz.
+- **Sonuç (2026-08-01):** `showModalBottomSheet` **kalktı**; yerine
+  `showAnchoredMenu<String>` (ders seçimindeki `showClockStyleMenu` ile aynı
+  kalıp) ve tetikleyen buton `Builder(buttonContext)` ile sarmalandı — bu
+  sarmalayıcı olmadan menü ekranın köşesinde açılıyor. "Ünvanı kaldır" menü
+  değeri boş dize sentinel'i; `null` "kullanıcı menüyü kapattı" ile karışırdı.
+- **Yerleşim:** `Wrap` → tek satırlık `Row`. Ünvan chip'i `Expanded` içinde,
+  etiketi `maxLines: 1` + ellipsis; buton satırın sonunda **sabit** duruyor.
+  Menü öğelerinin adları da ellipsis'li.
+- **Mutasyon kanıtı (iki ayrı iddia):** (a) menüden önce bir alt sayfa açılacak
+  olsa `NavigatorObserver` bekçisi **2 testi** kırmızıya düşürüyor — yani sahip
+  kararı gerçekten korunuyor, "menü açıldı" demekle yetinilmedi; (b) `Row`
+  tekrar `Wrap` yapılınca **4 testin hepsi** kırmızı. Kod her iki denemede de
+  geri alındı.
+- **Ölçüm:** yeni `app/test/features/profile/title_picker_test.dart` **4 test** ·
+  mevcut `achievement_showcase_test` anahtarları (`profile-title-*`,
+  `remove-profile-title`) korunduğu için o dosya değişmeden geçiyor · tam paket
+  **1574/1574 yeşil** (öncesi 1570) · `flutter analyze` 0 uyarı · l10n OK.
+- **Not:** `achievement_showcase.dart` deponun **CRLF** dosyalarından biri;
+  düzenleme satır sonlarını korudu, `git diff` yalnız 132/102 satır (gerçek
+  değişiklik), dosya geneli yeniden yazılmadı.
 
 #### WP-480 — Görev tekrar metinleri seçilen aralığı söylesin
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../core/stats/achievement_ledger_engine.dart';
+import '../../../core/widgets/anchored_menu.dart';
 import '../../../core/stats/progression_visuals.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/achievement_ledger.dart';
@@ -552,41 +553,59 @@ class _ProfileTitleRow extends StatelessWidget {
   final Future<void> Function(String? achievementId)? onSelect;
   final bool updating;
 
+  /// "Ünvanı kaldır" seçeneğinin menü değeri. Başarım kimlikleri `String`
+  /// olduğu için `null` dönüşü "kullanıcı menüyü kapattı" ile karışırdı.
+  static const String _removeValue = '';
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Center(
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          if (definition != null)
-            Chip(
-              key: const ValueKey('profile-title-chip'),
-              avatar: Icon(
-                achievementIconData(definition!.iconKey),
-                size: 17,
-                color: theme.colorScheme.primary,
-              ),
-              label: Text(definition!.name),
-              visualDensity: VisualDensity.compact,
-            )
-          else
-            Text(
-              l10n.profileNoTitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          if (onSelect != null)
-            OutlinedButton.icon(
+    // WP-479: `Wrap` yerine tek satırlık `Row`. `Wrap`'te ünvan chip'i
+    // genişleyince buton bir sonraki satıra düşüyor ve kart yükseliyordu;
+    // `Expanded` sayesinde buton her uzunlukta aynı yerde kalır, uzun ünvan
+    // ellipsis ile kesilir.
+    return Row(
+      children: [
+        Expanded(
+          child: definition != null
+              ? Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Chip(
+                    key: const ValueKey('profile-title-chip'),
+                    avatar: Icon(
+                      achievementIconData(definition!.iconKey),
+                      size: 17,
+                      color: theme.colorScheme.primary,
+                    ),
+                    label: Text(
+                      definition!.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
+              : Text(
+                  l10n.profileNoTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+        ),
+        if (onSelect != null) ...[
+          const SizedBox(width: 8),
+          // 🔴 `Builder`: menü **basılan düğmeye** çapalanır. Bu sarmalayıcı
+          // olmadan `showAnchoredMenu` üst context'in kutusunu ölçer ve menü
+          // ekranın köşesinde açılır (`showClockStyleMenu` ile aynı kalıp).
+          Builder(
+            builder: (buttonContext) => OutlinedButton.icon(
               key: const ValueKey('choose-profile-title'),
               onPressed: updating || available.isEmpty
                   ? null
-                  : () => _showTitlePicker(context),
+                  : () => _showTitleMenu(buttonContext),
               icon: updating
                   ? const SizedBox.square(
                       dimension: 16,
@@ -595,59 +614,70 @@ class _ProfileTitleRow extends StatelessWidget {
                   : const Icon(Icons.edit_outlined, size: 18),
               label: Text(l10n.profileChooseTitle),
             ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
-  Future<void> _showTitlePicker(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.only(bottom: 12),
-          children: [
-            ListTile(
-              title: Text(
-                l10n.profileChooseTitle,
-                style: Theme.of(
-                  sheetContext,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(l10n.profileOnlyEarnedTitles),
+  /// Ünvan seçici.
+  ///
+  /// 🔴 Sahip kararı (WP-479, bağlayıcı): **alttan açılan kart olmayacak.**
+  /// Ders seçimindeki gibi butonun bulunduğu yerde açılan menü kullanılır
+  /// (`showAnchoredMenu`, §3.12 "basılan yerde" kalıbı).
+  Future<void> _showTitleMenu(BuildContext buttonContext) async {
+    final l10n = AppLocalizations.of(buttonContext);
+    final theme = Theme.of(buttonContext);
+    final result = await showAnchoredMenu<String>(
+      context: buttonContext,
+      items: [
+        PopupMenuItem<String>(
+          enabled: false,
+          height: 32,
+          child: Text(
+            l10n.profileOnlyEarnedTitles,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            if (selectedId != null)
-              ListTile(
-                key: const ValueKey('remove-profile-title'),
-                leading: const Icon(Icons.remove_circle_outline),
-                title: Text(l10n.profileRemoveTitle),
-                onTap: () async {
-                  Navigator.of(sheetContext).pop();
-                  await onSelect!(null);
-                },
-              ),
-            for (final item in available)
-              ListTile(
-                key: ValueKey('profile-title-${item.id}'),
-                leading: Icon(achievementIconData(item.iconKey)),
-                title: Text(item.name),
-                trailing: item.id == selectedId
-                    ? const Icon(Icons.check_circle)
-                    : null,
-                onTap: item.id == selectedId
-                    ? null
-                    : () async {
-                        Navigator.of(sheetContext).pop();
-                        await onSelect!(item.id);
-                      },
-              ),
-          ],
+          ),
         ),
-      ),
+        if (selectedId != null)
+          PopupMenuItem<String>(
+            key: const ValueKey('remove-profile-title'),
+            value: _removeValue,
+            child: Row(
+              children: [
+                const Icon(Icons.remove_circle_outline, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: Text(l10n.profileRemoveTitle)),
+              ],
+            ),
+          ),
+        for (final item in available)
+          PopupMenuItem<String>(
+            key: ValueKey('profile-title-${item.id}'),
+            value: item.id,
+            enabled: item.id != selectedId,
+            child: Row(
+              children: [
+                Icon(achievementIconData(item.iconKey), size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (item.id == selectedId)
+                  Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+              ],
+            ),
+          ),
+      ],
     );
+    if (result == null) return;
+    await onSelect!(result == _removeValue ? null : result);
   }
 }
 
