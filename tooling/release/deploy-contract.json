@@ -10,7 +10,7 @@
   "production": {
     "migration_head": "0119",
     "deploy_enabled": true,
-    "release_enabled": false,
+    "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",

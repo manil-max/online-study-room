@@ -40,13 +40,15 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # Remote gercek head apply oncesi 0116 olsa da kontrat hedefi 0119'a pinler;
 # protected workflow list/dry-run/post-check ile farki dogrular. release_enabled
 # false kalir: stable exact SHA/head/project-ref confirmation ve kanit ister.
-# Zincir sonunda iki deploy flag'i yeniden false kilitlenmelidir.
+# production release_enabled v58 stable icin tek seferlik acildi (0117-0119
+# production apply post-check 0119 sonrasi). Zincir sonunda tum flag'ler
+# yeniden false kilitlenmelidir.
 Assert-Equal $contract.staging.migration_head '0119' 'v58 staging hedef head 0119'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v58 staging apply tek seferlik acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0119' 'v58 production hedef head 0119'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v58 production apply tek seferlik acik'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'stable exact CI GO gerektirir'
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'v58 stable release tek seferlik acik'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8

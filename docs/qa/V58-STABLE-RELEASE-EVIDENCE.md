@@ -53,10 +53,12 @@ Database Gates ve Release Orchestrator girdilerinin tamamı aynı SHA'ya pinleni
 
 ## Tamamlanan zincir
 
-- Exact release SHA: _bekliyor_
-- CI / Database Gates validate: _bekliyor_
-- Staging dry-run/apply: _bekliyor_
-- Production dry-run/apply: _bekliyor_
+- Exact release SHA: `3ede412faa62d4d1d2b2826fdb1b5c8e7f8ca834`
+- CI / Database Gates validate / l10n Gate: 3/3 yesil (run 30715256387 / 30715256384 / 30715256383)
+- Staging dry-run: run 30715617734 - yalniz `0117`, `0118`, `0119`
+- Staging apply: run 30715755597 - post-check `local|remote|file = 0119`, push health `configured`
+- Production dry-run: run 30715879792 - yalniz `0117`, `0118`, `0119`
+- Production apply: run 30716014464 - post-check `local|remote|file = 0119`, kayitli owner no-backup waiver ile
 - Stable Release Orchestrator: _bekliyor_
-- Kapıları yeniden kilitleme: _bekliyor_
+- Kapilari yeniden kilitleme: _bekliyor_
 
