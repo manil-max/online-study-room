@@ -5548,8 +5548,8 @@ tekrar tutulmaz.
 
 #### WP-478 — Ünvan seçimi ekrandan çıkınca kayboluyor (profil önbelleği tazelenmiyor)
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız. WP-479 ile **aynı anda
-  verilmez** (ikisi de `achievement_showcase.dart`'a dokunur).
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
+  WP-479 bundan sonra.
 - **Belirti (V57-N02 birinci yarısı):** Ünvan seçiliyor, grup listesinde doğru
   görünüyor, ama Başarımlar ekranına tekrar girince "No title selected" yazıyor.
 - **Kök neden (kodda doğrulandı):** Ünvan sunucuya **yazılıyor**, istemci
@@ -5590,6 +5590,29 @@ tekrar tutulmaz.
   `authStateChanges()` **yeni** profili yayar (altı mutasyon için ayrı iddia) ·
   mutasyon kanıtı: yayını kaldır ⇒ test kırmızı · cihazda ünvan seçilip ekrandan
   çıkılıp girildiğinde ünvan duruyor.
+- **Sonuç (2026-08-01):** `SupabaseAuthRepository`ye `_profileMutations`
+  broadcast kanalı ve `_emitProfile()` eklendi; altı mutasyonun (`displayName`,
+  `dailyGoal`, `animal`, `title`, `monthlyReportOptIn`, `avatar`) hepsi
+  **yazma başarılı olduktan sonra** yayın yapıyor. `authStateChanges()` artık
+  iki kaynağı birleştiriyor: oturum olayları (`_sessionProfiles()`, eski
+  `async*` gövdesi aynen) + profil mutasyonları. Ekranlara `invalidate`
+  eklenmedi — kök neden repository katmanındaydı.
+- **`InMemoryAuthRepository` değişmedi:** zaten her mutasyonda `_controller.add`
+  yapıyor. Boşluk yalnız Supabase uygulamasındaydı; testlerin bunu görmemesinin
+  sebebi de buydu. Bu yüzden yeni test **gerçek PostgREST kablosunu** sürüyor
+  (`supabase_wire_harness`), InMemory sahteyi değil.
+- **Mutasyon kanıtı:** altı `_emitProfile()` çağrısı kaldırıldığında yeni testin
+  **3'ü kırmızı**; dördüncü ("başarısız mutasyon yayın yapmaz") doğru biçimde
+  yeşil kalıyor çünkü yokluk iddia ediyor. Kod geri alındı.
+- **Ölçüm:** yeni `app/test/data/auth_profile_emission_test.dart` **4 test** ·
+  tam paket **1570/1570 yeşil** (öncesi 1566) · `flutter analyze` 0 uyarı · l10n OK.
+- **🔴 Yol boyu bulunan, düzeltilmeyen kusur (bildiriliyor, silinmedi):**
+  `_sessionProfiles()` `await for` içinde askıdayken akışın `cancel()`i **hiç
+  tamamlanmıyor** — `async*` üreticisi kaynak bir olay daha üretmedikçe
+  çözülmüyor. Bu WP-478 **öncesinde de** vardı (akış doğrudan o üreticiydi) ve
+  üretimde görünmüyor çünkü Riverpod iptali beklemiyor. Yeni `onCancel` bu
+  cancel'ı bilerek **beklemiyor** ve gerekçesi kodda yazılı; kalıcı çözümü ayrı
+  bir WP'dir.
 
 #### WP-479 — Ünvan seçici: alt sayfa yerine butona bağlı menü, kaymayan yerleşim
 

@@ -28,6 +28,23 @@ class SupabaseAuthRepository implements AuthRepository {
   Profile? _current;
   final _recoveryController = StreamController<void>.broadcast();
 
+  /// WP-478: profil mutasyonlarının yayın kanalı.
+  ///
+  /// `authStateChanges()` yalnız **iki** olayda yayın yapıyordu: açılıştaki ilk
+  /// okuma ve auth durumu değişimi. `updateTitle` gibi profil mutasyonları
+  /// `_current`'ı tazeliyor ama akışa hiçbir şey düşmüyordu; `authStateProvider`
+  /// bu akıştan beslendiği için ekranlar **bayat profili** okumaya devam
+  /// ediyordu. Ünvanda görünmesinin sebebi iki ayrı ekranın (Başarımlar ve
+  /// Sosyal Profil) aynı gerçeği okumasıydı — diğer alanlar yerel `setState`
+  /// tuttuğu için hatayı gizliyordu.
+  final _profileMutations = StreamController<Profile?>.broadcast();
+
+  /// Güncellenmiş profili dinleyicilere duyurur.
+  void _emitProfile() {
+    if (_profileMutations.isClosed) return;
+    _profileMutations.add(_current);
+  }
+
   @override
   Profile? get currentUser => _current;
 
@@ -38,7 +55,36 @@ class SupabaseAuthRepository implements AuthRepository {
   Stream<void> get passwordRecoveryEvents => _recoveryController.stream;
 
   @override
-  Stream<Profile?> authStateChanges() async* {
+  Stream<Profile?> authStateChanges() {
+    // İki kaynak tek akışta birleşir: oturum olayları ve profil mutasyonları.
+    // Mutasyonlar `async*` gövdesine dışarıdan enjekte edilemediği için
+    // birleştirme burada yapılıyor.
+    final merged = StreamController<Profile?>();
+    StreamSubscription<Profile?>? sessions;
+    StreamSubscription<Profile?>? mutations;
+    merged
+      ..onListen = () {
+        sessions = _sessionProfiles().listen(
+          merged.add,
+          onError: merged.addError,
+          onDone: merged.close,
+        );
+        mutations = _profileMutations.stream.listen(merged.add);
+      }
+      ..onCancel = () {
+        // 🔴 `_sessionProfiles()` `await for` içinde askıdayken `cancel()`
+        // **tamamlanmıyor**: `async*` üreticisi ancak kaynak bir olay daha
+        // ürettiğinde çözülüyor, `onAuthStateChange` ise sessiz kalabiliyor.
+        // Bu davranış WP-478 öncesinde de vardı (akış doğrudan bu üreticiydi);
+        // burada yalnız **beklenmiyor**, aksi hâlde iptal eden taraf askıda
+        // kalırdı. Ölçüldü: `test/data/auth_profile_emission_test.dart`.
+        unawaited(sessions?.cancel() ?? Future<void>.value());
+        return mutations?.cancel() ?? Future<void>.value();
+      };
+    return merged.stream;
+  }
+
+  Stream<Profile?> _sessionProfiles() async* {
     // Açılışta mevcut oturum (varsa) yayınlanır.
     try {
       _current = await _profileFor(_client.auth.currentSession);
@@ -408,6 +454,7 @@ class SupabaseAuthRepository implements AuthRepository {
       rethrow;
     }
     _current = cur.copyWith(displayName: name);
+    _emitProfile();
   }
 
   @override
@@ -420,6 +467,7 @@ class SupabaseAuthRepository implements AuthRepository {
         .update({'daily_goal_minutes': safe})
         .eq('id', cur.id);
     _current = cur.copyWith(dailyGoalMinutes: safe);
+    _emitProfile();
   }
 
   @override
@@ -430,6 +478,7 @@ class SupabaseAuthRepository implements AuthRepository {
     if (safe.isEmpty) return;
     await _client.from('profiles').update({'animal': safe}).eq('id', cur.id);
     _current = cur.copyWith(animal: safe);
+    _emitProfile();
   }
 
   @override
@@ -454,6 +503,7 @@ class SupabaseAuthRepository implements AuthRepository {
     _current = value == null
         ? cur.copyWith(clearTitle: true)
         : cur.copyWith(titleAchievementId: value);
+    _emitProfile();
   }
 
   @override
@@ -465,6 +515,7 @@ class SupabaseAuthRepository implements AuthRepository {
         .update({'monthly_report_opt_in': value})
         .eq('id', cur.id);
     _current = cur.copyWith(monthlyReportOptIn: value);
+    _emitProfile();
   }
 
   @override
@@ -495,6 +546,7 @@ class SupabaseAuthRepository implements AuthRepository {
           .update({'avatar_url': url})
           .eq('id', cur.id);
       _current = cur.copyWith(avatarUrl: url);
+      _emitProfile();
     } on supa.StorageException catch (e) {
       throw AuthException('Fotoğraf yüklenemedi: ${e.message}');
     }
