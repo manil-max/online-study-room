@@ -6426,6 +6426,11 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   alınınca aynı koşum **4 test kırmızı** düşüyor (`9 tests completed, 4 failed`),
   geri getirilince yeşile dönüyor. Kabul 1–2 (logcat + bildirimden mola turu)
   gerçek cihaz gerektirir → QA kuyruğunda.
+- **CI (kapı):** commit `d78661e` push edildi, run **`31098581731` beş iş de
+  yeşil**. 🔴 Uyarı: `ci.yml` Android JVM testlerini **koşmuyor** — `android-unit`
+  kapısı yalnız yerel `scripts/test_all.py`'de var, yani bu kartın yeni testi
+  push edilmiş commit'te koşmadı. Kapsam dışıydı (SAHİP yollar yalnız Kotlin);
+  ayrı WP gerekir.
 
 ---
 
