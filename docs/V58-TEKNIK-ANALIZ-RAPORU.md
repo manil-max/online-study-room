@@ -688,12 +688,57 @@ senior'ın tek bakışta görmesidir.
   okunmuyor; `home_screen.dart`'taki tek `SafeArea` boyut paneline ait ve
   `top: false`.
 
+### Kapanış taraması (aynı tur, sahip "son kez bak" dedi)
+
+**1. Native prefs okumalarının TAMAMI tarandı.** `android/app/src/main/kotlin`
+içinde tip belirten her prefs okuması (`getInt`/`getLong`/`getBoolean`/`getFloat`)
+listelendi; sonuç **dört okuma, iki kusurlu anahtar**:
+
+| Okuma | Dart'ın yazdığı tip | Durum |
+|---|---|---|
+| `TimerStateStore.kt:100,103` `getLong(KEY_STARTED_AT_MS)` | `setInt` → Long | ✅ doğru |
+| `StudyWidgetProviders.kt:115` `getLong(started_at_ms)` | `setInt` → Long | ✅ doğru |
+| `StudyWidgetProviders.kt:122` `getInt(target_seconds)` | `setInt` → **Long** | 💥 T01 |
+| `StudyTimerService.kt:205,239` `getInt(KEY_CYCLE)` | `setInt` → **Long** | 💥 T01 |
+| `StudyTimerService.kt:476` `getBoolean(timer_panel_expanded)` | *(Dart hiç yazmıyor)* | ⚠️ aşağıya bak |
+
+Yani T01 iki anahtar ve üç çağrı yeriyle **sınırlı**; başka gizli tip uyuşmazlığı
+yok. Ters yön (Dart'ın native `putInt` değerini okuması) risk değildir — Dart
+tarafı Integer ve Long'u aynı `int` olarak alır.
+
+**2. İki çökme yolunun tetikleyicileri farklı — ikisi de koşullu.**
+
+- `getInt(target_seconds)`: ana ekranda **yerleştirilmiş sayaç widget'ı** gerekir
+  (yoksa `appWidgetIds` boş gelir, `forEach` hiç dönmez). Sahibin V57-N06'daki
+  kendi ifadesi (*"Android ana ekran widget'ında olmuyor"*) bu ön koşulun
+  sağlandığını gösteriyor, ama bu **çıkarım**, ölçüm değil.
+- `getInt(KEY_CYCLE)`: yalnız `ACTION_START_BREAK` / `ACTION_END_BREAK` ile
+  çalışır ve bu action'ları **yalnız bildirimdeki mola düğmeleri** gönderir
+  (`breakActionPending()` / `endBreakActionPending()`). Yani otomatik faz
+  geçişinde değil, kullanıcı bildirimden mola düğmesine bastığında patlar.
+
+**3. `timer_panel_expanded` ölü bayrak.** `StudyTimerService.kt:476` bu anahtarı
+okuyor ama `app/lib` içinde onu **yazan hiçbir kod yok** — yani v43'te bırakılan
+"OEM kaçış valfi" uygulamadan hiç açılıp kapatılamıyor, daima varsayılan `true`.
+Sahibin bildirdiği bir belirti değil; T02 ile aynı aileden (bağlanmamış uç) ve
+bir sonraki panel şikâyetinde bunu bilmek gerekir.
+
+**4. T04'ün gerçek kapsamı ölçüldü.** Yükleniyor-durumunu-yok-sayan desen tek
+yerde değil: `asData?.value` **22**, `.value ?? const …` **49**,
+`ref.watch(...).value;` (features altında) **31** kullanım. Hepsi hata değildir —
+boş listenin görsel olarak zararsız olduğu yerler var — ama düzeltme bir dosya
+işi değil, **denetimli bir tarama** olarak planlanmalıdır.
+
 ### Hâlâ kanıtlanmamış olanlar (dürüstlük payı)
 
-- **T01'in cihazdaki teyidi** — mekanizma uçtan uca kodda doğrulandı, ama
-  logcat'te `ClassCastException` satırını **görmedim**. Ana ekranda sayaç
-  widget'ı yoksa bu yol hiç çalışmaz; o durumda çökmenin başka bir sebebi vardır
-  ve rapor yanılmış olur. İlk iş bu satırı görmek.
+- **T01'in cihazdaki teyidi** — mekanizma uçtan uca kodda doğrulandı ve native
+  prefs okumalarının tamamı tarandı, ama logcat'te `ClassCastException` satırını
+  **görmedim**. Kodda kusur kesin (`getInt` bir `Long` değeri okuyor, bu her
+  koşulda hatalıdır ve er geç patlar); belirsiz olan tek şey, sahibin gördüğü
+  çökmenin **bu** kusurdan mı geldiği. Ayrım pratikte önemsiz: düzeltme her
+  hâlükârda yapılacak, ama "çökme bitti" demeden önce logcat satırı görülmeli.
+  🔴 Bu, raporun **tek** çalışma zamanı belirsizliğidir; kalan 13 bulgunun
+  hepsi statik olarak kapalıdır.
 - **T06'nın çift sayma verisi** — mekanizma (gruplar arası toplama) kodda net,
   ama sahibin gerçekten iki grupta birinci olduğunu **veriyle** görmedim.
 - **T12 / T13** — telemetri olmadan kapanmaz; değişmedi.
