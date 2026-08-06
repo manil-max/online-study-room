@@ -202,7 +202,8 @@ class StudyTimerService : Service() {
             startedAtMs = nowMs,
             mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
             phase = "rest",
-            cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
+            cycle = TimerStateStore.readIntCompat(p, TimerStateStore.KEY_CYCLE, 1)
+                .coerceAtLeast(1),
             subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
             liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
             liveRunToken = liveRunToken,
@@ -236,7 +237,8 @@ class StudyTimerService : Service() {
             startedAtMs = System.currentTimeMillis(),
             mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
             phase = "work",
-            cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
+            cycle = TimerStateStore.readIntCompat(p, TimerStateStore.KEY_CYCLE, 1)
+                .coerceAtLeast(1),
             subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
             liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
             liveRunToken = liveRunToken,

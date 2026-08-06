@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
 import com.manilmax.online_study_room.R
+import com.manilmax.online_study_room.timer.TimerStateStore
 import es.antonborri.home_widget.HomeWidgetProvider
 
 internal const val WIDGET_IDLE_TIMER_TEXT = "00:00"
@@ -58,6 +59,32 @@ internal fun timerChronometerProjection(
         remainingMs > 0L,
     )
 }
+
+/**
+ * WP-489: sayaç widget'ının prefs okumaları.
+ *
+ * `onUpdate` bir [android.content.BroadcastReceiver] içinde koşar; oradaki tek
+ * yakalanmamış istisna uygulama **sürecini** öldürür (kullanıcının gördüğü
+ * "geri sayımı başlatınca uygulama kapanıyor" budur). Okumalar bu yüzden tek
+ * noktada toplanır ve hata widget'ı idle'a düşürür — uygulamayı değil.
+ */
+internal data class TimerWidgetPrefs(
+    val startedAtMs: Long?,
+    val mode: String?,
+    val targetSeconds: Int?,
+)
+
+internal fun readTimerWidgetPrefs(prefs: SharedPreferences): TimerWidgetPrefs = runCatching {
+    TimerWidgetPrefs(
+        // Epoch-millis anahtarı (native servis yazar) string ISO'dan daha
+        // güvenilir; yoksa eski string anahtarından geri düşer.
+        startedAtMs = TimerStateStore.startedAtMs(prefs).takeIf { it > 0L },
+        mode = prefs.getString(TimerStateStore.KEY_MODE, null),
+        targetSeconds = TimerStateStore
+            .readIntCompat(prefs, TimerStateStore.KEY_TARGET_SECONDS, 0)
+            .takeIf { it > 0 },
+    )
+}.getOrElse { TimerWidgetPrefs(null, null, null) }
 
 private object StudyWidgetKeys {
     const val TimerTitle = "timer_title"
@@ -109,23 +136,15 @@ class TimerWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
                 val compact = appWidgetManager.isCompact(context, widgetId)
-                val appPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                // Epoch-millis anahtarı (native servis yazar) string ISO'dan daha
-                // güvenilir; yoksa eski string anahtarından geri düş.
-                val startMillis = appPrefs.getLong("flutter.timer_active_started_at_ms", 0L)
-                    .takeIf { it > 0L }
-                    ?: appPrefs.getString("flutter.timer_active_started_at", null)
-                        ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
-                val mode = appPrefs.getString("flutter.timer_active_mode", null)
-                val isRunning = startMillis != null
-                val targetSeconds = appPrefs
-                    .getInt("flutter.timer_active_target_seconds", 0)
-                    .takeIf { it > 0 }
+                val timerPrefs = readTimerWidgetPrefs(
+                    context.getSharedPreferences(TimerStateStore.PREFS_NAME, Context.MODE_PRIVATE),
+                )
+                val isRunning = timerPrefs.startedAtMs != null
                 val projection = timerChronometerProjection(
                     isRunning = isRunning,
-                    mode = mode,
-                    startedAtMs = startMillis,
-                    targetSeconds = targetSeconds,
+                    mode = timerPrefs.mode,
+                    startedAtMs = timerPrefs.startedAtMs,
+                    targetSeconds = timerPrefs.targetSeconds,
                     nowWallClockMs = System.currentTimeMillis(),
                     nowElapsedRealtimeMs = SystemClock.elapsedRealtime(),
                 )

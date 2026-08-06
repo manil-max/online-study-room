@@ -5345,6 +5345,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-417** Tanıtım turu sadeleştirme | Android + Windows | Ana ekranda yalnız "kartları düzenle" balonu çıkıyor (genel bakış + sayaç turu yok); istatistiklerde hiç tur açılmıyor. Commit: `d0751a0`. **Cihazda doğrulanmalı.** |
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6372,7 +6373,7 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 
 ### WP-489: Dart↔native prefs tip sözleşmesi — geri sayım/pomodoro çökmesi 💥
 - **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N05 / rapor T01)
-- **Ajan:** Claude · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** yok (ilk kart)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** yok (ilk kart)
 - **Problem:** Dart `prefs.setInt` Android'e **`putLong`** yazar
   (`shared_preferences_android` `SharedPreferencesPlugin.kt:317`); native taraf
   aynı anahtarları `getInt` ile okuyor → `ClassCastException` → **uygulama
@@ -6390,12 +6391,14 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **DOKUNMA (oku, değiştirme):** `app/lib/data/providers/study_providers.dart`,
   `app/lib/features/android_widgets/**`, `AndroidManifest.xml`.
 - **Adımlar:**
-  - [ ] Native yazımı `putLong`a çevir (`TimerStateStore.writeRunning`: `KEY_CYCLE`, `KEY_TARGET_SECONDS`).
-  - [ ] Native okumaları `getLong(...).toInt()` yap (üç çağrı yeri).
-  - [ ] Widget sağlayıcılarındaki prefs okumalarını `runCatching` ile sar —
-        `BroadcastReceiver` içindeki tek istisna süreci öldürmemeli.
-  - [ ] JVM testi: aynı anahtara önce `putLong` yaz, okuma yolunu sür, istisna
-        atmadığını ve değerin doğru geldiğini doğrula (kırık girdiyle sınanır).
+  - [x] Native yazımı `putLong`a çevir (`TimerStateStore.writeRunning`: `KEY_CYCLE`, `KEY_TARGET_SECONDS`).
+  - [x] Native okumaları tip-bağımsız `TimerStateStore.readIntCompat` üzerinden
+        yap (üç çağrı yeri: `StudyTimerService:205,239` + `StudyWidgetProviders:122`).
+  - [x] Sayaç widget'ının prefs okumaları tek `readTimerWidgetPrefs` noktasında
+        toplandı ve `runCatching` ile sarıldı — `BroadcastReceiver` içindeki tek
+        istisna artık süreci öldürmüyor, widget idle'a düşüyor.
+  - [x] JVM testi `TimerPrefsTypeContractTest` (5 test): `putLong` yazımı, eski
+        `putInt` kurulumu, bozuk/eksik anahtar ve widget okuma yolu.
 - **Veri/Migration etkisi:** Yok. Eski cihazlarda anahtar `Int` tipinde kalmış
   olabilir; `getLong` bunu da okuyamaz → okuma `runCatching` + tip-bağımsız
   yardımcı ile yapılmalı (**iki yönlü** dayanıklılık). Geri alma: commit revert.
@@ -6416,6 +6419,13 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   kurulumları bozar. Ayrıca `timer_active_started_at_ms` zaten **doğru**
   (`getLong`); onu bozma.
 - **Model önerisi:** 🔴 Opus (native + süreç ölümü)
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` temiz ·
+  `flutter test --exclude-tags=golden` **1567 yeşil** · `l10n_android_audit` OK ·
+  `:app:testLocalDebugUnitTest` **9/9 yeşil** (yeni sınıf 5/5). Kapı kasten
+  kırık girdiyle sınandı: `readIntCompat` düz `getInt`e ve yazım `putInt`e geri
+  alınınca aynı koşum **4 test kırmızı** düşüyor (`9 tests completed, 4 failed`),
+  geri getirilince yeşile dönüyor. Kabul 1–2 (logcat + bildirimden mola turu)
+  gerçek cihaz gerektirir → QA kuyruğunda.
 
 ---
 

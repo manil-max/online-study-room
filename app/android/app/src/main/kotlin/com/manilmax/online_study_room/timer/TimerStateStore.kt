@@ -105,6 +105,25 @@ object TimerStateStore {
                 ?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
             ?: 0L
 
+    /**
+     * WP-489: sayısal sayaç anahtarlarının kanonik tipi **Long**'dur.
+     *
+     * Flutter'ın `prefs.setInt` çağrısı Android'e `putLong` yazar
+     * (`SharedPreferencesPlugin.kt:317`). Aynı anahtarı `getInt` ile okumak
+     * `SharedPreferencesImpl` içindeki `(Integer) value` cast'ine düşer ve
+     * yakalanmayan bir `ClassCastException` fırlatır; servis/receiver içinde
+     * bu, uygulama **sürecini** öldürür.
+     *
+     * Yardımcı iki yönlü dayanıklıdır: v58 öncesi kurulumlarda aynı anahtar
+     * native `putInt` ile yazılmış olabilir, o değer de okunabilir kalır.
+     */
+    fun readIntCompat(p: SharedPreferences, key: String, fallback: Int): Int {
+        if (!p.contains(key)) return fallback
+        val asLong = runCatching { p.getLong(key, fallback.toLong()) }.getOrNull()
+        if (asLong != null) return asLong.toInt()
+        return runCatching { p.getInt(key, fallback) }.getOrDefault(fallback)
+    }
+
     /** Çalışan sayaç durumunu atomik yazar (commit). */
     fun writeRunning(
         p: SharedPreferences,
@@ -125,10 +144,10 @@ object TimerStateStore {
             .putLong(KEY_STARTED_AT_MS, startedAtMs)
             .putString(KEY_MODE, mode)
             .putString(KEY_PHASE, phase)
-            .putInt(KEY_CYCLE, cycle)
+            .putLong(KEY_CYCLE, cycle.toLong())
             .also { editor ->
                 if (targetSeconds != null && targetSeconds > 0) {
-                    editor.putInt(KEY_TARGET_SECONDS, targetSeconds)
+                    editor.putLong(KEY_TARGET_SECONDS, targetSeconds.toLong())
                 } else {
                     editor.remove(KEY_TARGET_SECONDS)
                 }
