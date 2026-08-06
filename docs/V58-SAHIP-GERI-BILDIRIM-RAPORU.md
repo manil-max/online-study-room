@@ -3,7 +3,7 @@
 > **Tarih:** 6 Ağustos 2026
 > **Kaynak:** v58 stable yayınının ardından ürün sahibinin cihaz izlenimleri
 > **Amaç:** Gözlemi kaybetmeden, belirti ile teşhisi karıştırmadan kaydetmek
-> **Durum:** 🟢 **HAM KAYIT TAMAM (11 madde).** Bölüm 3 sahibin sözleridir;
+> **Durum:** 🟢 **HAM KAYIT TAMAM (11 madde + 1 sahip düzeltmesi).** Bölüm 3 sahibin sözleridir;
 > kök neden veya çözüm iddiası içermez. Kök neden çalışması 4. bölümde,
 > iş paketleri `progress.md`'dedir.
 
@@ -111,6 +111,28 @@ seçili olmasına rağmen, bu hafta."
 mı kalıyor anlamadım. Sonrasında telefondan girince 4-5 saat süre birikmiş
 oluyor. Stop diyorum, toplam sürede değişmiyor. İşleyişte olmayan bir bug."
 
+### V58-N08-EK — Sahibin düzeltmesi: süre kaybolmuyor, hayalet koşu var
+
+*(2026-08-06, ilk kaydın ardından sahip düzeltti. Ajanın "kaybolan 4-5 saat"
+okuması **yanlıştı**; aşağısı sahibin kendi ifadesidir.)*
+
+"Kaybolan 4-5 saat yazmışsın ama aslında orada kaybolmuyor. Zaten kendi kendine
+diğer cihazdan kronometre başlatıyor, ya da başlatılmış gibi oluyor, bilmiyorum.
+Ben normalde kendi telefonumdan kapatıp açıyorum. Sonrasında, atıyorum, uyudum;
+sabah bir kalkıyorum, telefonu bir açıyorum, 10 saat kronometre olmuş telefondan.
+Ama telefondan durdur'a basıyorum, diyor ki 'diğer cihazdaki kronometreyi
+durduracaksınız' diye bir uyarı veriyor, evet diyorum ama hiçbir şey olmuyor.
+Yani burada aslında kayıp değil bu zaman; yani çalıştığım zaman kaybolmuyor."
+
+**Bu kaydın üç ayrı iddiası var:**
+
+1. Gerçek çalışma süresi **kaybolmuyor** — sahip kendi telefonunda normal
+   başlat/durdur yapıyor ve o süre yazılıyor.
+2. Diğer cihazda **kendiliğinden** bir kronometre çalışıyor ya da çalışıyor gibi
+   görünüyor; sabah telefonda **10 saatlik** bir koşu beliriyor.
+3. Telefondan Durdur → "diğer cihazdaki kronometre durdurulacak" onayı → evet →
+   **hiçbir şey olmuyor**; hata mesajı da bildirilmedi.
+
 ### V58-N09 — Bildirim sayacı ve ayna cihaz senkronunda kalıntı sorunlar
 
 "Bildirim sayaç + ayna cihazda senkron problemleri, daha az da olsa, var hâlâ."
@@ -147,7 +169,8 @@ studying' kısmında falan aşağı kayıyorlar."
 | V58-N05 | Geri sayım ve pomodoro çökme/uygulamanın arkaya atılması | Doğrudan gözlem | Bildirilmedi | **Kritik** |
 | V58-N06 | `alpha_wolf_weekly` tek haftada 2 sayıyor | Doğrudan gözlem | Bildirilmedi | Orta |
 | V58-N07 | Grup yüzeyinde aktif çalışma bazen görünmüyor | Şüpheli belirti | V56/V57'de benzer kayıt var | Orta |
-| V58-N08 | Ayna cihazda açık kalan koşu 4-5 saat biriktiriyor; Durdur toplamı değiştirmiyor | Doğrudan gözlem | V57-N06'nın komşusu | **Kritik** |
+| V58-N08 | Diğer cihazda hayalet koşu birikiyor (10 sa); aynadan Durdur **etkisiz** | Doğrudan gözlem | V57-N06'nın komşusu | **Kritik** |
+| V58-N08-EK | 🔴 Sahip düzeltmesi: **gerçek çalışma süresi kaybolmuyor**; sorun sahte/hayalet koşu ve işlemeyen Durdur | Doğrudan gözlem (ajan okumasını düzeltir) | — | **Kritik** |
 | V58-N09 | Bildirim sayacı + ayna senkronunda kalıntı sapma | Şüpheli belirti | V57-N06 kısmen | Orta |
 | V58-N10 | Ana ekran üst güvenli alanı taşımıyor; seri rozeti gereğinden büyük | Doğrudan gözlem + **ürün kararı** | **V57-N12'nin (üst şerit kaldırıldı) yan etkisi** | Yüksek |
 | V58-N11 | Liste satırları aşağı kayıyor / sığmıyor | Doğrudan gözlem | V57-N11 ailesinin devamı | Orta |

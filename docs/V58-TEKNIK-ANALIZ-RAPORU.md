@@ -6,7 +6,10 @@
 > **Revizyon 1 (2026-08-06):** sahip kararları (seçili grup, sade rozet) ve
 > N10-N11 eklendi; T06/T08/T10 yeniden yazıldı, T14 açıldı.
 > **Revizyon 2 (2026-08-06):** sahip talebiyle tam doğrulama turu — T01 ve T11'in
-> gerekçesi **düzeltildi**, T05/T09/T10 kanıtı sertleştirildi. Bkz. §2.5.
+> gerekçesi **düzeltildi**, T09/T10 kanıtı sertleştirildi. Bkz. §2.5.
+> **Revizyon 3 (2026-08-06):** 🔴 **T05 sahip düzeltmesiyle yeniden yazıldı.**
+> Belirti "kaybolan çalışma süresi" değil, **hayalet koşu + etkisiz Durdur**.
+> Önerilen eski çözüm (oturum yazmak) sahte süre üretirdi ve **iptal edildi**.
 > **Yöntem:** yalnız **statik kod analizi**. Cihazda koşum, logcat, profil ve
 > production sorgusu **yapılmadı**; her bulgunun kanıt seviyesi ayrıca yazılıdır.
 > **Amaç:** belirtiden koda inmek, kök nedeni dosya:satır ile göstermek ve her
@@ -295,74 +298,82 @@ tek değil.
 
 ---
 
-### T05 — Ayna cihazda Durdur hiçbir şey kaydetmiyor + 12 saatlik hayalet koşu (N08)
+### T05 — Hayalet koşu ve etkisiz ayna Durdur'u (N08, N08-EK)
 
-**Seviye: A (kayıt yolu) / B (12 saatlik pencerenin sahadaki payı) · Şiddet: Kritik**
+**Seviye: A (kod yolları) / C (hayaletin kaynağı) · Şiddet: Kritik**
 
-İki kusur üst üste biniyor.
+> 🔴 **Bu bulgu 2026-08-06'da sahip düzeltmesiyle YENİDEN YAZILDI.** İlk sürüm
+> belirtiyi "kaybolan 4-5 saatlik çalışma" diye okumuştu ve çözüm olarak
+> *"sunucu, uzak durdurmada `study_sessions` satırını yazsın"* diyordu.
+> **Bu okuma yanlıştı ve önerilen düzeltme zararlıydı:** sahip gerçek çalışmasını
+> kendi telefonunda normal başlatıp durduruyor ve o süre yazılıyor. Ekranda
+> beliren 10 saat **çalışılmış zaman değil, hayalet bir koşudur**. O koşudan
+> oturum yazmak, kullanıcının istatistiklerine **10 saatlik sahte çalışma
+> enjekte ederdi**. Aşağıdaki analiz düzeltilmiş hâlidir.
 
-**(a) Ayna durdurması oturum yazmıyor.**
+**Belirti (sahibin senaryosu).** Telefonda normal çalış-durdur → uyu → sabah
+telefonu aç → ekranda **10 saatlik** bir kronometre → Durdur'a bas → "diğer
+cihazdaki kronometre durdurulacak" onayı → evet → **hiçbir şey olmuyor**.
+
+**(a) Telefon "ayna", koşunun sahibi diğer cihaz.** Onay metninin çıkması
+(`study_timer_card.dart:119-139`) yalnız `timer.isGlobalTimerMirror` iken
+mümkündür. Yani sunucuda **başka bir cihazın controller olduğu açık bir koşu**
+var ve telefon onu aynalıyor. Görünen 10 saat, koşunun `effective_started_at`
+değerinden türüyor — bu yüzden "kendi kendine başlamış" gibi duruyor.
+
+**(b) Neden ölmüyor? — belgelenmiş boşluk.** Kodun kendi yorumu bu boşluğu
+zaten yazmış:
 
 ```
-app/lib/data/providers/study_providers.dart:2109-2133  stopMirroredRun()
-    state = state.copyWith(isStopping: true, clearSettling: true);
-    await coordinator.stopMirroredRun(runId: ..., expectedRunRevision: ...);
-    _finish();                                   // ← settlingSeconds YOK, _recordSession YOK
+study_providers.dart:1104-1107
+  // Ayna, uzak durdurmayı yalnız yaşam döngüsüne bağlı snapshot turundan
+  // öğrenebilir; cihaz uyurken o tur ÖLÜDÜR. Bu satır o boşluğun ölçülebilir izidir.
 ```
 
-Normal `stop()` yolu (satır 2046-2060) kaydedilecek saniyeyi hesaplayıp
-`settling*` alanlarına yazar ve `_recordSession(...)` çağırır. Ayna yolu bunların
-**hiçbirini** yapmaz; yalnız sunucudaki koşuyu kapatır. Dolayısıyla ekranda
-görünen 4-5 saat, Durdur'a basıldığında **hiçbir günlük toplama eklenmez** —
-sahibin "stop diyorum, toplam sürede değişmiyor" dediği davranış tam da budur ve
-kodun bugünkü hâlinde **beklenen** davranıştır.
+Roller tersine döndüğünde aynı boşluk controller tarafında da geçerlidir: diğer
+cihazın Dart isolate'i uykudayken, sunucudaki koşunun kapandığını **öğrenemez**;
+native foreground servisi çalışmaya devam eder ve uyandığında kendi durumunu
+yeniden yayınlayabilir. `0119`un **12 saatlik** recovery grace'i de süpürücünün
+bu koşuyu kapatmasını yarım gün geciktirir. Bu ikisi birlikte "sabah 10 saat"
+tablosunu üretir.
 
-Süreyi origin cihazın (tablet) yazması gerekir; o cihaz kapalı/uykudaysa süre
-hiçbir yere yazılmaz. Yani veri sadece "görünmüyor" değil, **kayıp**.
+**(c) Durdur neden etkisiz görünüyor?** Sunucu tarafı stop **koşulludur**
+(`0101_global_timer_controller_contract.sql:269-281`):
 
-**(b) Koşu 12 saat boyunca "çalışıyor" kalıyor.**
+| Sunucu sonucu | İstemci davranışı | Kullanıcının gördüğü |
+|---|---|---|
+| `run_revision` uyuşmazsa → `stale` | `StateError` fırlatır (`global_timer_providers.dart:216`) | Snackbar: durdurulamadı |
+| Zaten `stopped`/`abandoned` → `already_stopped` | Hata değil; `_finish()` çalışır | Sayaç kapanır… |
+| Normal yol | Koşu `stopped`, revision +1 | Sayaç kapanır… |
 
-`supabase/migrations/0119_global_timer_lease_recovery_grace.sql` v58'de tam da bu
-turda geldi: lease süresi dolan koşu artık **12 saat** boyunca terminal
-`abandoned` durumuna geçmiyor (`lease_expires_at <= v_now - interval '12 hours'`).
-Gerekçesi doğru (Android Dart isolate'i askıya alırken native sayaç yaşamaya devam
-ediyor), ama sonucu şu: tablette unutulan bir koşu yarım gün boyunca canlı sayılır
-ve telefon açıldığında **ayna olarak birikmiş süreyi** gösterir.
+Son iki satırda sayaç **yerel olarak** kapanır; ama diğer cihazın native servisi
+hâlâ ayaktaysa bir sonraki uzlaşma turunda koşu **yeniden aynalanır** ve sayaç
+geri gelir. Kullanıcı için sonuç "hiçbir şey olmadı"dır. Sahip bir hata mesajı
+bildirmediği için `stale` yolu (snackbar'lı) **daha az olası**; ama elenmiş
+değildir.
 
-**Bu, v58'de değişen ve cihazda hiç doğrulanmayan bir davranıştır** — belirtinin
-bu turda ortaya çıkması tesadüf değil.
+**Kanıtlanmamış olan:** hayalet koşuyu kimin, ne zaman açtığı. Bu, statik
+okumayla değil **sunucu durumu + tanı günlüğüyle** kapanır — ikisi de mevcut:
+`live_study_runs`, `user_timer_state`, `global_timer_commands` ve WP-430'da
+kurulan `TimerDiagnosticJournal` (`mirrorStopRequested` olayının
+`applied`/`stale`/`deferred` sonucu satır satır yazılıyor).
 
-**(c) Doğrulama turunda ortaya çıkan üçüncü katman: kayıp yalnız aynada değil.**
-İlk taslak "süreyi origin cihaz yazmalı" diyordu; origin de yazmıyor:
+**Düzeltme yönü — sıra önemli:**
+1. 🔴 **Hayalet koşudan oturum YAZILMAZ.** Sahte süreyi kalıcılaştırmak, hatayı
+   veri bozulmasına çevirir. Bu kural her düzeltmenin üstündedir.
+2. Önce **teşhis**: koşuyu kim açtı, stop hangi sonucu döndürdü, koşu neden geri
+   geliyor. Protokol WP-490 kartındadır.
+3. Durdurma **dürüst** olmalı: komut kabul edilse bile koşu geri geliyorsa
+   kullanıcıya bunu söyle; sessizce yeniden aynalama yasak.
+4. Diğer cihazın native servisi, sunucudaki terminal durumu **uyanmadan** da
+   öğrenmeli (push ile stop teslimi) — yoksa aynı hayalet her uykuda geri döner.
+5. `0119`un 12 saatlik penceresi, hayaleti yarım gün canlı tuttuğu için
+   daraltılmalı (WP-491).
 
-- Sunucuda ayrı bir `stop_mirrored_run` RPC'si **yok**; Dart
-  `apply_global_timer_command(action: 'stop')` çağırıyor
-  (`global_timer_providers.dart:194-203`). O fonksiyonun stop dalı yalnız
-  `live_study_runs.status = 'stopped'` yazıp presence'ı kapatıyor
-  (`0101_global_timer_controller_contract.sql:274-281`) — `study_sessions`'a
-  **hiçbir insert yok**. (`insert into public.study_sessions` tüm migration'larda
-  tek yerde: `0051`'deki `finalize_verified_live_run`, ve o yalnız
-  `run_token`'lı verified koşu için çağrılır.)
-- Origin cihaz uzak durdurmayı öğrendiğinde de kayıt yapmıyor:
-  `_applyRemoteMirrorStop` → `_finish(globalTimerStoppedRemotelyAt: …)`
-  (`study_providers.dart:1154`). `_finish` zaten belgesinde "**kayıt yapmadan**
-  durdurur" diyor ve native tarafa giden `STOP_SILENT` kuyruğa aralık yazmaz.
-
-Yani uzaktan/aynadan durdurulan bir koşunun süresi **iki uçta da** hiçbir yere
-yazılmıyor. Bu, "toplam değişmiyor"un tam açıklamasıdır ve belirtinin
-şiddetini yükseltir: veri geç gelmiyor, **hiç gelmiyor**.
-
-**Düzeltme yönü — sıralı:**
-1. Ayna durdurmasını **kayıtlı** hâle getir: sunucu, koşuyu kapatırken oturumu
-   kendisi yazsın (`stop_mirrored_run` içinde `study_sessions` kaydı). İstemciden
-   yazmak çift kayıt riski taşır; tek yazıcı sunucu olmalı.
-2. Terk edilmiş koşu için 12 saat **çok uzun**. Native sayacın canlılığını lease
-   yerine ayrı bir sinyalle ölç (FGS heartbeat'i zaten var) ve grace'i o sinyale
-   bağla; sinyal yoksa 1-2 saat sonra kapat.
-3. Kullanıcıya "başka cihazda X saattir açık koşu var, kapatılsın mı?" sorusu —
-   sessizce 4 saat biriktirmekten iyidir.
-
----
+**Gerçek çalışma süresi ne durumda?** Sahibin ifadesine göre **sağlam**: kendi
+cihazında normal başlat/durdur ile yazılıyor. Bu yüzden bu bulgu bir *veri kaybı*
+değil, **sahte durum** bulgusudur ve şiddeti oradan gelir: kullanıcı ekranda
+yaşamadığı bir çalışmayı görüyor ve durduramıyor.
 
 ### T06 — `alpha_wolf_weekly` gruplar arasında toplanıyor (N06)
 
@@ -667,7 +678,7 @@ senior'ın tek bakışta görmesidir.
 
 | Bulgu | Yeni kanıt |
 |---|---|
-| **T05** | Sunucuda `stop_mirrored_run` RPC'si **yok**; stop dalı (`0101:274-281`) yalnız durum güncelliyor, `study_sessions` insert'i tüm migration'larda tek yerde (`0051`, verified koşu). Origin cihaz da uzak durdurmada `_finish()` çağırıyor — o da "kayıt yapmadan durdurur". Yani süre **iki uçta da** kayıp. |
+| **T05** | *(Bu satır 2026-08-06'da geçersizleşti — sahip düzeltmesiyle bulgu yeniden yazıldı; §T05'e bak. Sunucu/istemci kod okumaları doğruydu, **yorumu** yanlıştı: yazılmayan şey kullanıcının çalışması değil, hayalet koşunun sahte süresidir.)* |
 | **T09** | Varsayım değil, kütüphane kaynağı: `iterateThroughAxis` satır 56-58 eksen sınırı için **fazladan** etiket üretiyor ve `maxIncluded` varsayılanı `true`. Çakışma her veri kümesinde deterministik. |
 | **T10** | Taçlı avatar yüksekliği elle hesaplandı: r=16 → **50.9 px** (taçsız 32), satır ≈ **61 px**, kartın bütçesi **42** → %45 aşım. |
 
@@ -805,7 +816,7 @@ ile en az bir golden gerekir.
 | Sıra | Bulgu | Gerekçe |
 |---|---|---|
 | 1 | **T01** | Süreç ölümü. Kullanıcı iki sayaç modunu kullanamıyor. Düzeltme küçük ve lokal. |
-| 2 | **T05** | Veri **kaybı** (4-5 saatlik koşu hiçbir yere yazılmıyor) + v58'de değişen davranış. |
+| 2 | **T05** | Sahte durum: kullanıcı yaşamadığı 10 saatlik koşuyu görüyor ve **durduramıyor**. Veri kaybı değil (sahip düzeltmesi), ama güven kaybı. |
 | 3 | **T02** | Reklam edilen bir özellik tümüyle çalışmıyor; düzeltme sunucu tarafında tek noktada. |
 | 4 | **T03** | Pil/ağ maliyeti ve görünür titreme; tek dosyada. |
 | 5 | **T04** | Algılanan kalitede en görünür kusur; desen taraması gerektirir. |
