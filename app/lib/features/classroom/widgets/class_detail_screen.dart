@@ -98,19 +98,33 @@ class ClassDetailScreen extends ConsumerWidget {
                 ),
               ),
               if (isAdmin)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context).classroomYonetici,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
+                // 🔴 WP-498 yan bulgusu (kart kapsamında değil, aynı dosyada
+                // ölçüldü): bu rozetin genişliği yazı ölçeğiyle sınırsız
+                // büyüyordu. 320 dp ekranda ölçek 1.6'da satır **8.8 px
+                // taşıyordu** (sarı-siyah şerit). Eski kodda da vardı; komşu
+                // test bunu göremezdi çünkü `MediaQuery(size:)` gerçek
+                // pencereyi daraltmıyor, iddia 800 dp'de sınanıyordu.
+                //
+                // Üst sınır bilerek **ölçekle büyümüyor**: taşmanın nedeni tam
+                // olarak ölçekle büyüyen bir sabitti. Sığmayan metin kırpılır.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 96),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context).classroomYonetici,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
                     ),
                   ),
                 ),
@@ -834,6 +848,12 @@ class _GroupAvatarEditorState extends ConsumerState<_GroupAvatarEditor> {
   }
 }
 
+/// Üye satırının kararlı kancası (test + golden).
+///
+/// Satır artık `ListTile` değil (WP-498); testler satırı tipe göre bulamaz.
+/// Ada/ünvana göre aramak da kırılgan: uzun ad kırpılınca `find.text` tutmaz.
+Key memberRowKey(String memberId) => ValueKey('member-row-$memberId');
+
 class _MembersCard extends ConsumerWidget {
   const _MembersCard({
     required this.group,
@@ -885,75 +905,133 @@ class _MembersCard extends ConsumerWidget {
       child: Column(
         children: [
           for (final m in members)
-            ListTile(
-              leading: LiveCrownedAvatar(
-                userId: m.id,
-                displayName: m.displayName,
-                avatarUrl: m.avatarUrl,
-                radius: 18,
-              ),
-              // WP-487: ad tek satır. Sarmalanan ad + sarmalanan ünvan +
-              // ayrı "Yönetici" satırı aynı üyeyi 5 satıra çıkarabiliyordu.
-              title: Text(
-                !m.isActive
-                    ? AppLocalizations.of(context).classroomEskiGrupUyesi
-                    : (m.displayName.isEmpty
-                          ? AppLocalizations.of(context).classroomIsimsiz
-                          : m.displayName),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: _memberSubtitle(
-                context,
-                isOwner: m.id == group.createdBy,
-                title: titleNames[m.titleAchievementId],
-              ),
-              onTap: () => SocialProfileDialog.show(context, m),
-              trailing: m.isActive && m.id != currentUserId
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _NudgeButton(
-                          key: ValueKey('nudge-${m.id}'),
-                          isRecipientStudying: studyingIds.contains(m.id),
-                          onSend: currentUser == null
-                              ? null
-                              : () => _sendNudge(context, ref, currentUser, m),
-                        ),
-                        _MuteNudgeButton(
-                          key: ValueKey('mute-${m.id}'),
-                          memberId: m.id,
-                          isMuted: mutedIds.contains(m.id),
-                        ),
-                        // 🔴 WP-446: bu iki eylem aynı görünüyordu ama
-                        // sonuçları farklı. Çıkarma geri dönülebilir
-                        // (üye davet koduyla tekrar katılır), yasak
-                        // değil. Yasak düğmesi üstelik `safetyBlock`
-                        // ("Kişiyi engelle") metnini kullanıyordu — o ise
-                        // hesap-kapsamlı KİŞİSEL bir tercihtir, yönetici
-                        // işlemi değil. Yönetici "engelliyorum" sanıp
-                        // kalıcı grup yasağı koyabiliyordu.
-                        if (isAdmin && m.id != group.createdBy)
-                          IconButton(
-                            tooltip: AppLocalizations.of(
-                              context,
-                            ).classroomUyeyiCikar,
-                            icon: const Icon(Icons.person_remove_outlined),
-                            onPressed: () => _removeMember(context, repo, m),
-                          ),
-                        if (isAdmin && m.id != group.createdBy)
-                          IconButton(
-                            tooltip: AppLocalizations.of(
-                              context,
-                            ).classroomUyeyiYasakla,
-                            icon: const Icon(Icons.gavel_outlined),
-                            onPressed: () => _banMember(context, repo, m),
-                          ),
-                      ],
-                    )
-                  : null,
+            _memberRow(
+              context,
+              ref,
+              member: m,
+              repo: repo,
+              currentUser: currentUser,
+              titleName: titleNames[m.titleAchievementId],
+              isStudying: studyingIds.contains(m.id),
+              isMuted: mutedIds.contains(m.id),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Tek üye satırı.
+  ///
+  /// 🔴 WP-498 (V58-N04): burada `ListTile` vardı ve `trailing`e **dört**
+  /// `IconButton` diziliyordu. `ListTile` önce `trailing`e istediği genişliği
+  /// verir, `title`a **kalanı** bırakır: dört yuva 192 dp yiyor, 320 dp ekranda
+  /// ada ~40 dp kalıyordu — ad "B...", "S..." diye tek harfe düşüyordu.
+  /// Şikâyetin kanıtı ekrandaki tek istisnaydı: eylem simgesi **olmayan** satır
+  /// (yöneticinin kendi satırı) adı tam gösteriyordu. Bu, WP-487'nin (dikey
+  /// şişme) yan etkisidir — sorun dikeyden yataya taşınmıştı.
+  ///
+  /// Çözüm iki parçalı, ikisi de gerekli:
+  ///   1. yerleşim `ListTile`dan alındı; ad `Expanded` ile **öncelikli** alanı
+  ///      alır, eylemler sabit genişlikte artık ne kalırsa onu değil;
+  ///   2. ikincil yönetici eylemleri (çıkar/yasakla) tek taşma menüsüne indi.
+  ///      Dürtme ve susturma **satırda kalır** — ikisi de birincil eylem.
+  ///
+  /// Satır yüksekliği ad/ünvan uzunluğundan bağımsızdır (WP-487 kazanımı):
+  /// `ListTile`ın iki satırlık 72 dp taban yüksekliği burada `minHeight` olarak
+  /// açıkça duruyor, aksi hâlde eylemi olan satır olmayandan yüksek olurdu.
+  Widget _memberRow(
+    BuildContext context,
+    WidgetRef ref, {
+    required Profile member,
+    required GroupRepository repo,
+    required Profile? currentUser,
+    required String? titleName,
+    required bool isStudying,
+    required bool isMuted,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final showActions = member.isActive && member.id != currentUserId;
+    final canModerate = isAdmin && member.id != group.createdBy;
+    return InkWell(
+      key: memberRowKey(member.id),
+      onTap: () => SocialProfileDialog.show(context, member),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 72),
+        child: Padding(
+          // Sağda dolgu yok: eylem yuvasındaki `IconButton` zaten 8 dp iç
+          // dolgu taşıyor, ikinci bir kenar boşluğu doğrudan addan çalınıyordu.
+          padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+          child: Row(
+            children: [
+              LiveCrownedAvatar(
+                userId: member.id,
+                displayName: member.displayName,
+                avatarUrl: member.avatarUrl,
+                radius: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // WP-487: ad tek satır. Sarmalanan ad + sarmalanan ünvan +
+                    // ayrı "Yönetici" satırı aynı üyeyi 5 satıra çıkarabiliyordu.
+                    Text(
+                      !member.isActive
+                          ? l10n.classroomEskiGrupUyesi
+                          : (member.displayName.isEmpty
+                                ? l10n.classroomIsimsiz
+                                : member.displayName),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    _memberSubtitle(
+                      context,
+                      isOwner: member.id == group.createdBy,
+                      title: titleName,
+                    ),
+                  ],
+                ),
+              ),
+              if (showActions) ...[
+                _MemberActionSlot(
+                  child: _NudgeButton(
+                    key: ValueKey('nudge-${member.id}'),
+                    isRecipientStudying: isStudying,
+                    onSend: currentUser == null
+                        ? null
+                        : () => _sendNudge(context, ref, currentUser, member),
+                  ),
+                ),
+                _MemberActionSlot(
+                  child: _MuteNudgeButton(
+                    key: ValueKey('mute-${member.id}'),
+                    memberId: member.id,
+                    isMuted: isMuted,
+                  ),
+                ),
+                // 🔴 WP-446: bu iki eylem aynı görünüyordu ama sonuçları
+                // farklı. Çıkarma geri dönülebilir (üye davet koduyla tekrar
+                // katılır), yasak değil. Yasak düğmesi üstelik `safetyBlock`
+                // ("Kişiyi engelle") metnini kullanıyordu — o ise hesap-kapsamlı
+                // KİŞİSEL bir tercihtir, yönetici işlemi değil. Yönetici
+                // "engelliyorum" sanıp kalıcı grup yasağı koyabiliyordu.
+                // WP-498: ikisi de menüye indi ama **koşulu ve adları aynen**.
+                if (canModerate)
+                  _MemberActionSlot(
+                    child: _MemberModerationMenu(
+                      key: ValueKey('moderate-${member.id}'),
+                      onRemove: () => _removeMember(context, repo, member),
+                      onBan: () => _banMember(context, repo, member),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1236,6 +1314,79 @@ class _MuteNudgeButtonState extends ConsumerState<_MuteNudgeButton> {
       onPressed: _busy ? null : _toggle,
     );
   }
+}
+
+/// Üye satırındaki tek eylem yuvası.
+///
+/// 🔴 WP-498: `IconButton` varsayılan olarak **48 dp genişliğinde** bir kutu
+/// ister. 320 dp ekranda kartın iç genişliği ~280 dp; ada 12 karakterlik
+/// (~96 dp) alan bırakmak isteyen bir satırda üç yuvaya toplam 144 dp değil
+/// **120 dp** düşer. Bu yüzden yuva yatayda 40 dp'ye çekildi.
+///
+/// Dokunma hedefinin **dikey** boyutu 48 dp olarak korunur (`IconButton`ın
+/// kendi alt sınırı, satır zaten en az 72 dp) ve satırın tamamı ayrıca
+/// tıklanabilir (profil kartı). Daralan yalnız yatay ayak izidir; alternatif,
+/// adın okunamaz kalmaya devam etmesiydi.
+class _MemberActionSlot extends StatelessWidget {
+  const _MemberActionSlot({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      SizedBox(width: _kMemberActionSlotWidth, child: child);
+}
+
+const double _kMemberActionSlotWidth = 40;
+
+/// WP-498: yönetici eylemlerinin taşma menüsü.
+///
+/// Çıkarma ve yasaklama satırdan **kaldırılmadı**, tek yuvaya indirildi: ikisi
+/// de nadir, geri dönüşü zor ve zaten onay diyaloğu ister. Dürtme ve susturma
+/// menüye girmez — onlar birincil eylemlerdir (kart tuzağı).
+///
+/// Menü yalnız `isAdmin && m.id != group.createdBy` iken çizilir; koşul
+/// sağlanmıyorsa **düğmenin kendisi yoktur**, boş menü açılmaz.
+class _MemberModerationMenu extends StatelessWidget {
+  const _MemberModerationMenu({
+    super.key,
+    required this.onRemove,
+    required this.onBan,
+  });
+
+  final VoidCallback onRemove;
+  final VoidCallback onBan;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return PopupMenuButton<VoidCallback>(
+      icon: const Icon(Icons.more_vert),
+      // Yuva 40 dp; `IconButton`ın 8 dp iç dolgusu bu kutuda taşma yapar.
+      padding: EdgeInsets.zero,
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem<VoidCallback>(
+          value: onRemove,
+          child: _menuRow(Icons.person_remove_outlined, l10n.classroomUyeyiCikar),
+        ),
+        PopupMenuItem<VoidCallback>(
+          value: onBan,
+          child: _menuRow(Icons.gavel_outlined, l10n.classroomUyeyiYasakla),
+        ),
+      ],
+    );
+  }
+
+  Widget _menuRow(IconData icon, String label) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon),
+      const SizedBox(width: 12),
+      // Menü genişliği içeriğe göre; uzun çeviride sarmalanır, kırpılmaz.
+      Flexible(child: Text(label)),
+    ],
+  );
 }
 
 /// Basit onay diyaloğu (tehlikeli işlemler için).

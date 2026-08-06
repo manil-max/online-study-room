@@ -5353,7 +5353,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `17432c5`. **Cihazda doğrulanmalı.** |
 | **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `b8aaa3f`. **Cihazda doğrulanmalı.** |
 | **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `536eeb5`. **Cihazda doğrulanmalı.** |
-| **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `dd0eda3`. **Cihazda doğrulanmalı.** |
+| **WP-498** Üye satırında ad alanı | Android telefon + gerçek Supabase (grup detayı; **uzun adlı**, ünvanlı, yönetici olmayan bir üye; yazı ölçeği 1.0 ve 1.6) | Üye listesinde ad artık tek harfe düşmüyor — en az 12 karakter okunuyor; dürtme ve susturma satırda duruyor; sağdaki ⋮ menüsünde "Üyeyi çıkar" ve "Üyeyi yasakla" ayrı adlarla çıkıyor ve seçilince onay diyaloğu açılıyor; yönetici olmayan hesapta ⋮ hiç görünmüyor. Ekran başlığındaki "Yönetici" rozeti 1.6 ölçekte sarı-siyah taşma şeridi üretmiyor. Commit: `b3e6c7d`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7117,33 +7118,84 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-498: Grup üye satırında ad tek harfe düşüyor 🔠
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N04 / rapor T07)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-494 kapanmadan başlamaz** (aynı dosya)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-494 ✅ kapandı (`434cc58`)
 - **Problem:** `class_detail_screen.dart:903-948` `ListTile.trailing`e dört
   `IconButton` koyuyor (~192 dp); `ListTile` trailing'e istediği genişliği verir,
   ada ~40-60 dp kalır → "B...", "S...", "A...". Ekran görüntüsü kanıtı: eylem
   simgesi **olmayan** tek satır (yöneticinin kendi satırı) adı tam gösteriyor.
   Bu, WP-487'nin (dikey şişme) yan etkisidir: sorun yataya taşındı.
+  ↳ **Ölçüldü, kartın tahmininden kötü:** uzun adlı üye satırında ada kalan
+  genişlik 320 dp ekranda **0.0 dp** (ad hiç çizilmiyor), 360 dp'de **12.7 dp**
+  (%4 — sahibin gördüğü "tek harf"), 411 dp'de **63.7 dp** (%17).
 - **Kapsam dışı:** Dürtme/susturma/çıkarma/yasak **davranışları**, ünvan metni,
   üye sıralaması, sohbet kartı.
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/classroom/widgets/class_detail_screen.dart`
   - `app/test/features/classroom/member_row_wp498_test.dart` (yeni)
-- **DOKUNMA:** `group_providers.dart` (WP-494'ün sahibi), l10n.
+  - `app/test/features/classroom/goldens/member_row_wp498.png` (yeni)
+  - ⚠️ **Kartta yazmayan, zorunlu iki komşu:** `member_row_layout_test.dart`
+    (WP-487) satırı `find.byType(ListTile)` ile buluyordu ve
+    `group_action_scope_wp446_test.dart` çıkar/yasak düğmelerini `tooltip` ile
+    arıyordu. İkisi de yerleşim değişince kırıldı; iddiaları **korunarak**
+    yeni kancalara taşındı (`memberRowKey`, menü anahtarı + menü metni).
+- **DOKUNMA:** `group_providers.dart` (WP-494'ün sahibi), l10n. — **dokunulmadı**
+  (menü kalemleri mevcut `classroomUyeyiCikar`/`classroomUyeyiYasakla`
+  anahtarlarını kullanıyor, yeni anahtar açılmadı).
 - **Adımlar:**
-  - [ ] `ListTile` yerine kendi satırı: ada `Expanded`, eylemler sabit genişlik.
-  - [ ] İkincil eylemleri (çıkar/yasakla) tek bir taşma menüsüne indir; dürtme
-        ve susturma satırda kalsın.
-  - [ ] Golden: 320 dp genişlik + uzun ad + ünvan + yönetici.
+  - [x] `ListTile` yerine kendi satırı: ada `Expanded`, eylemler sabit genişlik
+        (`_MemberActionSlot`, 40 dp). Satırın kancası `memberRowKey(memberId)`.
+  - [x] İkincil eylemler (çıkar/yasakla) tek `PopupMenuButton`a indi; dürtme ve
+        susturma satırda kaldı (kart tuzağı).
+  - [x] Golden: 320 dp + uzun ad + ünvan + yönetici
+        (`goldens/member_row_wp498.png`).
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yasak/çıkarma eylemlerinin **görünürlük koşulları** aynen
-  korunur (`isAdmin && m.id != group.createdBy`).
+  korunur (`isAdmin && m.id != group.createdBy`). Koşul sağlanmıyorsa menü
+  düğmesi **hiç çizilmez** — boş menü açılmaz. İki test bunu ayrı ayrı ölçüyor
+  (yönetici olmayan izleyici · kurucunun satırı).
 - **Edge-case'ler:** Çok uzun ad · ünvanlı/ünvansız · yönetici kendi satırı ·
-  eski üye · 320 dp ekran · yazı ölçeği 1.3.
-- **Kabul (ölçülebilir):** 320 dp genişlikte ad için **en az 12 karakter**
-  görünür alan kalır; satır tek satırda kalır ve hiçbir eylem kaybolmaz (golden).
+  eski üye · 320 dp ekran · yazı ölçeği 1.3 ve 1.6 — hepsi testte.
+- **Kabul (ölçülebilir):**
+  1. ⚠️ **Karakter sayısı dp'ye çevrildi.** `flutter test` gerçek yazı tipini
+     yüklemez; Ahem'de **her** glif fontSize kadar geniştir (16 sp → 16 dp), yani
+     "12 karakter" testte 192 dp eder ve hiçbir yerleşim geçemez. Ölçülen şey
+     **ada ayrılan dp**: sınır 96 dp (12 × ~8 dp, Roboto 16 sp ortalama
+     ilerleme). Sonuç: 320 dp ekranda **108 dp** (satırın %38'i), 360'ta 148,
+     411'de 192. Eskisi sırasıyla 0 / 12.7 / 63.7 dp idi.
+  2. ✅ Satır tek satırda kalır (`maxLines: 1` + ellipsis) ve satır yüksekliği
+     ad/ünvan/eylem varlığından bağımsız — `ListTile`ın iki satırlık 72 dp
+     tabanı `minHeight` olarak açıkça korundu (WP-487 kazanımı).
+  3. ✅ Hiçbir eylem kaybolmadı: dürtme + susturma satırda, çıkar + yasakla
+     menüde ayrı adlarla; menü kalemi seçilince onay diyaloğu gerçekten açılıyor
+     (boş bir menü metin testini geçerdi, o yüzden ayrı iddia).
+- **Kanıt (kırmızı-yeşil, ölçüldü):** eski dosya `git stash` ile geri konup
+  aynı ölçüm koşuldu → ada kalan alan **0.0 / 12.7 / 63.7 dp** (320/360/411).
+  Yeni kodda **108 / 148 / 192 dp**. Yeni test dosyası 12/12 yeşil; komşu iki
+  test dosyası taşındıktan sonra classroom paketi 39/39.
+- **🔴 Kartta olmayan iki bulgu:**
+  1. **Komşu test 320 dp'yi hiç ölçmüyormuş.** `member_row_layout_test.dart`
+     ekranı `MediaQuery(size: Size(320, 900))` ile kuruyordu; `MediaQuery`
+     yalnız onu **okuyan** widget'ları etkiler, kök kısıt test penceresinden
+     gelir (800×600). "Dar ekranda taşma yok" iddiası bu yüzden 800 dp'de
+     koşuyordu. Bu WP'nin ilk ölçümü de aynı tuzağa düştü (ada 570 dp çıktı).
+     Kurulum artık `tester.view.physicalSize` ile pencereyi gerçekten daraltıyor.
+  2. **Gerçek 320 dp'de bir taşma varmış.** Ekran başlığındaki "Yönetici"
+     rozetinin genişliği yazı ölçeğiyle sınırsız büyüyordu; 320 dp + ölçek 1.6'da
+     satır **8.8 px taşıyor** (sarı-siyah şerit). Eski kodda da vardı — yani
+     WP-498'in getirdiği bir gerileme değil, (1) yüzünden görünmeyen bir hata.
+     Aynı dosyada olduğu için düzeltildi: rozet **ölçekle büyümeyen** 96 dp üst
+     sınıra alındı ve kırpılıyor. Test artık 320+1.6'da istisna yok diyor.
+- **Test durumu:** `flutter test` **1693/1693** (+12), `flutter analyze` temiz,
+  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
 - **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
   eylemdir, satırda kalır.
+  ↳ Uyuldu: menüye yalnız çıkar/yasakla indi; dürtme ve susturma satırda.
+- **Bilinçli ödünleşim:** Üç eylem yuvası `IconButton`ın varsayılan 48 dp
+  genişliğinden **40 dp**'ye çekildi. Dokunma hedefinin **dikeyi 48 dp** kalır
+  (satır zaten ≥72 dp) ve satırın tamamı ayrıca tıklanabilir. 48 dp yatayda
+  korunsaydı ada 280 dp'lik satırda 96 dp'nin altı kalıyordu; alternatif adın
+  okunamaz kalmaya devam etmesiydi.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

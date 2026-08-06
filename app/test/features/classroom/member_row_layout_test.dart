@@ -36,10 +36,21 @@ final _owner = _member('owner-1', 'Sahip', titleId: _longTitleId);
 final _shortMember = _member('peer-1', 'Ada');
 final _longMember = _member('peer-2', _longName, titleId: _longTitleId);
 
-Future<Widget> _detail({
+/// 🔴 WP-498'de ölçüldü: bu kurulum eskiden `MediaQuery(size: ...)` ile
+/// "dar ekran" kuruyordu. `MediaQuery` yalnız onu **okuyan** widget'ları
+/// etkiler; kök kısıt test penceresinden gelir (varsayılan 800×600). Aşağıdaki
+/// "320 dp'de taşma yok" iddiası bu yüzden yıllarca 800 dp'de koştu ve gerçek
+/// bir taşmayı (ekran başlığında 8.8 px) göremedi. Pencere artık gerçekten
+/// daraltılıyor; `surface` parametresi ne diyorsa o ölçülüyor.
+Future<Widget> _detail(
+  WidgetTester tester, {
   Size surface = const Size(360, 900),
   double textScale = 1.0,
 }) async {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = surface;
+  addTearDown(tester.view.reset);
+
   final groups = InMemoryGroupRepository();
   final group = await groups.createGroup(name: 'Odak Grubu', creator: _owner);
   await groups.joinGroup(inviteCode: group.inviteCode, member: _shortMember);
@@ -54,12 +65,14 @@ Future<Widget> _detail({
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(
-          size: surface,
-          textScaler: TextScaler.linear(textScale),
+      home: Builder(
+        builder: (context) => MediaQuery(
+          // Yalnız yazı ölçeği eziliyor; boyut artık pencereden geliyor.
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: ClassDetailScreen(group: group),
         ),
-        child: ClassDetailScreen(group: group),
       ),
     ),
   );
@@ -72,23 +85,17 @@ Future<List<double>> _memberRowHeights(WidgetTester tester) async {
     300,
     scrollable: find.byType(Scrollable).first,
   );
-  // Üye kartındaki satırlar: adları benzersiz olan üç üye.
+  // Üye kartındaki satırlar. WP-498: satır artık `ListTile` değil, kendi
+  // yerleşimi — kanca `memberRowKey`.
   return [
-    for (final name in [_owner.displayName, _shortMember.displayName, _longName])
-      tester
-          .getSize(
-            find.ancestor(
-              of: find.text(name),
-              matching: find.byType(ListTile),
-            ),
-          )
-          .height,
+    for (final member in [_owner, _shortMember, _longMember])
+      tester.getSize(find.byKey(memberRowKey(member.id))).height,
   ];
 }
 
 void main() {
   testWidgets('ad ve ünvan tek satıra sınırlanır', (tester) async {
-    await tester.pumpWidget(await _detail());
+    await tester.pumpWidget(await _detail(tester));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text(_longName),
@@ -104,7 +111,7 @@ void main() {
   testWidgets('satır yüksekliği ad/ünvan uzunluğundan bağımsız', (
     tester,
   ) async {
-    await tester.pumpWidget(await _detail());
+    await tester.pumpWidget(await _detail(tester));
     await tester.pumpAndSettle();
 
     final heights = await _memberRowHeights(tester);
@@ -122,7 +129,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      await _detail(surface: const Size(320, 900), textScale: 1.6),
+      await _detail(tester, surface: const Size(320, 900), textScale: 1.6),
     );
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(

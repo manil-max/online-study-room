@@ -198,8 +198,6 @@ void main() {
       await tester.pumpWidget(await _detailHarness(viewer: _owner));
       await tester.pumpAndSettle();
 
-      final kick = find.byTooltip('Üyeyi çıkar');
-      final ban = find.byTooltip('Üyeyi yasakla');
       // `scrollUntilVisible` tek eleman bekler; iki uye satiri oldugu icin
       // once uye bolumune, benzersiz bir metinle kaydiriliyor.
       await tester.scrollUntilVisible(
@@ -208,11 +206,23 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
 
-      // Kurucu disindaki iki uye icin birer cift dugme.
-      expect(kick, findsNWidgets(2));
-      expect(ban, findsNWidgets(2));
+      // WP-498: iki eylem satırdaki ayrı simgelerden **tek taşma menüsüne**
+      // indi (dört yuva ada yer bırakmıyordu). Bu testin iddiası değişmedi:
+      // kurucu dışındaki her üye için ayrı bir moderasyon girişi var ve
+      // içindeki iki eylem ayrı adlarla duruyor.
+      expect(find.byKey(const ValueKey('moderate-peer-1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('moderate-other-1')), findsOneWidget);
+      // Kurucunun kendi satırında moderasyon yok (koşul aynen korundu).
+      expect(find.byKey(const ValueKey('moderate-owner-1')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('moderate-other-1')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Üyeyi çıkar'), findsOneWidget);
+      expect(find.text('Üyeyi yasakla'), findsOneWidget);
       // Eski hâlde grup yasağı `safetyBlock` ile etiketliydi; o metin
       // hesap-kapsamlı KİŞİSEL engellemeye aittir ve yönetici işlemi değildir.
+      expect(find.text('Engelle'), findsNothing);
       expect(find.byTooltip('Engelle'), findsNothing);
     });
 
@@ -233,8 +243,12 @@ void main() {
       expect(row, findsOneWidget);
       expect(find.byTooltip('Dürt'), findsWidgets);
 
-      expect(find.byTooltip('Üyeyi çıkar'), findsNothing);
-      expect(find.byTooltip('Üyeyi yasakla'), findsNothing);
+      // WP-498: eylemler menüye indi; kapının yeri değişmedi — yönetici
+      // olmayan izleyicide **menü düğmesi hiç çizilmez**, boş menü açılmaz.
+      expect(find.byKey(const ValueKey('moderate-other-1')), findsNothing);
+      expect(find.byKey(const ValueKey('moderate-owner-1')), findsNothing);
+      expect(find.text('Üyeyi çıkar'), findsNothing);
+      expect(find.text('Üyeyi yasakla'), findsNothing);
     });
   });
 }
