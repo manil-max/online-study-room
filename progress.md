@@ -6361,14 +6361,18 @@ Hiçbir F4 kartı production/stable kapısı açmaz.
 - l10n `.arb` → **WP-500**; WP-496 metin **kaldırdığı** için kullanılmayan
   anahtar bırakabilir, ikisi arka arkaya koşar (bkz. WP-500 tuzaklar).
 
-**Migration numaraları önceden ayrıldı:** `0120` WP-490 · `0121` WP-491 ·
-`0122` WP-492 · `0123` WP-501. pgTAP dosyaları `045`ten devam eder (`044` dolu).
+**Migration numarası önceden ayrılmaz (2026-08-06 düzeltmesi).** WP-490 artık
+teşhis kartıdır ve **migration gerektirmeyebilir**; numarayı önceden ayırmak boş
+numara bırakır ya da çakışma üretir. Kural: **migration'ı ilk YAZAN kart sıradaki
+boş numarayı alır** (şu an `0120`) ve head'i üç yerde birden ilerletir. Numara
+gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
+`045`ten devam eder (`044` dolu).
 
 ---
 
 ### WP-489: Dart↔native prefs tip sözleşmesi — geri sayım/pomodoro çökmesi 💥
 - **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N05 / rapor T01)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (ilk kart)
+- **Ajan:** Claude · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** yok (ilk kart)
 - **Problem:** Dart `prefs.setInt` Android'e **`putLong`** yazar
   (`shared_preferences_android` `SharedPreferencesPlugin.kt:317`); native taraf
   aynı anahtarları `getInt` ile okuyor → `ClassCastException` → **uygulama
