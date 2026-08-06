@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-08-01** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-08-06** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. `docs/PLAN.md` artık
@@ -18,13 +18,20 @@
 
 ## Proje Gerçekleri
 
-- ✅ **Migration gerçeği (2026-08-01):** repo/local head **`0119`**; staging ve
-  production **`0116`**. `0117–0119` hiçbir remote ortama uygulanmadı. Docker
-  Desktop başlatıldı; yerel baseline reset/replay **48 dosya / 678 pgTAP yeşil**.
-  Staging `0115–0116` apply run `30700266897`, production
-  `0101–0116` apply run `30700518285`; iki post-check de
-  `local|remote|file = 0116` verdi. v57 stable release run `30700647563`
-  tamamen yeşil ve tag SHA'sı `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`.
+- ✅ **Migration gerçeği (2026-08-01 · v58 yayını sonrası):** repo/local,
+  staging ve production **üçü de `0119`**. Staging apply run `30715755597`,
+  production apply run `30716014464`; iki post-check de
+  `local|remote|file = 0119` verdi. Yerel reset/replay **48 dosya / 678 pgTAP
+  yeşil**. v58 stable release run `30716184775` (preflight/android/windows/
+  finalize 6/6) ve tag SHA'sı `3ede412faa62d4d1d2b2826fdb1b5c8e7f8ca834`.
+  Kanıt: `docs/qa/V58-STABLE-RELEASE-EVIDENCE.md`.
+  - 🔴 **Bu satır 2026-08-06'da düzeltildi.** Uzun süre "staging ve production
+    `0116`, `0117–0119` hiçbir remote ortama uygulanmadı" yazıyordu; v58
+    zinciri üçünü de `0119`a çıkarmıştı. Bayat kalan bu satır yeni migration
+    numarasını yanlış seçtirebilirdi. **Sıradaki boş numara `0120`.**
+  - **Tarihsel (v57):** staging `0115–0116` apply run `30700266897`, production
+    `0101–0116` apply run `30700518285`, v57 release run `30700647563`, tag SHA
+    `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`.
   - ✅ **Kontrat notu:** `tooling/release/deploy-contract.json` içinde staging
     ve production `deploy_enabled` / `release_enabled` değerlerinin dördü de
     `false`; guard bu fail-closed durumu doğrular.
@@ -193,7 +200,12 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
   yükseltilmedi. (2) `release-preflight` beta senaryosu, yerel head staging'in
   önünde olduğu için artık **fail-closed düşüyor** ve test bunu doğruluyor —
   uygulanmamış şemayla beta çıkarılamaz.
-- **Sırada:** push → CI'ın üç günde ilk kez koşması. Yeni ürün WP'si yok.
+- **Sırada (2026-08-06):** 🔴 **Faz F5 — v58 saha geri bildirimi.** Sahip v58
+  stable üzerinde 11 belirti bildirdi; hepsi ham kayıtta
+  (`docs/V58-SAHIP-GERI-BILDIRIM-RAPORU.md`) ve 14 bulgu hâlinde koda kadar
+  izlendi (`docs/V58-TEKNIK-ANALIZ-RAPORU.md`). Kartlar: **WP-489…WP-502**,
+  aşağıda **Faz F5** başlığı altında. Sıra ve çakışma kuralları oradadır.
+- **Tarihsel sıra notu:** push → CI'ın üç günde ilk kez koşması (v57 turu).
 - ✅ **Faz 2 — sessiz borç bitti:** WP-473 (Database Gates ilk kez yeşil: 37
   dosya / 486 pgTAP testi) ve WP-472 (`0109` + iki uçlu sözleşme testi).
 - **Sonra Faz 3 — kalan ürün zinciri, tek sıra:**
@@ -213,16 +225,16 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v57` stable yayında** · release run `30700647563` · production şeması `0116` |
-| Aktif plan | **PLAN 5 / v57 tamamlandı** · deploy/release kapıları yeniden kilitli |
-| Cihaz kabulü | ⚪ **v57 için sahip muafiyeti:** beta-v5701, fiziksel cihaz QA ve 3 günlük soak 2026-08-01 kararıyla bu sürümden kaldırıldı |
+| Sürüm | **`v58` stable yayında** · release run `30716184775` · production şeması `0119` |
+| Aktif plan | 🔴 **PLAN 5 / Faz F5 — v58 saha geri bildirimi (WP-489…WP-502).** Deploy/release kapıları kilitli |
+| Cihaz kabulü | 🔴 **v58'in cihaz kabulü hiç yapılmadı.** Sahip ("kod bittiyse yayına çıkar") fiziksel kabulü yayın sonrasına bıraktı; 2026-08-06'da gelen 11 belirti bu borcun karşılığıdır |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local/staging/production **`0116`** |
+| Migration | Repo/local/staging/production **`0119`** · sıradaki boş numara **`0120`** |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
-| Remote kapıları | staging + production deploy/release dört bayrak v57 sonrası **kapalı** |
+| Remote kapıları | staging + production deploy/release dört bayrak v58 sonrası **kapalı** |
 | Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
 | Microsoft Partner Center | 🟢 **Doğrulama alındı** (2026-07-28). Ana odak Play; Microsoft PLAN 2 · Faz H'de kalır |
 
@@ -6315,6 +6327,592 @@ WP-482 (`0119`, global timer lease recovery grace). Üçü de head'i
 **üç yerde birden** ilerletti ve `Replay bekliyor` etiketiyle teslim edilir.
 Hiçbir F4 kartı production/stable kapısı açmaz.
 
+## Faz F5 — v58 saha geri bildirimi (WP-489…WP-502)
+
+> **Kaynak:** `docs/V58-SAHIP-GERI-BILDIRIM-RAPORU.md` (11 ham belirti,
+> V58-N01…N11) → `docs/V58-TEKNIK-ANALIZ-RAPORU.md` (14 bulgu, T01…T14).
+> Her kartın başında hangi belirti/bulgudan geldiği yazılıdır; kart iddiası
+> değil, **rapordaki dosya:satır kanıtı** esastır.
+>
+> 🔴 **Zemin uyarısı:** v58 cihazda hiç kabul edilmedi. Bu fazın hiçbir kartı
+> production/stable kapısı açmaz; dördü de bayrak `false` kalır.
+
+### Faz F5 sırası ve çakışma kuralları
+
+**Sıra (yukarıdan aşağı, atlanmaz):**
+
+1. **WP-489** — çökme. Kullanıcı iki sayaç modunu kullanamıyor.
+2. **WP-490 → WP-491** — kaybolan süre (veri kaybı), sonra hayalet koşu penceresi.
+3. **WP-492** — seri yazma yolu (özellik tümüyle ölü).
+4. **WP-493** — ana ekran üst güvenli alanı (tek satır, en görünür kusur).
+5. **WP-494 → WP-495** — abonelik sızıntısı, sonra yükleniyor-durumu taraması.
+6. **WP-496 · WP-497 · WP-498 · WP-499 · WP-500** — UI/l10n kümesi.
+7. **WP-501** — seçili grup başarım kapsamı (şema değişikliği).
+8. **WP-502** — telemetri; T12/T13 bunsuz kapanmaz.
+
+🔴 **Sıcak dosya serileştirmesi:**
+- `supabase/migrations/**` → **WP-490 → WP-491 → WP-492 → WP-501** sırayla;
+  ikisi aynı anda açılmaz, her biri head'i **üç yerde birden** ilerletir
+  (`tooling/release/deploy-contract.json` · `supabase/tests/001_schema_contract.test.sql`
+  · `tooling/supabase/guard.tests.ps1`).
+- `class_detail_screen.dart` → **WP-494** ve **WP-498** aynı dosyayı sahiplenir;
+  önce WP-494 (yapısal), sonra WP-498 (yerleşim). Aynı commit'e karışmaz.
+- `goal_streak_flame.dart` → **WP-496**; `study_timer_card.dart` da o kartındır.
+- l10n `.arb` → **WP-500**; WP-496 metin **kaldırdığı** için kullanılmayan
+  anahtar bırakabilir, ikisi arka arkaya koşar (bkz. WP-500 tuzaklar).
+
+**Migration numaraları önceden ayrıldı:** `0120` WP-490 · `0121` WP-491 ·
+`0122` WP-492 · `0123` WP-501. pgTAP dosyaları `045`ten devam eder (`044` dolu).
+
+---
+
+### WP-489: Dart↔native prefs tip sözleşmesi — geri sayım/pomodoro çökmesi 💥
+- **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N05 / rapor T01)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (ilk kart)
+- **Problem:** Dart `prefs.setInt` Android'e **`putLong`** yazar
+  (`shared_preferences_android` `SharedPreferencesPlugin.kt:317`); native taraf
+  aynı anahtarları `getInt` ile okuyor → `ClassCastException` → **uygulama
+  süreci ölüyor**. Kronometrede olmuyor çünkü `target_seconds` o modda siliniyor
+  ve `KEY_CYCLE` okumaları yalnız mola yollarında. Kusurlu üç çağrı yeri:
+  `StudyWidgetProviders.kt:122`, `StudyTimerService.kt:205` ve `:239`.
+- **Kapsam dışı:** Sayaç durum makinesi, mola/pomodoro mantığı, widget tasarımı,
+  bildirim paneli düzeni, Dart tarafındaki `setInt` çağrılarını değiştirmek
+  (kanonik tip **Long** kalır).
+- **SAHİP dosyalar (yaz):**
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/StudyWidgetProviders.kt`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt`
+  - `app/android/app/src/test/kotlin/com/manilmax/online_study_room/timer/TimerPrefsTypeContractTest.kt` (yeni)
+- **DOKUNMA (oku, değiştirme):** `app/lib/data/providers/study_providers.dart`,
+  `app/lib/features/android_widgets/**`, `AndroidManifest.xml`.
+- **Adımlar:**
+  - [ ] Native yazımı `putLong`a çevir (`TimerStateStore.writeRunning`: `KEY_CYCLE`, `KEY_TARGET_SECONDS`).
+  - [ ] Native okumaları `getLong(...).toInt()` yap (üç çağrı yeri).
+  - [ ] Widget sağlayıcılarındaki prefs okumalarını `runCatching` ile sar —
+        `BroadcastReceiver` içindeki tek istisna süreci öldürmemeli.
+  - [ ] JVM testi: aynı anahtara önce `putLong` yaz, okuma yolunu sür, istisna
+        atmadığını ve değerin doğru geldiğini doğrula (kırık girdiyle sınanır).
+- **Veri/Migration etkisi:** Yok. Eski cihazlarda anahtar `Int` tipinde kalmış
+  olabilir; `getLong` bunu da okuyamaz → okuma `runCatching` + tip-bağımsız
+  yardımcı ile yapılmalı (**iki yönlü** dayanıklılık). Geri alma: commit revert.
+- **Ortam/Deploy:** local. Production/stable kapısı **açılmaz**.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Ana ekranda widget yokken (kod yolu hiç koşmaz) · eski
+  sürümden yükseltmede `Int` kalmış anahtar · mola düğmesine bildirimden basma ·
+  pomodoro faz geçişi · uygulama arka plandayken widget tazelemesi.
+- **Kabul (ölçülebilir):**
+  1. Ana ekranda sayaç widget'ı **yerleştirilmişken** geri sayım ve pomodoro
+     başlatılır; uygulama çökmez, `adb logcat -b crash` içinde
+     `ClassCastException` **görünmez** (öncesi/sonrası iki kayıt).
+  2. Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanır.
+  3. Yeni JVM testi, düzeltme geri alındığında **kırmızı** olur (kapı kasten
+     kırık girdiyle sınandı).
+  4. `flutter analyze` temiz, tam paket yeşil.
+- **Tuzaklar:** Dart tarafını `setString`e çevirme cazibesi — tüm eski
+  kurulumları bozar. Ayrıca `timer_active_started_at_ms` zaten **doğru**
+  (`getLong`); onu bozma.
+- **Model önerisi:** 🔴 Opus (native + süreç ölümü)
+
+---
+
+### WP-490: Uzak/ayna durdurmada oturum kaydı — kaybolan 4-5 saat (`0120`) 🕳️
+- **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N08 / rapor T05a)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-489 (aynı yüzey, sıra bozulmasın)
+- **Problem:** Aynadan Durdur'a basıldığında süre **hiçbir yere yazılmıyor**.
+  Sunucu stop dalı yalnız `live_study_runs.status='stopped'` yazıyor
+  (`0101_global_timer_controller_contract.sql:274-281`), `study_sessions` insert'i
+  yok; istemci tarafında `stopMirroredRun` (`study_providers.dart:2109-2133`)
+  `settling*` yazmadan `_finish()` çağırıyor; origin cihaz da uzak durdurmayı
+  `_applyRemoteMirrorStop` → `_finish()` ile karşılıyor (o da "kayıt yapmadan
+  durdurur"). Sonuç: kullanıcı 4-5 saatlik koşuyu durduruyor, günlük toplam
+  değişmiyor — **veri kaybı**.
+- **Kapsam dışı:** Lease/grace penceresi (WP-491), widget senkronu, verified
+  live run zinciri (`0051`), yeni sayaç modu.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0120_global_timer_remote_stop_records_session.sql` (yeni)
+  - `supabase/tests/045_global_timer_remote_stop.test.sql` (yeni)
+  - `tooling/release/deploy-contract.json` · `supabase/tests/001_schema_contract.test.sql` · `tooling/supabase/guard.tests.ps1` (head `0120`)
+- **DOKUNMA:** `app/lib/data/providers/study_providers.dart` (bu kartta Dart
+  değişmez — sunucu tek yazıcı olacak), `0051`, `0119`.
+- **Adımlar:**
+  - [ ] `apply_global_timer_command` stop dalında, koşunun süresi > 0 ise
+        `study_sessions` satırını **sunucu** yazsın; `run_id` ile idempotent
+        (`on conflict do nothing`).
+  - [ ] Zaten `finalize_verified_live_run` ile yazılmış koşu için **ikinci kayıt
+        üretmediğini** testle kilitle.
+  - [ ] Head'i üç yerde ilerlet.
+- **Veri/Migration etkisi:** `study_sessions`'a yeni satır kaynağı; şema
+  değişmiyor. Geri alma: fonksiyonun `0101` sürümüne dönüşü (tek `create or
+  replace`), yazılmış satırlar kalır.
+- **Ortam/Deploy:** local. Docker bu hostta kalkmıyorsa **`Replay bekliyor`**
+  etiketiyle teslim; kanıt Database Gates local replay job'ından alınır.
+- **RLS/Güvenlik:** Fonksiyon `security definer`; satır **yalnız** koşunun
+  `user_id`'sine yazılır, çağıran cihaz kimliği yazılan `user_id`'yi seçemez.
+- **Edge-case'ler:** Süre 0 · mola fazında durdurma · aynı koşu iki kez stop ·
+  origin ve ayna aynı anda stop · çevrimdışı origin sonradan uyanıyor (çift
+  kayıt olmamalı) · gün sınırını aşan koşu.
+- **Kabul (ölçülebilir):**
+  1. pgTAP: aynadan stop sonrası `study_sessions` satırı **var**, süresi koşu
+     süresine eşit (±1 sn), ikinci stop yeni satır **üretmiyor**.
+  2. İki cihaz senaryosunda telefondaki toplam, Durdur'dan sonra ≤ 5 sn içinde
+     artıyor (cihaz kanıtı, sahip turu).
+- **Tuzaklar:** `finalize_verified_live_run` ile çakışıp aynı süreyi iki kez
+  yazmak. `id = run.id` tekilleştirmesi bunun kalkanıdır — aynısını kullan.
+- **Model önerisi:** 🔴 Opus (veri bütünlüğü + SQL)
+
+---
+
+### WP-491: Terk edilmiş koşu penceresi ve görünürlüğü (`0121`) ⏳
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N08 / rapor T05b)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-490 kapanmadan başlamaz** (aynı migration hattı)
+- **Problem:** `0119` terk edilmiş koşuyu terminal duruma almadan önce **12 saat**
+  bekliyor. Gerekçesi doğruydu (Android Dart isolate'i askıya alırken native
+  sayaç yaşıyor), ama sonucu: tablette unutulan koşu yarım gün canlı sayılıyor ve
+  telefon açılınca birikmiş süre ayna olarak görünüyor. Bu davranış **v58'de
+  değişti ve cihazda hiç doğrulanmadı**.
+- **Kapsam dışı:** Oturum kaydı (WP-490'da), presence mimarisi, FCM zinciri.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0121_global_timer_grace_from_heartbeat.sql` (yeni)
+  - `supabase/tests/046_global_timer_grace.test.sql` (yeni)
+  - head üçlüsü (`0121`)
+- **DOKUNMA:** `0119` (okunur, değiştirilmez), `app/lib/**`.
+- **Adımlar:**
+  - [ ] Grace'i sabit 12 saat yerine **native canlılık sinyaline** bağla: FGS
+        heartbeat'i tazeyse koşu yaşar, sinyal yoksa kısa pencere (öneri 1-2 saat).
+  - [ ] Açık CAS stop davranışı **değişmez** (anında).
+  - [ ] pgTAP: heartbeat taze → kapanmaz; heartbeat yok + pencere doldu → kapanır.
+- **Veri/Migration etkisi:** `expire_global_timer_v2_leases` yeniden tanımı.
+  Geri alma: `0119` gövdesine dönüş.
+- **Ortam/Deploy:** local · `Replay bekliyor` kuralı WP-490 ile aynı.
+- **RLS/Güvenlik:** `service_role` kontrolü korunur.
+- **Edge-case'ler:** Uçak modu · cihaz kapalı · saat değişimi/DST · aynı
+  kullanıcının iki cihazı da uykuda.
+- **Kabul (ölçülebilir):** Heartbeat kesildikten sonra koşu ≤ seçilen pencere +
+  1 dakika içinde terminal duruma geçer; taze heartbeat'te **hiçbir** koşu
+  kapanmaz (pgTAP iki yönlü).
+- **Tuzaklar:** Pencereyi kısaltırken WP-482'nin çözdüğü "ayna ortada kayboluyor"
+  hatasını geri açmak. Bu yüzden ölçüt **süre değil, sinyal**.
+- **Model önerisi:** 🔴 Opus
+
+---
+
+### WP-492: Seri tamamlaması hiç yazılmıyor — yazma yolunu bağla (`0122`) 🔥
+- **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N03 / rapor T02)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-491 (migration hattı sırası)
+- **Problem:** Okuma ucu tam (`goal_streak_projection` → repository → rozet), ama
+  `goal_progress_events`'e satır yazan **tek** yol olan `record_goal_completion`
+  (`0112:96`) üretimde **hiçbir yerden çağrılmıyor**: `app/lib`de yalnız yorumda,
+  `supabase/functions` (7 edge function) içinde yok, tetikleyici de yok. Tek
+  gerçek çağıran `test/data/goal_streak_parity_wp453_test.dart`. Sonuç: seri
+  matematiksel olarak **daima 0** ve rozet daima "Henüz seri yok".
+- **Kapsam dışı:** Rozetin görünümü (WP-496), seri durum makinesi kuralları
+  (V57-N04 kararı **değişmez**), grup hedefi tanımı, XP/başarım zinciri.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0122_goal_completion_writer.sql` (yeni)
+  - `supabase/tests/047_goal_completion_writer.test.sql` (yeni)
+  - head üçlüsü (`0122`)
+- **DOKUNMA:** `0112` (okunur), `app/lib/features/stats/widgets/goal_streak_flame.dart`.
+- **Adımlar:**
+  - [ ] Tamamlamayı **sunucu** yazsın: `study_sessions` insert/update sonrası gün
+        toplamı hedefi geçtiğinde `record_goal_completion` çağıran trigger.
+  - [ ] Kişisel **ve** grup kapsamı aynı yoldan beslensin (V57-N05 kararı).
+  - [ ] Geçmiş için tek seferlik backfill: mevcut `study_sessions`'tan geriye
+        dönük tamamlama olayları üretilsin (idempotent, `event_key` tekil).
+  - [ ] pgTAP: hedefi geçen gün olay üretir, geçmeyen üretmez, aynı gün iki kez
+        yazılmaz, duraklatma (V57-N04 Durum 2) doğru sınıflanır.
+- **Veri/Migration etkisi:** `goal_progress_events` satırları + trigger. Geri
+  alma: `drop trigger` (olay satırları kalır, projeksiyon zararsızdır).
+- **Ortam/Deploy:** local · `Replay bekliyor` kuralı geçerli. Backfill
+  production'da **ayrı GO** ister.
+- **RLS/Güvenlik:** Yazma yolu **yalnız** sunucuda kalır; istemciye yazma API'si
+  açılmaz (0112'nin tasarım kararı korunur).
+- **Edge-case'ler:** Hedef gün içinde değişirse · İstanbul gün sınırı · manuel
+  süre ekleme · silinen oturum · çevrimdışı yazım sonradan senkronlanınca ·
+  koruma (pause) günü.
+- **Kabul (ölçülebilir):**
+  1. Hedefi tutturan bir günün ardından `goal_progress_events`'te **1** satır
+     oluşur; aynı gün ikinci oturum yeni satır üretmez.
+  2. Rozet cihazda hedef tutturulduğu gün **canlı alev + doğru sayı** gösterir.
+  3. Backfill sonrası sahibin serisi **0'dan farklı** ve geçmişle tutarlı.
+- **Tuzaklar:** Serinin istemciden artırılabilir hale gelmesi (yasak). Backfill'i
+  idempotent yazmamak. Grup kapsamını unutmak.
+- **Model önerisi:** 🔴 Opus
+
+---
+
+### WP-493: Ana ekran üst güvenli alanı — WP-488 regresyonu 📐
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N10 / rapor T14)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (bağımsız, her an açılabilir)
+- **Problem:** WP-488 görüntüleme modunda üst şeridi kaldırdı; şeridin taşıdığı
+  durum çubuğu payını **kimse devralmadı**. `tab_action_bar.dart:12-13` sözleşmesi
+  "şerit yoksa çağıran gövdeyi `SafeArea(bottom: false)` ile sarar" diyor, home
+  bunu yapmıyor. Tek üst boşluk `getSafeVerticalPadding`ten geliyor ve o yardımcı
+  **yalnız alt** inset'i ekliyor (`safe_screen_padding.dart:15-18`);
+  `MediaQuery.paddingOf(context).top` uygulamanın hiçbir yerinde okunmuyor. İlk
+  kart saat/pil simgelerinin altına giriyor.
+- **Kapsam dışı:** Kart sırası, seri rozeti görünümü (WP-496), düzenleme modu
+  şeridi, masaüstü dalı, `getSafeVerticalPadding`in **diğer** çağıranları
+  (şeridi olan ekranlarda çift boşluk üretir — dokunma).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/home_screen.dart`
+  - `app/test/features/home/home_safe_area_wp493_test.dart` (yeni)
+- **DOKUNMA:** `app/lib/core/widgets/safe_screen_padding.dart`,
+  `app/lib/core/navigation/**`, `classroom_screen.dart`, `stats_screen.dart`.
+- **Adımlar:**
+  - [ ] Gövdeyi `SafeArea(bottom: false)` ile sar (yalnız `appBar == null` dalı).
+  - [ ] `buildTabActionBar` çağıran diğer ekranların "eylem yok" dalını **tara**
+        ve bulgusunu karta yaz (düzeltme ayrı WP olabilir).
+  - [ ] Golden: `MediaQueryData(padding: EdgeInsets.only(top: 48))`.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Çentikli/delikli ekran · yatay mod · düzenleme modu (şerit
+  geri gelir, çift boşluk olmamalı) · masaüstü penceresi · boş pano.
+- **Kabul (ölçülebilir):** 48 px üst inset'li golden'da ilk kartın üst kenarı
+  durum çubuğunun **altında** kalır; düzenleme moduna girip çıkınca boşluk
+  **iki kez eklenmez** (aynı golden iki durumda).
+- **Tuzaklar:** `getSafeVerticalPadding`e üst inset eklemek — bu yardımcıyı
+  paylaşan şeritli ekranlarda çift boşluk üretir. Bu yüzden **yasak**.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-494: Grup üye akışı `build()` içinde açılıyor — abonelik sızıntısı 🔁
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N01 / rapor T03)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok
+- **Problem:** `class_detail_screen.dart:866-867` `StreamBuilder`a
+  `repo.watchMembers(group.id)` veriyor; bu çağrı **her `build()`de yeni bir
+  Supabase realtime aboneliği** açıyor ve her emisyonda bir RPC atıyor
+  (`supabase_group_repository.dart:288-308`). Aynı `build()` presence'ı izlediği
+  için widget saniyeler mertebesinde yeniden kuruluyor → yeni stream →
+  `snapshot.data == null` → tam kart yerine spinner → yeniden çizim. Sahibin
+  gördüğü "gruplar kısmında sürekli ekran yenilenip geliyordu" budur; açık
+  kanallar birikiyor.
+- **Kapsam dışı:** Üye satırı yerleşimi (WP-498), dürtme/susturma davranışı,
+  presence mimarisi, sohbet kartı.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/widgets/class_detail_screen.dart`
+  - `app/lib/data/providers/group_providers.dart`
+  - `app/test/features/classroom/member_stream_wp494_test.dart` (yeni)
+- **DOKUNMA:** `app/lib/data/repositories/**` (imza değişmez),
+  `presence_providers.dart`.
+- **Adımlar:**
+  - [ ] `StreamProvider.family<List<Profile>, String>` ekle; ekran onu izlesin.
+  - [ ] `StreamBuilder`ı kaldır; yükleniyorken **son bilinen liste** korunsun
+        (spinner yalnız ilk yüklemede).
+  - [ ] Test: aynı ekranın N kez yeniden çizimi **tek** abonelik üretmeli.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** `group_member_directory` RPC'si aynen kalır (engellenen üye
+  anonimleşir, kaybolmaz — WP-413 kararı korunur).
+- **Edge-case'ler:** Grup değiştirme · gruptan çıkma · offline → online ·
+  ekran arka plandayken · aynı grubu iki ekranın izlemesi.
+- **Kabul (ölçülebilir):**
+  1. Ekran 10 kez yeniden çizildiğinde abonelik sayısı **1** kalır (test).
+  2. Presence değişiminde üye listesi **spinner göstermeden** güncellenir.
+- **Tuzaklar:** `autoDispose` provider'ı dinleyicisiz bırakıp her okumada
+  yeniden kurmak (bkz. Riverpod 3 tuzağı) — testte dinleyici tut.
+- **Model önerisi:** 🟣 Pro
+
+---
+
+### WP-495: "Yükleniyor" durumunun "veri yok" sayılması — denetimli tarama 👻
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N02, N07 / rapor T04)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-494 (aynı sınıf, yapısal olan önce)
+- **Problem:** İki bilinen yüzey: (a) `active_members_card.dart:29-36`
+  `userGroupProvider` ilk yüklemede `null` döndüğü için kullanıcıya "grup yok +
+  **Grup Oluştur**" kartı gösteriliyor, veri gelince düzeliyor (sahibin gördüğü
+  "create group" flaşı); (b) `crowned_avatar.dart:459-463` `asData?.value`
+  kullanıyor, `asData` **her yenilemede** null döner → taç bir kare kaybolup geri
+  geliyor. Aktif üye listesi de `.value ?? const []` ile yükleniyor durumunu boş
+  sayıyor (V58-N07'nin en olası açıklaması).
+- **Kapsam dışı:** Kart tasarımları, boş durum metinleri, yeni provider mimarisi.
+  Repo genelindeki **49 + 22 + 31** kullanımın hepsini körlemesine değiştirmek —
+  bu kart yalnız **kullanıcı yüzeyinde yanlış boş durum üreten** yerleri düzeltir.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/widgets/crowned_avatar.dart`
+  - `app/lib/features/home/widgets/active_members_card.dart`
+  - `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` (yeni — tarama çıktısı)
+  - `app/test/features/home/async_empty_state_wp495_test.dart` (yeni)
+- **DOKUNMA:** `group_card_shell.dart`, provider tanımları.
+- **Adımlar:**
+  - [ ] `asData?.value` → `valueOrNull` (yenilemede son veriyi korur).
+  - [ ] "Grup yok" dalı yalnız `hasValue && value == null` iken çizilsin;
+        yükleniyorken iskelet/son bilinen içerik.
+  - [ ] Repo genelini tara, her kullanımı **zararsız / düzeltilecek** diye
+        sınıflandır ve tabloyu `docs/qa/`ya yaz (düzeltmesi bu kartta değil).
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Soğuk açılış · oturum kapatma/açma · gerçekten grubu
+  olmayan kullanıcı (kart **doğru** görünmeli) · ağ hatası (hata durumu boş
+  durumla karışmamalı).
+- **Kabul (ölçülebilir):**
+  1. Provider `AsyncLoading` iken "Grup Oluştur" kartı **çizilmiyor** (test).
+  2. Provider yenilenirken taç **kaybolmuyor** (test).
+  3. Gerçekten grubu olmayan kullanıcıda kart **hâlâ** görünüyor.
+- **Tuzaklar:** Hata durumunu da "yükleniyor" sayıp sonsuz iskelet göstermek.
+- **Model önerisi:** 🟣 Pro
+
+---
+
+### WP-496: Seri rozeti yalın: yalnız alev + sayı 🔥
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N10 / rapor T08) · **sahip kararı**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (WP-492 ile aynı anda gidebilir; farklı dosyalar)
+- **Problem:** Rozet gereğinden büyük ve "Bugün" yazısının üstüne biniyor.
+  Sahip kararı (2026-08-06): **rozette hiç yazı olmayacak** — ne durum metni
+  ("Henüz seri yok"), ne kapsam etiketi ("Kişisel"). Gerekçe sahibin ifadesi:
+  *"grup kısmında grup streak yazıyor, oradan anlaşılır zaten"*. Ayrıca
+  `study_timer_card.dart:298-311` rozeti `Stack` içinde serbest konumluyor ve
+  içeriği **sabit 48 px** ile itiyor; rozet küçülse bile yazı ölçeği 1.6'da
+  çakışma geri gelir.
+- **Kapsam dışı:** Seri **davranışı** (V57-N04/N05 kararı değişmez), yazma yolu
+  (WP-492), grup rozetinin yerleştiği ekranlar, tema token'ları.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/stats/widgets/goal_streak_flame.dart`
+  - `app/lib/features/classroom/widgets/study_timer_card.dart`
+  - `app/test/features/stats/goal_streak_flame_test.dart` (mevcut, güncellenir)
+- **DOKUNMA:** `goal_streak_providers.dart`, `goal_streak_projection.dart`,
+  `app/lib/l10n/**` (kullanılmayan anahtarlar WP-500'de ele alınır).
+- **Adımlar:**
+  - [ ] Görünür metni ve `_ScopeBadge`i kaldır; ikon + sayı kalsın.
+  - [ ] `Semantics` etiketi (satır 47) **aynen kalsın** — ekran okuyucu hâlâ
+        "Kişisel · 3 · bugün tamamlandı" desin.
+  - [ ] Dört durumun ikonları görsel olarak **belirgin** ayrışsın (dolu alev /
+        içi boş alev / pause / gri alev); metin gidince tek ayırt edici ikon.
+  - [ ] `study_timer_card`ta sabit 48 px kalksın; rozet başlık satırının parçası
+        olsun (Stack yerine akış).
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Yazı ölçeği 1.0/1.3/1.6 · dar kart (compact) · dört durumun
+  dördü · grup rozeti · ekran okuyucu.
+- **Kabul (ölçülebilir):**
+  1. Rozette **hiç metin yok**; golden üç yazı ölçeğinde "Bugün" ile
+     çakışmıyor (0 piksel örtüşme).
+  2. Dört durum için dört **ayrı ikon** golden'da ayırt edilebiliyor.
+  3. `Semantics` etiketi eskisiyle **birebir aynı** (test).
+- **Tuzaklar:** Metni kaldırırken erişilebilirlik kanalını da kaldırmak.
+  Kullanılmayan `.arb` anahtarlarını **silmeden** bırakmak → l10n kapısı
+  şikâyet edebilir; WP-500 ile arka arkaya koş.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-497: Aktif üye kartında satır yüksekliği — taç bütçeye sığmıyor 👑
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N11, N04 / rapor T10)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-495 (aynı dosya: `active_members_card.dart`) — **sonra** koşar
+- **Problem:** Kart kaç satır sığacağını **sabit 42 px** ile hesaplıyor
+  (`active_members_card.dart:60-80`). Taçlı avatar ise kutusunu büyütüyor
+  (`crowned_avatar.dart:274-283`): `radius 16` için hesap **50.9 px**, satır
+  `Padding(vertical: 5)` ile **≈61 px** — bütçe %45 aşılıyor. Sonuç: son satır
+  alttan kırpılıyor ve tacın üst payı boşluk gibi görünüp satırlar aşağı kaymış
+  izlenimi veriyor.
+- **Kapsam dışı:** Taç geometrisi (sahip 2026-07-25'te onayladı, **dokunulmaz**),
+  avatar boyutu, kart içeriği, dashboard grid ölçüleri.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/widgets/active_members_card.dart`
+  - `app/test/features/home/active_members_card_wp497_test.dart` (yeni)
+- **DOKUNMA:** `app/lib/core/widgets/crowned_avatar.dart` (WP-495'in sahibi),
+  dashboard grid.
+- **Adımlar:**
+  - [ ] Sabit `rowHeight`/`headerHeight` aritmetiğini kaldır; gerçek
+        kaydırılabilir liste + içeriğe göre yükseklik.
+  - [ ] Golden'ı **taçlı** üyelerle kur (taçsız golden bu hatayı göremez).
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** 0/1/2/10 aktif üye · taçlı+taçsız karışık · yazı ölçeği 1.3 ·
+  kartın 1×1 ve 2×2 boyutu · çok dar kart (compact dal).
+- **Kabul (ölçülebilir):** Taçlı üyelerle **ve** yazı ölçeği 1.3'te kırpılmış
+  piksel yok; satırlar kartın üst kenarından başlıyor (golden).
+- **Tuzaklar:** `maxItems` hesabını "biraz büyüterek" yamamak — aynı hata başka
+  ölçekte geri gelir. Varsayımı **kaldır**, büyütme.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-498: Grup üye satırında ad tek harfe düşüyor 🔠
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N04 / rapor T07)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-494 kapanmadan başlamaz** (aynı dosya)
+- **Problem:** `class_detail_screen.dart:903-948` `ListTile.trailing`e dört
+  `IconButton` koyuyor (~192 dp); `ListTile` trailing'e istediği genişliği verir,
+  ada ~40-60 dp kalır → "B...", "S...", "A...". Ekran görüntüsü kanıtı: eylem
+  simgesi **olmayan** tek satır (yöneticinin kendi satırı) adı tam gösteriyor.
+  Bu, WP-487'nin (dikey şişme) yan etkisidir: sorun yataya taşındı.
+- **Kapsam dışı:** Dürtme/susturma/çıkarma/yasak **davranışları**, ünvan metni,
+  üye sıralaması, sohbet kartı.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/widgets/class_detail_screen.dart`
+  - `app/test/features/classroom/member_row_wp498_test.dart` (yeni)
+- **DOKUNMA:** `group_providers.dart` (WP-494'ün sahibi), l10n.
+- **Adımlar:**
+  - [ ] `ListTile` yerine kendi satırı: ada `Expanded`, eylemler sabit genişlik.
+  - [ ] İkincil eylemleri (çıkar/yasakla) tek bir taşma menüsüne indir; dürtme
+        ve susturma satırda kalsın.
+  - [ ] Golden: 320 dp genişlik + uzun ad + ünvan + yönetici.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yasak/çıkarma eylemlerinin **görünürlük koşulları** aynen
+  korunur (`isAdmin && m.id != group.createdBy`).
+- **Edge-case'ler:** Çok uzun ad · ünvanlı/ünvansız · yönetici kendi satırı ·
+  eski üye · 320 dp ekran · yazı ölçeği 1.3.
+- **Kabul (ölçülebilir):** 320 dp genişlikte ad için **en az 12 karakter**
+  görünür alan kalır; satır tek satırda kalır ve hiçbir eylem kaybolmaz (golden).
+- **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
+  eylemdir, satırda kalır.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-499: Trend grafiğinde Y ekseni etiketleri çakışıyor 📉
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N04 / rapor T09)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok
+- **Problem:** `daily_line_chart.dart:26-28` `maxY`yi veri maksimumunun 1.2 katı
+  yapıyor; bu değer seçilen aralığın katı değil. fl_chart ise aralık tıklarına
+  **ek olarak** eksen sınırı için bir etiket daha üretiyor
+  (`axis_chart_helper.dart:56-58`, `SideTitles.maxIncluded` varsayılanı `true`)
+  → tepedeki iki etiket birkaç piksel arayla üst üste biniyor. Her veri
+  kümesinde deterministik. `daily_bar_chart.dart:50-51` aynı deseni (×1.32)
+  kullanıyor.
+- **Kapsam dışı:** Grafik tipi, renkler, dönem seçici, tooltip.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/stats/widgets/daily_line_chart.dart`
+  - `app/lib/features/stats/widgets/daily_bar_chart.dart`
+  - `app/lib/features/stats/widgets/chart_axis.dart`
+  - `app/test/features/stats/chart_axis_wp499_test.dart` (yeni)
+- **DOKUNMA:** diğer grafik widget'ları (ayrı WP olur).
+- **Adımlar:**
+  - [ ] Önce aralığı seç, sonra `maxY`yi aralığın **üst katına yuvarla**
+        (`(dataMax * 1.15 / interval).ceil() * interval`).
+  - [ ] Gerekirse `maxIncluded: false` ile ikinci kalkan.
+  - [ ] Saf fonksiyon testi: üretilen etiket kümesinde **iki etiket aynı
+        aralıktan yakın** olamaz.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Tüm günler 0 · tek gün veri · 90 günlük seri · 24 saatlik
+  tek gün · dakika/saat birim geçişi (90 dk eşiği).
+- **Kabul (ölçülebilir):** 14/30/90 gün ve üç sentetik seri için golden'da eksen
+  etiketleri **çakışmıyor**; en üst etiket eksen sınırına eşit.
+- **Tuzaklar:** Yalnız `maxIncluded: false` yapıp `maxY` yuvarlamasını atlamak —
+  tepe etiketi kaybolur, ölçek okunamaz hale gelir.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-500: İngilizce arayüzde "2 aktif" + l10n kapısının kör noktası 🌐
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N04 / rapor T11)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-496 (metin kaldırdığı için birlikte temizlenir)
+- **Problem:** `active_members_card.dart:121` `'${active.length} aktif'` gömülü
+  Türkçe. Kapı bunu **iki** kuralla birden kaçırdı: (1) `TURKISH_CHAR_RE`
+  (`l10n_audit.py:55`) yalnız Türkçe'ye özgü karakter arıyor, "aktif" sırf ASCII;
+  (2) `TECHNICAL_RE` içindeki "tamamı interpolasyon" deseni (`l10n_audit.py:101`)
+  yalnız **başlangıcı** kontrol ettiği için `$` ile başlayan her literal muaf
+  tutuluyor. Yani `'$degisken Türkçe kelime'` biçimindeki her metin görünmez.
+- **Kapsam dışı:** l10n mimarisi, DE/AR uykudaki dosyalar, çeviri kalitesi,
+  başka ekranların metin denetimi (kapı düzelince çıkacak bulgular ayrı WP).
+- **SAHİP dosyalar (yaz):**
+  - `scripts/l10n_audit.py`
+  - `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb`
+  - `app/lib/features/home/widgets/active_members_card.dart`
+- **DOKUNMA:** `app/lib/l10n/app_localizations*.dart` (üretilir), diğer ekranlar.
+- **Adımlar:**
+  - [ ] `homeAktifSayisi` anahtarı ({count} çoğul) TR+EN eklensin, kod onu kullansın.
+  - [ ] "Tamamı interpolasyon" desenini literalin **tamamını** arayacak şekilde
+        düzelt.
+  - [ ] Kapıyı **kasten kırık girdiyle** sına: geçici bir `'$x aktif'` satırı
+        eklenince kapı **kırmızı** olmalı.
+  - [ ] Düzeltilmiş kapının ürettiği yeni bulguları listele; düzeltmeleri bu
+        kartta yapma, **rapor et**.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** count = 0/1/2 · uzun çeviri · dar kart · yeni kural eski
+  muafiyet listesiyle çelişirse.
+- **Kabul (ölçülebilir):**
+  1. EN arayüzde rozet "2 active" gösteriyor (cihaz/golden).
+  2. Kasten eklenen kırık girdi kapıyı **düşürüyor**, kaldırılınca yeşil.
+  3. `scripts/l10n_audit.py` tam koşumda OK.
+- **Tuzaklar:** Yeni kuralın onlarca eski bulguyu birden açıp kapıyı kalıcı
+  kırmızıya çevirmesi — bulguları **borç siciline** yaz, kapıyı yeşil bırak.
+- **Model önerisi:** 🟣 Pro
+
+---
+
+### WP-501: Grup başarımı yalnız seçili gruptan sayılsın (`0123`) 🐺
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N06 / rapor T06) · **sahip kararı**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-492 (migration hattı) · sahip kararı **alındı**
+- **Problem:** `alpha_wolf_weekly` metriği `group_achievement_weekly`den
+  `group by user_id` ile toplanıyor (`0063:588-593`), yani **(grup × hafta)**
+  sayılıyor: iki grupta aynı hafta birinci olan kullanıcı 2 alıyor. Sahip kararı:
+  *"hangi grup seçili ise ondan sayılsın"*. Ancak `achievement_metric_progress`
+  birincil anahtarı `(user_id, achievement_id)` — şemada **grup boyutu yok**.
+- **Kapsam dışı:** Başarım sözlüğü/kademe eşikleri, XP ekonomisi, kişisel
+  başarımlar, rozet görünümü.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0123_group_scoped_achievement_progress.sql` (yeni)
+  - `supabase/tests/048_group_scoped_progress.test.sql` (yeni)
+  - `app/lib/features/profile/widgets/achievement_showcase.dart`
+  - head üçlüsü (`0123`)
+- **DOKUNMA:** `achievement_ledger_engine.dart` (istemci zaten 0 döner,
+  değişmez), `0062`/`0063` (okunur).
+- **Adımlar:**
+  - [ ] `achievement_metric_progress`e **grup boyutu** ekle (ya da grup
+        metrikleri için ayrı görünüm); okuma seçili grubun satırını çeksin.
+  - [ ] Aynı tabloyu paylaşan **dört** metriği birlikte çevir: `alpha_wolf`,
+        `alpha_wolf_weekly`, `campfire_hours`, `team_player`, `locomotive` —
+        yalnız Lider Kurt düzeltilirse kural tutarsız kalır.
+  - [ ] XP/kademe döngüsü de **aynı** kaynağı okusun; iki uç ayrışmasın.
+- **Veri/Migration etkisi:** Şema değişikliği + backfill. Geri alma: yeni
+  kolon/görünüm düşürülür, eski toplayıcı geri konur.
+- **Ortam/Deploy:** local · `Replay bekliyor`.
+- **RLS/Güvenlik:** Kullanıcı yalnız **kendi** ilerlemesini okur; grup kırılımı
+  başka kullanıcının verisini açmaz.
+- **Edge-case'ler:** Tek grup · gruptan çıkma · grup silinmesi · seçili grup yok ·
+  aynı hafta iki grupta birincilik · geçmiş kademelerin geri alınmaması.
+- **Kabul (ölçülebilir):**
+  1. pgTAP: iki grupta aynı hafta birinci olan kullanıcının **seçili grup**
+     değeri 1 (toplam değil).
+  2. Zaten kazanılmış kademe **geri alınmıyor** (XP negatife dönmez).
+  3. Cihazda "bu hafta" değeri sahibin gördüğü çift sayımı **göstermiyor**.
+- **Tuzaklar:** `metric_value = greatest(...)` mantığı yüzünden eski toplam
+  değerin kilitli kalması — backfill'de bunu ele al.
+- **Model önerisi:** 🔴 Opus
+
+---
+
+### WP-502: Açılış bütçesi ve senkron sapması telemetrisi 📈
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N01, N09 / rapor T12, T13)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-489 + WP-490 (ikisi de senkron yüzeyini değiştirir; ölçüm sonra anlamlı)
+- **Problem:** İki belirti kök nedene **indirilemedi**: (a) reboot sonrası iki
+  gün süren ~7-8 sn açılış, kendiliğinden geçti; (b) bildirim sayacı + ayna
+  cihazda "daha az da olsa" süren sapma. İkisi de tek seferlik teşhis avıyla
+  değil, **ölçümle** kapanır.
+- **Kapsam dışı:** Yeni performans optimizasyonu, mimari değişiklik, üçüncü
+  parti APM entegrasyonu, kullanıcı verisi toplama.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/observability/observability_service.dart`
+  - `docs/qa/V58-STARTUP-SYNC-BUDGET.md` (yeni)
+- **DOKUNMA:** `study_providers.dart`, `main.dart` (yalnız ölçüm noktası eklenirse
+  ayrı kart açılır).
+- **Adımlar:**
+  - [ ] Soğuk açılış süresi + açık realtime kanal sayısını yerel günlüğe yaz.
+  - [ ] Ayna/bildirim sapmasını saniye cinsinden ölç (beklenen vs görünen).
+  - [ ] Eşik belirle ve **bir sonraki** sürümde regresyon kapısı olarak kullan.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local; hiçbir veri sunucuya gönderilmez.
+- **RLS/Güvenlik:** Kişisel veri **yazılmaz**; yalnız süre ve sayaç.
+- **Edge-case'ler:** Reboot sonrası ilk açılış · uçak modu · düşük bellek ·
+  arka plandan geri dönüş.
+- **Kabul (ölçülebilir):** Soğuk açılış ve kanal sayısı ölçülebiliyor; sahibin
+  cihazında bir hafta boyunca kayıt toplanıp `docs/qa/`ya işleniyor. Eşik
+  aşımı **görünür** oluyor.
+- **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
@@ -6343,9 +6941,10 @@ Hiçbir F4 kartı production/stable kapısı açmaz.
 ## Worker'a Verilecek Kısa Komutlar
 
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
-kartlar worker'a verilir. 🔴 **Güncel ürün sırası artık Faz F4'tür**
-(v57 sahip geri bildirimi, WP-477…WP-488); sıra ve çakışma kuralları o fazın
-**Faz F4 sırası** başlığındadır. Aşağıdaki F3 dalgaları tarihsel kayıttır
+kartlar worker'a verilir. 🔴 **Güncel ürün sırası artık Faz F5'tir**
+(v58 sahip geri bildirimi, WP-489…WP-502); sıra ve çakışma kuralları o fazın
+**Faz F5 sırası ve çakışma kuralları** başlığındadır. Faz F4 (WP-477…WP-488,
+v57 geri bildirimi) kod tarafında kapandı ve v58 ile yayınlandı. Aşağıdaki F3 dalgaları tarihsel kayıttır
 (v49 sonrası sekiz
 sahip bulgusunun tamamı).
 
