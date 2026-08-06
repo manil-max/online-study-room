@@ -3,8 +3,10 @@
 > **Tarih:** 6 Ağustos 2026 · **Sürüm:** v58 stable (tag `v58`, aday `3ede412`,
 > release `9365895`, production migration head `0119`)
 > **Girdi:** `docs/V58-SAHIP-GERI-BILDIRIM-RAPORU.md` (11 ham belirti)
-> **Revizyon:** 2026-08-06 · sahip kararları (seçili grup, sade rozet) ve
+> **Revizyon 1 (2026-08-06):** sahip kararları (seçili grup, sade rozet) ve
 > N10-N11 eklendi; T06/T08/T10 yeniden yazıldı, T14 açıldı.
+> **Revizyon 2 (2026-08-06):** sahip talebiyle tam doğrulama turu — T01 ve T11'in
+> gerekçesi **düzeltildi**, T05/T09/T10 kanıtı sertleştirildi. Bkz. §2.5.
 > **Yöntem:** yalnız **statik kod analizi**. Cihazda koşum, logcat, profil ve
 > production sorgusu **yapılmadı**; her bulgunun kanıt seviyesi ayrıca yazılıdır.
 > **Amaç:** belirtiden koda inmek, kök nedeni dosya:satır ile göstermek ve her
@@ -93,13 +95,47 @@ app/android/.../timer/StudyTimerService.kt:205, 239
 
 **Neden anahtarın tipi değişken?** İki yazıcı var ve **farklı tip yazıyorlar**:
 native `TimerStateStore.writeRunning` `putInt` (satır 128, 131), Dart
-`_persistActiveTimer` `putLong`. Son yazan kazanır. Başlatmada Dart, native
-çağrıdan sonra kalıcılaştırdığı için pratikte **Long** kalır.
+`_persistActiveTimer` `putLong`. Son yazan kazanır.
 
-**Neden hemen çöküyor?** Başlatmanın hemen ardından `_syncTimerSurfaces()` widget
-tazelemesi tetikler; `TimerWidgetProvider.onUpdate` **uygulama sürecinde** koşar,
-istisna yakalanmaz → süreç ölür. Kullanıcının gördüğü "alta atıyor" budur;
-Flutter hata ekranı çıkmaz, çünkü çöken katman Dart değildir.
+**Başlatmadaki sıra (2026-08-06 doğrulama turunda düzeltildi).** İlk taslak
+"Dart, native çağrıdan sonra yazıyor" diyordu; **yanlıştı**. `start()` gövdesinde
+sıra şudur:
+
+```
+study_providers.dart:1852  _persistActiveTimer();                     // putLong  ← ÖNCE
+study_providers.dart:1868  unawaited(_bindStartAndPublishGlobalTimer…) // native putInt (async, SONRA)
+study_providers.dart:1882  unawaited(_showTimerSurfaces(...));        // → _syncTimerWidget()
+```
+
+Sonuç aynı kapıya çıkıyor ama gerekçe **daha güçlü**: widget tazelemesi (1882)
+native servisin `writeRunning`'inden **önce** koşar, çünkü native yol
+`startForegroundService` → `onStartCommand` zincirini bekler. Yani widget
+`onUpdate` prefs'i okuduğu anda değer kesinlikle **Long**'dur. Bu, hatayı
+"yarışa bağlı ara sıra" olmaktan çıkarıp **başlatmada beklenen sonuç** hâline
+getirir — sahibin "basar basmaz" ifadesiyle birebir uyuşan da budur.
+
+**Zincir uçtan uca doğrulandı:**
+
+```
+_syncTimerWidget() → HomeWidget.updateWidget(...)
+  → HomeWidgetPlugin.kt:110-116  intent.action = ACTION_APPWIDGET_UPDATE; context.sendBroadcast(intent)
+  → TimerWidgetProvider.onReceive → onUpdate   (uygulama süreci, try/catch YOK)
+  → appPrefs.getInt("flutter.timer_active_target_seconds")   💥
+```
+
+`TimerWidgetProvider.onUpdate` gövdesinde tek `runCatching` ISO tarih
+ayrıştırmasında (satır 118); prefs okumaları korumasız. Dosyadaki diğer `try`
+(satır 365) alarm widget'ının JSON ayrıştırmasına ait. Bir `BroadcastReceiver`
+içindeki yakalanmamış istisna **süreci öldürür**; kullanıcının gördüğü "alta
+atıyor" budur, Flutter hata ekranı çıkmaz çünkü çöken katman Dart değildir.
+
+**Prefs arka ucu da doğrulandı.** Uygulama eski (legacy) `SharedPreferences`
+API'sini kullanıyor (`SharedPreferences.getInstance()`), yani XML dosyası
+`FlutterSharedPreferences` ve yazım `putLong` (`SharedPreferencesPlugin.kt:317`).
+Yeni `SharedPreferencesAsync`/DataStore arka ucu (aynı dosyada satır 96) devrede
+olsaydı anahtar bambaşka bir depoya yazılırdı ve native taraf hiç göremezdi —
+öyle olmadığını `timer_active_started_at_ms`'in sahada çalışıyor olması da
+gösteriyor.
 
 **Ön koşul (düşürücü test).** Widget yolu yalnız **ana ekranda yerleştirilmiş bir
 sayaç widget'ı varsa** tetiklenir. Sayaç widget'ını ana ekrandan kaldırıp geri
@@ -227,8 +263,9 @@ app/lib/features/home/widgets/active_members_card.dart:29-36
     }
 ```
 
-`AsyncValue.value`, **yükleniyorken de** `null` döner. Yani "grup henüz
-yüklenmedi" ile "kullanıcının grubu yok" aynı dala düşüyor ve kullanıcıya
+`AsyncValue.value`, **ilk yüklemede** `null` döner (yenilenmede önceki değeri
+korur; asıl tuzak burada değil, `asData`'da — bkz. (b)). Yani soğuk açılışta
+"grup henüz yüklenmedi" ile "kullanıcının grubu yok" aynı dala düşüyor ve kullanıcıya
 `GroupCardShell` — yani "Bir gruba katılınca burada…" + **Grup Oluştur** butonu —
 gösteriliyor (`group_card_shell.dart:33-60`). Veri gelince kart yerine oturuyor.
 Sahibin gördüğü flaş budur.
@@ -240,8 +277,9 @@ app/lib/core/widgets/crowned_avatar.dart:459-463
     final rank = ref.watch(gamificationProfileProvider(userId)).asData?.value.crownRank;
 ```
 
-`asData`, sağlayıcı **yenilenirken** (`AsyncLoading`) `null` döner — önceki değeri
-korumaz. Provider her invalidate/refresh turunda taç bir kare kayboluyor, sonra
+`asData`, sağlayıcı **yenilenirken** `null` döner — `AsyncData` olmayan her
+durumda null olduğu için önceki değeri korumaz. `.value`/`.valueOrNull` ise
+yenilenmede önceki veriyi taşır; ikisi arasındaki bu fark hatanın tamamıdır. Provider her invalidate/refresh turunda taç bir kare kayboluyor, sonra
 geri geliyor. Doğrusu `valueOrNull` (yenilenme sırasında son veriyi korur).
 
 **(c) Aynı sınıfın üçüncü örneği** — aktif üye listesi
@@ -293,6 +331,26 @@ ve telefon açıldığında **ayna olarak birikmiş süreyi** gösterir.
 
 **Bu, v58'de değişen ve cihazda hiç doğrulanmayan bir davranıştır** — belirtinin
 bu turda ortaya çıkması tesadüf değil.
+
+**(c) Doğrulama turunda ortaya çıkan üçüncü katman: kayıp yalnız aynada değil.**
+İlk taslak "süreyi origin cihaz yazmalı" diyordu; origin de yazmıyor:
+
+- Sunucuda ayrı bir `stop_mirrored_run` RPC'si **yok**; Dart
+  `apply_global_timer_command(action: 'stop')` çağırıyor
+  (`global_timer_providers.dart:194-203`). O fonksiyonun stop dalı yalnız
+  `live_study_runs.status = 'stopped'` yazıp presence'ı kapatıyor
+  (`0101_global_timer_controller_contract.sql:274-281`) — `study_sessions`'a
+  **hiçbir insert yok**. (`insert into public.study_sessions` tüm migration'larda
+  tek yerde: `0051`'deki `finalize_verified_live_run`, ve o yalnız
+  `run_token`'lı verified koşu için çağrılır.)
+- Origin cihaz uzak durdurmayı öğrendiğinde de kayıt yapmıyor:
+  `_applyRemoteMirrorStop` → `_finish(globalTimerStoppedRemotelyAt: …)`
+  (`study_providers.dart:1154`). `_finish` zaten belgesinde "**kayıt yapmadan**
+  durdurur" diyor ve native tarafa giden `STOP_SILENT` kuyruğa aralık yazmaz.
+
+Yani uzaktan/aynadan durdurulan bir koşunun süresi **iki uçta da** hiçbir yere
+yazılmıyor. Bu, "toplam değişmiyor"un tam açıklamasıdır ve belirtinin
+şiddetini yükseltir: veri geç gelmiyor, **hiç gelmiyor**.
 
 **Düzeltme yönü — sıralı:**
 1. Ayna durdurmasını **kayıtlı** hâle getir: sunucu, koşuyu kapatırken oturumu
@@ -405,21 +463,24 @@ itiliyor. Rozetin gerçek yüksekliği ise değişken: ikon (20) + dikey padding
 `maxLines: 2`) + kapsam rozeti. Uzun etiket ("Henüz seri yok") ve/veya sistem
 yazı ölçeği >1 olduğunda rozet 48 px'i aşar ve "Bugün" satırının üstüne biner.
 
-**Sahip kararı (2026-08-06) bu bulguyu kapsam olarak büyütüyor:** rozet
-**yalnız alev + sayı** olacak; "Personal" kapsam etiketi ve "Henüz seri yok"
-metni kaldırılacak. Bu tek başına çakışmayı da büyük ölçüde bitirir — rozetin
-yüksekliği tek satır ikon+sayıya iner.
+**Sahip kararı (2026-08-06, kesinleşmiş):** rozette **hiç yazı olmayacak** —
+yalnız **alev + sayı**. Ne durum metni ("Henüz seri yok"), ne kapsam etiketi
+("Kişisel"/"Grup"). Gerekçe sahibin kendi ifadesi: *"grup kısmında grup streak
+yazıyor, oradan anlaşılır zaten"* — yani kapsamı **bağlam** (rozetin hangi
+ekranda/bölümde durduğu) söyler, rozetin kendisi değil. Bu tek başına çakışmayı
+da büyük ölçüde bitirir; rozet tek satır ikon+sayıya iner.
 
 **Düzeltme yönü.**
 1. `GoalStreakFlame`'de görünür metin ve `_ScopeBadge` kaldırılsın; ikon + sayı
    kalsın (`goal_streak_flame.dart:84-102`).
-2. 🔴 **Erişilebilirlik notu — karar gerekiyor.** WP-454'ün yazılı kuralı
-   "ayrım yalnız RENGE dayanmaz; her durumun ayrı ikonu, metni ve kapsam rozeti
-   var" idi (`goal_streak_flame.dart:15-18`). Metin ve kapsam rozeti kalkınca
-   kişisel/grup ayrımı yalnız **çerçeve biçiminde** (yuvarlak/köşeli) kalır.
-   Öneri: görünür metin kalksın ama (a) çerçeve farkı korunsun, (b) `Semantics`
-   etiketi (satır 47) aynen kalsın — ekran okuyucu hâlâ "Kişisel · 3 · bugün
-   tamamlandı" desin. Böylece görsel sadelik erişilebilirliği düşürmez.
+2. **Erişilebilirlik, karar bozulmadan korunuyor.** WP-454'ün kuralı "ayrım
+   yalnız RENGE dayanmaz" idi (`goal_streak_flame.dart:15-18`). Görünür metin
+   kalkıyor ama iki kanal duruyor: (a) her durumun **ayrı ikonu** (dolu alev /
+   içi boş alev / pause / gri alev) — renk körü kullanıcı için ayrım burada,
+   (b) `Semantics` etiketi (satır 47) aynen kalır, ekran okuyucu hâlâ
+   "Kişisel · 3 · bugün tamamlandı" der. Kapsam ayrımı görsel olarak bağlamdan
+   okunacağı için `_ScopeBadge` tümüyle silinir; çerçeve biçimi farkı
+   (yuvarlak/köşeli) kalabilir ama artık **taşıyıcı** kanal değildir.
 3. Sabit `48` üst boşluk (`study_timer_card.dart:307`) yine de kaldırılmalı;
    rozet küçülse bile sistem yazı ölçeği 1.6'da aynı çakışma geri gelir.
    Doğrusu rozeti `Stack` yerine başlık satırının parçası yapmak.
@@ -443,10 +504,27 @@ app/lib/features/stats/widgets/daily_line_chart.dart:26-28
 ```
 
 `maxY`, veri maksimumunun 1.2 katı — yani seçilen `yInterval`'in **katı değil**.
-Bu yüzden eksenin tepesinde son aralık etiketi ile eksen sınırındaki etiket
-birbirine çok yakın iki y konumunda çiziliyor ve 9 punto etiketler üst üste
-biniyor (ekran görüntüsü 1: "12" ile "10h" iç içe). Kodda iki etiket arası asgari
-mesafe kontrolü yok.
+
+**Kütüphane kaynağında doğrulandı (fl_chart 1.2.0):** eksen etiketleri
+`AxisChartHelper.iterateThroughAxis` ile üretiliyor ve fonksiyon aralık
+tıklarına **ek olarak** eksen sınırını da veriyor:
+
+```
+fl_chart-1.2.0/lib/src/chart/base/axis_chart/axis_chart_helper.dart:56-58
+    if (maxIncluded && !lastPositionOverlapsWithMax) {
+      yield max;                       // ← aralık ızgarasında olmayan fazladan etiket
+    }
+```
+
+`SideTitles.maxIncluded` varsayılanı `true` (`axis_chart_data.dart:204`) ve kod
+bunu geçersiz kılmıyor. Ekrandaki seri için: veri maks ≈ 10.4 sa → `maxY` = 12.5
+sa (750 dk) → `niceMinuteInterval(750)` = 240 dk → tıklar 4h/8h/**12h**, üstüne
+sınır etiketi **12.5h**. İki etiket ~30 dakikalık mesafede, yani ekranda birkaç
+piksel arayla çiziliyor → ekran görüntüsü 1'deki iç içe geçmiş üst etiket. Bu
+**her veri kümesinde** olur, çünkü `maxY` hiçbir zaman aralığın katı değildir.
+
+**Bir satırlık geçici çare de var:** `SideTitles(maxIncluded: false)`. Kalıcı
+doğru çözüm yine `maxY`'yi aralığın üst katına yuvarlamaktır (aşağıda).
 
 **Düzeltme yönü.** Önce aralığı seç, sonra `maxY`'yi o aralığın üst katına
 yuvarla: `maxY = (dataMax * 1.15 / interval).ceil() * interval`. Böylece tepe
@@ -480,8 +558,14 @@ app/lib/core/widgets/crowned_avatar.dart:274-283
     avatar = SizedBox(width: half * 2, height: top + base + outlineW, ...)
 ```
 
-Yani taçsız avatar 32 px iken (radius 16), taçlı avatar ~45-50 px olur. Satır
-`Padding(vertical: 5)` ile birlikte ~55 px'e çıkar — kartın bütçesi ise **42**.
+Sayı, kartın kullandığı `radius: 16` için birebir hesaplandı: `ring` =
+max(2.0, 16×0.075) = **2.0** → `base` = 18. `radius 16 < kCrownCompactRadius (18)`
+olduğu için **compact** geometri seçilir (`tipRadius` 1.74, `pearlRadius` 0):
+`topExtent` = 18 × 1.74 = **31.3**, `outlineW` = max(0.8, 0.72) = 0.8 →
+`height` = 31.3 + 0.8 + 18 + 0.8 = **≈50.9 px**.
+
+Yani taçsız avatar 32 px iken taçlı avatar **51 px**; satır `Padding(vertical: 5)`
+ile **≈61 px** eder — kartın bütçesi ise **42**. Bütçe %45 aşılıyor.
 Sonuç: (a) `maxItems` fazla satır sığacağını sanır, son satır alttan kırpılır;
 (b) her satırın içinde tacın üst payı boşluk gibi görünür ve satırlar aşağı
 kaymış izlenimi verir. Sahibin "aşağı kayıyorlar" dediği (V58-N11) budur ve
@@ -503,10 +587,29 @@ app/lib/features/home/widgets/active_members_card.dart:121
 ```
 
 Gömülü Türkçe metin; `app_en.arb` içinde karşılığı yok, `AppLocalizations`'tan
-geçmiyor. Bu **l10n kapısının kaçırdığı** bir sınıftır: `scripts/l10n_audit.py`
-V57-N01'den sonra genişletildi ama **string interpolasyonu içindeki** Türkçe
-sözcüğü yakalamıyor. Aynı kapı v55 boyunca da kırmızıydı (bkz.
-`ci-kapisi-yesil-sanilmaz-dogrulanir` dersi).
+geçmiyor.
+
+**Kapının deliği doğrulama turunda tam olarak bulundu** (ilk taslaktaki
+"interpolasyonu taramıyor" ifadesi eksikti — denetçi tarıyor, iki ayrı kural
+birden eliyor):
+
+1. `TURKISH_CHAR_RE = re.compile(r"[ÇĞİÖŞÜçğıöşü]")` (`l10n_audit.py:55`) —
+   literal, **Türkçe'ye özgü bir karakter** içermek zorunda. `"aktif"` sırf ASCII
+   harflerden oluşuyor → bu kural kördür. Aynı körlük `grup`, `hedef`, `toplam`,
+   `seri`, `mola`, `dakika` gibi onlarca sözcük için de geçerlidir.
+2. İkinci kural (`ui_prose_violations`) tam da bu boşluğu kapatmak için yazılmış
+   ("Türkçe'ye özel karakter içermeyen Türkçe cümleler"), ama `TECHNICAL_RE`
+   içindeki `^\$` deseni (`l10n_audit.py:101`, yorumu "tamamı interpolasyon")
+   yalnız **başlangıcı** kontrol ediyor. Literal `'${active.length} aktif'`
+   `$` ile başladığı için "tamamı interpolasyon" sayılıp muaf tutuluyor.
+
+Yani `'$degisken Türkçe kelime'` biçimindeki **her** metin iki kuralın da altından
+geçiyor. Bu tek karakterlik desen hatası, l10n kapısının en büyük kör noktasıdır.
+
+**Düzeltme:** `^\$` yerine literalin **tamamının** tek bir interpolasyon olmasını
+arayan desen (`^\$\{?[\w.]+\}?$`). Kapı düzeltildikten sonra kasten kırık bir
+girdiyle sınanmalı (bkz. `ci-kapisi-yesil-sanilmaz-dogrulanir` dersi); v55
+boyunca aynı kapı kırmızıyken yeşil sanılmıştı.
 
 **Düzeltme yönü.** (1) Anahtarı ekle (`homeAktifSayisi` + `{count}` çoğul formu).
 (2) **Kapıyı** düzelt: denetçi `'...$degisken ...'` biçimindeki interpolasyonlu
@@ -543,6 +646,59 @@ Foreground uzlaşma 5 saniyede bir (`kGlobalTimerForegroundReconcileInterval`,
 olsa var" ifadesiyle geliyor, sayısal değil. T01 ve T05 düzeltilmeden bu maddeyi
 ölçmek anlamsız: ikisi de aynı yüzeyin (native SSOT + ayna) davranışını
 değiştiriyor. **Önce T01/T05, sonra yeniden ölçüm.**
+
+---
+
+## 2.5 Doğrulama turu (2026-08-06, sahip talebi)
+
+Sahip *"emin misin, son kez kontrol et"* dedi. Bulguların tamamı ikinci kez
+sürüldü; aşağıda **ne değişti** ve **ne sertleşti** ayrı ayrı yazılıdır. Bu
+bölümün amacı raporu savunmak değil, hangi iddianın hangi kanıta dayandığını
+senior'ın tek bakışta görmesidir.
+
+### Değişen iki iddia
+
+| Bulgu | İlk taslakta yazan | Doğrulamada çıkan |
+|---|---|---|
+| **T01** | "Dart native'den **sonra** yazdığı için değer Long kalır" | **Yanlıştı.** Dart `start()` içinde **önce** yazıyor (satır 1852), widget tazelemesi hemen ardından (1882), native `putInt` ise `startForegroundService` zincirini beklediği için **en son** geliyor. Sonuç aynı, gerekçe daha güçlü: değer widget okuduğu anda **kesin** Long → hata yarışa bağlı değil, başlatmada **beklenen** sonuç. |
+| **T11** | "l10n denetçisi interpolasyonlu metni taramıyor" | **Eksikti.** Denetçi tarıyor; iki kural birden eliyor: (1) Türkçe taraması yalnız `ÇĞİÖŞÜçğıöşü` arıyor, `"aktif"` sırf ASCII; (2) `TECHNICAL_RE`'deki `^\$` deseni `$` ile **başlayan** her literali "tamamı interpolasyon" sayıp muaf tutuyor. Delik tek karakterlik bir desen hatası. |
+
+### Sertleşen üç iddia
+
+| Bulgu | Yeni kanıt |
+|---|---|
+| **T05** | Sunucuda `stop_mirrored_run` RPC'si **yok**; stop dalı (`0101:274-281`) yalnız durum güncelliyor, `study_sessions` insert'i tüm migration'larda tek yerde (`0051`, verified koşu). Origin cihaz da uzak durdurmada `_finish()` çağırıyor — o da "kayıt yapmadan durdurur". Yani süre **iki uçta da** kayıp. |
+| **T09** | Varsayım değil, kütüphane kaynağı: `iterateThroughAxis` satır 56-58 eksen sınırı için **fazladan** etiket üretiyor ve `maxIncluded` varsayılanı `true`. Çakışma her veri kümesinde deterministik. |
+| **T10** | Taçlı avatar yüksekliği elle hesaplandı: r=16 → **50.9 px** (taçsız 32), satır ≈ **61 px**, kartın bütçesi **42** → %45 aşım. |
+
+### Değişmeyen, ikinci turda da doğrulanan iddialar
+
+- **T02** — `record_goal_completion` çağrısı `app/lib`, `supabase/migrations` ve
+  **`supabase/functions` (7 edge function)** içinde yok; yalnız tanım, testler ve
+  dokümanlarda geçiyor. Tetikleyici de yok.
+- **T03** — `StreamBuilder`'a her `build()`'de **yeni bir stream nesnesi**
+  veriliyor; Flutter nesne kimliği değişince yeniden abone olur, bu yüzden döngü
+  gerçek.
+- **T04** — `.value` (ilk yükleme) ile `asData` (her yenileme) farkı doğrulandı;
+  ikisi ayrı belirti üretiyor.
+- **T06** — `achievement_metric_progress` birincil anahtarı `(user_id,
+  achievement_id)`; şemada grup boyutu **yok**, dolayısıyla "seçili grup" kuralı
+  şema değişikliği gerektiriyor.
+- **T14** — `MediaQuery.paddingOf(context).top` uygulamanın **hiçbir yerinde**
+  okunmuyor; `home_screen.dart`'taki tek `SafeArea` boyut paneline ait ve
+  `top: false`.
+
+### Hâlâ kanıtlanmamış olanlar (dürüstlük payı)
+
+- **T01'in cihazdaki teyidi** — mekanizma uçtan uca kodda doğrulandı, ama
+  logcat'te `ClassCastException` satırını **görmedim**. Ana ekranda sayaç
+  widget'ı yoksa bu yol hiç çalışmaz; o durumda çökmenin başka bir sebebi vardır
+  ve rapor yanılmış olur. İlk iş bu satırı görmek.
+- **T06'nın çift sayma verisi** — mekanizma (gruplar arası toplama) kodda net,
+  ama sahibin gerçekten iki grupta birinci olduğunu **veriyle** görmedim.
+- **T12 / T13** — telemetri olmadan kapanmaz; değişmedi.
+- **T07** — `ListTile` sıkıştırması standart Flutter davranışı ve ekran görüntüsü
+  birebir uyuyor, ama ölçümü cihazda yapılmadı.
 
 ---
 

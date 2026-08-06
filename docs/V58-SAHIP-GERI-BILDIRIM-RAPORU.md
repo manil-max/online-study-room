@@ -157,8 +157,10 @@ studying' kısmında falan aşağı kayıyorlar."
 1. **Grup başarımı yalnız SEÇİLİ gruptan sayılır.** "Hangi grup seçili ise ondan
    sayılsın." Yani `alpha_wolf_weekly` gibi grup metrikleri kullanıcının tüm
    gruplarını toplamaz; aktif/seçili grubun değeri gösterilir.
-2. **Seri rozeti sadeleşecek:** yalnız **alev + sayı**. "Personal" kapsam etiketi
-   ve "Henüz seri yok / No streak yet" metni **kaldırılacak**.
+2. **Seri rozetinde hiç yazı olmayacak:** yalnız **alev + sayı**. Durum metni
+   ("Henüz seri yok / No streak yet") ve kapsam etiketi ("Kişisel"/"Personal")
+   birlikte kaldırılacak. Sahibin gerekçesi: *"grup kısmında grup streak yazıyor,
+   oradan anlaşılır zaten"* — kapsamı rozet değil, **bulunduğu bağlam** söyler.
 3. **Seri davranışı V57'de kararlaştırıldığı gibidir; değişmedi.** Kanonik metin
    `docs/V57-SAHIP-GERI-BILDIRIM-RAPORU.md` V57-N04/N05'tir:
    - **Durum 1** — dün ve önceki gün yapılmamış, seri sıfırlanmış: **gri soluk
