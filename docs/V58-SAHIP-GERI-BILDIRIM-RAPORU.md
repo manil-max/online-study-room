@@ -3,7 +3,7 @@
 > **Tarih:** 6 Ağustos 2026
 > **Kaynak:** v58 stable yayınının ardından ürün sahibinin cihaz izlenimleri
 > **Amaç:** Gözlemi kaybetmeden, belirti ile teşhisi karıştırmadan kaydetmek
-> **Durum:** 🟢 **HAM KAYIT TAMAM (9 madde).** Bölüm 3 sahibin sözleridir;
+> **Durum:** 🟢 **HAM KAYIT TAMAM (11 madde).** Bölüm 3 sahibin sözleridir;
 > kök neden veya çözüm iddiası içermez. Kök neden çalışması 4. bölümde,
 > iş paketleri `progress.md`'dedir.
 
@@ -115,6 +115,21 @@ oluyor. Stop diyorum, toplam sürede değişmiyor. İşleyişte olmayan bir bug.
 
 "Bildirim sayaç + ayna cihazda senkron problemleri, daha az da olsa, var hâlâ."
 
+### V58-N10 — Ana ekranın en üstü durum çubuğuyla çakışıyor, seri rozeti fazla büyük
+
+"Bak fotoya, hem aşırı yukarıda, bildirim panelinde işaretlerle çakışıyor. Bir de
+streak kısmı bu kadar büyük olmasına gerek yok; 'Personal' yazısı ve diğer 'no
+streak yet' falan gerek yok, dümdüz alev yanında sayı yeter zaten."
+
+*(Ekran görüntüsü 4: kart durum çubuğunun hemen altında başlıyor; seri rozeti saat
+ve bildirim simgeleriyle aynı hizaya kadar çıkmış, altındaki "Today" yazısının
+üstüne biniyor.)*
+
+### V58-N11 — Listelerde satırlar aşağı kayıyor
+
+"Listelerde bu dikey sıkışıklığı çözmek için ne yaptın bilmiyorum ama 'currently
+studying' kısmında falan aşağı kayıyorlar."
+
 ---
 
 ## 4. Normalize edilmiş belirti kaydı
@@ -134,13 +149,28 @@ oluyor. Stop diyorum, toplam sürede değişmiyor. İşleyişte olmayan bir bug.
 | V58-N07 | Grup yüzeyinde aktif çalışma bazen görünmüyor | Şüpheli belirti | V56/V57'de benzer kayıt var | Orta |
 | V58-N08 | Ayna cihazda açık kalan koşu 4-5 saat biriktiriyor; Durdur toplamı değiştirmiyor | Doğrudan gözlem | V57-N06'nın komşusu | **Kritik** |
 | V58-N09 | Bildirim sayacı + ayna senkronunda kalıntı sapma | Şüpheli belirti | V57-N06 kısmen | Orta |
+| V58-N10 | Ana ekran üst güvenli alanı taşımıyor; seri rozeti gereğinden büyük | Doğrudan gözlem + **ürün kararı** | **V57-N12'nin (üst şerit kaldırıldı) yan etkisi** | Yüksek |
+| V58-N11 | Liste satırları aşağı kayıyor / sığmıyor | Doğrudan gözlem | V57-N11 ailesinin devamı | Orta |
 
-### 4.1 Bu turda sahibin bağlayıcı kararı
+### 4.1 Bu turda sahibin bağlayıcı kararları
 
-Bu tur için yeni ürün kararı verilmedi; maddeler hata kaydıdır. V57'de verilen
-kararlar (chess.com seri modeli, sınırsız koruma, rozetin daima görünmesi,
-ünvan seçicinin buton yanında açılması, ana ekranda üst şerit olmaması)
-yürürlüktedir ve **değişmemiştir**.
+1. **Grup başarımı yalnız SEÇİLİ gruptan sayılır.** "Hangi grup seçili ise ondan
+   sayılsın." Yani `alpha_wolf_weekly` gibi grup metrikleri kullanıcının tüm
+   gruplarını toplamaz; aktif/seçili grubun değeri gösterilir.
+2. **Seri rozeti sadeleşecek:** yalnız **alev + sayı**. "Personal" kapsam etiketi
+   ve "Henüz seri yok / No streak yet" metni **kaldırılacak**.
+3. **Seri davranışı V57'de kararlaştırıldığı gibidir; değişmedi.** Kanonik metin
+   `docs/V57-SAHIP-GERI-BILDIRIM-RAPORU.md` V57-N04/N05'tir:
+   - **Durum 1** — dün ve önceki gün yapılmamış, seri sıfırlanmış: **gri soluk
+     alev + `0`**.
+   - **Durum 2** — dün yapılmamış ama ondan önceki gün yapılmış (duraklatma):
+     **pause işareti**. Bugün de yapılmazsa seri `0` olur; yapılırsa Durum 3'e
+     geçer. **Koruma hakkı sınırsızdır.**
+   - **Durum 3** — o günün hedefine ulaşılmış: **renkli/canlı alev**.
+   - Aynı model **grup hedefi** için de geçerlidir.
+
+V57'nin diğer kararları (ünvan seçicinin buton yanında açılması, ana ekranda üst
+şerit olmaması) yürürlüktedir ve **değişmemiştir**.
 
 ## 5. Bu rapor ne değildir
 

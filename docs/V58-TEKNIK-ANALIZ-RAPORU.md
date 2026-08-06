@@ -2,7 +2,9 @@
 
 > **Tarih:** 6 Ağustos 2026 · **Sürüm:** v58 stable (tag `v58`, aday `3ede412`,
 > release `9365895`, production migration head `0119`)
-> **Girdi:** `docs/V58-SAHIP-GERI-BILDIRIM-RAPORU.md` (9 ham belirti)
+> **Girdi:** `docs/V58-SAHIP-GERI-BILDIRIM-RAPORU.md` (11 ham belirti)
+> **Revizyon:** 2026-08-06 · sahip kararları (seçili grup, sade rozet) ve
+> N10-N11 eklendi; T06/T08/T10 yeniden yazıldı, T14 açıldı.
 > **Yöntem:** yalnız **statik kod analizi**. Cihazda koşum, logcat, profil ve
 > production sorgusu **yapılmadı**; her bulgunun kanıt seviyesi ayrıca yazılıdır.
 > **Amaç:** belirtiden koda inmek, kök nedeni dosya:satır ile göstermek ve her
@@ -326,10 +328,26 @@ ve `weekly_alpha_wins` satır başına 0/1 ile sınırlı (`0062:17`). Toplama
 iki grupta aynı hafta birinci olursa metrik 2 artar. Sahibin gördüğü "tek hafta,
 iki sayı" bu tanımın doğal sonucudur.
 
-**Ürün sorusu (sahip kararı gerekir):** "Lider Kurt" bir **hafta** başarımı mı
-(hafta başına en fazla 1), yoksa **grup-hafta** başarımı mı (her grupta ayrı
-sayılır)? V57 kartı "haftalık grup birincisi" diyor; sahibin beklentisi hafta
-başına tek görünüyor.
+**Ürün kararı geldi (2026-08-06):** *"Hangi grup seçili ise ondan sayılsın."*
+Yani metrik **gruplar arası toplanmayacak**; gösterilen değer seçili grubun
+değeridir.
+
+Bu, tek satırlık bir SQL düzeltmesi değildir çünkü `achievement_metric_progress`
+kullanıcı başına **tek satır** tutuyor (`(user_id, achievement_id)` birincil
+anahtar) — grup boyutu şemada yok. İki uygulama yolu var, ikisi de gerçek iş:
+
+1. **Projeksiyonu grup kırılımlı yap:** `achievement_metric_progress`'e
+   `group_id` boyutu ekle (ya da grup metrikleri için ayrı bir görünüm), okuma
+   tarafı seçili grubun satırını çeksin. Doğru olan budur; başarım rozeti
+   "hangi grupta" sorusunu cevaplayabilir hale gelir.
+2. **Okuma tarafında filtrele:** metrik satırı yerine
+   `group_achievement_weekly`'yi doğrudan seçili `group_id` ile sorgula.
+   Daha ucuz ama XP/kademe zinciri hâlâ toplam üzerinden ilerlerse iki uç
+   ayrışır — `0063`'teki XP döngüsü de aynı kaynağı okumalı.
+
+**Öneri:** (1). `alpha_wolf`, `campfire_hours`, `team_player`, `locomotive` de
+aynı tabloyu paylaştığı için düzeltme bu dört metriği birlikte kapsamalı; yoksa
+"seçili grup" kuralı yalnız Lider Kurt'ta geçerli olur ve tutarsızlık kalır.
 
 **Doğrulama sorgusu:**
 
@@ -339,10 +357,8 @@ from public.group_achievement_weekly
 where user_id = '<user_id>' order by iso_week_start desc limit 10;
 ```
 
-İki satır aynı `iso_week_start` ile dönerse teşhis doğrulanır. Düzeltme, hafta
-başına tekilleştirme: `count(distinct iso_week_start) filter (where weekly_alpha_wins = 1)`.
-
----
+Aynı `iso_week_start` için iki satır dönüyorsa mevcut davranış (toplama)
+doğrulanmış olur.
 
 ### T07 — Üye satırında ad tek harfe düşüyor (N04.2)
 
@@ -389,11 +405,31 @@ itiliyor. Rozetin gerçek yüksekliği ise değişken: ikon (20) + dikey padding
 `maxLines: 2`) + kapsam rozeti. Uzun etiket ("Henüz seri yok") ve/veya sistem
 yazı ölçeği >1 olduğunda rozet 48 px'i aşar ve "Bugün" satırının üstüne biner.
 
-**Düzeltme yönü.** Sabit sayı yerine gerçek yerleşim: rozeti `Stack` yerine
-başlık satırının bir parçası yap (`Row` + `Spacer`), ya da rozeti ölçüp
-`Padding`'i ondan türet. Kabul: `textScaleFactor 1.0 / 1.3 / 1.6` için golden.
+**Sahip kararı (2026-08-06) bu bulguyu kapsam olarak büyütüyor:** rozet
+**yalnız alev + sayı** olacak; "Personal" kapsam etiketi ve "Henüz seri yok"
+metni kaldırılacak. Bu tek başına çakışmayı da büyük ölçüde bitirir — rozetin
+yüksekliği tek satır ikon+sayıya iner.
 
----
+**Düzeltme yönü.**
+1. `GoalStreakFlame`'de görünür metin ve `_ScopeBadge` kaldırılsın; ikon + sayı
+   kalsın (`goal_streak_flame.dart:84-102`).
+2. 🔴 **Erişilebilirlik notu — karar gerekiyor.** WP-454'ün yazılı kuralı
+   "ayrım yalnız RENGE dayanmaz; her durumun ayrı ikonu, metni ve kapsam rozeti
+   var" idi (`goal_streak_flame.dart:15-18`). Metin ve kapsam rozeti kalkınca
+   kişisel/grup ayrımı yalnız **çerçeve biçiminde** (yuvarlak/köşeli) kalır.
+   Öneri: görünür metin kalksın ama (a) çerçeve farkı korunsun, (b) `Semantics`
+   etiketi (satır 47) aynen kalsın — ekran okuyucu hâlâ "Kişisel · 3 · bugün
+   tamamlandı" desin. Böylece görsel sadelik erişilebilirliği düşürmez.
+3. Sabit `48` üst boşluk (`study_timer_card.dart:307`) yine de kaldırılmalı;
+   rozet küçülse bile sistem yazı ölçeği 1.6'da aynı çakışma geri gelir.
+   Doğrusu rozeti `Stack` yerine başlık satırının parçası yapmak.
+
+**Not — dördüncü durum.** Metin kalkınca kullanıcı durumları yalnız ikondan
+ayırt edecek. Sahibin tarif ettiği üç durumun kodda dört karşılığı var:
+`completedToday` (dolu alev), `pendingToday` (**içi boş alev** — dün tamamlandı,
+bugün henüz değil), `atRisk` (pause), `expired`/`empty` (gri alev). Dolu ile içi
+boş alev ayrımı küçük rozette zayıf kalabilir; tasarım turunda bu iki ikon
+belirgin şekilde ayrışmalı.
 
 ### T09 — Trend grafiğinde Y ekseni etiketleri çakışıyor (N04.1)
 
@@ -435,11 +471,27 @@ yüksekliği avatar (32) + dikey padding (2×5) = 42'yi ancak yazı ölçeği 1.
 tutar; ölçek büyüdüğünde satır büyür, hesap büyümez → son satır alttan kırpılır
 (ekran görüntüsü 1'deki yarım "Minik Kuş" satırı).
 
-**Düzeltme yönü.** Sabit sayı yerine kaydırılabilir liste (`ListView` + gerçek
-`physics`) ya da `MediaQuery.textScalerOf(context).scale(42)` ile ölçeklenen satır
-yüksekliği. Kabul: 1.3 yazı ölçeğinde kırpılmış piksel olmamalı.
+**🔴 Asıl tetikleyici bulundu — taçlı avatar 42 px'e sığmıyor.** `CrownedAvatar`
+taç varken kutusunu **büyütüyor**:
 
----
+```
+app/lib/core/widgets/crowned_avatar.dart:274-283
+    final top = geometry.topExtent(base) + outlineW;   // tacın üste taşan payı
+    avatar = SizedBox(width: half * 2, height: top + base + outlineW, ...)
+```
+
+Yani taçsız avatar 32 px iken (radius 16), taçlı avatar ~45-50 px olur. Satır
+`Padding(vertical: 5)` ile birlikte ~55 px'e çıkar — kartın bütçesi ise **42**.
+Sonuç: (a) `maxItems` fazla satır sığacağını sanır, son satır alttan kırpılır;
+(b) her satırın içinde tacın üst payı boşluk gibi görünür ve satırlar aşağı
+kaymış izlenimi verir. Sahibin "aşağı kayıyorlar" dediği (V58-N11) budur ve
+ekran görüntüsü 1'de **iki üyenin de tacı var**.
+
+**Düzeltme yönü.** Sabit `rowHeight`/`headerHeight` aritmetiği tümüyle kalksın:
+gerçek `ListView` (kendi `physics`'i ile) + içeriğe göre yükseklik. Satır sayısı
+tahmin edilmeyecekse `maxItems` hesabına da gerek kalmaz. Kabul ölçütü: **taçlı**
+üyelerle ve `textScaleFactor 1.3` ile kırpılmış piksel olmamalı — golden test bu
+iki koşulu birlikte kurmalı (taçsız golden bu hatayı göremez).
 
 ### T11 — İngilizce arayüzde Türkçe rozet: "2 aktif" (N04.1)
 
@@ -494,6 +546,59 @@ değiştiriyor. **Önce T01/T05, sonra yeniden ölçüm.**
 
 ---
 
+### T14 — Ana ekran üst güvenli alanı taşımıyor: WP-488 regresyonu (N10)
+
+**Seviye: A · Şiddet: Yüksek · Etki: içerik durum çubuğunun altında kalıyor**
+
+WP-488 (V57-N12, sahip kararı) görüntüleme modunda üst şeridi kaldırdı. Commit
+mesajı *"gövde üst güvenli alanı kendisi taşır"* diyor — **taşımıyor**.
+
+```
+app/lib/core/navigation/tab_action_bar.dart:12-13
+    /// Eylem yoksa `null` döner; çağıran ekran bu durumda gövdeyi
+    /// `SafeArea(bottom: false)` ile sarar.        ← yazılı sözleşme
+```
+
+Home bunu yapmıyor. Gövdenin tek üst boşluğu şu yardımcıdan geliyor:
+
+```
+app/lib/core/widgets/safe_screen_padding.dart:15-18
+    final bottomSafe = MediaQuery.paddingOf(context).bottom;
+    return EdgeInsets.fromLTRB(horizontal, vertical, horizontal, vertical + bottomSafe);
+                                          ^^^^^^^^ sabit 16 — üst inset HİÇ okunmuyor
+```
+
+`MediaQuery.paddingOf(context).top` hiçbir yerde kullanılmıyor; `home_screen.dart`
+içindeki tek `SafeArea` (satır 926) boyut paneline ait ve zaten `top: false`.
+`Scaffold`'un `appBar` yuvası `null` olduğu için durum çubuğu payını kimse
+tüketmiyor → ilk kart ekranın tepesinden yalnız **16 px** aşağıda başlıyor,
+yani saat/pil/bildirim simgelerinin altına giriyor. Ekran görüntüsü 4 bunu
+gösteriyor.
+
+Kart sıralaması sahibin panosunda sayaç kartını en üste koyduğu için, çakışan şey
+seri rozeti oluyor; hata rozete değil **ekran kabuğuna** aittir.
+
+**Düzeltme yönü.** İki seçenekten biri, ikisi birden değil (aksi hâlde boşluk iki
+kez eklenir):
+- `getSafeVerticalPadding`'e `top: vertical + MediaQuery.paddingOf(context).top`
+  eklemek — ama bu yardımcı `classroom_screen`, `class_chat_screen` gibi **şeridi
+  olan** ekranlarda da kullanılıyor; oralarda AppBar payı zaten tüketildiği için
+  çift boşluk oluşur. Bu yüzden **tercih edilmez**.
+- ✅ `home_screen.dart`'ta gövdeyi `SafeArea(bottom: false)` ile sarmak — yani
+  `tab_action_bar.dart`'ta zaten **yazılı olan** sözleşmeyi uygulamak. Lokal,
+  yan etkisiz ve diğer sekmelerin davranışını değiştirmez.
+
+**Ek kontrol.** Aynı sözleşmeyi ihlal eden başka ekran var mı diye
+`buildTabActionBar` çağıran her ekranın "eylem yok" dalı taranmalı; WP-488 bu
+şeridi kaldıran tek karar değildi.
+
+**Kapı neden kaçırdı?** Golden testler widget'ı `MediaQuery` üst inset'i **0**
+olan bir yüzeyde kuruyor; durum çubuğu payı olmayan bir dünyada bu hata
+görünmez. Kabul ölçütü olarak `MediaQueryData(padding: EdgeInsets.only(top: 48))`
+ile en az bir golden gerekir.
+
+---
+
 ## 3. Öncelik sırası
 
 | Sıra | Bulgu | Gerekçe |
@@ -503,9 +608,10 @@ değiştiriyor. **Önce T01/T05, sonra yeniden ölçüm.**
 | 3 | **T02** | Reklam edilen bir özellik tümüyle çalışmıyor; düzeltme sunucu tarafında tek noktada. |
 | 4 | **T03** | Pil/ağ maliyeti ve görünür titreme; tek dosyada. |
 | 5 | **T04** | Algılanan kalitede en görünür kusur; desen taraması gerektirir. |
-| 6 | **T07, T08, T09, T10, T11** | UI kümesi; tek turda golden testleriyle birlikte. |
-| 7 | **T06** | Önce sahip kararı (hafta mı, grup-hafta mı), sonra SQL. |
-| 8 | **T12, T13** | Telemetri kurulmadan kapatılamaz. |
+| 6 | **T14** | Tek satırlık kabuk düzeltmesi, en görünür kusuru kapatıyor (içerik durum çubuğunun altında). |
+| 7 | **T07, T08, T09, T10, T11** | UI kümesi; tek turda golden testleriyle birlikte. T08 ve T10 sahip kararıyla yeniden tanımlandı. |
+| 8 | **T06** | Sahip kararı geldi (seçili grup); şema boyutu eklenecek. |
+| 9 | **T12, T13** | Telemetri kurulmadan kapatılamaz. |
 
 ---
 
