@@ -5348,6 +5348,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. 🔴 Aynı flaş sıralama/grup hedefi/trend kartlarında **sürebilir** (ayrı WP). Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6723,7 +6724,7 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 
 ### WP-495: "Yükleniyor" durumunun "veri yok" sayılması — denetimli tarama 👻
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N02, N07 / rapor T04)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-494 (aynı sınıf, yapısal olan önce)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-494 ✅ kapandı (`434cc58`)
 - **Problem:** İki bilinen yüzey: (a) `active_members_card.dart:29-36`
   `userGroupProvider` ilk yüklemede `null` döndüğü için kullanıcıya "grup yok +
   **Grup Oluştur**" kartı gösteriliyor, veri gelince düzeliyor (sahibin gördüğü
@@ -6741,11 +6742,13 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   - `app/test/features/home/async_empty_state_wp495_test.dart` (yeni)
 - **DOKUNMA:** `group_card_shell.dart`, provider tanımları.
 - **Adımlar:**
-  - [ ] `asData?.value` → `valueOrNull` (yenilemede son veriyi korur).
-  - [ ] "Grup yok" dalı yalnız `hasValue && value == null` iken çizilsin;
-        yükleniyorken iskelet/son bilinen içerik.
-  - [ ] Repo genelini tara, her kullanımı **zararsız / düzeltilecek** diye
-        sınıflandır ve tabloyu `docs/qa/`ya yaz (düzeltmesi bu kartta değil).
+  - [x] `asData?.value` → **`value`** (yenilemede son veriyi korur). 🔴 Kart
+        `valueOrNull` diyordu; o getter **Riverpod 3'te yok** (v3'te kaldırıldı),
+        `value` zaten null-güvenli ve önceki değeri koruyan yazımdır.
+  - [x] "Grup yok" dalı yalnız `hasValue && value == null` iken çizilir;
+        yükleniyorken başlık + iskelet, hatada ayrı metin.
+  - [x] Repo geneli tarandı (**194** yer), sınıflandırıldı ve
+        `docs/qa/V58-ASYNC-EMPTY-AUDIT.md`ye yazıldı (düzeltmesi bu kartta değil).
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
@@ -6758,6 +6761,31 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   3. Gerçekten grubu olmayan kullanıcıda kart **hâlâ** görünüyor.
 - **Tuzaklar:** Hata durumunu da "yükleniyor" sayıp sonsuz iskelet göstermek.
 - **Model önerisi:** 🟣 Pro
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` 0 uyarı ·
+  `dart format` temiz · tam paket **1615/1615 yeşil** (öncesi 1608) ·
+  `scripts/l10n_audit.py` OK (1500 anahtar) · `guard.tests.ps1` 75/75 ·
+  `release-preflight.tests.ps1` 8/8. Yeni
+  `app/test/features/home/async_empty_state_wp495_test.dart` **7 test**.
+  **Kapı kasten kırık girdiyle sınandı:** `hasValue` kapısı kaldırılıp
+  `ready = true` yapılınca 4 test kırmızı; `value` yeniden `asData?.value`
+  yapılınca taç testi kırmızı; iki kontrol testi (gerçekten grubu olmayan
+  kullanıcı · veri geldiğinde normal liste) **her iki kodda da yeşil** kaldı.
+- **🔴 Kart iddiası düzeltildi (ölçümle).** Riverpod 3.3.2'de `asData`
+  *her* yenilemede boşalmıyor: `invalidate(provider)` (pull-to-refresh)
+  durumu `AsyncData` bırakır, `asData` **dolu** kalır. Değer yalnız
+  **izlenen bağımlılık değiştiğinde** düşer (`AsyncLoading` + önceki değer).
+  Taç testi bu durumu kurar ve durumun gerçekten öyle olduğunu ayrıca
+  doğrular — aksi hâlde iddia sessizce yeşil kalıyordu (ilk denemede kaldı).
+- **🔴 Kapsam dışı bırakılan bulgu (düzeltilmedi, bildiriliyor):** "Grup Oluştur"
+  flaşı **tek kartta değil**. Aynı dal `leaderboard_card.dart:29`,
+  `group_goal_card.dart:64`, `group_trend_card.dart:25` ve
+  `stats_screen.dart:99`da da var; dördü de bu kartın SAHİP listesi dışında.
+  Bunlar düzeltilmeden belirti cihazda **sürer**. Ayrıca `home_shell.dart:108`
+  sekme çubuğundaki tacı `crowned_avatar` ile birebir aynı hatayla okuyor ve
+  `data_export_screen.dart:43-48` veriyi beklemeden dışa aktarıyor (kozmetik
+  değil). Tam liste ve gerekçe: `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` §5.
+- **Yeni l10n anahtarı:** `homeCalisanlarYuklenemedi` (TR+EN) — hata dalının
+  boş durumdan ayrılabilmesi için; ölü anahtar değil, iki dalda da kullanılıyor.
 
 ---
 

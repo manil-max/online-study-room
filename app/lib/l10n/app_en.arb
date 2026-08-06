@@ -2798,6 +2798,10 @@
   "@homeIsimsiz": {
     "description": "Home user-facing text. Source: İsimsiz"
   },
+  "homeCalisanlarYuklenemedi": "Could not load who is studying.",
+  "@homeCalisanlarYuklenemedi": {
+    "description": "Home card error state when the group or presence stream fails (WP-495). Source: Çalışanlar yüklenemedi."
+  },
   "homeSuAnCalisanKimse": "There is no one studying right now.",
   "@homeSuAnCalisanKimse": {
     "description": "Home user-facing text. Source: Şu an çalışan kimse yok."

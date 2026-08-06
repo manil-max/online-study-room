@@ -456,11 +456,15 @@ class LiveCrownedAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // WP-495: `asData` yalnız `AsyncData` durumunda dolu. Provider izlediği bir
+    // bağımlılık değiştiği için yeniden yüklendiğinde durum `AsyncLoading`
+    // (önceki değer korunarak) olur → `asData` null → taç bir kare kaybolup
+    // geri gelirdi. `value` önceki değeri döndürdüğü için taç yerinde kalır.
+    // (Riverpod 3'te `valueOrNull` yoktur; `value` zaten null-güvenlidir.)
     final rank = ref
         .watch(gamificationProfileProvider(userId))
-        .asData
-        ?.value
-        .crownRank;
+        .value
+        ?.crownRank;
     return CrownedAvatar(
       displayName: displayName,
       avatarUrl: avatarUrl,
