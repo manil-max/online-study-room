@@ -5347,7 +5347,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
-| **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
 | **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. 🔴 Aynı flaş sıralama/grup hedefi/trend kartlarında **sürebilir** (ayrı WP). Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
@@ -6714,6 +6714,19 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   emisyonu 20 ms geciktirerek gerçek ağ turunu temsil ediyor. Ayrıca sayaç
   `groupMembersProvider`ın çağrısını da topluyordu; o provider testte
   override edilerek ölçüm detay ekranına daraltıldı.
+- **CI (kapı, 2026-08-06):** commit `434cc58` push edildi; run **`31116014190`**.
+  Beş işten **dördü yeşil** (analyze + tam paket · Windows golden · Windows
+  kritik akış · Dart/Edge ↔ SQL sözleşmesi) ve l10n Gate run `31116014402`
+  yeşil. 🔴 **`Edge Function tip denetimi` KOŞMADI — yeşil sayılmaz.** İş
+  `Set up job` adımında düşüyor: `Failed to resolve action download info.
+  Error: Service Unavailable` (GitHub'ın action çözümleme servisinden 503);
+  Deno hiç kurulmadı, `deno check` hiç çalışmadı. Sebep koda ait değil:
+  githubstatus.com **"Incident with Actions" (partial outage, 15:22Z, sürüyor)**
+  diyor, `denoland/setup-deno` deposu public/arşivsiz ve `refs/heads/v2`
+  yerinde. Üç yeniden koşum aynı hataya, dördüncüsü 10 dk iş zaman aşımına
+  düştü. Bu commit `supabase/functions/**` altına **tek satır dokunmuyor**.
+  **Yapılacak:** kesinti kapanınca bu iş yeniden koşturulup sonucu buraya
+  yazılır; o zamana kadar kapı *bilinmiyor* durumundadır.
 - **Kapsam dışı bırakılan gözlem (düzeltilmedi, bildiriliyor):** aktif grubun
   detayı açıkken `groupMembersProvider` ile `groupMembersByIdProvider(aynı id)`
   **iki ayrı** realtime kanalı açar. Bu WP öncesinde de böyleydi (provider +
