@@ -291,45 +291,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    // WP-460: "Ana Sayfa" başlığı alt menüde zaten yazılı; şerit yalnız
+    // gerçek eylemleri taşır.
+    final appBar = buildTabActionBar(
+      leading: _editing
+          ? IconButton(
+              tooltip: AppLocalizations.of(context).homeBitti,
+              icon: const Icon(Icons.check),
+              onPressed: () => _setEditing(false),
+            )
+          : null,
+      actions: [
+        if (_editing) ...[
+          IconButton(
+            tooltip: AppLocalizations.of(context).homeBosluklariYukariTopla,
+            icon: const Icon(Icons.vertical_align_top),
+            onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
+          ),
+          IconButton(
+            tooltip: AppLocalizations.of(context).homeAnaSayfayiSifirla,
+            icon: const Icon(Icons.restart_alt),
+            onPressed: _confirmResetDashboard,
+          ),
+          IconButton(
+            tooltip: AppLocalizations.of(context).homeKartEkle,
+            icon: const Icon(Icons.add),
+            onPressed: () => showCardPicker(context),
+          ),
+        ],
+        // 🔴 WP-488 (sahip kararı): görüntüleme modunda **hiçbir eylem
+        // yok**, bu yüzden `buildTabActionBar` `null` döner ve şerit hiç
+        // kurulmaz; gövde üst güvenli alanı kendisi taşır. Yerine yeni
+        // buton KONMAYACAK — düzenlemeye giriş yolu karta uzun basmaktır.
+      ],
+    );
+
+    // 🔴 WP-493 (V58-N10): şerit `null` döndüğünde durum çubuğu payını kimse
+    // devralmıyordu — ilk kart saat/pil simgelerinin altına giriyordu.
+    // `tab_action_bar.dart` sözleşmesinin çağırana düşen yarısı burası.
+    // `getSafeVerticalPadding`e üst inset EKLENMEZ: o yardımcıyı şeritli
+    // ekranlar da kullanır, orada çift boşluk olur. Şerit varken (düzenleme
+    // modu) `AppBar` payı zaten yutar, o yüzden sarmalayıcı yalnız `null` dalında.
+    final content = stickyPanelBelow(body, sizeSheet);
+
     return _withIntroductionTours(
       context,
       layout,
       Scaffold(
-        // WP-460: "Ana Sayfa" başlığı alt menüde zaten yazılı; şerit yalnız
-        // gerçek eylemleri taşır.
-        appBar: buildTabActionBar(
-          leading: _editing
-              ? IconButton(
-                  tooltip: AppLocalizations.of(context).homeBitti,
-                  icon: const Icon(Icons.check),
-                  onPressed: () => _setEditing(false),
-                )
-              : null,
-          actions: [
-            if (_editing) ...[
-              IconButton(
-                tooltip: AppLocalizations.of(context).homeBosluklariYukariTopla,
-                icon: const Icon(Icons.vertical_align_top),
-                onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
-              ),
-              IconButton(
-                tooltip: AppLocalizations.of(context).homeAnaSayfayiSifirla,
-                icon: const Icon(Icons.restart_alt),
-                onPressed: _confirmResetDashboard,
-              ),
-              IconButton(
-                tooltip: AppLocalizations.of(context).homeKartEkle,
-                icon: const Icon(Icons.add),
-                onPressed: () => showCardPicker(context),
-              ),
-            ],
-            // 🔴 WP-488 (sahip kararı): görüntüleme modunda **hiçbir eylem
-            // yok**, bu yüzden `buildTabActionBar` `null` döner ve şerit hiç
-            // kurulmaz; gövde üst güvenli alanı kendisi taşır. Yerine yeni
-            // buton KONMAYACAK — düzenlemeye giriş yolu karta uzun basmaktır.
-          ],
-        ),
-        body: stickyPanelBelow(body, sizeSheet),
+        appBar: appBar,
+        body: appBar == null
+            ? SafeArea(bottom: false, child: content)
+            : content,
       ),
     );
   }

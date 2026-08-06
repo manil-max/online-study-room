@@ -5346,6 +5346,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
+| **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6590,7 +6591,7 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 
 ### WP-493: Ana ekran üst güvenli alanı — WP-488 regresyonu 📐
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N10 / rapor T14)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (bağımsız, her an açılabilir)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** yok (bağımsız, her an açılabilir)
 - **Problem:** WP-488 görüntüleme modunda üst şeridi kaldırdı; şeridin taşıdığı
   durum çubuğu payını **kimse devralmadı**. `tab_action_bar.dart:12-13` sözleşmesi
   "şerit yoksa çağıran gövdeyi `SafeArea(bottom: false)` ile sarar" diyor, home
@@ -6607,10 +6608,22 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **DOKUNMA:** `app/lib/core/widgets/safe_screen_padding.dart`,
   `app/lib/core/navigation/**`, `classroom_screen.dart`, `stats_screen.dart`.
 - **Adımlar:**
-  - [ ] Gövdeyi `SafeArea(bottom: false)` ile sar (yalnız `appBar == null` dalı).
-  - [ ] `buildTabActionBar` çağıran diğer ekranların "eylem yok" dalını **tara**
+  - [x] Gövdeyi `SafeArea(bottom: false)` ile sar (yalnız `appBar == null` dalı).
+        `buildTabActionBar` sonucu `appBar` değişkenine alındı; sarmalayıcı
+        yalnız `null` dalında kurulur, düzenleme modunda payı `AppBar` yutar.
+  - [x] `buildTabActionBar` çağıran diğer ekranların "eylem yok" dalını **tara**
         ve bulgusunu karta yaz (düzeltme ayrı WP olabilir).
-  - [ ] Golden: `MediaQueryData(padding: EdgeInsets.only(top: 48))`.
+        **Bulgu: başka ekran bu dala hiç düşmüyor — ek WP gerekmiyor.** Yalnız üç
+        çağıran var: `home_screen.dart:296` (koşullu → `null` olabiliyor),
+        `classroom_screen.dart:108` (grup değiştir eylemi **koşulsuz** verilir) ve
+        `stats_screen.dart:31` (`bottom: TabBar` **koşulsuz** verilir). İkisinde de
+        yardımcı hiçbir durumda `null` dönemez, yani sözleşmenin çağıran yarısı
+        yalnız ana ekranda açıktaydı.
+  - [x] Golden: `MediaQueryData(padding: EdgeInsets.only(top: 48))`.
+        Piksel karşılaştırması yerine **geometrik ölçüm**: 48 dp üst inset
+        enjekte edilip ilk kartın `Rect.top`'u okunur. Kabul kriteri zaten sayısal
+        ("ilk kartın üst kenarı durum çubuğunun altında"), ölçüm doğrudan onu
+        bağlar ve tema/font kaymasına karşı kırılgan değildir.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
@@ -6622,6 +6635,18 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **Tuzaklar:** `getSafeVerticalPadding`e üst inset eklemek — bu yardımcıyı
   paylaşan şeritli ekranlarda çift boşluk üretir. Bu yüzden **yasak**.
 - **Model önerisi:** 🔵 Sonnet
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` 0 uyarı ·
+  `dart format` temiz · tam paket (golden dahil) **1605/1605 yeşil** ·
+  `scripts/l10n_audit.py` OK (1499 anahtar; bu kart metin eklemedi).
+  Yeni `app/test/features/home/home_safe_area_wp493_test.dart` **4 test**:
+  (1) 48 dp inset'te ilk kart `top ≥ 48`, (2) pay bir kez eklenir (`top < 80`;
+  çift eklense 112 olurdu), (3) düzenlemeye girip çıkınca boşluk birikmiyor
+  (kart–şerit arası < 48 kalır, çıkışta yerleşim ±0.5 px aynı), (4) boş panoda
+  da gövde `SafeArea(top, bottom: false)` içinde. **Kapı kasten kırık girdiyle
+  sınandı:** sarmalayıcı geri alınınca aynı koşumda **2 test kırmızı** düşüyor
+  (1. ve 4.), geri getirilince yeşile dönüyor. `home_action_bar_wp488_test`
+  (5 test) regresyonsuz geçiyor. Kabul kriterinin cihaz yarısı (çentikli ekran,
+  yatay mod) fiziksel telefon ister → QA kuyruğunda.
 
 ---
 
