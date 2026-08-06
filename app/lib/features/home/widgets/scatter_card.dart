@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/session_scatter_chart.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// "Oturum dağılımı" kartı (§3.11): son günlerdeki her oturum bir nokta
@@ -17,7 +18,15 @@ class ScatterCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken boş dağılım yanlış iddiadır.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeOturumDagilimi,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 280;

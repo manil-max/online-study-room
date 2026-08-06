@@ -14,6 +14,7 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'group_card_shell.dart';
 
 /// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Boyuta göre üye
@@ -39,11 +40,20 @@ class LeaderboardCard extends ConsumerWidget {
     if (gate != null) return gate;
     final group = groupAsync.value!;
 
-    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
-    final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
+    final statsAsync = ref.watch(groupDailyStatsProvider);
+    final membersAsync = ref.watch(groupMembersProvider);
+    final alphaAsync = ref.watch(groupAlphaScoresProvider);
+    // WP-495C: grup hazır ama istatistik/üye gelmeden sıralama boş çizilirdi.
+    final dataGate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeGrupSiralamasi,
+      sources: [statsAsync, membersAsync, alphaAsync],
+    );
+    if (dataGate != null) return dataGate;
+    final stats = statsAsync.value!;
+    final members = membersAsync.value!;
     final meId = ref.watch(authStateProvider).value?.id;
-    final alphaWins =
-        ref.watch(groupAlphaScoresProvider).value ?? const <String, int>{};
+    final alphaWins = alphaAsync.value!;
 
     return Card(
       child: LayoutBuilder(

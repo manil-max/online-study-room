@@ -10,6 +10,7 @@ import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_bar_chart.dart';
 import '../dashboard_card.dart';
 import 'card_scaffold.dart';
+import 'card_data_gate.dart';
 import 'group_card_shell.dart';
 
 /// "Grup günlük trendi" kartı (§3.11): grubun son günlerdeki toplam çalışma
@@ -34,7 +35,15 @@ class GroupTrendCard extends ConsumerWidget {
     if (gate != null) return gate;
     final group = groupAsync.value!;
 
-    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
+    final statsAsync = ref.watch(groupDailyStatsProvider);
+    // WP-495C: istatistik gelmeden trend düz çizgi çizer.
+    final dataGate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeGrupGunlukTrendi,
+      sources: [statsAsync],
+    );
+    if (dataGate != null) return dataGate;
+    final stats = statsAsync.value!;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 280;

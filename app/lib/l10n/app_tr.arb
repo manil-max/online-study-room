@@ -657,6 +657,7 @@
   "homeIsimsiz": "İsimsiz",
   "homeCalisanlarYuklenemedi": "Çalışanlar yüklenemedi.",
   "homeGrupBilgisiYuklenemedi": "Grup bilgisi yüklenemedi.",
+  "homeVerilerYuklenemedi": "Veriler yüklenemedi.",
   "homeSuAnCalisanKimse": "Şu an çalışan kimse yok.",
   "homeSuAnCalisanlar": "Şu an çalışanlar",
   "homeTtitleEklendi": "“{title}” eklendi",

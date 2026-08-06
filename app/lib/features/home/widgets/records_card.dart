@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/study_records.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// "Rekorlar" kartı (§3.11): toplam, rekor seri, en verimli gün, aktif gün,
@@ -16,7 +17,15 @@ class RecordsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken "Kayıt yok" yazmak kaydı olan kullanıcıya yalandır.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeRekorlar,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
 
     return CardScaffold(
       header: cardTitle(context, AppLocalizations.of(context).homeRekorlar),

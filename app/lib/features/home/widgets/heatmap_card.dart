@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/study_heatmap.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// GitHub tarzı çalışma yoğunluğu ısı haritası kartı (§3.11). Boyut, gösterilen
@@ -16,7 +17,15 @@ class HeatmapCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: veri gelmeden boş ısı haritası çizmek "hiç çalışmamışsın" der.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeCalismaTakvimi,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
 
     return CardScaffold(
       header: cardTitle(

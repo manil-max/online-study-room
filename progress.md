@@ -5349,7 +5349,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
 | **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. Commit: `95043fd`. **Cihazda doğrulanmalı.** |
-| **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `695e589`. **Cihazda doğrulanmalı.** |
+| **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6871,6 +6872,58 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   `group_action_scope_wp446_test` iki ekstra `pump` ile düzeltilmişti; sohbet
   kapısı yalnız yükleme dalına indirilince gerek kalmadı ve dosya HEAD'e
   döndürüldü.
+
+---
+
+### WP-495C: Pano kartlarının ilk yüklemede "veri yok" demesi 📉
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N07 sınıfı / rapor T04)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-495B (`695e589`)
+- **Kaynak:** Sahip emri (2026-08-06): **"WP-495C'yi yap"**. Kart bu emirle açıldı;
+  kapsamı `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` §5'te kalan 13 karttır.
+- **Problem:** 13 pano kartı oturum/grup istatistiği akışını
+  `ref.watch(p).value ?? const []` ile okuyordu. Yenilemeye dayanıklı ama **ilk
+  yüklemede** boş liste "hiç kaydın yok" demektir. Kırık girdiyle ölçülen en net
+  örnek: `today_summary_card` açılış karesinde **"Bugün henüz çalışma kaydın yok.
+  Sayaçtan başla!"** yazıyor.
+- **Kapsam dışı:** Kart tasarımları, grafik türleri, provider mimarisi, veri
+  yolları. Kapı yalnız **hangi karede ne çizildiğini** değiştirir.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/widgets/card_data_gate.dart` (yeni — ortak kapı)
+  - 13 kart: `heatmap_card` · `hour_activity_card` · `line_chart_card` ·
+    `period_summary_card` · `records_card` · `rhythm_card` · `scatter_card` ·
+    `today_summary_card` · `weekday_weekend_card` · `weekly_chart_card` ·
+    `leaderboard_card` · `group_goal_card` · `group_trend_card`
+  - `app/lib/l10n/app_{tr,en}.arb` (tek yeni anahtar)
+  - `app/test/features/home/dashboard_loading_wp495c_test.dart` (yeni)
+  - `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` (kapanış durumu)
+- **Adımlar:**
+  - [x] Ortak `cardDataGate` + `CardBlockSkeleton`; 13 kart tek uygulamayı
+        paylaşıyor, kopya yok.
+  - [x] Grup kartlarında iki kapı sırayla: önce grup (WP-495B), sonra veri.
+  - [x] Hata dalı ayrı: `homeVerilerYuklenemedi` — sonsuz iskelet yok.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local. Production/stable kapısı açılmaz.
+- **RLS/Güvenlik:** Yok.
+- **Kabul (ölçülebilir):**
+  1. 10 kişisel kart, oturum akışı ilk verisini vermeden **boş durum metni
+     yazmıyor** ve yer tutucu çiziyor (test).
+  2. 3 grup kartı, grup hazır ama istatistik gelmemişken boş sıralama/%0
+     çizmiyor ve davet kartına da düşmüyor (test).
+  3. Akış hata verirse iskelet değil hata metni (test).
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` 0 uyarı ·
+  `dart format` temiz · tam paket **1651/1651 yeşil** (öncesi 1624) ·
+  `scripts/l10n_audit.py` OK (1502 anahtar) · `guard.tests.ps1` 75/75 ·
+  `release-preflight.tests.ps1` 8/8. Yeni
+  `app/test/features/home/dashboard_loading_wp495c_test.dart` **27 test**.
+- **🔴 Kapı iki kez sınandı; ilk probe yetersizdi.** Kapıyı `return null` yapmak
+  27 testin hepsini kırdı ama **çökme** olarak (`value!` null) — bu, testlerin
+  *eski davranışı* yakaladığını kanıtlamaz. İkinci probe sadıktır: `records_card`
+  ve `today_summary_card` **gerçek eski koduna** (`?? const []`) döndürüldü;
+  yükleme testi kırmızı düştü ve hata mesajı ekrandaki yanlış cümleyi gösterdi
+  ("Bugün henüz çalışma kaydın yok…"), kontrol testi ("veri gelince normal
+  çiziliyor") yeşil kaldı. Test bu yüzden metin iddialarını iskeletten **önce**
+  ölçüyor.
+- **Yeni l10n anahtarı:** `homeVerilerYuklenemedi` (TR+EN).
 
 ---
 

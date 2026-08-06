@@ -7,6 +7,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// Hafta içi (Pzt–Cum) ile hafta sonu (Cmt–Paz) çalışma kıyası (§3.11 kart).
@@ -18,7 +19,15 @@ class WeekdayWeekendCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken iki sütun da 0 görünür.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeHaftaIciHaftaSonu,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
     final split = weekdayWeekendSplit(sessions);
     final max = (split.weekday > split.weekend ? split.weekday : split.weekend)
         .clamp(1, 1 << 30);

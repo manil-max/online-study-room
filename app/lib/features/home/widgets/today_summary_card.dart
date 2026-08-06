@@ -9,6 +9,7 @@ import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 
 /// Bugünün özeti: toplam süre + ders bazında oransal dağılım (§3.9 kart).
 /// Küçük boyutta yalnızca toplamı, orta/büyükte ders dağılımını gösterir.
@@ -20,8 +21,17 @@ class TodaySummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
-    final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    final subjectsAsync = ref.watch(userSubjectsProvider);
+    // WP-495C: ikisi de gelmeden "0 dk" ya da varsayılan ders renkleri çizilir.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeBugunOzeti,
+      sources: [sessionsAsync, subjectsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
+    final subjects = subjectsAsync.value!;
     final now = DateTime.now();
     final today = sessions.where((s) => isSameDay(s.day, now)).toList();
     final total = totalSeconds(today);

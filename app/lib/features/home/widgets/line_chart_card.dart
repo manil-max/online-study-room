@@ -7,6 +7,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_line_chart.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// Günlük çalışma eğilimini çizgi grafikle gösterir (§3.11 kart). Dönem filtresi
@@ -26,7 +27,15 @@ class _LineChartCardState extends ConsumerState<LineChartCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken düz çizgi "hiç çalışma yok" demektir.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeEgilim,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 280;

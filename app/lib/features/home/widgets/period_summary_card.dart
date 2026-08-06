@@ -6,6 +6,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 
 enum _Period { today, week, month, year }
 
@@ -42,7 +43,15 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken "0 dk" yanlış iddiadır.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeDonemOzeti,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
     final now = DateTime.now();
     final from = _from(now);
     final total = totalSeconds(inRange(sessions, from, now));

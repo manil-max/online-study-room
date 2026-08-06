@@ -2806,6 +2806,10 @@
   "@homeGrupBilgisiYuklenemedi": {
     "description": "Shared group-card gate error state when the group stream fails (WP-495B). Source: Grup bilgisi yüklenemedi."
   },
+  "homeVerilerYuklenemedi": "Data could not be loaded.",
+  "@homeVerilerYuklenemedi": {
+    "description": "Shared dashboard-card gate error state when a card source fails (WP-495C). Source: Veriler yüklenemedi."
+  },
   "homeSuAnCalisanKimse": "There is no one studying right now.",
   "@homeSuAnCalisanKimse": {
     "description": "Home user-facing text. Source: Şu an çalışan kimse yok."

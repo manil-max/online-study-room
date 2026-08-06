@@ -101,7 +101,25 @@ Kalan `Düzeltilecek` satırları (11 pano kartının boş grafik/0 dk gösterme
 tek satırlık değil kart tasarımı işidir ve WP-495'in "kart tasarımları kapsam
 dışı" kuralına girer.
 
-## 5. Düzeltilecek — ayrı WP gerekiyor
+## 4c. WP-495C kapanış durumu (2026-08-06)
+
+§5 listesinin kalan tamamı — **13 pano kartı** — WP-495C ile kapandı. Ortak
+`cardDataGate` kapısı (`app/lib/features/home/widgets/card_data_gate.dart`):
+kaynakların hepsi ilk verisini verene kadar başlığı koruyan bir yer tutucu
+çizilir, hata ayrı metinle gösterilir.
+
+| Kart | Yükleme karesinde eskiden ne yazıyordu |
+|---|---|
+| `today_summary_card` | **"Bugün henüz çalışma kaydın yok. Sayaçtan başla!"** (kırık girdiyle ölçüldü) |
+| `records_card` | Boş rekor döşemeleri |
+| `heatmap_card` · `rhythm_card` · `scatter_card` · `hour_activity_card` | Tamamen boş grafik |
+| `weekly_chart_card` · `line_chart_card` | Düz/boş çizgi = "hiç çalışmadın" |
+| `period_summary_card` · `weekday_weekend_card` | 0 dk · 0 gün |
+| `leaderboard_card` · `group_goal_card` · `group_trend_card` | Boş sıralama · %0 halka · düz trend |
+
+Böylece §5'te açık madde kalmadı; tablo tarihsel kayıt olarak duruyor.
+
+## 5. Düzeltilecek — ayrı WP gerekiyor (WP-495B/C ile kapandı)
 
 🔴 **En önemli bulgu:** sahibin gördüğü "Grup Oluştur" flaşı **tek kartta
 değil**. `active_members_card` düzeltildi, fakat `leaderboard_card`,

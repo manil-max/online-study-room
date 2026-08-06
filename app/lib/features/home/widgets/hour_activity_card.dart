@@ -6,6 +6,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/hour_activity_chart.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// "Çalışma saatleri" kartı (§3.11): günün hangi saatlerinde çalıştığını gösterir.
@@ -18,7 +19,15 @@ class HourActivityCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final sessions = ref.watch(userSessionsProvider).value ?? const [];
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    // WP-495C: yükleniyorken boş saat dağılımı yanlış iddiadır.
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeCalismaSaatleri,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+    final sessions = sessionsAsync.value!;
     final hourly = hourlyTotals(sessions);
 
     return CardScaffold(

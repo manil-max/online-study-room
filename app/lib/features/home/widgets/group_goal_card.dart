@@ -15,6 +15,7 @@ import '../../../data/providers/study_providers.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'group_card_shell.dart';
 
 /// "Grup hedefi" kartı (§3.11): grubun bugünkü TOPLAM çalışması / günlük grup
@@ -73,7 +74,15 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
     if (gate != null) return gate;
     final group = groupAsync.value!;
 
-    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
+    final statsAsync = ref.watch(groupDailyStatsProvider);
+    // WP-495C: istatistik gelmeden halka %0 gösterir.
+    final dataGate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeGrupHedefi,
+      sources: [statsAsync],
+    );
+    if (dataGate != null) return dataGate;
+    final stats = statsAsync.value!;
     final dayTotals = groupDayTotals(stats);
     final goalSeconds = group.dailyGoalMinutes * 60;
 
