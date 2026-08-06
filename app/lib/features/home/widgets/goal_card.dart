@@ -108,7 +108,8 @@ class GoalCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     // Minik kartta rozet tam sığmıyor; içerik kırpılmak yerine
-                    // ölçekleniyor (kapsam etiketi erişilebilirlik için kalmalı).
+                    // ölçekleniyor. (WP-496'dan sonra rozette yazı yok; kapsam
+                    // bilgisi `Semantics` etiketinde duruyor.)
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: GoalStreakBadge(

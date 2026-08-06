@@ -11,6 +11,12 @@ library;
 // (2) kozmetik değil erişilebilirlik: renk körü bir kullanıcı için üç durum da
 // aynı gri tona düşebilir. Bu yüzden testler rengi değil İKON ve METİN
 // farkını ölçüyor — renk tek ayırt edici olsaydı bu iddialar geçmezdi.
+//
+// ⚠️ WP-496 (sahip kararı, 2026-08-06) rozetteki **görünür** metni kaldırdı.
+// Kartın (2) kabulü düşmedi, kanalı değişti: metin farkı artık `Semantics`
+// etiketinde ölçülüyor. Aşağıdaki iddialar `find.text` yerine
+// `find.bySemanticsLabel` kullanıyor; hiçbiri gevşetilmedi. Rozette yazı
+// olmadığının ayrı kanıtı `goal_streak_badge_wp496_test.dart`ta.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/goal_streak.dart';
@@ -72,8 +78,9 @@ void main() {
       );
     });
 
-    testWidgets('her durum ayrı metin gösterir', (tester) async {
-      final texts = <String>{};
+    testWidgets('her durum ayrı cümle duyurur', (tester) async {
+      final handle = tester.ensureSemantics();
+      final labels = <String>{};
       for (final state in [
         GoalStreakState.completedToday,
         GoalStreakState.pendingToday,
@@ -82,21 +89,24 @@ void main() {
         await tester.pumpWidget(
           _wrap(GoalStreakFlame(projection: _projection(state))),
         );
-        final rendered = tester
-            .widgetList<Text>(find.byType(Text))
-            .map((t) => t.data ?? '')
-            .where((t) => t.length > 3)
-            .join('|');
-        texts.add(rendered);
+        labels.add(tester.getSemantics(find.byType(GoalStreakFlame)).label);
       }
-      expect(texts, hasLength(3));
+      expect(labels, hasLength(3));
+      handle.dispose();
     });
 
     testWidgets('grace durumu okunabilir uyarı cümlesi taşır', (tester) async {
+      final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         _wrap(GoalStreakFlame(projection: _projection(GoalStreakState.atRisk))),
       );
-      expect(find.text('Bugün tamamlanmazsa seri bitecek'), findsOneWidget);
+      // WP-496: cümle ekranda çizilmiyor ama ekran okuyucuya aynen gidiyor.
+      expect(find.text('Bugün tamamlanmazsa seri bitecek'), findsNothing);
+      expect(
+        find.bySemanticsLabel('Kişisel · 4 · Bugün tamamlanmazsa seri bitecek'),
+        findsOneWidget,
+      );
+      handle.dispose();
     });
   });
 
@@ -129,7 +139,10 @@ void main() {
   });
 
   group('kişisel ve grup ayrımı renge bağlı değil', () {
-    testWidgets('rozet metni kapsamı söyler', (tester) async {
+    testWidgets('duyurulan cümle kapsamı söyler', (tester) async {
+      // WP-496 öncesi bu ayrım görünür bir kapsam rozetiydi; sahip kararıyla
+      // kalktı. Bilgi kaybolmadı: kapsam hâlâ cümlenin ilk kelimesi.
+      final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         _wrap(
           GoalStreakFlame(
@@ -137,8 +150,10 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Kişisel'), findsOneWidget);
-      expect(find.text('Grup'), findsNothing);
+      expect(
+        tester.getSemantics(find.byType(GoalStreakFlame)).label,
+        startsWith('Kişisel · '),
+      );
 
       await tester.pumpWidget(
         _wrap(
@@ -150,8 +165,11 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Grup'), findsOneWidget);
-      expect(find.text('Kişisel'), findsNothing);
+      expect(
+        tester.getSemantics(find.byType(GoalStreakFlame)).label,
+        startsWith('Grup · '),
+      );
+      handle.dispose();
     });
 
     testWidgets('çerçeve biçimi de ayrışır', (tester) async {
@@ -231,8 +249,9 @@ void main() {
 
       expect(find.byType(Icon), findsOneWidget);
       expect(find.text('12'), findsOneWidget);
-      expect(find.text('Kişisel'), findsOneWidget);
-      // Uzun cümle dar alanda düşer; ölçülen şey işaretin kaybolmaması.
+      // WP-496: kapsam ve durum cümlesi artık hiçbir boyutta çizilmiyor;
+      // ölçülen şey işaretin (ikon + sayı) kaybolmaması.
+      expect(find.text('Kişisel'), findsNothing);
       expect(find.text('Bugün tamamlanmazsa seri bitecek'), findsNothing);
     });
 

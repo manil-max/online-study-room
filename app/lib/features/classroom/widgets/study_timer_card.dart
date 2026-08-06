@@ -255,61 +255,83 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           final small = constraints.maxWidth < 280;
           final isLarge = constraints.maxWidth >= 400;
 
-          return Stack(
-            children: [
-              // Saat görünümü + tam ekran odak modu (§3.12).
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Row(
-                  children: [
-                    IconButton(
-                      tooltip: AppLocalizations.of(
-                        context,
-                      ).classroomGecmisOturumlar,
-                      icon: const Icon(Icons.history),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const SessionHistoryScreen(),
+          // WP-496: kart artık `Stack` değil **akış**.
+          //
+          // 🔴 Kök neden buydu: rozet ve üst ikonlar `Positioned` ile içeriğin
+          // ÜSTÜNE biniyordu, çakışmayı yalnız `fromLTRB(16, 48, ...)` sabiti
+          // önlüyordu. 48 px yazı ölçeğiyle büyümez; ölçek 1.3/1.6'ya çıkınca
+          // rozet "Bugün" yazısının üstüne oturuyordu (sahip şikâyeti V58-N10).
+          // Akışta üst şerit kendi yüksekliğini ölçekle birlikte büyütür, yani
+          // çakışma yapısal olarak imkânsız — sayıyı büyütmekle çözülmedi,
+          // sayının kendisi kaldırıldı.
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 4, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // WP-481: seri rozeti **daima** görünür (sahip kararı) ve
+                      // kanonik projeksiyondan okunur. Eski `if (streak > 0)`
+                      // kapısı ile grace'siz `currentStreakProvider` birlikte
+                      // kalktı. Dar kartta ikonlara yer kalsın diye küçülür,
+                      // kırpılmaz.
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: GoalStreakBadge(
+                              scope: personalStreakScope,
+                              size: small
+                                  ? GoalStreakFlameSize.compact
+                                  : GoalStreakFlameSize.regular,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    Builder(
-                      builder: (iconContext) => IconButton(
-                        tooltip: AppLocalizations.of(
-                          context,
-                        ).classroomSaatGorunumu,
-                        icon: const Icon(Icons.tune),
-                        onPressed: () => showClockStyleMenu(iconContext, ref),
+                      // Saat görünümü + tam ekran odak modu (§3.12).
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomGecmisOturumlar,
+                            icon: const Icon(Icons.history),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SessionHistoryScreen(),
+                              ),
+                            ),
+                          ),
+                          Builder(
+                            builder: (iconContext) => IconButton(
+                              tooltip: AppLocalizations.of(
+                                context,
+                              ).classroomSaatGorunumu,
+                              icon: const Icon(Icons.tune),
+                              onPressed: () =>
+                                  showClockStyleMenu(iconContext, ref),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomTamEkranOdak,
+                            icon: const Icon(Icons.fullscreen),
+                            onPressed: () => openFocusTimer(context),
+                          ),
+                        ],
                       ),
-                    ),
-                    IconButton(
-                      tooltip: AppLocalizations.of(
-                        context,
-                      ).classroomTamEkranOdak,
-                      icon: const Icon(Icons.fullscreen),
-                      onPressed: () => openFocusTimer(context),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              // WP-481: seri rozeti **daima** görünür (sahip kararı) ve
-              // kanonik projeksiyondan okunur. Eski `if (streak > 0)` kapısı
-              // ile grace'siz `currentStreakProvider` birlikte kalktı.
-              Positioned(
-                top: 14,
-                left: 14,
-                child: GoalStreakBadge(
-                  scope: personalStreakScope,
-                  size: small
-                      ? GoalStreakFlameSize.compact
-                      : GoalStreakFlameSize.regular,
-                ),
-              ),
-              Padding(
-                // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
-                padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
-                child: SingleChildScrollView(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                   child: Column(
                     children: [
                       Text(
@@ -404,8 +426,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

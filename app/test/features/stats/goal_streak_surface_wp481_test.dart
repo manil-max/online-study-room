@@ -72,6 +72,7 @@ IconData _iconOf(WidgetTester tester) =>
 void main() {
   group('rozet daima görünür', () {
     testWidgets('seri 0 iken de çizilir ve "0" gösterir', (tester) async {
+      final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         _badge(
           scope: _personal,
@@ -83,7 +84,13 @@ void main() {
       // 🔴 Sahibin maddesi: "rozet her zaman görünür, seri 0 iken bile."
       expect(find.byType(GoalStreakFlame), findsOneWidget);
       expect(find.text('0'), findsOneWidget);
-      expect(find.text('Henüz seri yok'), findsOneWidget);
+      // WP-496 sahip kararı: durum cümlesi artık çizilmiyor, yalnız duyuruluyor.
+      expect(find.text('Henüz seri yok'), findsNothing);
+      expect(
+        tester.getSemantics(find.byType(GoalStreakFlame)).label,
+        endsWith('Henüz seri yok'),
+      );
+      handle.dispose();
     });
 
     testWidgets('projeksiyon henüz yokken bile rozet var', (tester) async {
@@ -163,6 +170,7 @@ void main() {
       testWidgets('grup rozeti $state durumunu aynı ikonla gösterir', (
         tester,
       ) async {
+        final handle = tester.ensureSemantics();
         await tester.pumpWidget(
           _badge(
             scope: _personal,
@@ -178,7 +186,13 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(_iconOf(tester), personalIcon);
-        expect(find.text('Grup'), findsOneWidget);
+        // WP-496: kapsam etiketi görünür değil; cümlede duruyor.
+        expect(find.text('Grup'), findsNothing);
+        expect(
+          tester.getSemantics(find.byType(GoalStreakFlame)).label,
+          startsWith('Grup · '),
+        );
+        handle.dispose();
       });
     }
   });

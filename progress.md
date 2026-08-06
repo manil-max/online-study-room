@@ -5351,7 +5351,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. Commit: `95043fd`. **Cihazda doğrulanmalı.** |
 | **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `695e589`. **Cihazda doğrulanmalı.** |
 | **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `17432c5`. **Cihazda doğrulanmalı.** |
-| **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `b8aaa3f`. **Cihazda doğrulanmalı.** |
+| **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6965,7 +6966,7 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-496: Seri rozeti yalın: yalnız alev + sayı 🔥
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N10 / rapor T08) · **sahip kararı**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok (WP-492 ile aynı anda gidebilir; farklı dosyalar)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** yok
 - **Problem:** Rozet gereğinden büyük ve "Bugün" yazısının üstüne biniyor.
   Sahip kararı (2026-08-06): **rozette hiç yazı olmayacak** — ne durum metni
   ("Henüz seri yok"), ne kapsam etiketi ("Kişisel"). Gerekçe sahibin ifadesi:
@@ -6978,30 +6979,73 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/stats/widgets/goal_streak_flame.dart`
   - `app/lib/features/classroom/widgets/study_timer_card.dart`
-  - `app/test/features/stats/goal_streak_flame_test.dart` (mevcut, güncellenir)
+  - `app/test/features/stats/goal_streak_badge_wp496_test.dart` (yeni; kartta
+    adı `goal_streak_flame_test.dart` yazıyordu, repoda öyle bir dosya yok)
+  - `app/test/features/stats/goal_streak_flame_wp454_test.dart` (güncellendi)
+  - `app/test/features/stats/goal_streak_surface_wp481_test.dart`
+    (**kartta listelenmiyordu**; metin iddiaları taşıdığı için güncellenmesi
+    zorunluydu — `find.text('Grup')` → `Semantics` etiketi)
+  - `app/test/features/stats/goldens/goal_streak_flame_{light,dark,compact_scaled}.png`
+  - `app/lib/features/home/widgets/{goal_card,group_goal_card}.dart` — **yalnız
+    yorum**: "kapsam etiketi erişilebilirlik için kalmalı" satırı artık yalan
+    olurdu.
 - **DOKUNMA:** `goal_streak_providers.dart`, `goal_streak_projection.dart`,
   `app/lib/l10n/**` (kullanılmayan anahtarlar WP-500'de ele alınır).
 - **Adımlar:**
-  - [ ] Görünür metni ve `_ScopeBadge`i kaldır; ikon + sayı kalsın.
-  - [ ] `Semantics` etiketi (satır 47) **aynen kalsın** — ekran okuyucu hâlâ
-        "Kişisel · 3 · bugün tamamlandı" desin.
-  - [ ] Dört durumun ikonları görsel olarak **belirgin** ayrışsın (dolu alev /
-        içi boş alev / pause / gri alev); metin gidince tek ayırt edici ikon.
-  - [ ] `study_timer_card`ta sabit 48 px kalksın; rozet başlık satırının parçası
-        olsun (Stack yerine akış).
+  - [x] Görünür metni ve `_ScopeBadge`i kaldır; ikon + sayı kalsın.
+  - [x] `Semantics` etiketi **aynen kaldı** — dört durum × iki kapsam için
+        beklenen sekiz cümle testte harfi harfine yazılı.
+  - [x] Dört durum ayırt edilebilir. ⚠️ **Kartın yazdığı gibi değil:** kart
+        "dört ayrı ikon" istiyordu, ama sıfırlanmış durumun ikonu WP-481'de
+        sahip tarafından **gri soluk alev** olarak karara bağlanmıştı ("gece
+        ikonu 'seri yok' demiyordu") ve o karar `goal_streak_surface_wp481`
+        testinde sabit. İkisi aynı anda olamaz; sahip kararı üstün (`§0.1`).
+        Ayrımı **(ikon, sayı) çifti** taşıyor: `expired`/`empty` modelde her
+        zaman **0**, `completedToday` en az 1 — yani "dolu alev + 0" ile "dolu
+        alev + n" karışamaz. Hem çiftin dört ayrı değer aldığı hem de model
+        garantisi teste bağlandı.
+  - [x] `study_timer_card`ta sabit 48 px kalktı; kart `Stack` yerine akış.
+        Üst ikon şeridi de aynı satıra taşındı, yoksa rozet akışa girse bile
+        ikonlar hâlâ içeriğin üstünde duruyordu.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** Yazı ölçeği 1.0/1.3/1.6 · dar kart (compact) · dört durumun
   dördü · grup rozeti · ekran okuyucu.
 - **Kabul (ölçülebilir):**
-  1. Rozette **hiç metin yok**; golden üç yazı ölçeğinde "Bugün" ile
-     çakışmıyor (0 piksel örtüşme).
-  2. Dört durum için dört **ayrı ikon** golden'da ayırt edilebiliyor.
-  3. `Semantics` etiketi eskisiyle **birebir aynı** (test).
+  1. ✅ Rozette **hiç metin yok** (dört durum × iki kapsam × compact/regular:
+     çizilen tek `Text` sayının kendisi). Üç yazı ölçeğinde (1.0/1.3/1.6)
+     "Bugün" ile çakışma yok. 🔴 Golden bunu **ölçemez** — bkz. aşağıdaki
+     kanıt notu; ölçüm `tester.getRect` ile yapıldı.
+  2. ⚠️ Kartın yazdığı biçimiyle karşılanamaz (yukarıdaki 3. adım). Karşılanan:
+     dört durum dört ayrı **(ikon, sayı)** çifti üretiyor ve bu renkten
+     bağımsız.
+  3. ✅ `Semantics` etiketi birebir aynı; sekiz cümlenin sekizi de testte
+     sabit dize olarak yazılı.
+- **Kanıt (kırmızı-yeşil, ölçüldü):**
+  - Eski `Stack` düzeni geri konup yalnız geometri testleri koşuldu: ölçek
+    1.3'te rozetin alt kenarı **59.0**, "Bugün"ün üstü **52.0**; 1.6'da
+    **66.0** / **52.0** → iki test kırmızı. Yeni düzende ikisi de yeşil.
+    Yani şikâyet testte **yeniden üretildi**, sonra düzeltildi.
+  - 🔴 `Rect.overlaps` **tek başına yetmiyordu** ve bu ölçüldü: rozet solda,
+    "Bugün" ortada olduğu için iki dikdörtgen yatayda kesişmiyor ve
+    `overlaps` **bozuk kodda da** `false` dönüyordu. Kabuldeki "0 piksel
+    örtüşme" ifadesine harfiyen uyan bir test bu hatayı kaçırırdı; hatayı
+    yakalayan iddia `badge.bottom <= bugun.top`.
+  - Rozet genişliği: metinli sürüm **452.4 px**, yalın sürüm **58.1 px**
+    (aynı ağaç, aynı ölçek) — 7.8 kat dar. Sınır 120 px olarak teste bağlandı.
+  - Golden ikon ayrımını göremez (gerçek MaterialIcons fontu yüklenmiyor;
+    `goal_streak_flame_wp454_test.dart` içindeki ölçülmüş uyarı). Üç golden
+    yenilendi ama **kanıt onlar değil**, `Icon.icon` okuyan iddialar.
+- **Test durumu:** `flutter test` **1666/1666** yeşil (tüm paket),
+  `flutter analyze` temiz, l10n TR/EN + Android kapıları yeşil.
 - **Tuzaklar:** Metni kaldırırken erişilebilirlik kanalını da kaldırmak.
   Kullanılmayan `.arb` anahtarlarını **silmeden** bırakmak → l10n kapısı
   şikâyet edebilir; WP-500 ile arka arkaya koş.
+  ↳ **Bu tuzak gerçekleşmedi:** `streakFlame*` ve `streakScope*` anahtarları
+  `Semantics` etiketini beslemeye devam ettiği için ölü anahtar oluşmadı;
+  l10n denetimi 1502 anahtarla temiz. WP-500 bu kartın artığını temizlemek
+  zorunda değil.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

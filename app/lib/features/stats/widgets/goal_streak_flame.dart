@@ -12,10 +12,30 @@ import '../../../data/providers/goal_streak_providers.dart';
 /// tahmini olsaydı, cihaz saati ile sunucu günü ayrıştığı anda kullanıcı
 /// ekranda başka, sunucuda başka bir seri görürdü.
 ///
-/// 🔴 Ayrım yalnız RENGE dayanmaz. Renk körü bir kullanıcı için üç durumun
-/// üçü de aynı gri tona düşebilir; bu yüzden her durumun ayrı **ikonu**,
-/// ayrı **metni** ve ekran okuyucu için ayrı `semanticsLabel`ı var. Kişisel ve
-/// grup ise ayrıca çerçeve biçimi + rozet etiketiyle ayrılır.
+/// 🔴 **WP-496 sahip kararı (2026-08-06): rozette hiç yazı yok.** Ne durum
+/// cümlesi ("Henüz seri yok"), ne kapsam etiketi ("Kişisel"). Sahibin gerekçesi:
+/// *"grup kısmında grup streak yazıyor, oradan anlaşılır zaten"*. Görünen içerik
+/// **ikon + sayı**dan ibarettir.
+///
+/// Ayrım yine yalnız RENGE dayanmaz — renk körü bir kullanıcı için dört durum da
+/// aynı gri tona düşebilir. Metin gidince ayrımı taşıyan kanallar şunlar:
+///
+///   * **ikon**: canlı alev / içi boş alev / pause — üç ayrı glif;
+///   * **sayı**: `expired` ve `empty` her zaman **0** taşır
+///     (`projectGoalStreak`: `currentStreak: distance <= 2 ? streak : 0`),
+///     `completedToday` ise en az 1'dir. Yani "dolu alev + 0" ile
+///     "dolu alev + n" hiçbir zaman karışmaz;
+///   * **`Semantics` etiketi**: kapsam · sayı · durum cümlesi **aynen** durur,
+///     ekran okuyucu hiçbir bilgi kaybetmez.
+///
+/// ⚠️ Kart "dört durum için dört ayrı ikon" yazıyordu; sıfırlanmış durumun
+/// ikonu ise WP-481'de sahip tarafından **gri soluk alev** olarak karara
+/// bağlandı ("gece ikonu 'seri yok' demiyordu"). İkisi aynı anda olamaz; sahip
+/// kararı üstün (`AGENTS.md §0.1`), ayrımı yukarıdaki (ikon, sayı) çifti taşır
+/// ve testte bu çiftin dört durumda dört ayrı değer aldığı ölçülür.
+///
+/// Kişisel/grup ayrımı ise çerçeve **biçimiyle** sürüyor (yuvarlak / köşeli),
+/// yani kapsam etiketi kalksa da renksiz bir kanal kalıyor.
 enum GoalStreakFlameSize { compact, regular }
 
 class GoalStreakFlame extends StatelessWidget {
@@ -47,9 +67,11 @@ class GoalStreakFlame extends StatelessWidget {
       label: '$scopeLabel · ${projection.currentStreak} · $label',
       child: ExcludeSemantics(
         child: Container(
+          // Sahip şikâyeti "rozet gereğinden büyük" idi; metin gidince dolgu da
+          // küçülüyor, yoksa boş bir kutu kalırdı.
           padding: EdgeInsets.symmetric(
-            horizontal: _isCompact ? 8 : 12,
-            vertical: _isCompact ? 4 : 8,
+            horizontal: _isCompact ? 6 : 8,
+            vertical: _isCompact ? 2 : 4,
           ),
           decoration: BoxDecoration(
             color: visual.background,
@@ -68,71 +90,20 @@ class GoalStreakFlame extends StatelessWidget {
                 size: _isCompact ? 16 : 20,
                 color: visual.foreground,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 '${projection.currentStreak}',
-                style: (_isCompact
-                        ? theme.textTheme.labelMedium
-                        : theme.textTheme.titleMedium)
-                    ?.copyWith(
-                      color: visual.foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              // Küçük kartta da işaret okunur kalmalı: dar alanda sayı ve
-              // durum ikonu korunur, yalnız uzun metin düşer.
-              if (!_isCompact) ...[
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: visual.foreground,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(width: 6),
-              _ScopeBadge(
-                text: scopeLabel,
-                color: visual.foreground,
-                compact: _isCompact,
+                style:
+                    (_isCompact
+                            ? theme.textTheme.labelMedium
+                            : theme.textTheme.titleMedium)
+                        ?.copyWith(
+                          color: visual.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ScopeBadge extends StatelessWidget {
-  const _ScopeBadge({
-    required this.text,
-    required this.color,
-    required this.compact,
-  });
-
-  final String text;
-  final Color color;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-        child: Text(
-          text,
-          style: (compact ? theme.textTheme.labelSmall : theme.textTheme.labelMedium)
-              ?.copyWith(color: color, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -153,8 +124,9 @@ class GoalStreakFlameVisual {
   final Color background;
 }
 
-/// Durum → görsel. Üç durumun **üç ayrı ikonu** var; renk tek ayırt edici
-/// değildir (kart kabulü).
+/// Durum → görsel. Üç ayrı glif; renk tek ayırt edici değildir (kart kabulü).
+/// Dördüncü durumun (`expired`/`empty`) ayrımını sayı taşır — bkz.
+/// [GoalStreakFlame] başlığı.
 GoalStreakFlameVisual goalStreakFlameVisual(
   GoalStreakState state,
   ColorScheme scheme,
@@ -197,6 +169,11 @@ GoalStreakFlameVisual goalStreakFlameVisual(
   }
 }
 
+/// Durumun okunabilir cümlesi.
+///
+/// WP-496'dan sonra bu cümle **ekranda çizilmez**; yalnız `Semantics` etiketini
+/// besler. Yani l10n anahtarları (`streakFlame*`) hâlâ kullanımdadır — silinecek
+/// ölü anahtar üretmez (WP-500 tuzağı).
 String goalStreakFlameLabel(GoalStreakState state, AppLocalizations l10n) {
   switch (state) {
     case GoalStreakState.completedToday:
