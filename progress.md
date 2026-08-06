@@ -5346,7 +5346,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
-| **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6647,6 +6647,9 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   (1. ve 4.), geri getirilince yeşile dönüyor. `home_action_bar_wp488_test`
   (5 test) regresyonsuz geçiyor. Kabul kriterinin cihaz yarısı (çentikli ekran,
   yatay mod) fiziksel telefon ister → QA kuyruğunda.
+- **CI (kapı):** commit `1dd4a1f` push edildi; CI run **`31100544481` beş iş de
+  yeşil** (analyze + tam paket · Windows golden · Windows kritik akış · SQL
+  sözleşmesi · Edge tip denetimi), l10n Gate run `31100544405` yeşil.
 
 ---
 
