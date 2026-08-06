@@ -61,14 +61,17 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final group = ref.watch(userGroupProvider).value;
-    if (group == null) {
-      return GroupCardShell(
-        title: AppLocalizations.of(context).homeGrupHedefi,
-        onCreateGroup: () => createGroupFlow(context, ref),
-        onJoinGroup: () => joinGroupFlow(context, ref),
-      );
-    }
+    final groupAsync = ref.watch(userGroupProvider);
+    // WP-495B: yükleniyorken davet değil iskelet (bkz. `groupCardGate`).
+    final gate = groupCardGate(
+      context,
+      groupAsync,
+      title: AppLocalizations.of(context).homeGrupHedefi,
+      onCreateGroup: () => createGroupFlow(context, ref),
+      onJoinGroup: () => joinGroupFlow(context, ref),
+    );
+    if (gate != null) return gate;
+    final group = groupAsync.value!;
 
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final dayTotals = groupDayTotals(stats);

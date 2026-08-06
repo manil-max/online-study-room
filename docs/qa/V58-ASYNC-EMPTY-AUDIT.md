@@ -72,6 +72,35 @@ Desen dağılımı: `asData` 25 ·
 | `features/home/widgets/active_members_card.dart:56` | `.value ?? boş` | Presence yüklenirken 'Şu an çalışan kimse yok' (V58-N07). |
 | `features/home/widgets/active_members_card.dart:57` | `.value ?? boş` | Üyeler yüklenirken satırlar 'İsimsiz'. |
 
+## 4b. WP-495B kapanış durumu (2026-08-06)
+
+Aşağıdaki §5 listesi WP-495B ile **kısmen** kapatıldı. Kapananlar:
+
+| Yer | Ne yapıldı |
+|---|---|
+| `leaderboard_card:29` · `group_goal_card:64` · `group_trend_card:25` | Ortak `groupCardGate` kapısı: yükleniyorken iskelet, hata → metin, gerçekten grup yoksa davet. `active_members_card` da aynı kapıya taşındı — tek uygulama. |
+| `stats_screen:99` | Sınıf sekmesi yükleniyorken "bir gruba katıl" demiyor; sekmenin geri kalanı gibi spinner/hata. |
+| `stats_screen:87` · `home_shell:84` · `home_shell:103,108` | `asData` → `value`: özet, ödül rozeti ve sekme çubuğundaki taç yeniden yüklemede kaybolmuyor. |
+| `data_export_screen:43-48` | `asData?.value ?? []` yerine `await …future`: dışa aktarma artık veriyi bekliyor, eksik dosya üretmiyor. |
+| `class_chat_card:71` | Engelli kümesi gelmeden mesaj çizilmiyor (sohbet süzgeci **yalnız istemcide**). Hata dalı bilerek beklemez: küme çağrısı düşerse sohbet kapanmak yerine eski davranışa döner. |
+
+**Kapatılmayan iki gizlilik satırı — gerekçesiyle düşürüldü.**
+`campfire_scene:84` ve `class_stats_view:100` ilk taramada "gizlilik" diye
+işaretlenmişti. Sunucu sözleşmesi okununca bu **yanlış** çıktı:
+`group_member_directory` satırı döndürürken engellenen üyenin
+adını/avatarını/hayvanını zaten boşaltıyor (`0095`, `0115`) — gerçek ad istemciye
+hiç ulaşmıyor. Sahneyi ve sıralamayı bu ek ağ çağrısına bağlamak ana ekranın
+kritik yoluna spinner ekliyor ve **27 mevcut testi** kırıyordu. İkisi de
+`İzlenecek`e indirildi.
+
+`session_history_screen:30` de düşürüldü: `hasGroup` bir kare `false` olunca
+filtre **geç görünüyor**, yanlış bir iddia üretmiyor.
+
+Kalan `Düzeltilecek` satırları (11 pano kartının boş grafik/0 dk göstermesi)
+**WP-495C**'ye bırakıldı: her biri kendi yükleme iskeletini gerektiriyor, yani
+tek satırlık değil kart tasarımı işidir ve WP-495'in "kart tasarımları kapsam
+dışı" kuralına girer.
+
 ## 5. Düzeltilecek — ayrı WP gerekiyor
 
 🔴 **En önemli bulgu:** sahibin gördüğü "Grup Oluştur" flaşı **tek kartta

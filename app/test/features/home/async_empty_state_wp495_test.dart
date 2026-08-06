@@ -28,6 +28,7 @@ import 'package:online_study_room/data/providers/gamification_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/features/home/widgets/active_members_card.dart';
+import 'package:online_study_room/features/home/widgets/group_card_shell.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 final _owner = Profile(
@@ -108,7 +109,7 @@ void main() {
     // Eski kod burada daveti çiziyordu: `.value == null` → GroupCardShell.
     expect(find.text(l10n.homeGrupOlustur), findsNothing);
     expect(find.text(l10n.homeKodaKatil), findsNothing);
-    expect(find.byKey(kActiveMembersSkeletonKey), findsOneWidget);
+    expect(find.byKey(kGroupCardSkeletonKey), findsOneWidget);
     // Başlık kalır: kart yerini korur, boyut zıplamaz.
     expect(find.text(l10n.homeSuAnCalisanlar), findsOneWidget);
   });
@@ -120,7 +121,7 @@ void main() {
 
     final l10n = await AppLocalizations.delegate.load(const Locale('tr'));
     expect(find.text(l10n.homeGrupOlustur), findsOneWidget);
-    expect(find.byKey(kActiveMembersSkeletonKey), findsNothing);
+    expect(find.byKey(kGroupCardSkeletonKey), findsNothing);
   });
 
   testWidgets('grup yüklenemezse boş durum değil hata metni çizilir', (
@@ -132,9 +133,11 @@ void main() {
     );
 
     final l10n = await AppLocalizations.delegate.load(const Locale('tr'));
-    expect(find.text(l10n.homeCalisanlarYuklenemedi), findsOneWidget);
+    // WP-495B: grup akışının hatası ortak kapıdan geçtiği için mesaj grup
+    // odaklı; presence/üye hatası kartın kendi metnini kullanmaya devam eder.
+    expect(find.text(l10n.homeGrupBilgisiYuklenemedi), findsOneWidget);
     // Tuzak: hatayı "yükleniyor" sayıp sonsuz iskelet göstermek.
-    expect(find.byKey(kActiveMembersSkeletonKey), findsNothing);
+    expect(find.byKey(kGroupCardSkeletonKey), findsNothing);
     expect(find.text(l10n.homeGrupOlustur), findsNothing);
   });
 
@@ -151,7 +154,7 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('tr'));
     expect(find.text(l10n.homeSuAnCalisanKimse), findsNothing);
     expect(find.text('0 aktif'), findsNothing);
-    expect(find.byKey(kActiveMembersSkeletonKey), findsOneWidget);
+    expect(find.byKey(kGroupCardSkeletonKey), findsOneWidget);
   });
 
   testWidgets('presence geldiğinde liste ve sayaç normal çizilir', (
@@ -167,7 +170,7 @@ void main() {
 
     expect(find.text(_peer.displayName), findsOneWidget);
     expect(find.text('1 aktif'), findsOneWidget);
-    expect(find.byKey(kActiveMembersSkeletonKey), findsNothing);
+    expect(find.byKey(kGroupCardSkeletonKey), findsNothing);
   });
 
   testWidgets('presence hatasında boş durum değil hata metni çizilir', (

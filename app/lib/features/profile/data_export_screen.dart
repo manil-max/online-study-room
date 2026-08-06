@@ -39,13 +39,15 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     try {
       final repo = ref.read(dataExportRepositoryProvider);
       if (repo is InMemoryDataExportRepository) {
-        final sessions =
-            ref.read(userSessionsProvider).asData?.value ?? const [];
-        final subjects =
-            ref.read(userSubjectsProvider).asData?.value ?? const [];
-        final summary = ref.read(userStudySummaryProvider).asData?.value;
-        final xp =
-            ref.read(gamificationSummaryProvider).asData?.value?.profile.xp;
+        // WP-495B: eskiden `asData?.value ?? const []` okunuyordu — kullanıcı
+        // ekranı açıp hemen dışa aktarırsa veri henüz gelmemiş olur ve **eksik**
+        // dosya üretilirdi. Artık ilk değer beklenir.
+        final sessions = await ref.read(userSessionsProvider.future);
+        final subjects = await ref.read(userSubjectsProvider.future);
+        final summary = await ref.read(userStudySummaryProvider.future);
+        // Bu provider türetilmiş `AsyncValue` döndürür (`.future` yok);
+        // `value` yenilemede son değeri korur.
+        final xp = ref.read(gamificationSummaryProvider).value?.profile.xp;
         repo.seed(
           userId: user.id,
           profile: {
@@ -75,8 +77,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         );
       } else {
         final dir = await getTemporaryDirectory();
-        final idPart =
-            user.id.length >= 8 ? user.id.substring(0, 8) : user.id;
+        final idPart = user.id.length >= 8 ? user.id.substring(0, 8) : user.id;
         final file = File('${dir.path}/odak-kampi-export-$idPart.json');
         await file.writeAsString(json);
         await SharePlus.instance.share(

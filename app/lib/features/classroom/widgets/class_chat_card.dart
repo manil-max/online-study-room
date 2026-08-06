@@ -44,6 +44,18 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
     final theme = Theme.of(context);
     final messagesAsync = ref.watch(classMessagesProvider(widget.group.id));
     final user = ref.watch(authStateProvider).value;
+    // WP-495B: engelli kümesi gelmeden mesajlar çizilirse engellenen kişinin
+    // mesajı bir kare görünür. Sohbet, roster'ın aksine sunucuda süzülmüyor
+    // (`0095` sohbeti kapsamaz) — süzgeç yalnız burada, o yüzden küme beklenir.
+    //
+    // 🔴 Hata dalı bilerek beklemez: küme çağrısı düşerse sohbeti tamamen
+    // kapatmak yerine eski davranışa (süzgeçsiz liste) dönülür. Kalıcı bir
+    // moderasyon hatası sohbeti kullanılamaz hâle getirmemeli.
+    final blockedAsync = ref.watch(blockedUserIdsProvider);
+    final blockedPending = !blockedAsync.hasValue && !blockedAsync.hasError;
+    final gatedMessages = blockedPending
+        ? const AsyncValue<List<ChatMessage>>.loading()
+        : messagesAsync;
 
     return Card(
       child: Padding(
@@ -64,11 +76,10 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
             const SizedBox(height: 8),
             SizedBox(
               height: widget.messageListHeight,
-              child: messagesAsync.when(
+              child: gatedMessages.when(
                 data: (messages) {
                   // WP-126: engellenen kullanıcı mesajlarını gizle.
-                  final blocked =
-                      ref.watch(blockedUserIdsProvider).value ?? const {};
+                  final blocked = blockedAsync.value ?? const <String>{};
                   final visible = blocked.isEmpty
                       ? messages
                       : messages

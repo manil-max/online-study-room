@@ -2802,6 +2802,10 @@
   "@homeCalisanlarYuklenemedi": {
     "description": "Home card error state when the group or presence stream fails (WP-495). Source: Çalışanlar yüklenemedi."
   },
+  "homeGrupBilgisiYuklenemedi": "Group info could not be loaded.",
+  "@homeGrupBilgisiYuklenemedi": {
+    "description": "Shared group-card gate error state when the group stream fails (WP-495B). Source: Grup bilgisi yüklenemedi."
+  },
   "homeSuAnCalisanKimse": "There is no one studying right now.",
   "@homeSuAnCalisanKimse": {
     "description": "Home user-facing text. Source: Şu an çalışan kimse yok."

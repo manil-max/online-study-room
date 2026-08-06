@@ -5348,7 +5348,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
-| **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. 🔴 Aynı flaş sıralama/grup hedefi/trend kartlarında **sürebilir** (ayrı WP). Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. Commit: `95043fd`. **Cihazda doğrulanmalı.** |
+| **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6799,6 +6800,77 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
   değil). Tam liste ve gerekçe: `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` §5.
 - **Yeni l10n anahtarı:** `homeCalisanlarYuklenemedi` (TR+EN) — hata dalının
   boş durumdan ayrılabilmesi için; ölü anahtar değil, iki dalda da kullanılıyor.
+- **Commit `95043fd`** (push edildi). **CI (kapı):** l10n Gate run `31118599635`
+  **yeşil**. 🔴 CI run `31118599617` başka bir oturumun hemen ardından attığı
+  `86217ca` yüzünden eşzamanlılık kuralıyla **iptal** oldu; onun yerine koşan
+  `31118682398` GitHub Actions kesintisine takıldı (**beş işin beşi de**
+  `Set up job` adımında `Failed to resolve action download info: Service
+  Unavailable`). Kapı **yeşil değil, KOŞMADI** — kesinti bitince yeniden koşulmalı.
+
+---
+
+### WP-495B: "Yükleniyor = veri yok" — kalan yüzeyler 👻
+- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N02 devamı / rapor T04)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-495 (`95043fd`)
+- **Kaynak:** Sahip emri (2026-08-06): WP-495 teslim özetindeki "aynı hata dört
+  kartta daha var" bulgusu üzerine **"WP-495B'yi yap"**. Kart bu emirle açıldı.
+- **Problem:** WP-495 yalnız `active_members_card`ı sahiplenmişti; `.value == null`
+  dalı grup gerektiren **her** kartta duruyordu. Yani sahibin gördüğü "Grup
+  Oluştur" flaşı cihazda **sürecekti**. Ayrıca `asData?.value` iki yerde daha
+  (sekme çubuğu tacı, ödül rozeti, kişisel özet), dışa aktarma veriyi beklemeden
+  dosya üretiyor ve sohbette engellenen kişinin mesajı bir kare görünüyordu.
+- **Kapsam dışı:** 11 pano kartının ilk yüklemede boş grafik/0 dk göstermesi
+  (**WP-495C**: her biri kendi iskeletini gerektirir, kart tasarımı işidir) ·
+  provider mimarisi · kart tasarımları.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/widgets/group_card_shell.dart` (ortak kapı)
+  - `app/lib/features/home/widgets/active_members_card.dart` (ortak kapıya taşındı)
+  - `app/lib/features/home/widgets/leaderboard_card.dart`
+  - `app/lib/features/home/widgets/group_goal_card.dart`
+  - `app/lib/features/home/widgets/group_trend_card.dart`
+  - `app/lib/features/stats/stats_screen.dart`
+  - `app/lib/core/navigation/home_shell.dart`
+  - `app/lib/features/profile/data_export_screen.dart`
+  - `app/lib/features/classroom/widgets/class_chat_card.dart`
+  - `app/test/features/home/async_empty_state_wp495b_test.dart` (yeni)
+  - `docs/qa/V58-ASYNC-EMPTY-AUDIT.md` (kapanış durumu)
+- **Adımlar:**
+  - [x] Ortak `groupCardGate` + `GroupCardStatus`/`GroupCardSkeleton`: dört kart
+        tek uygulamayı paylaşıyor (kopya yok).
+  - [x] `stats_screen` sınıf sekmesi yükleniyorken davet metni yerine spinner.
+  - [x] `asData` → `value`: `home_shell` (ödül rozeti + taç) ve kişisel özet.
+  - [x] Dışa aktarma `await …future` ile veriyi bekliyor.
+  - [x] Sohbet engelli kümesini bekliyor; **hata dalı beklemiyor** (kalıcı
+        moderasyon hatası sohbeti kullanılamaz hâle getirmemeli).
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local. Production/stable kapısı açılmaz.
+- **RLS/Güvenlik:** Sohbet süzgeci **yalnız istemcide** (`0095` sohbeti kapsamaz),
+  bu yüzden kapı orada gerçek bir gizlilik düzeltmesidir.
+- **Kabul (ölçülebilir):**
+  1. Üç grup kartı `AsyncLoading` iken "Grup Oluştur" **çizmiyor** (test).
+  2. Gerçekten grubu olmayan kullanıcıda davet **hâlâ** çıkıyor (test).
+  3. Engelli kümesi gelmeden sohbette mesaj **çizilmiyor** (test).
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` 0 uyarı ·
+  `dart format` temiz · tam paket **1624/1624 yeşil** (öncesi 1615) ·
+  `scripts/l10n_audit.py` OK (1501 anahtar) · `guard.tests.ps1` 75/75 ·
+  `release-preflight.tests.ps1` 8/8. Yeni
+  `app/test/features/home/async_empty_state_wp495b_test.dart` **9 test**.
+  **Kapı kasten kırık girdiyle sınandı:** kapı `if (true)` yapılıp engelli
+  bekletmesi kaldırılınca **6 test kırmızı**; beş kontrol testi (grubu olmayan
+  kullanıcıda davet · küme gelince süzgeç çalışıyor) her iki kodda da yeşil kaldı.
+- **🔴 İki "gizlilik" satırı ölçümle düşürüldü.** `campfire_scene:84` ve
+  `class_stats_view:100` tarama belgesinde gizlilik açığı sayılmıştı. Sunucu
+  sözleşmesi okununca yanlış çıktı: `group_member_directory` engellenen üyenin
+  adını/avatarını/hayvanını **zaten boşaltıyor** (`0095`, `0115`), gerçek ad
+  istemciye hiç ulaşmıyor. İlk denemede oraya da kapı konulmuştu; ana ekranın
+  kritik yoluna spinner ekliyor ve **27 mevcut testi** kırıyordu → geri alındı,
+  `İzlenecek`e indirildi. Sohbet farklı, orada süzgeç yalnız istemcide.
+- **Yeni l10n anahtarı:** `homeGrupBilgisiYuklenemedi` (TR+EN) — ortak kapının
+  hata metni.
+- **Yabancı test dosyası değiştirilmedi.** İlk denemede
+  `group_action_scope_wp446_test` iki ekstra `pump` ile düzeltilmişti; sohbet
+  kapısı yalnız yükleme dalına indirilince gerek kalmadı ve dosya HEAD'e
+  döndürüldü.
 
 ---
 

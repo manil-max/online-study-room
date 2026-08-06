@@ -79,10 +79,11 @@ class HomeShell extends ConsumerWidget {
     final groupsTabIndex = AppTab.groups.index;
     assert(_screens.length == AppTab.values.length);
 
+    // WP-495B: `asData` yeniden yüklemede boşalır ve rozet bir kare 0'a düşer;
+    // `value` önceki değeri korur (bkz. docs/qa/V58-ASYNC-EMPTY-AUDIT.md §1).
     final rewardSummary = ref
         .watch(pendingAchievementRewardSummaryProvider)
-        .asData
-        ?.value;
+        .value;
     final pendingRewardCount = rewardSummary?.pendingCount ?? 0;
     final pendingRewardXp = rewardSummary?.pendingXp ?? 0;
     // WP-352: birincil grup seçilmemişse grup ilerlemesi sessizce durur. Seçim
@@ -100,14 +101,12 @@ class HomeShell extends ConsumerWidget {
     final warningDotColor = warningColorsOn(
       Theme.of(context).colorScheme.surface,
     ).container;
-    final selfId = ref.watch(authStateProvider).asData?.value?.id;
+    final selfId = ref.watch(authStateProvider).value?.id;
+    // Sekme çubuğundaki taç `crowned_avatar.dart` ile aynı hatayı taşıyordu:
+    // provider yeniden yüklenince `asData` boşalıyor, taç bir kare sönüyordu.
     final crownRank = selfId == null
         ? null
-        : ref
-              .watch(gamificationProfileProvider(selfId))
-              .asData
-              ?.value
-              .crownRank;
+        : ref.watch(gamificationProfileProvider(selfId)).value?.crownRank;
     final rewardToast = RewardToast(
       pendingCount: pendingRewardCount,
       pendingXp: pendingRewardXp,

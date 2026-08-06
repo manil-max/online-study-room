@@ -82,10 +82,9 @@ class _PersonalTab extends ConsumerWidget {
           ),
         ),
       ),
-      data: (sessions) => PersonalStatsView(
-        sessions: sessions,
-        summary: summaryAsync.asData?.value,
-      ),
+      // WP-495B: `asData` yeniden yüklemede boşalır, özet bir kare kaybolurdu.
+      data: (sessions) =>
+          PersonalStatsView(sessions: sessions, summary: summaryAsync.value),
     );
   }
 }
@@ -96,8 +95,27 @@ class _ClassTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final group = ref.watch(userGroupProvider).value;
+    final groupAsync = ref.watch(userGroupProvider);
+    final group = groupAsync.value;
     if (group == null) {
+      // WP-495B: veri gelmeden "bir gruba katıl" demek grubu olan kullanıcıya
+      // yanlış iddiadır; sekmenin geri kalanı gibi önce yükleme/hata gösterilir.
+      if (!groupAsync.hasValue) {
+        return Center(
+          child: groupAsync.hasError
+              ? Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    AppLocalizations.of(context).homeGrupBilgisiYuklenemedi,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              : const CircularProgressIndicator(),
+        );
+      }
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

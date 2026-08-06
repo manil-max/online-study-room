@@ -81,7 +81,12 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
     // WP-389/F2: engellenen üye sayıda kalır; kimliği ve etkileşimi gizlenir.
-    final blocked = ref.watch(blockedUserIdsProvider).value ?? const {};
+    // WP-495B notu: küme gelmeden `?? const {}` okunuyor. Bu, roster
+    // yüzeylerinde **gizlilik açığı değildir**: sunucu `group_member_directory`
+    // satırı döndürürken engellenen üyenin adını/avatarını/hayvanını zaten
+    // boşaltır (`0095`/`0115`), istemci kümesi ikinci kattır. Sahneyi bu ek ağ
+    // çağrısına bağlamak ana ekranın kritik yoluna spinner ekler.
+    final blocked = ref.watch(blockedUserIdsProvider).value ?? const <String>{};
 
     return membersAsync.when(
       loading: () => _SceneFrame(

@@ -26,15 +26,18 @@ class LeaderboardCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final group = ref.watch(userGroupProvider).value;
+    final groupAsync = ref.watch(userGroupProvider);
 
-    if (group == null) {
-      return GroupCardShell(
-        title: AppLocalizations.of(context).homeGrupSiralamasi,
-        onCreateGroup: () => createGroupFlow(context, ref),
-        onJoinGroup: () => joinGroupFlow(context, ref),
-      );
-    }
+    // WP-495B: yükleniyorken davet değil iskelet (bkz. `groupCardGate`).
+    final gate = groupCardGate(
+      context,
+      groupAsync,
+      title: AppLocalizations.of(context).homeGrupSiralamasi,
+      onCreateGroup: () => createGroupFlow(context, ref),
+      onJoinGroup: () => joinGroupFlow(context, ref),
+    );
+    if (gate != null) return gate;
+    final group = groupAsync.value!;
 
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
