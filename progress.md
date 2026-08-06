@@ -231,7 +231,7 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local/staging/production **`0119`** · sıradaki boş numara **`0120`** |
+| Migration | Repo/local **`0120`** (WP-492; hiçbir ortama uygulanmadı — `Replay bekliyor`) · staging/production **`0119`** · sıradaki boş numara **`0121`** |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Remote kapıları | staging + production deploy/release dört bayrak v58 sonrası **kapalı** |
@@ -5350,7 +5350,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
 | **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. Commit: `95043fd`. **Cihazda doğrulanmalı.** |
 | **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `695e589`. **Cihazda doğrulanmalı.** |
-| **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `17432c5`. **Cihazda doğrulanmalı.** |
+| **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6370,9 +6371,11 @@ Hiçbir F4 kartı production/stable kapısı açmaz.
 **Migration numarası önceden ayrılmaz (2026-08-06 düzeltmesi).** WP-490 artık
 teşhis kartıdır ve **migration gerektirmeyebilir**; numarayı önceden ayırmak boş
 numara bırakır ya da çakışma üretir. Kural: **migration'ı ilk YAZAN kart sıradaki
-boş numarayı alır** (şu an `0120`) ve head'i üç yerde birden ilerletir. Numara
-gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
-`045`ten devam eder (`044` dolu).
+boş numarayı alır** ve head'i üç yerde birden ilerletir. Numara gerektiren
+kartlar: WP-491, WP-501 ve gerekirse WP-490.
+🔴 **Güncel durum (2026-08-06):** ilk yazan **WP-492** oldu → `0120` + pgTAP `045`
+tüketildi. **Sıradaki boş numara `0121`, sıradaki pgTAP dosyası `046`.**
+Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değildir.
 
 ---
 
@@ -6549,9 +6552,9 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 
 ---
 
-### WP-492: Seri tamamlaması hiç yazılmıyor — yazma yolunu bağla (`0122`) 🔥
+### WP-492: Seri tamamlaması hiç yazılmıyor — yazma yolunu bağla (`0120`) 🔥
 - **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N03 / rapor T02)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-491 (migration hattı sırası)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü + backfill GO'su bekliyor · **Bağımlılık:** yok. Kart `0122` diyordu; 2026-08-06 kuralı gereği **migration'ı ilk yazan kart sıradaki boş numarayı alır** ve WP-490/491 henüz migration yazmadığı için numara **`0120`** oldu. pgTAP dosyası `045`
 - **Problem:** Okuma ucu tam (`goal_streak_projection` → repository → rozet), ama
   `goal_progress_events`'e satır yazan **tek** yol olan `record_goal_completion`
   (`0112:96`) üretimde **hiçbir yerden çağrılmıyor**: `app/lib`de yalnız yorumda,
@@ -6561,20 +6564,35 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **Kapsam dışı:** Rozetin görünümü (WP-496), seri durum makinesi kuralları
   (V57-N04 kararı **değişmez**), grup hedefi tanımı, XP/başarım zinciri.
 - **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/0122_goal_completion_writer.sql` (yeni)
-  - `supabase/tests/047_goal_completion_writer.test.sql` (yeni)
-  - head üçlüsü (`0122`)
+  - `supabase/migrations/0120_goal_completion_writer.sql` (yeni)
+  - `supabase/tests/045_goal_completion_writer.test.sql` (yeni)
+  - head üçlüsü (`0120`)
 - **DOKUNMA:** `0112` (okunur), `app/lib/features/stats/widgets/goal_streak_flame.dart`.
 - **Adımlar:**
-  - [ ] Tamamlamayı **sunucu** yazsın: `study_sessions` insert/update sonrası gün
+  - [x] Tamamlamayı **sunucu** yazsın: `study_sessions` insert/update sonrası gün
         toplamı hedefi geçtiğinde `record_goal_completion` çağıran trigger.
-  - [ ] Kişisel **ve** grup kapsamı aynı yoldan beslensin (V57-N05 kararı).
-  - [ ] Geçmiş için tek seferlik backfill: mevcut `study_sessions`'tan geriye
-        dönük tamamlama olayları üretilsin (idempotent, `event_key` tekil).
-  - [ ] pgTAP: hedefi geçen gün olay üretir, geçmeyen üretmez, aynı gün iki kez
-        yazılmaz, duraklatma (V57-N04 Durum 2) doğru sınıflanır.
-- **Veri/Migration etkisi:** `goal_progress_events` satırları + trigger. Geri
-  alma: `drop trigger` (olay satırları kalır, projeksiyon zararsızdır).
+        Hedef matematiği auth'suz `_record_goal_completion`'a taşındı; genel RPC
+        aynı imza/hata sözleşmesiyle ona devrediyor (iki kopya = iki gün sonra
+        birbirinden sapan iki hedef tanımı).
+  - [x] Kişisel **ve** grup kapsamı aynı yoldan beslensin (V57-N05 kararı):
+        tetikleyici kişisel kapsamı Europe/Istanbul, kullanıcının aktif üyesi
+        olduğu **her** grubu kendi saat diliminde değerlendiriyor.
+  - [x] Geçmiş için tek seferlik backfill: `backfill_goal_completions()`
+        (idempotent, `on conflict do nothing`, yalnız `service_role`).
+        🔴 **Migration bu fonksiyonu ÇAĞIRMAZ** — remote'ta backfill ayrı GO ister.
+  - [x] pgTAP `045` (**20 iddia**): hedefi geçen gün olay üretir, geçmeyen
+        üretmez, aynı gün iki kez yazılmaz, grup kapsamı ayrı beslenir, backfill
+        geçmişi yazar ve ikinci koşumda 0 satır ekler, duraklatma
+        (V57-N04 Durum 2) doğru sınıflanır.
+  - [x] **Kartta yazmayan ama kabul 2'nin şartı olan boşluk:** istemci
+        (`SupabaseGoalStreakRepository.watchProjection`) `goal_progress_events`
+        üzerinde realtime dinliyor, fakat tablo `supabase_realtime`
+        publication'ında **değildi** — olay yazılsa bile rozet ancak ekran
+        yeniden abone olunca değişirdi. Tablo yayına eklendi (0016/0018/0117
+        koşullu kalıbı), pgTAP bunu ayrıca doğruluyor.
+- **Veri/Migration etkisi:** `goal_progress_events` satırları + trigger + realtime
+  yayını. Geri alma: `drop trigger` + `alter publication ... drop table` (olay
+  satırları kalır, projeksiyon zararsızdır).
 - **Ortam/Deploy:** local · `Replay bekliyor` kuralı geçerli. Backfill
   production'da **ayrı GO** ister.
 - **RLS/Güvenlik:** Yazma yolu **yalnız** sunucuda kalır; istemciye yazma API'si
@@ -6590,6 +6608,24 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **Tuzaklar:** Serinin istemciden artırılabilir hale gelmesi (yasak). Backfill'i
   idempotent yazmamak. Grup kapsamını unutmak.
 - **Model önerisi:** 🔴 Opus
+- 🔴 **Bilinçli kapsam dışı bırakılan iki davranış (uygulanmadı, bildiriliyor):**
+  1. **Oturum silinmesi tamamlamayı geri almaz.** Simetrik yazmak kolaydı ama
+     hesap silme yolu (`0113`/`0114`) oturumları satır satır siliyor; her satırda
+     grup toplamını yeniden hesaplatmak purge maliyetini üye sayısıyla çarpardı.
+     Ayrı kart konusu.
+  2. **Hedefin gün içinde değiştirilmesi tek başına olay üretmez;** değerlendirme
+     yalnız oturum yazımında olur. Hedefini düşüren kullanıcının o günkü bir
+     sonraki oturumu tamamlamayı yazar.
+- **Kanıt (2026-08-06, `Kodda doğrulandı` + `Replay bekliyor`):**
+  `scripts/test_all.py --internal-migration-head` OK (120 migration kesintisiz,
+  head `0120`; pinler local=0120 staging=0119 production=0119) ·
+  `backend_contract_audit` OK (91 RPC çağrısı / 219 sunucu imzası) ·
+  `guard.tests.ps1` **75/75** · `release-preflight.tests.ps1` **8/8** (yerel head
+  staging'in önünde olduğu için beta preflight doğru şekilde fail-closed düşüyor).
+  🔴 Bu hostta Docker kalkmıyor, **yerel pgTAP replay koşulamadı**; `045`in
+  gerçek kanıtı Database Gates workflow'unun local replay job'ından alınacak.
+  Kabul 2 (cihazda canlı alev) ve kabul 3 (backfill sonrası serinin 0'dan farklı
+  olması) cihaz + ayrı backfill GO'su ister → QA kuyruğunda.
 
 ---
 

@@ -43,6 +43,8 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # production release_enabled v58 stable icin tek seferlik acildi (0117-0119
 # production apply post-check 0119 sonrasi). Zincir sonunda tum flag'ler
 # yeniden false kilitlenmelidir.
+# 2026-08-06 (WP-492 / 0120): yerel head 0120'ye ilerledi, staging ve production
+# gercekten 0119'da durdugu icin asagidaki iki pin BILEREK 0119 kalir.
 Assert-Equal $contract.staging.migration_head '0119' 'v58 staging hedef head 0119'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'v58 sonrasi staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
