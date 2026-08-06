@@ -23,10 +23,17 @@ class DailyLineChart extends StatelessWidget {
       (m, d) => d.seconds > m ? d.seconds : m,
     );
     final maxMinutes = maxSeconds / 60;
-    final maxY = maxMinutes <= 0 ? 60.0 : maxMinutes * 1.2;
     // WP-237: Y ekseni ölçeği (eskiden hiç yoktu) + yer varken her gün etiketi.
-    final yInterval = niceMinuteInterval(maxY);
-    final useHours = axisUsesHours(maxMinutes);
+    //
+    // 🔴 WP-499: burada `maxY = maxMinutes * 1.2` ve `yInterval` **ayrı ayrı**
+    // seçiliyordu; üst sınır aralığın katı olmadığı için fl_chart tepeye
+    // ikinci bir etiket koyuyor ve iki etiket birkaç piksel arayla üst üste
+    // biniyordu. Sıra artık tersine: önce aralık, sonra o aralığın üst katı.
+    // Gerekçe ve ölçüm `chart_axis.dart` içindeki `MinuteAxis`te.
+    final axis = minuteAxis(maxMinutes);
+    final maxY = axis.maxY;
+    final yInterval = axis.interval;
+    final useHours = axis.useHours;
 
     return LayoutBuilder(
       builder: (context, constraints) {

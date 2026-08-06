@@ -5355,6 +5355,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `536eeb5`. **Cihazda doğrulanmalı.** |
 | **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `dd0eda3`. **Cihazda doğrulanmalı.** |
 | **WP-498** Üye satırında ad alanı | Android telefon + gerçek Supabase (grup detayı; **uzun adlı**, ünvanlı, yönetici olmayan bir üye; yazı ölçeği 1.0 ve 1.6) | Üye listesinde ad artık tek harfe düşmüyor — en az 12 karakter okunuyor; dürtme ve susturma satırda duruyor; sağdaki ⋮ menüsünde "Üyeyi çıkar" ve "Üyeyi yasakla" ayrı adlarla çıkıyor ve seçilince onay diyaloğu açılıyor; yönetici olmayan hesapta ⋮ hiç görünmüyor. Ekran başlığındaki "Yönetici" rozeti 1.6 ölçekte sarı-siyah taşma şeridi üretmiyor. Commit: `b3e6c7d`. **Cihazda doğrulanmalı.** |
+| **WP-499** Trend grafiği Y ekseni | Android telefon (İstatistik → kişisel; 14 / 30 / 90 günlük dönemlerin **üçü de**, en az bir dolu haftası olan hesap) | Çizgi grafiğin sol ekseninde tepede iki sayı üst üste binmiyor; en üstteki sayı en üst ızgara çizgisinin tam hizasında ve o çizginin değerine eşit; dönem değiştirince (14↔30↔90) hiçbirinde çakışma çıkmıyor. Commit: `bedd14a`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7202,7 +7203,7 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-499: Trend grafiğinde Y ekseni etiketleri çakışıyor 📉
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N04 / rapor T09)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** yok
 - **Problem:** `daily_line_chart.dart:26-28` `maxY`yi veri maksimumunun 1.2 katı
   yapıyor; bu değer seçilen aralığın katı değil. fl_chart ise aralık tıklarına
   **ek olarak** eksen sınırı için bir etiket daha üretiyor
@@ -7210,28 +7211,68 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
   → tepedeki iki etiket birkaç piksel arayla üst üste biniyor. Her veri
   kümesinde deterministik. `daily_bar_chart.dart:50-51` aynı deseni (×1.32)
   kullanıyor.
+  ↳ **Doğrulandı ve bir ayrıntı eklendi:** ızgara çizgileri
+  `maxIncluded: false` ile çizilir (`axis_chart_painter.dart:113-119`), yani
+  fazladan etiketin **çizgisi yok** — kullanıcı tepede boşlukta duran ikinci bir
+  sayı görüyor. Ölçülen üst üste binme (14/30/90 günün üçünde de aynı):
+  yükselen seri **22.9 px**, tek zirve **5.1 px**, uzun mesai **9.6 px**
+  (etiket yüksekliği ~23 px → ilkinde iki etiket neredeyse tamamen üst üste).
 - **Kapsam dışı:** Grafik tipi, renkler, dönem seçici, tooltip.
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/stats/widgets/daily_line_chart.dart`
-  - `app/lib/features/stats/widgets/daily_bar_chart.dart`
   - `app/lib/features/stats/widgets/chart_axis.dart`
   - `app/test/features/stats/chart_axis_wp499_test.dart` (yeni)
-- **DOKUNMA:** diğer grafik widget'ları (ayrı WP olur).
+  - ⚠️ `daily_bar_chart.dart` **değiştirilmedi** — gerekçe aşağıda.
+- **DOKUNMA:** diğer grafik widget'ları (ayrı WP olur). — dokunulmadı.
 - **Adımlar:**
-  - [ ] Önce aralığı seç, sonra `maxY`yi aralığın **üst katına yuvarla**
-        (`(dataMax * 1.15 / interval).ceil() * interval`).
-  - [ ] Gerekirse `maxIncluded: false` ile ikinci kalkan.
-  - [ ] Saf fonksiyon testi: üretilen etiket kümesinde **iki etiket aynı
-        aralıktan yakın** olamaz.
+  - [x] Sıra tersine çevrildi: önce aralık, sonra aralığın **üst katına
+        yuvarlanmış** üst sınır. Ortak saf fonksiyon `minuteAxis()` +
+        `MinuteAxis` (`chart_axis.dart`), pay 1.15 ve yuvarlama **paydan sonra**.
+  - [x] `maxIncluded: false` **kullanılmadı** — kartın kendi tuzağı bu: üst sınır
+        artık aralığın katı olduğu için o bayrak tepe etiketini **siler** ve
+        kabulün 2. maddesini ("en üst etiket eksen sınırına eşit") bozar.
+  - [x] Saf fonksiyon testi + gerçek grafik üzerinde geometrik test.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** Tüm günler 0 · tek gün veri · 90 günlük seri · 24 saatlik
-  tek gün · dakika/saat birim geçişi (90 dk eşiği).
-- **Kabul (ölçülebilir):** 14/30/90 gün ve üç sentetik seri için golden'da eksen
-  etiketleri **çakışmıyor**; en üst etiket eksen sınırına eşit.
+  tek gün · dakika/saat birim geçişi (90 dk eşiği) — hepsi testte. Birim
+  **serinin kendi tepesine** bakar, yuvarlanmış sınıra değil: 89 dk'lık seri
+  sınır 120'ye yuvarlandı diye "saat"e geçmiyor.
+- **Kabul (ölçülebilir):**
+  1. ⚠️ **Golden yerine geometri.** Golden çakışmayı ancak göz kararı gösterir;
+     bunun yerine gerçek `DailyLineChart` pump edilip Y etiketlerinin
+     dikdörtgenleri okunuyor ve **iki etiket dikeyde kesişemez** deniyor.
+     14/30/90 gün × 3 sentetik seri = 9 kombinasyon, hepsi yeşil.
+  2. ✅ En üst etiket eksen sınırına eşit: `maxY / interval` tam sayı — hem saf
+     fonksiyonda (1–1440 dk tam tarama, tek istisna yok) hem de grafiğe giden
+     `LineChartData` üzerinde ölçülüyor.
+- **Kanıt (kırmızı-yeşil, ölçüldü):** `chart_axis.dart` + `daily_line_chart.dart`
+  `git stash` ile geri konup aynı testler koşuldu → **10 test kırmızı**
+  (9 kombinasyonun tamamı + yapısal iddia). Yeni kodda 18/18 yeşil.
+- **🔴 Kartta olmayan iki bulgu:**
+  1. **Çubuk grafikte bu hata yapısal olarak yok.** Kart `daily_bar_chart.dart`i
+     "aynı deseni kullanıyor" diye sahiplendi; okundu: orada
+     `leftTitles.showTitles: false` ve `gridData.show: false`, yani **Y ekseni
+     etiketi de ızgarası da yok** — çakışacak etiket yok. Oradaki ×1.32 yalnız
+     çubuğun üstünde bırakılan paydır ve yuvarlamak çubukları görünür biçimde
+     kısaltırdı (100 dk tepe için sınır 132 → 180, çubuk %76'dan %56'ya iner):
+     hiçbir hatayı düzeltmeyen bir görsel gerileme. Dosya değiştirilmedi; kararı
+     kilitleyen test eklendi — biri Y eksenini açarsa test kırılıp `minuteAxis`e
+     yönlendiriyor.
+  2. **Aynı hata `session_scatter_chart.dart`te de var** (`:93`
+     `maxY = maxMin * 1.2`). Üstelik orada daha kötü: `leftTitles`in `interval`i
+     hiç verilmemiş (fl_chart kendi aralığını seçiyor) ve `getTitlesWidget`
+     hiçbir değeri elemiyor — `0` da, fazladan sınır etiketi de çiziliyor.
+     Kart "diğer grafik widget'ları ayrı WP olur" dediği için **dokunulmadı**;
+     WP-503 açıldı. Kodda okundu, piksel ölçümü yapılmadı.
+     `leaderboard_rank_chart.dart` ise korunuyor: `maxY = n + 0.5` fazladan
+     etiket üretse de `rank < 1` filtresi onu düşürüyor.
+- **Test durumu:** `flutter test` **1711/1711** (+18), `flutter analyze` temiz,
+  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
 - **Tuzaklar:** Yalnız `maxIncluded: false` yapıp `maxY` yuvarlamasını atlamak —
   tepe etiketi kaybolur, ölçek okunamaz hale gelir.
+  ↳ Uyuldu: bayrak hiç kullanılmadı, düzeltme yuvarlamada.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
@@ -7344,6 +7385,42 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
   cihazında bir hafta boyunca kayıt toplanıp `docs/qa/`ya işleniyor. Eşik
   aşımı **görünür** oluyor.
 - **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-503: Dağılım grafiğinde Y ekseni aynı hatayı taşıyor 🔵
+- **Program/Faz:** PLAN 5 · Faz F5 · Düşük (WP-499 yan bulgusu)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-499 ✅ kapandı
+  (`minuteAxis` orada yazıldı, burada yalnız çağrılacak)
+- **Problem:** `session_scatter_chart.dart:93` `maxY = maxMin * 1.2` — WP-499'un
+  düzelttiği desenin aynısı. Üstelik iki kat kötü: `leftTitles`in `interval`i
+  hiç verilmemiş (fl_chart kendi aralığını seçiyor, ızgarayla hizalanmıyor) ve
+  `getTitlesWidget` hiçbir değeri elemiyor — hem `0` hem de fl_chart'ın eksen
+  sınırı için ürettiği fazladan etiket çiziliyor.
+  ⚠️ **Kodda okundu, piksel ölçümü yapılmadı** — WP-499'un kapsamı dışıydı.
+  İlk adım ölçmek: eski koda karşı etiket dikdörtgenlerinin kesiştiğini göster.
+- **Kapsam dışı:** Nokta renkleri/ders eşlemesi, X ekseni tarih etiketleri,
+  tooltip, `leaderboard_rank_chart.dart` (orada `rank < 1` filtresi zaten
+  fazladan etiketi düşürüyor — ölçüldü, hata yok).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/stats/widgets/session_scatter_chart.dart`
+  - `app/test/features/stats/scatter_axis_wp503_test.dart` (yeni)
+- **DOKUNMA:** `chart_axis.dart` (WP-499'da yazıldı, imzası değişmemeli),
+  `daily_line_chart.dart`, `daily_bar_chart.dart`.
+- **Adımlar:**
+  - [ ] Önce kırmızıyı ölç: mevcut kodda Y etiketleri kesişiyor mu, kaç piksel?
+  - [ ] `minuteAxis()` çağır; `interval`i `SideTitles`a **ver** ve ızgaranın
+        `horizontalInterval`ı ile aynı olsun.
+  - [ ] `value <= 0` elemesi ekle (çizgi grafikteki gibi).
+  - [ ] WP-499'un geometrik testinin aynısı: iki etiket dikeyde kesişemez.
+- **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local. · **RLS:** Yok.
+- **Edge-case'ler:** Tek oturum · aynı güne çok oturum · boş dönem (grafik hiç
+  çizilmiyor, erken dönüş var) · 24 saatlik tek oturum.
+- **Kabul (ölçülebilir):** Y etiketlerinin dikdörtgenleri kesişmiyor; `maxY`
+  eksen aralığının tam katı; `0` etiketi çizilmiyor.
+- **Tuzaklar:** `interval` vermeden yalnız `maxY`yi yuvarlamak — fl_chart kendi
+  aralığını seçmeye devam eder ve yuvarlama işe yaramaz.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

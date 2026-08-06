@@ -50,6 +50,79 @@ double niceMinuteInterval(double maxMinutes) {
 /// Eksen boyunca tek birim: en yüksek değer ≥ 90 dk ise saat, yoksa dakika.
 bool axisUsesHours(double maxMinutes) => maxMinutes >= 90;
 
+/// Y ekseni ölçeği: üst sınır **her zaman** aralığın tam katıdır.
+///
+/// 🔴 WP-499 (V58-N04 / rapor T09) kök nedeni: üst sınır ile aralık ayrı ayrı
+/// seçiliyordu. Grafik `maxY = veriMaks × 1.2` diyor, aralığı ise ayrıca
+/// yuvarlak bir sayıya oturtuyordu — ikisi birbirinin katı değil.
+///
+/// fl_chart eksen üzerinde `min`den `max`a aralık aralık yürür ve **son adım
+/// `max`a denk gelmiyorsa `max` için bir etiket daha üretir**
+/// (`axis_chart_helper.dart`, `SideTitles.maxIncluded` varsayılanı `true`).
+/// Sonuç: tepede iki etiket, aralarında `maxY - k×aralık` kadar boşluk. Bu
+/// fark keyfî küçük olabilir — 51 dk'lık bir seride `maxY = 61.2`, aralık 30,
+/// son tık 60 → iki etiket eksenin **%2**'si kadar, yani üst üste.
+///
+/// Ek olarak ızgara çizgileri `maxIncluded: false` ile çizilir
+/// (`axis_chart_painter.dart`), yani fazladan etiketin çizgisi de yoktur:
+/// kullanıcı tepede boşlukta duran ikinci bir sayı görür.
+///
+/// Çözüm sıralamayı tersine çevirmek: **önce aralık, sonra o aralığın üst
+/// katına yuvarlanmış üst sınır.** Böylece son adım her zaman `max`a denk gelir
+/// ve fazladan etiket hiç üretilmez.
+///
+/// ⚠️ `maxIncluded: false` tek başına **yanlış** çözümdür (kart tuzağı): üst
+/// sınır zaten aralığın katıysa o bayrak tepe etiketini **siler**, ölçek
+/// okunamaz hâle gelir. Bu yüzden burada kullanılmıyor.
+class MinuteAxis {
+  const MinuteAxis({
+    required this.maxY,
+    required this.interval,
+    required this.useHours,
+  });
+
+  /// Eksenin üst sınırı (dakika). `interval`in tam katıdır.
+  final double maxY;
+
+  /// İki etiket/ızgara çizgisi arası (dakika).
+  final double interval;
+
+  /// Etiketler saat mi dakika mı yazıyor.
+  final bool useHours;
+
+  /// Eksende çizilecek etiket değerleri (0 hariç — grafik onu çizmiyor).
+  ///
+  /// fl_chart'ın ürettiği kümenin aynısı: üst sınır aralığın katı olduğu için
+  /// listenin sonu tam `maxY`dir ve arada tek bir eşit olmayan adım yoktur.
+  List<double> get labelValues => [
+    for (var step = 1; step * interval <= maxY + interval / 100000; step++)
+      step * interval,
+  ];
+}
+
+/// [maxMinutes] (serinin en yüksek değeri) için Y ekseni ölçeği.
+///
+/// [headroom] veri tepesinin üstünde bırakılacak paydır; yuvarlama bundan
+/// **sonra** yapılır, o yüzden gerçek pay her zaman biraz daha büyüktür.
+MinuteAxis minuteAxis(double maxMinutes, {double headroom = 1.15}) {
+  if (maxMinutes <= 0) {
+    // Boş seride ölçek yine de okunur olmalı: 0–60 dk, 15 dk aralık.
+    return const MinuteAxis(maxY: 60, interval: 15, useHours: false);
+  }
+  final raw = maxMinutes * headroom;
+  final interval = niceMinuteInterval(raw);
+  // Kayan nokta payı: `raw` aralığın tam katıysa `ceil` onu bir üst kata
+  // atmasın (örn. 119.99999999 → 4 değil 5 aralık).
+  final steps = (raw / interval - 1e-9).ceil();
+  return MinuteAxis(
+    maxY: (steps < 1 ? 1 : steps) * interval,
+    interval: interval,
+    // Birim serinin kendi tepesine göre seçilir, yuvarlanmış sınıra göre
+    // değil: 89 dk'lık bir seri yuvarlama yüzünden "saat"e geçmemeli.
+    useHours: axisUsesHours(maxMinutes),
+  );
+}
+
 /// Y ekseni etiketi. [useHours] true ise saat ("1.5s"), değilse dakika ("30dk").
 /// Tam sayıda saatte ondalık gösterilmez.
 String chartYLabel(
