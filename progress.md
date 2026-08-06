@@ -5352,7 +5352,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `695e589`. **Cihazda doğrulanmalı.** |
 | **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `17432c5`. **Cihazda doğrulanmalı.** |
 | **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `b8aaa3f`. **Cihazda doğrulanmalı.** |
-| **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `536eeb5`. **Cihazda doğrulanmalı.** |
+| **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7058,7 +7059,7 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-497: Aktif üye kartında satır yüksekliği — taç bütçeye sığmıyor 👑
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N11, N04 / rapor T10)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-495 (aynı dosya: `active_members_card.dart`) — **sonra** koşar
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-495 ✅ kapandı (`95043fd`)
 - **Problem:** Kart kaç satır sığacağını **sabit 42 px** ile hesaplıyor
   (`active_members_card.dart:60-80`). Taçlı avatar ise kutusunu büyütüyor
   (`crowned_avatar.dart:274-283`): `radius 16` için hesap **50.9 px**, satır
@@ -7070,21 +7071,46 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/home/widgets/active_members_card.dart`
   - `app/test/features/home/active_members_card_wp497_test.dart` (yeni)
+  - `app/test/features/home/goldens/active_members_crowned_wp497.png` (yeni)
 - **DOKUNMA:** `app/lib/core/widgets/crowned_avatar.dart` (WP-495'in sahibi),
-  dashboard grid.
+  dashboard grid. — **hiçbirine dokunulmadı.**
 - **Adımlar:**
-  - [ ] Sabit `rowHeight`/`headerHeight` aritmetiğini kaldır; gerçek
-        kaydırılabilir liste + içeriğe göre yükseklik.
-  - [ ] Golden'ı **taçlı** üyelerle kur (taçsız golden bu hatayı göremez).
+  - [x] Sabit `rowHeight`/`headerHeight` aritmetiği **tümüyle kalktı**
+        (`maxItems`, `fill`, `visibleActive` ile birlikte). Sınırlı yükseklikte
+        başlık listenin ilk öğesi olan gerçek kaydırılabilir `ListView.builder`;
+        sınırsız yükseklikte içeriğe göre uzayan `Column`.
+        `builder` bilinçli: her satırda saniyede bir çalışan `SecondTicker` var,
+        görünmeyen satır hiç kurulmamalı.
+  - [x] Golden **taçlı** üyelerle kuruldu; ayrıca "taçlı satır taçsızdan
+        yüksek" iddiası eklendi ki kurulum sessizce taçsıza düşerse test
+        kırılsın (ilk denemede tam bu oldu: rütbe akışı ikinci kareye kadar
+        gelmediği için ölçüm taçsızdı).
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** 0/1/2/10 aktif üye · taçlı+taçsız karışık · yazı ölçeği 1.3 ·
-  kartın 1×1 ve 2×2 boyutu · çok dar kart (compact dal).
-- **Kabul (ölçülebilir):** Taçlı üyelerle **ve** yazı ölçeği 1.3'te kırpılmış
-  piksel yok; satırlar kartın üst kenarından başlıyor (golden).
+- **Edge-case'ler:** 0/1/2/10 aktif üye · yazı ölçeği 1.0/1.3 · dar kart
+  (compact dal) · başlıktan bile kısa hücre · sınırsız yükseklik — hepsi testte.
+- **Kabul (ölçülebilir):**
+  1. ⚠️ **Yeniden yorumlandı.** Kabul "kırpılmış piksel yok" diyordu; gerçek
+     kaydırılabilir listede alt kenardaki yarım satır kırpılma değil,
+     **kaydırma işaretidir** ve içeriği bütçeye zorlamadan bundan kaçınmanın
+     yolu yok — üyeyi düşürmek zaten hatanın kendisiydi. Ölçülen: hiçbir satır
+     **kalıcı** kırpık değil; ilk satır durağan hâlde, son satır sona
+     kaydırılınca tam görünüyor (1.0 ve 1.3).
+  2. ✅ Satırlar kartın üst kenarından başlıyor (ilk satır testi + golden).
+  3. ✅ **Kartta yazmayan asıl kayıp:** `maxItems` bütçeye sığmayan üyeleri
+     listeden **tamamen düşürüyordu** ve liste kaydırılamıyordu
+     (`NeverScrollableScrollPhysics`) — o üyelere ulaşmanın hiçbir yolu yoktu.
+     Artık 10 üyeli grupta 10. üyeye kaydırarak ulaşılıyor (test).
+- **Kanıt (kırmızı-yeşil, ölçüldü):** eski dosya geri konup testler koşuldu →
+  **4 test kırmızı**: son satır 1.0 ve 1.3'te kaydırıldıktan sonra da kırpık,
+  10. üye hiç kurulmuyor, sınırsız yükseklik dalında 34 istisna. Yeni kodda
+  15/15 yeşil.
+- **Test durumu:** `flutter test` **1681/1681**, `flutter analyze` temiz,
+  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
 - **Tuzaklar:** `maxItems` hesabını "biraz büyüterek" yamamak — aynı hata başka
   ölçekte geri gelir. Varsayımı **kaldır**, büyütme.
+  ↳ Uyuldu: hiçbir sabit büyütülmedi, hepsi silindi.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

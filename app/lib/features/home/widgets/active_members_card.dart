@@ -64,33 +64,24 @@ class ActiveMembersCard extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 220;
-          final availableHeight = constraints.maxHeight;
-          final isHeightBounded = availableHeight.isFinite;
+          final isHeightBounded = constraints.maxHeight.isFinite;
 
-          // Sabit başlık (dikey padding dahil) ~68px, her satır ~42px.
-          const rowHeight = 42.0;
-          const headerHeight = 32 + 24 + 12;
-
-          // Başlık + en az bir satır sığmıyorsa TÜM içerik kaydırılır (Expanded
-          // yerine düz Column) → çok kısa hücrede taşma (RenderFlex) olmaz.
-          final fill =
-              !isHeightBounded || availableHeight >= headerHeight + rowHeight;
-
-          final int maxItems;
-          if (fill && isHeightBounded) {
-            maxItems = ((availableHeight - headerHeight) / rowHeight)
-                .floor()
-                .clamp(1, 20);
-          } else if (isHeightBounded) {
-            maxItems = 3;
-          } else {
-            maxItems = active.length;
-          }
-
-          final visibleActive = active.take(maxItems).toList();
+          // 🔴 WP-497: burada **sabit `rowHeight = 42` ve `headerHeight = 68`**
+          // vardı ve kaç satırın sığdığı o aritmetikten çıkıyordu. Varsayım
+          // yanlıştı: taçlı avatar kendi kutusunu büyütür
+          // (`crowned_avatar.dart` `top + base + outlineW`), `radius 16` için
+          // satır dikey dolguyla ~61 px eder — bütçe %45 aşılır. Sonuç, son
+          // satırın alttan kırpılması ve listenin aşağı kaymış görünmesiydi.
+          // Ayrıca `maxItems` bütçeye sığmayan üyeleri **tamamen düşürüyordu**;
+          // kullanıcı onlara hiçbir şekilde ulaşamıyordu.
+          //
+          // Sayıyı büyütmek çözüm değil (kart tuzağı): yazı ölçeği, taç kademesi
+          // ve avatar boyutu değiştikçe aynı hata geri gelir. Varsayım tümüyle
+          // kaldırıldı — sınırlı yükseklikte gerçek kaydırılabilir liste,
+          // sınırsız yükseklikte içeriğe göre uzayan sütun.
 
           Widget rowFor(int i) {
-            final p = visibleActive[i];
+            final p = active[i];
             final member = memberById[p.userId];
             final name = (member != null && !member.isActive)
                 ? AppLocalizations.of(context).homeEskiGrupUyesi
@@ -160,53 +151,48 @@ class ActiveMembersCard extends ConsumerWidget {
                 )
               : const GroupCardSkeleton(key: kGroupCardSkeletonKey);
 
-          if (!fill) {
+          // Gövde tek bir sıralı akış: veri yoksa iskelet/hata, kimse yoksa
+          // metin, varsa üye satırları. Üçü de aynı listeden beslendiği için
+          // dallara ayrı yükseklik hesabı gerekmiyor.
+          final bodyCount = (!ready || active.isEmpty) ? 1 : active.length;
+          Widget bodyAt(int i) {
+            if (!ready) return statusChild;
+            if (active.isEmpty) return emptyText;
+            return rowFor(i);
+          }
+
+          if (!isHeightBounded) {
+            // Dış kaydırıcının içindeyiz (ana ekran listesi): kart içeriği
+            // kadar uzar, iç içe kaydırma jesti yutulmaz.
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    header,
-                    const SizedBox(height: 12),
-                    if (!ready)
-                      statusChild
-                    else if (active.isEmpty)
-                      emptyText
-                    else
-                      for (var i = 0; i < visibleActive.length; i++) rowFor(i),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  header,
+                  const SizedBox(height: 12),
+                  for (var i = 0; i < bodyCount; i++) bodyAt(i),
+                ],
               ),
             );
           }
 
+          // Sınırlı yükseklik (pano hücresi): başlık da listenin ilk öğesi.
+          // Böylece hücre başlıktan bile kısa olsa `RenderFlex` taşması olmaz
+          // ve sığmayan üyeler düşmek yerine **kaydırılarak** görülebilir.
+          // `builder` kullanılıyor: her satırda saniyede bir çalışan
+          // `SecondTicker` var, görünmeyen satırlar hiç kurulmamalı.
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                header,
-                const SizedBox(height: 12),
-                if (!ready)
-                  // Kısa hücrede taşmasın: iskelet/hata metni kırpılır.
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      child: statusChild,
-                    ),
-                  )
-                else if (active.isEmpty)
-                  emptyText
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleActive.length,
-                      itemBuilder: (context, i) => rowFor(i),
-                    ),
-                  ),
-              ],
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: bodyCount + 1,
+              itemBuilder: (context, i) => i == 0
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: header,
+                    )
+                  : bodyAt(i - 1),
             ),
           );
         },
