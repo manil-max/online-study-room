@@ -5347,6 +5347,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
+| **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -6655,7 +6656,7 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 
 ### WP-494: Grup üye akışı `build()` içinde açılıyor — abonelik sızıntısı 🔁
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N01 / rapor T03)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** yok
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** yok
 - **Problem:** `class_detail_screen.dart:866-867` `StreamBuilder`a
   `repo.watchMembers(group.id)` veriyor; bu çağrı **her `build()`de yeni bir
   Supabase realtime aboneliği** açıyor ve her emisyonda bir RPC atıyor
@@ -6673,10 +6674,16 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **DOKUNMA:** `app/lib/data/repositories/**` (imza değişmez),
   `presence_providers.dart`.
 - **Adımlar:**
-  - [ ] `StreamProvider.family<List<Profile>, String>` ekle; ekran onu izlesin.
-  - [ ] `StreamBuilder`ı kaldır; yükleniyorken **son bilinen liste** korunsun
-        (spinner yalnız ilk yüklemede).
-  - [ ] Test: aynı ekranın N kez yeniden çizimi **tek** abonelik üretmeli.
+  - [x] `StreamProvider.family<List<Profile>, String>` ekle; ekran onu izlesin.
+        `groupMembersByIdProvider` (`group_providers.dart:143`). Mevcut
+        `groupMembersProvider` (aktif grup) **dokunulmadan** bırakıldı.
+  - [x] `StreamBuilder`ı kaldır; yükleniyorken **son bilinen liste** korunsun
+        (spinner yalnız ilk yüklemede). `AsyncValue.value` yenilemede son veriyi
+        taşır. Ayrıca: akış ilk veriden önce hata verirse eskiden **sonsuz
+        spinner** dönüyordu (`snapshot.data == null` hatayı da yutuyordu); artık
+        hata metni görünür (mevcut `authBeklenmeyenBirHataOlustu` anahtarı, yeni
+        l10n anahtarı eklenmedi — `.arb` WP-500'ün dosyası).
+  - [x] Test: aynı ekranın N kez yeniden çizimi **tek** abonelik üretmeli.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** `group_member_directory` RPC'si aynen kalır (engellenen üye
@@ -6689,6 +6696,28 @@ gerektiren kartlar: WP-491, WP-492, WP-501 ve gerekirse WP-490. pgTAP dosyaları
 - **Tuzaklar:** `autoDispose` provider'ı dinleyicisiz bırakıp her okumada
   yeniden kurmak (bkz. Riverpod 3 tuzağı) — testte dinleyici tut.
 - **Model önerisi:** 🟣 Pro
+- **Kanıt (2026-08-06, `Kodda doğrulandı`):** `flutter analyze` 0 uyarı ·
+  `dart format` temiz · tam paket **1608/1608 yeşil** (öncesi 1605) ·
+  `scripts/l10n_audit.py` OK. Yeni
+  `app/test/features/classroom/member_stream_wp494_test.dart` **3 test**:
+  (1) 10 presence emisyonundan sonra `watchMembers` çağrısı **1** (eski kodda 11),
+  (2) presence değişiminde spinner yok ve iki üye adı ekranda kalıyor,
+  (3) aynı grubu iki ekran izlediğinde abonelik yine 1 (aile `groupId` ile
+  anahtarlı). **Kapı kasten kırık girdiyle sınandı:** ekran `StreamBuilder`lı
+  HEAD sürümüne döndürülünce **üç test de kırmızı**, geri getirilince yeşil.
+- **⚠️ Ölçüm tuzağı (kalıcı ders):** ilk denemede iki iddia sessizce yeşildi.
+  (a) Üye kartı `ListView`in aşağısında; 800×600 test yüzeyinde **hiç kurulmuyor**
+  → sayaç 0'da kalıyor, test hiçbir şey ölçmüyordu (yüzey 1000×5000 yapıldı).
+  (b) Bellek-içi depo veriyi **anında** verdiği için taze abonelik "veri yok"
+  karesi göstermiyor → spinner iddiası her iki kodda da geçiyordu; sahte depo
+  emisyonu 20 ms geciktirerek gerçek ağ turunu temsil ediyor. Ayrıca sayaç
+  `groupMembersProvider`ın çağrısını da topluyordu; o provider testte
+  override edilerek ölçüm detay ekranına daraltıldı.
+- **Kapsam dışı bırakılan gözlem (düzeltilmedi, bildiriliyor):** aktif grubun
+  detayı açıkken `groupMembersProvider` ile `groupMembersByIdProvider(aynı id)`
+  **iki ayrı** realtime kanalı açar. Bu WP öncesinde de böyleydi (provider +
+  `StreamBuilder`), yani regresyon değil; birleştirme ayrı WP işidir çünkü
+  `groupMembersProvider`ı aileye devretmek 10+ testin override yüzeyine dokunur.
 
 ---
 

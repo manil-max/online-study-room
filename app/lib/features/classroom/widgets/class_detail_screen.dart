@@ -862,97 +862,98 @@ class _MembersCard extends ConsumerWidget {
     // WP-483: yalnız **kendi** susturma tercihim. Karşı taraf bunu okuyamaz.
     final mutedIds =
         ref.watch(mutedNudgeSenderIdsProvider).value ?? const <String>{};
+    // 🔴 WP-494: akış artık her `build()`de kurulmuyor; provider aynı grup için
+    // tek abonelik tutar ve yenilemede son listeyi korur (spinner yalnız ilk
+    // yüklemede). Bkz. `groupMembersByIdProvider`.
+    final membersAsync = ref.watch(groupMembersByIdProvider(group.id));
+    final members = membersAsync.value;
+    if (members == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            // Akış ilk veriden önce hata verirse eskiden sonsuz spinner
+            // dönüyordu; hata artık görünür.
+            child: membersAsync.hasError
+                ? Text(l10n.authBeklenmeyenBirHataOlustu)
+                : const CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
     return Card(
-      child: StreamBuilder<List<Profile>>(
-        stream: repo.watchMembers(group.id),
-        builder: (context, snapshot) {
-          final members = snapshot.data;
-          if (members == null) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          return Column(
-            children: [
-              for (final m in members)
-                ListTile(
-                  leading: LiveCrownedAvatar(
-                    userId: m.id,
-                    displayName: m.displayName,
-                    avatarUrl: m.avatarUrl,
-                    radius: 18,
-                  ),
-                  // WP-487: ad tek satır. Sarmalanan ad + sarmalanan ünvan +
-                  // ayrı "Yönetici" satırı aynı üyeyi 5 satıra çıkarabiliyordu.
-                  title: Text(
-                    !m.isActive
-                        ? AppLocalizations.of(context).classroomEskiGrupUyesi
-                        : (m.displayName.isEmpty
-                              ? AppLocalizations.of(context).classroomIsimsiz
-                              : m.displayName),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: _memberSubtitle(
-                    context,
-                    isOwner: m.id == group.createdBy,
-                    title: titleNames[m.titleAchievementId],
-                  ),
-                  onTap: () => SocialProfileDialog.show(context, m),
-                  trailing: m.isActive && m.id != currentUserId
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _NudgeButton(
-                              key: ValueKey('nudge-${m.id}'),
-                              isRecipientStudying: studyingIds.contains(m.id),
-                              onSend: currentUser == null
-                                  ? null
-                                  : () => _sendNudge(
-                                      context,
-                                      ref,
-                                      currentUser,
-                                      m,
-                                    ),
-                            ),
-                            _MuteNudgeButton(
-                              key: ValueKey('mute-${m.id}'),
-                              memberId: m.id,
-                              isMuted: mutedIds.contains(m.id),
-                            ),
-                            // 🔴 WP-446: bu iki eylem aynı görünüyordu ama
-                            // sonuçları farklı. Çıkarma geri dönülebilir
-                            // (üye davet koduyla tekrar katılır), yasak
-                            // değil. Yasak düğmesi üstelik `safetyBlock`
-                            // ("Kişiyi engelle") metnini kullanıyordu — o ise
-                            // hesap-kapsamlı KİŞİSEL bir tercihtir, yönetici
-                            // işlemi değil. Yönetici "engelliyorum" sanıp
-                            // kalıcı grup yasağı koyabiliyordu.
-                            if (isAdmin && m.id != group.createdBy)
-                              IconButton(
-                                tooltip: AppLocalizations.of(
-                                  context,
-                                ).classroomUyeyiCikar,
-                                icon: const Icon(Icons.person_remove_outlined),
-                                onPressed: () =>
-                                    _removeMember(context, repo, m),
-                              ),
-                            if (isAdmin && m.id != group.createdBy)
-                              IconButton(
-                                tooltip: AppLocalizations.of(
-                                  context,
-                                ).classroomUyeyiYasakla,
-                                icon: const Icon(Icons.gavel_outlined),
-                                onPressed: () => _banMember(context, repo, m),
-                              ),
-                          ],
-                        )
-                      : null,
-                ),
-            ],
-          );
-        },
+      child: Column(
+        children: [
+          for (final m in members)
+            ListTile(
+              leading: LiveCrownedAvatar(
+                userId: m.id,
+                displayName: m.displayName,
+                avatarUrl: m.avatarUrl,
+                radius: 18,
+              ),
+              // WP-487: ad tek satır. Sarmalanan ad + sarmalanan ünvan +
+              // ayrı "Yönetici" satırı aynı üyeyi 5 satıra çıkarabiliyordu.
+              title: Text(
+                !m.isActive
+                    ? AppLocalizations.of(context).classroomEskiGrupUyesi
+                    : (m.displayName.isEmpty
+                          ? AppLocalizations.of(context).classroomIsimsiz
+                          : m.displayName),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: _memberSubtitle(
+                context,
+                isOwner: m.id == group.createdBy,
+                title: titleNames[m.titleAchievementId],
+              ),
+              onTap: () => SocialProfileDialog.show(context, m),
+              trailing: m.isActive && m.id != currentUserId
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _NudgeButton(
+                          key: ValueKey('nudge-${m.id}'),
+                          isRecipientStudying: studyingIds.contains(m.id),
+                          onSend: currentUser == null
+                              ? null
+                              : () => _sendNudge(context, ref, currentUser, m),
+                        ),
+                        _MuteNudgeButton(
+                          key: ValueKey('mute-${m.id}'),
+                          memberId: m.id,
+                          isMuted: mutedIds.contains(m.id),
+                        ),
+                        // 🔴 WP-446: bu iki eylem aynı görünüyordu ama
+                        // sonuçları farklı. Çıkarma geri dönülebilir
+                        // (üye davet koduyla tekrar katılır), yasak
+                        // değil. Yasak düğmesi üstelik `safetyBlock`
+                        // ("Kişiyi engelle") metnini kullanıyordu — o ise
+                        // hesap-kapsamlı KİŞİSEL bir tercihtir, yönetici
+                        // işlemi değil. Yönetici "engelliyorum" sanıp
+                        // kalıcı grup yasağı koyabiliyordu.
+                        if (isAdmin && m.id != group.createdBy)
+                          IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomUyeyiCikar,
+                            icon: const Icon(Icons.person_remove_outlined),
+                            onPressed: () => _removeMember(context, repo, m),
+                          ),
+                        if (isAdmin && m.id != group.createdBy)
+                          IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomUyeyiYasakla,
+                            icon: const Icon(Icons.gavel_outlined),
+                            onPressed: () => _banMember(context, repo, m),
+                          ),
+                      ],
+                    )
+                  : null,
+            ),
+        ],
       ),
     );
   }
@@ -1218,9 +1219,7 @@ class _MuteNudgeButtonState extends ConsumerState<_MuteNudgeButton> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return IconButton(
-      tooltip: widget.isMuted
-          ? l10n.safetyUnmuteNudges
-          : l10n.safetyMuteNudges,
+      tooltip: widget.isMuted ? l10n.safetyUnmuteNudges : l10n.safetyMuteNudges,
       // Susturulmuş üyenin satırdaki görünür işareti: dolu simge + vurgu rengi.
       // Sahip "grupta mute işaretini bulamadım" derken göstergeyi de kastetti.
       icon: _busy
@@ -1265,7 +1264,6 @@ Future<bool> _confirm(
   );
   return result ?? false;
 }
-
 
 /// WP-445: Gruptan çıkış — tek hareket, tek komut.
 ///
@@ -1322,11 +1320,7 @@ class _LeaveGroupTileState extends ConsumerState<_LeaveGroupTile> {
     try {
       // Askıda kalan istek retry'ı gizlemesin.
       await repo
-          .leaveGroup(
-            widget.group.id,
-            widget.userId,
-            commandId: _commandId!,
-          )
+          .leaveGroup(widget.group.id, widget.userId, commandId: _commandId!)
           .timeout(const Duration(seconds: 10));
       // `left` ve `alreadyLeft` aynı kullanıcı gerçeğidir: artık üye değil.
       ref.read(activeGroupIdProvider.notifier).select(null);

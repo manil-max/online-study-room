@@ -140,6 +140,22 @@ final userGroupProvider = Provider<AsyncValue<StudyGroup?>>((ref) {
   });
 });
 
+/// 🔴 WP-494: Kimliği verilen grubun üye akışı.
+///
+/// Grup detay ekranı bu akışı `StreamBuilder`a **`build()` içinde** kuruyordu:
+/// her yeniden çizim yeni bir Supabase realtime aboneliği açıyor, her emisyon
+/// bir `group_member_directory` RPC'si atıyordu. Aynı `build()` presence'ı da
+/// izlediği için ekran saniyeler mertebesinde yeniden kuruluyor, taze stream
+/// henüz veri vermediği için liste spinner'a düşüyordu ("gruplar kısmında
+/// sürekli ekran yenilenip geliyordu"). Provider aynı `groupId` için tek akış
+/// tutar ve yeniden çizimde son listeyi korur.
+final groupMembersByIdProvider = StreamProvider.family<List<Profile>, String>((
+  ref,
+  groupId,
+) {
+  return ref.watch(groupRepositoryProvider).watchMembers(groupId);
+});
+
 /// Aktif sınıftaki üyeler.
 final groupMembersProvider = StreamProvider<List<Profile>>((ref) {
   final group = ref.watch(userGroupProvider).value;
