@@ -7039,6 +7039,12 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
     yenilendi ama **kanıt onlar değil**, `Icon.icon` okuyan iddialar.
 - **Test durumu:** `flutter test` **1666/1666** yeşil (tüm paket),
   `flutter analyze` temiz, l10n TR/EN + Android kapıları yeşil.
+  - 🔴 **CI koşmadı.** GitHub Actions 2026-08-06 17:07'den beri bu depoda
+    **hiç yeni run açmıyor**; `b8aaa3f` (WP-492) ve `536eeb5` (WP-496)
+    push'larının ikisi de runsuz. Önceki iki kırmızı run kod hatası değil,
+    altyapı: `Failed to resolve action download info. Error: Service
+    Unavailable`. **Kapı kanıtı hâlâ eksik** (protokol md. 3): kesinti
+    bitince bu iki commit'in koşumları izlenmeli.
 - **Tuzaklar:** Metni kaldırırken erişilebilirlik kanalını da kaldırmak.
   Kullanılmayan `.arb` anahtarlarını **silmeden** bırakmak → l10n kapısı
   şikâyet edebilir; WP-500 ile arka arkaya koş.
