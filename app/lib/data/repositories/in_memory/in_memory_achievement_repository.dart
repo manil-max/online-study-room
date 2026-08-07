@@ -33,6 +33,16 @@ class InMemoryAchievementRepository implements AchievementRepository {
   ) async => _snapshot(userId);
 
   @override
+  Stream<List<AchievementMetricProgress>> watchGroupScopedMetricProgress(
+    String userId,
+    String groupId,
+  ) {
+    // InMemory katmanı grup kırılımı tutmuyor: boş liste, çağıranın düz
+    // tabloya düşmesini sağlar (sunucusuz koşumda davranış değişmez).
+    return Stream.value(const <AchievementMetricProgress>[]);
+  }
+
+  @override
   Stream<List<AchievementMetricProgress>> watchMetricProgress(
     String userId,
   ) async* {

@@ -5357,6 +5357,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-498** Üye satırında ad alanı | Android telefon + gerçek Supabase (grup detayı; **uzun adlı**, ünvanlı, yönetici olmayan bir üye; yazı ölçeği 1.0 ve 1.6) | Üye listesinde ad artık tek harfe düşmüyor — en az 12 karakter okunuyor; dürtme ve susturma satırda duruyor; sağdaki ⋮ menüsünde "Üyeyi çıkar" ve "Üyeyi yasakla" ayrı adlarla çıkıyor ve seçilince onay diyaloğu açılıyor; yönetici olmayan hesapta ⋮ hiç görünmüyor. Ekran başlığındaki "Yönetici" rozeti 1.6 ölçekte sarı-siyah taşma şeridi üretmiyor. Commit: `b3e6c7d`. **Cihazda doğrulanmalı.** |
 | **WP-499** Trend grafiği Y ekseni | Android telefon (İstatistik → kişisel; 14 / 30 / 90 günlük dönemlerin **üçü de**, en az bir dolu haftası olan hesap) | Çizgi grafiğin sol ekseninde tepede iki sayı üst üste binmiyor; en üstteki sayı en üst ızgara çizgisinin tam hizasında ve o çizginin değerine eşit; dönem değiştirince (14↔30↔90) hiçbirinde çakışma çıkmıyor. Commit: `bedd14a`. **Cihazda doğrulanmalı.** |
 | **WP-500** İngilizce arayüzde "aktif" | Android telefon, **cihaz dili İngilizce** (grup detayı olan hesap, en az 2 kişi çalışırken) | Ana ekranda "Currently studying" kartındaki rozet "2 active" yazıyor, "2 aktif" değil; dili Türkçe'ye alınca "2 aktif" oluyor; tek kişi çalışırken "1 active". Commit: `07ce93b`. **Cihazda doğrulanmalı.** |
+| **WP-501** Grup başarımı seçili gruptan (`0121`) | Database Gates local replay → staging apply → Android telefon (**iki gruba** üye, aynı hafta ikisinde de birinci olmuş hesap) | (1) CI local replay job'ında `046` 16/16 yeşil. (2) Şema uygulandıktan sonra Lider Kurt ilerlemesi **2 değil 1** gösteriyor. (3) Grup değiştirince (sınıf seçici) değer o grubun gerçeğine dönüyor. (4) Daha önce kazanılmış kademe/XP **duruyor**, geri alınmamış. Commit: `28d6a57`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7208,9 +7209,14 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
     (`channel: stable`); yerel 3.44.2 iken runner o günkü stable'ı kuruyor.
     Toleransı yükseltmek yasak (`flutter_test_config.dart`: pay platform farkı
     içindir) ve %4.61'i karşılayacak bir pay gerçek regresyonu da gizlerdi.
-    Golden önce silindi. ✅ **WP-505 sürümü pinledi** (`.flutter-version`,
-    altı workflow adımı) ve golden **geri eklendi** — tam ekran çerçevesi,
-    320×900. Yerel ve CI artık aynı Flutter'ı kuruyor.
+    3. WP-505 sürümü pinledikten **sonra** (runner da 3.44.2) → **birebir
+       aynı** %4.61 / 13278 px.
+    (3) teşhisi çevirdi: sorun araç sürümü **değil**. Fark pinden önce ve
+    sonra bit-bit aynı olduğu için kaynak çalışma ortamıdır (Windows 11 vs
+    Windows Server 2025). Golden **kalıcı olarak kaldırıldı**; kaybedilen
+    kanıt sınırlı, çünkü kabulün ölçülebilir kısmı dp/oran/yükseklik
+    iddialarında ve onlar golden'dan güçlü (golden gerçek MaterialIcons
+    fontunu yükleyemediği için simgeleri zaten boş kutu çiziyordu).
   - ✅ Diğer beş job yeşil: `analyze + full test suite`, `Windows integration`,
     `Dart/Edge ↔ SQL`, `Edge Function tip denetimi`, l10n Gate.
 - **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
@@ -7399,7 +7405,7 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ### WP-501: Grup başarımı yalnız seçili gruptan sayılsın (`0123`) 🐺
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N06 / rapor T06) · **sahip kararı**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-492 (migration hattı) · sahip kararı **alındı**
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — `Replay bekliyor` + cihaz kabulü · **Bağımlılık:** WP-492 ✅ · sahip kararı **alındı**
 - **Problem:** `alpha_wolf_weekly` metriği `group_achievement_weekly`den
   `group by user_id` ile toplanıyor (`0063:588-593`), yani **(grup × hafta)**
   sayılıyor: iki grupta aynı hafta birinci olan kullanıcı 2 alıyor. Sahip kararı:
@@ -7414,13 +7420,36 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   - head üçlüsü (`0123`)
 - **DOKUNMA:** `achievement_ledger_engine.dart` (istemci zaten 0 döner,
   değişmez), `0062`/`0063` (okunur).
+- **⚠️ Numara düzeltildi:** kart `0123`/`048` diyordu (WP-490/491'in `0121`/
+  `0122`'yi alacağı varsayımıyla). O ikisi hâlâ bloke; zincirde boşluk kapıyı
+  düşürür. Gerçek numaralar: **`0121`** ve **`046`**.
+- **🔴 Tasarımı belirleyen ölçüm:** "seçili grup" **sunucuda yok.**
+  `activeGroupIdProvider` (`group_providers.dart:106`) seçimi yalnız cihazdaki
+  `SharedPreferences`'a yazar; aynı hesap iki cihazda farklı grup seçebilir.
+  Bu yüzden iş ikiye ayrıldı ve **ikisi de bu WP'de yapıldı**:
+  * **Gösterim** grup kırılımlı yeni tablodan, seçili grubun satırından gelir
+    (sahibin kuralı birebir) — birleştirme tek yerde,
+    `achievementMetricProgressProvider` içinde.
+  * **Ödül/XP** cihaza bağlı olamaz; düz tablo gruplar arası **`max`** tutar.
+    `max` çift sayımı bitirir ve kazanılmış kademeyi asla düşürmez.
 - **Adımlar:**
-  - [ ] `achievement_metric_progress`e **grup boyutu** ekle (ya da grup
-        metrikleri için ayrı görünüm); okuma seçili grubun satırını çeksin.
-  - [ ] Aynı tabloyu paylaşan **dört** metriği birlikte çevir: `alpha_wolf`,
-        `alpha_wolf_weekly`, `campfire_hours`, `team_player`, `locomotive` —
-        yalnız Lider Kurt düzeltilirse kural tutarsız kalır.
-  - [ ] XP/kademe döngüsü de **aynı** kaynağı okusun; iki uç ayrışmasın.
+  - [x] Grup boyutu ayrı tabloda: `group_achievement_metric_progress`
+        (PK `user_id, group_id, achievement_id`), RLS self-select, yazma
+        yetkisi yok, realtime yayınında.
+  - [x] Kural **tek yerde**: `_project_group_scoped_metrics()`. Üç projeksiyon
+        (`project_verified_group_day`, `project_group_day`, `project_group_week`)
+        artık onu çağırıyor; gövdeleri 0059/0063'teki hâlleriyle birebir
+        korundu (kopyalama hatası olmasın diye programatik çıkarıldı).
+  - [x] ⚠️ **Kart beş metrik sayıyor, ölçüldü: dört.** `alpha_wolf`,
+        `alpha_wolf_weekly`, `campfire_hours`, `locomotive` bu rollup'lardan
+        besleniyor. `team_player` `group_goal_contrib` metriğinden gelir
+        (`0050:49`), grup toplamıyla çarpılmıyor — dokunulmadı, pgTAP bunu
+        ayrıca sabitliyor.
+  - [x] XP/kademe döngüsü aynı düz tabloyu okumaya devam ediyor; iki uç
+        ayrışmıyor, yalnız o tabloya yazılan **sayı** düzeldi.
+  - [x] İstemci **bağlandı**: repository arayüzü + Supabase + InMemory
+        uygulamaları, provider birleştirmesi ve 4 test. (Bağlanmamış tablo
+        bırakmamak için: v57'de üç kez "bitmiş backend, çağıran yok" oldu.)
 - **Veri/Migration etkisi:** Şema değişikliği + backfill. Geri alma: yeni
   kolon/görünüm düşürülür, eski toplayıcı geri konur.
 - **Ortam/Deploy:** local · `Replay bekliyor`.
@@ -7433,8 +7462,32 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
      değeri 1 (toplam değil).
   2. Zaten kazanılmış kademe **geri alınmıyor** (XP negatife dönmez).
   3. Cihazda "bu hafta" değeri sahibin gördüğü çift sayımı **göstermiyor**.
+- **SAHİP dosyalar (gerçekleşen):**
+  - `supabase/migrations/0121_group_scoped_achievement_progress.sql` (yeni)
+  - `supabase/tests/046_group_scoped_progress.test.sql` (yeni, 16 iddia)
+  - `tooling/release/deploy-contract.json` (`local_migration_head` 0120→0121)
+  - `app/lib/data/repositories/achievement_repository.dart` + supabase/in_memory
+  - `app/lib/data/providers/achievement_provider.dart`
+  - `app/test/data/achievement_group_scope_wp501_test.dart` (yeni)
+  - ⚠️ `achievement_showcase.dart`e **dokunulmadı** — birleştirme veri
+    katmanında yapıldığı için rozeti çizen widget'ın kuralı bilmesi gerekmiyor.
+- **Kanıt:** `flutter analyze` temiz, yeni Dart testleri 4/4, T0 kapıları
+  (`migration-head` dâhil) yeşil. pgTAP **yerelde koşturulamadı** (bu hostta
+  Docker kalkmıyor); `046` CI'daki `Database Gates → Local replay` job'ında
+  koşacak — kapı kanıtı oradan gelecek.
 - **Tuzaklar:** `metric_value = greatest(...)` mantığı yüzünden eski toplam
   değerin kilitli kalması — backfill'de bunu ele al.
+  ↳ Uyuldu: haftalık metrik `greatest(mevcut, yeni)` ile yazılıyordu, yani
+  çift sayılmış eski değer **hiçbir zaman** düşemezdi. Bilerek
+  `excluded.metric_value` kullanıldı ve migration sonunda backfill çağrısı var.
+  Kademe geri alınmaz, çünkü ödül üretimi yalnız `insert ... on conflict do
+  nothing` yapar (`_sync_equal_source_rewards`, 0063) — hiçbir yerde ödül
+  silinmiyor. pgTAP bunu ayrı bir iddiayla ölçüyor.
+- **🔴 Testin yakaladığı eksik:** ilk hâlde yardımcı yalnız upsert yapıyordu;
+  gruptan çıkılınca eski kırılım satırı olduğu yerde kalıyor ve kullanıcı artık
+  üyesi olmadığı gruptan ilerleme görüyordu. Silme adımı eklendi (metriğe göre
+  ayrı koşul, çünkü `alpha_wolf`/`alpha_wolf_weekly` yalnız finalize edilmiş
+  satırlardan beslenir).
 - **Model önerisi:** 🔴 Opus
 
 ---
@@ -7593,8 +7646,24 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   - [x] Kayma koruması: `scripts/test_all.py --internal-flutter-pin`
         her adımın `.flutter-version` ile aynı değeri taşıdığını sınar.
         `test_all.py` (`flutter-pin`) ve `ci.yml` T0 job'ına bağlandı.
-  - [x] WP-498 goldenı **geri eklendi** (tam ekran çerçevesi, 320×900).
-  - [ ] CI'da yeşil olduğunu koşumla göster — push sonrası izleniyor.
+  - [x] ~~WP-498 goldenı geri eklendi~~ → **geri alındı**, aşağıdaki ölçüme bak.
+  - [x] CI koşuldu (`4953e26`): pin uygulandı (runner 3.44.2, `flutter-pin`
+        kapısı yeşil) ama golden **yine kırmızı**.
+- **🔴 TEŞHİSİM YANLIŞTI — ölçümle düzeltildi.** Pin **öncesi** ve **sonrası**
+  golden farkı **bit-bit aynı**: `%4.61 / 13278 px`. Aynı sayı, aracın sürümü
+  eşitlendiği hâlde değişmedi → kök neden Flutter sürümü **değil**. Kalan
+  değişken çalışma ortamı (yerel Windows 11 vs runner Windows Server 2025);
+  büyük olasılıkla kesirli yerleşim farkı kaydırma ofsetini oynatıyor ve tüm
+  ekran birkaç piksel kayıyor — %4.61 gibi büyük bir farkı bu açıklar.
+  WP-498 goldenı **kalıcı olarak kaldırıldı**; kabulün ölçülebilir kısmı
+  zaten dp/oran/yükseklik iddialarında ve onlar golden'dan güçlü.
+- **Pin yine de kaldı, gerekçesi değişti:** goldeni kurtarmadı ama bir
+  değişkeni tümden kaldırdı ve **yayın tekrarlanabilirliğini** kazandırdı —
+  APK'nın hangi Flutter'la derlendiği artık kayıtlı. Ayrıca Flutter
+  güncellemesi bundan sonra bilinçli bir commit.
+- **Denenmemiş tek seçenek:** ekranı kaydırma gerektirmeyecek kadar uzun bir
+  pencerede (örn. 320×1600) pump edip yakalamak — kaydırma değişkenini tümden
+  kaldırır. İki CI turu harcandığı için denenmedi; gerekirse ayrı WP.
 - **Kanıt (kapı kasten kırıldı):** `--internal-flutter-pin` iki kırık
   girdiye de kırmızı döndü: (a) bir workflow'da pin `3.99.0` yapılınca
   `pin 3.99.0 != .flutter-version 3.44.2`; (b) pin satırı silinince

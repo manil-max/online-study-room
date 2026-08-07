@@ -53,6 +53,26 @@ class SupabaseAchievementRepository implements AchievementRepository {
   }
 
   @override
+  Stream<List<AchievementMetricProgress>> watchGroupScopedMetricProgress(
+    String userId,
+    String groupId,
+  ) {
+    // Supabase realtime akışı tek `eq` filtresi kabul eder; grup süzgeci
+    // istemcide uygulanır. Satırlar zaten RLS ile kendi kullanıcısına kilitli.
+    return _client
+        .from('group_achievement_metric_progress')
+        .stream(primaryKey: ['user_id', 'group_id', 'achievement_id'])
+        .eq('user_id', userId)
+        .order('achievement_id')
+        .map(
+          (rows) => rows
+              .where((row) => row['group_id'] == groupId)
+              .map(AchievementMetricProgress.fromMap)
+              .toList(growable: false),
+        );
+  }
+
+  @override
   Future<AchievementEventResult> processEvent({
     required String eventType,
     Map<String, dynamic> payload = const {},
