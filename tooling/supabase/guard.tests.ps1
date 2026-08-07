@@ -43,14 +43,19 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # production release_enabled v58 stable icin tek seferlik acildi (0117-0119
 # production apply post-check 0119 sonrasi). Zincir sonunda tum flag'ler
 # yeniden false kilitlenmelidir.
-# 2026-08-06 (WP-492 / 0120): yerel head 0120'ye ilerledi, staging ve production
-# gercekten 0119'da durdugu icin asagidaki iki pin BILEREK 0119 kalir.
-Assert-Equal $contract.staging.migration_head '0119' 'v58 staging hedef head 0119'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'v58 sonrasi staging yeniden kilitli'
+# 2026-08-07: sahip "cihaz testine gönder" tetikleyicisiyle WP-490/491/492/501
+# zincirini (0120-0121) staging+production'a taşımak için kapsamlı, tek turluk
+# apply yetkisi verdi. Kontrat hedefi 0121'e, deploy_enabled true'ya çekildi;
+# release_enabled BİLEREK false kalır (stable release ayrı, tek seferlik
+# confirmation string'iyle geçer, bkz. release-gate.ps1). Apply turu bitince bu
+# iki pin (deploy_enabled) yeniden false'a re-lock edilir, migration_head 0121
+# olarak kalıcılaşır.
+Assert-Equal $contract.staging.migration_head '0121' 'v59 apply turu staging hedef head 0121'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v59 apply turu staging gecici acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
-Assert-Equal $contract.production.migration_head '0119' 'v58 production hedef head 0119'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'v58 sonrasi production yeniden kilitli'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'v58 sonrasi stable release yeniden kilitli'
+Assert-Equal $contract.production.migration_head '0121' 'v59 apply turu production hedef head 0121'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v59 apply turu production gecici acik'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8

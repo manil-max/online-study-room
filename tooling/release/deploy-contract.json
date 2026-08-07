@@ -2,14 +2,14 @@
   "schema_version": 1,
   "local_migration_head": "0121",
   "staging": {
-    "migration_head": "0119",
-    "deploy_enabled": false,
+    "migration_head": "0121",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED after the v58 stable chain (2026-08-01): staging applied 0117-0119 (run 30715755597, post-check 0119). No further apply or release is authorized; a new scoped owner authorization is required."
+    "hold_reason": "UNLOCKED 2026-08-07: owner gave the scoped device-test release trigger (\"cihaz testine gönder\") for WP-490/491/492/501 chain (0120-0121). Apply-only authorization; re-locks after staging+production apply complete."
   },
   "production": {
-    "migration_head": "0119",
-    "deploy_enabled": false,
+    "migration_head": "0121",
+    "deploy_enabled": true,
     "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED after the v58 stable chain (2026-08-01): production applied 0117-0119 (run 30716014464, post-check 0119) and stable v58 published from 9365895642d71191a3e69ad4c1be3fe6f40c0529 (run 30716184775). The free-plan no-backup/no-PITR/no-rollback waiver stays on record. No further apply or release is authorized without a new scoped owner authorization."
+    "hold_reason": "UNLOCKED 2026-08-07: owner gave the scoped device-test release trigger (\"cihaz testine gönder\") for WP-490/491/492/501 chain (0120-0121). Apply-only authorization; no-backup waiver from 2026-07-27 stays on record; re-locks after staging+production apply complete."
   }
 }
