@@ -73,10 +73,14 @@ select ok(
 
 -- 🔴 Kural uc ayri fonksiyonda kopyalanmisti ve uculde birden kayabiliyordu.
 -- Kirilim artik tek yerde; uc projeksiyon da onu cagirmali.
+-- 🔴 `project_verified_group_day` BU LISTEDE YOK ve olmamali: 0063 onu
+-- kaldirdi (`drop function if exists`), yerini `project_group_day` aldi.
+-- 0121'in ilk taslagi govdesini 0059'dan alip yeniden yaratmisti ve
+-- `001_schema_contract` "stale verified-only projectors are removed"
+-- iddiasi bunu yakaladi. Olu fonksiyonun geri gelmedigi burada da sabitlenir.
 select ok(
-  pg_get_functiondef('public.project_verified_group_day(uuid, date)'::regprocedure)
-    like '%_project_group_scoped_metrics%',
-  'project_verified_group_day kirilim fonksiyonunu cagirir'
+  to_regprocedure('public.project_verified_group_day(uuid,date)') is null,
+  '0063 kaldirdigi olu projektor geri dirilmedi'
 );
 
 select ok(

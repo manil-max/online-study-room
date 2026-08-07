@@ -62,8 +62,8 @@ exception
   when duplicate_object then null;
 end $$;
 
--- 2) Tek kırılım noktası. Üç projeksiyon da bunu çağırır; ayrı ayrı toplama
---    yapan üç kopya olduğu için kural üçünde birden kayabiliyordu.
+-- 2) Tek kırılım noktası. İki projeksiyon da bunu çağırır; ayrı ayrı toplama
+--    yapan kopyalar olduğu için kural her birinde ayrı kayabiliyordu.
 create or replace function public._project_group_scoped_metrics()
 returns integer
 language plpgsql
@@ -156,66 +156,14 @@ $$;
 revoke all on function public._project_group_scoped_metrics()
   from public, authenticated, anon;
 
--- 3) Üç projeksiyon: gövdeleri 0059/0063'teki hâlleriyle **birebir**, yalnız
---    düz tabloya yazan blok kırılım çağrısıyla değiştirildi.
+-- 3) İki canlı projeksiyon: gövdeleri 0063'teki hâlleriyle **birebir**,
+--    yalnız düz tabloya yazan blok kırılım çağrısıyla değiştirildi.
 
-create or replace function public.project_verified_group_day(p_group_id uuid, p_day date)
-returns integer language plpgsql security definer set search_path = public as $$
-declare v_affected integer;
-begin
-  with bounds as (
-    select (p_day::timestamp at time zone 'Europe/Istanbul') as lo,
-      ((p_day + 1)::timestamp at time zone 'Europe/Istanbul') as hi
-  ), seg as (
-    select s.user_id, greatest(s.started_at,b.lo) a, least(s.ended_at,b.hi) z
-    from public.live_study_segments s
-    join public.live_study_runs r on r.id=s.run_id
-    cross join bounds b
-    where r.group_id_snapshot=p_group_id and r.status='finalized'
-      and s.ended_at>b.lo and s.started_at<b.hi
-  ), thr as (
-    -- Dinamik kamp ateşi eşiği: max(2, ceil(N/2)), N = o gün aktif farklı üye.
-    select greatest(2, ceil(count(distinct user_id) / 2.0))::int as t from seg
-  ), events as (
-    select a t, 1 delta from seg union all select z, -1 from seg
-  ), points as (
-    select t, sum(delta) over(order by t, delta rows unbounded preceding) active,
-      lead(t) over(order by t, delta) next_t from events
-  ), camp as (
-    select s.user_id, floor(sum(extract(epoch from (least(s.z,p.next_t)-greatest(s.a,p.t)))))::bigint seconds
-    from seg s join points p on p.active >= (select t from thr) and p.next_t>p.t
-      and s.a<p.next_t and s.z>p.t group by s.user_id
-  ), totals as (
-    select user_id, floor(sum(extract(epoch from(z-a))))::bigint seconds from seg group by user_id
-  ), alpha as (
-    select user_id, case when count(*) over(partition by seconds)=1
-      and dense_rank() over(order by seconds desc)=1 then 1 else 0 end wins from totals
-  ), loco as (
-    select leader.user_id, count(distinct follower.user_id)::integer events
-    from seg leader join seg follower on follower.user_id<>leader.user_id
-      and follower.a between leader.a and least(leader.z, leader.a+interval '15 minutes')
-    group by leader.user_id
-  ), users as (
-    select user_id from seg group by user_id
-  )
-  insert into public.group_achievement_daily(
-    group_id,istanbul_day,user_id,alpha_wins,campfire_seconds,locomotive_events,updated_at
-  ) select p_group_id,p_day,u.user_id,coalesce(a.wins,0),coalesce(c.seconds,0),
-      coalesce(l.events,0),clock_timestamp()
-    from users u left join alpha a using(user_id) left join camp c using(user_id)
-    left join loco l using(user_id)
-  on conflict(group_id,istanbul_day,user_id) do update set
-    alpha_wins=excluded.alpha_wins,campfire_seconds=excluded.campfire_seconds,
-    locomotive_events=excluded.locomotive_events,updated_at=clock_timestamp();
-  get diagnostics v_affected = row_count;
-
-  -- 🔴 WP-501: burada `group by user_id` vardı — TÜM grupların toplamı
-  -- tek satıra yazılıyor, yani (grup × gün/hafta) sayılıyordu. Kırılım
-  -- artık `_project_group_scoped_metrics()` içinde, grup boyutuyla.
-  perform public._project_group_scoped_metrics();
-  return v_affected;
-end;
-$$;
+-- 🔴 `project_verified_group_day` BILEREK yok: 0063 onu
+-- `drop function if exists` ile **kaldirdi** (yerini `project_group_day` aldi)
+-- ve `001_schema_contract` "stale verified-only projectors are removed" diye
+-- olcuyor. Ilk taslakta gövdesi 0059'dan alinip yeniden yaratilmisti; kapi
+-- olu fonksiyonun geri dirilmesini yakaladi (run 31161974642).
 
 create or replace function public.project_group_day(p_group_id uuid, p_day date)
 returns integer language plpgsql security definer set search_path = public as $$

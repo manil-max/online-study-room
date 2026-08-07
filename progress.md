@@ -7474,7 +7474,22 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - **Kanıt:** `flutter analyze` temiz, yeni Dart testleri 4/4, T0 kapıları
   (`migration-head` dâhil) yeşil. pgTAP **yerelde koşturulamadı** (bu hostta
   Docker kalkmıyor); `046` CI'daki `Database Gates → Local replay` job'ında
-  koşacak — kapı kanıtı oradan gelecek.
+  koşuyor.
+- **🔴 Kapı gerçek bir hata yakaladı (run `31161974642`, ilk push):**
+  `001_schema_contract` üç iddiada kırmızı düştü ve biri ciddiydi —
+  *"stale verified-only projectors are removed"*. `0121`'in ilk taslağı
+  `project_verified_group_day` gövdesini **0059'dan** alıp `create or replace`
+  ile geri yaratıyordu; oysa **0063 o fonksiyonu `drop function if exists` ile
+  kaldırmıştı** (yerini `project_group_day` aldı). Yani ölü bir projektörü
+  dirilteceklerdi. Gövdeleri programatik çıkarmak kopyalama hatasını önledi
+  ama "bu fonksiyon hâlâ yaşıyor mu?" sorusunu sormamıştım.
+  ↳ Fonksiyon `0121`'den çıkarıldı; `046`'ya da onun **geri gelmediğini**
+  ölçen bir iddia eklendi.
+- **⚠️ Head aslında DÖRT yerde pinli.** `migration-head` kapısı üçünü biliyor
+  (`deploy-contract.json`, `guard.tests.ps1`, `release-preflight.tests.ps1`)
+  ama `supabase/tests/001_schema_contract.test.sql` de sayıyı ve head'i
+  literal tutuyor — kapı bunu görmüyor, yalnız pgTAP koşumu görüyor. Bu turda
+  tam oradan kırmızı düşüldü. Kapıya eklenmesi ayrı bir iş (WP-506).
 - **Tuzaklar:** `metric_value = greatest(...)` mantığı yüzünden eski toplam
   değerin kilitli kalması — backfill'de bunu ele al.
   ↳ Uyuldu: haftalık metrik `greatest(mevcut, yeni)` ile yazılıyordu, yani
