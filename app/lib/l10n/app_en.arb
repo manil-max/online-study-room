@@ -2818,6 +2818,35 @@
   "@homeSuAnCalisanlar": {
     "description": "Home user-facing text. Source: Şu an çalışanlar"
   },
+  "diagTimerJournalTitle": "Timer diagnostic log",
+  "@diagTimerJournalTitle": {
+    "description": "Settings entry that opens the local timer flight recorder."
+  },
+  "diagTimerJournalSubtitle": "Local record of timer transitions; never leaves the device unless you share it",
+  "@diagTimerJournalSubtitle": {
+    "description": "Settings entry subtitle."
+  },
+  "diagTimerJournalEmpty": "No timer transitions recorded yet.",
+  "@diagTimerJournalEmpty": {
+    "description": "Empty state for the timer diagnostic log."
+  },
+  "diagTimerJournalShare": "Share log",
+  "@diagTimerJournalShare": {
+    "description": "Button that shares the timer diagnostic log as JSON."
+  },
+  "diagTimerJournalCount": "{count, plural, =1 {1 record} other {{count} records}}",
+  "@diagTimerJournalCount": {
+    "description": "Number of records in the timer diagnostic log.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diagTimerJournalPrivacy": "Identifiers are replaced with short one-way hashes; no message text, email or token is stored.",
+  "@diagTimerJournalPrivacy": {
+    "description": "Privacy note shown above the timer diagnostic log."
+  },
   "commonXpMiktari": "{count} XP",
   "@commonXpMiktari": {
     "description": "Shared user-facing text. XP amount label; the unit is written \"XP\" in both TR and EN but the string stays in the catalog so a future locale can translate it. Source: $xp XP",

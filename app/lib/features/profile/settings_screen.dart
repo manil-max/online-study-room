@@ -22,6 +22,7 @@ import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
+import 'timer_journal_screen.dart';
 import 'feedback_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/unread_message_badge.dart';
@@ -205,6 +206,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => AccountSettingsScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 🔴 WP-490 önkoşulu: `TimerDiagnosticJournal` WP-430'da
+                  // yazıldı ama `app/lib` içinden hiç okunmuyordu — kayıt
+                  // tutuluyor, kimse göremiyordu. Hayalet koşu teşhisinin
+                  // 2. adımı doğrudan bu kayda bağlı.
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const ValueKey('timer-journal-entry'),
+                      leading: const Icon(Icons.timeline_outlined),
+                      title: Text(l10n.diagTimerJournalTitle),
+                      subtitle: Text(l10n.diagTimerJournalSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TimerJournalScreen(),
                         ),
                       ),
                     ),

@@ -6452,7 +6452,7 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-490: Hayalet koşu ve etkisiz ayna Durdur'u — önce TEŞHİS 👻
 - **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N08 + N08-EK / rapor T05)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-489 (aynı yüzey)
+- **Ajan:** Claude · **Durum:** [~] **Teşhis kiti hazır — cihaz verisi bekleniyor** · **Bağımlılık:** WP-489 ✅ kod tamam
 - 🔴 **Bu kart 2026-08-06'da sahip düzeltmesiyle YENİDEN YAZILDI.** Önceki hâli
   belirtiyi "kaybolan 4-5 saatlik çalışma" sanıyor ve *"sunucu uzak durdurmada
   `study_sessions` yazsın"* diyordu. **O düzeltme uygulansaydı kullanıcının
@@ -6482,16 +6482,30 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 - **DOKUNMA (oku, değiştirme):** `0119` (WP-491'in sahibi), `0051`, `0101`,
   native FGS dosyaları (WP-489 aktif).
 - **Adımlar — sıra bağlayıcı:**
-  - [ ] **1. Teşhis (kod yazmadan).** Belirti tekrarlanırken sunucu durumunu al:
+  - [x] **0. (Kartta yoktu, zorunlu çıktı) Günlüğü okunabilir yap.** Ölçüldü:
+        `TimerDiagnosticJournal` WP-430'da yazıldı, `exportEntries()` metodu
+        bile var ama `app/lib` içinden **hiçbir yerden çağrılmıyordu** — tek
+        çağıran kendi birim testiydi. Yani adım 2 ("günlüğü oku") **fiziksel
+        olarak yapılamıyordu**; sahip belirtiyi tekrarlasa bile eline hiçbir
+        kanıt geçmezdi. Ayarlara *Sayaç tanılama kaydı* ekranı eklendi:
+        kayıtlar en yeni üstte, `reason → outcome` görünür, JSON paylaşımı
+        var. Gizlilik sözleşmesi genişletilmedi (kimlikler zaten tuzlanmış
+        kısa özet, serbest metin yok).
+  - [x] **1. Teşhis kiti yazıldı** (`docs/qa/V58-GHOST-RUN-DIAGNOSIS.md`):
+        üç SQL sorgusu hazır, doldurulacak tablolar hazır ve **karar tablosu**
+        hazır — `mirror_stop_requested` kaydının `outcome` alanı
+        (`stale` / `deferred` / `applied` / satır yok) üç düzeltme yolundan
+        hangisinin doğru olduğunu doğrudan söylüyor.
+  - [ ] **1b. SAHİP: belirti tekrarlanırken veriyi topla.** Sunucu durumu:
         `live_study_runs` (status, controller_device_id, effective_started_at,
         run_revision, lease_expires_at), `user_timer_state.current_run_id`,
         son `global_timer_commands` satırları. Üç soruyu **veriyle** cevapla:
         (a) koşuyu hangi cihaz, ne zaman açtı? (b) Durdur'a basınca sunucu ne
         döndürdü — `stale` mi, `already_stopped` mı, normal mi? (c) koşu
         kapandıktan sonra **geri mi geliyor**, yoksa hiç mi kapanmıyor?
-  - [ ] **2.** `TimerDiagnosticJournal` kayıtlarını oku (WP-430'da kuruldu):
-        `mirrorStopRequested` olayının `applied` / `stale` / `deferred` sonucu
-        cevabı doğrudan verir.
+  - [ ] **2. SAHİP:** Ayarlar → *Sayaç tanılama kaydı* → **Kaydı paylaş**;
+        çıkan JSON'u teşhis belgesine yapıştır. Aranan satır
+        `mirror_stop_requested`; `outcome` alanı cevabı doğrudan verir.
   - [ ] **3.** Bulguya göre düzelt. Üç senaryo, üç ayrı yol:
         · `stale` dönüyorsa → ayna revizyonunu tazeleyip **tek** yeniden deneme.
         · Kapanıp geri geliyorsa → diğer cihazın native servisi terminal durumu
