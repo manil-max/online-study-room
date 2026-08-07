@@ -231,7 +231,7 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local **`0121`** (WP-492 `0120` + WP-501 `0121`; hiçbir ortama uygulanmadı — `Replay bekliyor`) · staging/production **`0119`** · sıradaki boş numara **`0122`** |
+| Migration | Repo/local **`0121`** · staging **`0121`** (run `31194597563`, 2026-08-07) · production **`0121`** (run `31195025233`, 2026-08-07) · sıradaki boş numara **`0122`**. Apply sonrası iki ortamın `deploy_enabled` bayrağı yeniden **kilitlendi**. |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Remote kapıları | staging + production deploy/release dört bayrak v58 sonrası **kapalı** |
@@ -7417,7 +7417,7 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ### WP-501: Grup başarımı yalnız seçili gruptan sayılsın (`0121`) 🐺
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N06 / rapor T06) · **sahip kararı**
-- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — `Replay bekliyor` + cihaz kabulü · **Bağımlılık:** WP-492 ✅ · sahip kararı **alındı**
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — **staging+production'a uygulandı** (`0121`, 2026-08-07), cihaz kabulü bekliyor · **Bağımlılık:** WP-492 ✅ · sahip kararı **alındı**
 - **Problem:** `alpha_wolf_weekly` metriği `group_achievement_weekly`den
   `group by user_id` ile toplanıyor (`0063:588-593`), yani **(grup × hafta)**
   sayılıyor: iki grupta aynı hafta birinci olan kullanıcı 2 alıyor. Sahip kararı:
