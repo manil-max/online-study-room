@@ -7042,12 +7042,18 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
     yenilendi ama **kanıt onlar değil**, `Icon.icon` okuyan iddialar.
 - **Test durumu:** `flutter test` **1666/1666** yeşil (tüm paket),
   `flutter analyze` temiz, l10n TR/EN + Android kapıları yeşil.
-  - 🔴 **CI koşmadı.** GitHub Actions 2026-08-06 17:07'den beri bu depoda
-    **hiç yeni run açmıyor**; `b8aaa3f` (WP-492) ve `536eeb5` (WP-496)
-    push'larının ikisi de runsuz. Önceki iki kırmızı run kod hatası değil,
-    altyapı: `Failed to resolve action download info. Error: Service
-    Unavailable`. **Kapı kanıtı hâlâ eksik** (protokol md. 3): kesinti
-    bitince bu iki commit'in koşumları izlenmeli.
+  - 🔴 **CI kesintisi (kapandı, kanıtı burada).** GitHub Actions 2026-08-06
+    17:07 – 23:08 UTC arasında bu depoda **hiç run açmadı**. API ile tek tek
+    doğrulandı: `b8aaa3f` (WP-492), `536eeb5` (WP-496), `c9a8b79` (docs) ve
+    `dd0eda3` (WP-497) → **0 run**. Kesinti 23:08'de kendiliğinden bitti;
+    `9b7b413` (WP-498) ve `55f2d70` (WP-499) run aldı.
+    ⚠️ **Bu dört commit kapı kanıtsız kalıyor** (protokol md. 3). Kod
+    kanıtları yerel tam koşumdan; ilk yeşil CI koşumu WP-500 sonrası
+    beklenmeli, çünkü aradaki değişiklikler `main`de birikti.
+  - ⚠️ **`gh run list` bu kesinti boyunca yanıltıcı çıktı verdi** ve ben ona
+    dayanıp "CI hâlâ koşmuyor" dedim; oysa 23:08'den sonra run vardı. Doğru
+    kaynak REST API: `gh api repos/<o>/<r>/actions/runs`. Bundan sonra kapı
+    durumu **API'den** okunur.
 - **Tuzaklar:** Metni kaldırırken erişilebilirlik kanalını da kaldırmak.
   Kullanılmayan `.arb` anahtarlarını **silmeden** bırakmak → l10n kapısı
   şikâyet edebilir; WP-500 ile arka arkaya koş.
@@ -7109,7 +7115,8 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
   10. üye hiç kurulmuyor, sınırsız yükseklik dalında 34 istisna. Yeni kodda
   15/15 yeşil.
 - **Test durumu:** `flutter test` **1681/1681**, `flutter analyze` temiz,
-  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
+  l10n TR/EN + Android yeşil. CI kesinti kaydı WP-496 kartında; bu commit
+  kesinti penceresinde kaldığı için **kapı kanıtı yok**.
 - **Tuzaklar:** `maxItems` hesabını "biraz büyüterek" yamamak — aynı hata başka
   ölçekte geri gelir. Varsayımı **kaldır**, büyütme.
   ↳ Uyuldu: hiçbir sabit büyütülmedi, hepsi silindi.
@@ -7188,7 +7195,21 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
      Aynı dosyada olduğu için düzeltildi: rozet **ölçekle büyümeyen** 96 dp üst
      sınıra alındı ve kırpılıyor. Test artık 320+1.6'da istisna yok diyor.
 - **Test durumu:** `flutter test` **1693/1693** (+12), `flutter analyze` temiz,
-  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
+  l10n TR/EN + Android yeşil.
+  - 🔴 **CI kırmızı düştü ve düzeltildi (run `31130356025`).** `Windows golden
+    baselines` job'ında bu WP'nin goldenı `Pixel test failed, image sizes do
+    not match — Master 288×225, Test 288×224` dedi. Sebep: golden çerçevesi
+    `Card` idi ve kartın yüksekliği **taçlı avatarın kesirli yüksekliğinden**
+    geliyor; yerel Flutter 3.44.2 ile runner'ın o günkü `stable`ı arasında
+    1 px oynuyor. Boyut uyuşmazlığını hiçbir raster toleransı karşılamaz
+    (`flutter_test_config.dart` yalnız yüzde farkına pay tanır) ve payı
+    yükseltmek zaten yasak. Çerçeve **tüm ekrana** alındı (320×900, pencere
+    boyutu → iki tarafta da sabit); WP-497'nin CI'da geçen goldenı da aynı
+    deseni kullanıyor. Golden yeniden üretildi.
+  - ⚠️ **Sistemik:** CI `flutter-version` **pinlemiyor** (`channel: stable`),
+    yani goldenlar hiçbir kod değişmeden, sadece Flutter sürümü çıktığı için
+    kırmızıya düşebilir. Ayrı karar konusu — pinleme sahibin onayını ister
+    (Flutter güncellemeleri otomatik gelmez olur).
 - **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
   eylemdir, satırda kalır.
   ↳ Uyuldu: menüye yalnız çıkar/yasakla indi; dürtme ve susturma satırda.
@@ -7269,7 +7290,16 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
      `leaderboard_rank_chart.dart` ise korunuyor: `maxY = n + 0.5` fazladan
      etiket üretse de `rank < 1` filtresi onu düşürüyor.
 - **Test durumu:** `flutter test` **1711/1711** (+18), `flutter analyze` temiz,
-  l10n TR/EN + Android yeşil. CI durumu WP-496 kartındaki notla aynı.
+  l10n TR/EN + Android yeşil.
+  - ✅ **CI kanıtı var** (`55f2d70`, run `31130356025`): `analyze + full test
+    suite` **yeşil** — bu WP'nin 18 testi ubuntu runner'ında da geçti.
+    `Dart/Edge ↔ SQL sözleşme kapısı` ve `Windows integration` da yeşil.
+    l10n Gate yeşil.
+  - ⚠️ Aynı koşumda **iki job kırmızı ve ikisi de bu WP'den değil**:
+    (1) `Windows golden baselines` → WP-498'in goldenı (o kartta düzeltildi);
+    (2) `Edge Function tip denetimi` → `Import 'https://esm.sh/@supabase/
+    supabase-js@2' failed: 522` — esm.sh CDN'i erişilemedi, dış altyapı.
+    Kod değişikliği gerektirmez, koşum yenilenince geçmesi beklenir.
 - **Tuzaklar:** Yalnız `maxIncluded: false` yapıp `maxY` yuvarlamasını atlamak —
   tepe etiketi kaybolur, ölçek okunamaz hale gelir.
   ↳ Uyuldu: bayrak hiç kullanılmadı, düzeltme yuvarlamada.

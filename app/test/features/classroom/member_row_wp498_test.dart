@@ -286,11 +286,20 @@ void main() {
     // ⚠️ Golden yalnız **yerleşimi** kanıtlar: `flutter test` gerçek
     // MaterialIcons fontunu yüklemez, simgeler boş kutu çizilir. Kabulün
     // ölçülebilir kısmı yukarıdaki dp/oran iddialarındadır.
+    //
+    // 🔴 Çerçeve `Card` değil **tüm ekran**, ve bu ölçülerek seçildi: kartın
+    // yüksekliği taçlı avatarın kesirli yüksekliğinden geliyor
+    // (`crowned_avatar.dart`), yerelde 225 px, CI runner'ında 224 px çıkıyordu
+    // — golden ilk koşumda tam bu yüzden kırmızı düştü (run 31130356025).
+    // Boyut uyuşmazlığını hiçbir raster toleransı karşılamaz
+    // (`flutter_test_config.dart` yalnız yüzde farkına pay tanır).
+    //
+    // Sebep: CI `flutter-version` pinlemiyor, `channel: stable` diyor; yerel
+    // sürüm 3.44.2 iken runner o günkü stable'ı kuruyor ve metin/şekil
+    // yuvarlaması 1 px oynuyor. Pencere boyutu ise iki tarafta da 320×900,
+    // yani **çerçeve** sabit. İçerideki 1 px kayma raster payına düşer.
     await expectLater(
-      find.ancestor(
-        of: find.byKey(memberRowKey(_longMember.id)),
-        matching: find.byType(Card),
-      ).first,
+      find.byType(ClassDetailScreen),
       matchesGoldenFile('goldens/member_row_wp498.png'),
     );
   });
