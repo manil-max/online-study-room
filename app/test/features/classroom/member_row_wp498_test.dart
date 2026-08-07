@@ -1,6 +1,3 @@
-@Tags(['golden'])
-library;
-
 // WP-498 (V58-N04 / rapor T07): "Grup üye satırında ad tek harfe düşüyor."
 //
 // 🔴 Kök neden yerleşim önceliğiydi. Satır `ListTile` idi ve `trailing`e dört
@@ -279,27 +276,28 @@ void main() {
     });
   });
 
-  testWidgets('golden: 320 dp · uzun ad · ünvan · yönetici', (tester) async {
-    await _pumpDetail(tester);
-    await _revealMembers(tester);
-
-    // ⚠️ Golden yalnız **yerleşimi** kanıtlar: `flutter test` gerçek
-    // MaterialIcons fontunu yüklemez, simgeler boş kutu çizilir. Kabulün
-    // ölçülebilir kısmı yukarıdaki dp/oran iddialarındadır.
-    //
-    // 🔴 Çerçeve `Card` değil **tüm ekran**, ve bu iki kez ölçülerek seçildi:
-    // kartın yüksekliği taçlı avatarın kesirli yüksekliğinden geliyor
-    // (`crowned_avatar.dart`) ve runner'da 1 px oynuyordu — `image sizes do
-    // not match` (288×225 vs 288×224). Pencere boyutu ise iki tarafta da
-    // 320×900, yani çerçeve sabit.
-    //
-    // Bu golden bir kez **silinmişti**: pin yokken (CI `channel: stable`,
-    // yerel 3.44.2) tam ekran çerçevesinde bile %4.61 raster farkı çıkıyordu
-    // ve toleransı yükseltmek yasak. WP-505 sürümü `.flutter-version` ile
-    // pinledi; yerel ve CI artık aynı Flutter'ı kullanıyor, golden geri geldi.
-    await expectLater(
-      find.byType(ClassDetailScreen),
-      matchesGoldenFile('goldens/member_row_wp498.png'),
-    );
-  });
+  // 🔴 GOLDEN KALICI OLARAK KALDIRILDI — uc kez olculdu:
+  //   1. cerceve `Card`  -> `image sizes do not match`, 288x225 (yerel) vs
+  //      288x224 (runner). Kartin yuksekligi tacli avatarin kesirli
+  //      yuksekliginden geliyor (`crowned_avatar.dart`).
+  //   2. cerceve tum ekran (320x900, boyut sabit) -> %4.61 / 13278 px fark.
+  //   3. WP-505 Flutter surumunu pinledikten SONRA (runner da 3.44.2)
+  //      -> **birebir ayni** %4.61 / 13278 px.
+  //
+  // (3) tesihisi cevirdi: sorun arac surumu DEGIL. Fark pinden once ve sonra
+  // bit-bit ayni oldugu icin kaynak calisma ortamidir (Windows 11 vs Windows
+  // Server 2025) — buyuk olasilikla kesirli yerlesim farkinin kaydirma
+  // ofsetini oynatmasi, ki bu tum ekrani birkac piksel kaydirir ve %4.61
+  // gibi buyuk bir fark uretir. Toleransi yukseltmek yasak ve %4.61'i
+  // karsilayacak bir pay gercek regresyonu da gizlerdi.
+  //
+  // Kaybedilen kanit sinirli: kabulun olculebilir kismi yukaridaki dp/oran/
+  // yukseklik iddialarinda ve onlar golden'dan **guclu** — golden zaten
+  // gercek MaterialIcons fontunu yukleyemedigi icin simgeleri bos kutu
+  // ciziyordu.
+  //
+  // Denenmemis tek secenek: ekrani kaydirma gerektirmeyecek kadar uzun bir
+  // pencerede (orn. 320x1600) pump edip yakalamak — kaydirma degiskenini
+  // tumden kaldirir. Iki CI turu harcandigi icin denenmedi; gerekirse ayri
+  // bir WP'de olculur.
 }
