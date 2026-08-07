@@ -724,7 +724,8 @@ class _CrownHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              '$xp XP',
+              // WP-504: birim katalogdan (bkz. `commonXpMiktari`).
+              AppLocalizations.of(context).commonXpMiktari(xp),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: rankColor,
                 fontWeight: FontWeight.w900,
@@ -1433,7 +1434,8 @@ class _RewardRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${_tierLabel(AppLocalizations.of(context), reward.tier)} · +${reward.xpAmount} XP',
+                '${_tierLabel(AppLocalizations.of(context), reward.tier)} · '
+                '+${AppLocalizations.of(context).commonXpMiktari(reward.xpAmount)}',
                 style: theme.textTheme.bodySmall,
               ),
             ],

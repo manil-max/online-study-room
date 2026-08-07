@@ -66,7 +66,10 @@ class _CardPickerSheet extends ConsumerWidget {
               ),
               const Spacer(),
               Text(
-                '${available.length} kart',
+                // WP-504: gömülü "kart" İngilizce arayüzde de Türkçe çıkıyordu
+                // (WP-500 ile aynı sınıf; l10n kapısının kör noktası kapanınca
+                // görünür oldu).
+                AppLocalizations.of(context).homeKartSayisi(available.length),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

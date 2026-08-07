@@ -330,33 +330,18 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
 # ⚠️ Bu WP kapının kendisini düzeltti; çıkan bulguların **tamamını çevirmek**
 # kartın kapsamı dışıdır (kart: "kapı düzelince çıkacak bulgular ayrı WP").
 # Gerçek çeviri borcu WP-504'e yazıldı.
+# WP-504: sicil **beşten bire** indi. Dört dosya borcunu ödedi ve satırları
+# tamamen silindi — sayıyı 0'a çekmek yetmezdi, çünkü sicilde adı geçen dosya
+# `ui_prose_violations` taramasından tümüyle **çıkarılıyor**; 0 yazmak o
+# dosyaya yarın eklenecek gerçek Türkçe metni de görünmez yapardı.
 UI_PROSE_DEBT: dict[str, tuple[int, str]] = {
-    "app/lib/core/widgets/crown_tiers_sheet.dart": (
-        2,
-        "'$currentXp XP' — 'XP' iki dilde de aynı yazılıyor; taşıma değeri "
-        "düşük ama literal olduğu için sicilde. WP-504.",
-    ),
-    "app/lib/features/profile/widgets/achievement_showcase.dart": (
-        2,
-        "Aynı 'XP' birimi (`:726` ve `:1435`). WP-504.",
-    ),
     "app/lib/features/desktop/desktop_home_shell.dart": (
         1,
         "Klavye kısayolu ipucu `(Ctrl+,)` — tuş adı platform sabiti, "
         "çevrilmez. Kardeş dosya `desktop_navigation_pane.dart` aynı gerekçeyle "
         "zaten muaf; burada dosyanın geri kalanı taranmaya devam etsin diye "
-        "muafiyet değil sicil kullanıldı.",
-    ),
-    "app/lib/features/home/widgets/card_picker.dart": (
-        1,
-        "🔴 Gerçek hata, WP-500 ile aynı sınıf: '${available.length} kart' "
-        "İngilizce arayüzde de Türkçe çıkıyor. Bu kartın SAHİP dosyası değil "
-        "(kapsam dışı) — WP-504.",
-    ),
-    "app/lib/features/profile/session_history_screen.dart": (
-        1,
-        "🔴 Gerçek hata, WP-500 ile aynı sınıf: '${sessions.length} oturum'. "
-        "WP-504.",
+        "muafiyet değil sicil kullanıldı. Sayı 1'de kilitli: aynı dosyaya ikinci "
+        "bir gömülü metin eklenirse kapı düşer.",
     ),
 }
 

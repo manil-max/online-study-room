@@ -228,7 +228,8 @@ class _PastDayTile extends StatelessWidget {
         ],
       ),
       subtitle: Text(
-        '${sessions.length} oturum',
+        // WP-504: gömülü "oturum" (WP-500 ile aynı sınıf).
+        AppLocalizations.of(context).profileOturumSayisi(sessions.length),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),

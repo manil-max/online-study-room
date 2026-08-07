@@ -40,7 +40,10 @@ Future<void> showCrownTiers(BuildContext context, {required int currentXp}) {
                 const SizedBox(height: 4),
                 Center(
                   child: Text(
-                    '$currentXp XP',
+                    // WP-504: birim katalogdan. TR ve EN'de aynı yazılıyor ama
+                    // literal olarak kalmıyor — ileride başka bir dil eklenirse
+                    // çeviri noktası hazır.
+                    AppLocalizations.of(context).commonXpMiktari(currentXp),
                     style: theme.textTheme.labelLarge?.copyWith(
                       color: tierColorFor(currentTier),
                       fontWeight: FontWeight.w700,
@@ -125,7 +128,7 @@ class _CrownTierRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$thresholdXp XP',
+                    AppLocalizations.of(context).commonXpMiktari(thresholdXp),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
