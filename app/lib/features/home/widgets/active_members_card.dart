@@ -125,7 +125,11 @@ class ActiveMembersCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${active.length} aktif',
+                    // 🔴 WP-500: burada `'${active.length} aktif'` yazıyordu —
+                    // İngilizce arayüzde de "2 aktif" çıkıyordu. l10n kapısı
+                    // bunu iki kör noktanın kesişiminde kaçırdı, ikisi de
+                    // `scripts/l10n_audit.py` içinde düzeltildi.
+                    AppLocalizations.of(context).homeAktifSayisi(active.length),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: green,
                       fontWeight: FontWeight.w700,

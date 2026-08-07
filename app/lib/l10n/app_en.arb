@@ -2818,6 +2818,15 @@
   "@homeSuAnCalisanlar": {
     "description": "Home user-facing text. Source: Şu an çalışanlar"
   },
+  "homeAktifSayisi": "{count, plural, =0 {0 active} =1 {1 active} other {{count} active}}",
+  "@homeAktifSayisi": {
+    "description": "Home user-facing text. Count of members currently studying, shown as a badge on the \"Currently studying\" card. Source: ${active.length} aktif",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "homeTtitleEklendi": "“{title}” added",
   "@homeTtitleEklendi": {
     "description": "Home user-facing text. Source: “${t.title}” eklendi",

@@ -122,6 +122,11 @@ def build_gates() -> list[Gate]:
              [py, "scripts/backend_contract_audit.py", "--self-test"]),
         Gate("l10n", "l10n katalog esligi", 0,
              [py, "scripts/l10n_audit.py"]),
+        # WP-500: kapinin kendisi de sinanir. Onceki prob yalniz duz bir
+        # `Text('...')` deniyordu; degiskenle baslayan gomulu cumle (asil kor
+        # nokta) hic sinanmiyordu ve uretime cikti.
+        Gate("l10n-self", "l10n kapisi kendini sinar", 0,
+             [py, "scripts/l10n_audit.py", "--self-test"]),
         Gate("l10n-android", "Android kaynak metin denetimi", 0,
              [py, "scripts/l10n_android_audit.py"]),
         Gate("migration-head", "Migration head uc yerde pinli", 0,

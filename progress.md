@@ -5356,6 +5356,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `dd0eda3`. **Cihazda doğrulanmalı.** |
 | **WP-498** Üye satırında ad alanı | Android telefon + gerçek Supabase (grup detayı; **uzun adlı**, ünvanlı, yönetici olmayan bir üye; yazı ölçeği 1.0 ve 1.6) | Üye listesinde ad artık tek harfe düşmüyor — en az 12 karakter okunuyor; dürtme ve susturma satırda duruyor; sağdaki ⋮ menüsünde "Üyeyi çıkar" ve "Üyeyi yasakla" ayrı adlarla çıkıyor ve seçilince onay diyaloğu açılıyor; yönetici olmayan hesapta ⋮ hiç görünmüyor. Ekran başlığındaki "Yönetici" rozeti 1.6 ölçekte sarı-siyah taşma şeridi üretmiyor. Commit: `b3e6c7d`. **Cihazda doğrulanmalı.** |
 | **WP-499** Trend grafiği Y ekseni | Android telefon (İstatistik → kişisel; 14 / 30 / 90 günlük dönemlerin **üçü de**, en az bir dolu haftası olan hesap) | Çizgi grafiğin sol ekseninde tepede iki sayı üst üste binmiyor; en üstteki sayı en üst ızgara çizgisinin tam hizasında ve o çizginin değerine eşit; dönem değiştirince (14↔30↔90) hiçbirinde çakışma çıkmıyor. Commit: `bedd14a`. **Cihazda doğrulanmalı.** |
+| **WP-500** İngilizce arayüzde "aktif" | Android telefon, **cihaz dili İngilizce** (grup detayı olan hesap, en az 2 kişi çalışırken) | Ana ekranda "Currently studying" kartındaki rozet "2 active" yazıyor, "2 aktif" değil; dili Türkçe'ye alınca "2 aktif" oluyor; tek kişi çalışırken "1 active". Commit: `07ce93b`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7196,20 +7197,23 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
      sınıra alındı ve kırpılıyor. Test artık 320+1.6'da istisna yok diyor.
 - **Test durumu:** `flutter test` **1693/1693** (+12), `flutter analyze` temiz,
   l10n TR/EN + Android yeşil.
-  - 🔴 **CI kırmızı düştü ve düzeltildi (run `31130356025`).** `Windows golden
-    baselines` job'ında bu WP'nin goldenı `Pixel test failed, image sizes do
-    not match — Master 288×225, Test 288×224` dedi. Sebep: golden çerçevesi
-    `Card` idi ve kartın yüksekliği **taçlı avatarın kesirli yüksekliğinden**
-    geliyor; yerel Flutter 3.44.2 ile runner'ın o günkü `stable`ı arasında
-    1 px oynuyor. Boyut uyuşmazlığını hiçbir raster toleransı karşılamaz
-    (`flutter_test_config.dart` yalnız yüzde farkına pay tanır) ve payı
-    yükseltmek zaten yasak. Çerçeve **tüm ekrana** alındı (320×900, pencere
-    boyutu → iki tarafta da sabit); WP-497'nin CI'da geçen goldenı da aynı
-    deseni kullanıyor. Golden yeniden üretildi.
-  - ⚠️ **Sistemik:** CI `flutter-version` **pinlemiyor** (`channel: stable`),
-    yani goldenlar hiçbir kod değişmeden, sadece Flutter sürümü çıktığı için
-    kırmızıya düşebilir. Ayrı karar konusu — pinleme sahibin onayını ister
-    (Flutter güncellemeleri otomatik gelmez olur).
+  - 🔴 **Golden CI'da iki kez kırmızı düştü ve sonunda KALDIRILDI.**
+    Ölçümler:
+    1. çerçeve `Card` (run `31130356025`) → `image sizes do not match`,
+       **288×225** (yerel) vs **288×224** (runner). Kartın yüksekliği taçlı
+       avatarın kesirli yüksekliğinden geliyor (`crowned_avatar.dart`).
+    2. çerçeve tüm ekran (320×900, boyut sabit) (run `cc5a600`) → boyut tuttu
+       ama **%4.61 / 13278 px** raster farkı.
+    Kök neden ürün kodu değil **araç**: CI `flutter-version` pinlemiyor
+    (`channel: stable`); yerel 3.44.2 iken runner o günkü stable'ı kuruyor.
+    Toleransı yükseltmek yasak (`flutter_test_config.dart`: pay platform farkı
+    içindir) ve %4.61'i karşılayacak bir pay gerçek regresyonu da gizlerdi.
+    Golden silindi; kaybedilen kanıt sınırlı, çünkü kabulün ölçülebilir kısmı
+    dp/oran/yükseklik iddialarında ve onlar golden'dan güçlü (golden gerçek
+    MaterialIcons fontunu yükleyemediği için simgeleri zaten boş kutu
+    çiziyordu). Sürüm pinlenirse geri eklenebilir → **WP-505**.
+  - ✅ Diğer beş job yeşil: `analyze + full test suite`, `Windows integration`,
+    `Dart/Edge ↔ SQL`, `Edge Function tip denetimi`, l10n Gate.
 - **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
   eylemdir, satırda kalır.
   ↳ Uyuldu: menüye yalnız çıkar/yasakla indi; dürtme ve susturma satırda.
@@ -7309,7 +7313,7 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ### WP-500: İngilizce arayüzde "2 aktif" + l10n kapısının kör noktası 🌐
 - **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N04 / rapor T11)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-496 (metin kaldırdığı için birlikte temizlenir)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-496 ✅ kapandı (`536eeb5`)
 - **Problem:** `active_members_card.dart:121` `'${active.length} aktif'` gömülü
   Türkçe. Kapı bunu **iki** kuralla birden kaçırdı: (1) `TURKISH_CHAR_RE`
   (`l10n_audit.py:55`) yalnız Türkçe'ye özgü karakter arıyor, "aktif" sırf ASCII;
@@ -7323,25 +7327,73 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
   - `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb`
   - `app/lib/features/home/widgets/active_members_card.dart`
 - **DOKUNMA:** `app/lib/l10n/app_localizations*.dart` (üretilir), diğer ekranlar.
+- **SAHİP dosyalar (ek):**
+  - `app/test/features/home/active_members_locale_wp500_test.dart` (yeni)
+  - ⚠️ **Kartta yazmayan, zorunlu iki komşu:** `scripts/test_all.py` ve
+    `.github/workflows/l10n-gate.yml` — yeni `--self-test` kapısı hiçbir yerden
+    çağrılmasa etkisiz olurdu.
 - **Adımlar:**
-  - [ ] `homeAktifSayisi` anahtarı ({count} çoğul) TR+EN eklensin, kod onu kullansın.
-  - [ ] "Tamamı interpolasyon" desenini literalin **tamamını** arayacak şekilde
-        düzelt.
-  - [ ] Kapıyı **kasten kırık girdiyle** sına: geçici bir `'$x aktif'` satırı
-        eklenince kapı **kırmızı** olmalı.
-  - [ ] Düzeltilmiş kapının ürettiği yeni bulguları listele; düzeltmeleri bu
-        kartta yapma, **rapor et**.
+  - [x] `homeAktifSayisi` anahtarı (`{count, plural, =0/=1/other}`) TR+EN
+        eklendi, kart onu kullanıyor.
+  - [x] "Tamamı interpolasyon" deseni literalin tamamını arıyor:
+        `^\$` → `^(?:\$\{[^{}]*\}|\$[A-Za-z_]\w*)+$`.
+  - [x] Kapı artık **kendini sınıyor** (`l10n_audit.py --self-test`), tek
+        seferlik elle denemeyle yetinilmedi.
+  - [x] Yeni bulgular listelendi ve **borç siciline** yazıldı; kapının
+        kapsamı dışındaki çeviriler WP-504'e taşındı.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** count = 0/1/2 · uzun çeviri · dar kart · yeni kural eski
-  muafiyet listesiyle çelişirse.
+- **Edge-case'ler:** count = 0/1/2/6 · TR ve EN · yeni kuralın eski muafiyet
+  listesiyle çelişmesi — hepsi testte.
 - **Kabul (ölçülebilir):**
-  1. EN arayüzde rozet "2 active" gösteriyor (cihaz/golden).
-  2. Kasten eklenen kırık girdi kapıyı **düşürüyor**, kaldırılınca yeşil.
-  3. `scripts/l10n_audit.py` tam koşumda OK.
+  1. ✅ EN arayüzde rozet "2 active", TR'de "2 aktif" (5 widget testi; golden
+     değil çünkü metin karşılaştırması doğrudan ve platformdan bağımsız).
+  2. ✅ Kırık girdi kapıyı düşürüyor — artık **kalıcı** kapı:
+     `python scripts/l10n_audit.py --self-test` üç ayrı kör noktayı birden
+     sınıyor ve ayıraç-birleştiren literalin yanlış pozitif üretmediğini de
+     doğruluyor. `test_all.py` (`l10n-self`) ve l10n Gate workflow'una bağlandı.
+  3. ✅ `scripts/l10n_audit.py` tam koşumda OK.
+- **🔴 Kartta olmayan üç bulgu:**
+  1. **Kör nokta bir değil ikiymiş ve kartın tarifi eksikti.** `TECHNICAL_RE`
+     düzeltildikten **sonra bile** literal görünmedi: `PROSE_RE` literalin
+     harfle başlamasını şart koşuyor, `'${active.length} aktif'` ise `$` ile
+     başlıyor. Yani "değişkenle başlayan cümle" iki kuralın kesişiminde
+     tamamen denetim dışıydı. Çözüm: interpolasyonlar prose sınamasından önce
+     tek harfli bir sözcüğe indirgeniyor.
+  2. **CI'daki prob kör noktayı göremezdi.** l10n Gate workflow'unda zaten bir
+     "kapıyı kırık girdiyle sına" adımı vardı, ama probu düz bir
+     `Text('This label must not ship hardcoded')` idi — o satır WP-294'ten beri
+     zaten yakalanıyordu. Kapı "kendini sınıyor" görünürken asıl deseni hiç
+     denemiyordu. Prob betiğe taşındı ve üç desene çıkarıldı.
+  3. **Gevşetme tek başına 52 bulgu açıyordu, 44'ü yanlış pozitifti**
+     (`'${l10n.x} · ${y}'` gibi zaten çevrilmiş parçaları ayıraçla
+     birleştirenler). Kural keskinleştirildi: interpolasyon **dışında** en az
+     iki harflik sözcük yoksa çevrilecek bir şey yoktur. Kalan 10 bulgunun
+     dağılımı aşağıda.
+- **Kapının açtığı bulgular (düzeltilmedi, sicile yazıldı):**
+  | Bulgu | Sınıf | Karar |
+  |---|---|---|
+  | `active_members_card.dart:127` `'${active.length} aktif'` | 🔴 gerçek hata | **bu WP'de düzeltildi** |
+  | `card_picker.dart:68` `'${available.length} kart'` | 🔴 aynı sınıf, başka ekran | WP-504 |
+  | `session_history_screen.dart:230` `'${sessions.length} oturum'` | 🔴 aynı sınıf | WP-504 |
+  | `admin_repository.dart:77` `'$userMessage
+Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, WP-486 |
+  | `crown_tiers_sheet.dart` ×2, `achievement_showcase.dart` ×2 (`XP`) | birim | sicilde, WP-504 |
+  | `desktop_home_shell.dart:223` `(Ctrl+,)` | çevrilmez | sicilde (kardeş dosya aynı gerekçeyle zaten muaf) |
+  | `week_hour_heatmap.dart:89` | tarayıcı kırpması | kapıda ele alındı: interpolasyon içinde aynı tırnak varsa literal kırpılıyor, kırık parçadan hüküm verilmiyor |
+- **Kanıt (kırmızı-yeşil, ölçüldü):** `active_members_card.dart` `git stash`
+  ile geri konup ikisi birden koşuldu → **kapı `FAIL (1)`** ile tam o literali
+  gösterdi (yani kör nokta gerçekten kapandı) ve **3 widget testi kırmızı**.
+  Yeni kodda kapı OK, testler 5/5.
+- **Test durumu:** `flutter test` **1716/1716** (+5), `flutter analyze` temiz,
+  l10n TR/EN + Android + `--self-test` yeşil.
 - **Tuzaklar:** Yeni kuralın onlarca eski bulguyu birden açıp kapıyı kalıcı
   kırmızıya çevirmesi — bulguları **borç siciline** yaz, kapıyı yeşil bırak.
+  ↳ Uyuldu: `UI_PROSE_DEBT` sicili eklendi (5 dosya, 7 literal). Blanket
+  muafiyet **kullanılmadı** — sicil `DATA_LAYER_DEBT` cırcırını taşır: sayı
+  artarsa da azalırsa da kapı kırmızı. Yani bu dosyalara yeni gömülü metin
+  eklenemez, borç ödendiğinde sayıyı düşürmek zorunludur.
 - **Model önerisi:** 🟣 Pro
 
 ---
@@ -7451,6 +7503,96 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
   eksen aralığının tam katı; `0` etiketi çizilmiyor.
 - **Tuzaklar:** `interval` vermeden yalnız `maxY`yi yuvarlamak — fl_chart kendi
   aralığını seçmeye devam eder ve yuvarlama işe yaramaz.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-504: l10n kapısının açtığı kalan gömülü metinler 🌐
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (WP-500 yan bulgusu)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-500 ✅ kapandı
+- **Problem:** WP-500 l10n kapısının iki kör noktasını kapattı ve kapı 10 bulgu
+  üretti. Biri (`active_members_card.dart`) orada düzeltildi; kalanlar kartın
+  kapsamı dışındaydı ve `scripts/l10n_audit.py` içindeki **`UI_PROSE_DEBT`**
+  siciline yazıldı (5 dosya, 7 literal). Sicil cırcırlı: sayı artarsa da
+  azalırsa da kapı kırmızı olur, yani bu borç sessizce büyüyemez.
+- **Kapsam:** Sicildeki üç sınıf:
+  1. 🔴 **Gerçek hata — İngilizce arayüzde Türkçe:**
+     `card_picker.dart:68` `'${available.length} kart'` ve
+     `session_history_screen.dart:230` `'${sessions.length} oturum'`.
+     WP-500'ün `homeAktifSayisi` deseniyle birebir aynı çözüm (çoğul anahtar).
+  2. **Birim metni:** `crown_tiers_sheet.dart` ×2 ve
+     `achievement_showcase.dart` ×2 — `'$xp XP'`. "XP" iki dilde de aynı
+     yazılıyor; taşımanın değeri düşük, **karar sahibin**: katalog anahtarı mı
+     açılsın yoksa sicilde gerekçeli kalsın mı.
+  3. **Çevrilmemesi doğru:** `desktop_home_shell.dart:223` `(Ctrl+,)` — tuş adı
+     platform sabiti. Sicilde durması yeterli; blanket muafiyet **açılmasın**
+     (dosyanın geri kalanı taranmaya devam etmeli).
+- **Kapsam dışı:** `DATA_LAYER_DEBT` içindeki 380 literal (yönetici/auth/grup
+  repository borcu — WP-486), l10n mimarisi, DE/AR dormant dosyalar.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/widgets/card_picker.dart`
+  - `app/lib/features/profile/session_history_screen.dart`
+  - `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb`
+  - `scripts/l10n_audit.py` (yalnız `UI_PROSE_DEBT` sayılarını **düşürmek**)
+- **DOKUNMA:** `l10n_audit.py`'nin kural gövdesi (WP-500'de yazıldı; kuralı
+  gevşetmek borcu ödemek değil **gizlemek** olur), `app_localizations*.dart`.
+- **Adımlar:**
+  - [ ] İki gerçek hata için çoğul anahtar aç, kod onu kullansın.
+  - [ ] `UI_PROSE_DEBT` sayılarını düşür — kapı düşmeyen sayıda **kırmızı**
+        olacak, kazanım böyle kilitlenir.
+  - [ ] "XP" için sahibin kararını al; katalog isteniyorsa anahtar aç.
+  - [ ] EN/TR widget testi (WP-500'ün `active_members_locale_wp500_test.dart`
+        dosyası birebir örnek).
+- **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local. · **RLS:** Yok.
+- **Edge-case'ler:** count = 0/1/çok · uzun İngilizce çeviri dar kartta.
+- **Kabul (ölçülebilir):** EN arayüzde "3 cards" / "12 sessions" görünüyor;
+  `UI_PROSE_DEBT` toplamı 7 → 3'e (ya da XP kararına göre 0'a) düşüyor ve kapı
+  yeşil; `--self-test` yeşil kalıyor.
+- **Tuzaklar:** Borcu sicilden **silerek** kapatmak. Sicil satırının kalkması
+  dosyanın taranmaya döndüğü anlamına gelir; literal duruyorsa kapı kırmızı
+  olur — bu doğru davranıştır, gerekçeyle susturulmaz.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-505: CI Flutter sürümü pinlensin — goldenlar kodsuz kırmızıya düşüyor 📌
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (WP-498 yan bulgusu) · **kapı altyapısı**
+- **Ajan:** — · **Durum:** [ ] **Sahip kararı bekliyor** · **Bağımlılık:** yok
+- **🔴 Sahibe soru (tek):** CI'daki Flutter sürümü **pinlensin mi?** Pinlenirse
+  Flutter güncellemeleri otomatik gelmez; yükseltme bilinçli bir commit olur.
+  Pinlenmezse goldenlar bugünkü gibi ara ara kırmızı düşmeye devam eder ve
+  yerelde üretilen hiçbir golden güvenilmez.
+- **Problem (ölçüldü):** Tüm workflow'lar `subosito/flutter-action` benzeri
+  adımı `channel: stable` ile çağırıyor, `flutter-version` **yok**. Yerel
+  geliştirme sürümü 3.44.2 (2026-06-10); runner o günkü stable'ı kuruyor.
+  Aradaki alt-piksel yerleşim farkı ölçüldü (WP-498 goldenı):
+  - `Card` çerçevesi → **288×225 vs 288×224**, `image sizes do not match`
+    (hiçbir tolerans karşılamaz).
+  - Tüm ekran çerçevesi (boyut sabit) → **%4.61 / 13278 px** raster farkı,
+    payın (0.5%) 9 katı.
+  Sonuç: WP-498 goldenı **kaldırılmak zorunda kaldı**.
+- **Neden bu bir kapı sorunu:** `ci.yml` başındaki kendi notu şunu diyor —
+  "raster farkı goldenları kırarsa doğru çözüm goldenları **üretildikleri
+  platforma sabitlemek**, sayıyı gevşetmek değil". Sürüm pinlemek tam olarak
+  bu ilkedir; bugün platform sabitleniyor ama **araç sürümü** sabitlenmiyor.
+- **Kapsam dışı:** Flutter'ı yükseltmek, golden içeriğini değiştirmek,
+  toleransı gevşetmek (**yasak**).
+- **SAHİP dosyalar (yaz):** `.github/workflows/*.yml` (yalnız flutter kurulum
+  adımları), `docs/KALITE-PROGRAMI.md` (kapı tanımı).
+- **Adımlar (onay gelirse):**
+  - [ ] Yerel sürümü tek kaynaktan oku (`app/pubspec.yaml` ya da yeni
+        `.flutter-version`) ve tüm workflow'lara aynı değeri ver.
+  - [ ] Release/stable workflow'larının da aynı sürümü kullandığını doğrula —
+        APK'nın hangi Flutter'la derlendiği artık kayıtlı olur (yayın
+        tekrarlanabilirliği kazanımı).
+  - [ ] WP-498 goldenını geri ekle ve CI'da yeşil olduğunu **koşumla** göster.
+  - [ ] Yükseltme yordamını yaz: sürüm değişince goldenlar tek commit'te
+        yenilenir.
+- **Veri/Migration etkisi:** Yok. · **RLS:** Yok.
+- **Kabul (ölçülebilir):** Aynı golden yerelde ve CI'da bit-bit geçiyor;
+  `Windows golden baselines` job'ı 61/61.
+- **Tuzaklar:** Yalnız golden job'ını pinleyip diğerlerini bırakmak — o zaman
+  test paketi ile golden paketi farklı Flutter'larda koşar.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

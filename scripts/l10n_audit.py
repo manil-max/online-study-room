@@ -78,6 +78,13 @@ UI_LITERAL_RE = re.compile(
 # snake_case, URL); ölçüm: gevşetme yalnız 4 yeni bulgu üretti, gürültü değil.
 PROSE_RE = re.compile(r"^[A-Za-zÇĞİÖŞÜçğıöşü][^\n]*\s")
 
+# Dart string interpolasyonu: `${ifade}` ya da `$tanımlayıcı`.
+INTERPOLATION_RE = re.compile(r"\$\{[^{}]*\}|\$[A-Za-z_]\w*")
+
+# "Çevrilecek sözcük": en az iki harf. Tek harf (`d`, `s`) birim kısaltması,
+# rakam/emoji/ayıraç ise zaten dilden bağımsızdır.
+WORD_RE = re.compile(r"[A-Za-zÇĞİÖŞÜçğıöşü]{2,}")
+
 # WP-477: veri katmanında kullanıcıya dönen metin yuvaları. Widget yuvası yok;
 # metin `throw XException('…')`, `return '…'` ya da `=> '…'` ile çıkar.
 # `throw StateError(...)` / `FormatException` gibi geliştirici invariantları
@@ -98,7 +105,13 @@ TECHNICAL_RE = re.compile(
     r"://"  # URL
     r"|^[a-z0-9_.]+$"  # snake/dotted id
     r"|^[A-Z0-9_]+$"  # SCREAMING_CASE sabit
-    r"|^\$"  # tamamı interpolasyon
+    # 🔴 WP-500: burada `^\$` yazıyordu ve niyeti "tamamı interpolasyon" idi,
+    # ama `^` yalnız **başlangıcı** kontrol eder. Sonuç: `$` ile başlayan her
+    # literal muaf sayılıyordu — `'${active.length} aktif'` gibi bir cümle
+    # kapıdan görünmeden geçti (V58-N04 / rapor T11: İngilizce arayüzde
+    # "2 aktif"). Desen artık literalin **tamamının** interpolasyon olmasını
+    # şart koşuyor; `${a}${b}` gibi bitişik interpolasyonlar da geçerli.
+    r"|^(?:\$\{[^{}]*\}|\$[A-Za-z_]\w*)+$"  # tamamı interpolasyon
     r"|^@"  # asset/annotation
     r"|^\d"  # sayıyla başlayan biçim
     r"|^[a-z]+[A-Z]"  # camelCase id
@@ -165,7 +178,10 @@ DATA_LAYER_DEBT: dict[str, tuple[int, int, str]] = {
         27,
         _ADMIN_DEBT,
     ),
-    "app/lib/data/repositories/admin_repository.dart": (10, 10, _ADMIN_DEBT),
+    # WP-500: prose sayısı 10 → 11. Yeni bir metin eklenmedi; kapının kör
+    # noktası kapanınca `:77` `'$userMessage\nDetay: $detail'` ilk kez göründü
+    # ("Detay" gömülü Türkçe). Sayı borcun **gerçek** büyüklüğüne çekildi.
+    "app/lib/data/repositories/admin_repository.dart": (10, 11, _ADMIN_DEBT),
     "app/lib/data/repositories/supabase/supabase_admin_moderation_repository.dart": (
         10,
         10,
@@ -302,6 +318,48 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
     ),
 }
 
+# (4) WP-500: prose taramasının **UI borç sicili** — dosya → (bulgu sayısı,
+# gerekçe).
+#
+# 🔴 Neden blanket muafiyet değil: `UI_PROSE_EXEMPTIONS` dosyanın tamamını
+# taramadan çıkarır ve yarın o dosyaya eklenen gerçek Türkçe metni de gizler.
+# WP-477'nin `INTERNAL_PREFIXES` dersi tam buydu. Sicil `DATA_LAYER_DEBT` ile
+# aynı cırcırı kullanır: sayı **artarsa** kapı kırmızı (yeni gömülü metin
+# yasak), **azalırsa** da kırmızı (kazanımı sayıyı düşürerek kilitle).
+#
+# ⚠️ Bu WP kapının kendisini düzeltti; çıkan bulguların **tamamını çevirmek**
+# kartın kapsamı dışıdır (kart: "kapı düzelince çıkacak bulgular ayrı WP").
+# Gerçek çeviri borcu WP-504'e yazıldı.
+UI_PROSE_DEBT: dict[str, tuple[int, str]] = {
+    "app/lib/core/widgets/crown_tiers_sheet.dart": (
+        2,
+        "'$currentXp XP' — 'XP' iki dilde de aynı yazılıyor; taşıma değeri "
+        "düşük ama literal olduğu için sicilde. WP-504.",
+    ),
+    "app/lib/features/profile/widgets/achievement_showcase.dart": (
+        2,
+        "Aynı 'XP' birimi (`:726` ve `:1435`). WP-504.",
+    ),
+    "app/lib/features/desktop/desktop_home_shell.dart": (
+        1,
+        "Klavye kısayolu ipucu `(Ctrl+,)` — tuş adı platform sabiti, "
+        "çevrilmez. Kardeş dosya `desktop_navigation_pane.dart` aynı gerekçeyle "
+        "zaten muaf; burada dosyanın geri kalanı taranmaya devam etsin diye "
+        "muafiyet değil sicil kullanıldı.",
+    ),
+    "app/lib/features/home/widgets/card_picker.dart": (
+        1,
+        "🔴 Gerçek hata, WP-500 ile aynı sınıf: '${available.length} kart' "
+        "İngilizce arayüzde de Türkçe çıkıyor. Bu kartın SAHİP dosyası değil "
+        "(kapsam dışı) — WP-504.",
+    ),
+    "app/lib/features/profile/session_history_screen.dart": (
+        1,
+        "🔴 Gerçek hata, WP-500 ile aynı sınıf: '${sessions.length} oturum'. "
+        "WP-504.",
+    ),
+}
+
 
 def catalog(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -417,11 +475,74 @@ def debt_drift(sources: list[tuple[str, str]]) -> tuple[list[str], int]:
     return errors, total
 
 
+def ui_prose_debt_drift(sources: list[tuple[str, str]]) -> tuple[list[str], int]:
+    """UI prose sicilindeki dosyaların sayımı sabit mi? (aynı cırcır)"""
+    errors: list[str] = []
+    by_path = dict(sources)
+    total = 0
+    for relative, (expected, _) in sorted(UI_PROSE_DEBT.items()):
+        source = by_path.get(relative)
+        if source is None:
+            errors.append(
+                f"UI prose debt register points at a missing file: {relative}"
+            )
+            continue
+        actual = sum(
+            1
+            for match in UI_LITERAL_RE.finditer(source)
+            if (literal := match.group(1) or match.group(2)) is not None
+            and looks_like_prose(literal)
+        )
+        total += actual
+        if actual > expected:
+            errors.append(
+                f"{relative}: UI prose debt grew {expected} -> {actual}; "
+                "new user-facing literals are not allowed in this file"
+            )
+        elif actual < expected:
+            errors.append(
+                f"{relative}: UI prose debt shrank {expected} -> {actual}; "
+                "lower the number in UI_PROSE_DEBT to lock the gain"
+            )
+    return errors, total
+
+
 def looks_like_prose(text: str) -> bool:
     stripped = text.strip()
     if len(stripped) < 4 or TECHNICAL_RE.search(stripped):
         return False
-    return bool(PROSE_RE.match(stripped))
+    # 🔴 WP-500 ikinci kör nokta. `TECHNICAL_RE`nin `^\$` muafiyeti
+    # düzeltildikten sonra bile `'${active.length} aktif'` görünmedi, çünkü
+    # `PROSE_RE` literalin **harfle başlamasını** şart koşuyor ve bu literal
+    # `$` ile başlıyor. Yani "değişkenle başlayan cümle" iki kuralın kesişimine
+    # düşüp tamamen denetim dışı kalıyordu.
+    #
+    # Çözüm: interpolasyonlar prose sınamasından **önce** tek harfli bir
+    # sözcüğe indirgenir. Böylece `'${n} aktif'` → `X aktif` (harfle başlar,
+    # boşluk içerir → cümle) olurken `'${path}/foo.png'` → `X/foo.png`
+    # (boşluk yok → teknik) ayrımı korunur.
+    #
+    # ⚠️ Tek başına bu gevşetme **52 bulgu** açıyordu ve büyük çoğunluğu gerçek
+    # hata değildi: `'${l10n.x} · ${y}'`, `'${formatHuman(a)} / ${b}'` gibi
+    # literaller zaten çevrilmiş parçaları ayıraçla birleştiriyor. Ölçüldü:
+    # 52 bulgunun 44'ü bu sınıftaydı. Kapıyı gürültüyle kırmızıya boğmak
+    # yerine kural keskinleştirildi — interpolasyonlu bir literalde çeviri
+    # gerektiren şey, ifadelerin **arasında kalan** metindir. Dışarıda en az
+    # iki harflik bir sözcük yoksa (yalnız ` · `, ` / `, `: `, `+`, emoji,
+    # rakam) çevrilecek bir şey de yoktur.
+    if INTERPOLATION_RE.search(stripped):
+        outside = INTERPOLATION_RE.sub(" ", stripped)
+        # Literal, interpolasyonun **içinde aynı tırnağı** taşıdığı için
+        # taramada kırpılmış olabilir: `'${h.padLeft(2, '0')}:00'` düz bir
+        # regex'le `'${h.padLeft(2, '` olarak yakalanır. Kırık parçadan hüküm
+        # verilmez — doğru çözüm gerçek bir Dart lexer'ı olurdu, o da bu
+        # kapının kapsamı değil. Ölçüldü: bu duruma düşen tek yer
+        # `week_hour_heatmap.dart:89`.
+        if "${" in outside:
+            return False
+        if not WORD_RE.search(outside):
+            return False
+    return bool(PROSE_RE.match(INTERPOLATION_RE.sub("X", stripped)))
 
 
 def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
@@ -432,7 +553,11 @@ def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
     """
     violations: list[str] = []
     for relative, source in sources:
-        if relative in UI_PROSE_EXEMPTIONS or relative in DATA_LAYER_DEBT:
+        if (
+            relative in UI_PROSE_EXEMPTIONS
+            or relative in DATA_LAYER_DEBT
+            or relative in UI_PROSE_DEBT
+        ):
             continue
         for match in UI_LITERAL_RE.finditer(source):
             literal = match.group(1)
@@ -509,7 +634,82 @@ def native_errors() -> tuple[list[str], str]:
     return [], (native.stdout or "").strip()
 
 
+SELF_TEST_PROBE = DART_ROOT / "features" / "_l10n_gate_probe.dart"
+
+# 🔴 WP-500 kabul md. 2: "kasten eklenen kırık girdi kapıyı düşürüyor".
+# Bu tek seferlik elle denenmez — kapı kendini her koşumda sınar
+# (`backend_contract_audit.py --self-test` ile aynı desen).
+#
+# Üç prob, kapının **üç ayrı** kör noktasına karşılık gelir:
+#   1. `$` ile başlayan gömülü cümle — WP-500'ün asıl hatası;
+#   2. Türkçe'ye özgü karakter içermeyen düz gömülü cümle;
+#   3. interpolasyon **arasında** kalan gömülü sözcük.
+# Ayrıca bir de **geçmemesi gereken** satır var: yalnız ayıraç birleştiren
+# literal kapıyı kırmızıya düşürmemeli, yoksa gürültü kapıyı kullanılmaz yapar.
+SELF_TEST_SOURCE = """// GECICI KAPI PROBU — l10n_audit.py --self-test tarafindan yazilir ve hemen
+// silinir. Repoda kalici olarak bulunmamalidir.
+import 'package:flutter/material.dart';
+
+class L10nGateProbe extends StatelessWidget {
+  const L10nGateProbe({super.key, required this.count, required this.label});
+
+  final int count;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text('$count gate_probe_leading'),
+      const Text('gate probe plain sentence'),
+      Text('$label gate_probe_between $count'),
+      // Bu satir kapiyi DUSURMEMELI: disarida yalniz ayirac var.
+      Text('$label · $count'),
+    ],
+  );
+}
+"""
+
+
+def self_test() -> int:
+    """Kapının kırmızıya döndüğünü kanıtlar."""
+    sources = dart_sources()
+    baseline = set(ui_prose_violations(sources))
+    SELF_TEST_PROBE.write_text(SELF_TEST_SOURCE, encoding="utf-8")
+    try:
+        probed = set(ui_prose_violations(dart_sources()))
+    finally:
+        SELF_TEST_PROBE.unlink(missing_ok=True)
+
+    new = probed - baseline
+    expected = (
+        "gate_probe_leading",
+        "gate probe plain sentence",
+        "gate_probe_between",
+    )
+    caught = {token: any(token in item for item in new) for token in expected}
+
+    print("self-test — kapı probu:")
+    for token, hit in caught.items():
+        print(f"  {'yakalandı' if hit else 'KAÇIRILDI'}: {token}")
+    # Yanlış pozitif kontrolü: ayıraç-birleştiren literal sessiz kalmalı.
+    separator_noise = [item for item in new if "·" in item]
+    print(
+        f"  {'temiz' if not separator_noise else 'GURULTU'}: "
+        "ayıraç birleştiren literal"
+    )
+    if not all(caught.values()) or separator_noise:
+        print("FAIL: kapı ya probu kaçırdı ya da gürültü üretti.")
+        for item in sorted(new):
+            print(f"    - {item}")
+        return 1
+    print(f"OK: kapı üç probu da reddetti, gürültü üretmedi ({len(new)} bulgu).")
+    return 0
+
+
 def main() -> int:
+    if "--self-test" in sys.argv[1:]:
+        return self_test()
+
     errors, template_key_count = catalog_errors()
     sources = dart_sources()
 
@@ -522,6 +722,8 @@ def main() -> int:
 
     drift_errors, debt_total = debt_drift(sources)
     errors.extend(drift_errors)
+    ui_drift_errors, ui_debt_total = ui_prose_debt_drift(sources)
+    errors.extend(ui_drift_errors)
 
     native_failures, native_summary = native_errors()
     errors.extend(native_failures)
@@ -542,6 +744,11 @@ def main() -> int:
         f"data-layer debt: {debt_total} literals still embedded in "
         f"{len(DATA_LAYER_DEBT)} files (locked at these counts; see "
         "DATA_LAYER_DEBT)"
+    )
+    print(
+        f"UI prose debt: {ui_debt_total} literals still embedded in "
+        f"{len(UI_PROSE_DEBT)} files (locked at these counts; see "
+        "UI_PROSE_DEBT)"
     )
     return 0
 

@@ -53,26 +53,17 @@ jobs:
         run: python scripts/l10n_audit.py
 
       - name: Prove the gate actually rejects a new hardcoded string
-        # 🔴 Yeşil bir denetim, denetimin çalıştığını kanıtlamaz. Bu adım geçici
-        # olarak gömülü bir kullanıcı metni ekler, denetimin **kırmızıya
-        # döndüğünü** doğrular ve dosyayı geri alır. Kapı sessizce etkisiz hâle
-        # gelirse (regex bozulur, muafiyet fazla genişler) bu adım düşer.
+        # 🔴 Yeşil bir denetim, denetimin çalıştığını kanıtlamaz. Bu adım kapıya
+        # geçici gömülü metinler yazdırır ve **kırmızıya döndüğünü** doğrular.
         #
-        # Sonda **İngilizce** metin var, Türkçe değil: Türkçe karakter taraması
-        # WP-89'dan beri vardı. Kırmızıya dönmesi gereken şey WP-294'te eklenen
-        # prose taramasıdır — gömülü İngilizce eskiden sessizce geçiyordu.
-        run: |
-          set -e
-          probe=app/lib/core/l10n/_gate_probe.dart
-          cleanup() { rm -f "$probe"; }
-          trap cleanup EXIT
-          cat > "$probe" <<'DART'
-          import 'package:flutter/material.dart';
-
-          Widget gateProbe() => const Text('This label must not ship hardcoded');
-          DART
-          if python scripts/l10n_audit.py; then
-            echo "::error::l10n gate did not reject a hardcoded user-facing string"
-            exit 1
-          fi
-          echo "Gate rejected the probe as expected."
+        # WP-500: prob buradaki tek satırlık `Text('This label…')` idi ve tam da
+        # bu yüzden kapının kör noktasını göremedi — o satır WP-294'ten beri
+        # zaten yakalanıyordu. `'${active.length} aktif'` biçimindeki
+        # **değişkenle başlayan** cümle ise iki kuralın kesişiminde denetim
+        # dışıydı ve İngilizce arayüzde Türkçe metin olarak yayına çıktı.
+        #
+        # Prob artık betiğin kendi içinde (`--self-test`), kuralların yanında
+        # duruyor ve üç ayrı kör noktayı birden sınıyor; ayrıca ayıraç
+        # birleştiren literalin **yanlış pozitif üretmediğini** de doğruluyor.
+        # `backend_contract_audit.py --self-test` ile aynı desen.
+        run: python scripts/l10n_audit.py --self-test

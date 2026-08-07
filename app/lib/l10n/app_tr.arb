@@ -660,6 +660,7 @@
   "homeVerilerYuklenemedi": "Veriler yüklenemedi.",
   "homeSuAnCalisanKimse": "Şu an çalışan kimse yok.",
   "homeSuAnCalisanlar": "Şu an çalışanlar",
+  "homeAktifSayisi": "{count, plural, =0 {0 aktif} =1 {1 aktif} other {{count} aktif}}",
   "homeTtitleEklendi": "“{title}” eklendi",
   "notificationsBaslangic": "Başlangıç",
   "notificationsBildirimMerkezi": "Bildirim Merkezi",
