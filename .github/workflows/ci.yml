@@ -64,6 +64,14 @@ jobs:
       - name: Migration zinciri ve head pinleri
         run: python scripts/test_all.py --internal-migration-head
 
+      # 🔴 WP-505: Flutter sürümü **altı** workflow adımında pinlidir ve
+      # migration head'in üç yerde kayması gibi burası da kayabilir.
+      # Pin kayarsa/silinirse runner o günkü stable'ı kurar; ölçüldü,
+      # goldenlar kod hiç değişmeden kırmızıya düşüyor (288×225 vs
+      # 288×224, sonra %4.61 raster farkı). Tek kaynak `.flutter-version`.
+      - name: Flutter sürümü her workflow'da aynı
+        run: python scripts/test_all.py --internal-flutter-pin
+
   # 🔴 Altı Edge Function (1601 satır, içinde kullanıcı verisi silen
   # `purge-accounts`) hiçbir yerde tip denetiminden geçmiyordu. Denetim ilk
   # açıldığında **altısı da** düştü; hepsi düzeltildi (yakalananlar: `catch`
@@ -112,6 +120,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # 🔴 WP-505: surum PINLI. Pinsizken runner o gunku stable'i
+          # kuruyordu ve yerelde uretilen goldenlar alt-piksel farkiyla
+          # kirmiziya dusuyordu (olculdu: 288x225 vs 288x224, sonra
+          # %4.61 raster farki). Tek kaynak: repo kokundeki
+          # `.flutter-version`. Degeri `scripts/test_all.py
+          # --internal-flutter-pin` her kosumda dogrular.
+          flutter-version: 3.44.2
 
       - run: flutter pub get
 
@@ -166,6 +181,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # 🔴 WP-505: surum PINLI. Pinsizken runner o gunku stable'i
+          # kuruyordu ve yerelde uretilen goldenlar alt-piksel farkiyla
+          # kirmiziya dusuyordu (olculdu: 288x225 vs 288x224, sonra
+          # %4.61 raster farki). Tek kaynak: repo kokundeki
+          # `.flutter-version`. Degeri `scripts/test_all.py
+          # --internal-flutter-pin` her kosumda dogrular.
+          flutter-version: 3.44.2
       - run: flutter pub get
       - name: Sahte env.json (secret gerekmez)
         shell: pwsh
@@ -186,6 +208,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # 🔴 WP-505: surum PINLI. Pinsizken runner o gunku stable'i
+          # kuruyordu ve yerelde uretilen goldenlar alt-piksel farkiyla
+          # kirmiziya dusuyordu (olculdu: 288x225 vs 288x224, sonra
+          # %4.61 raster farki). Tek kaynak: repo kokundeki
+          # `.flutter-version`. Degeri `scripts/test_all.py
+          # --internal-flutter-pin` her kosumda dogrular.
+          flutter-version: 3.44.2
       - run: flutter pub get
       - name: Sahte env.json (secret gerekmez)
         shell: pwsh

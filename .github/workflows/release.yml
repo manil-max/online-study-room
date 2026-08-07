@@ -79,6 +79,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # 🔴 WP-505: surum PINLI. Pinsizken runner o gunku stable'i
+          # kuruyordu ve yerelde uretilen goldenlar alt-piksel farkiyla
+          # kirmiziya dusuyordu (olculdu: 288x225 vs 288x224, sonra
+          # %4.61 raster farki). Tek kaynak: repo kokundeki
+          # `.flutter-version`. Degeri `scripts/test_all.py
+          # --internal-flutter-pin` her kosumda dogrular.
+          flutter-version: 3.44.2
       - name: İmzalama anahtarını hazırla
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks

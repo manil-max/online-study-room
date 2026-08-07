@@ -7208,10 +7208,9 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
     (`channel: stable`); yerel 3.44.2 iken runner o günkü stable'ı kuruyor.
     Toleransı yükseltmek yasak (`flutter_test_config.dart`: pay platform farkı
     içindir) ve %4.61'i karşılayacak bir pay gerçek regresyonu da gizlerdi.
-    Golden silindi; kaybedilen kanıt sınırlı, çünkü kabulün ölçülebilir kısmı
-    dp/oran/yükseklik iddialarında ve onlar golden'dan güçlü (golden gerçek
-    MaterialIcons fontunu yükleyemediği için simgeleri zaten boş kutu
-    çiziyordu). Sürüm pinlenirse geri eklenebilir → **WP-505**.
+    Golden önce silindi. ✅ **WP-505 sürümü pinledi** (`.flutter-version`,
+    altı workflow adımı) ve golden **geri eklendi** — tam ekran çerçevesi,
+    320×900. Yerel ve CI artık aynı Flutter'ı kuruyor.
   - ✅ Diğer beş job yeşil: `analyze + full test suite`, `Windows integration`,
     `Dart/Edge ↔ SQL`, `Edge Function tip denetimi`, l10n Gate.
 - **Tuzaklar:** Eylemleri menüye alırken dürtmeyi de gömmek — dürtme birincil
@@ -7557,11 +7556,14 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ### WP-505: CI Flutter sürümü pinlensin — goldenlar kodsuz kırmızıya düşüyor 📌
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (WP-498 yan bulgusu) · **kapı altyapısı**
-- **Ajan:** — · **Durum:** [ ] **Sahip kararı bekliyor** · **Bağımlılık:** yok
-- **🔴 Sahibe soru (tek):** CI'daki Flutter sürümü **pinlensin mi?** Pinlenirse
-  Flutter güncellemeleri otomatik gelmez; yükseltme bilinçli bir commit olur.
-  Pinlenmezse goldenlar bugünkü gibi ara ara kırmızı düşmeye devam eder ve
-  yerelde üretilen hiçbir golden güvenilmez.
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü gerekmez (kapı işi) · **Bağımlılık:** yok
+- **Karar:** Sahip "gereken neyse yap" dedi (2026-08-07) ve bunun bir araç
+  kararı olduğunu, kendisinde bilgi olmadığını söyledi. **Pinlendi.**
+  Gerekçe: pinsizken yerelde üretilen hiçbir golden güvenilmez ve kapı kod
+  değişmeden kırmızı düşer; pinliyken yükseltme bilinçli bir commit olur ve
+  yayınlanan APK'nın hangi Flutter'la derlendiği **kayıtlı** hâle gelir.
+  Bu, `ci.yml`'in kendi ilkesiyle aynı yönde: "doğru çözüm sabitlemek,
+  sayıyı gevşetmek değil."
 - **Problem (ölçüldü):** Tüm workflow'lar `subosito/flutter-action` benzeri
   adımı `channel: stable` ile çağırıyor, `flutter-version` **yok**. Yerel
   geliştirme sürümü 3.44.2 (2026-06-10); runner o günkü stable'ı kuruyor.
@@ -7579,15 +7581,30 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   toleransı gevşetmek (**yasak**).
 - **SAHİP dosyalar (yaz):** `.github/workflows/*.yml` (yalnız flutter kurulum
   adımları), `docs/KALITE-PROGRAMI.md` (kapı tanımı).
-- **Adımlar (onay gelirse):**
-  - [ ] Yerel sürümü tek kaynaktan oku (`app/pubspec.yaml` ya da yeni
-        `.flutter-version`) ve tüm workflow'lara aynı değeri ver.
-  - [ ] Release/stable workflow'larının da aynı sürümü kullandığını doğrula —
-        APK'nın hangi Flutter'la derlendiği artık kayıtlı olur (yayın
-        tekrarlanabilirliği kazanımı).
-  - [ ] WP-498 goldenını geri ekle ve CI'da yeşil olduğunu **koşumla** göster.
-  - [ ] Yükseltme yordamını yaz: sürüm değişince goldenlar tek commit'te
-        yenilenir.
+- **SAHİP dosyalar (yaz):** `.flutter-version` (yeni) ·
+  `.github/workflows/{ci,release,stable-candidate,windows-release}.yml` ·
+  `scripts/test_all.py` · `app/test/features/classroom/member_row_wp498_test.dart`
+- **Adımlar:**
+  - [x] Tek kaynak: repo kökünde `.flutter-version` = `3.44.2` (yerelde
+        kullanılan sürüm; tüm testler zaten onunla yeşil).
+  - [x] **Altı** `subosito/flutter-action` adımının hepsine
+        `flutter-version: 3.44.2` verildi — CI (3), release,
+        stable-candidate, windows-release. Yani APK'lar da pinli.
+  - [x] Kayma koruması: `scripts/test_all.py --internal-flutter-pin`
+        her adımın `.flutter-version` ile aynı değeri taşıdığını sınar.
+        `test_all.py` (`flutter-pin`) ve `ci.yml` T0 job'ına bağlandı.
+  - [x] WP-498 goldenı **geri eklendi** (tam ekran çerçevesi, 320×900).
+  - [ ] CI'da yeşil olduğunu koşumla göster — push sonrası izleniyor.
+- **Kanıt (kapı kasten kırıldı):** `--internal-flutter-pin` iki kırık
+  girdiye de kırmızı döndü: (a) bir workflow'da pin `3.99.0` yapılınca
+  `pin 3.99.0 != .flutter-version 3.44.2`; (b) pin satırı silinince
+  `1 flutter-action adimi var ama 0 flutter-version pini`.
+- **🔴 Yan bulgu (bu turda düşülen tuzak):** `stable-candidate.yml`
+  kardeşleri LF iken `git checkout --` sonrası CRLF'e döndü — ve o
+  komut aynı anda **commit'lenmemiş pin düzenlemesini sildi**
+  (`paylasilan-dizinde-checkout-yasak` notundaki tuzak, tek ajanda bile
+  geçerli: kendi commit'lenmemiş işini siler). Dosya LF'e geri döndürüldü,
+  diff yalnız +7 satır.
 - **Veri/Migration etkisi:** Yok. · **RLS:** Yok.
 - **Kabul (ölçülebilir):** Aynı golden yerelde ve CI'da bit-bit geçiyor;
   `Windows golden baselines` job'ı 61/61.

@@ -131,6 +131,10 @@ def build_gates() -> list[Gate]:
              [py, "scripts/l10n_android_audit.py"]),
         Gate("migration-head", "Migration head uc yerde pinli", 0,
              [py, "scripts/test_all.py", "--internal-migration-head"]),
+        # WP-505: pin alti workflow adiminda duruyor; biri kayarsa goldenlar
+        # kod degismeden kirmiziya duser.
+        Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
+             [py, "scripts/test_all.py", "--internal-flutter-pin"]),
 
         # T1 — bagimsiz araclar; birbirinin dosyasina dokunmaz.
         Gate("analyze", "flutter analyze", 1,
@@ -205,6 +209,73 @@ def internal_deno_check() -> int:
     if failed:
         print("KIRMIZI tip denetimi: " + ", ".join(failed))
         return 1
+    return 0
+
+
+def internal_flutter_pin() -> int:
+    """Her workflow ayni Flutter surumune pinli mi?
+
+    🔴 Bu kapinin sebebi olculdu (WP-498/WP-505): workflow'lar `channel: stable`
+    diyordu, surum pinlemiyordu. Yerel surum 3.44.2 iken runner o gunku
+    stable'i kuruyor ve alt-piksel yerlesim farki goldenlari **kod hic
+    degismeden** kirmiziya dusuruyordu:
+      * cerceve Card  -> `image sizes do not match`, 288x225 vs 288x224
+      * cerceve ekran -> %4.61 / 13278 px raster farki (payin 9 kati)
+    WP-498'in goldeni bu yuzden silinmek zorunda kaldi.
+
+    ⚠️ Pin **alti ayri yerde** duruyor. Migration head'in ucu bir yerde
+    unutulup CI'i iki kez kirmizi dusurmustu (AGENTS.md dersi); ayni hata
+    burada alti kat daha olasi. Tek kaynak repo kokundeki `.flutter-version`;
+    bu kapi her workflow'un onunla ayni degeri tasidigini dogrular.
+
+    Yukseltme yordami: `.flutter-version`i degistir, bu kapiyi kosur, soyledigi
+    yerleri guncelle, sonra goldenlari **tek commit'te** yenile.
+    """
+    import re
+
+    pin_file = ROOT / ".flutter-version"
+    if not pin_file.exists():
+        print("FAIL: .flutter-version yok — pinin tek kaynagi bu dosyadir.")
+        return 1
+    expected = pin_file.read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", expected):
+        print(f"FAIL: .flutter-version okunamadi: {expected!r}")
+        return 1
+
+    problems: list[str] = []
+    checked = 0
+    for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        uses = text.count("subosito/flutter-action")
+        if not uses:
+            continue
+        pins = re.findall(r"flutter-version:\s*(\S+)", text)
+        checked += uses
+        if len(pins) != uses:
+            problems.append(
+                f"{rel}: {uses} flutter-action adimi var ama {len(pins)} "
+                "`flutter-version` pini — pinsiz adim runner'in o gunku "
+                "stable'ini kurar"
+            )
+        for pin in pins:
+            if pin != expected:
+                problems.append(
+                    f"{rel}: pin {pin} != .flutter-version {expected}"
+                )
+
+    if not checked:
+        print("FAIL: hicbir workflow'da flutter-action bulunamadi.")
+        return 1
+    if problems:
+        print(f"FAIL ({len(problems)}):")
+        for problem in problems:
+            print(f"  - {problem}")
+        return 1
+    print(
+        f"OK: {checked} flutter-action adimi da {expected} surumune pinli "
+        "(.flutter-version)."
+    )
     return 0
 
 
@@ -357,12 +428,16 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-migration-head", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-flutter-pin", action="store_true",
+                        help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     if args.internal_deno_check:
         return internal_deno_check()
     if args.internal_migration_head:
         return internal_migration_head()
+    if args.internal_flutter_pin:
+        return internal_flutter_pin()
 
     gates = build_gates()
     if args.list:
