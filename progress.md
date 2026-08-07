@@ -7505,6 +7505,16 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
      elle insert `on conflict (event_key) do nothing` yapıldı (testin niyeti
      "bu günler tamamlanmış sayılsın"; olayı kimin yazdığı iddiayı
      değiştirmez). WP-492 kartına da işlendi.
+- **Üçüncü koşum (`b0e98e0`): `001` ve `038` yeşil, tek kırmızı `046`.**
+  `group_achievement_weekly_pkey` çakışması: `base_seed` alpha için grp1'de
+  bugüne oturum yazıyor ve `_study_session_project_group_metrics`
+  tetikleyicisi bu haftanın satırını **zaten** oluşturuyor. Fixture'ın ne
+  ürettiğini varsaymak yerine `on conflict ... do update` ile ezmek gerekiyor
+  (testin niyeti iki grupta da birincilik kurmak).
+  ↳ Aynı sınıfın üçüncü örneği: şemayı/veriyi **yazıldığı ana göre** değil
+  **koşum anındaki gerçek durumuna** göre okumak gerekiyordu (önce silinmiş
+  fonksiyon, sonra yeniden adlandırılmış kolon, şimdi tetikleyicinin önceden
+  yazdığı satır).
 - **⚠️ Head aslında DÖRT yerde pinli.** `migration-head` kapısı üçünü biliyor
   (`deploy-contract.json`, `guard.tests.ps1`, `release-preflight.tests.ps1`)
   ama `supabase/tests/001_schema_contract.test.sql` de sayıyı ve head'i

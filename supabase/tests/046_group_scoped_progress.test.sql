@@ -115,7 +115,16 @@ insert into public.group_achievement_weekly (
   finalized_at
 ) values
   (:'grp1', date_trunc('week', current_date)::date, :'alpha', 7200, 1, now()),
-  (:'grp2', date_trunc('week', current_date)::date, :'alpha', 7200, 1, now());
+  (:'grp2', date_trunc('week', current_date)::date, :'alpha', 7200, 1, now())
+-- 🔴 `on conflict` sart: base_seed alpha icin grp1'de bugune oturum yaziyor ve
+-- `_study_session_project_group_metrics` tetikleyicisi bu haftanin satirini
+-- ZATEN olusturuyor. Duz insert `group_achievement_weekly_pkey` cakismasi
+-- veriyordu (run 31163... ). Fixture'in urettigi satiri ezmek testin niyeti:
+-- iki grupta da birincilik kurulacak.
+on conflict (group_id, iso_week_start, user_id) do update set
+  total_seconds = excluded.total_seconds,
+  weekly_alpha_wins = excluded.weekly_alpha_wins,
+  finalized_at = excluded.finalized_at;
 
 select public._project_group_scoped_metrics();
 
