@@ -231,7 +231,7 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local **`0120`** (WP-492; hiçbir ortama uygulanmadı — `Replay bekliyor`) · staging/production **`0119`** · sıradaki boş numara **`0121`** |
+| Migration | Repo/local **`0121`** (WP-492 `0120` + WP-501 `0121`; hiçbir ortama uygulanmadı — `Replay bekliyor`) · staging/production **`0119`** · sıradaki boş numara **`0122`** |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Remote kapıları | staging + production deploy/release dört bayrak v58 sonrası **kapalı** |
@@ -6357,7 +6357,7 @@ Hiçbir F4 kartı production/stable kapısı açmaz.
 **Sıra (yukarıdan aşağı, atlanmaz):**
 
 1. **WP-489** — çökme. Kullanıcı iki sayaç modunu kullanamıyor.
-2. **WP-490 → WP-491** — hayalet koşu teşhisi + etkisiz Durdur, sonra grace penceresi. 🔴 Hayalet koşudan **oturum yazılmaz** (sahip düzeltmesi, 2026-08-06).
+2. **WP-490 → WP-491** — hayalet koşu teşhisi + etkisiz Durdur. 🔴 Hayalet koşudan **oturum yazılmaz** (sahip düzeltmesi, 2026-08-06). 🔴 **Güncelleme (2026-08-07):** kök neden kod analiziyle bulundu (cihaz verisi olmadan), düzeltme **migration gerektirmedi** — istemci tarafı cihaz-kimliği kontrolü. Ayrıntı WP-490/491 kartlarında.
 3. **WP-492** — seri yazma yolu (özellik tümüyle ölü).
 4. **WP-493** — ana ekran üst güvenli alanı (tek satır, en görünür kusur).
 5. **WP-494 → WP-495** — abonelik sızıntısı, sonra yükleniyor-durumu taraması.
@@ -6366,24 +6366,23 @@ Hiçbir F4 kartı production/stable kapısı açmaz.
 8. **WP-502** — telemetri; T12/T13 bunsuz kapanmaz.
 
 🔴 **Sıcak dosya serileştirmesi:**
-- `supabase/migrations/**` → **WP-490 → WP-491 → WP-492 → WP-501** sırayla;
-  ikisi aynı anda açılmaz, her biri head'i **üç yerde birden** ilerletir
-  (`tooling/release/deploy-contract.json` · `supabase/tests/001_schema_contract.test.sql`
-  · `tooling/supabase/guard.tests.ps1`).
+- `supabase/migrations/**` → **WP-492 → WP-501** sırayla (WP-490/491 artık
+  migration yazmıyor, çıkarıldı); ikisi aynı anda açılmaz, her biri head'i
+  **üç yerde birden** ilerletir (`tooling/release/deploy-contract.json` ·
+  `supabase/tests/001_schema_contract.test.sql` · `tooling/supabase/guard.tests.ps1`).
 - `class_detail_screen.dart` → **WP-494** ve **WP-498** aynı dosyayı sahiplenir;
   önce WP-494 (yapısal), sonra WP-498 (yerleşim). Aynı commit'e karışmaz.
 - `goal_streak_flame.dart` → **WP-496**; `study_timer_card.dart` da o kartındır.
 - l10n `.arb` → **WP-500**; WP-496 metin **kaldırdığı** için kullanılmayan
   anahtar bırakabilir, ikisi arka arkaya koşar (bkz. WP-500 tuzaklar).
 
-**Migration numarası önceden ayrılmaz (2026-08-06 düzeltmesi).** WP-490 artık
-teşhis kartıdır ve **migration gerektirmeyebilir**; numarayı önceden ayırmak boş
-numara bırakır ya da çakışma üretir. Kural: **migration'ı ilk YAZAN kart sıradaki
-boş numarayı alır** ve head'i üç yerde birden ilerletir. Numara gerektiren
-kartlar: WP-491, WP-501 ve gerekirse WP-490.
-🔴 **Güncel durum (2026-08-06):** ilk yazan **WP-492** oldu → `0120` + pgTAP `045`
-tüketildi. **Sıradaki boş numara `0121`, sıradaki pgTAP dosyası `046`.**
-Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değildir.
+**Migration numarası önceden ayrılmaz (2026-08-06 düzeltmesi).** Numarayı
+önceden ayırmak boş numara bırakır ya da çakışma üretir. Kural: **migration'ı
+ilk YAZAN kart sıradaki boş numarayı alır** ve head'i üç yerde birden ilerletir.
+🔴 **Güncel durum (2026-08-07):** `0120` WP-492'de, `0121` WP-501'de tüketildi.
+WP-490/491 kök nedeni istemci tarafında bulunup düzeltildiği için **hiç
+migration yazmadı** — `0122` hâlâ boş. Kart başlıklarındaki eski `0121`
+etiketi (WP-491) artık geçersizdir, kart başlığından kaldırıldı.
 
 ---
 
@@ -6450,127 +6449,124 @@ Kart başlıklarındaki `0121`/`0123` etiketleri tahmindir, bağlayıcı değild
 
 ---
 
-### WP-490: Hayalet koşu ve etkisiz ayna Durdur'u — önce TEŞHİS 👻
+### WP-490: Hayalet koşu ve etkisiz ayna Durdur'u — TEŞHİS (kod analiziyle kapandı) 👻
 - **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N08 + N08-EK / rapor T05)
-- **Ajan:** Claude · **Durum:** [~] **Teşhis kiti hazır — cihaz verisi bekleniyor** · **Bağımlılık:** WP-489 ✅ kod tamam
-- 🔴 **Bu kart 2026-08-06'da sahip düzeltmesiyle YENİDEN YAZILDI.** Önceki hâli
-  belirtiyi "kaybolan 4-5 saatlik çalışma" sanıyor ve *"sunucu uzak durdurmada
-  `study_sessions` yazsın"* diyordu. **O düzeltme uygulansaydı kullanıcının
-  istatistiklerine 10 saatlik sahte çalışma yazılırdı.** Sahibin ifadesi:
-  gerçek çalışma süresi kaybolmuyor; ekranda beliren süre **hayalet koşudur**.
-- **Problem (sahibin senaryosu):** Telefonda normal çalış-durdur → uyu → sabah
-  telefonu aç → ekranda **10 saatlik** kronometre → Durdur → "diğer cihazdaki
-  kronometre durdurulacak" onayı → evet → **hiçbir şey olmuyor**. Onay metninin
-  çıkması telefonun **ayna**, koşunun sahibinin **diğer cihaz** olduğunu kanıtlar
-  (`study_timer_card.dart:119-139` yalnız `isGlobalTimerMirror` iken bu diyaloğu
-  açar). Kodun kendi yorumu boşluğu zaten yazmış: cihaz uyurken uzak durdurmayı
-  öğrenecek tur **ölüdür** (`study_providers.dart:1104-1107`); `0119`un 12
-  saatlik grace'i de süpürücüyü yarım gün geciktirir.
-- 🔴 **Mutlak kural — bu kartın en üst maddesi:** **hayalet koşudan oturum
-  YAZILMAZ.** Hiçbir adım `study_sessions`'a satır eklemez. Sahte süreyi
-  kalıcılaştırmak hatayı veri bozulmasına çevirir.
-- **Kapsam dışı:** Grace penceresi (WP-491), oturum kaydı mimarisi, presence,
-  yeni sayaç modu, widget senkronu, **ve** "kullanıcının kayıp süresini telafi
-  etme" fikri (kayıp süre yok).
-- **SAHİP dosyalar (yaz):**
-  - `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md` (yeni — teşhis çıktısı, **ilk teslim bu**)
-  - `app/lib/data/providers/study_providers.dart` (yalnız teşhis sonrası düzeltme)
-  - `app/lib/data/providers/global_timer_providers.dart`
-  - `app/test/data/global_timer_mirror_stop_wp490_test.dart` (yeni)
-  - *(Migration gerekirse `supabase/migrations/0120_*.sql` numarası bu karta ayrıldı;
-    teşhis göstermeden yazılmaz.)*
-- **DOKUNMA (oku, değiştirme):** `0119` (WP-491'in sahibi), `0051`, `0101`,
-  native FGS dosyaları (WP-489 aktif).
-- **Adımlar — sıra bağlayıcı:**
-  - [x] **0. (Kartta yoktu, zorunlu çıktı) Günlüğü okunabilir yap.** Ölçüldü:
-        `TimerDiagnosticJournal` WP-430'da yazıldı, `exportEntries()` metodu
-        bile var ama `app/lib` içinden **hiçbir yerden çağrılmıyordu** — tek
-        çağıran kendi birim testiydi. Yani adım 2 ("günlüğü oku") **fiziksel
-        olarak yapılamıyordu**; sahip belirtiyi tekrarlasa bile eline hiçbir
-        kanıt geçmezdi. Ayarlara *Sayaç tanılama kaydı* ekranı eklendi:
-        kayıtlar en yeni üstte, `reason → outcome` görünür, JSON paylaşımı
-        var. Gizlilik sözleşmesi genişletilmedi (kimlikler zaten tuzlanmış
-        kısa özet, serbest metin yok).
-  - [x] **1. Teşhis kiti yazıldı** (`docs/qa/V58-GHOST-RUN-DIAGNOSIS.md`):
-        üç SQL sorgusu hazır, doldurulacak tablolar hazır ve **karar tablosu**
-        hazır — `mirror_stop_requested` kaydının `outcome` alanı
-        (`stale` / `deferred` / `applied` / satır yok) üç düzeltme yolundan
-        hangisinin doğru olduğunu doğrudan söylüyor.
-  - [ ] **1b. SAHİP: belirti tekrarlanırken veriyi topla.** Sunucu durumu:
-        `live_study_runs` (status, controller_device_id, effective_started_at,
-        run_revision, lease_expires_at), `user_timer_state.current_run_id`,
-        son `global_timer_commands` satırları. Üç soruyu **veriyle** cevapla:
-        (a) koşuyu hangi cihaz, ne zaman açtı? (b) Durdur'a basınca sunucu ne
-        döndürdü — `stale` mi, `already_stopped` mı, normal mi? (c) koşu
-        kapandıktan sonra **geri mi geliyor**, yoksa hiç mi kapanmıyor?
-  - [ ] **2. SAHİP:** Ayarlar → *Sayaç tanılama kaydı* → **Kaydı paylaş**;
-        çıkan JSON'u teşhis belgesine yapıştır. Aranan satır
-        `mirror_stop_requested`; `outcome` alanı cevabı doğrudan verir.
-  - [ ] **3.** Bulguya göre düzelt. Üç senaryo, üç ayrı yol:
-        · `stale` dönüyorsa → ayna revizyonunu tazeleyip **tek** yeniden deneme.
-        · Kapanıp geri geliyorsa → diğer cihazın native servisi terminal durumu
-          uyanmadan öğrenmeli (push ile stop teslimi); yeniden aynalama
-          sunucudaki `stopped` koşuyu **asla** diriltemez.
-        · Hiç kapanmıyorsa → CAS/kimlik yolu bozuktur; kimlik yenilenip tekrar.
-  - [ ] **4.** Durdurma **dürüst** olsun: komut kabul edilse bile koşu 5 sn
-        içinde geri dönerse kullanıcıya bunu söyle. Sessiz başarısızlık yasak.
-- **Veri/Migration etkisi:** Teşhis adımında **yok**. Düzeltme sunucu tarafını
-  gerektirirse `0120` kullanılır ve head üç yerde ilerletilir; geri alma tek
-  `create or replace`.
-- **Ortam/Deploy:** local + **sahibin iki cihazı** (teşhis onsuz yapılamaz).
-  Production/stable kapısı açılmaz.
-- **RLS/Güvenlik:** Teşhis sorguları sahibin **kendi** kullanıcı kimliğiyle
-  sınırlıdır; başka kullanıcının koşu verisi okunmaz. Rapor redacted yazılır.
-- **Edge-case'ler:** İki cihaz da uykuda · tablet uçak modunda · aynı anda iki
-  stop · koşu zaten `abandoned` · telefon çevrimdışıyken Durdur · kullanıcı
-  onayı iptal ediyor · üçüncü cihaz.
-- **Kabul (ölçülebilir):**
-  1. `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md` üç soruyu **veriyle** cevaplıyor
-     (koşuyu kim açtı, stop ne döndürdü, neden geri geliyor).
-  2. Düzeltmeden sonra: aynadan Durdur → koşu ≤ 5 sn içinde kapanıyor ve
-     **60 sn boyunca geri gelmiyor** (iki cihaz kanıtı).
-  3. Kapanamadığı durumda kullanıcı **görünür** bir uyarı alıyor; sessizce
-     "hiçbir şey olmadı" hâli kalmıyor.
-  4. `study_sessions`'a bu akıştan **hiçbir** yeni satır yazılmıyor (test).
-- **Tuzaklar:** (1) Hayalet süreyi "kurtarmaya" çalışmak — yasak. (2) Grace'i
-  bu kartta değiştirmek (WP-491'in işi). (3) Teşhis yapmadan tahminle yama
-  yazmak: üç senaryonun üç farklı düzeltmesi var, yanlışını seçmek belirtiyi
-  gizler.
-- **Model önerisi:** 🔴 Opus (çoklu cihaz + durum makinesi)
+- **Ajan:** Claude · **Durum:** [x] **Kök neden kod analiziyle bulundu — cihaz kabulü bekliyor** · **Bağımlılık:** WP-489 ✅ kod tamam
+- 🔴 **Yöntem değişti (2026-08-07):** Sahip uzaktaydı, cihaz kurulumu/tekrar
+  üretim istemedi ("bir şey kurup cihaz testi eklemek istemiyorum, sen genel
+  her koşulu araştır"). Adım 1b/2 (sahibin SQL/JSON export'u) **atlandı**;
+  bunun yerine sahibin ayrıntılı ikinci anlatısı (`docs/qa/V58-GHOST-RUN-DIAGNOSIS.md`
+  "Sahibin ayrıntılı anlatısı" bölümü) + statik kod okuması ile kök neden
+  **canlı veri olmadan** izole edildi. Bu, orijinal kartın "teşhis yapmadan
+  tahminle yama yazma" tuzağının **istisnasıdır**: tahmin değil, iki ayrı
+  kod yolunun (`global_timer.dart` + `study_providers.dart`) doğrudan okunmasıyla
+  doğrulanmış bir bulgu.
+- **Bulgu — iki ayrı, birbirini tamamlayan kusur:**
+  1. **`planGlobalTimerForegroundApply` (`global_timer.dart:152-196`, düzeltme
+     öncesi) `run.controllerDeviceId`'i bu cihazın kendi kimliğiyle HİÇ
+     karşılaştırmıyordu.** Karar yalnız "sunucuda çalışan koşu var mı + bu
+     cihaz yerelde çalışmıyor mu" idi. Sınıfın kendi yorum satırı
+     (`global_timer.dart:65-67`, `TimerControllerRole` dokümantasyonu) tam
+     tersini söylüyordu: rol cihaz kimliği eşleşmesine göre belirlenmeliydi —
+     ama kod bunu hiç uygulamıyordu.
+  2. **Normal ön-plan Durdur, V2 stop komutunu sunucuya hiç göndermiyor
+     olabilir** (doğrulanmadı, bkz. aşağıdaki flag). `_finish()` native
+     tarafı `STOP_SILENT` ile kapatıyor ve yorum satırı (`study_providers.dart`
+     eski 2115-2117) bunun "kuyruğa interval yazmadığı için çift kayıt
+     üretmediğini" söylüyor — ama aynı kuyruk V2 stop zarfının da taşıyıcısı.
+     `planTimerStop` (`global_timer.dart:274`, "TEK karar noktası" diye
+     belgelenmiş) `app/lib` içinde **hiçbir yerden çağrılmıyor** — yalnız
+     testlerde var. Bu, sonucu (V2 run'ın sunucuda `running` kalması) açıklar
+     ama gerçek çalışma süresinin kaybolmamasıyla da çelişmez, çünkü
+     `_recordSession`/`_finalizeVerifiedRun` (gerçek oturum kaydı) tamamen
+     **ayrı** bir yoldan gidiyor.
+  - Sonuç: telefon sabah açıldığında native SSOT idle (dün gece gerçekten
+    durduruldu), sunucudaki V2 satırı hâlâ `running` (2 numaralı bulgu
+    yüzünden), `controllerDeviceId` **bu telefonun kendi kimliği** — ama kod
+    bunu kontrol etmediği için (1 numaralı bulgu) "başka cihaz" sanıp aynı
+    telefonda "diğer cihazdaki kronometre durdurulacak" diyaloğunu açıyordu.
+    Ayna rolünde oturum hiç yazılmadığı için ("ayna asla oturum üretmez")
+    silinecek kayıt da bulunamıyordu — sahibin ikinci anlatısındaki üç iddia
+    (süre kaybolmuyor · silinecek kayıt yok · toplam süre bozulmuyor) tam
+    olarak buradan geliyor.
+  - **2 numaralı bulgu düzeltilmedi** — native `StudyTimerService.kt`'ye
+    dokunmadan cihazda doğrulanamayacak kadar riskli; ayrı bir flag'li görev
+    olarak bırakıldı (`task_a98657b2`, spawn_task ile açıldı). Asıl belirtiyi
+    (yanlış diyalog + hayalet gösterim) kapatan **1 numaralı bulgunun
+    düzeltmesi** WP-491'e taşındı.
+- 🔴 **Mutlak kural korundu:** düzeltme hiçbir adımda `study_sessions`'a satır
+  eklemiyor (test: `app/test/data/global_timer_v57_repro_test.dart` "ayna
+  koşusunun sonu hiçbir oturum yazmaz" + yeni WP-491 testleri).
+- **`finalizeLiveRun` retry'ı BİLEREK yazılmadı:** ilk planda "ağ hatasında
+  sessizce kaybolan Durdur'u kalıcı/tekrar denenebilir yap" vardı ama
+  `finalize_verified_live_run` sunucuda bitişi `now()` ile yazıyor —
+  ertesi sabah körlemesine tekrar denemek gerçek bir çalışma yerine **dev
+  boyutta sahte oturum** üretirdi (hayalet süreyi kalıcılaştırma yasağının
+  tam kendisi). Bu yüzden retry fikri terk edildi.
+- **Kanıt:** `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md` güncellendi (sahibin
+  ayrıntılı anlatısı + iki bulgunun dosya:satır kanıtı + açık sorular).
+  Asıl kod düzeltmesi WP-491 kartındadır (aynı köke ait, tek oturumda birlikte
+  yazıldı).
+- **Model önerisi:** 🔴 Opus (çoklu cihaz + durum makinesi) — fiilen Sonnet 5 ile tek oturumda tamamlandı.
 
 ---
 
-### WP-491: Terk edilmiş koşu penceresi ve görünürlüğü (`0121`) ⏳
-- **Program/Faz:** PLAN 5 · Faz F5 · Yüksek (V58-N08 / rapor T05b)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-490 teşhisi bitmeden başlamaz** — grace penceresi hayaletin *ömrünü* uzatıyor, *kaynağı* değil; kaynağı bilmeden pencere daraltmak belirtiyi maskeler
-- **Problem:** `0119` terk edilmiş koşuyu terminal duruma almadan önce **12 saat**
-  bekliyor. Gerekçesi doğruydu (Android Dart isolate'i askıya alırken native
-  sayaç yaşıyor), ama sonucu: tablette unutulan koşu yarım gün canlı sayılıyor ve
-  telefon açılınca birikmiş süre ayna olarak görünüyor. Bu davranış **v58'de
-  değişti ve cihazda hiç doğrulanmadı**.
-- **Kapsam dışı:** Oturum kaydı (WP-490'da), presence mimarisi, FCM zinciri.
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/0121_global_timer_grace_from_heartbeat.sql` (yeni)
-  - `supabase/tests/046_global_timer_grace.test.sql` (yeni)
-  - head üçlüsü (`0121`)
-- **DOKUNMA:** `0119` (okunur, değiştirilmez), `app/lib/**`.
-- **Adımlar:**
-  - [ ] Grace'i sabit 12 saat yerine **native canlılık sinyaline** bağla: FGS
-        heartbeat'i tazeyse koşu yaşar, sinyal yoksa kısa pencere (öneri 1-2 saat).
-  - [ ] Açık CAS stop davranışı **değişmez** (anında).
-  - [ ] pgTAP: heartbeat taze → kapanmaz; heartbeat yok + pencere doldu → kapanır.
-- **Veri/Migration etkisi:** `expire_global_timer_v2_leases` yeniden tanımı.
-  Geri alma: `0119` gövdesine dönüş.
-- **Ortam/Deploy:** local · `Replay bekliyor` kuralı WP-490 ile aynı.
-- **RLS/Güvenlik:** `service_role` kontrolü korunur.
-- **Edge-case'ler:** Uçak modu · cihaz kapalı · saat değişimi/DST · aynı
-  kullanıcının iki cihazı da uykuda.
-- **Kabul (ölçülebilir):** Heartbeat kesildikten sonra koşu ≤ seçilen pencere +
-  1 dakika içinde terminal duruma geçer; taze heartbeat'te **hiçbir** koşu
-  kapanmaz (pgTAP iki yönlü).
-- **Tuzaklar:** Pencereyi kısaltırken WP-482'nin çözdüğü "ayna ortada kayboluyor"
-  hatasını geri açmak. Bu yüzden ölçüt **süre değil, sinyal**.
-- **Model önerisi:** 🔴 Opus
+### WP-491: Ayna kararına cihaz kimliği kontrolü — hayalet koşu sessizce temizlenir 🔥
+- **Program/Faz:** PLAN 5 · Faz F5 · **Kritik** (V58-N08 + N08-EK / rapor T05b) — WP-490'ın bulduğu kök nedenin düzeltmesi
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-490 ✅ kök neden bulundu
+- 🔴 **Kapsam WP-490'da bulunan gerçek kök nedene göre TAMAMEN değişti.**
+  Eski kart migration'lı bir "grace penceresini heartbeat'e bağla" işiydi
+  (`0121`); o fikir **artık gereksiz** — asıl kusur sunucu tarafı zamanlama
+  değil, istemcinin cihaz kimliğini hiç kontrol etmemesiydi. Yeni kart
+  **migration gerektirmiyor**, tamamen istemci tarafı.
+- **Problem → düzeltme:** `planGlobalTimerForegroundApply`'a (`global_timer.dart`)
+  `myDeviceId` parametresi eklendi. `run.controllerDeviceId == myDeviceId` ve
+  `!localRunning` ise artık `mirrorStart` DEĞİL, yeni `staleOwnRunCleanup`
+  yönü dönüyor: canlı sayaç hiç açılmıyor, kullanıcıya yanlış "diğer cihazdaki
+  kronometre durdurulacak" diyaloğu hiç gösterilmiyor (`study_timer_card.dart`
+  diyaloğu yalnız `state.isGlobalTimerMirror==true` iken açılıyor ve bu dal
+  onu hiç `true` yapmıyor); koşu `coordinator.stopMirroredRun()` ile aynı CAS
+  "stop" yoluyla, sessizce, sunucuda kapatılıyor. `stopMirroredRun`'ın
+  "ayna asla oturum üretmez" garantisi burada da geçerli — mutlak kural
+  korunuyor.
+- **Kapsam dışı:** Native tarafta V2 stop komutunun hiç kuyruğa yazılmaması
+  ihtimali (WP-490'da flag'lendi, `task_a98657b2`) — bu kart yalnız
+  **sonucu** (yanlış ayna gösterimi) düzeltir, kaynağı değil.
+- **SAHİP dosyalar (yazıldı):**
+  - `app/lib/data/models/global_timer.dart` — `staleOwnRunCleanup` enum değeri
+    + `myDeviceId` karşılaştırması
+  - `app/lib/data/providers/global_timer_providers.dart` — `reconcileForeground`
+    zaten elindeki `deviceId`'i `myDeviceId` olarak iletiyor
+  - `app/lib/data/providers/study_providers.dart` — yeni switch dalı: journal
+    kaydı (`origin: recovery`, `outcome: ghostNoSession`) + `stopMirroredRun`
+    çağrısı + `acknowledgeForeground`
+  - `app/test/data/global_timer_v57_repro_test.dart` — 4 yeni test (model: own-device/other-device/eksik-kimlik; coordinator: uçtan uca `myDeviceId` iletimi)
+  - `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md` — bulgu + sahibin anlatısı işlendi
+- **DOKUNMA:** native FGS dosyaları, migration'lar (bu kart hiç migration yazmadı).
+- **Veri/Migration etkisi:** **Yok.** Tamamen istemci tarafı, `Replay bekliyor`
+  etiketi gerekmiyor.
+- **Ortam/Deploy:** local. Production/stable kapısı bu kartla açılmaz.
+- **Edge-case'ler:** `myDeviceId` boş/kayıtsız → eski davranışa (mirrorStart)
+  güvenli düşüş (test var). `controllerDeviceId` sunucudan hiç gelmiyorsa aynı
+  düşüş. Gerçek başka-cihaz senaryosu → davranış değişmedi (regresyon testi
+  var).
+- **Kabul (ölçülebilir):**
+  1. ✅ Aynı cihazın kendi eski koşusu artık `staleOwnRunCleanup` dönüyor,
+     `mirrorStart` değil (test).
+  2. ✅ Gerçek başka-cihaz senaryosu hâlâ `mirrorStart` (regresyon testi).
+  3. ✅ `staleOwnRunCleanup` hiçbir zaman `study_sessions`'a satır yazmıyor
+     (mevcut `stopMirroredRun`/`recordLocalInterval:false` garantisi + kod
+     okuması: state hiç `isRunning=true`/`isGlobalTimerMirror=true` yapılmıyor).
+  4. **Cihazda doğrulanmadı** — sahip cihaz testi istemedi, kod kanıtı var.
+- **Test durumu:** `flutter analyze` 0 uyarı. `flutter test` (tüm paket)
+  **1742/1742 yeşil**; hedefli koşum (global_timer_v57_repro + repository +
+  mirror_stop + controller_contract + deferred_stop + supabase_wire_device)
+  **52/52 yeşil**.
+- **Tuzaklar:** (1) Hayalet süreyi "kurtarmaya" çalışmak — yasak, uyulmadı.
+  (2) `finalizeLiveRun`'ı retry'lı yapmak — sunucu `now()` ile bitiş yazdığı
+  için tehlikeli, YAPILMADI (yukarıda gerekçeli). (3) Native stop yolunu
+  cihazsız değiştirmek — yapılmadı, ayrı flag açıldı.
+- **Model önerisi:** 🔴 Opus — fiilen Sonnet 5 ile tek oturumda tamamlandı.
 
 ---
 

@@ -1271,6 +1271,43 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             runRevision: run?.revision,
             errorCode: 'needs_reconcile',
           );
+        case GlobalTimerForegroundDirectiveKind.staleOwnRunCleanup:
+          // WP-491: bu koşunun sahibi BU cihaz — dünkü Durdur sunucuya
+          // ulaşmamış (bkz. `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md`). Başka
+          // cihaz yok; canlı sayaç hiç açılmadan, kullanıcıya yanlış "diğer
+          // cihaz" diyaloğu gösterilmeden koşu doğrudan sunucuda kapatılır.
+          // Hayalet süreden oturum YAZILMAZ (mutlak kural korunur).
+          if (run == null) {
+            await coordinator.acknowledgeForeground(
+              directive,
+              status: 'deferred',
+            );
+            return;
+          }
+          _journalTransition(
+            event: TimerJournalEvents.mirrorAdopted,
+            reason: TimerJournalReasons.remoteSnapshot,
+            outcome: TimerJournalOutcomes.ghostNoSession,
+            origin: TimerJournalOrigins.recovery,
+            runId: run.id,
+            runRevision: run.revision,
+            stateVersion: directive.snapshot.stateVersion,
+            queueAgeMs: run.effectiveStartedAt == null
+                ? null
+                : DateTime.now()
+                      .difference(run.effectiveStartedAt!)
+                      .inMilliseconds,
+          );
+          await coordinator.stopMirroredRun(
+            runId: run.id,
+            expectedRunRevision: run.revision,
+          );
+          await coordinator.acknowledgeForeground(
+            directive,
+            status: 'native_applied',
+            runId: run.id,
+            runRevision: run.revision,
+          );
         case GlobalTimerForegroundDirectiveKind.deferred:
           await coordinator.acknowledgeForeground(
             directive,

@@ -129,6 +129,14 @@ enum GlobalTimerForegroundDirectiveKind {
   /// gösterilemiyor (kira dolmuş ya da yaş sınırı aşılmış). Yerel yüzey
   /// **canlı sayaç açmaz**; kullanıcıya uzlaştırma gerektiği gösterilir.
   needsReconcile,
+
+  /// WP-491: sunucu `running` diyor, koşu gösterilebilir **ve** koşunun
+  /// `controllerDeviceId`'i bu cihazın kendi kimliğiyle eşleşiyor — yani
+  /// başka bir cihaz yok, bu cihazın dünkü Durdur'u sunucuya ulaşmamış
+  /// (bkz. `docs/qa/V58-GHOST-RUN-DIAGNOSIS.md`). Canlı sayaç AÇILMAZ,
+  /// kullanıcıya yanlış "diğer cihazdaki kronometre durdurulacak" diyaloğu
+  /// gösterilmez; koşu sessizce sunucuda kapatılır.
+  staleOwnRunCleanup,
 }
 
 class GlobalTimerForegroundDirective {
@@ -146,6 +154,7 @@ GlobalTimerForegroundDirective planGlobalTimerForegroundApply({
   required bool localRunning,
   required bool localIsMirror,
   required String? localMirrorRunId,
+  String? myDeviceId,
   Duration? maxRunAge,
 }) {
   final run = snapshot.run;
@@ -172,8 +181,19 @@ GlobalTimerForegroundDirective planGlobalTimerForegroundApply({
       );
     }
     if (!localRunning) {
+      // WP-491: `controllerDeviceId` bu cihazın kendi kimliğiyle eşleşiyorsa
+      // gerçek bir ayna yok — bu cihazın kendi dünkü koşusu sunucuda kapanmadan
+      // kalmış demektir. Başka cihaz olmadan "diğer cihaz" diyaloğu açmak
+      // yanıltıcıdır; sessiz temizlik dalına yönlendirilir.
+      final isOwnDevice =
+          myDeviceId != null &&
+          myDeviceId.isNotEmpty &&
+          run.controllerDeviceId != null &&
+          run.controllerDeviceId == myDeviceId;
       return GlobalTimerForegroundDirective(
-        kind: GlobalTimerForegroundDirectiveKind.mirrorStart,
+        kind: isOwnDevice
+            ? GlobalTimerForegroundDirectiveKind.staleOwnRunCleanup
+            : GlobalTimerForegroundDirectiveKind.mirrorStart,
         snapshot: snapshot,
       );
     }

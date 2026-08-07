@@ -397,6 +397,51 @@ void main() {
       );
     });
 
+    test(
+      'WP-491: reconcileForeground kendi cihazinin device_id\'sini '
+      'planGlobalTimerForegroundApply\'a iletir',
+      () async {
+        // V58-N08 / V58-N08-EK: harness'in kendi deviceId'si 'device-mirror'.
+        // Sunucudaki calisan kosu AYNI deviceId'yi controller olarak
+        // gosteriyorsa bu, coordinator'in gercekten kendi kimligini
+        // karsilastirmaya kattigini kanitlar (onceden hic iletilmiyordu).
+        final serverTime = DateTime.now().toUtc();
+        final repository = _RecordingRepository()
+          ..snapshot = GlobalTimerSnapshot(
+            userId: 'user-1',
+            stateVersion: 30,
+            serverTime: serverTime,
+            run: GlobalTimerRun(
+              id: 'run-own-overnight',
+              status: 'running',
+              revision: 5,
+              effectiveStartedAt: serverTime.subtract(
+                const Duration(hours: 10),
+              ),
+              leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+              controllerDeviceId: 'device-mirror',
+            ),
+          );
+        final harness = await _harness({}, repository);
+
+        final directive = await harness.container
+            .read(globalTimerCoordinatorProvider)
+            .reconcileForeground(
+              localRunning: false,
+              localIsMirror: false,
+              localMirrorRunId: null,
+            );
+
+        expect(
+          directive?.kind,
+          GlobalTimerForegroundDirectiveKind.staleOwnRunCleanup,
+          reason:
+              'ayni cihazin dunku kosusu ayna olarak degil, sessiz '
+              'temizlik olarak isaretlenmeli',
+        );
+      },
+    );
+
     test('WP-431 onarimi: kirasi taze, makul yasli kosu HALA aynalanir', () {
       // Sinirlar hayalet kosuyu kesmeli ama GERCEK uzun calismayi degil.
       final serverTime = DateTime.now().toUtc();
@@ -487,6 +532,107 @@ void main() {
         reason: 'hayalet sayac ekranda kalmamali',
       );
     });
+
+    test(
+      'WP-491: controllerDeviceId bu cihazla eslesirse gercek ayna degil, '
+      'staleOwnRunCleanup',
+      () {
+        // Sahibin V58-N08 anlatisi: telefondan normal Durdur -> uyu -> sabah
+        // ac -> ekranda 10 saat -> "diger cihaz" onayi -> tablete hic
+        // dokunulmamis. Kok neden: dunku Durdur sunucuya ulasmamis, run
+        // hala `running`; ama controller_device_id BU cihazin kendi
+        // kimligi. Baska cihaz yokken "diger cihaz" diyalogu YANLIS.
+        final serverTime = DateTime.now().toUtc();
+        final directive = planGlobalTimerForegroundApply(
+          snapshot: GlobalTimerSnapshot(
+            stateVersion: 20,
+            serverTime: serverTime,
+            run: GlobalTimerRun(
+              id: 'run-own-stale',
+              status: 'running',
+              revision: 4,
+              effectiveStartedAt: serverTime.subtract(const Duration(hours: 10)),
+              leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+              controllerDeviceId: 'device-phone-1',
+            ),
+          ),
+          localRunning: false,
+          localIsMirror: false,
+          localMirrorRunId: null,
+          myDeviceId: 'device-phone-1',
+        );
+        expect(
+          directive.kind,
+          GlobalTimerForegroundDirectiveKind.staleOwnRunCleanup,
+          reason:
+              'ayni cihazin kendi eski kosusu sessizce temizlenmeli, '
+              'ayna olarak acilmamali',
+        );
+      },
+    );
+
+    test(
+      'WP-491: controllerDeviceId farkli cihazsa hala gercek mirrorStart',
+      () {
+        // Regresyon kilidi: gercek coklu-cihaz senaryosu bozulmamali.
+        final serverTime = DateTime.now().toUtc();
+        final directive = planGlobalTimerForegroundApply(
+          snapshot: GlobalTimerSnapshot(
+            stateVersion: 21,
+            serverTime: serverTime,
+            run: GlobalTimerRun(
+              id: 'run-other-device',
+              status: 'running',
+              revision: 2,
+              effectiveStartedAt: serverTime.subtract(const Duration(hours: 1)),
+              leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+              controllerDeviceId: 'device-tablet-2',
+            ),
+          ),
+          localRunning: false,
+          localIsMirror: false,
+          localMirrorRunId: null,
+          myDeviceId: 'device-phone-1',
+        );
+        expect(
+          directive.kind,
+          GlobalTimerForegroundDirectiveKind.mirrorStart,
+          reason: 'gercekten baska cihazsa ayna deneyimi degismemeli',
+        );
+      },
+    );
+
+    test(
+      'WP-491: myDeviceId veya controllerDeviceId eksikse guvenli varsayilan '
+      'mirrorStart',
+      () {
+        // Eski sunucu semasi ya da henuz kayitli olmayan cihaz: karsilastirma
+        // yapilamiyorsa eski (WP-431) davranisa geri dusulur, crash olmaz.
+        final serverTime = DateTime.now().toUtc();
+        final directive = planGlobalTimerForegroundApply(
+          snapshot: GlobalTimerSnapshot(
+            stateVersion: 22,
+            serverTime: serverTime,
+            run: GlobalTimerRun(
+              id: 'run-no-controller',
+              status: 'running',
+              revision: 1,
+              effectiveStartedAt: serverTime.subtract(const Duration(hours: 1)),
+              leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+            ),
+          ),
+          localRunning: false,
+          localIsMirror: false,
+          localMirrorRunId: null,
+          myDeviceId: 'device-phone-1',
+        );
+        expect(
+          directive.kind,
+          GlobalTimerForegroundDirectiveKind.mirrorStart,
+          reason: 'controllerDeviceId yoksa eslesme iddia edilemez',
+        );
+      },
+    );
 
     test(
       'WP-431 onarimi: yas sinirini asan kosu kira taze olsa da aynalanmaz',

@@ -474,6 +474,7 @@ class GlobalTimerCoordinator {
         localRunning: localRunning,
         localIsMirror: localIsMirror,
         localMirrorRunId: localMirrorRunId,
+        myDeviceId: deviceId,
       );
       // `seen` bir olay-dedup anahtarıdır; yerel projection doğruluğunun yerine
       // geçemez. Soğuk açılışta ayna güvenlik gereği temizlenir. Sunucu sürümü

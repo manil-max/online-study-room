@@ -91,6 +91,52 @@ Durdur'dan sonra ekranı kapatıp yeniden aç:
 
 **Doldurulacak:** _(gözlem)_
 
+## Sahibin ayrıntılı anlatısı (2026-08-07, WP-490 kapsamında)
+
+> Aşağıdaki, sahibin kendi ifadesinin **anlamı korunarak** kaydıdır; teşhis
+> değildir, ham gözlemdir.
+
+Kütüphanede gün içinde **telefondan** normal çalış-durdur yapıldı, akşam
+telefondan kronometre durduruldu, uyundu. **Tablete süreç boyunca hiç
+dokunulmadı.** Sabah tekrar kütüphaneye gidildi, **telefonda** uygulama
+açıldığında sayaç **açık** görünüyordu, **10 saat** yazıyordu ve saymaya
+devam ediyordu. Kaydı "hile olmasın" diye silmek amacıyla önce **Durdur**'a
+basıldı; klasik "diğer cihazdaki kronometre durdurulacak" onayı çıktı, "evet"
+denildi, sayaç ekranda sorunsuz durdu. Ardından geçmişten bu kaydı silmeye
+gidildiğinde **böyle bir oturum listede hiç yoktu** — silecek bir şey
+bulunamadı. **Toplam süreye de hiçbir şey eklenmedi.** Sonrasında normal
+kullanıma devam edildi, başka bir etkisi olmadı. **Bu birkaç kez daha oldu**
+(sıklık/desen netleşmedi — bkz. açık sorular).
+
+**Bu anlatının doğruladıkları (N08-EK ile tutarlı, teyit):**
+- Gerçek çalışma süresi kaybolmuyor.
+- Hayalet koşudan **oturum satırı yazılmıyor** (silecek kayıt yoktu = zaten
+  `study_sessions`'a hiç yazılmamış demek — mutlak kuralın ihlal edilmediğine
+  dolaylı kanıt).
+- Toplam süre sahte zamanla **kirlenmiyor**.
+- Ayna onay diyaloğunun çıkması (`isGlobalTimerMirror`) burada da doğrulandı.
+
+**Bu anlatının açtığı yeni soru:** Tablete hiç dokunulmamışken telefon neden
+kendini "ayna" (mirror) sanıyor? İki olası okuma var, ikisi de ayrı kod yolu
+gerektirir:
+  (a) Koşunun gerçek sahibi tablet — tabletin arka planda (kilit ekranı
+      arkasında) canlı kalan bir FGS/oturumu var ve telefon bunu doğru
+      okuyor; asıl soru tabletin neden hâlâ "controller" olarak kayıtlı
+      kaldığı.
+  (b) Koşunun gerçek sahibi **telefonun kendisi** — akşamki Durdur komutu
+      sunucuya tam ulaşmadı/işlenmedi, `live_study_runs` satırı `running`
+      kaldı; sabah aynı fiziksel cihaz açıldığında, olası bir cihaz kimliği
+      tutarsızlığı yüzünden kendi eski koşusunu "başka cihaz" sanıp ayna
+      diyaloğunu açıyor.
+  Adım 1'deki `controller_device_id` ile telefonun kendi `deviceRef`'inin
+  aynı mı farklı mı olduğu bunu **doğrudan** ayırt eder.
+
+**Açık sorular (owner'a soruldu, 2026-08-07):**
+1. O gece tabletin durumu: ekranı kilitli ama uygulama arka planda açık mı,
+   yoksa uygulamadan tamamen çıkılmış/kapatılmış mıydı?
+2. Diğer birkaç tekrar da hep "akşam telefondan durdur → uyu → sabah aç"
+   deseninde mi, yoksa gün içinde uyumadan da oldu mu?
+
 ---
 
 ## Bilinen kod boşlukları (teşhisi yönlendiren ipuçları)
