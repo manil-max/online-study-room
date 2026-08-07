@@ -44,17 +44,17 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # production apply post-check 0119 sonrasi). Zincir sonunda tum flag'ler
 # yeniden false kilitlenmelidir.
 # 2026-08-07: sahip "cihaz testine gönder" tetikleyicisiyle WP-490/491/492/501
-# zincirini (0120-0121) staging+production'a taşımak için kapsamlı, tek turluk
-# apply yetkisi verdi. Kontrat hedefi 0121'e, deploy_enabled true'ya çekildi;
-# release_enabled BİLEREK false kalır (stable release ayrı, tek seferlik
-# confirmation string'iyle geçer, bkz. release-gate.ps1). Apply turu bitince bu
-# iki pin (deploy_enabled) yeniden false'a re-lock edilir, migration_head 0121
-# olarak kalıcılaşır.
-Assert-Equal $contract.staging.migration_head '0121' 'v59 apply turu staging hedef head 0121'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v59 apply turu staging gecici acik'
+# zincirini (0120-0121) staging+production'a tasidi (staging run 31194597563,
+# production run 31195025233 -- ikisi de post-check 0121 verdi). Apply turu
+# bitti, deploy_enabled iki ortamda da yeniden false'a re-lock edildi;
+# migration_head 0121 olarak kalici gercek durumu yansitir. release_enabled
+# BILEREK false kalir -- stable release ayri, tek seferlik confirmation
+# string'iyle gecer (bkz. release-gate.ps1).
+Assert-Equal $contract.staging.migration_head '0121' 'v59 sonrasi staging gercek head 0121'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'v59 sonrasi staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
-Assert-Equal $contract.production.migration_head '0121' 'v59 apply turu production hedef head 0121'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v59 apply turu production gecici acik'
+Assert-Equal $contract.production.migration_head '0121' 'v59 sonrasi production gercek head 0121'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'v59 sonrasi production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
