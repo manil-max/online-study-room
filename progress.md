@@ -7403,7 +7403,7 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ---
 
-### WP-501: Grup başarımı yalnız seçili gruptan sayılsın (`0123`) 🐺
+### WP-501: Grup başarımı yalnız seçili gruptan sayılsın (`0121`) 🐺
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N06 / rapor T06) · **sahip kararı**
 - **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — `Replay bekliyor` + cihaz kabulü · **Bağımlılık:** WP-492 ✅ · sahip kararı **alındı**
 - **Problem:** `alpha_wolf_weekly` metriği `group_achievement_weekly`den
@@ -7485,6 +7485,25 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   ama "bu fonksiyon hâlâ yaşıyor mu?" sorusunu sormamıştım.
   ↳ Fonksiyon `0121`'den çıkarıldı; `046`'ya da onun **geri gelmediğini**
   ölçen bir iddia eklendi.
+- **İkinci koşum (`bd88dcc`): `001` yeşile döndü**, iki kırmızı kaldı ve
+  ikisi de öğreticiydi:
+  1. `046` kendi kurulumunda düştü: `group_achievement_weekly.verified_seconds`
+     **yok** — `0062` o adla açmıştı, `0063:239` `total_seconds`a yeniden
+     adlandırmış. Şemayı en son tanımlayan migration'dan okumak yetmiyor;
+     **sonraki** migration'ların yeniden adlandırmasına da bakmak gerekiyor
+     (aynı sınıf hata, ölü fonksiyonla birlikte ikinci kez).
+     Not: dosya o satırda durduğu için ilk **9 iddia koştu ve geçti** — yani
+     `0121`'in şema/RLS/fonksiyon kablosu CI'da doğrulandı.
+  2. 🔴 **`038_progression_matrix` benden önce kırılmış.** `goal_progress_events`
+     birincil anahtarında çakışma veriyor: WP-492'nin `0120` tetikleyicisi
+     aynı olayları artık `study_sessions` yazımında **kendisi** üretiyor ve
+     event_key biçimi birebir aynı (`0120:117`). Yani hata `b8aaa3f`
+     push'undan beri `main`de duruyordu; **Actions o pencerede hiç run
+     açmadığı için** kimse görmedi ve ilk kez bu turda ortaya çıktı.
+     ↳ Kapsamım dışıydı ama `main`de kırmızı bir kapı bırakılamaz: `038`'deki
+     elle insert `on conflict (event_key) do nothing` yapıldı (testin niyeti
+     "bu günler tamamlanmış sayılsın"; olayı kimin yazdığı iddiayı
+     değiştirmez). WP-492 kartına da işlendi.
 - **⚠️ Head aslında DÖRT yerde pinli.** `migration-head` kapısı üçünü biliyor
   (`deploy-contract.json`, `guard.tests.ps1`, `release-preflight.tests.ps1`)
   ama `supabase/tests/001_schema_contract.test.sql` de sayıyı ve head'i

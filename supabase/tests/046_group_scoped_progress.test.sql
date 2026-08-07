@@ -107,8 +107,11 @@ values (:'grp2', :'alpha', 'admin', now() - interval '1 day')
 on conflict (group_id, user_id) do nothing;
 
 -- Ayni ISO haftasinda iki ayri grupta birincilik.
+-- Kolon adi `total_seconds`: 0062 `verified_seconds` diye acmisti, 0063:239
+-- yeniden adlandirdi. Ilk taslak eski adi kullaninca pgTAP dosyayi bastan
+-- dusurdu (run 31162831797).
 insert into public.group_achievement_weekly (
-  group_id, iso_week_start, user_id, verified_seconds, weekly_alpha_wins,
+  group_id, iso_week_start, user_id, total_seconds, weekly_alpha_wins,
   finalized_at
 ) values
   (:'grp1', date_trunc('week', current_date)::date, :'alpha', 7200, 1, now()),

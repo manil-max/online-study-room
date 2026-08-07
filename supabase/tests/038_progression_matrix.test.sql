@@ -265,6 +265,17 @@ from (
 ) t;
 
 -- Ayni gunler kanonik hedef olayi olarak da yaziliyor.
+--
+-- 🔴 `on conflict do nothing` WP-501 turunda eklendi ve sebebi bir REGRESYON:
+-- WP-492'nin `0120` tetikleyicisi ayni olaylari artik `study_sessions`
+-- yaziminda **kendisi** uretiyor ve event_key birebir ayni bicimde
+-- (`0120:117`). Bu insert o yuzden `goal_progress_events_pkey` cakismasi
+-- veriyordu. Hata `b8aaa3f` push'undan beri main'de duruyordu ama GitHub
+-- Actions o pencerede (2026-08-06 17:07-23:08 UTC) hic run acmadigi icin
+-- kimse gormedi; ilk kez WP-501'in Database Gates kosumunda ortaya cikti.
+--
+-- Insert silinmiyor: testin niyeti "bu gunler tamamlanmis sayilsin"; olayi
+-- kimin yazdigi (tetikleyici mi, bu satir mi) iddiayi degistirmez.
 insert into public.goal_progress_events
   (event_key, scope_type, scope_id, time_zone, event_kind, goal_day, occurred_at)
 select
@@ -273,7 +284,8 @@ select
 from (
   select ((now() at time zone 'Europe/Istanbul')::date - n) as d
   from (values (0), (2), (4)) as v(n)
-) t;
+) t
+on conflict (event_key) do nothing;
 
 select is(
   (select current_streak from public.goal_streak_projection(
