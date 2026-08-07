@@ -7592,6 +7592,12 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   **1743/1743 yeşil**.
 - **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması — `Stopwatch`
   ve `postFrameCallback` senkron/ucuz, ağ çağrısı yok.
+- 🔴 **Debug tarama düzeltmesi (2026-08-07, commit `61d98dc`):** Release
+  öncesi istenen son kontrolde bulundu — `reconcileForeground`'daki
+  `snapshotReconciled` kaydı `staleOwnRunCleanup`'ı (WP-491) `origin=unknown`'a
+  düşürüyordu; gerçek ayna (`origin=mirror`) ile karışırdı ve bu kartın T13
+  analizini kirletirdi. `origin=recovery` olarak düzeltildi, doküman §2.2'ye
+  filtreleme uyarısı eklendi. Fonksiyonel etki yok, yalnız telemetri etiketi.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
