@@ -178,7 +178,10 @@ abstract final class TimerJournalEvents {
   /// Sunucu bir koşu kimliği verdi ya da mevcut koşuyu benimsetti.
   static const runIdentityAccepted = 'run_identity_accepted';
 
-  /// Uzak koşu bu cihazda **projeksiyon** olarak açıldı (ayna).
+  /// Uzak koşu bu cihazda **projeksiyon** olarak açıldı (ayna). WP-491
+  /// sonrası bu olay `origin=recovery` ile de gelebilir — o durumda hiçbir
+  /// projeksiyon açılmaz, sunucudaki terk edilmiş kendi koşusu sessizce
+  /// kapatılır; `origin` alanı ikisini ayırt eder.
   static const mirrorAdopted = 'mirror_adopted';
 
   /// Ayna cihazda durdurma isteği (yerel kapatma değil, global komut).

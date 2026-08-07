@@ -50,6 +50,13 @@ başlatma/senkron sinyalinde `queue_age_ms` alanını taşıyor
 `effective_started_at`'i ile bu cihazın onu **gördüğü** an arasındaki
 farktır — tam olarak "ayna/bildirim sapması saniye cinsinden" ölçütü.
 
+- 🔴 **WP-491 sonrası dikkat:** `event=mirror_adopted` artık iki farklı
+  senaryodan gelebilir — `origin=mirror` **gerçek** çapraz-cihaz aynası
+  (bu ölçütün asıl hedefi), `origin=recovery` ise WP-491'in kendi cihazın
+  terk edilmiş koşusunu sessizce temizlediği dal (gerçek senkron sapması
+  değil, hayalet-koşu öz-iyileşmesi). T13 analizi yaparken `origin=mirror`
+  ile filtrelenmeli; `origin=recovery` sayısı ayrı bir sinyaldir (ne kadar
+  sık "dünkü Durdur sunucuya ulaşmadı" oluyor sorusunu ölçer).
 - **Aranacak olay adı:** `timer_transition`, `event=mirror_adopted` veya
   `event=sync_signal`.
 - **Aranacak alan:** `queue_age_ms` (ms). Saniyeye çevirmek için 1000'e böl.

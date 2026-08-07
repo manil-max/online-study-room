@@ -506,9 +506,15 @@ class GlobalTimerCoordinator {
             TimerJournalOutcomes.stale,
           _ => TimerJournalOutcomes.applied,
         },
-        origin: directive.kind == GlobalTimerForegroundDirectiveKind.mirrorStart
-            ? TimerJournalOrigins.mirror
-            : TimerJournalOrigins.unknown,
+        origin: switch (directive.kind) {
+          GlobalTimerForegroundDirectiveKind.mirrorStart =>
+            TimerJournalOrigins.mirror,
+          // WP-491: gerçek ayna değil, bu cihazın kendi terk edilmiş koşusu —
+          // `unknown`'a düşerse "sürpriz ayna" sanılıp yanlış teşhis edilir.
+          GlobalTimerForegroundDirectiveKind.staleOwnRunCleanup =>
+            TimerJournalOrigins.recovery,
+          _ => TimerJournalOrigins.unknown,
+        },
         accountId: user.id,
         runId: run?.id,
         deviceId: deviceId,
