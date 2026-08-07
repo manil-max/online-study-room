@@ -55,11 +55,17 @@ void main() {
         pendingOutboxCount: 1,
         elapsedMilliseconds: 18,
       );
+      service.coldStartBudget(elapsedMs: 812, realtimeChannelCount: 2);
 
       expect(transport.initializeCalls, 1);
       expect(
         transport.breadcrumbs.map((item) => item.message),
-        containsAll(['timer_restore', 'outbox_flush', 'realtime_snapshot']),
+        containsAll([
+          'timer_restore',
+          'outbox_flush',
+          'realtime_snapshot',
+          'cold_start_budget',
+        ]),
       );
       for (final breadcrumb in transport.breadcrumbs) {
         expect(breadcrumb.category, 'app.sync');
@@ -72,6 +78,23 @@ void main() {
       }
     },
   );
+
+  test('WP-502: soğuk açılış bütçesi süre + kanal sayısını taşır', () async {
+    final transport = _FakeTransport();
+    final service = ObservabilityService(
+      config: enabledConfig,
+      transport: transport,
+    );
+    await service.initialize(await preferences({}));
+
+    service.coldStartBudget(elapsedMs: 4200, realtimeChannelCount: 3);
+
+    final breadcrumb = transport.breadcrumbs.firstWhere(
+      (item) => item.message == 'cold_start_budget',
+    );
+    expect(breadcrumb.data['elapsed_ms'], 4200);
+    expect(breadcrumb.data['realtime_channel_count'], 3);
+  });
 
   test(
     'bilinen hata, ham hata metni yerine yalnız hata türüyle yakalanır',

@@ -215,6 +215,22 @@ class ObservabilityService {
     _record('timer_restore', {'had_active_timer': hadActiveTimer});
   }
 
+  /// WP-502 (V58-N01 / rapor T12): soğuk açılış süresi + o anda açık realtime
+  /// kanal sayısı. `elapsedMs` yalnız `main()` başlangıcından ilk çizilen
+  /// kareye kadarki Dart-katmanı süresidir (OS süreç açılışı/engine init
+  /// dışarıda kalır); açılışın "sürekli 2 gün yavaş kaldı" gibi anormal
+  /// uzamalarını sonradan Sentry breadcrumb geçmişinden görünür kılmak
+  /// içindir, kesin bir SLO ölçütü değildir.
+  void coldStartBudget({
+    required int elapsedMs,
+    required int realtimeChannelCount,
+  }) {
+    _record('cold_start_budget', {
+      'elapsed_ms': elapsedMs,
+      'realtime_channel_count': realtimeChannelCount,
+    });
+  }
+
   /// WP-430: sayac gecisinin **sayisal** ozeti. Tanisal zaman cizelgesi
   /// cihazda kalir ([TimerDiagnosticJournal]); buraya yalniz kapali sozlukten
   /// gelen slug'lar ve tamsayilar cikar. Ham hesap/kosu/ders kimligi ve mesaj

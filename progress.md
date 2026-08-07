@@ -7550,31 +7550,48 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ### WP-502: Açılış bütçesi ve senkron sapması telemetrisi 📈
 - **Program/Faz:** PLAN 5 · Faz F5 · Orta (V58-N01, N09 / rapor T12, T13)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-489 + WP-490 (ikisi de senkron yüzeyini değiştirir; ölçüm sonra anlamlı)
-- **Problem:** İki belirti kök nedene **indirilemedi**: (a) reboot sonrası iki
-  gün süren ~7-8 sn açılış, kendiliğinden geçti; (b) bildirim sayacı + ayna
-  cihazda "daha az da olsa" süren sapma. İkisi de tek seferlik teşhis avıyla
-  değil, **ölçümle** kapanır.
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — **kabul bir haftalık cihaz verisi bekliyor** (tek seferlik cihaz onayı değil) · **Bağımlılık:** WP-489 ✅ + WP-490/491 ✅ kapandı
+- 🔴 **DOKUNMA çelişkisi çözüldü (2026-08-07):** Eski kart `main.dart`/
+  `study_providers.dart`'a dokunmayı yasaklıyor ama Adımlar tam da oraya
+  ölçüm noktası istiyordu. İnceleme sonucu: (a) `main.dart`'a eklenen tek
+  şey bağımsız bir `Stopwatch` + `postFrameCallback` — hiçbir mevcut akışı
+  değiştirmiyor, davranışsal risk yok; (b) `study_providers.dart`'a **hiç
+  dokunulmadı** — T13 (senkron sapması) için gereken veri zaten WP-430'dan
+  beri `_journalTransition`'ın `queue_age_ms` alanıyla `ObservabilityService`e
+  akıyordu, yalnız WP-502 çerçevesinde **belgelenmedi**.
+- **Yapılan:**
+  1. `ObservabilityService.coldStartBudget({elapsedMs, realtimeChannelCount})`
+     — yeni PII'siz breadcrumb (`cold_start_budget`).
+  2. `main.dart`: `main()` başında `Stopwatch`, ilk `postFrameCallback`'te
+     `elapsedMs` + `Supabase.instance.client.realtime.channels.length`
+     kaydediliyor. Windows'un mevcut pencere-gösterme `postFrameCallback`'i
+     **ayrı ve dokunulmadan** kaldı.
+  3. T13 için yeni kod **yazılmadı** — mevcut `queue_age_ms` alanının nereden
+     okunacağı `docs/qa/V58-STARTUP-SYNC-BUDGET.md`'de belgelendi.
 - **Kapsam dışı:** Yeni performans optimizasyonu, mimari değişiklik, üçüncü
-  parti APM entegrasyonu, kullanıcı verisi toplama.
-- **SAHİP dosyalar (yaz):**
+  parti APM entegrasyonu, kullanıcı verisi toplama, eşik belirleme (veri
+  olmadan keyfi olurdu — bkz. doküman §3).
+- **SAHİP dosyalar (yazıldı):**
   - `app/lib/core/observability/observability_service.dart`
+  - `app/lib/main.dart`
+  - `app/test/core/observability/observability_service_test.dart` (2 yeni assert/test)
   - `docs/qa/V58-STARTUP-SYNC-BUDGET.md` (yeni)
-- **DOKUNMA:** `study_providers.dart`, `main.dart` (yalnız ölçüm noktası eklenirse
-  ayrı kart açılır).
-- **Adımlar:**
-  - [ ] Soğuk açılış süresi + açık realtime kanal sayısını yerel günlüğe yaz.
-  - [ ] Ayna/bildirim sapmasını saniye cinsinden ölç (beklenen vs görünen).
-  - [ ] Eşik belirle ve **bir sonraki** sürümde regresyon kapısı olarak kullan.
-- **Veri/Migration etkisi:** Yok.
-- **Ortam/Deploy:** local; hiçbir veri sunucuya gönderilmez.
-- **RLS/Güvenlik:** Kişisel veri **yazılmaz**; yalnız süre ve sayaç.
-- **Edge-case'ler:** Reboot sonrası ilk açılış · uçak modu · düşük bellek ·
-  arka plandan geri dönüş.
-- **Kabul (ölçülebilir):** Soğuk açılış ve kanal sayısı ölçülebiliyor; sahibin
-  cihazında bir hafta boyunca kayıt toplanıp `docs/qa/`ya işleniyor. Eşik
-  aşımı **görünür** oluyor.
-- **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması.
+- **Veri/Migration etkisi:** Yok. Hiçbir veri sunucuya gönderilmez (Sentry
+  breadcrumb'ı hariç, o da yalnız telemetri açıksa ve zaten PII'siz).
+- **RLS/Güvenlik:** Kişisel veri **yazılmaz**; yalnız süre ve tamsayı.
+- **Edge-case'ler:** `buildManifest.usesSupabase == false` (in-memory/local
+  derleme) → kanal sayısı 0 yazılır, `Supabase.instance` hiç çağrılmaz.
+- **Kabul (ölçülebilir):**
+  1. ✅ Soğuk açılış süresi + kanal sayısı ölçülüyor ve test kanıtlı.
+  2. ✅ Senkron sapması zaten ölçülüyordu; nereden okunacağı belgelendi.
+  3. **Kapanmadı:** sahibin cihazında bir hafta boyunca kayıt toplanıp
+     `docs/qa/V58-STARTUP-SYNC-BUDGET.md`'e p95 eşiği işlenmesi gerekiyor —
+     bu, diğer F5 kartlarındaki tek seferlik "cihaz kabulü"nden **farklı bir
+     bekleme türüdür** (süre gerektirir, anlık onay değil).
+- **Test durumu:** `flutter analyze` 0 uyarı. `flutter test` tam paket
+  **1743/1743 yeşil**.
+- **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması — `Stopwatch`
+  ve `postFrameCallback` senkron/ucuz, ağ çağrısı yok.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

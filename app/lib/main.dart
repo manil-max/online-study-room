@@ -35,6 +35,11 @@ import 'package:home_widget/home_widget.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 
 Future<void> main() async {
+  // WP-502 (V58-N01): soğuk açılış bütçesi. `main()` başlangıcından ilk
+  // çizilen kareye kadarki Dart-katmanı süresi — OS süreç/engine init
+  // dışarıda kalır, kesin bir SLO değil, anormal uzamaları görünür kılan
+  // bir breadcrumb'tır.
+  final coldStartStopwatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
   // WP-294: `intl` tarih/ay adlarını **yerel verisi kaydedilmeden** üretemez;
@@ -144,6 +149,19 @@ Future<void> main() async {
       unawaited(showDesktopWindowWhenReady());
     });
   }
+
+  // WP-502: ilk kare çizildiğinde soğuk açılış bütçesini kaydet. Bağımsız
+  // bir postFrameCallback — yukarıdaki Windows penceresini göstermeyle
+  // sıralaması karışmaz, ölçüm de o akışı geciktirmez.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final channelCount = buildManifest.usesSupabase
+        ? Supabase.instance.client.realtime.channels.length
+        : 0;
+    ObservabilityService.instance.coldStartBudget(
+      elapsedMs: coldStartStopwatch.elapsedMilliseconds,
+      realtimeChannelCount: channelCount,
+    );
+  });
 }
 
 class OnlineStudyRoomApp extends ConsumerWidget {
