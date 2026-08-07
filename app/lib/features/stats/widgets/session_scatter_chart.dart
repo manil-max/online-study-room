@@ -8,6 +8,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
+import 'chart_axis.dart';
 
 List<String> _months(BuildContext context) => [
   AppLocalizations.of(context).statsOca,
@@ -90,7 +91,15 @@ class SessionScatterChart extends ConsumerWidget {
         ),
       );
     }
-    final maxY = maxMin <= 0 ? 60.0 : maxMin * 1.2;
+    // 🔴 WP-503 (WP-499 yan bulgusu): burada `maxMin * 1.2` vardı ve eksen
+    // aralığı ayrıca **hiç verilmiyordu** (`leftTitles`in `interval`i yok,
+    // `gridData`nın `horizontalInterval`ı yok) — fl_chart ikisi için de kendi
+    // aralığını seçiyor, üstelik üst sınır o aralığın katı olmadığı için
+    // tepeye fazladan bir etiket daha koyuyordu. Aynı desen çizgi grafiğinde
+    // ölçüldü: en kötü seride iki etiket **22.9 px** üst üste biniyordu.
+    // Ortak kural artık `minuteAxis()`: önce aralık, sonra aralığın üst katı.
+    final axis = minuteAxis(maxMin);
+    final maxY = axis.maxY;
 
     DateTime dateAt(double x) => startDay.add(Duration(days: x.round()));
     // Alt eksende ~3-4 tarih etiketi (dar kartta da karışmasın).
@@ -108,6 +117,9 @@ class SessionScatterChart extends ConsumerWidget {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
+            // Izgara ve etiketler **aynı** aralığı kullanmalı; ikisi ayrı
+            // seçilince çizgisiz etiket ve etiketsiz çizgi çıkıyordu.
+            horizontalInterval: axis.interval,
             getDrawingHorizontalLine: (_) => FlLine(
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               strokeWidth: 1,
@@ -119,12 +131,20 @@ class SessionScatterChart extends ConsumerWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 30,
-                getTitlesWidget: (value, meta) => Text(
-                  '${value.round()}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                interval: axis.interval,
+                getTitlesWidget: (value, meta) {
+                  // `0` ve sınır dışı değerler çizilmez: taban çizgisinin
+                  // üstündeki sıfır ile alt eksen tarihleri çakışıyordu.
+                  if (value <= 0 || value > maxY) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    '${value.round()}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  );
+                },
               ),
             ),
             rightTitles: const AxisTitles(

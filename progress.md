@@ -5358,6 +5358,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-499** Trend grafiği Y ekseni | Android telefon (İstatistik → kişisel; 14 / 30 / 90 günlük dönemlerin **üçü de**, en az bir dolu haftası olan hesap) | Çizgi grafiğin sol ekseninde tepede iki sayı üst üste binmiyor; en üstteki sayı en üst ızgara çizgisinin tam hizasında ve o çizginin değerine eşit; dönem değiştirince (14↔30↔90) hiçbirinde çakışma çıkmıyor. Commit: `bedd14a`. **Cihazda doğrulanmalı.** |
 | **WP-500** İngilizce arayüzde "aktif" | Android telefon, **cihaz dili İngilizce** (grup detayı olan hesap, en az 2 kişi çalışırken) | Ana ekranda "Currently studying" kartındaki rozet "2 active" yazıyor, "2 aktif" değil; dili Türkçe'ye alınca "2 aktif" oluyor; tek kişi çalışırken "1 active". Commit: `07ce93b`. **Cihazda doğrulanmalı.** |
 | **WP-501** Grup başarımı seçili gruptan (`0121`) | Database Gates local replay → staging apply → Android telefon (**iki gruba** üye, aynı hafta ikisinde de birinci olmuş hesap) | (1) CI local replay job'ında `046` 16/16 yeşil. (2) Şema uygulandıktan sonra Lider Kurt ilerlemesi **2 değil 1** gösteriyor. (3) Grup değiştirince (sınıf seçici) değer o grubun gerçeğine dönüyor. (4) Daha önce kazanılmış kademe/XP **duruyor**, geri alınmamış. Commit: `28d6a57`. **Cihazda doğrulanmalı.** |
+| **WP-503** Dağılım grafiği Y ekseni | Android telefon (İstatistik → kişisel → oturum dağılımı; 14 / 30 / 90 günün üçü de) | Dağılım grafiğinin sol ekseninde iki sayı üst üste binmiyor; en alttaki `0` artık yazmıyor; her sayının hizasında bir ızgara çizgisi var (çizgisiz sayı ya da sayısız çizgi kalmıyor). Commit: `0d5a82e`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7559,15 +7560,15 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ### WP-503: Dağılım grafiğinde Y ekseni aynı hatayı taşıyor 🔵
 - **Program/Faz:** PLAN 5 · Faz F5 · Düşük (WP-499 yan bulgusu)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-499 ✅ kapandı
-  (`minuteAxis` orada yazıldı, burada yalnız çağrılacak)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Bağımlılık:** WP-499 ✅ kapandı
 - **Problem:** `session_scatter_chart.dart:93` `maxY = maxMin * 1.2` — WP-499'un
   düzelttiği desenin aynısı. Üstelik iki kat kötü: `leftTitles`in `interval`i
   hiç verilmemiş (fl_chart kendi aralığını seçiyor, ızgarayla hizalanmıyor) ve
   `getTitlesWidget` hiçbir değeri elemiyor — hem `0` hem de fl_chart'ın eksen
   sınırı için ürettiği fazladan etiket çiziliyor.
-  ⚠️ **Kodda okundu, piksel ölçümü yapılmadı** — WP-499'un kapsamı dışıydı.
-  İlk adım ölçmek: eski koda karşı etiket dikdörtgenlerinin kesiştiğini göster.
+  ↳ **Ölçüldü (eski koda karşı):** Y etiketleri **12.9 px** üst üste biniyor
+  ve `leftTitles.interval` gerçekten `null` dönüyor. 14/30/90 günün üçünde de
+  aynı.
 - **Kapsam dışı:** Nokta renkleri/ders eşlemesi, X ekseni tarih etiketleri,
   tooltip, `leaderboard_rank_chart.dart` (orada `rank < 1` filtresi zaten
   fazladan etiketi düşürüyor — ölçüldü, hata yok).
@@ -7577,18 +7578,32 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - **DOKUNMA:** `chart_axis.dart` (WP-499'da yazıldı, imzası değişmemeli),
   `daily_line_chart.dart`, `daily_bar_chart.dart`.
 - **Adımlar:**
-  - [ ] Önce kırmızıyı ölç: mevcut kodda Y etiketleri kesişiyor mu, kaç piksel?
-  - [ ] `minuteAxis()` çağır; `interval`i `SideTitles`a **ver** ve ızgaranın
-        `horizontalInterval`ı ile aynı olsun.
-  - [ ] `value <= 0` elemesi ekle (çizgi grafikteki gibi).
-  - [ ] WP-499'un geometrik testinin aynısı: iki etiket dikeyde kesişemez.
+  - [x] Kırmızı önce ölçüldü: **12.9 px** çakışma, `interval` `null`.
+  - [x] `minuteAxis()` çağrıldı; `interval` `SideTitles`a **verildi** ve
+        `gridData.horizontalInterval` ile aynı yapıldı (eskiden ikisi ayrı
+        seçiliyordu: çizgisiz etiket + etiketsiz çizgi).
+  - [x] `value <= 0 || value > maxY` elemesi eklendi.
+  - [x] WP-499'un geometrik testinin aynısı: 3 seri × 14/30/90 gün = 9
+        kombinasyon + yapısal iddia + "sıfır etiketi çizilmez".
 - **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local. · **RLS:** Yok.
 - **Edge-case'ler:** Tek oturum · aynı güne çok oturum · boş dönem (grafik hiç
   çizilmiyor, erken dönüş var) · 24 saatlik tek oturum.
-- **Kabul (ölçülebilir):** Y etiketlerinin dikdörtgenleri kesişmiyor; `maxY`
-  eksen aralığının tam katı; `0` etiketi çizilmiyor.
+- **Kabul (ölçülebilir):**
+  1. ✅ Y etiketlerinin dikdörtgenleri kesişmiyor (9 kombinasyon).
+  2. ✅ `maxY / interval` tam sayı **ve** `gridData.horizontalInterval` aynı
+     değer — grafiğe giden `ScatterChartData` üzerinden okunuyor.
+  3. ✅ `0` etiketi çizilmiyor.
+- **Kanıt (kırmızı-yeşil, ölçüldü):** `session_scatter_chart.dart` `git stash`
+  ile geri konup testler koşuldu → **4 kırmızı**: üç geometrik iddia (etiketler
+  12.9 px üst üste) ve yapısal iddia (`interval` `null`). Yeni kodda 11/11.
+- **Test durumu:** `flutter analyze` temiz; tam paket sonucu commit mesajında.
 - **Tuzaklar:** `interval` vermeden yalnız `maxY`yi yuvarlamak — fl_chart kendi
   aralığını seçmeye devam eder ve yuvarlama işe yaramaz.
+  ↳ Uyuldu: `interval` hem `SideTitles`a hem ızgaraya verildi; test ikisinin
+  **eşit** olduğunu ayrıca ölçüyor.
+- **Kapsam notu:** Etiket metni bilerek çıplak sayı bırakıldı (çizgi
+  grafiğindeki `chartYLabel` birim eki eklemiyor burada). Birim eklemek
+  görünür bir ürün değişikliği ve kartın kapsamında değil.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
