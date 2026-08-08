@@ -6,6 +6,7 @@ import '../../../core/validation/name_limits.dart';
 import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/anchored_menu.dart';
+import '../../../data/models/profile.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
@@ -151,144 +152,205 @@ class _ClassDetailButton extends StatelessWidget {
 
 /// Sınıf oluşturma akışı: ad sorar, oluşturur, yeni sınıfı aktif yapar.
 /// Başarılıysa true döner.
+///
+/// 🔴 WP-530: `createGroup` sunucu turu sahada 5-6 sn sürüyor. Eskiden
+/// "Oluştur" **diyaloğu anında kapatıyordu** ve istek boyunca ekranda hiçbir
+/// gösterge kalmıyordu; sahip "olmadı" sanıp ikinci kez denedi. Ölçüldü
+/// (WP-530 probu): ikinci deneme ikinci `createGroup` çağrısını gerçekten
+/// gönderiyordu → **iki grup**. Bu yüzden istek artık diyaloğun **içinde**
+/// koşar: buton devre dışı + "Kuruluyor…", bitince sonuç.
 Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
-  final draft = await _promptCreateGroup(context);
-  if (draft == null || draft.name.trim().isEmpty) return false;
-
   final user = ref.read(authStateProvider).value;
   if (user == null) return false;
-  if (!context.mounted) return false;
-  final messenger = ScaffoldMessenger.of(context);
-  final genericError = AppLocalizations.of(
-    context,
-  ).authBeklenmeyenBirHataOlustu;
-  try {
-    final group = await ref
-        .read(groupRepositoryProvider)
-        .createGroup(
-          name: draft.name,
-          creator: user,
-          visibility: draft.visibility,
-          timeZone: draft.timeZone,
-        );
-    ref.read(activeGroupIdProvider.notifier).select(group.id);
-    return true;
-  } on GroupException {
-    messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    return false;
+  final group = await _promptCreateGroup(context, ref, user);
+  if (group == null) return false;
+
+  ref.read(activeGroupIdProvider.notifier).select(group.id);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).classroomGrupOlusturuldu),
+      ),
+    );
   }
+  return true;
 }
 
-class _CreateGroupDraft {
-  const _CreateGroupDraft({
-    required this.name,
-    required this.visibility,
-    required this.timeZone,
-  });
-
-  final String name;
-  final GroupVisibility visibility;
-  final String timeZone;
-}
-
-Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
+/// Ad/gizlilik/saat dilimi sorar **ve grubu kurar**. Oluşan grubu döner;
+/// vazgeçilirse veya ad boşsa null.
+Future<StudyGroup?> _promptCreateGroup(
+  BuildContext context,
+  WidgetRef ref,
+  Profile creator,
+) {
   final controller = TextEditingController();
-  return showDialog<_CreateGroupDraft>(
+  return showDialog<StudyGroup>(
     context: context,
+    // WP-530: istek uçarken bariyere dokunmak kullanıcıyı yine göstergesiz
+    // ekranda bırakırdı. Vazgeçmenin açık düğmesi var.
+    barrierDismissible: false,
     builder: (ctx) {
       var visibility = GroupVisibility.private;
       var timeZone = DeviceTimezone.lastId ?? kDefaultGroupTimeZone;
       if (!kGroupTimeZoneChoices.contains(timeZone)) {
         timeZone = kDefaultGroupTimeZone;
       }
+      var submitting = false;
+      String? error;
       final l10n = AppLocalizations.of(ctx);
       return StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text(l10n.classroomGrupOlustur),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
-                  // `_promptText` (davet kodu) bilerek sınırsız — o ad değil.
-                  maxLength: kGroupNameMaxLength,
-                  decoration: InputDecoration(labelText: l10n.classroomGrupAdi),
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    l10n.groupDiscoveryPrivacyTitle,
-                    style: Theme.of(ctx).textTheme.titleSmall,
-                  ),
-                ),
-                RadioGroup<GroupVisibility>(
-                  groupValue: visibility,
-                  onChanged: (value) => setState(() => visibility = value!),
-                  child: Column(
-                    children: [
-                      RadioListTile<GroupVisibility>(
-                        contentPadding: EdgeInsets.zero,
-                        value: GroupVisibility.private,
-                        title: Text(l10n.groupDiscoveryPrivate),
-                        subtitle: Text(l10n.groupDiscoveryPrivateDescription),
+        builder: (ctx, setState) {
+          final currentError = error;
+
+          Future<void> submit() async {
+            // İkinci basış: düğme zaten devre dışı; bu ikinci kapı aynı
+            // sözleşmeyi klavye/erişilebilirlik yollarına karşı da tutar.
+            if (submitting) return;
+            if (controller.text.trim().isEmpty) {
+              Navigator.pop(ctx);
+              return;
+            }
+            setState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              final group = await ref
+                  .read(groupRepositoryProvider)
+                  .createGroup(
+                    name: controller.text,
+                    creator: creator,
+                    visibility: visibility,
+                    timeZone: timeZone,
+                  );
+              if (ctx.mounted) Navigator.pop(ctx, group);
+            } on GroupException {
+              if (!ctx.mounted) return;
+              setState(() {
+                submitting = false;
+                error = l10n.authBeklenmeyenBirHataOlustu;
+              });
+            }
+          }
+
+          return PopScope(
+            canPop: !submitting,
+            child: AlertDialog(
+              title: Text(l10n.classroomGrupOlustur),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+                      // `_promptText` (davet kodu) bilerek sınırsız — o ad değil.
+                      maxLength: kGroupNameMaxLength,
+                      decoration: InputDecoration(
+                        labelText: l10n.classroomGrupAdi,
                       ),
-                      RadioListTile<GroupVisibility>(
-                        contentPadding: EdgeInsets.zero,
-                        value: GroupVisibility.public,
-                        title: Text(l10n.groupDiscoveryPublic),
-                        subtitle: Text(l10n.groupDiscoveryPublicDescription),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l10n.groupDiscoveryPrivacyTitle,
+                        style: Theme.of(ctx).textTheme.titleSmall,
+                      ),
+                    ),
+                    RadioGroup<GroupVisibility>(
+                      groupValue: visibility,
+                      onChanged: (value) => setState(() => visibility = value!),
+                      child: Column(
+                        children: [
+                          RadioListTile<GroupVisibility>(
+                            contentPadding: EdgeInsets.zero,
+                            value: GroupVisibility.private,
+                            title: Text(l10n.groupDiscoveryPrivate),
+                            subtitle: Text(
+                              l10n.groupDiscoveryPrivateDescription,
+                            ),
+                          ),
+                          RadioListTile<GroupVisibility>(
+                            contentPadding: EdgeInsets.zero,
+                            value: GroupVisibility.public,
+                            title: Text(l10n.groupDiscoveryPublic),
+                            subtitle: Text(
+                              l10n.groupDiscoveryPublicDescription,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: timeZone,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.groupTimeZone,
+                      ),
+                      items: kGroupTimeZoneChoices
+                          .map(
+                            (zone) => DropdownMenuItem(
+                              value: zone,
+                              child: Text(
+                                localizedWorldCityLabel(
+                                  zone,
+                                  l10n,
+                                  fallback: zone,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) => setState(() => timeZone = value!),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.groupTimeZoneDescription,
+                      style: Theme.of(ctx).textTheme.bodySmall,
+                    ),
+                    if (currentError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        currentError,
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.error,
+                        ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: timeZone,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: l10n.groupTimeZone),
-                  items: kGroupTimeZoneChoices
-                      .map(
-                        (zone) => DropdownMenuItem(
-                          value: zone,
-                          child: Text(
-                            localizedWorldCityLabel(zone, l10n, fallback: zone),
-                          ),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) => setState(() => timeZone = value!),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(ctx),
+                  child: Text(l10n.classroomVazgec),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.groupTimeZoneDescription,
-                  style: Theme.of(ctx).textTheme.bodySmall,
+                FilledButton(
+                  key: const Key('create-group-submit'),
+                  onPressed: submitting ? null : submit,
+                  child: submitting
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(l10n.classroomGrupKuruluyor),
+                          ],
+                        )
+                      : Text(l10n.classroomOlustur),
                 ),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.classroomVazgec),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                ctx,
-                _CreateGroupDraft(
-                  name: controller.text,
-                  visibility: visibility,
-                  timeZone: timeZone,
-                ),
-              ),
-              child: Text(l10n.classroomOlustur),
-            ),
-          ],
-        ),
+          );
+        },
       );
     },
   );

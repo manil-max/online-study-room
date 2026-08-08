@@ -586,6 +586,22 @@
   "@authKaytOl": {
     "description": "Auth user-facing text. Source: Kayıt ol"
   },
+  "authHesabinOlusturuldu": "Account created",
+  "@authHesabinOlusturuldu": {
+    "description": "Auth user-facing text. Source: Hesabın oluşturuldu"
+  },
+  "authHesabinHazir": "Your account is ready. You can start right away.",
+  "@authHesabinHazir": {
+    "description": "Auth user-facing text. Source: Hesabın hazır. Hemen başlayabilirsin."
+  },
+  "authEpostaDogrulamaGonderildi": "Tap the verification link we sent to your email so you can log in.",
+  "@authEpostaDogrulamaGonderildi": {
+    "description": "Auth user-facing text. Source: Giriş yapabilmek için e-postana gönderdiğimiz doğrulama bağlantısına tıkla."
+  },
+  "authDevam": "Continue",
+  "@authDevam": {
+    "description": "Auth user-facing text. Source: Devam"
+  },
   "authGirisYap": "Log in",
   "@authGirisYap": {
     "description": "Auth user-facing text. Source: Giriş yap"
@@ -917,6 +933,14 @@
   "classroomOlustur": "Create",
   "@classroomOlustur": {
     "description": "Classroom user-facing text. Source: Oluştur"
+  },
+  "classroomGrupKuruluyor": "Creating…",
+  "@classroomGrupKuruluyor": {
+    "description": "Classroom user-facing text. Source: Kuruluyor…"
+  },
+  "classroomGrupOlusturuldu": "Group created.",
+  "@classroomGrupOlusturuldu": {
+    "description": "Classroom user-facing text. Source: Grup oluşturuldu."
   },
   "classroomOlusturulma": "Created",
   "@classroomOlusturulma": {

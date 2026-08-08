@@ -45,6 +45,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
 
     final auth = ref.read(authRepositoryProvider);
+    // WP-530: kayıt sonucunun onay metni. Hesap kurulduğu **her iki** uçta da
+    // (oturum açıldı / e-posta doğrulaması bekleniyor) doluyor; modal, istek
+    // bittikten sonra gösterilir.
+    String? accountCreated;
+    var signedIn = false;
     try {
       if (_isRegister) {
         await auth.signUp(
@@ -52,16 +57,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           password: _passwordController.text,
           displayName: _nameController.text,
         );
+        accountCreated = l10n.authHesabinHazir;
+        signedIn = true;
       } else {
         await auth.signIn(
           email: _emailController.text,
           password: _passwordController.text,
         );
+        signedIn = true;
       }
-      ref.invalidate(authStateProvider);
-      // Başarılıysa AuthGate otomatik olarak ana uygulamaya geçer.
     } on AuthException catch (e) {
       final verifiedEmailNotice = e.message.contains('e-postana gönderilen');
+      // Hesap **oluştu**, yalnız doğrulama bekliyor. Eskiden tek satırlık bir
+      // bilgi yazıp modu sessizce giriş'e çeviriyorduk; sahibin gördüğü "bir
+      // anda sign in kısmına atıyor" davranışı buydu.
+      if (verifiedEmailNotice) {
+        accountCreated = l10n.authEpostaDogrulamaGonderildi;
+      }
       setState(() {
         if (verifiedEmailNotice) {
           _info = l10n.commonEpostaDogrulamasiGerekiyor;
@@ -76,6 +88,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+
+    if (accountCreated != null && mounted) {
+      await _showAccountCreatedDialog(l10n, accountCreated);
+    }
+    // Başarılıysa AuthGate otomatik olarak ana uygulamaya geçer.
+    if (signedIn && mounted) ref.invalidate(authStateProvider);
+  }
+
+  /// WP-530: kayıt sonucunun **kaçırılamaz** onayı.
+  ///
+  /// Satır içi `_info` metni yetmiyordu: doğrulama gerekmeyen kurulumda ekran
+  /// zaten değişiyor, gerekende ise mod giriş'e dönüyor ve kullanıcı hesabının
+  /// oluşup oluşmadığını anlayamıyordu.
+  Future<void> _showAccountCreatedDialog(
+    AppLocalizations l10n,
+    String message,
+  ) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        key: const Key('signup-confirmation'),
+        icon: const Icon(Icons.check_circle_outline),
+        title: Text(l10n.authHesabinOlusturuldu),
+        content: Text(message),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.authDevam),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _sendPasswordReset() async {
