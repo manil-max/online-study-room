@@ -14,6 +14,47 @@ class SupabaseStudyRepository implements StudyRepository {
 
   final SupabaseClient _client;
 
+  /// Elle kurulan realtime kanallari icin `subscribe()` durum koprusu.
+  ///
+  /// 🔴 Neden var: paketin `.stream()` yolu yeniden baglanmada veriyi
+  /// kendisi tazeler (`supabase-2.13.0/lib/src/supabase_stream_builder.dart`,
+  /// `_wasSubscribed` deseni). `channel(...).subscribe()` ile elle kurulan
+  /// kanal bunu YAPMAZ. Durum callback'i verilmezse ag 5 dakika kopup geri
+  /// geldiginde soket rejoin olur ama hicbir refetch tetiklenmez: liste bir
+  /// sonraki postgres degisikligine kadar donmus kalir ve kopukluk sirasinda
+  /// baska cihazda yazilan oturumlar hic gorunmez. Ayni sessizlik ust kattaki
+  /// yeniden dinleme dongusunu de uyandirmaz — `offline_first_study_repository`
+  /// yalnizca akis hata yayarsa tekrar dinliyor.
+  void Function(RealtimeSubscribeStatus status, Object? error)
+  _realtimeStatusBridge({
+    required void Function() onResubscribed,
+    required void Function(Object error, StackTrace stackTrace) onFailure,
+    required bool Function() isDisposed,
+  }) {
+    var wasSubscribed = false;
+    return (status, error) {
+      // Kendi `onCancel` teardown'umuzun urettigi `closed` hata sayilmaz.
+      if (isDisposed()) return;
+      switch (status) {
+        case RealtimeSubscribeStatus.subscribed:
+          // Ilk abonelikte veriyi `onListen` zaten cekti. Ikinci ve sonraki
+          // `subscribed` = yeniden abonelik, yani elde kopukluk penceresi
+          // kadar geride kalmis bir liste var.
+          if (wasSubscribed) onResubscribed();
+          wasSubscribed = true;
+        case RealtimeSubscribeStatus.channelError:
+        case RealtimeSubscribeStatus.timedOut:
+        case RealtimeSubscribeStatus.closed:
+          // Sessiz olum kabul edilmez: hata akisa duser, ust kat cache
+          // fallback'ine ya da kontrollu yeniden dinlemeye gecebilir.
+          onFailure(
+            RealtimeSubscribeException(status, error),
+            StackTrace.current,
+          );
+      }
+    };
+  }
+
   Map<String, dynamic> _rpcMap(dynamic value) {
     if (value is! Map) throw const FormatException('RPC map bekleniyordu');
     return Map<String, dynamic>.from(value);
@@ -149,6 +190,7 @@ class SupabaseStudyRepository implements StudyRepository {
     RealtimeChannel? channel;
     Timer? debounce;
     var refreshSeq = 0;
+    var disposed = false;
 
     Future<void> refresh() async {
       final seq = ++refreshSeq;
@@ -187,9 +229,21 @@ class SupabaseStudyRepository implements StudyRepository {
               ),
               callback: (_) => scheduleRefresh(),
             )
-            .subscribe();
+            // Yeniden baglanmada tazele; sessiz sokete hata yay (WP-543).
+            .subscribe(
+              _realtimeStatusBridge(
+                onResubscribed: () => unawaited(refresh()),
+                onFailure: (error, stackTrace) {
+                  if (!controller.isClosed) {
+                    controller.addError(error, stackTrace);
+                  }
+                },
+                isDisposed: () => disposed || controller.isClosed,
+              ),
+            );
       },
       onCancel: () async {
+        disposed = true;
         debounce?.cancel();
         if (channel != null) await _client.removeChannel(channel!);
       },
@@ -251,6 +305,7 @@ class SupabaseStudyRepository implements StudyRepository {
     RealtimeChannel? channel;
     Timer? debounce;
     var refreshSeq = 0;
+    var disposed = false;
 
     Future<void> refresh() async {
       final seq = ++refreshSeq;
@@ -284,9 +339,21 @@ class SupabaseStudyRepository implements StudyRepository {
               table: 'study_sessions',
               callback: (_) => scheduleRefresh(),
             )
-            .subscribe();
+            // Yeniden baglanmada tazele; sessiz sokete hata yay (WP-543).
+            .subscribe(
+              _realtimeStatusBridge(
+                onResubscribed: () => unawaited(refresh()),
+                onFailure: (error, stackTrace) {
+                  if (!controller.isClosed) {
+                    controller.addError(error, stackTrace);
+                  }
+                },
+                isDisposed: () => disposed || controller.isClosed,
+              ),
+            );
       },
       onCancel: () async {
+        disposed = true;
         debounce?.cancel();
         if (channel != null) await _client.removeChannel(channel!);
       },
