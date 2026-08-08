@@ -29,6 +29,8 @@ import 'package:online_study_room/features/home/widgets/card_data_gate.dart';
 import 'package:online_study_room/features/home/widgets/today_summary_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../support/istanbul_fixture.dart';
+
 List<Override> _statsOverrides() => [
   authStateProvider.overrideWith(
     (ref) => Stream.value(
@@ -37,11 +39,19 @@ List<Override> _statsOverrides() => [
   ),
   userSessionsProvider.overrideWith(
     (ref) => Stream.value(<StudySession>[
+      // 🔴 WP-565: `DateTime.now() - 1 saat` GECE YARISI TUZAGI. Bu dosyanin
+      // butun iddialari oturumun BUGUNE dusmesine dayanir; urunun gun siniri
+      // `Europe/Istanbul`. Kosum 00:00-01:00 arasina denk gelirse oturum DUNE
+      // duser, ders dagilimi bosalir ve dort test hatasiz kodu suclar.
+      // Olculdu (2026-08-09): 00:5x'te 4 kirmizi, 01:04'te hicbir kod
+      // degismeden 4 yesil. Ayni hata v49 surum kosumunu kirmisti ve
+      // `support/istanbul_fixture.dart` tam bunun icin yazilmisti -- bu dosya
+      // onu kullanmiyordu. Yardimci geri gidisi bugunun icinde tutar.
       StudySession(
         id: 's1',
         userId: 'u1',
         subjectId: 'sub-1',
-        start: DateTime.now().subtract(const Duration(hours: 1)),
+        start: agoWithinIstanbulToday(const Duration(hours: 1)),
         end: DateTime.now(),
         durationSeconds: 3600,
         source: StudySource.live,
@@ -50,7 +60,7 @@ List<Override> _statsOverrides() => [
         id: 's2',
         userId: 'u1',
         subjectId: 'sub-2',
-        start: DateTime.now().subtract(const Duration(minutes: 30)),
+        start: agoWithinIstanbulToday(const Duration(minutes: 30)),
         end: DateTime.now(),
         durationSeconds: 1800,
         source: StudySource.live,

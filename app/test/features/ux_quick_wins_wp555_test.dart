@@ -32,6 +32,8 @@ import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/istanbul_fixture.dart';
+
 /// `discoverPublicGroups` cagri sayacini tutan kesif deposu (IS 3).
 class _CountingDiscoveryRepository extends InMemoryGroupRepository {
   int discoverCalls = 0;
@@ -101,7 +103,11 @@ void main() {
         StudySession(
           id: 'oturum-1',
           userId: user.id,
-          start: now.subtract(const Duration(hours: 1)),
+          // 🔴 WP-565: gece yarisi tuzagi -- bkz. support/istanbul_fixture.dart.
+          // Test oturumun BUGUN listesinde gorunmesini bekler; 00:00-01:00
+          // arasinda `now - 1 saat` DUNE duser ve oturum `_PastDayTile`a
+          // katlanir. Olculdu (2026-08-09): 00:5x kirmizi, 01:04 yesil.
+          start: agoWithinIstanbulToday(const Duration(hours: 1), now: now),
           end: now,
           durationSeconds: 3600,
           source: StudySource.manual,
