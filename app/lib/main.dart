@@ -5,6 +5,12 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// WP-542: `http` su an yalniz dev_dependency (Supabase kablo testleri icin).
+// Kok pakette dev bagimliliklari derleme zamaninda da cozulur, bu yuzden
+// calisir; kalici cozum pubspec'te `dependencies` altina tasimaktir. pubspec bu
+// is paketinin SAHIP yollarinda olmadigi icin burada lint bastiriliyor.
+// ignore: depend_on_referenced_packages
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -108,6 +114,13 @@ Future<void> main() async {
       url: SupabaseConfig.url,
       // "publishable" = eski "anon public" anahtarın yeni adı (aynı anahtar).
       publishableKey: SupabaseConfig.anonKey,
+      // WP-542: her Supabase HTTP turuna üst sınır. Sınır yokken kötü ağda
+      // istek, işletim sisteminin TCP zaman aşımına (dakikalar) kadar asılı
+      // kalabiliyordu; hiçbir çağrı için doğru bekleme süresi bu değildir.
+      httpClient: _TimeoutHttpClient(
+        http.Client(),
+        const Duration(seconds: 10),
+      ),
     );
   }
 
@@ -162,6 +175,29 @@ Future<void> main() async {
       realtimeChannelCount: channelCount,
     );
   });
+}
+
+/// WP-542: Supabase'in tüm REST/Auth/Storage isteklerine tek bir üst sınır.
+///
+/// Realtime websocket bu istemciden geçmez; kalıcı bağlantı etkilenmez.
+/// Uygulamada büyük dosya yükleme yoktur (storage yalnız `getPublicUrl` ve
+/// küçük `remove` çağrılarında kullanılır), bu yüzden 10 sn güvenlidir.
+class _TimeoutHttpClient extends http.BaseClient {
+  _TimeoutHttpClient(this._inner, this._timeout);
+
+  final http.Client _inner;
+  final Duration _timeout;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    return _inner.send(request).timeout(_timeout);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+    super.close();
+  }
 }
 
 class OnlineStudyRoomApp extends ConsumerWidget {

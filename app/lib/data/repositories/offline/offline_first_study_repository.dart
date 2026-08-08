@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
+
 import '../../../core/observability/observability_service.dart';
 import '../../../core/stats/session_window.dart';
 import '../../models/daily_stat.dart';
@@ -8,23 +10,69 @@ import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
 import 'offline_cache_store.dart';
 
-class OfflineFirstStudyRepository implements StudyRepository {
+/// WP-542: "yerel yazim bitince don, uzak turu arka planda surdur" yetenegi.
+///
+/// `StudyRepository` arayuzunun kendisine eklenemez: o dosya bu is paketinin
+/// SAHIP yollarinda degil ve arayuze yeni uye eklemek TUM implementasyonlari
+/// (in-memory, supabase, test sahteleri) kirar. Yetenek bu yuzden ayri bir
+/// arayuzle tanimlanir; cagiran taraf `is` testiyle secer, desteklemeyen
+/// repolarda eski (bloklayan) `addSession` yolu aynen kalir.
+abstract interface class LocalFirstSessionWriter {
+  /// Yalniz YEREL yazim (cache + yerel stream emit) bitene kadar bekler.
+  /// Uzak gonderim arka planda surer; basarisiz olursa outbox'a kuyruklanir.
+  Future<void> addSessionLocalFirst(StudySession session);
+}
+
+/// WP-542: kalici hata yuzunden kuyruktan dusurulen mutasyonun kaydi.
+///
+/// Kalici dead-letter deposu `OfflineCacheStore`'a yazilirdi ama o dosya bu is
+/// paketinin SAHIP yollarinda degil; bu yuzden kayit surec omru boyunca
+/// bellekte tutulur ve ayrica `ObservabilityService` ile raporlanir. Kuyrugun
+/// sonsuza dek tikanmasindansa gorunur bir kayip tercih edilir.
+class DeadLetteredStudyMutation {
+  const DeadLetteredStudyMutation({
+    required this.mutation,
+    required this.errorType,
+    required this.occurredAt,
+  });
+
+  final OfflineStudyMutation mutation;
+  final String errorType;
+  final DateTime occurredAt;
+}
+
+class OfflineFirstStudyRepository
+    implements StudyRepository, LocalFirstSessionWriter {
   OfflineFirstStudyRepository({
     required StudyRepository remote,
     required OfflineCacheStore cache,
     Duration groupStatsReconnectDelay = const Duration(seconds: 2),
-  }) : this._(remote, cache, groupStatsReconnectDelay);
+    Duration remoteDispatchTimeout = const Duration(seconds: 12),
+  }) : this._(remote, cache, groupStatsReconnectDelay, remoteDispatchTimeout);
 
   OfflineFirstStudyRepository._(
     this._remote,
     this._cache,
     this._groupStatsReconnectDelay,
+    this._remoteDispatchTimeout,
   );
 
   final StudyRepository _remote;
   final OfflineCacheStore _cache;
   final Duration _groupStatsReconnectDelay;
+
+  /// WP-542: arka plana atilan uzak turun ust siniri. Zaman asimi KALICI bir
+  /// hata degildir — mutasyon outbox'a alinir, baglanti donunce yeniden denenir.
+  /// Sinir olmadan asili bir istek mutasyonu ne sunucuya ne de kuyruga koyardi.
+  final Duration _remoteDispatchTimeout;
+
   bool _isFlushing = false;
+
+  final List<DeadLetteredStudyMutation> _deadLetters = [];
+
+  /// Kalici hata yuzunden kuyruktan dusurulen mutasyonlar (tani icin).
+  List<DeadLetteredStudyMutation> get deadLetteredMutations =>
+      List.unmodifiable(_deadLetters);
 
   /// Aktif [watchUserSessions] dinleyicilerine mutation sonrası anında push.
   /// Realtime gecikse bile UI (bugün toplam, istatistik) cache gerçeğini görür.
@@ -94,7 +142,24 @@ class OfflineFirstStudyRepository implements StudyRepository {
         try {
           await _applyMutation(mutation);
           appliedCount++;
-        } catch (_) {
+        } catch (error, stackTrace) {
+          // WP-542: KALICI ile GECICI hatayi ayir.
+          //
+          // Eskiden ayrim yoktu: ilk hatada dongu kirilir, o kayit ve
+          // ARKASINDAKI TUM kayitlar kuyrukta birakilirdi. Hata kaliciysa
+          // (silinmis subject_id -> FK ihlali 23503, ya da
+          // `study_sessions_time_order` / `study_sessions_duration_bound`
+          // CHECK ihlali 23514) kuyruk SONSUZA DEK tikanir; kullanicinin
+          // butun calisma suresi yalniz yerel cache'te birikir ve uygulama
+          // silinince tamamen kaybolur.
+          //
+          // Kalici hatada tek kayit dusurulur (dead-letter + telemetri),
+          // kuyrugun geri kalani akmaya devam eder. Gecici hatada (ag,
+          // 5xx, zaman asimi) eski davranis aynen surer: dur ve sirayi koru.
+          if (_isPermanentRemoteFailure(error)) {
+            _recordDeadLetter(mutation, error, stackTrace);
+            continue;
+          }
           remaining.addAll(pending.skip(i));
           break;
         }
@@ -117,11 +182,36 @@ class OfflineFirstStudyRepository implements StudyRepository {
 
   @override
   Future<void> addSession(StudySession session) async {
+    await _writeSessionLocally(session);
+    await _dispatchAddSessionRemote(session);
+  }
+
+  /// WP-542: Durdur'a basildiginda kullanicinin bekledigi tek is YEREL yazimdir.
+  ///
+  /// Saha sikayeti: "Durdur'a basiyorum, sayac bir sure oylece duruyor." Sebep
+  /// [addSession]'in uzak turu `await` etmesiydi; kotu agda TCP zaman asimina
+  /// kadar (dakikalar) `_finish()` calismiyordu — Durdur dugmesi devre disi,
+  /// FGS bildirimi/widget hala "calisiyor", presence hala `studying`.
+  ///
+  /// Burada uzak gonderim ateşle-unut'tur: hata/zaman asimi outbox'a duser,
+  /// `flushPending` sonradan akitir. Kullanici icin durdurma anliktir.
+  @override
+  Future<void> addSessionLocalFirst(StudySession session) async {
+    await _writeSessionLocally(session);
+    unawaited(_dispatchAddSessionRemote(session));
+  }
+
+  Future<void> _writeSessionLocally(StudySession session) async {
     await _cache.upsertCachedSession(session);
     await _publishLocalUserSessions(session.userId);
+  }
+
+  Future<void> _dispatchAddSessionRemote(StudySession session) async {
     try {
-      await flushPending();
-      await _remote.addSession(session);
+      await Future(() async {
+        await flushPending();
+        await _remote.addSession(session);
+      }).timeout(_remoteDispatchTimeout);
     } catch (_) {
       await _cache.queueStudyMutation(OfflineStudyMutation.add(session));
     }
@@ -302,6 +392,49 @@ class OfflineFirstStudyRepository implements StudyRepository {
     if (!hub.isClosed) {
       hub.add(_hotOnly(cached));
     }
+  }
+
+  /// WP-542: bu hata TEKRAR DENEYINCE de ayni sonucu verir mi?
+  ///
+  /// Kalici sayilanlar:
+  ///   * SQLSTATE `23xxx` — butunluk ihlali (FK 23503, CHECK 23514, unique
+  ///     23505). Ayni govde tekrar gonderilirse yine reddedilir.
+  ///   * Postgrest'in `code` alanina yazdigi 4xx HTTP durumlari — istek
+  ///     gecersiz/yetkisiz. 408 (timeout) ve 429 (rate limit) HARIC: onlar
+  ///     gecicidir, sirayi bozmadan beklenmeli.
+  /// Bunlarin disinda kalan her sey (ag, soket, 5xx, TimeoutException) gecici
+  /// sayilir; kuyruk durur ve sira korunur.
+  static bool _isPermanentRemoteFailure(Object error) {
+    if (error is! PostgrestException) return false;
+    final code = error.code;
+    if (code == null || code.isEmpty) return false;
+    if (code.length == 5 && code.startsWith('23')) return true;
+    final status = int.tryParse(code);
+    if (status == null) return false;
+    if (status == 408 || status == 429) return false;
+    return status >= 400 && status < 500;
+  }
+
+  void _recordDeadLetter(
+    OfflineStudyMutation mutation,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    _deadLetters.add(
+      DeadLetteredStudyMutation(
+        mutation: mutation,
+        errorType: error.runtimeType.toString(),
+        occurredAt: DateTime.now(),
+      ),
+    );
+    // Sessiz kayip yok: dusurulen her kayit telemetriye dusen bir hatadir.
+    unawaited(
+      ObservabilityService.instance.captureOperationFailure(
+        operation: ObservabilityOperation.timer,
+        error: error,
+        stackTrace: stackTrace,
+      ),
+    );
   }
 
   Future<void> _applyMutation(OfflineStudyMutation mutation) {

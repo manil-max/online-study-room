@@ -553,6 +553,22 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// (son durumu asla düşürme).
   Future<void>? _reconcileInFlight;
   bool _reconcileAgainRequested = false;
+
+  /// WP-542: DUVAR SAATINDEN BAGIMSIZ gecen-sure zemini.
+  ///
+  /// Cihaz saati koşu ortasinda geriye gidebilir (ag saati duzeltmesi ya da
+  /// kullanicinin elle degistirmesi). O anda `DateTime.now()` `startedAt`'in
+  /// ONUNE duser, bitis-baslangic farki NEGATIF cikar ve `_recordSession`
+  /// bunu `duration <= 0` gorup sessizce dusururdu: 40 dakikalik calisma ne
+  /// sunucuya ne cache'e yazilir, kullaniciya uyari da gitmezdi.
+  ///
+  /// `Stopwatch` monotoniktir — duvar saati oynatilsa bile ileri sayar. Kosu
+  /// ilk goruldugunde bir ZEMIN olculur ([_elapsedFloorSeconds]: duvar farki
+  /// ile prefs'teki son yazim damgasinin buyugu), o andan sonraki her saniye
+  /// ise monotonik olcuye gelir. Toplam icin [_monotonicElapsedSeconds].
+  DateTime? _runClockStartedAt;
+  int _runClockBaselineSeconds = 0;
+  final Stopwatch _runClockStopwatch = Stopwatch();
   Future<void>? _globalTimerReconcileInFlight;
   Future<void>? _globalTimerHeartbeatInFlight;
   String? _subjectFallbackInFlightForUserId;
@@ -610,6 +626,56 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     } catch (_) {
       // Tanı kaydı ürün akışını asla kesmez (prefs/provider hazır değilse sus).
     }
+  }
+
+  /// WP-542: monotonik koşu saatini [snapshot]'a göre kurar/sıfırlar.
+  ///
+  /// Çağrı noktaları bilinçli olarak azdır: `build()` (soğuk açılışta benimseme),
+  /// `_persistActiveTimer()` (her koşu geçişi bu yoldan geçer) ve
+  /// `_clearActiveTimer()` (terminal geçiş). Aynı `startedAt` için tekrar
+  /// çağrılması zararsızdır — zemin yalnız koşu DEĞİŞİNCE yeniden ölçülür.
+  void _syncRunClock(StudyTimerState snapshot) {
+    final started = snapshot.startedAt;
+    if (!snapshot.isRunning || started == null) {
+      _runClockStartedAt = null;
+      _runClockBaselineSeconds = 0;
+      _runClockStopwatch
+        ..stop()
+        ..reset();
+      return;
+    }
+    if (_runClockStartedAt == started) return;
+    _runClockStartedAt = started;
+    // Zemin, ELDEKI EN BUYUK guvenilir alt sinirdir:
+    //   * duvar farki — saat normalse dogru cevap;
+    //   * `lastUpdatedAt` farki — prefs'e en son yazilan an. Saat ZATEN geriye
+    //     gitmisken acilan uygulamada duvar farki negatiftir, ama bu damga
+    //     sicramadan ONCEKI gercek zamanda yazilmistir; kosunun en az o kadar
+    //     surdugunu kanitlar.
+    // Ikisi de kullanilamiyorsa 0 ve uzerine yalniz monotonik sure eklenir.
+    _runClockBaselineSeconds = _elapsedFloorSeconds(
+      started,
+      snapshot.lastUpdatedAt,
+    );
+    _runClockStopwatch
+      ..reset()
+      ..start();
+  }
+
+  /// [started]'dan bu yana gecmis olabilecek EN AZ sure (negatifse 0).
+  static int _elapsedFloorSeconds(DateTime started, DateTime? persistedAt) {
+    final wall = DateTime.now().difference(started).inSeconds;
+    final persisted = persistedAt == null
+        ? 0
+        : persistedAt.difference(started).inSeconds;
+    final best = wall > persisted ? wall : persisted;
+    return best > 0 ? best : 0;
+  }
+
+  /// Duvar saatinden bağımsız geçen süre; izlenen bir koşu yoksa `null`.
+  int? get _monotonicElapsedSeconds {
+    if (_runClockStartedAt == null) return null;
+    return _runClockBaselineSeconds + _runClockStopwatch.elapsed.inSeconds;
   }
 
   /// Yüzeyde o an GÖRÜNEN saniye — kaydedilen oturumla karşılaştırılacak sayı.
@@ -833,6 +899,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
                 : TimerVerification.statisticsOnly)
           : TimerVerification.verified,
     );
+    // WP-542: soğuk açılışta benimsenen koşu için monotonik zemini HEMEN kur.
+    // Bu satır olmadan, uygulama açıldıktan sonra saat geriye giderse elde
+    // hiçbir bağımsız süre ölçüsü kalmaz ve oturum yine kaybolur.
+    _syncRunClock(initial);
     ObservabilityService.instance.timerRestore(
       hadActiveTimer: activeStartedAt != null,
     );
@@ -2072,6 +2142,39 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           ? at
           : DateTime.now();
 
+      // WP-542 (SESSİZ VERİ KAYBI): cihaz saati koşu sırasında geriye gittiyse
+      // (ağ saati düzeltmesi ya da kullanıcı elle değiştirdiyse) `end`,
+      // `startedAt`'in ÖNÜNE düşer. ESKİ DAVRANIŞ: `recordedSeconds` negatif →
+      // settling temizlenir → `_recordSession` `duration <= 0` görüp jurnale
+      // `dropped` yazıp SESSİZCE `return` ederdi. 40 dakikalık çalışma ne
+      // sunucuya ne cache'e yazılırdı; kullanıcıya hiçbir uyarı gitmezdi.
+      //
+      // KARAR: oturum YİNE DE yazılır. Süre duvar saatinden değil, duvar
+      // saatinden bağımsız koşu saatinden ([_monotonicElapsedSeconds]) alınır:
+      // benimseme anındaki alt sınır + o andan beri geçen MONOTONİK süre.
+      // Hiçbir ölçü yoksa 1 saniyelik bir iz yazılır — yanlış ama GÖRÜNÜR bir
+      // kayıt, sessiz kayıptan iyidir; kullanıcı geçmişten düzeltebilir.
+      //
+      // NOT: yukarıdaki `end` satırının metni WP-432 repro testi tarafından
+      // birebir sabitlenmiştir; düzeltme bu yüzden ayrı bir değişkende yapılır.
+      var effectiveEnd = end;
+      if (wasWork && startedAt != null && !end.isAfter(startedAt)) {
+        final monotonic = _monotonicElapsedSeconds ?? 0;
+        final recoveredSeconds = monotonic > 0 ? monotonic : 1;
+        effectiveEnd = startedAt.add(Duration(seconds: recoveredSeconds));
+        _journalTransition(
+          event: TimerJournalEvents.stopRequested,
+          // `stale` = elimizdeki duvar saati okuması artık güvenilir değil;
+          // süre bağımsız kaynaktan kurtarıldı.
+          reason: TimerJournalReasons.userAction,
+          outcome: TimerJournalOutcomes.stale,
+          origin: TimerJournalOrigins.app,
+          runId: state.globalTimerRunId,
+          runRevision: state.globalTimerRunRevision,
+          elapsedSeconds: recoveredSeconds,
+        );
+      }
+
       // WP-250 (KRİTİK — sıra değiştirilemez): aşağıdaki `await`'lerin toplamı
       // gerçek cihazda 100ms+ sürer (offline cache yazımı → yerel stream emit →
       // ardından ağ RTT'si). Flutter bu boşlukta bir kare çizer. O karede
@@ -2082,7 +2185,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       //   (2) DB'ye verilecek saniyeyi + o anki kayıtlı toplamı yayınla
       // Böylece UI, kayıt yerleşmeden de yerleştikten de AYNI sayıyı gösterir.
       final recordedSeconds = (wasWork && startedAt != null)
-          ? end.difference(startedAt).inSeconds
+          ? effectiveEnd.difference(startedAt).inSeconds
           : 0;
       if (recordedSeconds > 0 && startedAt != null) {
         state = state.copyWith(
@@ -2126,7 +2229,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           if (state.liveRunToken case final token?) {
             await _finalizeVerifiedRun(token);
           } else {
-            await _recordSession(startedAt, end, subjectId);
+            await _recordSession(startedAt, effectiveEnd, subjectId);
           }
         }
       } finally {
@@ -2413,19 +2516,28 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       elapsedSeconds: duration,
     );
 
-    await ref
-        .read(studyRepositoryProvider)
-        .addSession(
-          StudySession(
-            id: sessionId ?? _uuid.v4(),
-            userId: user.id,
-            subjectId: subjectId,
-            start: start,
-            end: end,
-            durationSeconds: duration,
-            source: StudySource.live,
-          ),
-        );
+    final record = StudySession(
+      id: sessionId ?? _uuid.v4(),
+      userId: user.id,
+      subjectId: subjectId,
+      start: start,
+      end: end,
+      durationSeconds: duration,
+      source: StudySource.live,
+    );
+
+    // WP-542: durdurma AĞ TURUNU BEKLEMEZ. Offline-first repo yerel cache
+    // yazımı biter bitmez döner; sunucuya gönderme arka planda sürer ve
+    // başarısız olursa outbox'a kuyruklanır. Böylece `_finish()` (FGS
+    // teardown + `_publishPresence(offline)` + widget senkronu) kötü ağda
+    // dakikalarca beklemez. Bu yeteneği desteklemeyen repolarda (in-memory,
+    // doğrudan Supabase) eski bloklayan yol aynen korunur.
+    final repository = ref.read(studyRepositoryProvider);
+    if (repository case final LocalFirstSessionWriter writer) {
+      await writer.addSessionLocalFirst(record);
+    } else {
+      await repository.addSession(record);
+    }
   }
 
   /// Kullanıcının canlı durumunu presence deposuna yazar (hata olursa sayacı bozmaz).
@@ -2457,6 +2569,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   void _persistActiveTimer() {
+    // WP-542: her koşu geçişi buradan geçer → monotonik saat burada hizalanır.
+    _syncRunClock(state);
     if (!state.isRunning || state.startedAt == null) return;
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(_kActiveStartedAt, state.startedAt!.toIso8601String());
@@ -2500,6 +2614,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   void _clearActiveTimer() {
+    // WP-542: terminal geçişte monotonik koşu saati de bırakılır.
+    _syncRunClock(state);
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.remove(_kActiveStartedAt);
     prefs.remove(_kActiveStartedAtMs);
