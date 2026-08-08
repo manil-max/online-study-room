@@ -4,6 +4,38 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v61 / 1.0.61+61] - 2026-08-08
+
+> **Dil düzeltmeleri ve mağaza hazırlığı.** Sahip sahada "arayüz İngilizceyken
+> SSS Türkçe geliyor" dedi; kök neden tarandı ve aynı sınıftan üç hata birden
+> kapandı. Ayrıca Play Store yolu için gereken parçalar bu sürümde.
+
+### Yenilikler
+- **Uygulamanın adı telefonun diline uyuyor.** İngilizce cihazda *Focus Camp*,
+  Türkçe cihazda *Odak Kampı*. Daha önce herkeste sabit Türkçe adı yazıyordu.
+- **SSS'de dil başına 33 soru var** (önceden 13). Başlangıç, sayaç modları,
+  günlük hedef, kamp ateşi, ad sınırı, dürtme susturma, veri indirme, hesap
+  silme ve daha fazlası.
+- **Gizlilik politikası ve hesap silme sayfaları yayında.** Uygulama içindeki
+  Yasal Merkez artık gerçek bir adres gösteriyor.
+
+### Düzeltmeler
+- **Arayüz İngilizceyken SSS içeriği Türkçe geliyordu.** Dil tercihi üç
+  değerli (sistem / İngilizce / Türkçe) ama kod iki değere daraltıyor ve
+  "sistem"i sessizce Türkçe sayıyordu.
+- **Bildirimler cihazın dilini kullanıyordu.** Uygulamada İngilizce seçen
+  ama telefonu Türkçe olan kullanıcı bildirimleri Türkçe alıyordu.
+- **Elle süre eklerken açılan takvim herkeste Türkçeydi.**
+- **Hesap silme production'da hiç işlenmiyordu.** İstek kaydediliyor, 14 gün
+  geçiyor ve hiçbir şey silinmiyordu; silici yalnız staging'e bağlanmıştı.
+
+### Altyapı
+- Kaynak kodu tarayan kalıcı bir kapı eklendi: dil tercihini iki değere
+  daraltmak ve ekrana sabit dil vermek artık testte kırmızı düşürür.
+- Play için AAB (app bundle) üretimi ve onu zorlayan preflight kapısı.
+- Yasal metinler `docs/legal/*.md`'den statik siteye üretiliyor; uygulamanın
+  koddan istediği adreslerin gerçekten yayınlandığı ölçülüyor.
+
 ## [v60 / 1.0.60+60] - 2026-08-08
 
 > **Saha geri bildirimi sürümü.** v59 sonrası sahibin bildirdiği on madde ve

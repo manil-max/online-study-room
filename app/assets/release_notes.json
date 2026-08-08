@@ -3,6 +3,42 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.61",
+                         "buildNumber":  61,
+                         "channel":  "stable",
+                         "date":  "2026-08-08",
+                         "title":  "v61: dil dÃ¼zeltmeleri ve maÄŸaza hazÄ±rlÄ±ÄŸÄ±",
+                         "highlights":  [
+                                            "UygulamanÄ±n adÄ± artÄ±k telefonun diline uyuyor: Ä°ngilizce cihazda Focus Camp, TÃ¼rkÃ§e cihazda Odak KampÄ±.",
+                                            "SSS\u0027de her dil iÃ§in 33 soru var; sorular ve cevaplar arayÃ¼zÃ¼n dilinde geliyor.",
+                                            "Gizlilik politikasÄ± ve hesap silme sayfalarÄ± artÄ±k herkese aÃ§Ä±k bir adreste yayÄ±nda."
+                                        ],
+                         "fixes":  [
+                                       "ArayÃ¼z Ä°ngilizceyken SSS sorularÄ± ve cevaplarÄ± TÃ¼rkÃ§e geliyordu; artÄ±k arayÃ¼zÃ¼n dilinde geliyor.",
+                                       "Bildirimler cihazÄ±n dilini kullanÄ±yordu; artÄ±k uygulamada seÃ§tiÄŸin dili kullanÄ±yor.",
+                                       "Elle sÃ¼re eklerken aÃ§Ä±lan takvim herkeste TÃ¼rkÃ§eydi; artÄ±k arayÃ¼zÃ¼n dilinde.",
+                                       "Hesap silme isteÄŸi production tarafÄ±nda hiÃ§ iÅŸlenmiyordu; 14 gÃ¼nÃ¼n sonundaki kalÄ±cÄ± silme artÄ±k gerÃ§ekten Ã§alÄ±ÅŸÄ±yor."
+                                   ],
+                         "notes":  [
+
+                                   ],
+                         "titleEn":  "v61: language fixes and store readiness",
+                         "highlightsEn":  [
+                                              "The app name now follows your phone\u0027s language: Focus Camp in English, Odak KampÄ± in Turkish.",
+                                              "The FAQ has 33 questions per language, and the questions and answers follow the interface language.",
+                                              "The privacy policy and account deletion pages are now published at a public address."
+                                          ],
+                         "fixesEn":  [
+                                         "FAQ questions and answers came in Turkish while the interface was English; they now follow the interface language.",
+                                         "Notifications used the device language; they now use the language you picked in the app.",
+                                         "The date picker for manually added time was always Turkish; it now follows the interface language.",
+                                         "Account deletion requests were never processed in production; permanent deletion after the 14-day window now really runs."
+                                     ],
+                         "notesEn":  [
+
+                                     ]
+                     },
+                     {
                          "versionName":  "1.0.60",
                          "buildNumber":  60,
                          "channel":  "stable",
