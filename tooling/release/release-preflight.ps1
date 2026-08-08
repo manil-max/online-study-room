@@ -13,6 +13,18 @@ param(
   # WP-527: kapinin kirik girdiyle sinanabilmesi icin workflow yolu
   # enjekte edilebilir. Bos birakilinca gercek repo dosyasi okunur.
   [string]$ReleaseWorkflowPath,
+  # WP-564: deploy kontrati da enjekte edilebilir -- YALNIZ test icin.
+  #
+  # Sebep: asagidaki head/kontrat kontrolu (satir ~55) Play AAB kontrolunden
+  # ONCE kosar. Yerel head production'in onundeyken (migration yazilmis ama
+  # henuz uygulanmamis -- mesru ve sik gorulen durum) stable preflight zaten
+  # orada duser. WP-527'nin "AAB adimi silinince kapi kirmizi dusmeli"
+  # negatifleri boylece AAB yuzunden degil head yuzunden kirmizi oluyordu:
+  # release.yml'den Play yolunu tamamen silsen bile testler yesil kalirdi.
+  # Testler bu bayrakla head'i tutan gecici bir kontrat verir; olculen sey
+  # yeniden AAB adiminin kendisi olur. Gercek yayinda bayrak bos gecilir ve
+  # kontrat her zaman repodaki dosyadan okunur.
+  [string]$DeployContractPath,
   [switch]$ValidateOnly,
   [string]$EvidenceRoot
 )
@@ -49,7 +61,14 @@ $actualHead = Get-LocalMigrationHead -RepoRoot $repoRoot
 if ($actualHead -ne $ExpectedMigrationHead) {
   throw "Migration head mismatch: local=$actualHead expected=$ExpectedMigrationHead."
 }
-$contract = Get-DeployContract -RepoRoot $repoRoot
+$contract = if ([string]::IsNullOrWhiteSpace($DeployContractPath)) {
+  Get-DeployContract -RepoRoot $repoRoot
+} else {
+  if (-not (Test-Path -LiteralPath $DeployContractPath -PathType Leaf)) {
+    throw "Deploy contract is missing: $DeployContractPath"
+  }
+  Get-Content -LiteralPath $DeployContractPath -Raw -Encoding UTF8 | ConvertFrom-Json
+}
 if ($contract.$environment.migration_head -ne $ExpectedMigrationHead) {
   throw "Release contract rejects migration head $ExpectedMigrationHead for $Channel."
 }

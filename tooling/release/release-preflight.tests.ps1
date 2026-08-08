@@ -19,6 +19,7 @@ $head = Get-LocalMigrationHead -RepoRoot $repoRoot
 # demek olurdu. Kontrati staging'i 0108 yazacak sekilde "duzeltmek" ayni
 # yalanin baska turudur; staging head'i yalniz gercek apply sonrasi ilerler.
 $stagingHead = (Get-DeployContract -RepoRoot $repoRoot).staging.migration_head
+$productionHead = (Get-DeployContract -RepoRoot $repoRoot).production.migration_head
 if ($head -eq $stagingHead) {
   & $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
 } else {
@@ -121,8 +122,43 @@ if ($preflightSource -notmatch 'Assert-ReleaseNotesEntry') {
 # bu yuzden kapi hem POZITIF hem de KIRIK GIRDI ile olculur.
 # ---------------------------------------------------------------------------
 
-# Pozitif: mevcut release.yml ile stable preflight yesil.
-& $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+# WP-564: STABLE head simetrisi -- beta kolundakiyle ayni kural.
+#
+# Eskiden burada KOSULSUZ bir pozitif vardi ve yerel head'i bekliyordu. Yerel
+# head production'in onune gectigi anda (migration yazildi, production'a henuz
+# uygulanmadi) bu satir kapiyi kirmiziya dusuruyordu -- kod dogruyken.
+# Dogru iddia: yerel head production'a esitse stable preflight GECMELI, degilse
+# FAIL-CLOSED dusmeli. Ikisi de mesru durum; kontrati "duzeltmek" (production
+# head'ini elle ilerletmek) uygulanmamis semayla yayin yapmak demek olurdu.
+if ($head -eq $productionHead) {
+  & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+} else {
+  $failed = $false
+  $message = ''
+  try {
+    & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+  } catch { $failed = $true; $message = $_.Exception.Message }
+  if (-not $failed) {
+    throw "Preflight must fail closed while local head $head is ahead of production $productionHead."
+  }
+  if ($message -notmatch 'Release contract rejects migration head') {
+    throw "Stable preflight failed for the wrong reason: $message"
+  }
+  Write-Host "Local head $head is ahead of production $productionHead; stable preflight correctly fails closed."
+}
+
+# WP-564: bundan sonraki WP-527 senaryolari head'i TUTAN gecici bir kontratla
+# kosar. Aksi halde negatifler AAB adimi yuzunden degil head uyusmazligi
+# yuzunden kirmizi duser ve kapi hicbir sey olcmez (asagida hata mesaji da
+# dogrulanir). Gercek `deploy-contract.json` dosyasina DOKUNULMAZ.
+$contractObject = Get-DeployContract -RepoRoot $repoRoot
+$contractObject.production.migration_head = $head
+$contractObject.staging.migration_head = $head
+$headSyncedContractPath = Join-Path ([IO.Path]::GetTempPath()) "wp564-contract-$([guid]::NewGuid().ToString('N')).json"
+[IO.File]::WriteAllText($headSyncedContractPath, ($contractObject | ConvertTo-Json -Depth 8))
+
+# Pozitif: mevcut release.yml + head'i tutan kontrat ile stable preflight yesil.
+& $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -DeployContractPath $headSyncedContractPath | Out-Null
 
 # Kirik girdi: AAB yolunun her bir parcasi tek tek silinmis bir workflow
 # kopyasinda kapi KIRMIZI dusmeli. Gercek dosyaya dokunulmaz.
@@ -140,18 +176,24 @@ try {
   )) {
     [IO.File]::WriteAllText($brokenWorkflowPath, ($releaseWorkflow -replace $removal.Pattern, ''))
     $failed = $false
+    $message = ''
     try {
-      & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath | Out-Null
-    } catch { $failed = $true }
+      & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath -DeployContractPath $headSyncedContractPath | Out-Null
+    } catch { $failed = $true; $message = $_.Exception.Message }
     if (-not $failed) {
       throw "Play AAB gate must fail closed: $($removal.Name)"
+    }
+    # WP-564: "kirmizi dustu" yetmez -- DOGRU SEBEPLE dusmeli. Bu satir olmadan
+    # kapi head uyusmazligi gibi alakasiz bir sebeple de yesil gorunurdu.
+    if ($message -notmatch 'Play') {
+      throw "Play AAB gate failed for the wrong reason on '$($removal.Name)': $message"
     }
     Write-Host "Play AAB gate red on broken input: $($removal.Name)"
   }
 
   # Geri al: bozulmamis kopya yine YESIL. Kapi her girdiye kirmizi demiyor.
   [IO.File]::WriteAllText($brokenWorkflowPath, $releaseWorkflow)
-  & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath | Out-Null
+  & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath -DeployContractPath $headSyncedContractPath | Out-Null
 
   # Beta kanali Play'e girmez: AAB'siz workflow beta preflight'i bloklamamali.
   [IO.File]::WriteAllText($brokenWorkflowPath, ($releaseWorkflow -replace 'flutter build appbundle[^\r\n]*', ''))
@@ -162,6 +204,30 @@ try {
   if (Test-Path -LiteralPath $brokenWorkflowPath) {
     Remove-Item -LiteralPath $brokenWorkflowPath -Force
   }
+  if (Test-Path -LiteralPath $headSyncedContractPath) {
+    Remove-Item -LiteralPath $headSyncedContractPath -Force
+  }
+}
+
+# WP-564: enjeksiyon bayragi bir ARKA KAPI olmamali -- gercek yayinda kontrat
+# her zaman repodaki dosyadan okunmali. Bayragin varsayilani bos oldugu icin
+# davranis degismez; burada bunu iddia olarak sabitliyoruz.
+$preflightSource = Get-Content -LiteralPath $script -Raw -Encoding UTF8
+if ($preflightSource -notmatch '\[string\]\$DeployContractPath') {
+  throw 'release-preflight.ps1 must expose -DeployContractPath for the WP-527 gate to measure the AAB step.'
+}
+if ($preflightSource -notmatch 'IsNullOrWhiteSpace\(\$DeployContractPath\)') {
+  throw 'The deploy contract must default to the repository file; an always-injected contract is a back door.'
+}
+foreach ($workflow in @(
+  (Join-Path $repoRoot '.github\workflows\release.yml'),
+  (Join-Path $repoRoot '.github\workflows\supabase-deploy.yml')
+)) {
+  if (-not (Test-Path -LiteralPath $workflow)) { continue }
+  $workflowText = Get-Content -LiteralPath $workflow -Raw -Encoding UTF8
+  if ($workflowText -match 'DeployContractPath') {
+    throw "Workflow must never inject a deploy contract: $workflow"
+  }
 }
 
 # Jargon sozlesmesi: kullaniciya gorunen notlarda teknik metin olmayacak.
@@ -169,4 +235,4 @@ try {
   -UserNotesPath (Join-Path $repoRoot 'app/assets/release_notes.json') `
   -TechnicalLogPath (Join-Path $repoRoot 'tooling/release/release_notes_technical.json') | Out-Null
 
-Write-Host 'Release preflight tests: 10 passed (release-notes + Play AAB gates included).'
+Write-Host 'Release preflight tests: 13 passed (release-notes + Play AAB + WP-564 head symmetry gates included).'
