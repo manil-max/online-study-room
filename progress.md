@@ -5351,7 +5351,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-495** Yükleniyor ≠ veri yok | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap) | Ana ekran açılışında "Grup Oluştur" kartı bir kare bile görünmüyor; "Şu an çalışanlar" kartı önce iskelet, sonra liste gösteriyor — arada "kimse yok" yazmıyor; taç kaybolup geri gelmiyor. Commit: `95043fd`. **Cihazda doğrulanmalı.** |
 | **WP-495B** Kalan yükleniyor yüzeyleri | Android telefon + gerçek Supabase (soğuk açılış, grubu **olan** hesap; sohbeti olan bir grup) | Sıralama, grup hedefi ve grup trendi kartlarında da "Grup Oluştur" flaşı yok; istatistik → sınıf sekmesi açılışta "bir gruba katıl" demiyor; sekme çubuğundaki taç yenilemede sönmüyor; dışa aktarma eksik dosya üretmiyor; sohbet açılışında engellenen kişinin mesajı bir kare bile görünmüyor. Commit: `695e589`. **Cihazda doğrulanmalı.** |
 | **WP-495C** Pano kartları yükleme durumu | Android telefon + gerçek Supabase (soğuk açılış, **kaydı olan** hesap) | Ana ekran açılışında hiçbir kartta "Bugün henüz çalışma kaydın yok", "Kayıt yok", boş grafik ya da 0 dk görünmüyor; kartlar önce yer tutucu, sonra gerçek veri gösteriyor. Uçağa alıp (çevrimdışı) açınca iskelet değil "Veriler yüklenemedi" çıkıyor. Commit: `17432c5`. **Cihazda doğrulanmalı.** |
-| **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) `backfill_goal_completions()` **ayrı sahip GO'su** ile çalıştırıldıktan sonra sahibin serisi 0'dan farklı ve geçmişle tutarlı. Commit: `b8aaa3f`. **Cihazda doğrulanmalı.** |
+| **WP-492** Seri tamamlama yazıcısı (`0120`) | Database Gates local replay → staging apply → Android telefon | (1) CI local replay job'ında `045` 20/20 yeşil. (2) Şema uygulandıktan sonra hedefi tutturulan gün rozet **canlı** renkli aleve dönüyor (uygulamayı yeniden açmadan; realtime yayını bunun için eklendi) ve sayı doğru. (3) Backfill **koşuldu** (WP-506, 2026-08-08: production 43 satır, geçmiş 2026-06-21'e kadar) → cihazda serinin 0'dan farklı ve geçmişle tutarlı görünmesi. Commit: `b8aaa3f` + `2611384`. **Cihazda doğrulanmalı.** |
 | **WP-496** Seri rozeti yalın | Android telefon (ana ekran + sayaç kartı; yazı ölçeği 1.0 ve 1.6) | Rozette hiçbir yazı yok — yalnız alev + sayı; "Bugün" yazısıyla üst üste binmiyor (1.6 ölçekte de); dört durum birbirinden ayırt edilebiliyor (renkli alev / içi boş alev / duraklatma / gri alev + 0); TalkBack rozete odaklanınca "Kişisel · 3 · Bugün hedef tamamlandı" cümlesini okuyor. Commit: `536eeb5`. **Cihazda doğrulanmalı.** |
 | **WP-497** Aktif üye kartı satır yüksekliği | Android telefon + gerçek Supabase (**taçlı** üyesi olan grup, en az 6 aktif üye) | "Şu an çalışanlar" kartında satırlar kartın üst kenarından başlıyor; kart parmakla **kaydırılıyor** ve en alttaki üye tam görünüyor; hiçbir aktif üye listeden düşmüyor (başlıktaki "N aktif" sayısı ile satır sayısı kaydırınca örtüşüyor); yazı ölçeği 1.3'te de aynısı. Commit: `dd0eda3`. **Cihazda doğrulanmalı.** |
 | **WP-498** Üye satırında ad alanı | Android telefon + gerçek Supabase (grup detayı; **uzun adlı**, ünvanlı, yönetici olmayan bir üye; yazı ölçeği 1.0 ve 1.6) | Üye listesinde ad artık tek harfe düşmüyor — en az 12 karakter okunuyor; dürtme ve susturma satırda duruyor; sağdaki ⋮ menüsünde "Üyeyi çıkar" ve "Üyeyi yasakla" ayrı adlarla çıkıyor ve seçilince onay diyaloğu açılıyor; yönetici olmayan hesapta ⋮ hiç görünmüyor. Ekran başlığındaki "Yönetici" rozeti 1.6 ölçekte sarı-siyah taşma şeridi üretmiyor. Commit: `b3e6c7d`. **Cihazda doğrulanmalı.** |
@@ -6644,6 +6644,14 @@ etiketi (WP-491) artık geçersizdir, kart başlığından kaldırıldı.
   gerçek kanıtı Database Gates workflow'unun local replay job'ından alınacak.
   Kabul 2 (cihazda canlı alev) ve kabul 3 (backfill sonrası serinin 0'dan farklı
   olması) cihaz + ayrı backfill GO'su ister → QA kuyruğunda.
+- 🔴 **Backfill GO kapısı kaldırıldı (2026-08-08, WP-506).** Bu kartın koyduğu
+  "ayrı sahip GO'su" kuralı bir güvenlik gereği değildi ve GO verilse bile
+  koşturacak yol yoktu. Blast radius ölçüldü (insert-only, yaprak tablo,
+  tetikleyicisiz), koşum yolu açıldı ve backfill **iki ortamda da koşuldu**:
+  staging 8 satır, production **43** satır, geçmiş 2026-06-21'e kadar işlendi
+  (run `31247059415` / `31247209137`; ikinci staging koşumu 0 satır → idempotens
+  sahada doğrulandı). Kabul 3'ün sunucu tarafı **tamam**; cihazda kalan tek şey
+  serinin 0'dan farklı **görünmesi**.
 
 ---
 
@@ -7588,6 +7596,10 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
      `docs/qa/V58-STARTUP-SYNC-BUDGET.md`'e p95 eşiği işlenmesi gerekiyor —
      bu, diğer F5 kartlarındaki tek seferlik "cihaz kabulü"nden **farklı bir
      bekleme türüdür** (süre gerektirir, anlık onay değil).
+- 🔴 **Bu bir "sahipte bekleyen karar" DEĞİLDİR (2026-08-08 düzeltmesi).**
+  Cihaz test listesinde sahibe açık iş gibi sunulmuştu; yanlıştı. Onaylanacak
+  hiçbir şey yok — veri normal kullanımla kendiliğinden birikir, eşiği veriden
+  ben işlerim. Sahibin yapması gereken tek şey uygulamayı normal kullanmak.
 - **Test durumu:** `flutter analyze` 0 uyarı. `flutter test` tam paket
   **1743/1743 yeşil**.
 - **Tuzaklar:** Ölçüm kodunun kendisinin açılışı yavaşlatması — `Stopwatch`
@@ -7863,7 +7875,22 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   3. ✅ Staging koşuldu — kanıt aşağıda.
   4. ✅ Production koşuldu — kanıt aşağıda.
   5. ✅ İkinci koşum **0 yeni satır** yazar (idempotens sahada doğrulandı).
-- **Uzak koşum kanıtı:** _(koşumdan sonra doldurulur)_
+- **Uzak koşum kanıtı (2026-08-08, commit `2611384`, head `0121` — migration
+  uygulanmadı):**
+
+  | Koşum | Run | Öncesi | Yazılan | Sonrası |
+  |---|---|---|---|---|
+  | staging | `31247059415` ✅ | 0 (0 kişisel / 0 grup) | **8** | 8 (4 / 4) · 2026-07-20 → 07-25 |
+  | production | `31247209137` ✅ | 5 (5 / 0) · 08-03 → 08-07 | **43** | 48 (33 / 15) · **2026-06-21** → 08-07 |
+  | staging (2.) | `31247380398` ✅ | 8 (4 / 4) | **0** | 8 (4 / 4) — *değişmedi* |
+
+  - Production'daki 5 satır **koşumdan önce** vardı: `0120` 2026-08-07'de
+    uygulandığından beri tetikleyici canlı yazıyor. Yani bu tur aynı zamanda
+    **yazıcının sahada çalıştığını** da doğruladı.
+  - Üçüncü satır **idempotensi sahada** kanıtlar: ikinci koşum 0 satır yazdı ve
+    sayaçlar bit-bit aynı kaldı (`045` pgTAP iddiasının uzak karşılığı).
+  - Sahibin geçmişi artık **2026-06-21**'e kadar geriye işlenmiş durumda;
+    seri hesabı için gereken veri sunucuda.
 - **Tuzaklar:** Backfill **güncel** hedef değerini geçmiş günlere uygular
   (tarihsel hedef saklanmıyor — `0120` bunu bilerek seçti). Yani seri
   "bugünkü hedefe göre geçmiş" anlamındadır; sahte çalışma süresi

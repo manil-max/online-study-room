@@ -55,12 +55,13 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # bu yuzden asagidaki head iddialari degismedi. Kosum biter bitmez ayri bir
 # commit ile $false'a re-lock edilir ve bu iki satir da geri cevrilir --
 # ratchet'in degeri tam olarak "her acilis testi elle degistirmeyi gerektirir"
-# olmasindadir, o yuzden gevsetilmedi.
+# olmasindadir, o yuzden gevsetilmedi. Kosum bitti; iki bayrak da re-lock
+# edildi (staging run 31247059415 + 31247380398, production run 31247209137).
 Assert-Equal $contract.staging.migration_head '0121' 'v59 sonrasi staging gercek head 0121'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'WP-506 backfill icin staging tek seferlik acik'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'WP-506 kosumu bitti, staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0121' 'v59 sonrasi production gercek head 0121'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'WP-506 backfill icin production tek seferlik acik'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'WP-506 kosumu bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
