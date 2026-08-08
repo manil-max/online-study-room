@@ -331,12 +331,7 @@ class SupabaseAuthRepository implements AuthRepository {
         password: currentPassword,
       );
     } on supa.AuthException catch (e) {
-      throw AuthException(
-        _reauthMessage(e.message),
-        code: _isRateLimit(e.message)
-            ? AuthErrorCode.rateLimited
-            : AuthErrorCode.invalidCurrentPassword,
-      );
+      throw _reauthFailure(e);
     }
 
     try {
@@ -408,12 +403,7 @@ class SupabaseAuthRepository implements AuthRepository {
         password: currentPassword,
       );
     } on supa.AuthException catch (e) {
-      throw AuthException(
-        _reauthMessage(e.message),
-        code: _isRateLimit(e.message)
-            ? AuthErrorCode.rateLimited
-            : AuthErrorCode.invalidCurrentPassword,
-      );
+      throw _reauthFailure(e);
     }
 
     try {
@@ -644,6 +634,50 @@ class SupabaseAuthRepository implements AuthRepository {
       return 'Çok sık denedin. Biraz bekleyip tekrar dene.';
     }
     return 'Mevcut şifre hatalı.';
+  }
+
+  /// Yeniden kimlik doğrulama hatasını **sınıflandırır**.
+  ///
+  /// 🔴 WP-536: burası eskiden yoktu; `signInWithPassword`'dan gelen her hata
+  /// `invalidCurrentPassword` sayılıyordu. `supa.AuthException`'ın altında
+  /// ağ hatası (`AuthRetryableFetchException`) da var — yani bağlantı bir an
+  /// titrediğinde kullanıcıya **"mevcut şifre hatalı"** deniyordu. Sahip
+  /// sahada tam bunu bildirdi: doğru şifreyle birkaç kez hata aldı, sonra
+  /// aynı şifre kabul edildi. Şifre hakkında hüküm vermek için sunucunun
+  /// gerçekten "kimlik bilgisi geçersiz" demesi gerekir.
+  AuthException _reauthFailure(supa.AuthException error) {
+    // 🔴 Mesaj TEKNIK ve Ingilizcedir. Bu katman kullanıcıya metin taşımaz;
+    // ekran `AuthErrorCode.network`i kendi katalogundan çevirir
+    // (`l10n_audit` bu kuralı zorluyor ve ilk denememi kırmızı düşürdü).
+    if (error is supa.AuthRetryableFetchException) {
+      return const AuthException(
+        'auth reauthentication could not reach the server',
+        code: AuthErrorCode.network,
+      );
+    }
+    if (_isRateLimit(error.message)) {
+      return AuthException(
+        _reauthMessage(error.message),
+        code: AuthErrorCode.rateLimited,
+      );
+    }
+    final apiCode = error is supa.AuthApiException
+        ? error.code?.toLowerCase()
+        : null;
+    final message = error.message.toLowerCase();
+    final wrongPassword =
+        apiCode == 'invalid_credentials' ||
+        message.contains('invalid login credentials') ||
+        message.contains('invalid credentials');
+    if (wrongPassword) {
+      return AuthException(
+        _reauthMessage(error.message),
+        code: AuthErrorCode.invalidCurrentPassword,
+      );
+    }
+    // Sunucu başka bir şey söyledi (5xx, beklenmeyen kod...). Şifre hakkında
+    // hüküm vermek yanlış olur; genel hata dönülür.
+    return AuthException(_translate(error.message), code: null);
   }
 
   String? _emailChangeCode(String message) {

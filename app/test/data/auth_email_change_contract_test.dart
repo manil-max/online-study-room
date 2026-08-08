@@ -48,9 +48,14 @@ void main() {
       greaterThan(reauth),
       reason: 'updateUser mevcut şifre doğrulanmadan çağrılamaz',
     );
+    // WP-536: hata kodu artık gövdeye satır içi yazılmıyor; ortak
+    // `_reauthFailure` sınıflandırıcısı üretiyor (ağ hatası ile yanlış şifreyi
+    // ayırmak için). Sözleşme aynı kaldı: yazma aşamasından ÖNCE hata
+    // kodlanmalı. `invalidCurrentPassword` iddiası sınıflandırıcının kendi
+    // testinde: `auth_reauth_failure_wp536_test.dart`.
     expect(
       body.substring(0, write),
-      contains('invalidCurrentPassword'),
+      contains('throw _reauthFailure('),
       reason: 'yanlış şifre yazma aşamasına geçmeden kodlanmış hata olmalı',
     );
   });

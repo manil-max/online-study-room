@@ -466,6 +466,8 @@ class _ChangeEmailDialogState extends ConsumerState<_ChangeEmailDialog> {
       AuthErrorCode.sameEmail => l10n.profileEpostaAyniOlamaz,
       AuthErrorCode.emailAlreadyInUse => l10n.profileEpostaKullanilamiyor,
       AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      // WP-536: ag hatasi sifre hakkinda hukum vermez.
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
       AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
       _ => l10n.profileBeklenmeyenBirHataOlustu,
     };
@@ -643,6 +645,8 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
       AuthErrorCode.weakPassword => l10n.profileSifreEnAz6,
       AuthErrorCode.samePassword => l10n.profileYeniSifreEskisiyleAyni,
       AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      // WP-536: ag hatasi sifre hakkinda hukum vermez.
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
       AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
       _ => l10n.profileBeklenmeyenBirHataOlustu,
     };

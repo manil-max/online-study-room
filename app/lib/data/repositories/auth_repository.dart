@@ -22,6 +22,14 @@ class AuthErrorCode {
   /// Yeni şifre mevcut şifreyle aynı.
   static const String samePassword = 'same_password';
 
+  /// Ağ/sunucuya ulaşılamadı — **şifre hakkında hiçbir şey söylemez**.
+  ///
+  /// 🔴 WP-536: bu kod eskiden yoktu ve `signInWithPassword`'dan gelen HER
+  /// hata [invalidCurrentPassword] sayılıyordu. Bağlantı titrediğinde
+  /// kullanıcıya "mevcut şifre hatalı" deniyordu; sahip sahada tam bunu
+  /// yaşadı ("doğru şifre girmeme rağmen birkaç kez hata verdi, sonra girdi").
+  static const String network = 'network';
+
   /// Sunucu hız sınırı: art arda çok fazla deneme.
   static const String rateLimited = 'rate_limited';
 

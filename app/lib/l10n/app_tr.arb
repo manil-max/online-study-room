@@ -1704,6 +1704,7 @@
   "profileMevcutSifreHatali": "Mevcut şifre hatalı.",
   "profileYeniSifreEskisiyleAyni": "Yeni şifre mevcut şifreyle aynı olamaz.",
   "profileCokFazlaDeneme": "Çok sık denedin. Biraz bekleyip tekrar dene.",
+  "profileSunucuyaUlasilamadi": "Sunucuya ulaşılamadı. Bağlantını kontrol edip tekrar dene.",
   "profileSifremiUnuttum": "Şifremi unuttum",
   "profileSifreSifirlamaGonderildi": "Şifre sıfırlama bağlantısı e-postana gönderildi.",
   "profileMevcutSifreniGir": "Mevcut şifreni gir.",

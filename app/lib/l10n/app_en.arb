@@ -5892,6 +5892,10 @@
   "@profileCokFazlaDeneme": {
     "description": "Profile user-facing text. Source: Çok sık denedin. Biraz bekleyip tekrar dene."
   },
+  "profileSunucuyaUlasilamadi": "Could not reach the server. Check your connection and try again.",
+  "@profileSunucuyaUlasilamadi": {
+    "description": "Profile user-facing text. Source: Sunucuya ulasilamadi. Baglantini kontrol edip tekrar dene."
+  },
   "profileSifremiUnuttum": "Forgot my password",
   "@profileSifremiUnuttum": {
     "description": "Profile user-facing text. Source: Şifremi unuttum"
