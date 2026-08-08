@@ -73,11 +73,15 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # gerektirmiyor. Kontrat hedefi 0123'e pinlendi, deploy_enabled iki ortamda da
 # TEK bir apply icin acildi. Post-check 0123 verince ayri bir commit ile iki
 # bayrak $false'a re-lock edilir ve asagidaki iki satir da geri cevrilir.
+# APPLY BITTI: staging run 31258097990, production run 31258274401 -- ikisi de
+# post-check 0123 verdi. Iki bayrak da $false'a re-lock edildi; head'ler
+# 0123'te kalici gercek durumu yansitiyor. Yeni APK/tag turu YOK: SSS satirlari
+# sunucudan okunur, v60 kurulu cihazda ekran yenilenince gorunur.
 Assert-Equal $contract.staging.migration_head '0123' 'WP-522 turu staging hedefi 0123'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0123 apply icin staging acik'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0123 apply bitti, staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0123' 'WP-522 turu production hedefi 0123'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0123 apply icin production acik'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0123 apply bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin

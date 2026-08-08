@@ -3,13 +3,13 @@
   "local_migration_head": "0123",
   "staging": {
     "migration_head": "0123",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "OPEN for exactly ONE staging apply of migration 0123 (WP-522 FAQ content expansion, 40 rows, TR+EN). Content-only: no schema, function, policy or grant changes, so the blast radius is the faq_entries table alone. Authorized by the owner in-session on 2026-08-08 (durable release authorization, reaffirmed after the v60 device acceptance where the FAQ was the single remaining complaint). Once the post-check reports head 0123 this flag is re-locked to false in a separate commit, together with the guard.tests.ps1 head assertions. release_enabled stays false ON PURPOSE - no new app release is needed, FAQ rows are read from the server and appear in the installed v60."
+    "hold_reason": "RE-LOCKED after the 2026-08-08 WP-522 apply: migration 0123 (FAQ content expansion) was applied to staging and the post-check reported head 0123 (run 31258097990). ORIGINAL OPEN SCOPE was exactly ONE staging apply of migration 0123 (WP-522 FAQ content expansion, 40 rows, TR+EN). Content-only: no schema, function, policy or grant changes, so the blast radius is the faq_entries table alone. Authorized by the owner in-session on 2026-08-08 (durable release authorization, reaffirmed after the v60 device acceptance where the FAQ was the single remaining complaint). Once the post-check reports head 0123 this flag is re-locked to false in a separate commit, together with the guard.tests.ps1 head assertions. release_enabled stays false ON PURPOSE - no new app release is needed, FAQ rows are read from the server and appear in the installed v60. That scope is now spent; no further apply or release is authorized without a new scoped owner authorization."
   },
   "production": {
     "migration_head": "0123",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN for exactly ONE production apply of migration 0123 (WP-522 FAQ content expansion, 40 rows, TR+EN) after the staging apply post-checks head 0123. Content-only: no schema, function, policy or grant changes; blast radius is the faq_entries table alone and the rollback is a plain delete (written in the migration header). Authorized by the owner in-session on 2026-08-08. Once the post-check reports head 0123 this flag is re-locked to false in a separate commit, together with the guard.tests.ps1 head assertions. release_enabled stays false ON PURPOSE - FAQ rows are read from the server, so no new APK is required. Both heads now read 0122 in all four pin locations. release_enabled stays false ON PURPOSE - the stable release passes with a single-use PRODUCTION RELEASE GO confirmation string instead of an open flag. No further apply or release is authorized; a new scoped owner authorization is required. The free-plan no-backup/no-PITR/no-rollback waiver stays on record (production.backup_waiver, owner 2026-07-27)."
+    "hold_reason": "RE-LOCKED after the 2026-08-08 WP-522 apply: migration 0123 (FAQ content expansion) was applied to production and the post-check reported head 0123 (run 31258274401). ORIGINAL OPEN SCOPE was exactly ONE production apply of migration 0123 (WP-522 FAQ content expansion, 40 rows, TR+EN) after the staging apply post-checks head 0123. Content-only: no schema, function, policy or grant changes; blast radius is the faq_entries table alone and the rollback is a plain delete (written in the migration header). Authorized by the owner in-session on 2026-08-08. Once the post-check reports head 0123 this flag is re-locked to false in a separate commit, together with the guard.tests.ps1 head assertions. release_enabled stays false ON PURPOSE - FAQ rows are read from the server, so no new APK is required. That scope is now spent; no further apply or release is authorized without a new scoped owner authorization. The free-plan no-backup/no-PITR/no-rollback waiver stays on record (production.backup_waiver, owner 2026-07-27). Both heads now read 0122 in all four pin locations. release_enabled stays false ON PURPOSE - the stable release passes with a single-use PRODUCTION RELEASE GO confirmation string instead of an open flag. No further apply or release is authorized; a new scoped owner authorization is required. The free-plan no-backup/no-PITR/no-rollback waiver stays on record (production.backup_waiver, owner 2026-07-27)."
   }
 }
