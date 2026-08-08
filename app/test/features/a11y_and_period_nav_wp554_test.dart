@@ -241,7 +241,9 @@ void main() {
       final data = tester
           .getSemantics(find.bySemanticsLabel('Ada, Çalışıyor'))
           .getSemanticsData();
-      expect(data.hasFlag(ui.SemanticsFlag.isButton), isTrue);
+      // `hasFlag` Flutter 3.32'de deprecate edildi; `flagsCollection`
+      // ayni bilgiyi tip guvenli alanlarla veriyor.
+      expect(data.flagsCollection.isButton, isTrue);
       expect(data.hasAction(ui.SemanticsAction.tap), isTrue);
 
       handle.dispose();
