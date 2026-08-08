@@ -19,8 +19,51 @@ Sırayla git. Her maddede tam olarak ne yazacağın/yükleyeceğin yazılı.
 ### 2. Store listing metinleri
 - **Kısa açıklama (max 80 karakter):** arkadaşlarınla birlikte çalış, süreni
   takip et.
-- **Uzun açıklama:** hazır metni ben vereceğim, sen yapıştıracaksın (henüz
-  yazmadım — söyle, yazayım).
+- **Uzun açıklama:** aşağıdaki metni olduğu gibi yapıştır.
+
+```
+Odak Kampı, arkadaşlarınla birlikte çalışmayı kolaylaştıran bir çalışma
+takip uygulamasıdır.
+
+Sayaç üç modda çalışır: kronometre, geri sayım ve pomodoro. Sayaç açıkken
+süre bildirim alanında canlı görünür; uygulamayı kapatsan da saymaya devam
+eder.
+
+Bir grup kur ya da arkadaşının davet koduyla katıl. Kamp ateşi ekranında
+grubundaki herkesin o an çalışıp çalışmadığını tek bakışta görürsün. Grup
+sohbeti, dürtme ve günlük hedef ile birbirinizi takipte tutarsınız.
+
+Ne yaptığını rakamlarla gör: günlük ve haftalık istatistikler, ders bazında
+dağılım, seri takibi, XP ve başarımlar.
+
+Ana ekranı kendine göre düzenle, hazır temalardan birini seç ya da kendi
+temanı oluştur. Alarm, zamanlayıcı ve görev listesi de uygulamanın içinde.
+
+Uygulama Türkçe ve İngilizce çalışır.
+```
+
+- **İngilizce listing** (sonra ekleyeceğiz, zorunlu değil):
+
+```
+Odak Kampı (Focus Camp) is a study tracker that makes studying with friends
+easier.
+
+The timer runs in three modes: stopwatch, countdown and pomodoro. While it
+runs, the elapsed time stays live in your notification area and keeps
+counting even if you close the app.
+
+Create a group or join one with a friend's invite code. The campfire screen
+shows at a glance who in your group is studying right now. Group chat,
+nudges and a daily goal keep everyone on track.
+
+See what you actually did: daily and weekly statistics, per-subject
+breakdown, streaks, XP and achievements.
+
+Arrange the home screen your way, pick a ready-made theme or build your own.
+An alarm, a standalone timer and a task list are included.
+
+The app works in Turkish and English.
+```
 
 ### 3. Görseller — **bunları senin hazırlaman gerekiyor**
 Repoda hazır listing görseli yok, bunlar bende üretilemez:
