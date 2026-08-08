@@ -4,6 +4,54 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v62 / 1.0.62+62] - 2026-08-08
+
+> **Sayacı durdurmak artık anlık.** Sahip v60 kabulünde *"durduruluyor yazıyor
+> ama gene 2-3 sn bekleniyor"* demişti; kök neden ölçüldü ve kaldırıldı. Aynı
+> turda Play Console'un ilk gönderimde bloke ettiği iki izin de düştü.
+
+### Yenilikler
+- **Durdur anında duruyor.** Kayıt önce telefona yazılıyor, sunucuya gönderme
+  arkada sürüyor. Ölçüm: sunucu hiç cevap vermezken `stop()` **16-18 ms**
+  içinde dönüyor (önce: 5 saniyede bile dönmüyordu).
+- **Çevrimdışı biriken çalışma süreleri artık takılmıyor.** Kuyruktaki tek bir
+  kalıcı hata, arkasındaki bütün oturumları sonsuza dek bloke ediyordu.
+- **Bağlantı kopup geri gelince listeler kendini tazeliyor.** İstatistik ve
+  liderlik tablosu, yeni bir değişiklik gelene kadar donuk kalıyordu.
+
+### Düzeltmeler
+- **Telefonun saati geri alınınca biten oturum sessizce siliniyordu.** 40
+  dakikalık çalışma uyarı bile vermeden yok oluyordu; artık kaydediliyor.
+- **Doğru şifreye "mevcut şifre hatalı" deniyordu.** Ağ hatası şifre hatası
+  sayılıyordu; artık ağ hatası ağ hatası diyor.
+- **Uzun hata metinleri yarıda kesiliyordu** ("The new password cannot be th…").
+  Düzeltme tek tek alanlara değil temaya yazıldı.
+- **Şifre sıfırlamada çıkmaz sokak kapandı.** Hiçbir zaman gelmeyen bir kodu
+  isteyen düğme artık çizilmiyor (SMTP gelince bayrakla açılır).
+- **Hesap silme isteğinin iptal düğmesi kayboluyordu** durum sorgusu
+  başarısız olunca; 14 günlük pencerede iptal edilemez hale geliyordu.
+- **Grup kurma, katılma ve davet kodu yenilemede** bekleme göstergesi eklendi;
+  iki kez basmak iki kayıt üretmiyor.
+- **Sohbette engelleme, ağ hatası anında sessizce devre dışı kalıyordu.**
+- **Büyük sistem yazısı seçen kullanıcı** grupsuz ekranda "Kodla katıl" ve
+  "Grupları keşfet" düğmelerine ulaşamıyordu; ekran kaydırılmıyordu.
+- **Koyu temalarda gecikmiş görev rozetleri okunamıyordu** (kontrast 2.1-2.9).
+- **"Bugün özeti" başlığı** dar telefonda varsayılan yazı ölçüsünde bile
+  taşıyordu.
+
+### Altyapı
+- **Play sürümü artık fotoğraf, video, müzik ve tam alarm izni istemiyor.**
+  İlk gönderimde Console bu ikisini bloke etti; ikisi de düşürüldü. Alarm
+  çalışmaya devam ediyor, Android 14+ kullanıcısı bir kez izin ekranı görüyor.
+- **Cihaz yedeği kapatıldı** (`allowBackup=false`): oturum anahtarı artık
+  Google Drive yedeğine ve cihaz-cihaz transferine girmiyor.
+- **Hiç kullanılmayan bir eklenti** Play paketine ikinci bir foreground
+  service ve dışa açık bir açılış alıcısı sokuyordu; kaldırıldı.
+- **Hesap silme artık geri bildirim ve şikayet eklerini de siliyor**; silinen
+  grupların fotoğrafı sunucuda sahipsiz kalıyordu.
+- Kalıcı kapılar: Play izin sözleşmesi (kaynak + birleştirilmiş çıktı),
+  tek foreground service sözleşmesi, `allowBackup` sözleşmesi.
+
 ## [v61 / 1.0.61+61] - 2026-08-08
 
 > **Dil düzeltmeleri ve mağaza hazırlığı.** Sahip sahada "arayüz İngilizceyken
