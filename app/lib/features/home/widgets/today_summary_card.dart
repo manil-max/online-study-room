@@ -102,9 +102,83 @@ class TodaySummaryCard extends ConsumerWidget {
               ? 1
               : breakdown.first.value.clamp(1, 1 << 30);
 
+          // 🔴 WP-515: bu dal `Expanded` kuruyor. `isCompact` yükseklik eşiğini
+          // yalnız yükseklik **sınırlıyken** uyguluyor (yukarıda), yani
+          // "geniş + sınırsız" bir bağlamda (Gruplar listesi gibi) buraya
+          // sonsuz `maxHeight` ile giriliyordu — sonsuz yükseklikte flex'li
+          // çocuk `RenderFlex` hatası verir ve kart hiç çizilmezdi.
+          // Çözüm compact'a düşmek DEĞİL (ders dağılımı kaybolurdu): flex'i
+          // yalnız bounded'da kur, sınırsızda içerik kadar yer kapla.
+          final bounded = constraints.maxHeight.isFinite;
+          final breakdownBody = breakdown.isEmpty
+              ? Text(
+                  AppLocalizations.of(context).homeBugunHenuzCalismaKaydin,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                )
+              : ListView.builder(
+                  // WP-508: bayrak verilmezse dikey `ListView`
+                  // `AlwaysScrollableScrollPhysics`e düşer ve sığan
+                  // içerikte bile sürüklemeyi yutar.
+                  physics: kCardOverflowScrollPhysics,
+                  primary: false,
+                  // WP-515: sınırsız yükseklikte kendi yüksekliğini bilemez.
+                  shrinkWrap: !bounded,
+                  itemCount: breakdown.length,
+                  itemBuilder: (context, index) {
+                    final entry = breakdown[index];
+                    final subject = subjectFor(entry.key);
+                    final name =
+                        subject?.name ?? AppLocalizations.of(context).homeGenel;
+                    final color = subject != null
+                        ? subjectColor(subject.color)
+                        : theme.colorScheme.onSurfaceVariant;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(radius: 5, backgroundColor: color),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: theme.textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                formatHuman(entry.value),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: entry.value / maxSeconds,
+                              minHeight: 8,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -123,82 +197,7 @@ class TodaySummaryCard extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Expanded(
-                  child: breakdown.isEmpty
-                      ? Text(
-                          AppLocalizations.of(
-                            context,
-                          ).homeBugunHenuzCalismaKaydin,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        )
-                      : ListView.builder(
-                          // WP-508: bayrak verilmezse dikey `ListView`
-                          // `AlwaysScrollableScrollPhysics`e düşer ve sığan
-                          // içerikte bile sürüklemeyi yutar.
-                          physics: kCardOverflowScrollPhysics,
-                          primary: false,
-                          itemCount: breakdown.length,
-                          itemBuilder: (context, index) {
-                            final entry = breakdown[index];
-                            final subject = subjectFor(entry.key);
-                            final name =
-                                subject?.name ??
-                                AppLocalizations.of(context).homeGenel;
-                            final color = subject != null
-                                ? subjectColor(subject.color)
-                                : theme.colorScheme.onSurfaceVariant;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 5,
-                                        backgroundColor: color,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          name,
-                                          style: theme.textTheme.bodyMedium,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Text(
-                                        formatHuman(entry.value),
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: entry.value / maxSeconds,
-                                      minHeight: 8,
-                                      backgroundColor: theme
-                                          .colorScheme
-                                          .surfaceContainerHighest,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        color,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                ),
+                if (bounded) Expanded(child: breakdownBody) else breakdownBody,
               ],
             ),
           );
