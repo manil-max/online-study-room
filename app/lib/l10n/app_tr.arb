@@ -1978,5 +1978,19 @@
   "nudgeErrorMuteSaveFailed": "Dürtme ayarı kaydedilemedi.",
   "nudgeErrorCannotMuteSelf": "Kendini susturamazsın.",
   "taskListRepeatSummary": "{days, plural, =1{Her gün yenilenir} other{{days} günde bir yenilenir}}",
-  "taskListRepeatHint": "{days, plural, =1{Tamamlama yalnız bugünü etkiler; İstanbul'da gece yarısı yeniden aktif olur.} other{Tamamlama yalnız bu turu etkiler; {days} gün sonra, İstanbul'da gece yarısı yeniden aktif olur.}}"
+  "taskListRepeatHint": "{days, plural, =1{Tamamlama yalnız bugünü etkiler; İstanbul'da gece yarısı yeniden aktif olur.} other{Tamamlama yalnız bu turu etkiler; {days} gün sonra, İstanbul'da gece yarısı yeniden aktif olur.}}",
+  "a11yStudyClock": "{phase}, {duration}, {status}",
+  "a11yTimerPhaseWork": "Çalışma sayacı",
+  "a11yTimerPhaseBreak": "Mola sayacı",
+  "a11yTimerRunning": "çalışıyor",
+  "a11yTimerPaused": "duraklatıldı",
+  "a11yTimerStopped": "durduruldu",
+  "a11yDurationHours": "{count} saat",
+  "a11yDurationMinutes": "{count} dakika",
+  "a11yDurationSeconds": "{count} saniye",
+  "a11yCampfireMember": "{name}, {status}",
+  "statsPeriodPrevious": "Önceki dönem",
+  "statsPeriodNext": "Sonraki dönem",
+  "statsPeriodLastMonth": "Geçen ay",
+  "statsPeriodLastYear": "Geçen yıl"
 }

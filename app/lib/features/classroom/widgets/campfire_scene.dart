@@ -462,15 +462,18 @@ class _SceneLayoutState extends State<_SceneLayout>
             children: [
               // — Orman arka plan (statik) —
               Positioned.fill(
-                child: IgnorePointer(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      painter: GroundedForestPainter(
-                        horizonY: horizonY,
-                        daylight: widget.sky.value,
-                        sunProgress: widget.sky.sunProgress,
-                        warmth: widget.sky.warmth,
-                        showTrees: profile.showTrees,
+                child: ExcludeSemantics(
+                  // WP-554: dekoratif katman — semantik ağaçta yer almaz.
+                  child: IgnorePointer(
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        painter: GroundedForestPainter(
+                          horizonY: horizonY,
+                          daylight: widget.sky.value,
+                          sunProgress: widget.sky.sunProgress,
+                          warmth: widget.sky.warmth,
+                          showTrees: profile.showTrees,
+                        ),
                       ),
                     ),
                   ),
@@ -488,25 +491,28 @@ class _SceneLayoutState extends State<_SceneLayout>
 
               // — Ateş R2: PNG katmanları (WP-62); asset fail → StoneFirePainter —
               Positioned.fill(
-                child: IgnorePointer(
-                  child: RepaintBoundary(
-                    child: AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => Transform(
-                        alignment: FractionalOffset(cx / w, fireY / h),
-                        transform: Matrix4.diagonal3Values(
-                          layout.fireScale,
-                          layout.fireScale,
-                          1,
-                        ),
-                        child: LayeredCampfireFire(
-                          t: _controller.value,
-                          studyingCount: widget.studyingCount,
-                          embers: _embers,
-                          cx: cx,
-                          fireY: fireY,
-                          reduceMotion: reduceMotion,
-                          visualScale: profile.fireVisualScale,
+                child: ExcludeSemantics(
+                  // WP-554: dekoratif katman — semantik ağaçta yer almaz.
+                  child: IgnorePointer(
+                    child: RepaintBoundary(
+                      child: AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, _) => Transform(
+                          alignment: FractionalOffset(cx / w, fireY / h),
+                          transform: Matrix4.diagonal3Values(
+                            layout.fireScale,
+                            layout.fireScale,
+                            1,
+                          ),
+                          child: LayeredCampfireFire(
+                            t: _controller.value,
+                            studyingCount: widget.studyingCount,
+                            embers: _embers,
+                            cx: cx,
+                            fireY: fireY,
+                            reduceMotion: reduceMotion,
+                            visualScale: profile.fireVisualScale,
+                          ),
                         ),
                       ),
                     ),
@@ -516,34 +522,38 @@ class _SceneLayoutState extends State<_SceneLayout>
 
               // — Dal + kademeli pişen marşmelov (yalnız çalışanlar) —
               Positioned.fill(
-                child: IgnorePointer(
-                  child: RepaintBoundary(
-                    child: AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => CustomPaint(
-                        painter: MarshmallowPainter(
-                          t: _controller.value,
-                          // Sahnenin enjekte edilebilir anı; painter duvar
-                          // saatini okumaz (WP-365 determinizm düzeltmesi).
-                          now: widget.now,
-                          fireX: cx,
-                          fireY: fireY,
-                          reachFactor: stickReach,
-                          cycleMinutes: layout.roastCycleMinutes.round(),
-                          sticks: [
-                            for (final p
-                                in placements
-                                    .where(
-                                      (placement) => placement.camper.roasting,
-                                    )
-                                    .take(6))
-                              MarshStick(
-                                x: p.x,
-                                y: p.y - _CritterBody.boxFor(p.scale) * 0.42,
-                                phase: p.phase,
-                                startedAt: p.camper.startedAt,
-                              ),
-                          ],
+                child: ExcludeSemantics(
+                  // WP-554: dekoratif katman — semantik ağaçta yer almaz.
+                  child: IgnorePointer(
+                    child: RepaintBoundary(
+                      child: AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, _) => CustomPaint(
+                          painter: MarshmallowPainter(
+                            t: _controller.value,
+                            // Sahnenin enjekte edilebilir anı; painter duvar
+                            // saatini okumaz (WP-365 determinizm düzeltmesi).
+                            now: widget.now,
+                            fireX: cx,
+                            fireY: fireY,
+                            reachFactor: stickReach,
+                            cycleMinutes: layout.roastCycleMinutes.round(),
+                            sticks: [
+                              for (final p
+                                  in placements
+                                      .where(
+                                        (placement) =>
+                                            placement.camper.roasting,
+                                      )
+                                      .take(6))
+                                MarshStick(
+                                  x: p.x,
+                                  y: p.y - _CritterBody.boxFor(p.scale) * 0.42,
+                                  phase: p.phase,
+                                  startedAt: p.camper.startedAt,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -690,57 +700,73 @@ class _CritterBody extends StatelessWidget {
 
     final baseOpacity = studying ? 1.0 : (offline ? 0.36 : 0.58);
 
+    // 🔴 WP-554 (a11y): kamp ateşi uygulamanın iki imza yüzeyinden biri ve
+    // ekran okuyucuya tamamen görünmezdi — dokunulabilir hayvan gövdesi hiçbir
+    // etiket taşımıyordu (`CustomPaint` semantik üretmez). Etiket burada, yani
+    // **dokunulan** düğümde durur; dekoratif katmanlar `ExcludeSemantics` ile
+    // elenir ki okuyucu gürültüye boğulmasın. Yerleşim değişmez.
     return SizedBox(
       width: box,
       height: box,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: camper.isBlocked
-            ? null
-            : () => _showCamperDetails(context, camper),
-        child: Stack(
-          children: [
-            Positioned(
-              left: box * 0.16,
-              right: box * 0.16,
-              bottom: box * 0.015,
-              height: box * 0.12,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  borderRadius: BorderRadius.circular(box),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: controller,
-                builder: (context, _) {
-                  final t = controller.value;
-                  final pose = camper.poseAt(isNight: isNight);
-                  final breath = math.sin(
-                    (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
-                  );
-                  final sy = 1 + breath * (studying ? 0.035 : 0.02);
-                  final dy = -breath.abs() * (studying ? 2.0 : 0.8);
-                  return Transform.translate(
-                    offset: Offset(0, dy),
-                    child: Transform.scale(
-                      scaleY: sy,
-                      scaleX: 2 - sy,
-                      child: Opacity(
-                        opacity: baseOpacity,
-                        child: CustomPaint(
-                          size: Size(box, box),
-                          painter: CritterPainter(species: species, pose: pose),
-                        ),
-                      ),
+      child: Semantics(
+        container: true,
+        button: !camper.isBlocked,
+        enabled: !camper.isBlocked,
+        label: _camperSemanticsLabel(AppLocalizations.of(context), camper),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: camper.isBlocked
+              ? null
+              : () => _showCamperDetails(context, camper),
+          child: ExcludeSemantics(
+            child: Stack(
+              children: [
+                Positioned(
+                  left: box * 0.16,
+                  right: box * 0.16,
+                  bottom: box * 0.015,
+                  height: box * 0.12,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(box),
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: controller,
+                    builder: (context, _) {
+                      final t = controller.value;
+                      final pose = camper.poseAt(isNight: isNight);
+                      final breath = math.sin(
+                        (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
+                      );
+                      final sy = 1 + breath * (studying ? 0.035 : 0.02);
+                      final dy = -breath.abs() * (studying ? 2.0 : 0.8);
+                      return Transform.translate(
+                        offset: Offset(0, dy),
+                        child: Transform.scale(
+                          scaleY: sy,
+                          scaleX: 2 - sy,
+                          child: Opacity(
+                            opacity: baseOpacity,
+                            child: CustomPaint(
+                              size: Size(box, box),
+                              painter: CritterPainter(
+                                species: species,
+                                pose: pose,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -781,48 +807,71 @@ class _MemberLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final studying = camper.studying;
     final green = subjectColor('chart-2');
-    final name = camper.member.displayName.isEmpty
-        ? AppLocalizations.of(context).classroomIsimsiz
-        : camper.member.displayName;
+    final name = _camperName(AppLocalizations.of(context), camper);
 
-    return IgnorePointer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: studying ? 0.96 : 0.62),
-              fontSize: back ? fontSize - 1.5 : fontSize,
-              fontWeight: FontWeight.w700,
-              shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
+    // 🔴 WP-554: bu katman dokunulamaz bir **tekrar**dır — ad zaten gövdenin
+    // `Semantics` etiketinde, canlı süre ise `formatHms` ("00:12:34") ham
+    // biçiminde; ekran okuyucu onu rakam rakam okur. İkisi de gürültü, elenir.
+    return ExcludeSemantics(
+      child: IgnorePointer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: studying ? 0.96 : 0.62),
+                fontSize: back ? fontSize - 1.5 : fontSize,
+                fontWeight: FontWeight.w700,
+                shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
+              ),
             ),
-          ),
-          if (studying)
-            Builder(
-              builder: (context) {
-                Widget elapsed(DateTime now) => Text(
-                  formatHms(camper.liveExtra(now)),
-                  style: TextStyle(
-                    color: green,
-                    fontSize: back ? fontSize - 2 : fontSize - 1,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
-                  ),
-                );
-                final injected = clock;
-                if (injected != null) return elapsed(injected());
-                return SecondTicker(builder: (_, now) => elapsed(now));
-              },
-            ),
-        ],
+            if (studying)
+              Builder(
+                builder: (context) {
+                  Widget elapsed(DateTime now) => Text(
+                    formatHms(camper.liveExtra(now)),
+                    style: TextStyle(
+                      color: green,
+                      fontSize: back ? fontSize - 2 : fontSize - 1,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      shadows: const [
+                        Shadow(color: Colors.black, blurRadius: 5),
+                      ],
+                    ),
+                  );
+                  final injected = clock;
+                  if (injected != null) return elapsed(injected());
+                  return SecondTicker(builder: (_, now) => elapsed(now));
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// Üyenin görünen adı (boşsa katalogdaki "İsimsiz").
+String _camperName(AppLocalizations l10n, _Camper camper) =>
+    camper.member.displayName.isEmpty
+    ? l10n.classroomIsimsiz
+    : camper.member.displayName;
+
+/// WP-554: dokunulabilir kamp ateşi üyesinin ekran okuyucu etiketi —
+/// "Ada, Çalışıyor". Sahnede **kim** var ve **ne yapıyor** sorusunun cevabı
+/// yalnız çizimde duruyordu; ekran okuyucu için hiçbir düğüm yoktu.
+String _camperSemanticsLabel(AppLocalizations l10n, _Camper camper) {
+  final status = switch (camper.status) {
+    PresenceStatus.studying => l10n.classroomCalisiyor,
+    PresenceStatus.onBreak => l10n.classroomMolada,
+    PresenceStatus.offline => l10n.classroomCevrimdisi,
+  };
+  return l10n.a11yCampfireMember(_camperName(l10n, camper), status);
 }
 
 void _showCamperDetails(BuildContext context, _Camper camper) {
@@ -842,9 +891,7 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
     ),
   };
   final live = camper.liveExtra(DateTime.now());
-  final name = camper.member.displayName.isEmpty
-      ? AppLocalizations.of(context).classroomIsimsiz
-      : camper.member.displayName;
+  final name = _camperName(AppLocalizations.of(context), camper);
 
   showModalBottomSheet<void>(
     context: context,

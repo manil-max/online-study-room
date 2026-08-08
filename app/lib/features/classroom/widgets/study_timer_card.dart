@@ -360,6 +360,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                           style: clockStyle,
                           fontSize: small ? 34 : (isLarge ? 56 : 40),
                           diameter: small ? 130 : (isLarge ? 220 : 160),
+                          // WP-554: yalnız ekran okuyucu etiketi için.
+                          phase: timer.phase,
                         ),
                       ),
                       const SizedBox(height: 16),

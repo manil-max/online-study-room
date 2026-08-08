@@ -6,6 +6,7 @@ import '../../../core/prefs/app_prefs.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
+import '../../../data/providers/study_providers.dart' show TimerPhase;
 
 /// Saat (sayaç) görünüm stilleri (§3.12). Varsayılan sade; isteyen değiştirir.
 /// Şimdilik seçim bellek-içi (uygulama yenilenince sıfırlanır) — kalıcılık sonra.
@@ -78,6 +79,48 @@ Color goalColor(double pct) {
   return Color.lerp(amber, green, (p - 0.5) / 0.5)!;
 }
 
+/// WP-554 (a11y): `formatHms` "01:23:45" üretir ve TalkBack bunu **rakam
+/// rakam** okur ("sıfır bir iki üç dört beş"). Ekran okuyucu için süre insan
+/// dilinde söylenmeli. Katalog anahtarları dil başına doğru biçimi taşır
+/// (EN'de tekil/çoğul, TR'de tek biçim).
+///
+/// Sıfır saniye de sessiz kalmamalı → en az "0 saniye" döner.
+String spokenDuration(AppLocalizations l10n, int totalSeconds) {
+  final total = totalSeconds < 0 ? 0 : totalSeconds;
+  final h = total ~/ 3600;
+  final m = (total % 3600) ~/ 60;
+  final s = total % 60;
+  final parts = <String>[
+    if (h > 0) l10n.a11yDurationHours(h),
+    if (m > 0) l10n.a11yDurationMinutes(m),
+    if (s > 0 || (h == 0 && m == 0)) l10n.a11yDurationSeconds(s),
+  ];
+  return parts.join(' ');
+}
+
+/// Sayacın ekran okuyucuya okunan tam etiketi: **faz + insan okunur süre +
+/// durum**. Ekrana bakmadan "mola mı çalışma mı, akıyor mu" anlaşılmalı.
+///
+/// Durum saf türetim: akıyorsa `çalışıyor`; akmıyor ama ekranda süre varsa
+/// `duraklatıldı`; hiç başlamadıysa `durduruldu`.
+String studyClockSemanticsLabel({
+  required AppLocalizations l10n,
+  required int seconds,
+  required bool running,
+  required TimerPhase phase,
+}) {
+  final status = running
+      ? l10n.a11yTimerRunning
+      : (seconds > 0 ? l10n.a11yTimerPaused : l10n.a11yTimerStopped);
+  return l10n.a11yStudyClock(
+    phase == TimerPhase.rest
+        ? l10n.a11yTimerPhaseBreak
+        : l10n.a11yTimerPhaseWork,
+    spokenDuration(l10n, seconds),
+    status,
+  );
+}
+
 /// Seçili stile göre canlı süreyi gösteren saat. [seconds] gösterilecek süre
 /// (genelde mevcut oturum), [pctToGoal] bugünkü toplamın günlük hedefe oranı.
 class StudyClock extends StatelessWidget {
@@ -89,6 +132,7 @@ class StudyClock extends StatelessWidget {
     required this.style,
     required this.fontSize,
     this.diameter = 220,
+    this.phase = TimerPhase.work,
   });
 
   final int seconds;
@@ -98,8 +142,29 @@ class StudyClock extends StatelessWidget {
   final double fontSize;
   final double diameter;
 
+  /// Pomodoro fazı — yalnız erişilebilirlik etiketini etkiler, çizimi değil.
+  /// Kronometre/geri sayımda her zaman [TimerPhase.work].
+  final TimerPhase phase;
+
   @override
   Widget build(BuildContext context) {
+    // 🔴 WP-554: etiket + `excludeSemantics`. Alttaki `Text` "01:23:45"i
+    // rakam rakam okutuyordu; iç düğümler elenmezse TalkBack iki kez konuşur.
+    // Semantics yerleşimi etkilemez → tek piksel bile oynamaz (golden yeşil).
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: studyClockSemanticsLabel(
+        l10n: AppLocalizations.of(context),
+        seconds: seconds,
+        running: running,
+        phase: phase,
+      ),
+      child: _clock(context),
+    );
+  }
+
+  Widget _clock(BuildContext context) {
     final theme = Theme.of(context);
     final text = formatHms(seconds);
 

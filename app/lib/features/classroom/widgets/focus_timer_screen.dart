@@ -155,6 +155,8 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                       style: clockStyle,
                       fontSize: 72,
                       diameter: 300,
+                      // WP-554: yalnız ekran okuyucu etiketi için; çizim aynı.
+                      phase: timer.phase,
                     ),
                   ),
                 );
