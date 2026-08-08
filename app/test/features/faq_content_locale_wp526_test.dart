@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/l10n/app_locale.dart';
+import 'package:online_study_room/core/l10n/system_localizations.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/faq_entry.dart';
 import 'package:online_study_room/data/providers/support_providers.dart';
@@ -84,6 +85,23 @@ void main() {
     final container = await boot(null, const Locale('de'));
     await container.read(faqEntriesProvider.future);
     expect(repository.requested, ['en']);
+  });
+
+  // Bildirim/widget yollari BuildContext'siz calisir ve dili
+  // `loadSystemLocalizations` ile yukler. Iddia: kullanicinin SECTIGI dil
+  // kullanilir, cihazin dili degil.
+  test('bildirim dili kullanicinin sectigi dili izler', () async {
+    final container = await boot('english', const Locale('tr'));
+    await container
+        .read(appLanguageProvider.notifier)
+        .setLanguage(AppLanguage.english);
+    final l10n = await loadSystemLocalizations();
+    expect(l10n.localeName, 'en');
+
+    await container
+        .read(appLanguageProvider.notifier)
+        .setLanguage(AppLanguage.turkish);
+    expect((await loadSystemLocalizations()).localeName, 'tr');
   });
 
   test('contentLanguageCodeProvider tercihi degil cozulmus dili verir', () async {

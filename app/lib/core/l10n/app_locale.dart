@@ -51,8 +51,16 @@ Locale _fromSystem(Locale? systemLocale) {
 /// hic sinanamaz. WP-526'da tam bu oldu: sistem+Turkce testi, kod dogru olsa
 /// bile host dilini okuyup kirmizi dustu.
 Locale platformLocale() {
-  final binding = WidgetsBinding.instance;
-  return binding.platformDispatcher.locale;
+  try {
+    return WidgetsBinding.instance.platformDispatcher.locale;
+  } catch (_) {
+    // Binding hic kurulmamis olabilir: saf `test()` govdesi ya da arka plan
+    // isolate'i. `WidgetsBinding.instance` o durumda "Binding has not yet been
+    // initialized" ile duser -- WP-526'nin ilk halinde tam bu oldu ve dort
+    // test kirildi. Burada platforma dogrudan dusmek dogru davranistir:
+    // test binding'i yoksa ezilecek bir deger de yoktur.
+    return PlatformDispatcher.instance.locale;
+  }
 }
 
 bool isRtlLocale(Locale locale) => false;
