@@ -472,6 +472,14 @@ class AppTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        // WP-534: hata metni TEK SATIRA sigdirilip kesiliyordu. Sahip sahada
+        // "The new password cannot be th..." gordu -- cumlenin yarisi yok ve
+        // kullanici ne yapmasi gerektigini anlamiyor. Olculdu: ayar yokken
+        // uzun hata 16.0 px (tek satir), ayarla sariliyor.
+        // Duzeltme her alana tek tek degil TEMADA bir kez yapilir; aksi halde
+        // eklenen her yeni alan ayni hatayi yeniden uretir.
+        errorMaxLines: 3,
+        helperMaxLines: 3,
         filled: true,
         fillColor: colors.surface2.withValues(alpha: 0.6),
         border: OutlineInputBorder(

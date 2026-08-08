@@ -159,10 +159,13 @@ class _ClassDetailButton extends StatelessWidget {
 /// (WP-530 probu): ikinci deneme ikinci `createGroup` çağrısını gerçekten
 /// gönderiyordu → **iki grup**. Bu yüzden istek artık diyaloğun **içinde**
 /// koşar: buton devre dışı + "Kuruluyor…", bitince sonuç.
+/// 🔴 WP-535: oturum burada OKUNMAZ. WP-530'da `authStateProvider` diyalogdan
+/// ONCE okunuyordu; akis bir `Stream` oldugu icin ilk karelerde deger henuz
+/// `null` olur ve "Grup olustur" **hicbir sey yapmadan** doner. Sessiz
+/// hicbir sey, WP-530'un kapatmaya calistigi hatanin ta kendisi. Kullanici
+/// bilgisi artik gonderim aninda okunur; yoksa diyalogda yazili hata cikar.
 Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
-  final user = ref.read(authStateProvider).value;
-  if (user == null) return false;
-  final group = await _promptCreateGroup(context, ref, user);
+  final group = await _promptCreateGroup(context, ref);
   if (group == null) return false;
 
   ref.read(activeGroupIdProvider.notifier).select(group.id);
@@ -178,11 +181,7 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
 
 /// Ad/gizlilik/saat dilimi sorar **ve grubu kurar**. Oluşan grubu döner;
 /// vazgeçilirse veya ad boşsa null.
-Future<StudyGroup?> _promptCreateGroup(
-  BuildContext context,
-  WidgetRef ref,
-  Profile creator,
-) {
+Future<StudyGroup?> _promptCreateGroup(BuildContext context, WidgetRef ref) {
   final controller = TextEditingController();
   return showDialog<StudyGroup>(
     context: context,
@@ -208,6 +207,11 @@ Future<StudyGroup?> _promptCreateGroup(
             if (submitting) return;
             if (controller.text.trim().isEmpty) {
               Navigator.pop(ctx);
+              return;
+            }
+            final creator = ref.read(authStateProvider).value;
+            if (creator == null) {
+              setState(() => error = l10n.profileOturumBulunamadiGirisYap);
               return;
             }
             setState(() {
