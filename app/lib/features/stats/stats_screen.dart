@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/navigation/tab_action_bar.dart';
+import '../../core/widgets/app_pull_to_refresh.dart';
 
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
@@ -40,8 +41,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const StatsPeriodBar(),
+            // 🔴 WP-550: sarmalayıcı dönem şeridinin **altında** durur, böylece
+            // spinner şeridi örtmez. `AppPullToRefresh` yalnız dikey eksen
+            // bildirimlerini dinlediği için sekmeler arası yatay kaydırma
+            // yenilemeyi tetiklemez.
             const Expanded(
-              child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+              child: AppPullToRefresh(
+                child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+              ),
             ),
           ],
         ),
@@ -62,23 +69,27 @@ class _PersonalTab extends ConsumerWidget {
     final summaryAsync = ref.watch(userStudySummaryProvider);
     final l10n = AppLocalizations.of(context);
     return sessionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.authBeklenmeyenBirHataOlustu,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => ref.invalidate(userSessionsProvider),
-                child: Text(l10n.classroomYenile),
-              ),
-            ],
+      loading: () => const RefreshableBody(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, _) => RefreshableBody(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.authBeklenmeyenBirHataOlustu,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => ref.invalidate(userSessionsProvider),
+                  child: Text(l10n.classroomYenile),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -95,35 +106,54 @@ class _ClassTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final groupAsync = ref.watch(userGroupProvider);
     final group = groupAsync.value;
     if (group == null) {
       // WP-495B: veri gelmeden "bir gruba katıl" demek grubu olan kullanıcıya
       // yanlış iddiadır; sekmenin geri kalanı gibi önce yükleme/hata gösterilir.
       if (!groupAsync.hasValue) {
-        return Center(
-          child: groupAsync.hasError
-              ? Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    AppLocalizations.of(context).homeGrupBilgisiYuklenemedi,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+        // 🔴 WP-550: hata dalı çıkışsızdı — "Grup bilgisi yüklenemedi" yazıp
+        // duruyor, kullanıcıya tekrar deneme yolu vermiyordu. Kaynak
+        // `userGroupsProvider` (bkz. `userGroupProvider` türetimi).
+        return RefreshableBody(
+          child: Center(
+            child: groupAsync.hasError
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.homeGrupBilgisiYuklenemedi,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          key: const Key('stats-group-error-retry'),
+                          onPressed: () => ref.invalidate(userGroupsProvider),
+                          child: Text(l10n.classroomYenile),
+                        ),
+                      ],
                     ),
-                  ),
-                )
-              : const CircularProgressIndicator(),
+                  )
+                : const CircularProgressIndicator(),
+          ),
         );
       }
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            AppLocalizations.of(context).statsGrupIstatistikleriniGormekIcin,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      return RefreshableBody(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              l10n.statsGrupIstatistikleriniGormekIcin,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -134,25 +164,28 @@ class _ClassTab extends ConsumerWidget {
     final members = ref.watch(groupMembersProvider).value ?? const [];
     final currentUserId = ref.watch(authStateProvider).value?.id ?? '';
 
-    final l10n = AppLocalizations.of(context);
     return statsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.authBeklenmeyenBirHataOlustu,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => ref.invalidate(groupDailyStatsProvider),
-                child: Text(l10n.classroomYenile),
-              ),
-            ],
+      loading: () => const RefreshableBody(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, _) => RefreshableBody(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.authBeklenmeyenBirHataOlustu,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => ref.invalidate(groupDailyStatsProvider),
+                  child: Text(l10n.classroomYenile),
+                ),
+              ],
+            ),
           ),
         ),
       ),

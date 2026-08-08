@@ -7,8 +7,6 @@ import '../../data/providers/gamification_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/achievement_reward_provider.dart';
 import '../../data/providers/admin_providers.dart';
-import '../../data/providers/study_providers.dart';
-import '../../data/providers/subject_providers.dart';
 import '../../data/providers/device_integration_listener.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/providers/nudge_notification_listener.dart';
@@ -23,6 +21,7 @@ import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
 import '../desktop/desktop_window.dart';
 import '../theme/warning_tokens.dart';
+import '../widgets/app_pull_to_refresh.dart';
 import 'nav_index.dart';
 
 export 'nav_index.dart';
@@ -134,14 +133,11 @@ class HomeShell extends ConsumerWidget {
             selectedIndex: index,
             screens: _screens,
             onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
-            onRefresh: () {
-              ref.invalidate(userSessionsProvider);
-              ref.invalidate(groupDailyStatsProvider);
-              ref.invalidate(userGroupsProvider);
-              ref.invalidate(groupMembersProvider);
-              ref.invalidate(userSubjectsProvider);
-              ref.invalidate(pendingAchievementRewardSummaryProvider);
-            },
+            // 🔴 WP-550: burada eskiden **ikinci bir** provider listesi vardı ve
+            // eksikti (`userStudySummary`, `groupPresence`, duyurular yoktu).
+            // Masaüstü ve mobil artık aynı tek kaynağı çağırır; ikinci listeyi
+            // geri getirme, iki ayrı yenileme gerçeği bu hatanın kök nedeniydi.
+            onRefresh: () => refreshAppData(ref),
           ),
           rewardToast,
         ],

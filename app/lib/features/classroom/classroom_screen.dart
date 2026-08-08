@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
+import '../../core/widgets/app_pull_to_refresh.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/group_providers.dart';
@@ -87,18 +88,48 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
       );
     });
     final groupAsync = ref.watch(userGroupProvider);
-    final body = groupAsync.when(
-      data: (group) => group == null
-          ? const _NoGroupView()
-          : _GroupView(
-              group: group,
-              controller: _scrollController,
-              campfireKey: _campfireTourAnchor,
-              switcherKey: _groupSwitcherTourAnchor,
+    final l10n = AppLocalizations.of(context);
+    // 🔴 WP-550: sekme gövdesi `AppPullToRefresh` ile sarıldı. Yükleme ve hata
+    // dalları düz `Center`dı — ağaçta kaydırıcı yoktu, jest ölüydü.
+    final body = AppPullToRefresh(
+      child: groupAsync.when(
+        data: (group) => group == null
+            ? const _NoGroupView()
+            : _GroupView(
+                group: group,
+                controller: _scrollController,
+                campfireKey: _campfireTourAnchor,
+                switcherKey: _groupSwitcherTourAnchor,
+              ),
+        loading: () => const RefreshableBody(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        // 🔴 WP-550: burası çıkışsız bir duvardı — geçici bir ağ hatasından
+        // sonra kullanıcının tek çaresi uygulamayı öldürüp yeniden açmaktı.
+        // Kaynak `userGroupsProvider`; `userGroupProvider` ondan türeyen sade
+        // bir `Provider` olduğu için onu geçersiz kılmak yeni istek doğurmaz.
+        error: (_, _) => RefreshableBody(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.authBeklenmeyenBirHataOlustu,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('classroom-error-retry'),
+                    onPressed: () => ref.invalidate(userGroupsProvider),
+                    child: Text(l10n.classroomYenile),
+                  ),
+                ],
+              ),
             ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(
-        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+          ),
+        ),
       ),
     );
 

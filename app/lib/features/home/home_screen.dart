@@ -8,6 +8,7 @@ import '../../core/navigation/nav_index.dart';
 import '../../core/navigation/tab_action_bar.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/tour/tour_host.dart';
+import '../../core/widgets/app_pull_to_refresh.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../tours/app_tours.dart';
 import 'dashboard_card.dart';
@@ -133,81 +134,94 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final columns = ref.watch(dashboardGridColumnsProvider);
     final layout = ref.watch(dashboardLayoutProvider);
-    final body = layout.isEmpty
-        ? _EmptyDashboard(onEdit: () => showCardPicker(context))
-        : SingleChildScrollView(
-            controller: _scroll,
-            padding: getSafeVerticalPadding(
-              context,
-              horizontal: isDesktopWindow ? 24 : 16,
-            ),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: DesktopBreakpoints.maxContentWidth,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_editing && _showEditHint) ...[
-                      Text(
-                        AppLocalizations.of(context).homeKartiTutupSurukleHedef,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    _MatrixGrid(
-                      layout: layout,
-                      columns: columns,
-                      editing: _editing,
-                      selectedType: _selectedCard,
-                      onSelectCard: (type) =>
-                          setState(() => _selectedCard = type),
-                      onLongPressCard: () => _setEditing(true),
-                      onMoveCard: (type, x, y) => ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .setBounds(type, x: x, y: y),
-                      onResizeCard: (type, x, y, w, h, persist) => ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .setBounds(
-                            type,
-                            x: x,
-                            y: y,
-                            w: w,
-                            h: h,
-                            persist: persist,
-                          ),
-                      onCommit: ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .persist,
-                      onRemove: ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .removeCard,
-                    ),
-                    if (_editing) ...[
-                      const Divider(height: 24),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
+    // 🔴 WP-550: `AppPullToRefresh` yazılmış ama `lib/` içinde hiç monte
+    // edilmemişti; telefonda dört ana sekmenin hiçbirinde aşağı çekerek
+    // yenileme yoktu. Sarmalayıcı gövdeyi sarar (yapışık boyut panelini değil),
+    // böylece panel jestle birlikte sürüklenmez.
+    final body = AppPullToRefresh(
+      child: layout.isEmpty
+          ? _EmptyDashboard(onEdit: () => showCardPicker(context))
+          : SingleChildScrollView(
+              controller: _scroll,
+              padding: getSafeVerticalPadding(
+                context,
+                horizontal: isDesktopWindow ? 24 : 16,
+              ),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: DesktopBreakpoints.maxContentWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_editing && _showEditHint) ...[
+                        Text(
                           AppLocalizations.of(
                             context,
-                          ).homeGruplarEkranindaDaSayac,
+                          ).homeKartiTutupSurukleHedef,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
-                        subtitle: Text(AppLocalizations.of(context).homeSayac),
-                        value: ref.watch(classroomShowTimerProvider),
-                        onChanged: ref
-                            .read(classroomShowTimerProvider.notifier)
-                            .set,
+                        const SizedBox(height: 10),
+                      ],
+                      _MatrixGrid(
+                        layout: layout,
+                        columns: columns,
+                        editing: _editing,
+                        selectedType: _selectedCard,
+                        onSelectCard: (type) =>
+                            setState(() => _selectedCard = type),
+                        onLongPressCard: () => _setEditing(true),
+                        onMoveCard: (type, x, y) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(type, x: x, y: y),
+                        onResizeCard: (type, x, y, w, h, persist) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(
+                              type,
+                              x: x,
+                              y: y,
+                              w: w,
+                              h: h,
+                              persist: persist,
+                            ),
+                        onCommit: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .persist,
+                        onRemove: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .removeCard,
                       ),
+                      if (_editing) ...[
+                        const Divider(height: 24),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            ).homeGruplarEkranindaDaSayac,
+                          ),
+                          subtitle: Text(
+                            AppLocalizations.of(context).homeSayac,
+                          ),
+                          value: ref.watch(classroomShowTimerProvider),
+                          onChanged: ref
+                              .read(classroomShowTimerProvider.notifier)
+                              .set,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
-          );
+    );
 
     // WP-291: Boyut paneli düzenleme modunda ekranın altına yapışır.
     // WP-305: Artık `Scaffold.bottomSheet` DEĞİL — bkz. [stickyPanelBelow].
@@ -1218,37 +1232,42 @@ class _EmptyDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.dashboard_outlined,
-              size: 64,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).homeAnaSayfanBos,
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppLocalizations.of(context).homeKartEkle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    // 🔴 WP-550: burası düz `Center`dı, yani boş panoda ağaçta hiç `Scrollable`
+    // yoktu ve aşağı çekerek yenileme ölüydü — tam da kullanıcının "kartlarım
+    // neden gelmedi?" diye çekeceği ekranda.
+    return RefreshableBody(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.dashboard_outlined,
+                size: 64,
+                color: theme.colorScheme.primary,
               ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onEdit,
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context).homeKartEkle),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).homeAnaSayfanBos,
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context).homeKartEkle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.add),
+                label: Text(AppLocalizations.of(context).homeKartEkle),
+              ),
+            ],
+          ),
         ),
       ),
     );

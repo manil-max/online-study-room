@@ -8,6 +8,7 @@ import '../../data/providers/presence_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
 import '../../data/providers/achievement_provider.dart';
+import '../../data/providers/achievement_reward_provider.dart';
 import '../../data/providers/gamification_providers.dart';
 
 /// Kritik kaynak için üst bekleme. Spinner kullanıcıyı kilitlemesin (WP-102 A).
@@ -45,6 +46,46 @@ class AppPullToRefresh extends ConsumerWidget {
   }
 }
 
+/// Kısa (viewport'a sığan) boş / yükleme / hata gövdelerini kaydırılabilir kılar.
+///
+/// 🔴 WP-550: `RefreshIndicator` jesti bir `Scrollable`ın **overscroll**
+/// bildirimiyle çalışır. Bu dallar `Center(...)` döndüğünde ağaçta hiç kaydırıcı
+/// olmaz, yani aşağı çekme tam da kullanıcının ona en çok ihtiyaç duyduğu anda
+/// (boş ekran, ağ hatası) ölü kalır. `AlwaysScrollableScrollPhysics` burada
+/// açıkça verilir: gövde [AppPullToRefresh] dışında kullanılsa da jest yaşar.
+///
+/// `minHeight` viewport kadar olduğu için `Center` kısa içerikte hâlâ dikey
+/// ortalar — görünüm değişmez, yalnız jest kazanılır (aynı takas WP-541).
+class RefreshableBody extends StatelessWidget {
+  const RefreshableBody({required this.child, this.padding, super.key});
+
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final insets =
+        padding?.resolve(Directionality.of(context)) ?? EdgeInsets.zero;
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.hasBoundedHeight
+                ? (constraints.maxHeight - insets.vertical).clamp(
+                    0.0,
+                    double.infinity,
+                  )
+                : 0.0,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class _PullToRefreshScrollBehavior extends MaterialScrollBehavior {
   const _PullToRefreshScrollBehavior();
 
@@ -53,7 +94,14 @@ class _PullToRefreshScrollBehavior extends MaterialScrollBehavior {
       AlwaysScrollableScrollPhysics(parent: super.getScrollPhysics(context));
 }
 
-/// Uygulama verisini yeniden çeker. Test ve masaüstü yenileme için public.
+/// Uygulama verisini yeniden çeker. **Yenilemenin tek kaynağı budur**: mobil
+/// aşağı-çekme jesti ([AppPullToRefresh]) ve masaüstü kabuğunun yenile düğmesi
+/// (`home_shell.dart`) aynı bu fonksiyonu çağırır.
+///
+/// 🔴 WP-550: masaüstü kolu eskiden kendi elle yazılmış `invalidate` listesini
+/// tutuyordu ve liste **eksikti** — `userStudySummary`, `groupPresence` ve
+/// duyurular hiç tazelenmiyordu. İki ayrı liste = iki ayrı yenileme gerçeği.
+/// Buraya provider eklerken ikinci bir liste açma; her iki kol da burayı çağırır.
 Future<void> refreshAppData(WidgetRef ref) async {
   final user = ref.read(authStateProvider).value;
   if (user == null) return;
@@ -65,6 +113,8 @@ Future<void> refreshAppData(WidgetRef ref) async {
   ref.invalidate(achievementDictionaryProvider);
   ref.invalidate(gamificationProfileProvider(user.id));
   ref.invalidate(userAchievementsProvider(user.id));
+  // Masaüstü listesinden gelen tek fazlalık; kaybolmasın diye tek kaynağa taşındı.
+  ref.invalidate(pendingAchievementRewardSummaryProvider);
 
   // Kritik: kısa timeout ile bekle — ana istatistik / bugün / kamp ateşi.
   final critical = <Future<void>>[
@@ -88,8 +138,7 @@ Future<void> refreshAppData(WidgetRef ref) async {
 Future<void> settleRefreshSource(
   Future<void> Function() run, {
   Duration timeout = kPullToRefreshPerSourceTimeout,
-}) =>
-    _settle(run(), timeout: timeout);
+}) => _settle(run(), timeout: timeout);
 
 Future<void> _settle(
   Future<dynamic> future, {
