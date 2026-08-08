@@ -30,7 +30,8 @@
 | **E-posta iş kuyruğu (aylık rapor)** | Evet (job satırları; opt-in) | E-posta sağlayıcı (Resend vb. — ops deploy) | Aylık çalışma raporu | Evet (`monthly_report_opt_in`) | Evet | purge iptal / abandon; hesap silme | `email_job_queue`; `profiles.monthly_report_opt_in`; `0030`/`0035` |
 | **Hesap silme isteği meta** | Evet (status, purge_after, attempt) | Hayır | Yasal silme boru hattı | Kullanıcı tetikler | Evet | Cascade on Auth delete (satır gidebilir) | `account_deletion_requests` (`0037`) |
 | **Çökme / performans telemetrisi** | Koşullu (Sentry) | Sentry (DSN yapılandırılmışsa) | Kararlılık | **Evet — opt-out** | Evet HTTPS | Tercihi kapat → yeni olay yok | `TelemetryPreference` default **açık**; Legal Center switch; `observability_service.dart` |
-| **Cihaz veya diğer kimlikler (reklam ID vb.)** | Hayır (tasarım) | — | — | — | — | — | Reklam SDK yok |
+| **Cihaz veya diğer kimlikler** | **EVET** — push cihaz kimliği + FCM jetonu | Hayır (Firebase/FCM işleyici) | Bildirim gönderimi (dürtme, duyuru, sayaç senkronu) | Bildirim izni verilirse | Evet HTTPS | Hesap silme cascade (`user_id` FK) | `push_devices.installation_id` + `push_devices.fcm_token` (`0066_push_notification_delivery.sql:6-12`) |
+| **Reklam kimliği** | Hayır | — | — | — | — | — | Reklam SDK yok |
 | **Yaklaşık / hassas konum** | **Hayır** | — | — | — | — | — | Location permission / API yok |
 | **Takvim / rehber / mikrofon** | Hayır (ürün kapsamı dışı) | — | — | — | — | — | Manifest’te bu amaçla eklenmez |
 | **Bildirim / alarm izinleri (Android)** | İzin durumu (sistem); içerik yerel | Hayır | Alarm, sayaç, hatırlatıcı | Kullanıcı verir/geri alır | n/a yerel | İzin kapatma | Exact alarm / FGS / bildirim kanalları (ürün) |
