@@ -18,11 +18,11 @@ import '../notifications/notification_permissions_screen.dart';
 import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
 import '../safety/muted_nudges_screen.dart';
+import '../support/faq_screen.dart';
 import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
-import 'timer_journal_screen.dart';
 import 'feedback_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/unread_message_badge.dart';
@@ -210,24 +210,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                   ),
-                  // 🔴 WP-490 önkoşulu: `TimerDiagnosticJournal` WP-430'da
-                  // yazıldı ama `app/lib` içinden hiç okunmuyordu — kayıt
-                  // tutuluyor, kimse göremiyordu. Hayalet koşu teşhisinin
-                  // 2. adımı doğrudan bu kayda bağlı.
-                  _SettingsCard(
-                    child: ListTile(
-                      key: const ValueKey('timer-journal-entry'),
-                      leading: const Icon(Icons.timeline_outlined),
-                      title: Text(l10n.diagTimerJournalTitle),
-                      subtitle: Text(l10n.diagTimerJournalSubtitle),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const TimerJournalScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
+                  // WP-514: sayaç tanılama kaydı buradan **Hakkında**'daki gizli
+                  // geliştirici bölümüne taşındı. Normal kullanıcı için Hesap
+                  // bölümünde anlamı yoktu; kayıt hâlâ her cihazda tutuluyor ve
+                  // sürüm satırına yedi kez dokununca okunabiliyor.
                   _SettingsCard(
                     child: ListTile(
                       leading: const Icon(Icons.download_outlined),
@@ -362,6 +348,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 builder: (_) => const FeedbackScreen(),
                               ),
                             ),
+                    ),
+                  ),
+                ],
+              ),
+              // WP-514: SSS iki kat derindeydi (Ayarlar → Hakkında → SSS) ve
+              // sahip bulamıyordu. Kendi "Yardım" bölümüyle Ayarlar'ın **en
+              // altında** duruyor — yardım aranan yer listenin sonudur.
+              _SettingsSection(
+                title: l10n.settingsSectionHelp,
+                children: [
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-faq'),
+                      leading: const Icon(Icons.help_outline),
+                      title: Text(l10n.faqTitle),
+                      subtitle: Text(l10n.faqSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const FaqScreen()),
+                      ),
                     ),
                   ),
                 ],

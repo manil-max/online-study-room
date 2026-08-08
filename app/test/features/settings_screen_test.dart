@@ -11,6 +11,7 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_rep
 import 'package:online_study_room/features/notifications/notification_permissions_screen.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
+import 'package:online_study_room/features/support/faq_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -98,6 +99,8 @@ void main() {
     // WP-320: 1080 fiziksel px / 3x DPR = 360dp dar ekranda da bilgi
     // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma
     // aynı "Hesap" bölümündedir, yasal merkez en son bölümdedir.
+    // WP-514: SSS iki kat derindeydi (Ayarlar → Hakkında → SSS); artık kendi
+    // "Yardım" bölümüyle listenin **en altında**.
     final sections = [
       find.text('Görünüm'),
       find.text('Bildirimler'),
@@ -105,6 +108,7 @@ void main() {
       find.text('Çalışma tercihleri'),
       find.text('Gizlilik ve güvenlik'),
       find.text('Hakkında ve yasal'),
+      find.text('Yardım'),
     ];
     for (final section in sections) {
       expect(section, findsOneWidget);
@@ -123,6 +127,25 @@ void main() {
       tester.getTopLeft(find.text('Verilerimi dışa aktar')).dy,
       greaterThan(tester.getTopLeft(find.text('Hesap')).dy),
     );
+
+    // WP-514: sayaç tanılama kaydı Hesap bölümünden çıktı — normal kullanıcı
+    // için orada anlamı yoktu. Artık Hakkında'daki gizli geliştirici kapısının
+    // arkasında (bkz. about_screen_test.dart).
+    expect(find.byKey(const ValueKey('timer-journal-entry')), findsNothing);
+    expect(find.text('Sayaç tanılama kaydı'), findsNothing);
+
+    // SSS bu ekrandan açılıyor ve Yardım bölümünün altında duruyor.
+    final faqTile = find.byKey(const Key('settings-faq'));
+    expect(faqTile, findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Sık sorulan sorular')).dy,
+      greaterThan(tester.getTopLeft(find.text('Yardım')).dy),
+    );
+    await tester.tap(faqTile);
+    await tester.pumpAndSettle();
+    expect(find.byType(FaqScreen), findsOneWidget);
+    Navigator.of(tester.element(find.byType(FaqScreen))).pop();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('reset-introduction-tours')));
     await tester.pumpAndSettle();

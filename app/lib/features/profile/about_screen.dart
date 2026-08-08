@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_build_manifest.dart';
 import '../../core/config/build_identity_card.dart';
@@ -6,12 +7,13 @@ import '../../core/config/distribution_channel.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import '../desktop/desktop_surface.dart';
-import '../support/faq_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/release_notes_service.dart';
 import '../updater/updater_dialog.dart';
 import '../updater/updater_service.dart';
+import 'developer_mode.dart';
 import 'legal_center_screen.dart';
+import 'timer_journal_screen.dart';
 
 /// Ayarlar → Hakkında ve güncellemeler.
 ///
@@ -24,7 +26,11 @@ import 'legal_center_screen.dart';
 /// WP-456: Sürüm notları ve Hakkında ayarları bu ekranda birleşir. Güncelleme
 /// denetimi kanal politikasını izler; Play/Microsoft Store derlemeleri GitHub
 /// self-update yolunu hiçbir koşulda açmaz.
-class AboutScreen extends StatefulWidget {
+///
+/// WP-514: SSS buradan **Ayarlar → Yardım**'a taşındı (sahip iki kat derinde
+/// bulamıyordu). Karşılığında sürüm satırı gizli geliştirici kapısı oldu: yedi
+/// dokunuş sayaç tanılama kaydını açar.
+class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({
     super.key,
     this.buildManifest,
@@ -41,12 +47,56 @@ class AboutScreen extends StatefulWidget {
   final String? releaseNotesChannel;
 
   @override
-  State<AboutScreen> createState() => _AboutScreenState();
+  ConsumerState<AboutScreen> createState() => _AboutScreenState();
 }
 
-class _AboutScreenState extends State<AboutScreen> {
+class _AboutScreenState extends ConsumerState<AboutScreen> {
   bool _checking = false;
   UpdateCheckOutcome? _updateOutcome;
+
+  final _developerGate = DeveloperGateCounter();
+
+  /// Sürüm satırına dokunma. Kilit zaten açıksa sayaç hiç çalışmaz.
+  Future<void> _onVersionTap() async {
+    if (ref.read(developerModeProvider)) return;
+
+    final step = _developerGate.registerTap(DateTime.now());
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (step >= kDeveloperModeTapTarget) {
+      _developerGate.reset();
+      await ref.read(developerModeProvider.notifier).setEnabled(true);
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.developerModeUnlocked)));
+      return;
+    }
+
+    final remaining = kDeveloperModeTapTarget - step;
+    if (step >= kDeveloperModeHintAfter) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 900),
+            content: Text(l10n.developerModeStepsRemaining(remaining)),
+          ),
+        );
+    }
+  }
+
+  Future<void> _disableDeveloperMode() async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    _developerGate.reset();
+    await ref.read(developerModeProvider.notifier).setEnabled(false);
+    if (!mounted) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.developerModeDisabled)));
+  }
 
   bool get _allowsSideloadUpdates =>
       widget.allowsSideloadUpdates ?? DistributionConfig.allowsSideloadUpdates;
@@ -97,6 +147,7 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final developerMode = ref.watch(developerModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileSurumVeGuncellemeler)),
@@ -122,6 +173,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 BuildIdentityCard(
                   manifest:
                       widget.buildManifest ?? AppBuildManifest.currentOrNull,
+                  onVersionTap: _onVersionTap,
                 ),
                 const SizedBox(height: 24),
                 _AboutSection(
@@ -176,36 +228,57 @@ class _AboutScreenState extends State<AboutScreen> {
                   title: l10n.settingsSectionAboutLegal,
                   child: Card(
                     clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      children: [
-                        ListTile(
-                          key: const Key('about-faq'),
-                          leading: const Icon(Icons.help_outline),
-                          title: Text(l10n.faqTitle),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const FaqScreen(),
-                            ),
-                          ),
+                    child: ListTile(
+                      key: const Key('about-legal'),
+                      leading: const Icon(Icons.policy_outlined),
+                      title: Text(l10n.legalCenterTitle),
+                      subtitle: Text(l10n.legalPrivacyPolicy),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LegalCenterScreen(),
                         ),
-                        const Divider(height: 1),
-                        ListTile(
-                          key: const Key('about-legal'),
-                          leading: const Icon(Icons.policy_outlined),
-                          title: Text(l10n.legalCenterTitle),
-                          subtitle: Text(l10n.legalPrivacyPolicy),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const LegalCenterScreen(),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
+                if (developerMode) ...[
+                  const SizedBox(height: 24),
+                  _AboutSection(
+                    title: l10n.developerModeSectionTitle,
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          // 🔴 WP-490 önkoşulu: `TimerDiagnosticJournal`
+                          // WP-430'da yazıldı ama `app/lib` içinden hiç
+                          // okunmuyordu. WP-514'te Ayarlar → Hesap'tan buraya
+                          // taşındı: kayıt hâlâ okunabilir, ama normal
+                          // kullanıcının önünde durmuyor.
+                          ListTile(
+                            key: const ValueKey('timer-journal-entry'),
+                            leading: const Icon(Icons.timeline_outlined),
+                            title: Text(l10n.diagTimerJournalTitle),
+                            subtitle: Text(l10n.diagTimerJournalSubtitle),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const TimerJournalScreen(),
+                              ),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            key: const Key('developer-mode-disable'),
+                            leading: const Icon(Icons.lock_outline),
+                            title: Text(l10n.developerModeDisable),
+                            onTap: _disableDeveloperMode,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -16,12 +16,18 @@ class BuildIdentityCard extends StatefulWidget {
     super.key,
     required this.manifest,
     this.initiallyExpanded = false,
+    this.onVersionTap,
   });
 
   final AppBuildManifest? manifest;
 
   /// Yalnız test/hata ayıklama için; üretimde varsayılan kapalıdır.
   final bool initiallyExpanded;
+
+  /// WP-514: sürüm satırına her dokunuşta, aç/kapa davranışına **ek olarak**
+  /// çağrılır. Gizli geliştirici kapısının sayacı çağıranda durur; bu kart
+  /// kapının varlığını bilmez.
+  final VoidCallback? onVersionTap;
 
   @override
   State<BuildIdentityCard> createState() => _BuildIdentityCardState();
@@ -69,7 +75,10 @@ class _BuildIdentityCardState extends State<BuildIdentityCard> {
               _expanded ? Icons.expand_less : Icons.expand_more,
               semanticLabel: l10n.buildTaniBasligi,
             ),
-            onTap: () => setState(() => _expanded = !_expanded),
+            onTap: () {
+              widget.onVersionTap?.call();
+              setState(() => _expanded = !_expanded);
+            },
           ),
           if (_expanded)
             Padding(

@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/config/app_build_manifest.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
+import 'package:online_study_room/features/profile/developer_mode.dart';
 import 'package:online_study_room/features/profile/legal_center_screen.dart';
-import 'package:online_study_room/features/support/faq_screen.dart';
+import 'package:online_study_room/features/profile/timer_journal_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_service.dart';
 import 'package:online_study_room/features/updater/updater_dialog.dart';
@@ -34,12 +35,13 @@ void main() {
     flutterFlavor: 'beta',
   );
 
-  Future<void> pumpAbout(
+  Future<SharedPreferences> pumpAbout(
     WidgetTester tester, {
     AppBuildManifest? build,
     Future<UpdateCheckResult> Function()? updateCheck,
     bool allowsSideloadUpdates = true,
     ReleaseNotesService? releaseNotesService,
+    Map<String, Object> initialPrefs = const {},
   }) async {
     tester.view.physicalSize = const Size(1080, 6000);
     tester.view.devicePixelRatio = 3;
@@ -47,7 +49,7 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(initialPrefs);
     final preferences = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -68,6 +70,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    return preferences;
   }
 
   testWidgets('varsayılan olarak yalnız sürüm adı görünür', (tester) async {
@@ -138,12 +141,15 @@ void main() {
     expect(find.text('Odak Kampı'), findsOneWidget);
     expect(find.byKey(const Key('about-check-for-updates')), findsOneWidget);
     expect(find.byKey(const Key('about-release-notes')), findsOneWidget);
-    expect(find.byKey(const Key('about-faq')), findsOneWidget);
     expect(find.byKey(const Key('about-legal')), findsOneWidget);
     expect(find.text('Güncellemeleri denetle'), findsOneWidget);
     expect(find.text('Güncelleme notları'), findsOneWidget);
-    expect(find.text('Sık sorulan sorular'), findsOneWidget);
     expect(find.text('Gizlilik ve yasal'), findsOneWidget);
+
+    // WP-514: SSS buradan Ayarlar → Yardım'a taşındı. Bu ekranda kalmamalı,
+    // yoksa iki giriş noktası oluşur ve taşımanın anlamı kalmaz.
+    expect(find.byKey(const Key('about-faq')), findsNothing);
+    expect(find.text('Sık sorulan sorular'), findsNothing);
   });
 
   testWidgets('manuel denetim güncel ve hata durumlarını ayırır', (
@@ -219,7 +225,7 @@ void main() {
     expect(called, isFalse);
   });
 
-  testWidgets('sürüm notları, SSS ve yasal bağlantılar gerçek ekranları açar', (
+  testWidgets('sürüm notları ve yasal bağlantılar gerçek ekranları açar', (
     tester,
   ) async {
     final releaseNotesService = ReleaseNotesService(
@@ -236,14 +242,98 @@ void main() {
     Navigator.of(tester.element(find.byType(ReleaseNotesScreen))).pop();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('about-faq')));
-    await tester.pumpAndSettle();
-    expect(find.byType(FaqScreen), findsOneWidget);
-    Navigator.of(tester.element(find.byType(FaqScreen))).pop();
-    await tester.pumpAndSettle();
-
     await tester.tap(find.byKey(const Key('about-legal')));
     await tester.pumpAndSettle();
     expect(find.byType(LegalCenterScreen), findsOneWidget);
+  });
+
+  // ── WP-514: gizli geliştirici kapısı ────────────────────────────────────
+  //
+  // Sahip kararı: sayaç tanılama kaydı normal kullanıcının önünde durmasın,
+  // ama admin-only da olmasın — kayıt her cihazda tutuluyor, admin kapısı
+  // yalnız okunmasını engellerdi. Karşılığı: sürüm satırına yedi dokunuş.
+
+  Future<void> tapVersion(WidgetTester tester, int times) async {
+    for (var i = 0; i < times; i++) {
+      await tester.tap(find.byKey(const Key('build-identity-toggle')));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('geliştirici bölümü varsayılan olarak yok', (tester) async {
+    await pumpAbout(tester);
+
+    expect(find.byKey(const ValueKey('timer-journal-entry')), findsNothing);
+    expect(find.text('Geliştirici'), findsNothing);
+  });
+
+  testWidgets('altı dokunuş kapıyı açmaz', (tester) async {
+    final prefs = await pumpAbout(tester);
+
+    await tapVersion(tester, kDeveloperModeTapTarget - 1);
+
+    expect(find.byKey(const ValueKey('timer-journal-entry')), findsNothing);
+    expect(prefs.getBool(kDeveloperModeKey), isNot(isTrue));
+  });
+
+  testWidgets('yedi dokunuş sayaç tanılama kaydını açar ve kalıcıdır', (
+    tester,
+  ) async {
+    final prefs = await pumpAbout(tester);
+
+    await tapVersion(tester, kDeveloperModeTapTarget);
+
+    expect(find.text('Geliştirici modu açıldı.'), findsOneWidget);
+    expect(find.text('Geliştirici'), findsOneWidget);
+
+    final journalEntry = find.byKey(const ValueKey('timer-journal-entry'));
+    expect(journalEntry, findsOneWidget);
+    // Kalıcı: uygulama kapanıp açılınca kapıyı yeniden geçmek gerekmez.
+    expect(prefs.getBool(kDeveloperModeKey), isTrue);
+
+    await tester.ensureVisible(journalEntry);
+    await tester.tap(journalEntry);
+    await tester.pumpAndSettle();
+    expect(find.byType(TimerJournalScreen), findsOneWidget);
+  });
+
+  testWidgets('açık geliştirici modu kapatılabilir', (tester) async {
+    final prefs = await pumpAbout(
+      tester,
+      initialPrefs: const {kDeveloperModeKey: true},
+    );
+
+    // Kalıcı bayrak okunuyor: dokunmadan bölüm açık gelmeli.
+    expect(find.byKey(const ValueKey('timer-journal-entry')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('developer-mode-disable')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Geliştirici modu kapatıldı.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('timer-journal-entry')), findsNothing);
+    expect(prefs.getBool(kDeveloperModeKey), isFalse);
+  });
+
+  group('DeveloperGateCounter', () {
+    test('ardışık dokunuşlar sayılır', () {
+      final counter = DeveloperGateCounter(window: const Duration(seconds: 3));
+      final t0 = DateTime(2026, 8, 8, 12);
+
+      for (var i = 1; i <= kDeveloperModeTapTarget; i++) {
+        expect(counter.registerTap(t0.add(Duration(seconds: i))), i);
+      }
+    });
+
+    test('pencere dışındaki dokunuş diziyi sıfırlar', () {
+      // 🔴 Pencere olmadan sayaç sonsuza kadar birikirdi: sürüm satırını aylar
+      // içinde yedi kez açıp kapatan normal kullanıcı kapıyı kazara açardı.
+      final counter = DeveloperGateCounter(window: const Duration(seconds: 3));
+      final t0 = DateTime(2026, 8, 8, 12);
+
+      expect(counter.registerTap(t0), 1);
+      expect(counter.registerTap(t0.add(const Duration(seconds: 1))), 2);
+      expect(counter.registerTap(t0.add(const Duration(seconds: 30))), 1);
+    });
   });
 }

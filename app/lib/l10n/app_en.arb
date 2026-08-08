@@ -5918,6 +5918,39 @@
   "settingsSectionStudyPreferences": "Study preferences",
   "settingsSectionPrivacySecurity": "Privacy & security",
   "settingsSectionAboutLegal": "About & legal",
+  "settingsSectionHelp": "Help",
+  "@settingsSectionHelp": {
+    "description": "Settings section that holds the FAQ entry."
+  },
+  "faqSubtitle": "Common questions with short answers",
+  "@faqSubtitle": {
+    "description": "Settings FAQ entry subtitle."
+  },
+  "developerModeSectionTitle": "Developer",
+  "@developerModeSectionTitle": {
+    "description": "Hidden section revealed after the version row is tapped seven times."
+  },
+  "developerModeUnlocked": "Developer mode is on.",
+  "@developerModeUnlocked": {
+    "description": "Confirmation after the hidden developer gate unlocks."
+  },
+  "developerModeDisabled": "Developer mode is off.",
+  "@developerModeDisabled": {
+    "description": "Confirmation after developer mode is turned off again."
+  },
+  "developerModeDisable": "Turn off developer mode",
+  "@developerModeDisable": {
+    "description": "Action that hides the developer section again."
+  },
+  "developerModeStepsRemaining": "{count, plural, =1 {1 more tap} other {{count} more taps}} to developer mode",
+  "@developerModeStepsRemaining": {
+    "description": "Countdown shown while tapping the version row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "feedbackMyTickets": "My feedback",
   "feedbackConversation": "Conversation",
   "feedbackNoTickets": "You have not sent any feedback yet.",
