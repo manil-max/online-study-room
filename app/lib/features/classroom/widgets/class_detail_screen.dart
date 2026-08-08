@@ -27,7 +27,6 @@ import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import '../../safety/report_sheet.dart';
-import 'class_chat_card.dart';
 import 'group_avatar.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
@@ -282,10 +281,6 @@ class ClassDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
-          const SizedBox(height: 16),
-
-          // --- Sohbet ---
-          ClassChatCard(group: group),
           const SizedBox(height: 16),
 
           // --- Ayarlar / tehlikeli işlemler ---

@@ -5345,6 +5345,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-417** Tanıtım turu sadeleştirme | Android + Windows | Ana ekranda yalnız "kartları düzenle" balonu çıkıyor (genel bakış + sayaç turu yok); istatistiklerde hiç tur açılmıyor. Commit: `d0751a0`. **Cihazda doğrulanmalı.** |
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
@@ -7895,6 +7896,53 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   (tarihsel hedef saklanmıyor — `0120` bunu bilerek seçti). Yani seri
   "bugünkü hedefe göre geçmiş" anlamındadır; sahte çalışma süresi
   **üretmez**, yalnız zaten var olan oturumları bugünkü eşikle değerlendirir.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-509: Gruplar üst düzeni — grup değiştir başlığa indi, şerit kalktı 🧭
+- **Program/Faz:** PLAN 5 · Faz F5 · Küçük (v59 saha geri bildirimi · madde 3 + 4 + E6)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor
+- **Kaynak:** `docs/qa/V59-FIELD-FEEDBACK.md` §3, §4, E6
+- **Ne yapıldı:**
+  1. "Grup değiştir" (`Icons.swap_horiz`) üst eylem şeridinden `_CompactGroupHeader`'a
+     indi. Sıra soldan sağa: **değiştir → sohbet → ayarlar**.
+  2. Şeritte gösterilecek eylem kalmadığı için `buildTabActionBar` artık hiç
+     çağrılmıyor; `Scaffold`'un `appBar`'ı yok. Gövde `SafeArea(bottom: false)`
+     ile sarıldı — 🔴 **bu ikinci adım atlanırsa kamp ateşi durum çubuğunun
+     altına girer**; ana ekranda aynı yarım iş WP-493'te hataya dönüşmüştü.
+  3. Tanıtım turu çapası `_groupSwitcherTourAnchor` yeni düğmeye taşındı
+     (`ClassroomScreen` → `_GroupView.switcherKey` → `_CompactGroupHeader`).
+     Taşınmasaydı Gruplar turunun "switch" adımı hedefsiz balon açardı.
+  4. `ClassDetailScreen`'deki ikinci `ClassChatCard` kopyası ve import'u kaldırıldı
+     (madde 4). Sohbetin tek kanonik kapısı başlıktaki simge.
+- **Ölçüm — ikon yuvası (tahmin değil, testte ölçüldü):** üç varsayılan
+  `IconButton` yatayda **3 × 48 = 144 dp** yiyordu. Yuva **40 dp**'ye çekildi
+  (toplam 120 dp), dikey dokunma hedefi **48 dp** korundu.
+  🔴 Raporun önerdiği `visualDensity: VisualDensity.compact` **tek başına
+  yanlıştır**: yoğunluk her iki eksende 8 dp düşürür ve dokunma hedefini
+  40 dp'ye indirir (erişilebilirlik alt sınırı kırılır — ölçüldü). `constraints`
+  tek başına da yetmez: `IconButton`ın ButtonStyle'ı 48×48 `minimumSize` taşır
+  ve kısıt onu küçültmez (ölçüldü, 48 dp kaldı). Çalışan tek yol dış kutuyu
+  daraltmak; aynı takas üye satırında WP-498'de yapılmıştı (`_MemberActionSlot`).
+- **Değişen dosyalar:** `app/lib/features/classroom/classroom_screen.dart` ·
+  `app/lib/features/classroom/widgets/class_detail_screen.dart` ·
+  `app/test/features/classroom/group_header_actions_wp509_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok. **Yeni l10n anahtarı yok** (mevcut
+  `classroomGrupDegistir` / `classroomSohbet` / `classroomAyarlar` yeter).
+- **Kabul (ölçülebilir):**
+  1. ✅ Gruplar sekmesinde `AppBar` hiç kurulmuyor.
+  2. ✅ 48 dp'lik durum çubuğu payı verildiğinde gövde ≥ 48 dp'den başlıyor.
+  3. ✅ Üç eylem grup adıyla aynı satırda, sırası değiştir → sohbet → ayarlar.
+  4. ✅ Her yuva ≤ 40 dp geniş, ≥ 48 dp yüksek.
+  5. ✅ Turun "switch" adımının çapası `swap_horiz` düğmesini içeriyor.
+  6. ✅ `ClassDetailScreen` içinde `ClassChatCard` yok.
+- **Test:** 9 yeni iddia + komşu takım (classroom · navigation · l10n) 61/61 yeşil.
+  🔴 İki kritik iddia **kasten kırık girdiyle** sınandı: `SafeArea` kaldırılınca
+  ve çapa boş `GlobalKey()`ye bağlanınca ikisi de kırmızıya düştü — yani
+  gerçekten koruyorlar.
+  `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı** (deno kurulu değil).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel kabul bekliyor.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

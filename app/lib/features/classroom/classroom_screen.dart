@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/navigation/nav_index.dart';
-import '../../core/navigation/tab_action_bar.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -95,6 +94,7 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
               group: group,
               controller: _scrollController,
               campfireKey: _campfireTourAnchor,
+              switcherKey: _groupSwitcherTourAnchor,
             ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Center(
@@ -103,21 +103,18 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
     );
 
     // Windows: sol rail yeter; büyük başlık/sağ panel yok.
+    // WP-509: tek eylem olan "grup değiştir" grup adının yanına indi, bu
+    // yüzden şeritte gösterilecek gerçek eylem kalmadı ve üst şerit hiç
+    // kurulmuyor (`tab_action_bar.dart` sözleşmesi: eylem yoksa çubuk yok).
+    //
+    // 🔴 Şerit yokken durum çubuğu payını **gövde** devralmak zorunda; aksi
+    // hâlde kamp ateşi saat/pil simgelerinin altına girer. Aynı yarım iş ana
+    // ekranda WP-493'te hataya dönüşmüştü.
     final page = Scaffold(
-      // WP-460: başlık yok, yalnız gerçek eylem (grup değiştir) kalır.
-      appBar: buildTabActionBar(
-        actions: [
-          Builder(
-            builder: (iconContext) => IconButton(
-              key: _groupSwitcherTourAnchor,
-              tooltip: AppLocalizations.of(context).classroomGrupDegistir,
-              icon: const Icon(Icons.swap_horiz),
-              onPressed: () => showClassSwitcher(iconContext, ref),
-            ),
-          ),
-        ],
+      body: SafeArea(
+        bottom: false,
+        child: KeyedSubtree(key: _groupsTourAnchor, child: body),
       ),
-      body: KeyedSubtree(key: _groupsTourAnchor, child: body),
     );
     return _withIntroductionTours(context, groupAsync, page);
   }
@@ -185,11 +182,16 @@ class _GroupView extends ConsumerWidget {
     required this.group,
     required this.controller,
     required this.campfireKey,
+    required this.switcherKey,
   });
 
   final StudyGroup group;
   final ScrollController controller;
   final Key campfireKey;
+
+  /// Gruplar tanıtım turunun "grup değiştir" adımının hedefi (`AppTours.groups`).
+  /// Çapa düğmeyle birlikte taşınır; taşınmazsa balon hedefsiz açılır.
+  final Key switcherKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -204,7 +206,7 @@ class _GroupView extends ConsumerWidget {
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
-        _CompactGroupHeader(group: group),
+        _CompactGroupHeader(group: group, switcherKey: switcherKey),
         const SizedBox(height: 8),
         CampfireScene(key: campfireKey),
         const SizedBox(height: 16),
@@ -227,13 +229,14 @@ class _GroupView extends ConsumerWidget {
 /// `ClassDetailScreen` → Bilgiler kartında duruyordu. İki kopya aynı değildi:
 /// alttaki yalnız kopyalayabiliyor, detaydaki ayrıca **kodu yenileyebiliyordu**.
 /// Tek kanonik yer artık detay ekranı; ayarlar simgesi zaten oraya götürüyor.
-class _CompactGroupHeader extends StatelessWidget {
-  const _CompactGroupHeader({required this.group});
+class _CompactGroupHeader extends ConsumerWidget {
+  const _CompactGroupHeader({required this.group, required this.switcherKey});
 
   final StudyGroup group;
+  final Key switcherKey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Row(
       children: [
@@ -254,16 +257,26 @@ class _CompactGroupHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        IconButton(
+        // Menü basılan düğmeye göre konumlanır, bu yüzden `showClassSwitcher`
+        // düğmenin **kendi** context'ini almalı (`class_switcher.dart`).
+        Builder(
+          builder: (iconContext) => _HeaderAction(
+            key: switcherKey,
+            tooltip: AppLocalizations.of(context).classroomGrupDegistir,
+            icon: Icons.swap_horiz,
+            onPressed: () => showClassSwitcher(iconContext, ref),
+          ),
+        ),
+        _HeaderAction(
           tooltip: AppLocalizations.of(context).classroomSohbet,
-          icon: const Icon(Icons.forum_outlined),
+          icon: Icons.forum_outlined,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => ClassChatScreen(group: group)),
           ),
         ),
-        IconButton(
+        _HeaderAction(
           tooltip: AppLocalizations.of(context).classroomAyarlar,
-          icon: const Icon(Icons.settings_outlined),
+          icon: Icons.settings_outlined,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => ClassDetailScreen(group: group)),
           ),
@@ -272,3 +285,50 @@ class _CompactGroupHeader extends StatelessWidget {
     );
   }
 }
+
+/// Grup başlığındaki tek eylem düğmesi.
+///
+/// 🔴 WP-509: varsayılan `IconButton` yatayda 48 dp ister; üçü birden
+/// ~144 dp yiyor ve 360 dp'lik telefonda grup adına avatar/boşluk düşdükten
+/// sonra ~130 dp kalıyor — uzun ad tek kelimeye iniyordu. Yuva yatayda
+/// [kHeaderActionWidth] dp'ye çekildi (üçü 120 dp).
+///
+/// Dokunma hedefinin **dikey** boyutu 48 dp olarak korunur (erişilebilirlik
+/// alt sınırı); daralan yalnız yatay ayak izidir. Aynı takas üye satırında
+/// WP-498'de yapıldı (`class_detail_screen.dart` `_MemberActionSlot`).
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    // 🔴 Ölçüldü, tahmin değil: `IconButton`ın ButtonStyle'ı 48×48 dp
+    // `minimumSize` taşır ve **`constraints` tek başına onu küçültmez** (48 dp
+    // kaldı). `visualDensity: VisualDensity.compact` küçültüyor ama iki eksende
+    // birden — dokunma hedefi 40 dp'ye düşüyordu, erişilebilirlik alt sınırı
+    // kırılır. Yalnız **yatay** daralma için dış kutu daraltılır; aynı çözüm
+    // üye satırında WP-498'de kullanıldı (`_MemberActionSlot`).
+    width: kHeaderActionWidth,
+    child: IconButton(
+      tooltip: tooltip,
+      icon: Icon(icon),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minHeight: kHeaderActionHeight),
+      onPressed: onPressed,
+    ),
+  );
+}
+
+/// Başlık eylem düğmesinin yatay ayak izi (WP-509). Testler bu sabiti okur.
+const double kHeaderActionWidth = 40;
+
+/// Dokunma hedefinin dikey alt sınırı; erişilebilirlik gereği küçültülmez.
+const double kHeaderActionHeight = 48;
