@@ -5361,6 +5361,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-501** Grup başarımı seçili gruptan (`0121`) | Database Gates local replay → staging apply → Android telefon (**iki gruba** üye, aynı hafta ikisinde de birinci olmuş hesap) | (1) CI local replay job'ında `046` 16/16 yeşil. (2) Şema uygulandıktan sonra Lider Kurt ilerlemesi **2 değil 1** gösteriyor. (3) Grup değiştirince (sınıf seçici) değer o grubun gerçeğine dönüyor. (4) Daha önce kazanılmış kademe/XP **duruyor**, geri alınmamış. Commit: `28d6a57`. **Cihazda doğrulanmalı.** |
 | **WP-503** Dağılım grafiği Y ekseni | Android telefon (İstatistik → kişisel → oturum dağılımı; 14 / 30 / 90 günün üçü de) | Dağılım grafiğinin sol ekseninde iki sayı üst üste binmiyor; en alttaki `0` artık yazmıyor; her sayının hizasında bir ızgara çizgisi var (çizgisiz sayı ya da sayısız çizgi kalmıyor). Commit: `0d5a82e`. **Cihazda doğrulanmalı.** |
 | **WP-504** Kalan gömülü metinler | Android telefon, **cihaz dili İngilizce** (ana ekran kart ekleme sayfası; profil → oturum geçmişi; profil → taç kademeleri) | Kart ekleme başlığında "12 cards", oturum geçmişi satırında "3 sessions" yazıyor ("kart"/"oturum" değil); dili Türkçe'ye alınca "12 kart"/"3 oturum" oluyor; taç kademeleri sayfasında XP değerleri iki dilde de "250 XP" görünüyor. Commit: `7f7e436`. **Cihazda doğrulanmalı.** |
+| **WP-512** Taç kademeleri ikinci kapı | Android telefon (Profil → Başarımlar; XP'si olan hesap) | Rütbe adı + toplam XP satırının sağında ⓘ ipucu görünüyor; satıra dokununca XP eşikleri sayfası açılıyor; hemen altındaki 6 renkli kademe şeridine dokununca da aynı sayfa açılıyor; sayfada kullanıcının bulunduğu kademe işaretli. Commit: `d0fef93`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -7942,6 +7943,52 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   ve çapa boş `GlobalKey()`ye bağlanınca ikisi de kırmızıya düştü — yani
   gerçekten koruyorlar.
   `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı** (deno kurulu değil).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel kabul bekliyor.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-512: Taç kademeleri Başarımlar ekranından da açılsın 👑
+- **Program/Faz:** PLAN 5 · Faz F5 · Küçük (v59 saha geri bildirimi · madde 6)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor
+- **Kaynak:** `docs/qa/V59-FIELD-FEEDBACK.md` §6
+- **Problem:** XP eşiklerini gösteren `showCrownTiers`
+  (`core/widgets/crown_tiers_sheet.dart:11`) **tek yerden** açılıyordu: Profil
+  ekranındaki avatarın tacı (`gamification_card.dart:158`). Sayfanın kendisi
+  WP-234'ten beri hazırdı; eksik olan ona giden yoldu.
+- **Ne yapıldı:** Yeni ekran yazılmadı — var olan sayfaya ikinci kapı açıldı.
+  1. `_CrownHeader` (rütbe adı + toplam XP rozeti satırı) `InkWell` ile
+     tıklanabilir: `showCrownTiers(context, currentXp: xp)`.
+  2. Satırın sağına küçük bir `info_outline` ipucu ikonu (16 px, rütbe
+     renginde) — keşfedilebilirlik bu ikonla sağlanıyor, kapı görünür oldu.
+  3. Altındaki **6 kademe şeridi** de aynı sayfayı açar. Şeridin üstündeki
+     8 px boşluk `InkWell`'in dikey padding'ine taşındı; boşluk yerine
+     dokunma alanı oldu, görünürde bir şey kaymadı.
+- **Ölçüm (tahmin değil, testte ölçüldü):** başlık satırı eskiden **~44 dp**
+  yüksekliğindeydi; tıklanabilir olduğu için `minHeight: 48` verildi ve
+  **48 dp** ölçüldü. Kademe şeridi **35 dp**'de kaldı — 48'e çıkarmak XP
+  çubuğunun altına ~13 px görünür boşluk ekliyordu. Birincil kapı (başlık)
+  48 dp olduğu için şerit bilinçli olarak ikincil kolaylık bırakıldı.
+  🔵 **Ürün kararı:** sahip isterse şerit de 48 dp'ye çıkarılır, bedeli
+  görünür boşluktur.
+- **Değişen dosyalar:**
+  `app/lib/features/profile/widgets/achievement_showcase.dart` ·
+  `app/test/features/profile/crown_tiers_gate_wp512_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok. **Yeni l10n anahtarı yok** — ipucu ikonunun
+  `semanticLabel`'ı mevcut `profileTumKademeler` anahtarından geliyor
+  (`.arb` dosyaları o sırada başka bir lane'in elindeydi, dokunulmadı).
+- **Kabul (ölçülebilir):**
+  1. ✅ Dokunmadan önce kademe sayfası ekranda yok.
+  2. ✅ Rütbe satırına dokununca sayfa açılıyor.
+  3. ✅ Kademe şeridine dokununca da aynı sayfa açılıyor.
+  4. ✅ Satır bir `info_outline` ipucu taşıyor ve yüksekliği ≥ 48 dp.
+- **Test:** 3 yeni iddia yeşil. Sayfanın gerçekten açıldığının kanıtı
+  `1000000 XP` (Immortal eşiği) — bu metin **yalnız** kademe sayfasında
+  yazılıyor, vitrinin kendisinde geçmiyor; yani iddia "bir şey açıldı"yı
+  değil "doğru sayfa açıldı"yı ölçüyor.
+  `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı**
+  (deno bu makinede kurulu değil). Başlık satırının yüksekliği değiştiği için
+  ayrıca golden turu koşuldu: **49/49 yeşil**.
 - **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel kabul bekliyor.
 - **Model önerisi:** 🔵 Sonnet
 
