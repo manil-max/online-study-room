@@ -1,0 +1,98 @@
+name: Legal Site
+
+# WP-525: yasal metinleri canlı bir HTTPS adresinde yayınlar.
+#
+# Play Console gizlilik politikası için canlı bir adres ister; veri silme
+# beyanı için de ayrı bir adres ister. Metinler repoda vardı ama hiçbir yerde
+# yayınlanmıyordu, `LEGAL_BASE_URL` de hiçbir ortam dosyasında tanımlı değildi.
+#
+# Site `docs/legal/*.md` dosyalarından üretilir; tek kaynak orasıdır. Üretim
+# `scripts/build_legal_site.py` ile yapılır ve aynı script `--check` ile
+# uygulamanın koddan istediği yolların gerçekten üretildiğini doğrular
+# (`scripts/test_all.py --only legal-site`).
+#
+# Yayınlanan adres: https://<owner>.github.io/<repo>/
+# Gizlilik: .../legal/privacy-tr.html · Veri silme: .../legal/data-deletion-tr.html
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/legal/**'
+      - 'scripts/build_legal_site.py'
+      - '.github/workflows/legal-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: legal-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build legal site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sozlesme once: uretim yesil olsa bile uygulamanin istedigi bir yol
+      # eksikse yayinlamak 404'u canliya tasimak olur.
+      - name: Verify legal site contract
+        run: python3 scripts/build_legal_site.py --check
+
+      - name: Build
+        run: python3 scripts/build_legal_site.py --out build/legal-site
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/legal-site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Yayinlanan adres canli mi? Deploy adiminin "success" demesi sayfanin
+      # gercekten servis edildigini gostermez; iki kritik sayfa HTTP 200
+      # dondurene kadar bu is yesil sayilmaz.
+      - name: Verify the published pages actually answer
+        shell: bash
+        run: |
+          set -u
+          base='${{ steps.deployment.outputs.page_url }}'
+          base="${base%/}"
+          if [ -z "$base" ]; then
+            echo "::error::Pages deploy did not report a page_url."
+            exit 1
+          fi
+          for path in legal/privacy-tr.html legal/privacy-en.html legal/data-deletion-tr.html legal/data-deletion-en.html; do
+            ok=false
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              code="$(curl -s -o /dev/null -w '%{http_code}' "$base/$path" || true)"
+              if [ "$code" = "200" ]; then ok=true; break; fi
+              echo "$path -> HTTP $code (attempt $attempt/10); retrying."
+              sleep 6
+            done
+            if [ "$ok" != true ]; then
+              echo "::error::$base/$path did not return HTTP 200."
+              exit 1
+            fi
+            echo "$path -> 200"
+          done
+          echo "LEGAL_BASE_URL should be: $base"

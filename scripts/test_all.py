@@ -204,6 +204,11 @@ def build_gates() -> list[Gate]:
              [py, "scripts/l10n_android_audit.py"]),
         Gate("migration-head", "Migration head uc yerde pinli", 0,
              [py, "scripts/test_all.py", "--internal-migration-head"]),
+        # WP-525: uygulama yasal sayfa adresini KOD ICINDE kuruyor. Site o
+        # dosyayi uretmezse kullanici 404 gorur ve hicbir derleme hatasi
+        # bunu yakalamaz -- kapi yollari koddan tarayip karsilastirir.
+        Gate("legal-site", "Yasal site sozlesmesi", 0,
+             [py, "scripts/build_legal_site.py", "--check"]),
         # WP-505: pin alti workflow adiminda duruyor; biri kayarsa goldenlar
         # kod degismeden kirmiziya duser.
         Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
