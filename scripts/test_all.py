@@ -439,7 +439,7 @@ def internal_flutter_pin() -> int:
     return 0
 
 
-def internal_play_manifest() -> int:
+def internal_play_manifest(require_merged: bool = False) -> int:
     r"""WP-537: Play surumu, Play'de HIC CALISMAYAN bir ozellik icin genis
     medya izinleri istiyordu.
 
@@ -535,11 +535,48 @@ def internal_play_manifest() -> int:
             "app/intermediates/merged_manifest*/playRelease/**/AndroidManifest.xml"
         )
     )
-    if not merged:
-        print(
-            "NOT: birlestirilmis playRelease manifesti diskte yok, cikti "
-            "katmani olculmedi (gradle :app:processPlayReleaseManifest)."
+    # WP-552: cikti katmani BAYAT artefakt okuyabiliyordu. Olculdu: v62 turunda
+    # diskteki birlestirilmis manifest `versionCode=60` idi, yani v62'nin ciktisi
+    # degildi -- kapi yine de "kaynak + birlestirilmis cikti" diyerek yesil
+    # basiyordu. Tazelik, pubspec'teki build number ile karsilastirilarak olculur.
+    expected_code = None
+    pubspec = APP / "pubspec.yaml"
+    if pubspec.exists():
+        match = re.search(
+            r"^version:\s*\S+\+(\d+)\s*$", pubspec.read_text(encoding="utf-8"), re.M
         )
+        if match:
+            expected_code = match.group(1)
+
+    stale = []
+    if merged and expected_code:
+        fresh = []
+        for path in merged:
+            body = path.read_text(encoding="utf-8", errors="replace")
+            found = re.search(r'android:versionCode="(\d+)"', body)
+            if found and found.group(1) != expected_code:
+                stale.append(f"{path.parent.name} (versionCode={found.group(1)})")
+            else:
+                fresh.append(path)
+        merged = fresh
+
+    if not merged:
+        reason = (
+            f"bayat ({', '.join(stale)}; beklenen versionCode={expected_code})"
+            if stale
+            else "diskte yok"
+        )
+        message = (
+            f"birlestirilmis playRelease manifesti {reason}, cikti katmani "
+            "olculmedi (gradle :app:processPlayReleaseManifest)."
+        )
+        if require_merged:
+            problems.append(
+                message + " --require-merged verildi: bu kosumda cikti katmani "
+                "ZORUNLU."
+            )
+        else:
+            print("NOT: " + message)
     else:
         for path in merged:
             body = path.read_text(encoding="utf-8", errors="replace")
@@ -902,6 +939,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-manifest", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--require-merged", action="store_true",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--internal-android-smoke", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -915,7 +954,7 @@ def main() -> int:
     if args.internal_play_firebase:
         return internal_play_firebase()
     if args.internal_play_manifest:
-        return internal_play_manifest()
+        return internal_play_manifest(require_merged=args.require_merged)
     if args.internal_android_smoke:
         return internal_android_smoke()
 

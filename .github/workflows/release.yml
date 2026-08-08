@@ -168,6 +168,18 @@ jobs:
       - name: Play AAB derle (yalniz stable)
         if: needs.preflight.outputs.channel == 'stable'
         run: flutter build appbundle --release --flavor play --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.play.json
+      # WP-552: izin sozlesmesinin CIKTI katmani, AAB'yi ureten is akisinda
+      # kosmuyordu -- yalniz `ci.yml`de vardi ve orada Gradle hic kosmadigi icin
+      # her zaman "yalniz kaynak" olcuyordu. Yani GONDERIM-BLOKE sinifinin tek
+      # korumasi, gonderilen artefakti hicbir zaman gormuyordu. Olculdu: v61
+      # AAB'si READ_MEDIA_* ve USE_EXACT_ALARM tasiyordu ve Play Console surum
+      # yayinlamayi durdurdu; ikisi de ancak elle kesfedildi.
+      # Bu adim AAB derlemesinin HEMEN ardindan kosar, yani birlestirilmis
+      # manifest tazedir; `--require-merged` bayragi cikti katmanini ZORUNLU
+      # kilar (yoksa/bayatsa kirmizi duser, sessizce yesil saymaz).
+      - name: Play manifest izin sozlesmesi (birlestirilmis cikti)
+        if: needs.preflight.outputs.channel == 'stable'
+        run: python3 ../scripts/test_all.py --internal-play-manifest --require-merged
       - name: Play AAB artefaktini paketle
         if: needs.preflight.outputs.channel == 'stable'
         shell: bash
