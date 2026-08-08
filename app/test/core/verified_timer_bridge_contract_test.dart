@@ -67,10 +67,32 @@ void main() {
     final manifest = File(
       'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
-    expect(manifest, contains('android:foregroundServiceType="dataSync"'));
+
+    // WP-103: API 29–33 DATA_SYNC, API 34+ SPECIAL_USE kullanır; bildirilen tip
+    // ikisinin üst kümesi olmalı, yalnız `specialUse` iken ≤13'te
+    // IllegalArgumentException/RemoteServiceException ile çöker.
     expect(
       manifest,
       contains('android:foregroundServiceType="dataSync|specialUse"'),
+    );
+
+    // 🔴 WP-546: burada eskiden ayrıca `foregroundServiceType="dataSync"`
+    // aranıyordu. O dizeyi sağlayan tek satır, HİÇ KULLANILMAYAN
+    // `flutter_foreground_task` eklentisinin elle bildirdiğimiz servisiydi
+    // (`com.pravera...ForegroundService`) — yani iddia bizim sözleşmemizi
+    // değil, ölü bir eklentiyi ölçüyordu. Eklenti düşürülünce ortaya çıktı.
+    //
+    // Yerine gerçek sözleşme: uygulamanın **tek** foreground service'i vardır.
+    // İkinci bir FGS, Play'in FGS beyanında açıklanamayan bir yüzey demektir.
+    final declarations = RegExp(
+      r'android:foregroundServiceType="[^"]*"',
+    ).allMatches(manifest).map((m) => m.group(0)).toList();
+    expect(
+      declarations,
+      ['android:foregroundServiceType="dataSync|specialUse"'],
+      reason:
+          'Manifestte birden fazla foreground service tipi bildirildi: '
+          '$declarations. Play FGS beyani tek servisi anlatiyor.',
     );
   });
 

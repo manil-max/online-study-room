@@ -3,6 +3,56 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.62",
+                         "buildNumber":  62,
+                         "channel":  "stable",
+                         "date":  "2026-08-08",
+                         "title":  "v62: sayaci durdurmak artik anlik",
+                         "highlights":  [
+                                            "Durdur\u0027a bastiginda sayac aninda duruyor; kayit arka planda tamamlaniyor.",
+                                            "Internet kopukken biriken calisma sureleri artik takilip kalmiyor, baglanti gelince akiyor.",
+                                            "Buyuk yazi boyutu secen kullanicilar gruba katilma dugmelerine artik ulasabiliyor."
+                                        ],
+                         "fixes":  [
+                                       "Durdur\u0027a basinca 2-3 saniye beklenmesi bitti.",
+                                       "Telefonun saati geri alindiginda biten calisma oturumu sessizce kayboluyordu; artik kaydediliyor.",
+                                       "Sifre degistirirken dogru sifreye \"mevcut sifre hatali\" denmesi duzeldi; ag hatasi artik ag hatasi diyor.",
+                                       "Uzun hata mesajlari yarida kesiliyordu; artik tamami okunuyor.",
+                                       "Grup kurma, gruba katilma ve davet kodu yenilemede bekleme gostergesi eklendi; iki kez basinca iki kayit olusmuyor.",
+                                       "Sohbette engelleme, baglanti hatasi aninda sessizce devre disi kaliyordu.",
+                                       "Sifre sifirlamada hicbir zaman gelmeyen kodu isteyen cikmaz yol kaldirildi.",
+                                       "Hesap silme isteginin iptal dugmesi, durum sorgusu basarisiz olunca kayboluyordu.",
+                                       "Koyu temalarda gecikmis gorev rozetleri okunamiyordu.",
+                                       "Baglanti kopup geri geldiginde istatistik ve liderlik listeleri donuk kaliyordu."
+                                   ],
+                         "notes":  [
+                                       "Guvenlik: uygulama verisi artik cihaz yedegine alinmiyor, oturum anahtarin yedekle tasinmiyor.",
+                                       "Play surumu artik fotograf, video, muzik ve tam alarm izni istemiyor."
+                                   ],
+                         "titleEn":  "v62: stopping the timer is instant",
+                         "highlightsEn":  [
+                                              "Stop now stops the timer immediately; the session is saved in the background.",
+                                              "Study time recorded while offline no longer gets stuck in the queue.",
+                                              "People using large system text can finally reach the join-group buttons."
+                                          ],
+                         "fixesEn":  [
+                                         "Removed the 2-3 second wait after pressing Stop.",
+                                         "A finished session was silently dropped if the device clock moved backwards; it is now saved.",
+                                         "Changing your password no longer reports \"current password is wrong\" for a network error.",
+                                         "Long error messages were cut off mid-sentence; they now wrap.",
+                                         "Creating a group, joining a group and refreshing an invite code now show progress and cannot be submitted twice.",
+                                         "Blocking in chat silently turned itself off when the block list failed to load.",
+                                         "Removed the password-reset path that asked for a code that never arrived.",
+                                         "The cancel button for a pending account deletion disappeared when its status check failed.",
+                                         "Overdue task badges were unreadable in dark themes.",
+                                         "Stats and leaderboard lists stayed frozen after the connection dropped and came back."
+                                     ],
+                         "notesEn":  [
+                                         "Security: app data is no longer included in device backups, so your session key does not travel with a backup.",
+                                         "The Play build no longer requests photo, video, music or exact alarm permissions."
+                                     ]
+                     },
+                     {
                          "versionName":  "1.0.61",
                          "buildNumber":  61,
                          "channel":  "stable",
