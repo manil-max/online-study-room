@@ -8861,6 +8861,273 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ---
 
+### WP-545: Hesap silme depolama kapsami (uc bucket daha)
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `6f929ef`
+  · **Alt ajan yapti, lider denetledi.**
+- Purge yalniz `avatars` bucket'ini temizliyordu. `feedback_attachments` ve
+  `report_attachments` dosyalari **ham uid ile baslayan yollarda** duruyordu;
+  `docs/legal/ACCOUNT-DELETION.*` yalniz "avatar dosyalari" diyordu, ekleri hic
+  anmiyordu. Ucu de purge'e alindi, yasal metin ve DATA-SAFETY esitlendi.
+- **Yan bulgu (kimse aramamisti):** `0049`un grup avatari temizlik
+  tetikleyicisini `0054` KALDIRMIS, yerine soz verilen periyodik denetim hic
+  yazilmamis -- silinen her grubun fotografi sahipsiz kaliyordu.
+- 🔴 **Canliya gecmedi:** edge fonksiyonu yalniz elle tetiklenen aktivasyon
+  workflow'lariyla deploy oluyor. Beyan koddan ileride kalmasin diye bu, apply
+  turuyla birlikte yapilmali.
+
+---
+
+### WP-546: Olu eklenti dusuruldu, cihaz yedegi kapatildi
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `d8ffb9a`
+- `flutter_foreground_task` **hic kullanilmiyordu** (lib/, kotlin/, tum .dart
+  icinde 0 eslesme) ama Play paketine ikinci bir `dataSync` foreground service
+  ve disa acik bir `RebootReceiver` sokuyordu. WP-537 ile ayni desen.
+  Sonra (merged playRelease): pravera=0, RebootReceiver=0.
+- `allowBackup` bildirilmemisti -> Android varsayilani `true`. Supabase
+  oturumu (refresh token) `shared_prefs`te oldugu icin cihaz yedegini ele
+  geciren kisi oturumu tasiyabiliyordu. `allowBackup="false"`.
+- `http` yalniz dev_dependency'ydi ama WP-542 ile URETIM kodu kullanmaya
+  basladi; `dependencies`e tasindi.
+- Kapi `allowBackup` sozlesmesini de olcuyor; kirik girdiyle sinandi.
+
+---
+
+### WP-547: Bayat belge iddialari + olu dosyalar
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti ·
+  **Commit:** `ca4a3c0` (+ `0da1695` kalan olu atif)
+- Kok `README.md` hala "Planlama asamasinda, henuz gelistirmeye baslanmadi"
+  diyordu (uygulama 62. surumde). Migration numaralari uc belgede 0063/0070
+  yaziyordu (gercek 0123). "Gun siniri hala UTC" degismezi yanlisti.
+- Silinen dortlu: `app/README.md` (Flutter sablonu), `scripts/play/
+  build_play_aab.md` (sifir referans, 33 surum eski), `docs/PLAN.md` (mezar
+  tasi), **`update_progress.py`**.
+- 🔴 `update_progress.py` gercek bir tehlikeydi: aradigi basliklar artik yok,
+  yani hicbir is yapmiyor -- ama yine de `open('progress.md','w')` ile 8921
+  satiri yeniden yaziyor ve Windows'ta satir sonlarini bozarak bu dosyada
+  8921 satirlik sahte diff uretirdi.
+- Tarihsel iki baseline SILINMEDI; baslarina "bu 2026-07-20 fotografidir"
+  uyarisi kondu (hafizada "kanonik" diye duruyorlardi, aktif yaniltiyorlardi).
+
+---
+
+### WP-548: 10 sn HTTP tavani foto yuklemelerini kesiyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `36c1823`
+- **Kaynak:** v61->v62 regresyon denetimi (bagimsiz alt ajan). Bu turun TEK
+  gercek davranis regresyonu.
+- WP-542'nin ekledigi global tavanin yorumu "uygulamada buyuk dosya yukleme
+  yoktur" diyordu. **Yanlisti:** dort `uploadBinary` cagri yeri var ve geri
+  bildirim/sikayet/SSS ekranlari 5 MB'a kadar gorsele izin veriyor
+  (`maxWidth`/`maxHeight` VERMEDEN). `storage_client` yuklemeyi
+  `MultipartRequest` + `send()` ile yapar, yani tavan TUM yuklemeye
+  uygulaniyordu -> 1 Mbps'te 5 MB ~40 sn -> `TimeoutException` ->
+  `uploadReportAttachment` hatayi yutup `null` doner -> **sikayet eki sessizce
+  duser**.
+- Storage yolu (`/storage/v1/`) tavandan muaf; sinif test edilebilir olsun diye
+  `core/net/timeout_http_client.dart`a tasindi. 4 iddia.
+- Ayni commit: gizlilik politikasi cihaz/push kimligini HIC saymiyordu ama
+  Play formu "EVET" diyordu. Iki dile de eklendi.
+
+---
+
+### WP-549: Hesap silmeyi bloklayan UC SINIF (KRITIK, apply bekliyor)
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Staging BITTI, production
+  BEKLIYOR · **Commit:** `94d8da2` -> `6feae24` -> `5d64464`
+  · **Alt ajan + lider birlikte.**
+- **Bulgu:** `auth.admin.deleteUser` uc ayri sinifta dusuyordu:
+  1. **Dolayli `restrict` FK** (4 zincir): `live_study_segments`,
+     `study_sessions.live_run_id`, `global_timer_commands`, `ugc_reports`.
+     `0114` yalniz `auth.users`'a **dogrudan** giden 7 FK'yi cozmustu; cascade'in
+     tetikledigi restrict'lere hic bakmamisti.
+  2. **Yaz-geri tetikleyicileri** (5 adet): silinmis kullanici icin basarim/
+     projeksiyon/gecmis satiri yazmaya calisiyorlardi.
+  3. **Degismezlik guard'lari** (2 adet): moderasyon denetim olayinda AKTOR
+     olarak gecen her yonetici silinemiyordu; ders secmis + dogrulanmis oturumu
+     olan herkes silinemiyordu.
+- **Kapsam dar degil:** sayaci bir kez calistirmis / push kaydi olan / grubunda
+  rapor acilmis / hakkinda yaptirim uygulanmis HER kullanici.
+- 🔴 **Uc CI turu, iki gercek kusur:**
+  - run 31276032801 KIRMIZI -> yaz-geri sinifi (`23503`, `achievement_metric_progress`)
+  - run 31276906884 KIRMIZI -> duzeltmenin kendisi WP-336 oturum-grup atfini
+    geri sardirmisti (govde `0080` yerine `0063`ten kopyalanmisti; ilerleme tum
+    gruplara yaziliyordu)
+  - run 31277161339 YESIL (yerel replay: gercek Postgres + pgTAP, `050` 26 iddia)
+- **Durabilir ders:** `create or replace` ile tetikleyici govdesi yeniden
+  yazilirken kaynak, o fonksiyonun **EN SON** tanimi olmalidir.
+- **Besinci pin noktasi bulundu:** head `001_schema_contract.test.sql`'de de
+  pinli (kayitlarda "dort yer" yaziyordu).
+- **Staging APPLY BITTI:** run 31277610025, post-check iki tarafta da 0124,
+  purge saglik satiri configured / 0 kuyruk / 0 takili.
+- 🔴 **Production BEKLIYOR:** sahip izin verdi, ancak production kapisini acan
+  commit otomatik guvenlik siniflandiricisi tarafindan engellendi ve
+  zorlanmadi. Durum `guard.tests.ps1` icine yazildi (`37587f4`). **Hata
+  production'da CANLI ve Play hesap silmeyi zorunlu tutuyor.**
+
+---
+
+### WP-550: Ag hatasindan cikis yok (asagi cekerek yenileme)
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Bitti · **Commit:** `43c6005`
+  · **Alt ajan yapti; bir kez takildi, kaldigi yerden devam ettirildi.**
+- `AppPullToRefresh` yazilmis, belgelenmis ve testi de varmis ama `lib/` icinde
+  **hicbir yerde mount edilmemis**. Ayrica `lib/` icindeki **42** hata kolundan
+  yalnizca **2**'sinde yenileme eylemi varmis. Yani gecici bir ag hatasindan
+  sonra tek care uygulamayi oldurup acmakti.
+- Masaustu kabugu ayni isi elle yapiyordu ve listesi EKSIKTI (`userStudySummary`,
+  `groupPresence`, duyurular hic tazelenmiyordu). Tek kaynaga indi, 13 provider.
+- Dort sekme + iki hata koluna cikis eklendi. 4 sabotaj, 4 kirmizi; sonuncusu
+  ozellikle iyi: sarmalayici dururken yalniz kaydirma kapatilinca da kirmizi
+  (iddia varliga degil davranisa bagli).
+- **Lidere devredilen** cikissiz hata kollari: `card_data_gate.dart`,
+  `alarms_screen.dart:56,108`, `timers_screen.dart:67,92`,
+  `class_chat_card.dart:99`.
+
+---
+
+### WP-551: Gruba katilma/kesif hatalari sebebini soyluyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `3f80564`
+- Hazir cevirici (`groupActionErrorText`) varken kesif ekrani cagirmiyordu;
+  "grup dolu", "engellendin", "oturum yok" hepsi generic cumleye dusuyordu.
+  Ag hatasi ise `on GroupException` dar oldugu icin **hic yakalanmiyordu**.
+- Daha kotusu: liste yuklenemedigi zaman `_error` null kaliyor ve kullanici
+  hata yerine **"acik grup bulunamadi" bos listesini** goruyordu -- var olan
+  gruplari yok gibi gosteriyordu.
+- Cevirici `core/l10n/group_error_text.dart`a tasindi (1563 satirlik ekran
+  dosyasindan cikti).
+- EN metin kirigi: `"Report when your classmates nudge you"` -> `"Notify me..."`.
+  Bu uygulamada "Report" = **sikayet et**; moderasyonu olan bir uygulamada
+  aktif yaniltici.
+
+---
+
+### WP-552: Izin kapisi AAB'yi ureten is akisinda yoktu, bayat artefakta kaniyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `34e49d5`
+- Kapi yalniz `ci.yml`de kosuyordu; o is Gradle hic kosturmuyor, yani cikti
+  katmani CI'da **her zaman** atlaniyordu. AAB'yi ureten `release.yml`'de kapi
+  HIC yoktu. Sonuc: GONDERIM-BLOKE sinifinin tek korumasi, gonderilen
+  artefakti hicbir zaman gormuyordu -- v61'de izinler ELLE kesfedildi.
+- Ikinci kusur: diskteki birlestirilmis manifest `versionCode=60` idi (v62'nin
+  ciktisi degil) ve kapi yine de "kaynak + cikti" deyip yesil basiyordu.
+  Tazelik artik pubspec build number ile karsilastiriliyor.
+- `--require-merged` bayragi eklendi ve `release.yml`de AAB derlemesinin hemen
+  ardina baglandi. Uc asamada sinandi (bayat -> kirmizi, taze -> yesil, taze +
+  enjekte izin -> kirmizi).
+- **Acik kalan:** kapi hala bir **denylist**; "beklenmeyen izin var mi" diye
+  sormuyor. Allowlist'e cevirmek ayri is.
+
+---
+
+### WP-553: Emulator smoke ciktisiz oluyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [~] Tani eklendi, kok neden acik
+  · **Commit:** `2d7071d`
+- v62 turunda (run 31274760889) her iki API kolonu da adimin **ilk 20 ms**'sinde
+  `exit 1` verdi ve **tek satir cikti uretmedi**. WP-521'de kapatilan hatanin
+  ayni sinifi: kapi var, hicbir sey olcmuyor.
+- Ciktisiz kirmizi teshis edilemez -> `set -u`'DAN ONCE tani satirlari
+  (PWD / GITHUB_WORKSPACE / ANDROID_SDK_ROOT / `command -v adb|flutter`) ve
+  `LOG_DIR` icin tanimsiz-degiskene dayanikli fallback.
+- 🔴 **Sonraki denetim hipotezi curuttu:** betik o turda HIC degismemisti ve
+  `set -u` tanimsiz degisken hatasi kod **2** ile duser (gozlenen 1 degil) ve
+  stderr'e satir basar. Yani en olasi sebep, betigin hic baslamadan
+  action katmaninda dusmesi (`reactivecircus/android-emulator-runner@v2`
+  hareketli etikete pinli). **Onerilen:** action'i tam SHA'ya pinle ve betigi
+  repoya konan bir `.sh` dosyasina tasi.
+
+---
+
+### WP-554: Sayac ve kamp atesi ekran okuyucuya acildi + donem gezinmesi
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Bitti · **Commit:** `c255e10`
+  · **Alt ajan yapti.**
+- TalkBack `01:23:45`i "sifir bir iki uc dort bes" diye okuyordu; artik
+  "Calisma sayaci, 1 saat 23 dakika 45 saniye, calisiyor". Kamp atesindeki her
+  dokunulabilir uye adi + durumuyla okunuyor, dekoratif katmanlar elendi.
+- Gecmis doneme gitmek **5+ etkilesimden 1 dokunusa** indi.
+- **Iyi karar:** oklari ayri satira koyunca WP-190'in "tek kompakt satir" testi
+  kirmiziya dondu; ajan testi yeniden uretmek yerine **tasarimi** degistirdi
+  (oklar seridin icinde, secili chip ayni zamanda baslik).
+- 6 sabotaj / 6 kirmizi. Golden GECTI (gorunum degismedi), 1925 test yesil.
+- **Sinir asimi (bildirdi):** `stats_period_provider.dart` +12 satir (Riverpod 3
+  `state` `@protected`), `study_timer_card.dart` / `focus_timer_screen.dart`
+  +1'er satir (faz bilgisi yalniz cagri yerinde var).
+
+---
+
+### WP-555: Dort hizli kazanim
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti ·
+  **Commit:** 🔴 ayri commit YOK -- `f85253a` icine sizdi (bkz. asagi)
+- Grupsuz kullanicinin oturum gecmisi yapay olarak kapaliydi (ayni manuel
+  ekleme akisi sayac kartindan grupsuz CALISIYORDU); kapi kalkti.
+- Gunluk hedef Ayarlar'a baglandi (uygulamada tek giris noktasi sayac kartiydi;
+  o kart ana ekrandan kaldirilabiliyor).
+- Grup aramada her tusa giden RPC 300 ms debounce'a alindi (free plan kotasi).
+- Olu ekran `achievements_screen.dart` silindi (kodda sifir referans).
+- **Durust sabotaj notu:** yalniz `dispose`'daki `cancel()` kaldirilinca test
+  YESIL kaliyor (ikinci koruma `mounted` kontrolu); ikisi birden kalkinca
+  kirmizi. Ajan bunu sakladi degil, raporladi.
+- 🔴 **LIDER HATASI:** ajan stage etmisken lider `git commit` calistirdi ve bes
+  dosyasi `f85253a` (release commit'i) icine sizdi, push edildi. Icerik dogru,
+  kayip yok; ama "her WP tek ayrik commit" kurali bu turda **lider tarafindan**
+  kirildi. Ders: `git add`ten once **her zaman** `git diff --cached
+  --name-only`.
+- **Yeni bulgu (devredildi):** `goal_editor_dialog.dart` 360 dp'de 8 px tasiyor;
+  WP-555'ten onceki bir hata ama artik Ayarlar'dan da erisilebilir.
+
+---
+
+### WP-556: Bildirim / alarm / widget denetimi (SALT OKUNUR)
+- **Program/Faz:** Faz F5 · Denetim · **Durum:** [x] Bitti · **Commit:** —
+- Bugune kadar hic taranmamis alan. **En agir iki bulgu kullaniciya dokunuyor:**
+  1. **Tekrarlayan alarm bir kez calar, bir daha ASLA kurulmaz.** Pzt-Cum 07:00
+     alarmi salı calar, "Kapat"a basilir, carsamba hicbir sey olmaz.
+     `AlarmReceiver` FIRE dalinda yeniden kurma yok; `tryDismiss` PendingIntent'i
+     tamamen iptal ediyor; `AlarmsNotifier.rescheduleAll()` **hicbir yerden
+     cagrilmiyor**.
+  2. **Uygulamayi acmak gecmisteki alarmi caldiriyor.** `main.dart`taki
+     `if (consumeRescheduleFlag(...)) { }` govdesi BOS; `rescheduleFromMirror`
+     bayraktan bagimsiz her acilista kosuyor ve `trigger <= now` -> `fireNow`.
+- Ayrica: native metinler cihaz dilini kullaniyor (WP-526 yalniz Dart tarafini
+  duzeltmis); sayac bildirim kanalinin ADI ilk kurulumdaki dile cakiliyor;
+  kapatilmis bes widget'in veri hatti tam hizda calisiyor (tur basina 34
+  platform kanali turu, hicbiri okunmuyor); widget 30 dk'da bir cihazi bosuna
+  uyandiriyor ve boot sonrasi kronometre bozuk; POST_NOTIFICATIONS reddedilirse
+  sayac gorunmez calisiyor ve kullaniciya tek kelime soylenmiyor.
+- 🔴 **UC YALANCI YESIL daha:** `timer_state_store_semantics_test.dart` hicbir
+  uretim kodu import etmiyor (ifadeyi test icinde yeniden yaziyor);
+  `timer_notification_service_test.dart` uretimde HIC cagrilmayan bir sinifi
+  olcuyor (`showRunning`in cagirani yok); `consumePendingRing` test edilmis ama
+  uretimde hic cagrilmiyor.
+- **BAKTIM TEMIZ (kayda deger):** Dart<->native prefs tip sozlesmesi gercekten
+  saglam ve `TimerPrefsTypeContractTest` kirik girdiyle sinanmis gercek bir
+  test; FGS yasam dongusu, bildirim aksiyonlarinin kalicilgi (`commit()`),
+  kanal kimlik tutarliligi, alarm planlama kademeleri ve tam ekran yedek yolu
+  temiz.
+
+---
+
+### WP-557: Alarm — tekrar kurulmama + hayalet alarm
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Devam ediyor
+- WP-556 bulgu 1 ve 2 + olu `consumePendingRing`. Iki uclu test isteniyor
+  (Dart + saf JVM Kotlin).
+
+---
+
+### WP-558: Widget israfi, boot tazelemesi, olu native yollar
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Devam ediyor
+- WP-556 bulgu 9/10/12/13 + kanal adi (bulgu 8). Kapatilmis widget'lara giden
+  yayinin tek allowlist ile kapilanmasi, `updatePeriodMillis="0"`, boot'ta
+  `TimerWidgets.updateAll`, olu `WidgetRefreshReceiver`/`ACTION_START_BREAK`/
+  `EXTRA_PROMOTED_NOW_BAR` temizligi. 🔴 Olu kodu **kapi sabitliyor**
+  (`verified_timer_bridge_contract_test.dart:153-154`), silinirken o iddia da
+  kaldirilmali.
+
+---
+
+### WP-559: Native yuzeyler uygulama dilini kullansin
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [~] Devam ediyor
+- WP-556 bulgu 3. `res/xml/locales_config.xml` + manifest `localeConfig` + dil
+  degisiminde native'e iletme. WP-526 bu isi yalniz Dart tarafinda yapmisti;
+  bildirim/widget/alarm ekrani hala cihaz dilinde.
+
+---
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
