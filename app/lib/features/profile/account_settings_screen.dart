@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/widgets/safe_screen_padding.dart';
+import '../../data/models/account_deletion_status.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 
@@ -16,6 +19,41 @@ class AccountSettingsScreen extends ConsumerStatefulWidget {
 
 class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   bool _isLoading = false;
+
+  /// Silme durumu sorgusu **bir kez** kurulur.
+  ///
+  /// 🔴 WP-539: `FutureBuilder`ın `future:`ı doğrudan `build` içinde
+  /// çağrılıyordu; ekranın her yeniden çiziminde (snackbar, `setState`, auth
+  /// akışı tiki) yeni bir RPC açılıyor ve gösterge sıfırdan yükleniyordu.
+  late Future<AccountDeletionStatus> _deletionStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _deletionStatus = _queryDeletionStatus();
+  }
+
+  /// Durum gerçekten değiştiğinde (istek/iptal) veya kullanıcı yeniden
+  /// denediğinde sorguyu tazeler.
+  void _refreshDeletionStatus() {
+    // Gövde bloklu: `=>` biçimi atama ifadesinin değerini (bir `Future`)
+    // döndürür ve `setState` bunu "async callback" sanıp assert atar.
+    setState(() {
+      _deletionStatus = _queryDeletionStatus();
+    });
+  }
+
+  Future<AccountDeletionStatus> _queryDeletionStatus() {
+    final query = ref.read(authRepositoryProvider).fetchAccountDeletionStatus();
+    // `FutureBuilder` bu Future'a ancak **bir sonraki çizimde** abone olur.
+    // Sorgu o ana kadar hatayla biterse Dart onu "işlenmemiş" sayar ve hata
+    // yakalanabilir bir UI durumu yerine zone hatası olarak patlar — yani tam
+    // da görünür kılmaya çalıştığımız durum ekranı düşürür. Buradaki dinleyici
+    // hatayı yalnız **işlenmiş** işaretler; Future tamamlandıktan sonra abone
+    // olan `FutureBuilder` aynı hatayı yine görür.
+    unawaited(query.then((_) {}, onError: (Object _, StackTrace _) {}));
+    return query;
+  }
 
   Future<void> _changeEmail() async {
     final outcome = await showDialog<EmailChangeOutcome>(
@@ -187,50 +225,20 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   /// görüyordu**. Artık tüm metinler `AppLocalizations` üzerinden geliyor.
   Future<void> _requestAccountDeletion() async {
     final l10n = AppLocalizations.of(context);
-    final passwordController = TextEditingController();
-    final confirm = await showDialog<bool>(
+    // 🔴 WP-539: şifre alanının denetleyicisi **burada** kuruluyor ve diyalog
+    // kapanır kapanmaz `dispose()` ediliyordu. Kapanma animasyonu sürerken
+    // widget bir kez daha çiziliyor, bu da "A TextEditingController was used
+    // after being disposed" istisnasını atıyordu; istisna asenkron akışı
+    // kesiyor ve hata snackbar'ı **hiç görünmüyordu**. Denetleyici artık
+    // diyalogun kendi `State`'inde yaşıyor ve orada dispose ediliyor.
+    final password = await showDialog<String>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.accountHesabiSil),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.accountSilmeOnayGovdesi),
-              const SizedBox(height: 12),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(labelText: l10n.authSifre),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.profileIptal),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.accountSilmeyiPlanla),
-            ),
-          ],
-        );
-      },
+      builder: (_) => const _DeleteAccountDialog(),
     );
-    if (confirm != true || !mounted) {
-      passwordController.dispose();
-      return;
-    }
+    if (password == null || !mounted) return;
 
     final email = ref.read(authRepositoryProvider).currentUserEmail;
-    final password = passwordController.text;
-    passwordController.dispose();
-    if (email == null || password.isEmpty) return;
+    if (email == null) return;
 
     setState(() => _isLoading = true);
     try {
@@ -246,14 +254,18 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.accountSilmePlanlandiTarih(until))),
       );
-      setState(() {});
+      _refreshDeletionStatus();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            // Ham `e.toString()` gösterilmiyordu: içeriği yerelleştirilemez ve
-            // sunucu/istisna metnini kullanıcıya sızdırıyor (WP-294).
-            content: Text(l10n.authBeklenmeyenBirHataOlustu),
+            // 🔴 WP-539: burası tek bir `catch (e)` idi ve **her** sebep
+            // "Beklenmeyen bir hata oluştu."ya düşüyordu — yanlış şifre dahil.
+            // Aynı ekranın şifre/e-posta diyalogları zaten koda göre eşliyordu;
+            // silme yolu o eşlemenin dışında kalmıştı. Ham `e.toString()` yine
+            // gösterilmiyor: yerelleştirilemez ve sunucu metnini sızdırır
+            // (WP-294).
+            content: Text(_deletionErrorFor(l10n, e)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -261,6 +273,21 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Silme yolundaki hatanın nedenini kullanıcı metnine çevirir.
+  String _deletionErrorFor(AppLocalizations l10n, Object error) {
+    if (error is! AuthException) return l10n.profileBeklenmeyenBirHataOlustu;
+    return switch (error.code) {
+      // Giriş denemesi başarısız: kullanıcı **kendi** şifresini yazıyor, bu
+      // yüzden mesaj "e-posta veya şifre" değil doğrudan şifre hakkındadır.
+      AuthErrorCode.invalidCredentials => l10n.profileMevcutSifreHatali,
+      AuthErrorCode.invalidCurrentPassword => l10n.profileMevcutSifreHatali,
+      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
+      AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
+      _ => l10n.profileBeklenmeyenBirHataOlustu,
+    };
   }
 
   Future<void> _cancelAccountDeletion() async {
@@ -273,7 +300,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             content: Text(AppLocalizations.of(context).accountSilmeIptalEdildi),
           ),
         );
-        setState(() {});
+        _refreshDeletionStatus();
       }
     } catch (e) {
       if (mounted) {
@@ -390,12 +417,23 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 SizedBox(height: 12),
                 // WP-114: hesap silme
                 FutureBuilder(
-                  future: ref
-                      .read(authRepositoryProvider)
-                      .fetchAccountDeletionStatus(),
+                  future: _deletionStatus,
                   builder: (context, snap) {
                     final l10n = AppLocalizations.of(context);
-                    final active = snap.data?.active == true;
+                    // 🔴 WP-539: `snap.hasError` hiç kontrol edilmiyordu. Durum
+                    // sorgusu düştüğünde `snap.data` null kalıyor, `active`
+                    // false oluyor ve kart sessizce "Hesabı sil"e dönüyordu —
+                    // yani **bekleyen silme isteğinin tek iptal kapısı
+                    // kayboluyordu**. Kullanıcı 14 günlük geri alma penceresi
+                    // içinde iptal edemez hâle geliyordu.
+                    //
+                    // Hata hâlinde fail-safe taraf iptaldir: `cancel` RPC'si
+                    // bekleyen istek yoksa zararsızdır, oysa kapıyı gizlemek
+                    // geri dönüşü olmayan silmeye yol açar. Kullanıcı sorguyu
+                    // yenileyip gerçek duruma da dönebilsin diye kartta
+                    // "tekrar dene" var.
+                    final failed = snap.hasError;
+                    final active = failed || snap.data?.active == true;
                     return Card(
                       elevation: 0,
                       color: theme.colorScheme.errorContainer.withValues(
@@ -413,12 +451,22 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                         subtitle: Text(
-                          active
+                          failed
+                              ? l10n.accountSilmeDurumuOkunamadi
+                              : active
                               ? l10n.accountSilmeSonTarih(
                                   '${snap.data?.purgeAfter?.toLocal()}',
                                 )
                               : l10n.accountSilmeGeriAlmaPenceresi,
                         ),
+                        trailing: failed
+                            ? IconButton(
+                                key: const Key('accountDeletionStatusRetry'),
+                                icon: const Icon(Icons.refresh),
+                                tooltip: l10n.authTekrarDene,
+                                onPressed: _refreshDeletionStatus,
+                              )
+                            : null,
                         onTap: active
                             ? _cancelAccountDeletion
                             : _requestAccountDeletion,
@@ -428,6 +476,86 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// WP-539: hesap silme onayı — şifre alanı **kendi** `State`'inde yaşar.
+///
+/// İki ayrı hatayı birden kapatır:
+/// 1. 🔴 **Sessiz düğme.** Alanda hiç doğrulayıcı yoktu ve üst ekran boş şifreyi
+///    `if (password.isEmpty) return;` ile yutuyordu: "Silmeyi planla"ya basmak
+///    hiçbir şey yapmıyordu (ölçüm: `signInCalls=0 requestCalls=0 snackBar=0
+///    dialog=0`). Artık form doğrulaması diyalogu **açık tutuyor** ve nedeni
+///    yazıyor.
+/// 2. 🔴 **Dispose edilmiş denetleyici.** Denetleyici üst ekranda kuruluyor ve
+///    diyalog kapanma animasyonu sürerken senkron `dispose()` ediliyordu.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() != true) return;
+    Navigator.pop(context, _passwordController.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.accountHesabiSil),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.accountSilmeOnayGovdesi),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('deleteAccountPassword'),
+              controller: _passwordController,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              decoration: InputDecoration(labelText: l10n.authSifre),
+              onFieldSubmitted: (_) => _submit(),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return l10n.profileMevcutSifreniGir;
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.profileIptal),
+        ),
+        FilledButton(
+          key: const Key('deleteAccountSubmit'),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+          onPressed: _submit,
+          child: Text(l10n.accountSilmeyiPlanla),
+        ),
+      ],
     );
   }
 }

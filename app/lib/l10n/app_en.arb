@@ -682,6 +682,18 @@
   "@authSifreyiKaydetVeGiris": {
     "description": "Auth user-facing text. Source: Şifreyi Kaydet ve Giriş Yap"
   },
+  "authTekrarDene": "Try again",
+  "@authTekrarDene": {
+    "description": "WP-539: retry button on the auth gate error screen. Source: Tekrar dene"
+  },
+  "authOturumDurumuOkunamadi": "Could not read your session status. Check your connection and try again.",
+  "@authOturumDurumuOkunamadi": {
+    "description": "WP-539: auth gate error state; used to be a dead end with no way out. Source: Oturum durumu okunamadı. Bağlantını kontrol edip tekrar dene."
+  },
+  "authSifirlamaBaglantisiGecersiz": "This password reset link is no longer valid. Request a new reset email.",
+  "@authSifirlamaBaglantisiGecersiz": {
+    "description": "WP-539: recovery screen, expired or already used reset session. Source: Şifre sıfırlama bağlantısı artık geçerli değil. Yeni bir sıfırlama e-postası iste."
+  },
   "classroomCamperanimallabel": "{label} 🏕️",
   "@classroomCamperanimallabel": {
     "description": "Classroom user-facing text. Source: ${camper.animal.label} 🏕️",
@@ -5769,6 +5781,10 @@
   "accountSilmeGeriAlmaPenceresi": "14-day cooling-off, then permanent delete",
   "@accountSilmeGeriAlmaPenceresi": {
     "description": "Account settings: tile subtitle explaining the cooling-off window."
+  },
+  "accountSilmeDurumuOkunamadi": "Could not read the deletion status. If you have a pending request you can cancel it here.",
+  "@accountSilmeDurumuOkunamadi": {
+    "description": "WP-539: the deletion status query failed; the cancel gate stays reachable instead of disappearing. Source: Silme durumu okunamadı. Bekleyen bir isteğin varsa buradan iptal edebilirsin."
   },
   "updaterMagazaUzerindenYonetilir": "Updates are managed by the store.",
   "@updaterMagazaUzerindenYonetilir": {

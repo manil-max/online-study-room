@@ -209,7 +209,7 @@ class SupabaseAuthRepository implements AuthRepository {
       _current = profile;
       return profile;
     } on supa.AuthException catch (e) {
-      throw AuthException(_translate(e.message));
+      throw AuthException(_translate(e.message), code: _authCode(e));
     }
   }
 
@@ -227,8 +227,12 @@ class SupabaseAuthRepository implements AuthRepository {
       if (profile == null) throw const AuthException('Giriş yapılamadı.');
       _current = profile;
       return profile;
+      // 🔴 WP-539: eskiden burada `code` hiç verilmiyordu. Giriş ekranı hatayı
+      // Türkçe mesaja `contains` uygulayarak ayırdığı için doğrulanmamış
+      // e-posta, ağ hatası ve hız sınırı **üçü birden** "Beklenmeyen bir hata
+      // oluştu."ya düşüyordu.
     } on supa.AuthException catch (e) {
-      throw AuthException(_translate(e.message));
+      throw AuthException(_translate(e.message), code: _authCode(e));
     }
   }
 
@@ -236,7 +240,10 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> sendPasswordResetEmail(String email) async {
     final safe = email.trim();
     if (safe.isEmpty || !safe.contains('@')) {
-      throw const AuthException('Geçerli bir e-posta girin.');
+      throw const AuthException(
+        'Geçerli bir e-posta girin.',
+        code: AuthErrorCode.invalidEmail,
+      );
     }
     try {
       // WP-287: redirectTo verilmezse Supabase linki Site URL'e (localhost)
@@ -246,7 +253,7 @@ class SupabaseAuthRepository implements AuthRepository {
       final redirectTo = await _recoveryRedirect();
       await _client.auth.resetPasswordForEmail(safe, redirectTo: redirectTo);
     } on supa.AuthException catch (e) {
-      throw AuthException(_translateRecovery(e.message));
+      throw AuthException(_translateRecovery(e.message), code: _authCode(e));
     }
   }
 
@@ -283,12 +290,19 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> updatePassword(String newPassword) async {
     if (newPassword.length < 6) {
-      throw const AuthException('Şifre en az 6 karakter olmalı.');
+      throw const AuthException(
+        'Şifre en az 6 karakter olmalı.',
+        code: AuthErrorCode.weakPassword,
+      );
     }
     try {
       await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+      // 🔴 WP-539: kurtarma ekranı bu istisnanın **içine hiç bakmıyordu**
+      // (`on AuthException {` — değişken bile bağlanmamış). Süresi dolmuş
+      // sıfırlama bağlantısı, zayıf şifre ve ağ hatası aynı tek cümleye
+      // düşüyordu; kullanıcı hangisini düzelteceğini bilemiyordu.
     } on supa.AuthException catch (e) {
-      throw AuthException(_translate(e.message));
+      throw AuthException(_translate(e.message), code: _authCode(e));
     }
   }
 
@@ -678,6 +692,50 @@ class SupabaseAuthRepository implements AuthRepository {
     // Sunucu başka bir şey söyledi (5xx, beklenmeyen kod...). Şifre hakkında
     // hüküm vermek yanlış olur; genel hata dönülür.
     return AuthException(_translate(error.message), code: null);
+  }
+
+  /// WP-539: giriş/kayıt/sıfırlama yolundaki hatanın **nedenini** kodlar.
+  ///
+  /// Bu katman kullanıcı metni taşımaz (bkz. `_reauthFailure` notu, WP-536);
+  /// mesaj Türkçe kalsa bile ekran artık **koda** bakar. Neden gerekliydi:
+  /// `signIn`/`signUp`/`sendPasswordResetEmail` üçü de kodsuz istisna
+  /// atıyordu, giriş ekranı da kodsuz istisnayı mesaj alt dizesiyle ayırmaya
+  /// çalışıyordu ve tanımadığı her şeyi "Beklenmeyen bir hata oluştu."ya
+  /// düşürüyordu. Ölçülen üç somut kayıp: doğrulanmamış e-posta, ağ hatası ve
+  /// "şifremi unuttum" hız sınırı.
+  String? _authCode(supa.AuthException error) {
+    if (error is supa.AuthRetryableFetchException) return AuthErrorCode.network;
+    if (_isRateLimit(error.message)) return AuthErrorCode.rateLimited;
+    final apiCode = error is supa.AuthApiException
+        ? error.code?.toLowerCase()
+        : null;
+    final m = error.message.toLowerCase();
+    if (apiCode == 'email_not_confirmed' ||
+        (m.contains('email') && m.contains('confirm'))) {
+      return AuthErrorCode.emailNotConfirmed;
+    }
+    if (apiCode == 'invalid_credentials' || m.contains('invalid login')) {
+      return AuthErrorCode.invalidCredentials;
+    }
+    if (apiCode == 'weak_password' ||
+        (m.contains('password') && m.contains('at least'))) {
+      return AuthErrorCode.weakPassword;
+    }
+    if (apiCode == 'email_exists' ||
+        apiCode == 'user_already_exists' ||
+        m.contains('already registered') ||
+        m.contains('already exists')) {
+      return AuthErrorCode.emailAlreadyInUse;
+    }
+    if (m.contains('invalid') && m.contains('email')) {
+      return AuthErrorCode.invalidEmail;
+    }
+    // Kurtarma oturumu düşmüş/süresi dolmuş: yeni şifre yazılamaz.
+    if (m.contains('session') &&
+        (m.contains('missing') || m.contains('expired'))) {
+      return AuthErrorCode.noSession;
+    }
+    return null;
   }
 
   String? _emailChangeCode(String message) {

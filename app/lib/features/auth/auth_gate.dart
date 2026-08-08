@@ -75,13 +75,43 @@ class _AuthGateState extends ConsumerState<AuthGate> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: const Center(child: CircularProgressIndicator()),
       ),
+      // 🔴 WP-539: burası **çıkışsız bir ekrandı** — tek bir hata cümlesi, hiç
+      // düğme yok. Oturum akışı düştüğünde (bayat refresh token, sunucuya
+      // ulaşılamaması) kullanıcı ne yeniden deneyebiliyor ne de çıkıp yeniden
+      // giriş yapabiliyordu; tek çare uygulamayı öldürmekti.
       error: (_, _) => Scaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.authBeklenmeyenBirHataOlustu,
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.authOturumDurumuOkunamadi,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  key: const Key('auth-gate-retry'),
+                  onPressed: () => ref.invalidate(authStateProvider),
+                  child: Text(l10n.authTekrarDene),
+                ),
+                // İkinci çıkış: akışı yeniden kurmak yetmiyorsa (bozuk yerel
+                // oturum) kullanıcı temiz bir giriş ekranına dönebilmeli.
+                TextButton(
+                  key: const Key('auth-gate-signout'),
+                  onPressed: () async {
+                    try {
+                      await ref.read(authRepositoryProvider).signOut();
+                    } catch (_) {
+                      // Oturum zaten bozuksa signOut da düşebilir; kullanıcıyı
+                      // burada tutmanın anlamı yok, akış yine de tazelenir.
+                    }
+                    ref.invalidate(authStateProvider);
+                  },
+                  child: Text(l10n.profileCikisYap),
+                ),
+              ],
             ),
           ),
         ),

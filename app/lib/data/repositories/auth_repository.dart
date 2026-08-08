@@ -33,6 +33,22 @@ class AuthErrorCode {
   /// Sunucu hız sınırı: art arda çok fazla deneme.
   static const String rateLimited = 'rate_limited';
 
+  /// Hesap var ama e-posta doğrulaması tamamlanmamış — **giriş yapılamaz**.
+  ///
+  /// 🔴 WP-539: bu kod eskiden yoktu. Depo doğru cümleyi üretiyordu
+  /// ("E-posta doğrulaması gerekiyor.") ama giriş ekranı hatayı **metne göre**
+  /// ayırıyor ve yalnız dört alt dizeyi tanıyordu; doğrulanmamış e-posta o
+  /// listede olmadığı için kullanıcı "Beklenmeyen bir hata oluştu." görüyordu —
+  /// yani ne olduğunu ve ne yapması gerektiğini öğrenemiyordu.
+  static const String emailNotConfirmed = 'email_not_confirmed';
+
+  /// Giriş denemesinde e-posta/şifre çifti hatalı.
+  ///
+  /// [invalidCurrentPassword] ile karıştırılmaz: o, oturum **içindeyken**
+  /// yapılan yeniden doğrulamadır ("mevcut şifre"), bu ise giriş ekranıdır ve
+  /// hangi alanın hatalı olduğunu söylemez (kullanıcı sayımı koruması).
+  static const String invalidCredentials = 'invalid_credentials';
+
   /// Oturum yok/süresi dolmuş.
   static const String noSession = 'no_session';
 

@@ -44,9 +44,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         );
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
-    } on AuthException {
+    } on AuthException catch (e) {
       if (mounted) {
-        setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+        setState(() => _error = _messageFor(l10n, e));
       }
     } catch (_) {
       if (mounted) {
@@ -55,6 +55,23 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Hatanın nedenini kullanıcı metnine çevirir.
+  ///
+  /// 🔴 WP-539: burası eskiden `on AuthException {` idi — istisna **hiç
+  /// bağlanmıyordu**, yani içine bakılmadan üç farklı sebep (süresi dolmuş
+  /// sıfırlama oturumu, zayıf şifre, ağ hatası) tek bir "Beklenmeyen bir hata
+  /// oluştu." cümlesine düşüyordu. Kullanıcı hangisini düzelteceğini
+  /// bilemediği için ekranda takılı kalıyordu.
+  String _messageFor(AppLocalizations l10n, AuthException error) {
+    return switch (error.code) {
+      AuthErrorCode.weakPassword => l10n.authSifreEnAz6SifreEnAz6KarakterOlmal,
+      AuthErrorCode.noSession => l10n.authSifirlamaBaglantisiGecersiz,
+      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
+      _ => l10n.authBeklenmeyenBirHataOlustu,
+    };
   }
 
   @override

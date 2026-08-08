@@ -8,6 +8,27 @@ import '../../l10n/app_localizations.dart';
 import '../support/faq_screen.dart';
 import 'reset_with_code_screen.dart';
 
+/// 🔴 WP-539: e-postadaki 6 haneli kod yolu **derleme zamanı kapalıdır**.
+///
+/// Neden: `docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md:9-14` — Supabase ücretsiz plan
+/// kurtarma e-posta şablonunun değiştirilmesini reddediyor, yani şablona
+/// `{{ .Token }}` eklenemiyor ve kullanıcıya **6 haneli kod hiç gitmiyor**.
+/// Düğme yine de açıktı ve şu kapalı döngüyü üretiyordu: kod yok → ne girilse
+/// "Kod geçersiz veya süresi dolmuş." → yeni kod iste → yine gelmiyor.
+/// Kullanıcının şifre sıfırlamak için çıkışı kalmıyordu.
+///
+/// Aynı karar hesap ayarlarında zaten verilmişti
+/// (`account_settings_screen.dart` `_sendPasswordReset` notu: "Kod alanı açmak
+/// tam da bu WP'nin kapattığı ölü anahtar deseni olurdu"); giriş ekranı o
+/// kararı uygulamamıştı.
+///
+/// Ekran **silinmedi**, erişilemez yapıldı: özel SMTP (veya ücretli plan)
+/// bağlanıp şablona `{{ .Token }}` eklenince yol tek bayrakla geri açılır:
+/// `--dart-define=RESET_WITH_CODE_ENABLED=true`.
+const bool kResetWithCodeEnabled = bool.fromEnvironment(
+  'RESET_WITH_CODE_ENABLED',
+);
+
 /// Giriş ve kayıt ekranı (e-posta + şifre). Tek ekranda iki mod arası geçiş yapılır.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -80,7 +101,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _isRegister = false;
           _passwordController.clear();
         } else {
-          _error = _localizedAuthError(l10n, e.message);
+          _error = _localizedAuthError(l10n, e);
         }
       });
     } catch (e) {
@@ -136,8 +157,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       setState(() {
         _info = l10n.authSifreSifirlamaBaglantisiEpostana;
       });
+      // 🔴 WP-539: burada da `_localizedAuthError` çağrılıyor ama eskiden yalnız
+      // dört Türkçe alt dize tanındığı için hız sınırı ("Çok sık denedin…")
+      // generic'e düşüyordu — kullanıcı biraz bekleyip yeniden denemesi
+      // gerektiğini öğrenemiyordu.
     } on AuthException catch (e) {
-      setState(() => _error = _localizedAuthError(l10n, e.message));
+      setState(() => _error = _localizedAuthError(l10n, e));
     } catch (_) {
       setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
     } finally {
@@ -261,19 +286,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         icon: const Icon(Icons.mark_email_read_outlined),
                         label: Text(l10n.authSifremiUnuttum),
                       ),
-                      TextButton.icon(
-                        onPressed: _loading
-                            ? null
-                            : () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ResetWithCodeScreen(
-                                    initialEmail: _emailController.text.trim(),
+                      // 🔴 WP-539: `kResetWithCodeEnabled` false olduğu sürece
+                      // bu düğme **hiç çizilmez** (bayrağın gerekçesi dosyanın
+                      // başında). Ekranın kendisi silinmedi; SMTP bağlanınca
+                      // `--dart-define=RESET_WITH_CODE_ENABLED=true` ile geri
+                      // açılır. Kullanıcının çalışan yolu üstteki "Şifremi
+                      // unuttum" — e-postadaki **bağlantı**.
+                      if (kResetWithCodeEnabled)
+                        TextButton.icon(
+                          key: const Key('auth-reset-with-code'),
+                          onPressed: _loading
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ResetWithCodeScreen(
+                                      initialEmail: _emailController.text
+                                          .trim(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                        icon: const Icon(Icons.password_outlined),
-                        label: Text(l10n.authKoduGir),
-                      ),
+                          icon: const Icon(Icons.password_outlined),
+                          label: Text(l10n.authKoduGir),
+                        ),
                     ],
                     TextButton(
                       onPressed: _loading
@@ -316,19 +350,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  String _localizedAuthError(AppLocalizations l10n, String message) {
-    if (message.contains('Geçerli bir e-posta')) {
-      return l10n.authGecerliBirEpostaGirin;
-    }
-    if (message.contains('Şifre en az 6 karakter')) {
-      return l10n.authSifreEnAz6;
-    }
-    if (message.contains('Bu e-posta zaten kayıtlı')) {
-      return l10n.commonBuEpostaZatenKayitli;
-    }
-    if (message.contains('E-posta veya şifre hatalı')) {
-      return l10n.commonEpostaVeyaSifreHatali;
-    }
-    return l10n.authBeklenmeyenBirHataOlustu;
+  /// Hatanın **nedenini** kullanıcı metnine çevirir.
+  ///
+  /// 🔴 WP-539: eskiden burası `message.contains('…')` üçlemesiydi ve yalnız
+  /// dört Türkçe alt dizeyi tanıyordu; tanımadığı her şey "Beklenmeyen bir hata
+  /// oluştu."ya düşüyordu. Ölçülen sonuç: depo doğru cümleyi
+  /// ("E-posta doğrulaması gerekiyor.") üretiyor, ekran generic gösteriyordu.
+  /// Alt dize eşleştirmesi ayrıca ağ hatasını ve hız sınırını da yutuyordu.
+  /// Artık eşleme [AuthErrorCode] üzerinden yapılır: depo nedeni **kodla**
+  /// taşır, metni ekran katalogdan üretir.
+  String _localizedAuthError(AppLocalizations l10n, AuthException error) {
+    return switch (error.code) {
+      AuthErrorCode.emailNotConfirmed => l10n.commonEpostaDogrulamasiGerekiyor,
+      AuthErrorCode.invalidCredentials => l10n.commonEpostaVeyaSifreHatali,
+      AuthErrorCode.emailAlreadyInUse => l10n.commonBuEpostaZatenKayitli,
+      AuthErrorCode.invalidEmail => l10n.authGecerliBirEpostaGirin,
+      AuthErrorCode.weakPassword => l10n.authSifreEnAz6,
+      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
+      _ => l10n.authBeklenmeyenBirHataOlustu,
+    };
   }
 }
