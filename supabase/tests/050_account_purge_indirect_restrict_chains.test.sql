@@ -13,11 +13,24 @@
 -- + sayac komutu + hakkinda yaptirim + o yaptirima itiraz -- ve sonra tek bir
 -- `delete from auth.users` calistirip GECTIGINI olcer.
 --
+-- 🔴 UC SINIF, TEK IFADE. Ilk tur (yalniz FK zincirleri duzeltilmis hali) CI'da
+-- KIRMIZI dondu (`database-gates.yml` -> `staging-dry-run`, run 31276032801):
+-- 22 iddiadan 6'si dustu, cunku `delete from auth.users` FK'lerden degil bir
+-- TETIKLEYICIDEN oluyordu --
+--   died: 23503 ... achievement_metric_progress_user_id_fkey ...
+-- yani cascade ile silinen `study_sessions` satirinin AFTER DELETE
+-- tetikleyicisi, ARTIK VAR OLMAYAN kullanici icin metrik yazmaya calisiyordu.
+-- Bu dosya artik ucunu birden olcer:
+--   1. dolayli `restrict` FK zincirleri (§1, §3, §4),
+--   2. yaz-geri (write-back on delete) -- §4'teki `lives_ok` bunu kanitlar,
+--   3. RI'nin `set null` UPDATE'ini reddeden degismezlik guard'lari
+--      (`moderation_audit_events` append-only + verified oturum `subject_id`).
+--
 -- `0124` ONCESI bu dosya KIRMIZIDIR. Iki ayri sekilde kirmizi duser ve ikisi
 -- de kabul edilebilir kirmizidir:
 --   * §1 yapisal iddialar `restrict` gorup fail eder,
---   * `context_group_id_snapshot` sutunu HENUZ YOKTUR, yani ona dokunan ilk
---     ifade "column does not exist" ile islemi abort eder.
+--   * `context_group_id_snapshot` / `actor_hash` sutunlari HENUZ YOKTUR, yani
+--     onlara dokunan ilk ifade "column does not exist" ile islemi abort eder.
 --
 -- 🔴 OLCEMEDIGI SEY (durust sinir): bu dosya veritabaninin ICINDE kosar.
 -- `supabase/functions/purge-accounts/index.ts` dosyasini OKUYAMAZ. §2 o
@@ -58,7 +71,7 @@ on conflict (id) do nothing;
 \set report1  '47000000-0000-0000-0000-000000000001'
 \set report2  '47000000-0000-0000-0000-000000000002'
 
-select plan(22);
+select plan(26);
 
 -- ===========================================================================
 -- 1. Yapisal: dolayli zincirlerin FK aksiyonlari
@@ -137,6 +150,13 @@ select has_column(
   'public', 'ugc_reports', 'context_group_id_snapshot',
   'degismez grup snapshot sutunu var'
 );
+-- §6.1: `moderation_audit_events.actor_id` `set null`dur ama append-only
+-- tetikleyicisi o UPDATE'i kosulsuz reddediyordu; takma kimlik sutunu
+-- `0114`un deseniyle eklendi.
+select has_column(
+  'public', 'moderation_audit_events', 'actor_hash',
+  'moderasyon denetim olayinda takma aktor kimligi sutunu var'
+);
 
 -- ===========================================================================
 -- 2. Gercekci kullaniciyi kur
@@ -148,12 +168,23 @@ values (:'run', :'alpha', '48000000-0000-0000-0000-000000000001');
 insert into public.live_study_segments (id, run_id, user_id, ordinal)
 values (:'segment', :'run', :'alpha', 1);
 
+-- 🔴 Konu (subject): §6.2'nin tetikleyicisi. `subjects.user_id` cascade'dir ve
+-- `subjects` tablosu `0001`de `study_sessions`tan ONCE yaratildigi icin cascade
+-- tetikleyicisi ONCE ateslenir: konular silinir, `study_sessions.subject_id`
+-- `set null` olur ve o UPDATE `study_sessions_guard_verified_update`i atesler.
+-- Konu VERMEZSEK bu yol hic acilmaz ve test yanlis yesil verirdi.
+\set subject '4a000000-0000-0000-0000-000000000001'
+insert into public.subjects (id, user_id, name)
+values (:'subject', :'alpha', 'WP549 Konu');
+
 -- Verified oturum: `live_run_id` DOLU. `0051:109`daki guard tetikleyicisi
 -- yuzunden bu sutun `set null` ile bosaltilamaz; cozum cascade olmak zorunda.
 insert into public.study_sessions (
-  id, user_id, start_time, end_time, duration_seconds, source, live_run_id
+  id, user_id, subject_id, start_time, end_time, duration_seconds,
+  source, live_run_id
 ) values (
-  :'session', :'alpha', now() - interval '1 hour', now(), 3600, 'live', :'run'
+  :'session', :'alpha', :'subject', now() - interval '1 hour', now(), 3600,
+  'live', :'run'
 );
 
 -- Push cihazi + o cihaza bagli sayac komutu.
@@ -180,6 +211,18 @@ insert into public.moderation_sanctions (
 );
 insert into public.moderation_appeals (id, sanction_id, appellant_id, statement)
 values (:'appeal', :'sanction', :'alpha', 'wp549 fixture itiraz metni');
+
+-- 🔴 §6.1: alpha'yi bir denetim olayinin AKTORU yap. Bu satir olmadan
+-- `actor_id` NULL kalir (pgTAP'te `auth.uid()` NULL oldugu icin
+-- `moderation_audit_record` hep NULL yazar), RI hicbir `set null` UPDATE'i
+-- uretmez ve append-only blokaji GORUNMEZ olur -- `040`in kacirdigi tam olarak
+-- budur. Dogrudan insert ediyoruz cunku append-only yalniz UPDATE/DELETE'i
+-- kapatir, INSERT serbesttir.
+insert into public.moderation_audit_events (
+  actor_id, entity_type, entity_id, action, reason
+) values (
+  :'alpha', 'sanction', :'sanction'::uuid, 'wp549_actor_probe', 'wp549 fixture'
+);
 
 -- Raporlar: ikisini de GAMMA yazdi, yani alpha silinince cascade ile GITMEZLER.
 -- `target_type = 'message'` zorunlu; `0104:24` CHECK'i baglam sutununu yalniz
@@ -231,12 +274,19 @@ select is(
 -- ===========================================================================
 -- 4. Asil sinav: tek `delete from auth.users`
 -- ===========================================================================
--- 🔴 `0124` oncesi bu ifade DORT ayri FK ihlalinden biriyle patlardi. Hangisi
--- once atesler, RI tetikleyicilerinin OID sirasina baglidir; hepsi kapatilmadan
--- silme guvenilir olmaz.
+-- 🔴 `0124` oncesi bu ifade UC AYRI SINIFTAN biriyle patlardi ve hangisinin
+-- once vurdugu RI tetikleyicilerinin OID sirasina baglidir:
+--   * FK zinciri (§1-§4): dolayli `restrict`ler,
+--   * YAZ-GERI (§5): CI'da olculen `achievement_metric_progress` 23503'u --
+--     cascade ile silinen oturumun AFTER DELETE tetikleyicisi silinmis
+--     kullanici icin metrik yazmaya calisiyordu,
+--   * DEGISMEZLIK GUARD'I (§6): `moderation_audit_events` append-only
+--     tetikleyicisi RI'nin `actor_id` set-null UPDATE'ini reddediyordu ve
+--     verified oturum guard'i `subject_id` set-null'ini reddediyordu.
+-- Ucu birden kapatilmadan bu iddia yesil olamaz.
 select lives_ok(
   format($$delete from auth.users where id = %L$$, :'alpha'),
-  'gercekci kullanici tek ifadede silinebilir (dort zincir de acik)'
+  'gercekci kullanici tek ifadede silinebilir (uc sinif da acik)'
 );
 
 select is(
@@ -285,6 +335,25 @@ select ok(
   (select count(*) from public.moderation_audit_events
     where entity_type = 'sanction' and entity_id = :'sanction'::uuid) >= 1,
   'yaptirim denetim izi cascade sonrasi YERINDE kalir (FK`siz entity_id)'
+);
+
+-- §6.1 ucu: aktor kaydi silinmedi, ham kimlik koptu, takma kimlik korundu.
+select is(
+  (select count(*)::int from public.moderation_audit_events
+    where action = 'wp549_actor_probe'),
+  1,
+  'aktoru silinen denetim olayi KALIR (append-only bozulmadi)'
+);
+select ok(
+  (select actor_id is null from public.moderation_audit_events
+    where action = 'wp549_actor_probe'),
+  'ham aktor kimligi NULL olur (RI set null artik gecebiliyor)'
+);
+select is(
+  (select actor_hash from public.moderation_audit_events
+    where action = 'wp549_actor_probe'),
+  public.pseudonymous_user_hash(:'alpha'),
+  'takma aktor kimligi silme sonrasi DEGISMEDEN durur (tetikleyici ezmez)'
 );
 
 select * from finish();

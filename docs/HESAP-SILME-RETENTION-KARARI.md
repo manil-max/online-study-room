@@ -231,6 +231,53 @@ tamamen değişmez.
 `moderation_cases`'in `auth.users`'a hiçbir FK'si yoktur, oraya hiçbir cascade
 ulaşmaz. `050` bu envanteri dondurur.
 
+#### 5.7.1 FK zincirleri tek başına yetmedi — iki sınıf daha (CI'da ölçüldü)
+
+Yalnız yukarıdaki beş FK düzeltilmiş hâli CI'da (`database-gates.yml` →
+`staging-dry-run`, run 31276032801) **kırmızı** döndü. `delete from auth.users`'ı
+düşüren iki sınıf daha var ve ikisi de FK aksiyonu değil **tetikleyici**:
+
+**(a) Yaz-geri (write-back on delete).** Cascade ile silinen `study_sessions` /
+`group_members` satırlarının AFTER DELETE tetikleyicileri metriği yeniden
+hesaplayıp **artık var olmayan** kullanıcı için geri yazıyor →
+`23503 achievement_metric_progress_user_id_fkey`. Bu bir INSERT kontrolüdür,
+FK aksiyonu değiştirerek çözülemez; silinmiş hesaba projeksiyon satırı yazmak
+retention açısından zaten **daha kötü** olurdu.
+
+> **Kural:** var olmayan bir hesap için projeksiyon/geçmiş yaz-gerisi
+> **yapılmaz**. Tek yüklem (`_account_still_exists`), her yaz-geri girişinde tek
+> kapı. Davranış böylece RI tetikleyicilerinin ateşlenme **sırasından** bağımsız
+> olur — o sıra `pg_constraint` OID'lerine bağlıdır, yani şema evrimiyle
+> sessizce değişir.
+
+`delete from auth.users` yolunda ateşleyen 8 tetikleyicinin tamamı tarandı;
+5'i yaz-geri yapıyordu (`study_sessions_project_break_enemy`,
+`study_sessions_project_group_metrics`, `group_members_primary_group_reconcile`,
+`group_members_multi_group_presence_projection`,
+`user_group_preferences_append_history`), 3'ü temizdi
+(`study_sessions_mark_achievement_dirty` DELETE dalında yazmıyor;
+`groups_cleanup_avatar_object` `0054`'te kaldırılmış; `account_purge_audit`
+tablosunun `auth.users` FK'si yok).
+
+**(b) Değişmezlik guard'ı RI'nin `set null` UPDATE'ini reddediyor.** §5.6'nın
+`set null` kararı, hedef tabloda append-only/immutability tetikleyicisi varsa
+**çalışmıyor**. İki örnek bulundu:
+
+| Tablo | Neden düşüyordu | Karar |
+|---|---|---|
+| `moderation_audit_events` | `actor_id` `set null` (`0106:25`) bir UPDATE üretiyor, `moderation_audit_events_immutable` (`0106:56`) koşulsuz `42501` atıyor → **her admin/moderatör hesabı silinemez** | §5.6 deseni: `actor_hash` eklendi, guard'a **tek** geçiş izni (dolu → NULL, diğer sütunlar aynı). DELETE/TRUNCATE hâlâ koşulsuz atar. |
+| `study_sessions` | `subjects` cascade'i `subject_id`'yi `set null` yapıyor (`0001:42`/`0001:54`), `study_sessions_guard_verified_update` (`0051:109`) `verified_session_immutable` atıyor → **konu seçmiş her doğrulanmış oturum** | Guard'a tek geçiş izni: yalnız `subject_id` dolu → NULL ve başka hiçbir sütun değişmemiş. |
+
+`moderation_audit_events.actor_hash`, §5.6'daki yedi sütundan **bilinçli olarak
+farklı** biçimde **nullable**'dır: `actor_id` doğuştan nullable'dır
+(cron/service-role yazımlarında `auth.uid()` yoktur), yani NULL hash "kimlik
+kayboldu" değil "kimliklendirilmiş aktör hiç yoktu" demektir.
+
+Bu sınıfı `040` yakalayamazdı: pgTAP'te `auth.uid()` NULL olduğu için
+`moderation_audit_record` satırları `actor_id = null` yazar ve RI hiçbir
+`set null` UPDATE'i üretmez. `050` aktörü **doğrudan** insert ederek bu boşluğu
+kapatır.
+
 **Uygulama:** `0124_account_purge_indirect_restrict_chains.sql` ·
 **Sözleşme:** `supabase/tests/050_account_purge_indirect_restrict_chains.test.sql`
 (gerçekçi kullanıcı: grup sahibi + başkasının açtığı rapor + canlı koşu +
