@@ -133,6 +133,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 🔴 WP-572: workflow'un KENDI baglantisini sinar. Cok satirli bir
+      # `script:` blogu geri yazilirsa (ya da cagrilan `.sh` silinirse) burasi
+      # kirmizi doner. Saniyeler surer; emulator isini beklemeye gerek yok.
+      - name: CI script baglantisi (satir-satir tuzagi)
+        run: python3 scripts/ci/verify_ci_script_wiring.py
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -317,72 +323,24 @@ jobs:
           # `set -e` YOK: kırmızıyı yutmadan logcat'i toplayabilmek için çıkış
           # kodu elle taşınır. Aksi hâlde test düştüğünde crash tamponu hiç
           # okunmaz ve asıl kanıt kaybolur.
-          script: |
-            # 🔴 Bu blok `sh -c` ile kosar (action boyle cagiriyor), bash ile DEGIL.
-            # `set -o pipefail` bir bashism'dir ve dash'te "Illegal option" ile
-            # ANINDA duser: v60 turunda iki matris kolonu da (API 30 + 33) ilk
-            # satirda oldu, yani smoke CI'da HIC kosmadi -- kapi vardi, hicbir sey
-            # olcmuyordu. `set -u` POSIX'tir. pipefail'in korudugu tek yer cihaz
-            # kesfiydi; o artik acik bir bos kontrolle korunuyor.
-            # 🔴 WP-553: TANI SATIRLARI EN BASTA, `set -u`'DAN ONCE.
-            # v62 turunda (run 31274760889) her iki matris kolonu da adimin
-            # ILK 20 ms'sinde `exit 1` verdi ve TEK SATIR cikti uretmedi --
-            # yani "Cihaz: ..." echo'suna bile varamadi. Ciktisiz bir kirmizi
-            # teshis edilemez; bu blok kok nedeni bir sonraki kosumda gorunur
-            # kilar. `set -u` altinda TANIMSIZ bir degisken genislemesi dash'i
-            # aninda dusurur ve bu, gozlenen 20 ms'lik olumun en olasi sebebi
-            # (`$GITHUB_WORKSPACE` bu action'in alt kabuguna gecmemis olabilir).
-            echo "PWD=$PWD"
-            echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<tanimsiz>}"
-            echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-<tanimsiz>}"
-            command -v adb || echo "UYARI: adb PATH'te yok"
-            command -v flutter || echo "UYARI: flutter PATH'te yok"
-
-            set -u
-            # Tanimsizsa calisma dizinine dus: tani ciktisi ucmasin diye
-            # LOG_DIR yuzunden olmek kabul edilemez.
-            LOG_DIR="${GITHUB_WORKSPACE:-$PWD}/emulator-logs"
-            mkdir -p "$LOG_DIR"
-            CRASH_LOG="$LOG_DIR/crash-api${{ matrix.api-level }}.log"
-            DEVICE="$(adb devices | awk '/\tdevice$/ {print $1; exit}')"
-            if [ -z "$DEVICE" ]; then
-              echo "::error::adb hicbir hazir cihaz bildirmedi; emulator boot etmemis."
-              exit 1
-            fi
-            echo "Cihaz: $DEVICE"
-            adb logcat -c
-            status=0
-            # 🔴 APK once derlenip `install -g` (tum runtime izinleri ver) ile
-            # kurulur, sonra test kosar. Sebebi olculdu: API 33'te ilk `Baslat`
-            # POST_NOTIFICATIONS diyalogunu acar, kimse dokunmadigi icin diyalog
-            # ekranda kalir ve ikinci `Baslat`
-            # `PlatformException(permissionRequestInProgress)` firlatir — kapi
-            # sayacla ilgisi olmayan bir sebeple kirmizi duserdi. `flutter test`
-            # ayni APK'yi yeniden kurar; `-r` runtime izinlerini korur.
-            flutter build apk --debug --flavor local \
-              --dart-define-from-file=env.json || status=$?
-            if [ $status -eq 0 ]; then
-              adb -s "$DEVICE" install -r -t -g \
-                build/app/outputs/flutter-apk/app-local-debug.apk || status=$?
-            fi
-            if [ $status -eq 0 ]; then
-              flutter test -d "$DEVICE" --flavor local \
-                integration_test/android_timer_smoke_test.dart \
-                --dart-define-from-file=env.json || status=$?
-            fi
-            adb logcat -b crash -d > "$CRASH_LOG" || true
-            adb logcat -d -s flutter:V AndroidRuntime:E > "$LOG_DIR/flutter-api${{ matrix.api-level }}.log" || true
-            # Sessiz geçme yok: süreç çökmüşse `flutter test` bazen yalnız
-            # "Lost connection" der ve kök neden yalnız crash tamponundadır.
-            if grep -q 'ClassCastException' "$CRASH_LOG"; then
-              echo "::error::logcat crash tamponunda ClassCastException var — v58 sınıfı Dart↔native prefs tip kayması."
-              status=1
-            fi
-            if grep -q 'com.manilmax.online_study_room' "$CRASH_LOG"; then
-              echo "::error::Uygulama süreci logcat crash tamponuna düştü."
-              status=1
-            fi
-            exit $status
+          # 🔴 WP-572: BU ALAN TEK SATIR OLMALI.
+          # `android-emulator-runner` bu bloku tek bir kabuk betigi olarak
+          # KOSTURMUYOR: her SATIRI ayri bir `/usr/bin/sh -c` cagrisiyla
+          # calistiriyor. Kanit, kosum 31281652153 (job 93163879845):
+          #   [command]/usr/bin/sh -c echo "GITHUB_WORKSPACE=..."
+          #   GITHUB_WORKSPACE=/home/runner/work/online-study-room/...
+          #   mkdir: cannot create directory '': No such file or directory
+          # `GITHUB_WORKSPACE` TANIMLIYDI; `LOG_DIR=...` atamasi baska bir
+          # kabukta kaldigi icin bos genisledi. Ayni sebeple `set -u`/`set -e`
+          # de sonraki satirlara gecmiyordu.
+          # Sonucu tek cumleyle: bu smoke testi CI'da HIC KOSMADI -- kapi
+          # aylardir vardi, olctugu sey yoktu. v58'de acilista coken geri
+          # sayim/pomodoro hatasini yakalamasi gereken TEK is buydu.
+          # Butun mantik artik `scripts/ci/android_emulator_smoke.sh` icinde;
+          # orada degisken kapsami ve hata yayilimi normal calisir.
+          # `scripts/ci/verify_ci_script_wiring.py` bu satirin tek satir
+          # kalmasini ve cagrilan betigin GERCEKTEN var olmasini sinar.
+          script: bash ../scripts/ci/android_emulator_smoke.sh ${{ matrix.api-level }}
 
       - name: logcat artefaktı
         if: always()
