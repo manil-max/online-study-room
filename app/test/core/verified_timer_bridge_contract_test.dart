@@ -42,7 +42,12 @@ void main() {
 
     expect(store, contains('appendPendingVerifiedCommand'));
     expect(store, contains('.put("runToken", runToken)'));
-    expect(service, contains('p, "pause", liveRunToken, startOrigin'));
+    // WP-558: `pause` zarfinin native URETICISI yoktu — tek yazan yer
+    // `handleStartBreak`ti ve o yol ulasilamazdi (`breakActionPending()`
+    // hicbir yerden cagrilmiyordu). Olu yol silindi; Dart tarafi kuyrugu
+    // hala `case 'pause'` ile TUKETIR, native uretici geri gelirse buraya
+    // da geri gelmeli.
+    expect(service, isNot(contains('"pause"')));
     expect(service, contains('p, "resume", liveRunToken, startOrigin'));
     expect(service, contains('p, "finalize", liveRunToken, startOrigin'));
     expect(service, contains('START_NOT_STICKY'));
@@ -116,8 +121,17 @@ void main() {
     expect(service, contains('.setCustomBigContentView(custom)'));
     expect(service, contains('KEY_PANEL_EXPANDED'));
     expect(service, contains('prefs().getBoolean(KEY_PANEL_EXPANDED, true)'));
-    expect(service, contains('PRESENTATION_V43_CUSTOM'));
-    expect(service, contains('PRESENTATION_STANDARD_FALLBACK'));
+    // WP-558: v43 ayrimi artik OLU tani sabitleriyle degil, iki yolun
+    // kendi cagrilariyla korunur; `PRESENTATION_*` yalnizca okunmayan bir
+    // Bundle ekstrasina yaziliyordu.
+    expect(service, contains('if (useV43CustomPanel()) {'));
+    expect(
+      service,
+      contains(
+        'addAction(0, getString(R.string.action_start), '
+        'startActionPending())',
+      ),
+    );
     expect(
       service,
       contains('views.setChronometer(\n            R.id.notif_timer_elapsed,\n            base,\n            null,\n            true,'),
@@ -150,7 +164,55 @@ void main() {
     expect(service, isNot(contains('chronometerFormatHandler')));
     expect(service, contains('.setUsesChronometer(true)'));
     expect(service, contains('.setChronometerCountDown(false)'));
-    expect(service, contains('EXTRA_PROMOTED_NOW_BAR'));
-    expect(service, contains('PROMOTED_NOW_BAR_NOT_REQUESTED'));
+    // WP-558: tani ekstralari her bildirime yaziliyordu, okuyucusu yoktu.
+    // Fixture v43 kararini belgelemeye devam eder; kod artik tasimaz.
+    expect(service, isNot(contains('EXTRA_PROMOTED_NOW_BAR')));
+    expect(service, isNot(contains('EXTRA_TIMER_PRESENTATION')));
+  });
+
+  test('WP-558: widget gereksiz uyandirmaz, boot sonrasi tazelenir', () {
+    final boot = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/'
+      'TimerBootReceiver.kt',
+    ).readAsStringSync();
+    final info = File(
+      'android/app/src/main/res/xml/odak_timer_widget_info.xml',
+    ).readAsStringSync();
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+
+    // Chronometer.base `elapsedRealtime`e goredir; reboot'ta sifirlanir ve
+    // launcher'in sakladigi eski base anlamsizlasir. Boot'ta widget'i
+    // tazeleyen TEK yer bu receiver'dir.
+    expect(boot, contains('TimerWidgets.updateAll(context)'));
+    // Olu anahtar: Dart hicbir yerde okumuyordu.
+    expect(boot, isNot(contains('timer_restore_pending')));
+
+    // Periyodik onUpdate hicbir bilgi tasimiyordu (gunde ~48 uyandirma):
+    // tek dinamik oge kendi kendine akan Chronometer, dugme etiketi ise
+    // basla/durdur aninda TimerWidgets.updateAll ile itiliyor.
+    expect(info, contains('android:updatePeriodMillis="0"'));
+    expect(info, isNot(contains('1800000')));
+
+    // Ulasilamaz mola yolu + uykudaki rol tuzagi silindi.
+    expect(service, isNot(contains('ACTION_START_BREAK')));
+    expect(service, isNot(contains('handleStartBreak')));
+    // ACTION_END_BREAK OLU DEGIL: bildirimdeki 'Calismaya don' dugmesi.
+    expect(service, contains('ACTION_END_BREAK'));
+    expect(service, contains('endBreakActionPending()'));
+  });
+
+  test('WP-558: sayac bildirim kanali her acilista guncellenir', () {
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+
+    // Erken `return` kanal ADINI ilk kurulumdaki dile cakiyordu; Dart
+    // tarafi (app_push_notification_service) kosulsuz cagiriyor.
+    expect(service, contains('createNotificationChannel(channel)'));
+    expect(service, isNot(contains('if (existing != null) return')));
   });
 }

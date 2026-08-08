@@ -5,6 +5,7 @@ import 'package:home_widget/home_widget.dart';
 
 import 'package:online_study_room/core/notifications/timer_external_command_store.dart';
 import 'package:online_study_room/core/l10n/system_localizations.dart';
+import 'package:online_study_room/features/android_widgets/published_home_widgets.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 @pragma('vm:entry-point')
@@ -44,30 +45,62 @@ enum StudyHomeWidget {
     androidName: 'TimerWidgetProvider',
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.TimerWidgetProvider',
+    catalogProvider: HomeWidgetProvider.timer,
+    consumesWidgetData: false,
   ),
   stats(
     androidName: 'StudyStatsWidgetProvider',
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.StudyStatsWidgetProvider',
+    catalogProvider: HomeWidgetProvider.studyStats,
+    consumesWidgetData: true,
   ),
   leaderboard(
     androidName: 'GroupLeaderboardWidgetProvider',
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.GroupLeaderboardWidgetProvider',
+    catalogProvider: HomeWidgetProvider.groupLeaderboard,
+    consumesWidgetData: true,
   ),
   groupGoal(
     androidName: 'GroupGoalWidgetProvider',
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.GroupGoalWidgetProvider',
+    catalogProvider: HomeWidgetProvider.groupGoal,
+    consumesWidgetData: true,
   );
 
   const StudyHomeWidget({
     required this.androidName,
     required this.qualifiedAndroidName,
+    required this.catalogProvider,
+    required this.consumesWidgetData,
   });
 
   final String androidName;
   final String qualifiedAndroidName;
+
+  /// WP-558: yayın bayrağının **tek** kaynağına köprü.
+  ///
+  /// Bu enum ile [HomeWidgetProvider] birbirinden habersiz iki listeydi; boru
+  /// hattı yalnız bunu kullandığı için `published: false` olan üç widget'a
+  /// her veri değişiminde yayın gitmeye devam ediyordu.
+  final HomeWidgetProvider catalogProvider;
+
+  /// Sağlayıcının `onUpdate`'i `widgetData`'yı gerçekten okuyor mu?
+  ///
+  /// `TimerWidgetProvider.onUpdate` `widgetData` parametresine hiç dokunmaz;
+  /// süreyi ve düğme etiketini doğrudan `TimerStateStore` prefs'inden projekte
+  /// eder (`StudyWidgetProviders.kt`). Bu yüzden sayaç için `false`.
+  final bool consumesWidgetData;
+
+  /// Yayında olmayan sağlayıcıya `updateWidget` gönderilmez.
+  bool get isPublished => isHomeWidgetPublished(catalogProvider);
+
+  /// `saveWidgetData` yalnız yayında **ve** veriyi okuyan bir tüketici varsa
+  /// anlamlıdır; yoksa her snapshot 17 boş platform kanalı turudur.
+  static bool get anyPublishedConsumesWidgetData =>
+      values.any((widget) => widget.isPublished && widget.consumesWidgetData);
 }
 
 abstract final class AndroidWidgetKeys {
@@ -291,6 +324,9 @@ class AndroidWidgetService implements AndroidWidgetGateway {
 
   @override
   Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot) async {
+    // WP-558: yayında `widgetData` okuyan sağlayıcı yoksa tek anahtar bile
+    // yazılmaz — 17 anahtar × ayrı kanal turu boşuna gidiyordu.
+    if (!StudyHomeWidget.anyPublishedConsumesWidgetData) return;
     for (final entry in snapshot.toWidgetData().entries) {
       await _saveValue(entry.key, entry.value);
     }
@@ -298,7 +334,11 @@ class AndroidWidgetService implements AndroidWidgetGateway {
 
   @override
   Future<void> refresh({Iterable<StudyHomeWidget>? widgets}) async {
-    for (final widget in widgets ?? StudyHomeWidget.values) {
+    // WP-558: allowlist tek kapı — yayında olmayan sağlayıcıya yayın yok.
+    final targets = (widgets ?? StudyHomeWidget.values).where(
+      (widget) => widget.isPublished,
+    );
+    for (final widget in targets) {
       await HomeWidget.updateWidget(
         androidName: widget.androidName,
         qualifiedAndroidName: widget.qualifiedAndroidName,

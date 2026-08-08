@@ -12,7 +12,6 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
-import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
@@ -82,7 +81,6 @@ class StudyTimerService : Service() {
                     commandOrigin = "dart_app",
                 )
                 ACTION_DISCARD_PROJECTION -> handleDiscardProjection()
-                ACTION_START_BREAK -> handleStartBreak()
                 ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
                     // WP-135: idle→start; running→stop + 00:00 (writeIdle).
@@ -161,59 +159,6 @@ class StudyTimerService : Service() {
             buildRunningNotification(startedAtMs),
         )
         // Deterministik sıra: store → UI yüzeyler → Dart broadcast.
-        TimerWidgets.updateAll(this)
-        notifyStateChanged()
-    }
-
-    /** Çalışan iş aralığını kapatır ve uygulama kapalıyken de gerçek mola fazına
-     *  geçer. Mola süresi oturuma yazılmaz; Dart açıldığında `rest` fazını
-     *  SharedPreferences'tan uzlaştırır. */
-    private fun handleStartBreak() {
-        val p = prefs()
-        val currentStart = TimerStateStore.startedAtMs(p)
-        if (currentStart <= 0L) return
-
-        val nowMs = System.currentTimeMillis()
-        val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
-        val startOrigin = p.getString(
-            TimerStateStore.KEY_START_ORIGIN,
-            "native_notification",
-        ).orEmpty()
-        startForegroundCompat(buildRunningNotification(nowMs))
-
-        if (liveRunToken.isNotBlank()) {
-            TimerStateStore.appendPendingVerifiedCommand(
-                p, "pause", liveRunToken, startOrigin,
-            )
-        } else if (!TimerStateStore.isMirror(p) &&
-            p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs
-        ) {
-            TimerStateStore.appendPendingInterval(
-                p,
-                startMs = currentStart,
-                endMs = nowMs,
-                subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
-                origin = startOrigin,
-            )
-        }
-
-        TimerStateStore.writeRunning(
-            p,
-            startedAtMs = nowMs,
-            mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
-            phase = "rest",
-            cycle = TimerStateStore.readIntCompat(p, TimerStateStore.KEY_CYCLE, 1)
-                .coerceAtLeast(1),
-            subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
-            liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
-            liveRunToken = liveRunToken,
-            startOrigin = startOrigin,
-        )
-
-        notificationManager().notify(
-            NOTIFICATION_ID,
-            buildRunningNotification(nowMs),
-        )
         TimerWidgets.updateAll(this)
         notifyStateChanged()
     }
@@ -407,7 +352,7 @@ class StudyTimerService : Service() {
             .setOngoing(true)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-        val presentation = if (useV43CustomPanel()) {
+        if (useV43CustomPanel()) {
             val custom = buildRunningRemoteViews(startedAtMs, isBreak)
             builder
                 .setContentTitle("")
@@ -417,7 +362,6 @@ class StudyTimerService : Service() {
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
                 .setCustomBigContentView(custom)
-            PRESENTATION_V43_CUSTOM
         } else {
             // v43 fallback: custom layout desteklenmeyen OEM'de sayaç ve eylem kaybolmaz.
             builder
@@ -439,9 +383,8 @@ class StudyTimerService : Service() {
                     else getString(R.string.action_stop),
                     if (isBreak) endBreakActionPending() else stopActionPending(),
                 )
-            PRESENTATION_STANDARD_FALLBACK
         }
-        return addPresentationDiagnostic(builder, presentation).build()
+        return builder.build()
     }
 
     private fun buildIdleNotification(): Notification {
@@ -450,7 +393,7 @@ class StudyTimerService : Service() {
             .setOngoing(false)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-        val presentation = if (useV43CustomPanel()) {
+        if (useV43CustomPanel()) {
             val custom = buildIdleRemoteViews()
             builder
                 .setUsesChronometer(false)
@@ -460,7 +403,6 @@ class StudyTimerService : Service() {
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
                 .setCustomBigContentView(custom)
-            PRESENTATION_V43_CUSTOM
         } else {
             builder
                 .setUsesChronometer(false)
@@ -468,30 +410,13 @@ class StudyTimerService : Service() {
                 .setContentTitle(IDLE_NOTIFICATION_TIMER_TEXT)
                 .setContentText(getString(R.string.timer_ready))
                 .addAction(0, getString(R.string.action_start), startActionPending())
-            PRESENTATION_STANDARD_FALLBACK
         }
-        return addPresentationDiagnostic(builder, presentation).build()
+        return builder.build()
     }
 
     /** v43'teki kaçış valfi: true ana ürün paneli, false işlevsel standart bildirim. */
     private fun useV43CustomPanel(): Boolean =
         prefs().getBoolean(KEY_PANEL_EXPANDED, true)
-
-    /**
-     * Now Bar/promoted ongoing, custom panel ile aynı bildirimde etkinleştirilmez.
-     * Bu ekstra yalnız tanı içindir: OEM sonucu bir ürün vaadi veya stable davranış
-     * değişikliği değildir. Ayrı bir deney bu değeri okuyabilir; burada promoted API
-     * çağrısı yapılmaz.
-     */
-    private fun addPresentationDiagnostic(
-        builder: NotificationCompat.Builder,
-        presentation: String,
-    ): NotificationCompat.Builder = builder.addExtras(
-        Bundle().apply {
-            putString(EXTRA_TIMER_PRESENTATION, presentation)
-            putString(EXTRA_PROMOTED_NOW_BAR, PROMOTED_NOW_BAR_NOT_REQUESTED)
-        },
-    )
 
     private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
@@ -542,8 +467,6 @@ class StudyTimerService : Service() {
 
     private fun startActionPending(): PendingIntent = actionPending(ACTION_START, 2)
 
-    private fun breakActionPending(): PendingIntent = actionPending(ACTION_START_BREAK, 3)
-
     private fun endBreakActionPending(): PendingIntent = actionPending(ACTION_END_BREAK, 4)
 
     /** Bildirim aksiyonu: uygulama kapalıyken de FGS başlatabilmek için
@@ -578,10 +501,19 @@ class StudyTimerService : Service() {
         )
     }
 
+    /**
+     * WP-558: kanal her serviste KOŞULSUZ yeniden yaratılır.
+     *
+     * `createNotificationChannel` var olan bir kanalın **adını ve
+     * açıklamasını günceller** (importance ve kullanıcının kendi ayarları
+     * korunur). Eski erken `return` yüzünden kanal adı ilk kurulumdaki dile
+     * çakılıyor, kullanıcı dili değiştirince "Sayaç" başlığı eski dilde
+     * kalıyordu. Dart tarafı (`app_push_notification_service.dart`) ve
+     * `AlarmNotificationFallback.ensureChannel` zaten koşulsuz çağırır;
+     * asimetri tek nokta buydu.
+     */
     private fun ensureChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val existing = notificationManager().getNotificationChannel(CHANNEL_ID)
-        if (existing != null) return
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.timer_channel_name),
@@ -607,7 +539,6 @@ class StudyTimerService : Service() {
         const val ACTION_TOGGLE = "com.manilmax.online_study_room.timer.TOGGLE"
         const val ACTION_DISCARD_PROJECTION =
             "com.manilmax.online_study_room.timer.DISCARD_PROJECTION"
-        const val ACTION_START_BREAK = "com.manilmax.online_study_room.timer.START_BREAK"
         const val ACTION_END_BREAK = "com.manilmax.online_study_room.timer.END_BREAK"
 
         const val EXTRA_STARTED_AT_MS = "startedAtMs"
@@ -627,11 +558,6 @@ class StudyTimerService : Service() {
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
         /** v43 custom panel varsayılandır; false yalnız cihaz sorununda fallback'tir. */
         private const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
-        private const val EXTRA_TIMER_PRESENTATION = "timer.presentation"
-        private const val EXTRA_PROMOTED_NOW_BAR = "timer.promoted_now_bar"
-        private const val PRESENTATION_V43_CUSTOM = "v43_custom_panel"
-        private const val PRESENTATION_STANDARD_FALLBACK = "standard_fallback"
-        private const val PROMOTED_NOW_BAR_NOT_REQUESTED = "not_requested"
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
             context: Context,

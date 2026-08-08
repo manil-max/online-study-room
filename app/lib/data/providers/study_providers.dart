@@ -23,7 +23,6 @@ import '../../core/observability/timer_diagnostic_journal.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/canonical_stats_projection.dart';
 import '../../core/stats/study_stats.dart';
-import '../../core/utils/duration_format.dart';
 import '../../features/android_widgets/android_widget_service.dart';
 import '../models/daily_stat.dart';
 import '../models/global_timer.dart';
@@ -2664,6 +2663,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_disposed) return;
     // Android home_widget yoksa (Windows/web) projeksiyon + kanal maliyeti sıfır.
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    // WP-558: uc istatistik widget'i da yayindan dusuk
+    // (`published_home_widgets.dart`). Servis katmaninda da allowlist kapisi
+    // var; buradaki erken cikis ayrica grup liderlik projeksiyonunun CPU
+    // maliyetini de sifirlar (250 ms debounce ile her veri degisiminde
+    // kosuyordu).
+    if (!_kStatsWidgets.any((widget) => widget.isPublished)) return;
     final l10n = await loadSystemLocalizations();
     final widgetService = ref.read(androidWidgetServiceProvider);
     final projection = ref.read(canonicalStatsProjectionProvider);
@@ -2713,13 +2718,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         myRank: ownRank,
       ),
     );
-    await widgetService.refresh(
-      widgets: const [
-        StudyHomeWidget.stats,
-        StudyHomeWidget.groupGoal,
-        StudyHomeWidget.leaderboard,
-      ],
-    );
+    await widgetService.refresh(widgets: _kStatsWidgets);
   }
 
   int _goalPercent(int currentSeconds, int goalSeconds) {
@@ -2761,41 +2760,25 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _syncTimerWidget() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
-    final l10n = await loadSystemLocalizations();
-    final widgetService = ref.read(androidWidgetServiceProvider);
-    if (!state.isRunning || state.startedAt == null) {
-      await widgetService.saveSnapshot(
-        AndroidWidgetSnapshot.timer(
-          l10n: l10n,
-          elapsed: '00:00:00',
-          status: l10n.commonCalismaHazir,
-          action: l10n.desktopBaslat,
-        ),
-      );
-      await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
-      return;
-    }
-
-    final now = DateTime.now();
-    final startedAt = state.startedAt!;
-    final elapsed = now.difference(startedAt).inSeconds;
-    final target = state.phaseTargetSeconds;
-    final remaining = target == null
-        ? null
-        : (target - elapsed).clamp(0, target).toInt();
-    await widgetService.saveSnapshot(
-      AndroidWidgetSnapshot.timer(
-        l10n: l10n,
-        elapsed: formatHms(remaining ?? elapsed),
-        status: state.phase == TimerPhase.rest
-            ? l10n.desktopMola
-            : l10n.commonCalsyor,
-        action: l10n.profileDurdur,
-      ),
+    // WP-558: sayac widget'i `widgetData`yi OKUMAZ.
+    //
+    // `TimerWidgetProvider.onUpdate` `widgetData` parametresine hic dokunmaz;
+    // sureyi/etiketi dogrudan `TimerStateStore` prefs'inden projekte eder
+    // (`StudyWidgetProviders.kt`). Buraya snapshot yazmak her basla/durdur/
+    // faz gecisinde 17 ayri platform kanali turuydu ve hicbir yerde
+    // okunmuyordu. Geriye yalniz yeniden cizim yayini kalir.
+    await ref.read(androidWidgetServiceProvider).refresh(
+      widgets: const [StudyHomeWidget.timer],
     );
-    await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
   }
 }
+
+/// WP-558: istatistik boru hattinin dokundugu saglayici kumesi.
+const _kStatsWidgets = <StudyHomeWidget>[
+  StudyHomeWidget.stats,
+  StudyHomeWidget.groupGoal,
+  StudyHomeWidget.leaderboard,
+];
 
 final studyTimerProvider =
     NotifierProvider<StudyTimerNotifier, StudyTimerState>(

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- WP-134: 1 hücre ≈ 40dp formülü; resize korunur. -->
+<!-- WP-558: updatePeriodMillis=0 — periyodik uyandirma kaldirildi.
+     Tek dinamik oge kendi kendine tiklayan Chronometer'dir; dugme etiketi
+     basla/durdur aninda StudyTimerService -> TimerWidgets.updateAll ile
+     itilir, boot sonrasi tazeleme TimerBootReceiver icinde. Eski yarim
+     saatlik periyot, sistemi gunde ~48 kez hicbir bilgi tasimayan
+     onUpdate icin uyandiriyordu. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_timer_widget"
     android:minWidth="40dp"
@@ -10,4 +16,4 @@
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="1"
     android:targetCellHeight="1"
-    android:updatePeriodMillis="1800000" />
+    android:updatePeriodMillis="0" />

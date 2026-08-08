@@ -6,7 +6,9 @@
 // düşürülmüş olmalı.
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 import 'package:online_study_room/features/android_widgets/published_home_widgets.dart';
 
 String _manifest() => File('android/app/src/main/AndroidManifest.xml')
@@ -112,5 +114,61 @@ void main() {
       isTrue,
       reason: 'sayaç kartı allowlist üzerinden çizilmeli',
     );
+  });
+
+  // WP-558: bu dosya eskiden yalniz manifest METNINI olcuyordu; katalog
+  // bayragi ile calisan boru hattinin gercekte ne gonderdigini olcmuyordu.
+  group("yayin allowlisti boru hattini da baglar", () {
+    late List<String> updated;
+    const channel = MethodChannel('home_widget');
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      updated = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            if (call.method == 'updateWidget') {
+              final args = call.arguments as Map<Object?, Object?>;
+              updated.add(args['android'] as String? ?? '?');
+            }
+            return true;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('yayinda olmayan saglayiciya updateWidget gonderilmez', () async {
+      const service = AndroidWidgetService();
+      final dormant = StudyHomeWidget.values
+          .where((widget) => !widget.isPublished)
+          .toList();
+      expect(dormant, isNotEmpty, reason: 'iddia bos olmasin');
+
+      await service.refresh(widgets: dormant);
+      expect(updated, isEmpty);
+
+      await service.refresh();
+      expect(
+        updated,
+        StudyHomeWidget.values
+            .where((widget) => widget.isPublished)
+            .map((widget) => widget.androidName)
+            .toList(),
+      );
+    });
+
+    test('iki enum ayni yayin bayragini okur', () {
+      for (final widget in StudyHomeWidget.values) {
+        expect(
+          widget.isPublished,
+          isHomeWidgetPublished(widget.catalogProvider),
+          reason: '${widget.androidName} iki listede ayrisiyor',
+        );
+        expect(widget.androidName, widget.catalogProvider.androidClassName);
+      }
+    });
   });
 }
