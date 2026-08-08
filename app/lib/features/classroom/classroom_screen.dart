@@ -127,47 +127,75 @@ class _NoGroupView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.groups, size: 72, color: theme.colorScheme.primary),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).classroomHenuzBirGruptaDegilsin,
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppLocalizations.of(context).classroomYeniBirGrupOlustur,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    final padding = getSafeVerticalPadding(
+      context,
+      horizontal: 24,
+      vertical: 24,
+    );
+    // 🔴 WP-541 (yayın engeli): burada eskiden `Center` + `Column` vardı, yani
+    // ekranda **hiç kaydırıcı yoktu**. Sistem yazı boyutunu büyütmüş kullanıcıda
+    // içerik viewport'u aşıyor, "Koda katıl" ve "Grupları keşfet" ekran dışında
+    // kalıyor ve kaydırılamıyordu. Ölçüm (360x720, textScale 2.0): Create
+    // [324..570] görünür, Join [682..762] ekran dışı, Discover [770..850] ekran
+    // dışı, `Scrollable` sayısı 0. Davet kodu almış yeni kullanıcı bu yüzden
+    // uygulamaya hiç giremiyordu.
+    //
+    // Çözüm: sığdığında ortalanır (görünüm aynı kalır), sığmadığında kayar.
+    // `minHeight` viewport kadar olduğu için `MainAxisAlignment.center` kısa
+    // içerikte hâlâ dikey ortalar.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.hasBoundedHeight
+                ? (constraints.maxHeight - padding.vertical).clamp(
+                    0.0,
+                    double.infinity,
+                  )
+                : 0.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.groups, size: 72, color: theme.colorScheme.primary),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).classroomHenuzBirGruptaDegilsin,
+                style: theme.textTheme.titleLarge,
               ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => createGroupFlow(context, ref),
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context).classroomGrupOlustur),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => joinGroupFlow(context, ref),
-              icon: const Icon(Icons.login),
-              label: Text(AppLocalizations.of(context).classroomKodaKatil),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const GroupDiscoveryScreen()),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context).classroomYeniBirGrupOlustur,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              icon: const Icon(Icons.travel_explore),
-              label: Text(AppLocalizations.of(context).groupDiscoveryAction),
-            ),
-          ],
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => createGroupFlow(context, ref),
+                icon: const Icon(Icons.add),
+                label: Text(AppLocalizations.of(context).classroomGrupOlustur),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => joinGroupFlow(context, ref),
+                icon: const Icon(Icons.login),
+                label: Text(AppLocalizations.of(context).classroomKodaKatil),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const GroupDiscoveryScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.travel_explore),
+                label: Text(AppLocalizations.of(context).groupDiscoveryAction),
+              ),
+            ],
+          ),
         ),
       ),
     );

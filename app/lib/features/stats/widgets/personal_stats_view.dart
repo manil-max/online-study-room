@@ -90,27 +90,48 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final split = weekdayWeekendSplit(periodSessions);
 
     if (sessions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.timelapse, size: 56, color: theme.colorScheme.primary),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context).statsHenuzCalismaKaydinYok,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+      // 🔴 WP-541: `Center` + `Column` = kaydırıcı yok. Sekme çubuğu + dönem
+      // şeridi yüksekliği yedikten sonra büyük yazı ölçüsünde bu blok
+      // viewport'a sığmıyor ve taşıyordu (320x640, textScale 2.0 → "A RenderFlex
+      // overflowed by 58 pixels on the bottom"). Grup ekranındaki boş durumla
+      // (bkz. `classroom_screen.dart` `_NoGroupView`) aynı desen, aynı çözüm:
+      // sığdığında ortalanır, sığmadığında kayar.
+      const padding = EdgeInsets.all(24);
+      return LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: padding,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.hasBoundedHeight
+                  ? (constraints.maxHeight - padding.vertical).clamp(
+                      0.0,
+                      double.infinity,
+                    )
+                  : 0.0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.timelapse,
+                  size: 56,
+                  color: theme.colorScheme.primary,
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  AppLocalizations.of(context).statsHenuzCalismaKaydinYok,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

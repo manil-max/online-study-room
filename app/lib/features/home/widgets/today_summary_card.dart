@@ -181,18 +181,32 @@ class TodaySummaryCard extends ConsumerWidget {
               mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 🔴 WP-541: bu satır eskiden `Text` + `Spacer()` + `Text` idi
+                // ve hiçbiri esnek değildi, yani `Row` iki metnin **doğal**
+                // genişliğini istiyordu. Dar telefonda VARSAYILAN yazı
+                // ölçüsünde bile taşıyordu (320 dp → 11 px sağa taşma), büyük
+                // yazıda ölçü 299 px'e çıkıyordu. Başlık kısalabilir, toplam
+                // süre kısalamaz: esneklik başlığa verildi.
                 Row(
                   children: [
-                    Text(
-                      AppLocalizations.of(context).homeBugunOzeti,
-                      style: theme.textTheme.titleMedium,
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context).homeBugunOzeti,
+                        style: theme.textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
+                    // Toplam süre esnek DEĞİL: kısaltılırsa kartın tek sayısal
+                    // bilgisi ("2s 30dk" → "2s…") yalan söyler. Yer daralınca
+                    // kısalan başlıktır.
                     Text(
                       formatHuman(total),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.primary,
                       ),
+                      maxLines: 1,
                     ),
                   ],
                 ),

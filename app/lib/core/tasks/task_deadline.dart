@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -5,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../stats/istanbul_calendar.dart';
+import '../theme/warning_tokens.dart';
 import '../../data/models/user_task.dart';
 
 /// Europe/Istanbul gününün sonu (23:59:59.999 local → UTC).
@@ -70,7 +73,23 @@ bool isTaskOverdue(DateTime now, DateTime? dueAt) {
 /// - >7g: sakin primary
 /// - ~1–7g: sarı→turuncu lerp
 /// - <24s: turuncu→kırmızı
+///
+/// 🔴 WP-541: ton skalası korunur ama **açıklık zeminden türetilir**. Eskiden
+/// dönen değerler sabit hex'ti (`0xFFB91C1C` vb.) ve tema paletinden bağımsızdı:
+/// "Gecikti" kırmızısı 11 koyu temanın hepsinde 2.13–2.89 kontrast veriyordu,
+/// yani metin-dışı 3.0 tabanının bile altındaydı; `soft_cream` gibi açık
+/// temalarda ise "yakın"/"sakin" 1.97–2.56'ya düşüyordu. Aynı sınıf hata
+/// uyarı rozetinde WP-358'de yaşandı — çözüm oradaki ile aynı: renk sabit
+/// değil, **zeminin fonksiyonu**.
+///
+/// `taskUrgencyKind` a11y etiketi ekran okuyucuyu zaten kurtarıyordu; bu
+/// düzeltme gözle okuyanı kurtarır.
 Color taskUrgencyColor(DateTime now, DateTime? dueAt, ColorScheme scheme) {
+  return _readableOnSurfaces(_rawUrgencyColor(now, dueAt, scheme), scheme);
+}
+
+/// Ton seçimi (WP-197 spektrumu) — kontrast düzeltmesinden önceki ham renk.
+Color _rawUrgencyColor(DateTime now, DateTime? dueAt, ColorScheme scheme) {
   if (dueAt == null) {
     return scheme.onSurfaceVariant;
   }
@@ -96,6 +115,47 @@ Color taskUrgencyColor(DateTime now, DateTime? dueAt, ColorScheme scheme) {
   // <6s: turuncu → kırmızı
   final t = 1.0 - (hours / 6).clamp(0.0, 1.0);
   return Color.lerp(const Color(0xFFEA580C), const Color(0xFFDC2626), t)!;
+}
+
+/// Rengi **tonunu koruyarak** okunur hâle getirir.
+///
+/// İki zemin birden gözetilir, çünkü aynı renk iki farklı yüzeyde çiziliyor:
+/// ana ekran kartı [ColorScheme.surface] üstünde (`tasks_card.dart`), Görevler
+/// listesi ise scaffold ([ColorScheme.surfaceContainerLowest]) üstünde
+/// (`tasks_screen.dart`). Yalnız birine göre çözmek diğerini sessizce kırar.
+///
+/// Saf ve deterministiktir: aynı renk + aynı şema her zaman aynı sonucu verir.
+Color _readableOnSurfaces(Color color, ColorScheme scheme) {
+  final backgrounds = <Color>[scheme.surface, scheme.surfaceContainerLowest];
+  double worst(Color candidate) => backgrounds
+      .map((background) => contrastRatio(candidate, background))
+      .reduce(math.min);
+
+  var best = color;
+  var bestRatio = worst(color);
+  if (bestRatio >= kMinTextContrast) return color;
+
+  // Açıklığı iki yönde de adım adım dener; hedefi ilk tutturan kazanır, böylece
+  // renk gereğinden fazla bozulmaz. Yön sabitlenmez: orta parlaklıktaki bir
+  // zeminde doğru yön hangisiyse o bulunur.
+  final hsl = HSLColor.fromColor(color);
+  for (var step = 1; step <= 25; step++) {
+    final delta = step * 0.04;
+    for (final lightness in <double>[
+      hsl.lightness + delta,
+      hsl.lightness - delta,
+    ]) {
+      if (lightness < 0.0 || lightness > 1.0) continue;
+      final candidate = hsl.withLightness(lightness).toColor();
+      final ratio = worst(candidate);
+      if (ratio > bestRatio) {
+        best = candidate;
+        bestRatio = ratio;
+      }
+      if (ratio >= kMinTextContrast) return candidate;
+    }
+  }
+  return best;
 }
 
 /// a11y: yalnız renge güvenme — etiket anahtarı.
