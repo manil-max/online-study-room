@@ -84,6 +84,38 @@ def _needs_env_json() -> tuple[bool, str]:
     return True, ""
 
 
+def _adb() -> str | None:
+    r"""`adb` yolunu cozer; PATH'te olmasi sart degil.
+
+    🔴 Neden gerekli: WP-516'nin kapisi `shutil.which("adb")` ile bakiyordu ve
+    bu makinede adb PATH'te DEGIL (SDK `C:\Android\Sdk`, `local.properties`
+    icindeki `sdk.dir` gosteriyor). Sonuc: calisan bir SDK ve bootlanmis bir
+    emulator varken kapi yine "adb kurulu degil" diyip ATLANDI donuyordu —
+    yani kapi yerelde asla kosmuyordu. Atlanan kapi yesil degildir ama hep
+    atlanan bir kapi da kapi degildir.
+    """
+    found = shutil.which("adb")
+    if found:
+        return found
+
+    roots: list[Path] = []
+    local_props = APP / "android" / "local.properties"
+    if local_props.exists():
+        for line in local_props.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("sdk.dir="):
+                roots.append(Path(line.split("=", 1)[1].strip().replace("\\\\", "\\")))
+    for env_name in ("ANDROID_SDK_ROOT", "ANDROID_HOME"):
+        value = os.environ.get(env_name)
+        if value:
+            roots.append(Path(value))
+
+    for root in roots:
+        candidate = root / "platform-tools" / ("adb.exe" if os.name == "nt" else "adb")
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
 def _needs_android_device() -> tuple[bool, str]:
     """Emulator/cihaz smoke'u yalniz gercek bir Android hedefi varken kosar.
 
@@ -91,10 +123,11 @@ def _needs_android_device() -> tuple[bool, str]:
     tablosunda sebebiyle listelenir. Kapinin asil evi CI'daki `android-emulator`
     isidir (matris API 30 + 33).
     """
-    if shutil.which("adb") is None:
-        return False, "`adb` bu makinede kurulu degil (CI'da emulator job'i kosar)"
+    adb = _adb()
+    if adb is None:
+        return False, "`adb` bulunamadi (PATH, local.properties sdk.dir, ANDROID_SDK_ROOT)"
     probe = subprocess.run(
-        ["adb", "devices"], capture_output=True, text=True, timeout=60
+        [adb, "devices"], capture_output=True, text=True, timeout=60
     )
     if probe.returncode != 0:
         return False, "`adb devices` calismadi — Android SDK platform-tools eksik"
@@ -267,8 +300,12 @@ def internal_android_smoke() -> int:
     tamponunda durur. CI'daki `android-emulator` isi de ayni iki adimi yapar;
     yerel ile CI ayni seyi olcsun diye mantik burada tek yerde.
     """
+    adb = _adb()
+    if adb is None:
+        print("adb bulunamadi.")
+        return 1
     devices = subprocess.run(
-        ["adb", "devices"], capture_output=True, text=True, timeout=60
+        [adb, "devices"], capture_output=True, text=True, timeout=60
     )
     booted = [
         line.split("\t")[0]
@@ -281,7 +318,7 @@ def internal_android_smoke() -> int:
     device = booted[0]
     print(f"Cihaz: {device}")
 
-    subprocess.run(["adb", "-s", device, "logcat", "-c"], timeout=60)
+    subprocess.run([adb, "-s", device, "logcat", "-c"], timeout=60)
 
     # 🔴 APK once derlenir ve `install -g` ile TUM runtime izinleri verilerek
     # kurulur. Sebebi olculdu (API 33): ilk `Baslat` POST_NOTIFICATIONS
@@ -293,7 +330,7 @@ def internal_android_smoke() -> int:
     steps: list[list[str]] = [
         [_exe("flutter"), "build", "apk", "--debug", "--flavor", "local",
          "--dart-define-from-file=env.json"],
-        ["adb", "-s", device, "install", "-r", "-t", "-g", str(apk)],
+        [adb, "-s", device, "install", "-r", "-t", "-g", str(apk)],
         [_exe("flutter"), "test", "-d", device, "--flavor", "local",
          "integration_test/android_timer_smoke_test.dart",
          "--dart-define-from-file=env.json"],
@@ -305,7 +342,7 @@ def internal_android_smoke() -> int:
             break
 
     crash = subprocess.run(
-        ["adb", "-s", device, "logcat", "-b", "crash", "-d"],
+        [adb, "-s", device, "logcat", "-b", "crash", "-d"],
         capture_output=True, text=True, errors="replace", timeout=120,
     ).stdout
     if "ClassCastException" in crash:
