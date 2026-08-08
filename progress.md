@@ -3,8 +3,8 @@
 > Son güncelleme: **2026-08-06** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
-> açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. `docs/PLAN.md` artık
-> yalnız buraya işaret eden bir sapıdır; iki dosyada iki farklı gerçek olmaz.
+> açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. Eskiden buraya işaret
+> eden `docs/PLAN.md` sapı WP-547'de silindi; iki dosyada iki farklı gerçek olmaz.
 >
 > 🔴 **Sürüm politikası (2026-07-26):** tag oluşturma ve release tetikleme **sahip
 > onayına bağlıdır**. Commit/push serbest; düzeltmeler biriktirilip tek sürümde çıkar.
