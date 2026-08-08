@@ -72,7 +72,23 @@ void main() {
       find.descendant(of: gate, matching: find.byIcon(Icons.info_outline)),
       findsOneWidget,
     );
-    // 48 dp dokunma alanı (DoD erişilebilirlik maddesi).
-    expect(tester.getSize(gate).height, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets('iki kapı da 48 dp dokunma alanı taşır', (tester) async {
+    // DoD erişilebilirlik maddesi. Şerit ilk turda 35 dp kalmıştı; sahip
+    // 2026-08-08'de ikisinin de 48 dp olmasına karar verdi.
+    await tester.pumpWidget(harness());
+    await tester.pump();
+
+    for (final key in const [
+      ValueKey('crown-header-tiers-gate'),
+      ValueKey('crown-strip-tiers-gate'),
+    ]) {
+      expect(
+        tester.getSize(find.byKey(key)).height,
+        greaterThanOrEqualTo(48),
+        reason: '$key dokunma alanı',
+      );
+    }
   });
 }

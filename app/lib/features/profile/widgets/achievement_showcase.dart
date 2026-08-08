@@ -806,13 +806,15 @@ class _XpBar extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         // WP-512: kademe şeridi de rütbe satırıyla aynı XP eşikleri sayfasını
-        // açar. Üstteki 8 px boşluk artık dokunma alanının payı.
+        // açar. Üstteki 8 px boşluk dokunma alanına katıldı; şerit içeriği
+        // ~19 dp olduğundan 48 dp'yi sabit padding değil `minHeight` verir —
+        // yazı ölçeği büyüyünce alan kendiliğinden büyür, küçülmez.
         InkWell(
           key: const ValueKey('crown-strip-tiers-gate'),
           onTap: () => showCrownTiers(context, currentXp: xp),
           borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

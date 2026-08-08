@@ -5363,7 +5363,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-501** Grup başarımı seçili gruptan (`0121`) | Database Gates local replay → staging apply → Android telefon (**iki gruba** üye, aynı hafta ikisinde de birinci olmuş hesap) | (1) CI local replay job'ında `046` 16/16 yeşil. (2) Şema uygulandıktan sonra Lider Kurt ilerlemesi **2 değil 1** gösteriyor. (3) Grup değiştirince (sınıf seçici) değer o grubun gerçeğine dönüyor. (4) Daha önce kazanılmış kademe/XP **duruyor**, geri alınmamış. Commit: `28d6a57`. **Cihazda doğrulanmalı.** |
 | **WP-503** Dağılım grafiği Y ekseni | Android telefon (İstatistik → kişisel → oturum dağılımı; 14 / 30 / 90 günün üçü de) | Dağılım grafiğinin sol ekseninde iki sayı üst üste binmiyor; en alttaki `0` artık yazmıyor; her sayının hizasında bir ızgara çizgisi var (çizgisiz sayı ya da sayısız çizgi kalmıyor). Commit: `0d5a82e`. **Cihazda doğrulanmalı.** |
 | **WP-504** Kalan gömülü metinler | Android telefon, **cihaz dili İngilizce** (ana ekran kart ekleme sayfası; profil → oturum geçmişi; profil → taç kademeleri) | Kart ekleme başlığında "12 cards", oturum geçmişi satırında "3 sessions" yazıyor ("kart"/"oturum" değil); dili Türkçe'ye alınca "12 kart"/"3 oturum" oluyor; taç kademeleri sayfasında XP değerleri iki dilde de "250 XP" görünüyor. Commit: `7f7e436`. **Cihazda doğrulanmalı.** |
-| **WP-512** Taç kademeleri ikinci kapı | Android telefon (Profil → Başarımlar; XP'si olan hesap) | Rütbe adı + toplam XP satırının sağında ⓘ ipucu görünüyor; satıra dokununca XP eşikleri sayfası açılıyor; hemen altındaki 6 renkli kademe şeridine dokununca da aynı sayfa açılıyor; sayfada kullanıcının bulunduğu kademe işaretli. Commit: `d0fef93`. **Cihazda doğrulanmalı.** |
+| **WP-512** Taç kademeleri ikinci kapı | Android telefon (Profil → Başarımlar; XP'si olan hesap) | Rütbe adı + toplam XP satırının sağında ⓘ ipucu görünüyor; satıra dokununca XP eşikleri sayfası açılıyor; hemen altındaki 6 renkli kademe şeridine dokununca da aynı sayfa açılıyor; sayfada kullanıcının bulunduğu kademe işaretli; iki dokunma alanı da ≥ 48 dp. Commit: `d0fef93` + `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -8034,15 +8034,15 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   2. Satırın sağına küçük bir `info_outline` ipucu ikonu (16 px, rütbe
      renginde) — keşfedilebilirlik bu ikonla sağlanıyor, kapı görünür oldu.
   3. Altındaki **6 kademe şeridi** de aynı sayfayı açar. Şeridin üstündeki
-     8 px boşluk `InkWell`'in dikey padding'ine taşındı; boşluk yerine
-     dokunma alanı oldu, görünürde bir şey kaymadı.
+     8 px boşluk dokunma alanına katıldı.
 - **Ölçüm (tahmin değil, testte ölçüldü):** başlık satırı eskiden **~44 dp**
-  yüksekliğindeydi; tıklanabilir olduğu için `minHeight: 48` verildi ve
-  **48 dp** ölçüldü. Kademe şeridi **35 dp**'de kaldı — 48'e çıkarmak XP
-  çubuğunun altına ~13 px görünür boşluk ekliyordu. Birincil kapı (başlık)
-  48 dp olduğu için şerit bilinçli olarak ikincil kolaylık bırakıldı.
-  🔵 **Ürün kararı:** sahip isterse şerit de 48 dp'ye çıkarılır, bedeli
-  görünür boşluktur.
+  yüksekliğindeydi, `minHeight: 48` ile **48 dp** oldu. Kademe şeridi ilk
+  turda **35 dp**'de kalmıştı; ✅ **sahip kararı (2026-08-08): ikisi de 48 dp**
+  — şeride de `minHeight: 48` verildi, bedeli XP çubuğunun altında ~13 px
+  görünür boşluk ve kabul edildi.
+  🔴 48 dp'yi **sabit padding değil `minHeight`** verir: şerit içeriği ~19 dp
+  ve yazı ölçeği büyüyünce içerik büyür — sabit padding'de alan 48'in altına
+  düşmez ama içerik taşardı; `minHeight` alanı büyütür, asla küçültmez.
 - **Değişen dosyalar:**
   `app/lib/features/profile/widgets/achievement_showcase.dart` ·
   `app/test/features/profile/crown_tiers_gate_wp512_test.dart` (yeni)
@@ -8054,13 +8054,16 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   2. ✅ Rütbe satırına dokununca sayfa açılıyor.
   3. ✅ Kademe şeridine dokununca da aynı sayfa açılıyor.
   4. ✅ Satır bir `info_outline` ipucu taşıyor ve yüksekliği ≥ 48 dp.
-- **Test:** 3 yeni iddia yeşil. Sayfanın gerçekten açıldığının kanıtı
+- **Test:** 4 yeni iddia yeşil. Sayfanın gerçekten açıldığının kanıtı
   `1000000 XP` (Immortal eşiği) — bu metin **yalnız** kademe sayfasında
   yazılıyor, vitrinin kendisinde geçmiyor; yani iddia "bir şey açıldı"yı
   değil "doğru sayfa açıldı"yı ölçüyor.
+  🔴 48 dp iddiası **kasten kırık girdiyle** sınandı: `minHeight` kısıtı
+  eski `Padding`'e döndürülünce iddia `Actual: <35.0>` ile kırmızıya düştü —
+  yani gerçekten koruyor.
   `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı**
-  (deno bu makinede kurulu değil). Başlık satırının yüksekliği değiştiği için
-  ayrıca golden turu koşuldu: **49/49 yeşil**.
+  (deno bu makinede kurulu değil). İki kapının da yüksekliği değiştiği için
+  golden turu iki kez koşuldu: **49/49 yeşil**.
 - **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel kabul bekliyor.
 - **Model önerisi:** 🔵 Sonnet
 
