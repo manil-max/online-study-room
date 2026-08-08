@@ -25,9 +25,6 @@ class _NoopTimerNotificationService implements TimerNotificationGateway {
 
   @override
   Future<void> requestPermissionIfNeeded() async {}
-
-  @override
-  Future<void> showRunning(TimerNotificationSnapshot snapshot) async {}
 }
 
 class _NoopAndroidWidgetService implements AndroidWidgetGateway {

@@ -16,15 +16,12 @@ import 'package:online_study_room/core/notifications/timer_notification_service.
 class MockTimerNotificationService implements TimerNotificationService {
   @override
   Stream<TimerNotificationAction> get commands => const Stream.empty();
-  Future<void> show(TimerNotificationSnapshot snapshot) async {}
   @override
   Future<void> cancel() async {}
   @override
   Future<void> initialize() async {}
   @override
   Future<void> requestPermissionIfNeeded() async {}
-  @override
-  Future<void> showRunning(TimerNotificationSnapshot snapshot) async {}
 }
 
 class MockStudyTimerNotifier extends StudyTimerNotifier {
