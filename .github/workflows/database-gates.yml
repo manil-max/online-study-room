@@ -31,6 +31,8 @@ on:
           - production-repair-baseline-0070
           - staging-v3-compatibility
           - production-v3-compatibility
+          - staging-backfill-goals
+          - production-backfill-goals
       expected_git_sha:
         description: Exact 40-character commit SHA checked out by this run.
         required: false
@@ -140,6 +142,8 @@ jobs:
             'production-repair-baseline-0070' { 'repair-baseline-0070' }
             'staging-v3-compatibility' { 'inspect-v3-compatibility' }
             'production-v3-compatibility' { 'inspect-v3-compatibility' }
+            'staging-backfill-goals' { 'backfill-goals' }
+            'production-backfill-goals' { 'backfill-goals' }
             default {
               if ('${{ inputs.operation }}'.EndsWith('-apply')) { 'apply' } else { 'dry-run' }
             }
@@ -150,7 +154,7 @@ jobs:
           "project_ref=$projectRef" >> $env:GITHUB_OUTPUT
 
       - name: Resolve production backup evidence from Supabase
-        if: inputs.operation == 'production-apply' && inputs.backup_evidence == ''
+        if: (inputs.operation == 'production-apply' || inputs.operation == 'production-backfill-goals') && inputs.backup_evidence == ''
         shell: pwsh
         run: |
           $json = (& ./tooling/supabase/backup-evidence.ps1 `

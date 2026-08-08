@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'inspect-v3-compatibility', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070', 'repair-baseline-0070')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'inspect-v3-compatibility', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070', 'repair-baseline-0070', 'backfill-goals')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -136,7 +136,7 @@ try {
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {
     throw "Deploy contract rejects migration head $ExpectedMigrationHead for $Environment."
   }
-  if ($Action -in @('apply', 'manual-push-0066-0070', 'repair-baseline-0070', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
+  if ($Action -in @('apply', 'manual-push-0066-0070', 'repair-baseline-0070', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'backfill-goals') -and -not [bool]$targetContract.deploy_enabled) {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
   }
 
@@ -151,7 +151,7 @@ try {
     throw 'SUPABASE_DB_PASSWORD must come from the environment secret store.'
   }
 
-  if ($Environment -eq 'production' -and $Action -in @('apply', 'manual-push-0066-0070')) {
+  if ($Environment -eq 'production' -and $Action -in @('apply', 'manual-push-0066-0070', 'backfill-goals')) {
     Assert-ProductionApproval -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -ProjectRef $ProjectRef -BackupEvidence $BackupEvidence -Confirmation $ConfirmProductionGo -GitHubActions $env:GITHUB_ACTIONS -ApprovalEnvironment $env:DEPLOY_APPROVAL_ENVIRONMENT
   }
 
@@ -236,6 +236,17 @@ $post_check$;
     Assert-StagingReconciliationAction -Action $reconciliationInspectAction -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $reconciliationInspectSql
     Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $reconciliationInspectSql) -Label "04-reconciliation-$reconciliationAction-summary"
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '05-migration-list-after'
+  } elseif ($Action -eq 'backfill-goals') {
+    # Once/sonra ayni sayaci okuruz: idempotens iddiasi kanittan okunabilsin
+    # diye ikinci kosum yeni satir uretmemelidir (`045` pgTAP ile ayni iddia).
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list'
+    $backfillInspectSql = Get-GoalBackfillSql -Action inspect
+    Assert-GoalBackfillAction -Action inspect -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $backfillInspectSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $backfillInspectSql) -Label '03-goal-backfill-before'
+    $backfillSql = Get-GoalBackfillSql -Action backfill
+    Assert-GoalBackfillAction -Action backfill -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $backfillSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $backfillSql) -Label '04-goal-backfill'
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $backfillInspectSql) -Label '05-goal-backfill-after'
   } else {
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
     Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--dry-run') -Label '03-dry-run'

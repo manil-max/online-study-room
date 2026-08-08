@@ -657,13 +657,22 @@ class L10nGateProbe extends StatelessWidget {
 
 def self_test() -> int:
     """Kapının kırmızıya döndüğünü kanıtlar."""
+    # 🔴 Prob DISKE YAZILMAZ. Onceki sürüm `app/lib/features/` altina gecici
+    # bir dosya yazip siliyordu; `test_all.py` ayni tier'i paralel kosturdugu
+    # icin `contract`/`l10n` kapilari o dosyayi yakalayip ya FileNotFoundError
+    # ile cokuyor ya da bilerek bozuk probu gercek kaynak sanip yanlis kirmizi
+    # uretiyordu. Prob artik ayni giris noktasina bellekten verilir; paylasilan
+    # agac hic degismez.
+    if SELF_TEST_PROBE.exists():
+        print(f"FAIL: gecici kapi probu repoda kalmis: {SELF_TEST_PROBE}")
+        return 1
     sources = dart_sources()
     baseline = set(ui_prose_violations(sources))
-    SELF_TEST_PROBE.write_text(SELF_TEST_SOURCE, encoding="utf-8")
-    try:
-        probed = set(ui_prose_violations(dart_sources()))
-    finally:
-        SELF_TEST_PROBE.unlink(missing_ok=True)
+    probe = (
+        SELF_TEST_PROBE.relative_to(ROOT).as_posix(),
+        strip_comments(SELF_TEST_SOURCE),
+    )
+    probed = set(ui_prose_violations(sources + [probe]))
 
     new = probed - baseline
     expected = (

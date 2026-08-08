@@ -50,12 +50,34 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # migration_head 0121 olarak kalici gercek durumu yansitir. release_enabled
 # BILEREK false kalir -- stable release ayri, tek seferlik confirmation
 # string'iyle gecer (bkz. release-gate.ps1).
+# 2026-08-08 (WP-506): deploy_enabled iki ortamda da YALNIZ `backfill-goals`
+# icin acildi. Bu eylem migration UYGULAMAZ; head iki tarafta da 0121'de kalir,
+# bu yuzden asagidaki head iddialari degismedi. Kosum biter bitmez ayri bir
+# commit ile $false'a re-lock edilir ve bu iki satir da geri cevrilir --
+# ratchet'in degeri tam olarak "her acilis testi elle degistirmeyi gerektirir"
+# olmasindadir, o yuzden gevsetilmedi.
 Assert-Equal $contract.staging.migration_head '0121' 'v59 sonrasi staging gercek head 0121'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'v59 sonrasi staging yeniden kilitli'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'WP-506 backfill icin staging tek seferlik acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0121' 'v59 sonrasi production gercek head 0121'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'v59 sonrasi production yeniden kilitli'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'WP-506 backfill icin production tek seferlik acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
+
+# Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
+# kendisi hangi is icin acildigini ve re-lock taahhudunu yazili tasimalidir;
+# boylece unutulmus bir `true` kanittan okunur, hatirlamaya kalmaz.
+foreach ($environmentName in @('staging', 'production')) {
+  $target = $contract.$environmentName
+  if ([bool]$target.deploy_enabled) {
+    if ($target.hold_reason -notmatch '(?i)^OPEN\s') {
+      throw "$environmentName deploy_enabled is true but hold_reason declares no OPEN scope."
+    }
+    if ($target.hold_reason -notmatch '(?i)re-lock') {
+      throw "$environmentName deploy_enabled is true without a written re-lock commitment."
+    }
+  }
+  $passed++
+}
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8
@@ -236,6 +258,44 @@ Assert-Throws -Name 'arbitrary reconciliation SQL denied' -Script {
 Assert-Throws -Name 'production ref reconciliation masquerade denied' -Script {
   Assert-StagingReconciliationAction -Action prepare -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationPrepareSql
 }
+
+$backfillInspectSql = Get-GoalBackfillSql -Action inspect
+$backfillWriteSql = Get-GoalBackfillSql -Action backfill
+Assert-GoalBackfillAction -Action inspect -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $backfillInspectSql
+$passed++
+Assert-GoalBackfillAction -Action backfill -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $backfillWriteSql
+$passed++
+# Reconciliation'dan farkli olarak backfill production'da da mesrudur (insert-only,
+# yaprak tablo); production onayi remote.ps1'de ayrica zorunlu tutulur.
+Assert-GoalBackfillAction -Action backfill -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $backfillWriteSql
+$passed++
+Assert-Throws -Name 'backfill ref masquerade denied' -Script {
+  Assert-GoalBackfillAction -Action backfill -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $backfillWriteSql
+}
+Assert-Throws -Name 'arbitrary backfill SQL denied' -Script {
+  Assert-GoalBackfillAction -Action backfill -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'select public.backfill_goal_completions();'
+}
+Assert-Throws -Name 'backfill inspection may not write' -Script {
+  Assert-GoalBackfillAction -Action inspect -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $backfillWriteSql
+}
+# Kapinin kendisi kirik girdiyle sinanir: yazici SQL'i denetimden gecse bile
+# `Assert-SafeSupabaseArguments` yikici fiilleri reddetmeye devam etmelidir.
+Assert-Throws -Name 'destructive backfill argument denied' -Script {
+  Assert-SafeSupabaseArguments -Arguments @('db', 'query', '--linked', 'delete from public.goal_progress_events;')
+}
+# Uzak yol gercekten bagli mi: remote.ps1 ve workflow ikisi de tanimali.
+$remoteScriptText = Get-Content -LiteralPath (Join-Path $repoRoot 'tooling\supabase\remote.ps1') -Raw -Encoding UTF8
+if ($remoteScriptText -notmatch "Action -eq 'backfill-goals'" -or
+    $remoteScriptText -notmatch "'apply', 'manual-push-0066-0070', 'backfill-goals'") {
+  throw 'remote.ps1 must implement backfill-goals and gate it behind production approval.'
+}
+$passed++
+if ($databaseWorkflow -notmatch 'staging-backfill-goals' -or
+    $databaseWorkflow -notmatch 'production-backfill-goals' -or
+    $databaseWorkflow -notmatch "'production-backfill-goals' \{ 'backfill-goals' \}") {
+  throw 'Database Gates must expose both backfill-goals operations with an explicit mapping.'
+}
+$passed++
 
 $sha = '0123456789abcdef0123456789abcdef01234567'
 $confirmation = "PRODUCTION GO:$sha`:0063`:$productionRef"

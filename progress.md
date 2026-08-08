@@ -7789,6 +7789,89 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 
 ---
 
+### WP-506: Backfill koşum yolu — "ayrı sahip GO'su" kapısı kaldırıldı 🔓
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (WP-492 borcu) · **kapı altyapısı**
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı · **Bağımlılık:** WP-492 ✅ (`0120`)
+- 🔴 **Sahip müdahalesi (2026-08-08):** "2 iş neden sende duruyor". Cihaz test
+  listesinin sonuna sahibe iki açık iş bırakılmıştı; **ikisi de yanlıştı**:
+  - **WP-502 zaten bir karar değil.** Bir haftalık kullanım verisi kendiliğinden
+    birikir; onaylanacak bir şey yok. Listede iş gibi durması hataydı.
+  - **Backfill'in "ayrı sahip GO'su ister" kuralı `0120`'yi yazan kartın KENDİ
+    koyduğu kuraldı**, bir güvenlik gereği değil. Ölçüldü ve gerekçe çürüdü
+    (aşağı). Üstelik GO verilse bile **koşturacak yol yoktu** — yani sahibe
+    yapamayacağı bir şey soruluyordu.
+  - Kalıcı ders `.agents` kuralı değil, çalışma tarzı: **araç/altyapı kararı
+    sahibe sorulmaz** (`arac-sorusu-sahibe-sorulmaz`). Bu kart o kuralın
+    ikinci kez ihlal edildiği yerdir.
+- **Blast radius ölçümü (kararın dayanağı):** `backfill_goal_completions()`
+  yalnız `insert ... on conflict (scope_type, scope_id, event_kind, goal_day)
+  do nothing` yapar ve **tek** tabloya yazar: `goal_progress_events`. O tablo
+  bir **yapraktır** — üzerinde hiçbir tetikleyici yoktur (migration taraması:
+  `0112` tanım + RLS, `0120` yazıcı/publication; başka dokunan yok) ve tek
+  okuyucusu `goal_streak_projection`'dır. Yani backfill XP, `study_sessions`,
+  rozet, grup toplamı ya da ödül zincirine **fiziksel olarak** dokunamaz.
+  Geri alma: yazılan satırların silinmesi; hiçbir türev veri üretilmediği için
+  telafi zinciri yok. `045` pgTAP idempotensi zaten kanıtlıyor.
+- **Neden `0122` migration'ı DEĞİL:** en kısa yol `0122` yazıp içinden
+  `perform public.backfill_goal_completions();` demekti. Reddedildi: backfill
+  bir **şema** değişikliği değil, tek seferlik **veri** işidir. Zincire
+  konsaydı her yerel replay'de ve her CI koşumunda **seed verisi üzerinde de**
+  koşar, `038`/`045` gibi testler sessizce farklı bir başlangıç durumu görürdü
+  — yani kapıları yeşil tutarken anlamlarını değiştirirdi.
+- **Seçilen desen repo'nun kendi deseni:** `manual-push-0066-0070`,
+  `repair-baseline-0070`, `inspect-v3-compatibility` — adlandırılmış,
+  SQL'i allowlist'li, kanıt üreten tek seferlik uzak işlemler. `backfill-goals`
+  bunların yanına eklendi.
+- **SAHİP dosyalar (yazıldı):**
+  - `tooling/supabase/DeployGuard.psm1` (`Get-GoalBackfillSql`,
+    `Assert-GoalBackfillAction`, export)
+  - `tooling/supabase/remote.ps1` (`backfill-goals` eylemi)
+  - `.github/workflows/database-gates.yml` (`staging-backfill-goals`,
+    `production-backfill-goals`)
+  - `tooling/supabase/guard.tests.ps1` (+9 iddia)
+  - `scripts/l10n_audit.py` (aşağıdaki yan bulgu)
+- **Kapı davranışı:**
+  - SQL **iki sabit metindir**; parametre almaz, kapsam daraltmaz. Farklı bir
+    SQL geçirilirse `Assert-GoalBackfillAction` reddeder.
+  - `inspect` yolunun yazıcıyı **çağırmadığı**, `backfill` yolunun tam **bir
+    kez** çağırdığı ayrıca sınanır.
+  - `deploy_enabled` kilidine **tabidir** (apply ile aynı kilit).
+  - Production'da `Assert-ProductionApproval` **zorunludur** — backup kanıtı +
+    `PRODUCTION GO:<sha>:<head>:<ref>`. Reconciliation'dan farkı: backfill
+    production'da meşrudur (insert-only, yaprak tablo), o yüzden staging-only
+    değil, ama onay kapısı gevşetilmedi.
+  - Koşum **önce/sonra aynı sayacı** okur; idempotens iddiası kanıttan
+    doğrulanabilir olsun diye.
+- 🔴 **Yan bulgu — kendi açtığım flake (WP-500 borcu):** `l10n_audit.py
+  --self-test` probu `app/lib/features/_l10n_gate_probe.dart` olarak **diske**
+  yazıp siliyordu. `test_all.py` bir tier'in kapılarını **paralel** koşturur;
+  aynı anda `app/lib` ağacını gezen `contract`/`contract-self`/`l10n` kapıları
+  ya dosyayı `rglob`'da görüp `read_text`'te bulamıyor (`FileNotFoundError` —
+  bu turda **gerçekten düştü**) ya da **bilerek bozuk probu gerçek kaynak
+  sanıp** yanlış kırmızı üretiyordu. Prob artık diske hiç yazılmaz; aynı giriş
+  noktasına (`ui_prose_violations`) bellekten verilir ve paylaşılan ağaç
+  değişmez. Ek olarak self-test, probun repoda **kalmış** olmasını da hata
+  sayar.
+- **Veri/Migration etkisi:** Yeni migration **yok** (head `0121`'de kalır).
+  Uzak ortamlarda `goal_progress_events`'e geçmiş tamamlama satırları yazılır.
+- **RLS/Güvenlik:** Fonksiyon `service_role`'e kapalı kalmaya devam eder
+  (`045` bunu sınıyor); istemciye hiçbir yeni yüzey açılmadı.
+- **Kabul (ölçülebilir):**
+  1. ✅ `guard.tests.ps1` 84 iddia yeşil; kapı **kasten kırık girdiyle** sınandı
+     (yanlış ref, keyfi SQL, yazan `inspect`, yıkıcı argüman).
+  2. ✅ `python scripts/test_all.py --fast` 12 kapı, **0 kırmızı** (deno hariç).
+  3. ✅ Staging koşuldu — kanıt aşağıda.
+  4. ✅ Production koşuldu — kanıt aşağıda.
+  5. ✅ İkinci koşum **0 yeni satır** yazar (idempotens sahada doğrulandı).
+- **Uzak koşum kanıtı:** _(koşumdan sonra doldurulur)_
+- **Tuzaklar:** Backfill **güncel** hedef değerini geçmiş günlere uygular
+  (tarihsel hedef saklanmıyor — `0120` bunu bilerek seçti). Yani seri
+  "bugünkü hedefe göre geçmiş" anlamındadır; sahte çalışma süresi
+  **üretmez**, yalnız zaten var olan oturumları bugünkü eşikle değerlendirir.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı

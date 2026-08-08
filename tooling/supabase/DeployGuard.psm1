@@ -526,6 +526,71 @@ function Assert-StagingReconciliationAction {
   }
 }
 
+function Get-GoalBackfillSql {
+  <#
+    WP-506: `backfill_goal_completions()` (0120) icin uzak kosum yolu.
+
+    Fonksiyon insert-only'dir ve `on conflict do nothing` tasir; yalniz
+    `goal_progress_events` YAPRAK tablosuna yazar. O tablonun hicbir
+    tetikleyicisi yoktur (tek okuyucusu `goal_streak_projection`), yani
+    backfill XP, oturum, rozet ya da grup toplamlarina dokunamaz. Blast radius
+    olculmustur; bu yuzden burada tek bir sabit cagri durur, parametre yoktur.
+  #>
+  param([Parameter(Mandatory)][ValidateSet('inspect', 'backfill')][string]$Action)
+
+  if ($Action -eq 'backfill') {
+    return @'
+select json_build_object(
+  'kind', 'goal_backfill_result',
+  'events_written', public.backfill_goal_completions()
+)::text as goal_backfill_result;
+'@
+  }
+
+  return @'
+select json_build_object(
+  'kind', 'goal_backfill_state',
+  'observed_at', now(),
+  'personal_events', count(*) filter (where scope_type = 'personal'),
+  'group_events', count(*) filter (where scope_type = 'group'),
+  'earliest_goal_day', min(goal_day),
+  'latest_goal_day', max(goal_day)
+)::text as goal_backfill_state
+from public.goal_progress_events
+where event_kind = 'goal_completed';
+'@
+}
+
+function Assert-GoalBackfillAction {
+  param(
+    [Parameter(Mandatory)][ValidateSet('inspect', 'backfill')][string]$Action,
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  $expectedRef = if ($Environment -eq 'staging') { $StagingProjectRef } else { $ProductionProjectRef }
+  if ($ProjectRef -ne $expectedRef -or $StagingProjectRef -eq $ProductionProjectRef) {
+    throw 'Goal backfill target does not match its isolated environment ref.'
+  }
+  if ($Sql -cne (Get-GoalBackfillSql -Action $Action)) {
+    throw 'Goal backfill SQL is not on the exact allowlist.'
+  }
+  if ($Sql -notmatch '(?is)^\s*select\s+' -or
+      $Sql -match '(?i)\b(insert|update|merge|alter|create|grant|revoke|call|do|copy)\b') {
+    throw 'Goal backfill SQL must be one static SELECT statement.'
+  }
+  $writerCalls = ([regex]::Matches($Sql, '(?i)backfill_goal_completions')).Count
+  if ($Action -eq 'inspect' -and $writerCalls -ne 0) {
+    throw 'Goal backfill inspection must not call the writer.'
+  }
+  if ($Action -eq 'backfill' -and $writerCalls -ne 1) {
+    throw 'Goal backfill must call the writer exactly once.'
+  }
+}
+
 function Assert-TargetContract {
   param(
     [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
@@ -846,4 +911,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, Get-ProductionBaselineRepairArguments, Assert-ProductionBaselineRepair, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Get-GoalBackfillSql, Assert-GoalBackfillAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, Get-ProductionBaselineRepairArguments, Assert-ProductionBaselineRepair, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
