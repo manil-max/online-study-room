@@ -1992,5 +1992,10 @@
   "statsPeriodPrevious": "Önceki dönem",
   "statsPeriodNext": "Sonraki dönem",
   "statsPeriodLastMonth": "Geçen ay",
-  "statsPeriodLastYear": "Geçen yıl"
+  "statsPeriodLastYear": "Geçen yıl",
+  "commonTekrarDene": "Tekrar dene",
+  "clockAlarmlarYuklenemedi": "Alarmlar yüklenemedi.",
+  "clockZamanlayicilarYuklenemedi": "Zamanlayıcılar yüklenemedi.",
+  "clockHazirSurelerYuklenemedi": "Hazır süreler yüklenemedi.",
+  "clockIzinDurumuOkunamadi": "Alarm izni durumu okunamadı."
 }

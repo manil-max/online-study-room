@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/time_engine/lap_analysis.dart';
 import '../../data/models/timer_preset.dart';
 import '../../data/providers/alarm_providers.dart';
+import '../home/widgets/card_data_gate.dart';
 
 class TimersScreen extends ConsumerWidget {
   const TimersScreen({super.key, this.embedded = false});
@@ -38,10 +39,17 @@ class TimersScreen extends ConsumerWidget {
             ],
           ),
         ),
-        SizedBox(
-          height: 48,
-          child: presets.when(
-            data: (list) => ListView.separated(
+        // 🔴 WP-560: `SizedBox(height: 48)` eskiden `when`in ÜSTÜNDEYDİ ve
+        // yükleme ile hata dallarının ikisi de `SizedBox.shrink()` dönüyordu.
+        // Sonuç: üç ayrı durum (yükleniyor / hiç hazır süre yok / çekilemedi)
+        // ekranda aynı 48 piksellik BOŞLUK olarak görünüyordu; kullanıcı
+        // şeridin ölmüş mü yoksa dolmakta mı olduğunu ayırt edemiyordu.
+        // Sabit yükseklik veri/yükleme dallarına indi ki hata şeridi
+        // tekrar-dene düğmesine yer bulabilsin.
+        presets.when(
+          data: (list) => SizedBox(
+            height: 48,
+            child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: list.length + 1,
@@ -63,8 +71,20 @@ class TimersScreen extends ConsumerWidget {
                 );
               },
             ),
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+          ),
+          loading: () => const SizedBox(
+            height: 48,
+            child: Center(
+              child: SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          error: (_, _) => ErrorRetryView(
+            message: AppLocalizations.of(context).clockHazirSurelerYuklenemedi,
+            onRetry: () => ref.invalidate(timerPresetsProvider),
+            dense: true,
           ),
         ),
         const SizedBox(height: 8),
@@ -89,9 +109,16 @@ class TimersScreen extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+            // 🔴 WP-560: genel "Beklenmeyen bir hata oluştu." cümlesi tek
+            // başına çıkmazdı. Zamanlayıcılar yerel depodan gelir; geçici bir
+            // okuma hatasından sonra ekranın kendini toparlamasının tek yolu
+            // uygulamayı kapatıp açmaktı.
+            error: (_, _) => Center(
+              child: ErrorRetryView(
+                message: AppLocalizations.of(
+                  context,
+                ).clockZamanlayicilarYuklenemedi,
+                onRetry: () => ref.invalidate(timerInstancesProvider),
               ),
             ),
           ),

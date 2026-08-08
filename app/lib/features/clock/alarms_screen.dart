@@ -13,6 +13,7 @@ import '../../core/time_engine/clock_permissions.dart';
 import '../../core/time_engine/exact_alarm_permission.dart';
 import '../../data/models/alarm_rule.dart';
 import '../../data/providers/alarm_providers.dart';
+import '../home/widgets/card_data_gate.dart';
 import 'alarm_ringing_screen.dart';
 
 class AlarmsScreen extends ConsumerWidget {
@@ -52,8 +53,19 @@ class AlarmsScreen extends ConsumerWidget {
               ],
             );
           },
+          // Yükleme şeridi kasıtlı olarak boş: bu bir izin **probu**, içerik
+          // alanı değil — tek karelik bir spinner şeridi ekranı zıplatırdı.
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          // 🔴 WP-560: hata dalı da `SizedBox.shrink()`ti. Prob patladığında
+          // "kesin alarm izni kapalı" uyarısı sessizce kayboluyordu: izni
+          // kapalı kullanıcı hiçbir uyarı görmeden alarmların çalmadığını
+          // keşfediyordu. Sessiz yutma yerine görünür bir şerit + probu
+          // yeniden koşturan çıkış.
+          error: (_, _) => ErrorRetryView(
+            message: AppLocalizations.of(context).clockIzinDurumuOkunamadi,
+            onRetry: () => ref.invalidate(exactAlarmStatusProvider),
+            dense: true,
+          ),
         ),
         Expanded(
           child: alarmsState.when(
@@ -105,9 +117,15 @@ class AlarmsScreen extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(
-              child: Text(
-                AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+            // 🔴 WP-560: burada eskiden yalnız genel "Beklenmeyen bir hata
+            // oluştu." cümlesi vardı — ne neyin yüklenemediği ne de ne
+            // yapılacağı yazıyordu. Kardeş ekran Görevler aynı durumda
+            // tekrar-dene veriyordu; üç kardeş üç farklı davranışın
+            // kullanıcıda karşılığı "burada ne yapabilirim" bilinmezliği.
+            error: (_, _) => Center(
+              child: ErrorRetryView(
+                message: AppLocalizations.of(context).clockAlarmlarYuklenemedi,
+                onRetry: () => ref.invalidate(alarmsProvider),
               ),
             ),
           ),

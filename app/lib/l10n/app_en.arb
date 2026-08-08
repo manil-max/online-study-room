@@ -6491,5 +6491,25 @@
   "statsPeriodLastMonth": "Last month",
   "@statsPeriodLastMonth": {"description": "Stats period bar title for the previous month."},
   "statsPeriodLastYear": "Last year",
-  "@statsPeriodLastYear": {"description": "Stats period bar title for the previous year."}
+  "@statsPeriodLastYear": {"description": "Stats period bar title for the previous year."},
+  "commonTekrarDene": "Try again",
+  "@commonTekrarDene": {
+    "description": "WP-560 shared error body: retry action that re-reads the failed data source."
+  },
+  "clockAlarmlarYuklenemedi": "Alarms could not be loaded.",
+  "@clockAlarmlarYuklenemedi": {
+    "description": "Alarms list error state message."
+  },
+  "clockZamanlayicilarYuklenemedi": "Timers could not be loaded.",
+  "@clockZamanlayicilarYuklenemedi": {
+    "description": "Multi-timer list error state message."
+  },
+  "clockHazirSurelerYuklenemedi": "Quick-start presets could not be loaded.",
+  "@clockHazirSurelerYuklenemedi": {
+    "description": "Timer quick-start preset strip error state message."
+  },
+  "clockIzinDurumuOkunamadi": "Alarm permission status could not be checked.",
+  "@clockIzinDurumuOkunamadi": {
+    "description": "Shown when the exact-alarm permission probe fails."
+  }
 }

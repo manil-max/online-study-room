@@ -12,6 +12,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../home/widgets/card_data_gate.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../../safety/block_user_action.dart';
 import '../../safety/report_sheet.dart';
@@ -47,7 +48,6 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final messagesAsync = ref.watch(classMessagesProvider(widget.group.id));
     final user = ref.watch(authStateProvider).value;
     // WP-495B: engelli kümesi gelmeden mesajlar çizilirse engellenen kişinin
@@ -76,34 +76,54 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
               : const AsyncValue<List<ChatMessage>>.loading())
         : messagesAsync;
 
+    // 🔴 WP-560 — Riverpod 3 tuzağı, ÖLÇÜLDÜ: hiç değer vermemiş bir
+    // `StreamProvider` hata aldığında durum `AsyncError` DEĞİL, hatayı taşıyan
+    // `AsyncLoading` olur. `AsyncValue.when` varsayılan `skipError: false` ile
+    // önce `isLoading`e bakar; yani buradaki eski `error:` kolu bu senaryoda
+    // HİÇ çalışmıyordu. Kullanıcıdaki karşılığı: ağ hatasında "Sohbet
+    // yüklenemedi." yerine SONSUZ spinner — WP-538 fail-closed sözleşmesiyle
+    // birleşince sohbet kalıcı olarak kilitleniyordu. `card_data_gate.dart` da
+    // tam bu yüzden `.when` değil `hasError` kullanır. Ayrım burada da elle
+    // yapılır; `error_retry_wp560_test.dart` sahte depoda aynı durumu kurar.
+    final chatFailed = gatedMessages.hasError && !gatedMessages.hasValue;
+    final Widget chatBody;
+    if (chatFailed) {
+      // Tekrar-dene İKİ kaynağı birden tazeler: hata mesaj akışından da
+      // engelli küme çağrısından da gelmiş olabilir (`gatedMessages` ikisini
+      // tek [AsyncValue]'ya indirger, hangisinin patladığı burada okunamaz).
+      // Yalnız birini tazelemek düğmeyi vakaların yarısında sessizce etkisiz
+      // bırakırdı.
+      chatBody = Center(
+        child: ErrorRetryView(
+          message: AppLocalizations.of(context).classroomSohbetYuklenemedi,
+          onRetry: () {
+            ref.invalidate(blockedUserIdsProvider);
+            ref.invalidate(classMessagesProvider(widget.group.id));
+          },
+        ),
+      );
+    } else if (gatedMessages.hasValue) {
+      // WP-126: engellenen kullanıcı mesajlarını gizle.
+      // WP-538: buraya yalnız küme BİLİNİYORKEN gelinir; `?? {}` yedeği
+      // artık "hata varsa süzme" anlamına gelmiyor.
+      final blocked = knownBlocked ?? const <String>{};
+      final messages = gatedMessages.requireValue;
+      final visible = blocked.isEmpty
+          ? messages
+          : messages
+                .where((m) => !blocked.contains(m.userId))
+                .toList(growable: false);
+      chatBody = _MessageList(messages: visible, currentUserId: user?.id);
+    } else {
+      chatBody = const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Mesaj listesi boş kalan alanın **tamamını** alır; klavye açılınca
         // `Scaffold` gövdeyi kısaltır ve daralan yalnız bu parça olur.
-        Expanded(
-          child: gatedMessages.when(
-            data: (messages) {
-              // WP-126: engellenen kullanıcı mesajlarını gizle.
-              // WP-538: buraya yalnız küme BİLİNİYORKEN gelinir; `?? {}`
-              // yedeği artık "hata varsa süzme" anlamına gelmiyor.
-              final blocked = knownBlocked ?? const <String>{};
-              final visible = blocked.isEmpty
-                  ? messages
-                  : messages
-                        .where((m) => !blocked.contains(m.userId))
-                        .toList(growable: false);
-              return _MessageList(messages: visible, currentUserId: user?.id);
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Text(
-                AppLocalizations.of(context).classroomSohbetYuklenemedi,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-            ),
-          ),
-        ),
+        Expanded(child: chatBody),
         Padding(
           // Alt güvenli alan yazma alanına eklenir; klavye açıkken
           // `MediaQuery.paddingOf(...).bottom` zaten 0'a düşer (çift boşluk yok).
