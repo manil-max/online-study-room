@@ -48,6 +48,10 @@ type SupabaseAdminClient = ReturnType<typeof makeAdminClient>
  *   5. Tamamlanma izi — `deleteUser` cascade ile istek satırını sildiği için
  *      geriye kanıt kalmıyordu. Artık `record_account_purge_outcome` PII'siz
  *      (sha256 uid) bir denetim satırı yazar.
+ *   6. WP-545: storage temizliği tek bucket'ta (`avatars`) kalmıştı. Kullanıcı
+ *      klasörü taşıyan diğer iki bucket'a ve silinen grupların avatar
+ *      nesnelerine hiç dokunulmuyordu. Kapsam artık tek yerde (aşağıdaki
+ *      liste + grup döngüsü) durur ve yasal metinlerle aynı şeyi söyler.
  *
  * Retry (WP-127): attempt_count < MAX_PURGE_ATTEMPTS olan işler seçilir.
  * Hata sonrası attempt < 5 → 'scheduled' (yeniden dene); >= 5 → 'failed'
@@ -72,10 +76,69 @@ function must<T extends { error: unknown }>(result: T, step: string): T {
   return result
 }
 
-/** Avatar klasörünü SAYFALAYARAK siler; 100 nesne sınırı yoktur. */
-async function purgeAvatars(
+/**
+ * WP-545: purge'ün temizlediği storage bucket'ları — TEK LISTE.
+ *
+ * 🔴 Bu liste WP-545'e kadar tek elemanlıydı (`avatars`). Kullanıcının
+ * yüklediği geri bildirim ve şikâyet fotoğrafları hesap silindikten sonra
+ * ham uid'li klasörlerinde duruyordu; yasal sayfa ise yalnız "avatar
+ * dosyaları" diyordu. Beyan ile kod aynı şeyi söylemiyordu.
+ *
+ * Listeye girme ölçütü TEK: nesne yolunun ilk klasörü ham `auth.uid()` mi?
+ * Silme `list(uid)` ile çalışır; başka bir anahtarla saklanan bir bucket bu
+ * yoldan asla bulunmaz — hata bile vermez, sessizce sıfır nesne döner.
+ *
+ *   • avatars              — `<uid>/avatar.jpg`  (`0002_avatars_storage.sql:30`)
+ *   • feedback_attachments — `<uid>/...`         (`0072_...:31`)
+ *   • report_attachments   — `<uid>/...`         (`0096_...:69`)
+ *
+ * Son ikisinin dayanağı aynı: bunlar kullanıcının KENDİ içeriğidir ve dosyayı
+ * işaret eden satır (`feedback_tickets`, `ugc_reports`) `auth.users`'a
+ * `on delete cascade` ile bağlıdır — satır zaten gidiyor. Nesneyi bırakmak
+ * "delil saklamak" olmazdı; hiçbir satırın işaret etmediği bir fotoğraf
+ * bırakırdı. Retention kararı §5.6 kapsam notu bunu açık yazıyor: kullanıcının
+ * kendi bileti / kendi raporu cascade ile silinmeye devam eder.
+ *
+ * 🔴 `group-avatars` (`0049`) bu listede DEĞİL — ama kapsam dışında da
+ * değil: AYRI bir anahtarla, aşağıda grup döngüsünde temizlenir.
+ *   1. Yol anahtarı `groups.id`, kullanıcı uid'si DEĞİL
+ *      (`groups_avatar_path_format` check'i + `is_group_admin((...)[1]::uuid)`
+ *      politikası). `list(uid)` orada hiçbir zaman bir şey bulmaz; bu listeye
+ *      eklemek ölçüm değil sahte güven üretirdi.
+ *   2. Nesne grubun malıdır, yükleyenin değil. Sahibi silinen grup aşağıda
+ *      en eski aktif üyeye DEVREDİLİR ve yaşamaya devam eder; o dalda
+ *      avatara dokunmak başkalarının verisini silmek olurdu.
+ *   3. Grup üyesiz kalıp GERÇEKTEN silindiğinde nesne aşağıda grup id'siyle
+ *      düşürülür. `0049` bunu bir tetikleyiciyle yapıyordu ama `0054` onu
+ *      KALDIRDI (Storage artık `storage.objects`ten doğrudan silmeye izin
+ *      vermiyor) ve yerine söz verilen "periyodik storage-audit" hiçbir
+ *      zaman yazılmadı. Yani WP-545 öncesi silinen her grubun avatarı
+ *      sonsuza kadar sahipsiz kalıyordu.
+ *
+ * Sözleşme: `supabase/tests/049_account_purge_storage_scope.test.sql`.
+ */
+const USER_OWNED_STORAGE_BUCKETS = [
+  "avatars",
+  "feedback_attachments",
+  "report_attachments",
+] as const
+
+type StoragePurgeReport = {
+  removed: Record<string, number>
+  failures: string[]
+}
+
+/**
+ * Bir bucket'ta TEK bir klasörü SAYFALAYARAK siler; 100 nesne sınırı yoktur.
+ *
+ * Klasör adı kasıtlı olarak `uid` değil `folder`: `avatars` /
+ * `feedback_attachments` / `report_attachments` için uid'dir, `group-avatars`
+ * için `groups.id`'dir. Aynı sayfalama iki durumda da geçerlidir.
+ */
+async function purgeStorageFolder(
   admin: SupabaseAdminClient,
-  uid: string,
+  bucket: string,
+  folder: string,
 ): Promise<number> {
   let removed = 0
   // Her turda BAŞTAN okunur: bir önceki tur o nesneleri zaten sildiği için
@@ -84,19 +147,49 @@ async function purgeAvatars(
   const MAX_PAGES = 200
   for (let page = 0; page < MAX_PAGES; page++) {
     const listed = await admin.storage
-      .from("avatars")
-      .list(uid, { limit: STORAGE_PAGE_SIZE })
-    must(listed, "storage_list")
+      .from(bucket)
+      .list(folder, { limit: STORAGE_PAGE_SIZE })
+    must(listed, `storage_list:${bucket}`)
     const files = listed.data ?? []
     if (files.length === 0) break
 
-    const paths = files.map((f) => `${uid}/${f.name}`)
-    must(await admin.storage.from("avatars").remove(paths), "storage_remove")
+    const paths = files.map((f) => `${folder}/${f.name}`)
+    must(
+      await admin.storage.from(bucket).remove(paths),
+      `storage_remove:${bucket}`,
+    )
     removed += paths.length
 
     if (files.length < STORAGE_PAGE_SIZE) break
   }
   return removed
+}
+
+/**
+ * Her bucket AYRI denenir: birinin patlaması diğerlerini engellemez ve sonuç
+ * bucket bazında raporlanır (`results[].storage`).
+ *
+ * 🔴 Ama en az bir bucket patladıysa çağıran YINE DE atar — bu fonksiyon
+ * kendi başına atmaz, kısmi sonucu döndürür. Sebep §4'te yazılı: sessizce
+ * devam etmek `deleteUser`a kadar gider, kullanıcı silinir, dosyaları kalır ve
+ * istek satırı cascade ile gittiği için bir daha HİÇ denenemez. `avatars`
+ * temizliği WP-464'ten beri tam olarak bu toleransı taşıyor; yeni bucket'lar
+ * aynısını taşır.
+ */
+async function purgeUserStorage(
+  admin: SupabaseAdminClient,
+  uid: string,
+): Promise<StoragePurgeReport> {
+  const report: StoragePurgeReport = { removed: {}, failures: [] }
+  for (const bucket of USER_OWNED_STORAGE_BUCKETS) {
+    try {
+      report.removed[bucket] = await purgeStorageFolder(admin, bucket, uid)
+    } catch (err) {
+      const message = String((err as { message?: string })?.message ?? err)
+      report.failures.push(`${bucket} (${message})`)
+    }
+  }
+  return report
 }
 
 serve(async (req) => {
@@ -215,6 +308,10 @@ serve(async (req) => {
     for (const job of jobs) {
       const uid = job.user_id
       const id = job.id
+      // Hata yolunda da raporlanabilsin diye `try` DIŞINDA durur: hangi
+      // bucket temizlendi, hangisi patladı sorusu bir sonraki denemeye
+      // kalmamalı.
+      let storage: StoragePurgeReport = { removed: {}, failures: [] }
       try {
         if (!dryRun) {
           // E-posta kuyruğu: pending işleri iptal et.
@@ -227,7 +324,15 @@ serve(async (req) => {
             "email_queue_abandon",
           )
 
-          await purgeAvatars(admin, uid)
+          storage = await purgeUserStorage(admin, uid)
+          if (storage.failures.length) {
+            // Toplu atma: her bucket ölçüldü (ilk hata diğerlerini gizlemedi)
+            // ve iş retry kuyruğunda kalıyor — kullanıcı artık dosyaları
+            // arkada dururken silinmiyor.
+            throw new Error(
+              `storage_purge failed for ${storage.failures.join(", ")}`,
+            )
+          }
 
           // Grup ownership: created_by bu kullanıcı ise en eski aktif üyeye
           // devret, aktif üye yoksa grubu sil.
@@ -260,6 +365,20 @@ serve(async (req) => {
                 await admin.from("groups").delete().eq("id", g.id),
                 "group_delete",
               )
+              // 🔴 WP-545: grubun avatar nesnesi. `0049` bunu bir
+              // tetikleyiciyle düşürüyordu, `0054` onu kaldırdı (Storage
+              // artık DB'den doğrudan silmeye izin vermiyor) ve yerine söz
+              // verilen periyodik storage-audit hiç yazılmadı — silinen her
+              // grubun fotoğrafı sahipsiz kalıyordu.
+              //
+              // Anahtar `groups.id`, uid DEĞİL; bu bucket kullanıcı uzayı
+              // değildir, o yüzden `USER_OWNED_STORAGE_BUCKETS`e giremez.
+              //
+              // Şu SIRA bilinçlidir: önce satır, sonra nesne. Ters sırada
+              // `group_delete` bir FK'ye takılıp atsaydı grup HAYATTA kalır
+              // ama fotoğrafı silinmiş olurdu — henüz silinmemiş bir grubun
+              // üyelerinin verisini bozmak, bir nesnenin sızmasından ağırdır.
+              await purgeStorageFolder(admin, "group-avatars", String(g.id))
             }
           }
 
@@ -327,6 +446,7 @@ serve(async (req) => {
           user_id: uid,
           status: dryRun ? "dry_run_ok" : "completed",
           recovered_from_stale: job.recovered_from_stale ?? false,
+          storage: storage.removed,
         })
       } catch (err) {
         const attempt = (job.attempt_count ?? 0) + 1
@@ -375,6 +495,8 @@ serve(async (req) => {
           attempt_count: attempt,
           error_code: code,
           terminal: nextStatus === "failed",
+          storage: storage.removed,
+          storage_failures: storage.failures,
         })
         console.error("purge failed", id, code, String(err))
       }

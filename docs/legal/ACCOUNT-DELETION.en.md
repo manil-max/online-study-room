@@ -28,7 +28,13 @@ e-mail address of your account before acting on the request.
 - Profile: display name, avatar, camp animal, preferences
 - Study sessions and the statistics/XP records attached to them
 - Group memberships
-- Avatar files
+- The support tickets you opened, the questions you asked and the reports you
+  submitted
+- Every file you uploaded: your profile photo (`avatars`), the photos you
+  attached to support and feedback tickets (`feedback_attachments`) and the
+  photos you attached when reporting content (`report_attachments`)
+- The photos of groups that are left without members after you and are
+  therefore deleted (`group-avatars`)
 
 ## Data that is kept in pseudonymised form
 
@@ -42,6 +48,13 @@ history would disappear with it.
 - Support/feedback records: detached from identity the same way.
 - Group chat messages: the sender identity is dropped; the message stays in the
   group history without an author.
+- The photo of a group that continues to exist (`group-avatars`): even if you
+  were the one who uploaded it, that file belongs to the **group**, not to
+  you. If the group continues with its other members after your account is
+  deleted, its photo stays as well and remains until the group itself is
+  deleted. That file path does not carry your identity, it carries the
+  group's. If the group is left without members after you, both the group and
+  its photo are deleted.
 - Records that must be retained by law are kept for as long as required.
 
 Your identity cannot be reconstructed from these records.

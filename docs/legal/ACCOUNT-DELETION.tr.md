@@ -28,7 +28,12 @@ adresini doğrulamamız gerekir.
 - Profil: görünen ad, avatar, kamp hayvanı, tercihler
 - Çalışma oturumları ve bunlara bağlı istatistik/XP kayıtları
 - Grup üyelikleri
-- Avatar dosyaları
+- Kendi açtığın destek biletleri, sorduğun sorular ve gönderdiğin şikâyetler
+- Yüklediğin bütün dosyalar: profil fotoğrafın (`avatars`), destek ve geri
+  bildirim biletlerine eklediğin fotoğraflar (`feedback_attachments`) ve
+  şikâyet bildirirken eklediğin fotoğraflar (`report_attachments`)
+- Senden sonra üyesi kalmayan ve bu yüzden silinen grupların fotoğrafları
+  (`group-avatars`)
 
 ## Silinmeyen veya takma kimliğe çevrilen veriler
 
@@ -42,6 +47,12 @@ olur.
 - Destek/geri bildirim kayıtları: aynı şekilde kimlikten koparılır.
 - Grup sohbet mesajları: gönderen kimliği düşer; mesaj grup geçmişinde
   kimliksiz kalır.
+- Devam eden grupların fotoğrafı (`group-avatars`): bir grubun fotoğrafını sen
+  yüklediğin için bile olsa o dosya **gruba** aittir, sana değil. Hesabın
+  silindikten sonra grup başka üyeleriyle devam ediyorsa fotoğrafı da kalır ve
+  grup silinene kadar durur. Bu dosyanın yolunda senin kimliğin geçmez,
+  grubun kimliği geçer. Grup senden sonra üyesiz kalırsa hem grup hem
+  fotoğrafı silinir.
 - Yasal olarak tutulması gereken kayıtlar, gerektiği süre boyunca saklanır.
 
 Bu kayıtlardan kimliğin geri üretilemez.
