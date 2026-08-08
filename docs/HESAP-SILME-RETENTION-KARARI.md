@@ -189,6 +189,55 @@ silindi mi" ile "bu yaptırımı kim verdi" PII olmadan eşleşir. Sözleşme:
 > mesajları, kendi itirazı, kendi raporu) `on delete cascade` ile silinmeye
 > devam eder — §4.1 ile tutarlıdır ve bilinçli olarak değiştirilmemiştir.
 
+### 5.7 Dolaylı `restrict` zincirleri — **KARAR VERİLDİ 2026-08-08 (WP-549)**
+
+§5.6 (`0114`) yalnız `public` şemasından `auth.users`'a **doğrudan** giden yedi
+`restrict` FK'yi çözdü. Geriye **ikinci bir sınıf** kaldı ve o sınıf ölçülmedi:
+`auth.users` silinince önce **cascade** çocukları silinir; o cascade silmeleri
+de kendi **`restrict`** çocuklarını ateşler. `restrict` ertelenemez ve aynı
+ifade içinde daha sonra silinecek satırları beklemez (`no action`tan farkı tam
+olarak budur), yani zincir FK ihlaliyle düşer → iş 5 denemeyi yakar → hesap
+terminal `failed` → **hesap hiç silinmez**.
+
+Bu, `docs/legal/ACCOUNT-DELETION.en.md`'nin koşulsuz "kalıcı olarak silinir"
+sözünü ve `docs/play-store/DATA-SAFETY.md`'nin Play formuna yazdırdığı "Users
+can request that data be deleted → Yes" beyanını **fiilen yanlış** yapıyordu.
+
+Kodda doğrulanan dört zincir ve her biri için verilen karar:
+
+| # | Zincir (cascade → restrict) | Kişisel mi? | Karar | Gerekçe |
+|---|---|---|---|---|
+| A1 | `live_study_runs` (`0051:8`) → `live_study_segments.run_id` (`0051:36`) | Evet, **kendi** çalışma verisi | **cascade** | `user_id` zaten cascade; `restrict` bir saklama kararı değil, koşu bütünlüğü guard'ıydı. Denetim/moderasyon delili değil. |
+| A2 | aynı → `study_sessions.live_run_id` (`0051:63`) | Evet, **kendi** oturumu | **cascade** | `user_id` zaten cascade. 🔴 `set null` **çalışmaz**: `study_sessions_guard_verified_update` (`0051:109`) `verified_session_immutable` atar; RI'nin set-null'ı bir UPDATE'tir. |
+| A3 | `push_devices` (`0066:7`) → `global_timer_commands.device_id` (`0082:95`) | Evet, **kendi** cihaz telemetrisi | **cascade** | `user_id` zaten cascade; moderasyon delili değil. |
+| C | `moderation_sanctions.target_user_id` (`0105:86`) → `moderation_appeals.sanction_id` (`0106:146`) | Karma | **cascade** | Yaptırım satırı zaten hedefiyle birlikte gidiyor (`0105` kararı, `0114` ona dokunmadı). İtiraz da `appellant_id` cascade'dir. **İz kaybolmaz:** `moderation_audit_events` olayı FK'siz `entity_id` ile tutar. |
+| B | `groups.created_by` (`0001:27`) → `ugc_reports.context_group_id` (`0104:12`) | **Hayır — başkasının kanıtı** | **set null + değişmez snapshot** | Raporu yazan, silinen kullanıcıdan farklı olabilir; satırı hiçbir cascade temizlemez. §5.6 ilkesi birebir: satır kalır, ham bağ kopar, atfedilebilirlik ayrı sütunda korunur. |
+
+**B neden hash değil ham UUID snapshot'ı?** Burada gizlenmesi gereken şey
+silinen kullanıcının kimliği değil, artık var olmayan bir grubun id'sidir.
+`0051:23-24` aynı gerekçeyi zaten yazıyor ("A group UUID is an immutable
+audit/metric snapshot. Deliberately no FK"). Yeni ilke icat edilmedi.
+
+**B'nin iki gizli tuzağı** (ikisi de `0124`te çözüldü, ölçüldü):
+`ugc_reports_context_group_only_for_message` CHECK'i (`0104:24`) mesaj
+raporlarında bağlam sütununun dolu olmasını şart koşuyordu → CHECK değişmez
+snapshot sütununa taşındı; ve `_prevent_ugc_report_evidence_mutation`
+(`0106:341`) bağlam değişimini `42501` ile reddediyordu → tetikleyiciye
+**tek** bir geçiş izni verildi (dolu → NULL, yani grup silindi), snapshot ise
+tamamen değişmez.
+
+**Blokaj olmayan dal:** `ugc_reports.case_id` ve `moderation_sanctions.case_id`
+(ikisi de `→ moderation_cases`, `restrict`) bilerek **değiştirilmedi**:
+`moderation_cases`'in `auth.users`'a hiçbir FK'si yoktur, oraya hiçbir cascade
+ulaşmaz. `050` bu envanteri dondurur.
+
+**Uygulama:** `0124_account_purge_indirect_restrict_chains.sql` ·
+**Sözleşme:** `supabase/tests/050_account_purge_indirect_restrict_chains.test.sql`
+(gerçekçi kullanıcı: grup sahibi + başkasının açtığı rapor + canlı koşu +
+segment + verified oturum + push cihazı + sayaç komutu + yaptırım + itiraz;
+tek `delete from auth.users`) · Edge tarafı: `purge-accounts/index.ts`
+`groups_owner_recheck` kapısı.
+
 ---
 
 ## 6. Güvenlik ve RLS ilkeleri (implementasyon WP’sine taşınır)
@@ -248,3 +297,4 @@ Claude WP-65 belgesi yazıldığında §4.1 “I” satırı ve §5.5 ile çapra
 | Tarih | Not |
 |---|---|
 | 2026-07-14 | WP-66 ilk karar taslağı (Grok). Migration/Auth/app kodu yok. Paralel: Claude WP-65, Codex WP-68. |
+| 2026-08-08 | WP-549: §5.7 eklendi — **dolaylı** `restrict` zincirleri (cascade'in tetiklediği restrict). Dört zincir kodda doğrulandı; A1/A2/A3/C `cascade`, B `set null` + değişmez grup snapshot'ı. `0124` yazıldı, **uygulanmadı** (yerel Docker bloke, replay bekliyor); apply GO'su liderde. |

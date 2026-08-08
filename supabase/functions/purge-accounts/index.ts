@@ -52,6 +52,15 @@ type SupabaseAdminClient = ReturnType<typeof makeAdminClient>
  *      klasörü taşıyan diğer iki bucket'a ve silinen grupların avatar
  *      nesnelerine hiç dokunulmuyordu. Kapsam artık tek yerde (aşağıdaki
  *      liste + grup döngüsü) durur ve yasal metinlerle aynı şeyi söyler.
+ *   7. WP-549: `deleteUser` DOLAYLI `restrict` FK zincirlerine takılıyordu —
+ *      `auth.users` cascade'i bir ara tabloyu silerken o ara tablonun kendi
+ *      `restrict` çocukları zinciri düşürüyordu (`live_study_segments`,
+ *      `study_sessions.live_run_id`, `global_timer_commands.device_id`,
+ *      `moderation_appeals.sanction_id`) ve `group_delete` adımı
+ *      `ugc_reports.context_group_id` yüzünden atıyordu. Şema tarafı
+ *      `0124_account_purge_indirect_restrict_chains.sql`te çözüldü; burada
+ *      grup sahipliği devrinin gerçekten olduğu doğrulanır (aşağıdaki
+ *      `groups_owner_recheck`).
  *
  * Retry (WP-127): attempt_count < MAX_PURGE_ATTEMPTS olan işler seçilir.
  * Hata sonrası attempt < 5 → 'scheduled' (yeniden dene); >= 5 → 'failed'
@@ -361,6 +370,16 @@ serve(async (req) => {
                 "group_owner_transfer",
               )
             } else {
+              // 🔴 WP-549: bu adim `0124`e BAGIMLIDIR. `0124` oncesi
+              // `ugc_reports.context_group_id -> groups` FK'si `on delete
+              // restrict` idi (`0104:12`) ve raporu YAZAN kullanici silinen
+              // kullanicidan farkli olabildigi icin o satiri hicbir cascade
+              // temizlemiyordu. Sonuc: o grupta bir kez sikayet acilmissa bu
+              // `delete` FK ihlaliyle atiyor, `must(...)` isi retry kuyruguna
+              // dusuruyor, 5 deneme yaniyor ve hesap terminal `failed` oluyordu
+              // -- yani hesap HIC silinmiyordu. `0124` FK'yi `set null`a cevirdi
+              // ve baglami `context_group_id_snapshot`ta dondurdu: kanit kalir,
+              // silme akar. Sozlesme: `supabase/tests/050_*.test.sql` §3.
               must(
                 await admin.from("groups").delete().eq("id", g.id),
                 "group_delete",
@@ -380,6 +399,31 @@ serve(async (req) => {
               // üyelerinin verisini bozmak, bir nesnenin sızmasından ağırdır.
               await purgeStorageFolder(admin, "group-avatars", String(g.id))
             }
+          }
+
+          // 🔴 WP-549 son kapı: `deleteUser`dan ÖNCE hiçbir grup artık bu
+          // kullanıcıya ait OLMAMALI.
+          //
+          // Sebep: `groups.created_by -> auth.users` `on delete cascade`
+          // (`0001:27`). Yukarıdaki döngü devri `update(...)` ile yapıyor ve
+          // `must()` yalnız `error` alanına bakıyor — Supabase `update`i
+          // hiçbir satır eşleşmediğinde de hatasız döner. Yani devir SESSİZCE
+          // 0 satır güncellemiş olsaydı `created_by` bu kullanıcıda kalır ve
+          // `deleteUser` cascade'i, İÇİNDE AKTİF ÜYELERİ OLAN bir grubu ve
+          // (`group_members`, `class_messages`, `nudges`, `group_bans` …)
+          // üçüncü kişilerin verisini sessizce yok ederdi.
+          //
+          // Bu kontrol o sessiz yıkımı, işi retry kuyruğunda tutan bir hataya
+          // çevirir. §4'teki "sessizce devam etme" ilkesinin aynısı.
+          const stillOwned = must(
+            await admin.from("groups").select("id").eq("created_by", uid),
+            "groups_owner_recheck",
+          )
+          if (stillOwned.data?.length) {
+            throw new Error(
+              `groups_owner_recheck: ${stillOwned.data.length} group(s) still ` +
+                `owned by the account; deleteUser would cascade-delete them`,
+            )
           }
 
           // Sohbet scrub. Retention kararı §5.3: metin scrub edilir, satır
