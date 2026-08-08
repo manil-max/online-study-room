@@ -770,6 +770,10 @@
   "@classroomDavetKoduDavetKodu": {
     "description": "Classroom user-facing text. Source: Davet kodu:"
   },
+  "classroomDavetKodunuGir": "Enter the invite code.",
+  "@classroomDavetKodunuGir": {
+    "description": "Classroom user-facing text. Source: Davet kodunu gir."
+  },
   "classroomDers": "Subject",
   "@classroomDers": {
     "description": "Classroom user-facing text. Source: Ders"
@@ -878,6 +882,10 @@
   "@classroomHedefiDegistir": {
     "description": "Classroom user-facing text. Source: Hedefi değiştir"
   },
+  "classroomHedefEnAzBirDakika": "The daily goal must be at least 1 minute.",
+  "@classroomHedefEnAzBirDakika": {
+    "description": "Classroom user-facing text. Source: Günlük hedef en az 1 dakika olmalı."
+  },
   "classroomHenuzBirGruptaDegilsin": "You're not in a group yet",
   "@classroomHenuzBirGruptaDegilsin": {
     "description": "Classroom user-facing text. Source: Henüz bir grupta değilsin"
@@ -898,9 +906,25 @@
   "@classroomGrubaKatildin": {
     "description": "Classroom user-facing text. Source: Gruba katıldın."
   },
+  "classroomGrubaKatilmanEngellendi": "You are banned from joining this group.",
+  "@classroomGrubaKatilmanEngellendi": {
+    "description": "Classroom user-facing text. Source: Bu gruba katılman engellendi."
+  },
+  "classroomGrupDolu": "This group is full and cannot accept new members.",
+  "@classroomGrupDolu": {
+    "description": "Classroom user-facing text. Source: Grup dolu, yeni üye alamıyor."
+  },
   "classroomKaydet": "Save",
   "@classroomKaydet": {
     "description": "Classroom user-facing text. Source: Kaydet"
+  },
+  "classroomKaydediliyor": "Saving…",
+  "@classroomKaydediliyor": {
+    "description": "Classroom user-facing text. Source: Kaydediliyor…"
+  },
+  "classroomIsleniyor": "Working…",
+  "@classroomIsleniyor": {
+    "description": "Classroom user-facing text. Source: İşleniyor…"
   },
   "classroomKodaKatil": "Join with code",
   "@classroomKodaKatil": {
@@ -1042,6 +1066,14 @@
   "classroomYonetici": "Admin",
   "@classroomYonetici": {
     "description": "Classroom user-facing text. Source: Yönetici"
+  },
+  "classroomUyeCikarildi": "The member was removed from the group.",
+  "@classroomUyeCikarildi": {
+    "description": "Classroom user-facing text. Source: Üye gruptan çıkarıldı."
+  },
+  "classroomUyeYasaklandi": "The member was banned from the group.",
+  "@classroomUyeYasaklandi": {
+    "description": "Classroom user-facing text. Source: Üye gruba yasaklandı."
   },
   "classroomCalismaDk": "Study min",
   "@classroomCalismaDk": {

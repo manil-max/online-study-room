@@ -129,15 +129,30 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton.filled(
-                tooltip: AppLocalizations.of(context).classroomGonder,
-                onPressed: user == null || _sending ? null : _send,
-                icon: _sending
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
+              // 🔴 WP-540: gönder düğmesi boş metinde de ETKİNDİ. Basınca
+              // `normalizeChatMessageText` (`chat_repository.dart:28`)
+              // `ChatException('Mesaj boş olamaz.')` fırlatıyor, `_send` ise
+              // onu genel "Beklenmeyen bir hata oluştu." cümlesine çeviriyordu
+              // (ölçüldü: boş gönderimde o SnackBar çıkıyor). Kullanıcı hiçbir
+              // şey yazmamışken sistem hatası görüyordu. Doğrusu düğmenin
+              // etkin olmaması; `ValueListenableBuilder` metin değiştikçe
+              // yalnız bu düğmeyi yeniden çizer (her tuşta tüm sohbet değil).
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _controller,
+                builder: (context, value, _) {
+                  final canSend =
+                      user != null && !_sending && value.text.trim().isNotEmpty;
+                  return IconButton.filled(
+                    tooltip: AppLocalizations.of(context).classroomGonder,
+                    onPressed: canSend ? _send : null,
+                    icon: _sending
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                  );
+                },
               ),
             ],
           ),

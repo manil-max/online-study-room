@@ -66,9 +66,27 @@ class _NudgeActionState extends ConsumerState<NudgeAction> {
   /// uyarı kapanır kapanmaz aynı üye için yeniden gösterilebilir.
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _notice;
 
+  /// 🔴 WP-540: uçmakta olan dürtme isteği.
+  ///
+  /// Eskiden `_send` hiçbir meşgul durumu tutmuyordu. Ölçüldü: aynı düğmeye
+  /// ikinci basış İKİNCİ `sendNudge` çağrısı gönderiyordu (`TOPLAM sendNudge=2`)
+  /// ve sunucu ikinciyi `nudge_cooldown` ile reddediyordu — kullanıcı başarılı
+  /// dürtmenin hemen ardından "20 dakika bekle" hatası görüyordu. Yani kusur
+  /// kozmetik değil: doğru davranış yanlış hataya dönüşüyordu.
+  bool _sending = false;
+
+  /// `mounted` ayrı ele alınır: `onBeforeAction` modal alt sayfayı pop
+  /// edebiliyor, o durumda bu widget ağaçtan düşer ve `setState` çöker.
+  /// Kilidin kendisi yine de doğru kalmalı.
+  void _setSending(bool value) {
+    _sending = value;
+    if (mounted) setState(() {});
+  }
+
   void _handlePressed(Profile sender) {
     // Açıklama zaten ekrandaysa ikinci kez gösterme (kuyruk şişmesin).
     if (widget.isRecipientStudying && _notice != null) return;
+    if (_sending) return;
 
     // 🔴 Messenger ve metin kabuk kapanmadan **önce** okunmalı: `onBeforeAction`
     // alt sayfayı pop ederse bu widget ağaçtan düşer ve `context` ölür.
@@ -95,6 +113,10 @@ class _NudgeActionState extends ConsumerState<NudgeAction> {
     AppLocalizations l10n,
     Profile sender,
   ) async {
+    // İkinci kapı: düğme zaten devre dışı, bu guard klavye/erişilebilirlik
+    // yollarını ve kabuk kapandığı için `setState` işlemeyen durumu da kapatır.
+    if (_sending) return;
+    _setSending(true);
     try {
       await ref
           .read(nudgeRepositoryProvider)
@@ -114,6 +136,8 @@ class _NudgeActionState extends ConsumerState<NudgeAction> {
       );
     } on NudgeException catch (error) {
       messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
+    } finally {
+      _setSending(false);
     }
   }
 
@@ -133,17 +157,29 @@ class _NudgeActionState extends ConsumerState<NudgeAction> {
         ? l10n.classroomStudyingNudgeUnavailable
         : l10n.classroomDurt;
     // Oturum yoksa gönderecek kimse yok — düğme gerçekten devre dışıdır.
-    final onPressed = sender == null ? null : () => _handlePressed(sender);
+    // WP-540: uçmakta olan istek sırasında da devre dışı; ikinci basış artık
+    // ikinci `sendNudge` üretemez.
+    final onPressed = (sender == null || _sending)
+        ? null
+        : () => _handlePressed(sender);
+    // Gönderim görünür olmalı: WP-484 kazanımı (alıcı çalışıyorken düğme
+    // **etkin** kalır) korunuyor, kilit yalnız istek uçarken devrede.
+    final icon = _sending
+        ? const SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(Icons.notifications_active_outlined);
 
     return switch (widget.style) {
       NudgeActionStyle.icon => IconButton(
         tooltip: tooltip,
-        icon: const Icon(Icons.notifications_active_outlined),
+        icon: icon,
         onPressed: onPressed,
       ),
       NudgeActionStyle.labeled => FilledButton.tonalIcon(
         onPressed: onPressed,
-        icon: const Icon(Icons.notifications_active_outlined),
+        icon: icon,
         label: Text(l10n.classroomDurt),
       ),
     };

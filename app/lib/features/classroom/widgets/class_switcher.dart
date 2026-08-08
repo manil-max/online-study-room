@@ -6,11 +6,9 @@ import '../../../core/validation/name_limits.dart';
 import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/anchored_menu.dart';
-import '../../../data/models/profile.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
-import '../../../data/repositories/group_repository.dart';
 import 'class_detail_screen.dart';
 import 'group_avatar.dart';
 import 'group_discovery_screen.dart';
@@ -205,8 +203,11 @@ Future<StudyGroup?> _promptCreateGroup(BuildContext context, WidgetRef ref) {
             // İkinci basış: düğme zaten devre dışı; bu ikinci kapı aynı
             // sözleşmeyi klavye/erişilebilirlik yollarına karşı da tutar.
             if (submitting) return;
+            // 🔴 WP-540: burada `Navigator.pop(ctx)` vardı — boş girişte
+            // diyalog **hiçbir şey söylemeden** kapanıyordu. Kullanıcı için
+            // bu, sessizce başarısız olmuş bir eylemden ayırt edilemez.
             if (controller.text.trim().isEmpty) {
-              Navigator.pop(ctx);
+              setState(() => error = l10n.commonGrupAdiBosOlamaz);
               return;
             }
             final creator = ref.read(authStateProvider).value;
@@ -228,11 +229,17 @@ Future<StudyGroup?> _promptCreateGroup(BuildContext context, WidgetRef ref) {
                     timeZone: timeZone,
                   );
               if (ctx.mounted) Navigator.pop(ctx, group);
-            } on GroupException {
+            } catch (failure) {
+              // WP-540: sebep artık kaybolmuyor. Yasaklı grup adı
+              // (`public_name_not_allowed`, `0094`) tek "Beklenmeyen bir hata
+              // oluştu." cümlesine iniyordu — oysa ad DEĞİŞTİRMEDE doğru mesaj
+              // zaten vardı. Ağ hatası da ilk kez yakalanıyor: `GroupException`
+              // olmayan hata eskiden buradan kaçıyor, gösterge sonsuza dek
+              // dönüyor ve `PopScope` yüzünden diyalog da kapanmıyordu.
               if (!ctx.mounted) return;
               setState(() {
                 submitting = false;
-                error = l10n.authBeklenmeyenBirHataOlustu;
+                error = groupActionErrorText(failure, l10n);
               });
             }
           }
@@ -248,6 +255,9 @@ Future<StudyGroup?> _promptCreateGroup(BuildContext context, WidgetRef ref) {
                     TextField(
                       controller: controller,
                       autofocus: true,
+                      // WP-540: `_promptJoinGroup`da vardı, burada yoktu —
+                      // istek uçarken ad hâlâ düzenlenebiliyordu.
+                      enabled: !submitting,
                       textCapitalization: TextCapitalization.words,
                       // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
                       // `_promptJoinGroup` (davet kodu) bilerek sınırsız — o ad
@@ -375,10 +385,12 @@ Future<StudyGroup?> _promptCreateGroup(BuildContext context, WidgetRef ref) {
 /// yani kurmadaki gibi çift kayıt oluşmuyor; ama kullanıcı yine boş ekrana
 /// bakıyor ve gereksiz ikinci tur atılıyor. İstek artık diyaloğun **içinde**
 /// koşar.
+/// 🔴 WP-540: oturum burada OKUNMAZ — `createGroupFlow`daki WP-535 dersinin
+/// ikizi. `authStateProvider` bir `Stream`; ilk karelerde `.value` null olur ve
+/// "Gruba katıl" **hiçbir şey yapmadan** dönerdi. Kullanıcı bilgisi artık
+/// gönderim anında okunur; yoksa diyalogda yazılı hata çıkar.
 Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
-  final user = ref.read(authStateProvider).value;
-  if (user == null) return false;
-  final group = await _promptJoinGroup(context, ref, user);
+  final group = await _promptJoinGroup(context, ref);
   if (group == null) return false;
 
   ref.read(activeGroupIdProvider.notifier).select(group.id);
@@ -394,11 +406,7 @@ Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
 
 /// Davet kodu sorar **ve gruba katılır**. Katılınan grubu döner; vazgeçilirse
 /// veya kod boşsa null.
-Future<StudyGroup?> _promptJoinGroup(
-  BuildContext context,
-  WidgetRef ref,
-  Profile member,
-) {
+Future<StudyGroup?> _promptJoinGroup(BuildContext context, WidgetRef ref) {
   final controller = TextEditingController();
   return showDialog<StudyGroup>(
     context: context,
@@ -417,8 +425,15 @@ Future<StudyGroup?> _promptJoinGroup(
             // İkinci basış: düğme zaten devre dışı; bu ikinci kapı aynı
             // sözleşmeyi klavye/erişilebilirlik yollarına karşı da tutar.
             if (submitting) return;
+            // WP-540: boş kodda diyalog sessizce kapanıyordu (bkz.
+            // `_promptCreateGroup`daki aynı kusur).
             if (controller.text.trim().isEmpty) {
-              Navigator.pop(ctx);
+              setState(() => error = l10n.classroomDavetKodunuGir);
+              return;
+            }
+            final member = ref.read(authStateProvider).value;
+            if (member == null) {
+              setState(() => error = l10n.profileOturumBulunamadiGirisYap);
               return;
             }
             setState(() {
@@ -430,11 +445,16 @@ Future<StudyGroup?> _promptJoinGroup(
                   .read(groupRepositoryProvider)
                   .joinGroup(inviteCode: controller.text, member: member);
               if (ctx.mounted) Navigator.pop(ctx, group);
-            } on GroupException {
+            } catch (failure) {
+              // 🔴 WP-540: burada BEŞ ayrı sebep tek cümleye iniyordu — kod
+              // yanlış · yasaklısın (`group_banned`) · grup dolu · oturum yok ·
+              // ağ. Kullanıcı hangisini düzelteceğini bilemiyordu.
+              // `groupActionErrorText` (class_detail_screen.dart) sebebi
+              // koddan okur; desen `core/l10n/nudge_error_text.dart`.
               if (!ctx.mounted) return;
               setState(() {
                 submitting = false;
-                error = l10n.authBeklenmeyenBirHataOlustu;
+                error = groupActionErrorText(failure, l10n);
               });
             }
           }

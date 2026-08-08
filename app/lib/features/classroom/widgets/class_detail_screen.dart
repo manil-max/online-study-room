@@ -317,301 +317,234 @@ class ClassDetailScreen extends ConsumerWidget {
 
   Future<void> _renameDialog(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController(text: group.name);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(context).classroomGrupAdiniDegistir),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
-          maxLength: kGroupNameMaxLength,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context).classroomGrupAdi,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(AppLocalizations.of(context).classroomVazgec),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(AppLocalizations.of(context).classroomKaydet),
-          ),
-        ],
-      ),
-    );
-    if (name == null || name.trim().isEmpty || name.trim() == group.name) {
-      return;
-    }
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
     final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);
-    try {
-      await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
-      // groups tablosu realtime publication'da degil ve watchUserGroups yalniz
-      // group_members akisiyla tetiklenir; ad degisince akis tetiklenmez. Bu yuzden
-      // gruplari elle tazele ki liste/ekranlar yeni adi aninda gostersin.
-      ref.invalidate(userGroupsProvider);
-      navigator.pop();
-    } on GroupException catch (error) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            error.message == 'public_name_not_allowed'
-                ? l10n.moderationPublicNameRejected
-                : genericError,
-          ),
-        ),
-      );
-    }
+    final done = await _actionDialog<bool>(
+      context,
+      title: l10n.classroomGrupAdiniDegistir,
+      submitKey: const Key('rename-group-submit'),
+      submitLabel: l10n.classroomKaydet,
+      busyLabel: l10n.classroomKaydediliyor,
+      validate: (l10n) =>
+          controller.text.trim().isEmpty ? l10n.commonGrupAdiBosOlamaz : null,
+      content: (ctx, setState, enabled) => TextField(
+        controller: controller,
+        autofocus: true,
+        enabled: enabled,
+        textCapitalization: TextCapitalization.words,
+        // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+        maxLength: kGroupNameMaxLength,
+        decoration: InputDecoration(labelText: l10n.classroomGrupAdi),
+      ),
+      run: () async {
+        final name = controller.text.trim();
+        if (name == group.name) return false;
+        await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
+        return true;
+      },
+    );
+    if (done == null || !done.value) return;
+    // groups tablosu realtime publication'da degil ve watchUserGroups yalniz
+    // group_members akisiyla tetiklenir; ad degisince akis tetiklenmez. Bu yuzden
+    // gruplari elle tazele ki liste/ekranlar yeni adi aninda gostersin.
+    ref.invalidate(userGroupsProvider);
+    navigator.pop();
   }
 
   Future<void> _editGoalDialog(BuildContext context, WidgetRef ref) async {
     var hours = group.dailyGoalMinutes ~/ 60;
     var minutes = group.dailyGoalMinutes % 60;
-    final picked = await showDialog<int>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text(AppLocalizations.of(context).classroomGunlukGrupHedefi),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+    final l10n = AppLocalizations.of(context);
+    final navigator = Navigator.of(context);
+    final done = await _actionDialog<bool>(
+      context,
+      title: l10n.classroomGunlukGrupHedefi,
+      submitKey: const Key('group-goal-submit'),
+      submitLabel: l10n.classroomKaydet,
+      busyLabel: l10n.classroomKaydediliyor,
+      // Eskiden 0 dakika seçilince diyalog kapanıp **hiçbir şey olmuyordu**.
+      validate: (l10n) => hours * 60 + minutes < 1
+          ? l10n.classroomHedefEnAzBirDakika
+          : null,
+      content: (ctx, setState, enabled) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${l10n.classroomGrubunBirGundeToplamda} '
+            '${l10n.classroomOGunkuGrupToplami}',
+            style: Theme.of(ctx).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          Row(
             children: [
-              Text(
-                '${AppLocalizations.of(context).classroomGrubunBirGundeToplamda} '
-                '${AppLocalizations.of(context).classroomOGunkuGrupToplami}',
-                style: Theme.of(ctx).textTheme.bodySmall,
+              Expanded(
+                child: NumberStepper(
+                  label: l10n.classroomSaat,
+                  value: hours,
+                  min: 0,
+                  max: 24,
+                  onChanged: (v) => setState(() => hours = v),
+                ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberStepper(
-                      label: AppLocalizations.of(context).classroomSaat,
-                      value: hours,
-                      min: 0,
-                      max: 24,
-                      onChanged: (v) => setState(() => hours = v),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: NumberStepper(
-                      label: AppLocalizations.of(context).classroomDakika,
-                      value: minutes,
-                      min: 0,
-                      max: 59,
-                      onChanged: (v) => setState(() => minutes = v),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: NumberStepper(
+                  label: l10n.classroomDakika,
+                  value: minutes,
+                  min: 0,
+                  max: 59,
+                  onChanged: (v) => setState(() => minutes = v),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(AppLocalizations.of(context).classroomVazgec),
+        ],
+      ),
+      run: () async {
+        final picked = hours * 60 + minutes;
+        if (picked == group.dailyGoalMinutes) return false;
+        await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
+        return true;
+      },
+    );
+    if (done == null || !done.value) return;
+    // Ad degisimiyle ayni tazeleme gerekcesi (bkz. _renameDialog).
+    ref.invalidate(userGroupsProvider);
+    navigator.pop();
+  }
+
+  Future<void> _editAccessDialog(BuildContext context, WidgetRef ref) async {
+    var visibility = group.visibility;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final done = await _actionDialog<bool>(
+      context,
+      title: l10n.groupDiscoveryPrivacyTitle,
+      submitKey: const Key('group-access-submit'),
+      submitLabel: l10n.classroomKaydet,
+      busyLabel: l10n.classroomKaydediliyor,
+      content: (ctx, setState, enabled) => RadioGroup<GroupVisibility>(
+        groupValue: visibility,
+        onChanged: (value) => setState(() => visibility = value!),
+        child: Column(
+          children: [
+            RadioListTile<GroupVisibility>(
+              contentPadding: EdgeInsets.zero,
+              value: GroupVisibility.private,
+              title: Text(l10n.groupDiscoveryPrivate),
+              subtitle: Text(l10n.groupDiscoveryPrivateDescription),
             ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, (hours * 60 + minutes)),
-              child: Text(AppLocalizations.of(context).classroomKaydet),
+            RadioListTile<GroupVisibility>(
+              contentPadding: EdgeInsets.zero,
+              value: GroupVisibility.public,
+              title: Text(l10n.groupDiscoveryPublic),
+              subtitle: Text(l10n.groupDiscoveryPublicDescription),
             ),
           ],
         ),
       ),
-    );
-    if (picked == null || picked < 1 || picked == group.dailyGoalMinutes) {
-      return;
-    }
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    final navigator = Navigator.of(context);
-    try {
-      await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
-      // Ad degisimiyle ayni tazeleme gerekcesi (bkz. _renameDialog).
-      ref.invalidate(userGroupsProvider);
-      navigator.pop();
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
-  }
-
-  Future<void> _editAccessDialog(BuildContext context, WidgetRef ref) async {
-    final picked = await showDialog<GroupVisibility>(
-      context: context,
-      builder: (ctx) {
-        var visibility = group.visibility;
-        final l10n = AppLocalizations.of(ctx);
-        return StatefulBuilder(
-          builder: (ctx, setState) => AlertDialog(
-            title: Text(l10n.groupDiscoveryPrivacyTitle),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioGroup<GroupVisibility>(
-                  groupValue: visibility,
-                  onChanged: (value) => setState(() => visibility = value!),
-                  child: Column(
-                    children: [
-                      RadioListTile<GroupVisibility>(
-                        contentPadding: EdgeInsets.zero,
-                        value: GroupVisibility.private,
-                        title: Text(l10n.groupDiscoveryPrivate),
-                        subtitle: Text(l10n.groupDiscoveryPrivateDescription),
-                      ),
-                      RadioListTile<GroupVisibility>(
-                        contentPadding: EdgeInsets.zero,
-                        value: GroupVisibility.public,
-                        title: Text(l10n.groupDiscoveryPublic),
-                        subtitle: Text(l10n.groupDiscoveryPublicDescription),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(l10n.classroomVazgec),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, visibility),
-                child: Text(l10n.classroomKaydet),
-              ),
-            ],
-          ),
-        );
+      run: () async {
+        if (visibility == group.visibility) return false;
+        await ref
+            .read(groupRepositoryProvider)
+            .updateGroupAccess(
+              group.id,
+              visibility: visibility,
+              memberLimit: group.memberLimit,
+            );
+        return true;
       },
     );
-    if (picked == null || picked == group.visibility || !context.mounted) {
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    final l10n = AppLocalizations.of(context);
-    final navigator = Navigator.of(context);
-    try {
-      await ref
-          .read(groupRepositoryProvider)
-          .updateGroupAccess(
-            group.id,
-            visibility: picked,
-            memberLimit: group.memberLimit,
-          );
-      ref.invalidate(userGroupsProvider);
-      navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.groupDiscoveryPrivacyUpdated)),
-      );
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
+    if (done == null || !done.value) return;
+    ref.invalidate(userGroupsProvider);
+    navigator.pop();
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.groupDiscoveryPrivacyUpdated)),
+    );
   }
 
   Future<void> _editTimeZoneDialog(BuildContext context, WidgetRef ref) async {
     final choices = <String>{...kGroupTimeZoneChoices, group.timeZone}.toList();
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        var timeZone = group.timeZone;
-        final l10n = AppLocalizations.of(ctx);
-        return StatefulBuilder(
-          builder: (ctx, setState) => AlertDialog(
-            title: Text(l10n.groupTimeZoneChoose),
-            content: DropdownButtonFormField<String>(
-              initialValue: timeZone,
-              isExpanded: true,
-              decoration: InputDecoration(labelText: l10n.groupTimeZone),
-              items: choices
-                  .map(
-                    (zone) => DropdownMenuItem(
-                      value: zone,
-                      child: Text(
-                        localizedWorldCityLabel(zone, l10n, fallback: zone),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) => setState(() => timeZone = value!),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(l10n.classroomVazgec),
+    var timeZone = group.timeZone;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final done = await _actionDialog<bool>(
+      context,
+      title: l10n.groupTimeZoneChoose,
+      submitKey: const Key('group-time-zone-submit'),
+      submitLabel: l10n.classroomKaydet,
+      busyLabel: l10n.classroomKaydediliyor,
+      content: (ctx, setState, enabled) => DropdownButtonFormField<String>(
+        initialValue: timeZone,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: l10n.groupTimeZone),
+        items: choices
+            .map(
+              (zone) => DropdownMenuItem(
+                value: zone,
+                child: Text(
+                  localizedWorldCityLabel(zone, l10n, fallback: zone),
+                ),
               ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, timeZone),
-                child: Text(l10n.classroomKaydet),
-              ),
-            ],
-          ),
-        );
+            )
+            .toList(growable: false),
+        onChanged: (value) => setState(() => timeZone = value!),
+      ),
+      run: () async {
+        if (timeZone == group.timeZone) return false;
+        await ref
+            .read(groupRepositoryProvider)
+            .updateGroupTimeZone(group.id, timeZone);
+        return true;
       },
     );
-    if (picked == null || picked == group.timeZone || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    final l10n = AppLocalizations.of(context);
-    final navigator = Navigator.of(context);
-    try {
-      await ref
-          .read(groupRepositoryProvider)
-          .updateGroupTimeZone(group.id, picked);
-      ref.invalidate(userGroupsProvider);
-      navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.groupTimeZoneUpdated)),
-      );
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
+    if (done == null || !done.value) return;
+    ref.invalidate(userGroupsProvider);
+    navigator.pop();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.groupTimeZoneUpdated)));
   }
 
+  /// 🔴 WP-540: burası bu ekranın **en pahalı** kusuruydu.
+  ///
+  /// Eski akış onayı aldıktan sonra isteği göstergesiz gönderiyordu; düğme
+  /// etkin kalıyordu ve ölçüldü: ikinci basış İKİNCİ `regenerate_group_invite_code`
+  /// çağrısı üretiyor (`istek ucarken gosterge=false, dugme etkin=true,
+  /// TOPLAM regenerate=2`). RPC idempotent değil (`0093_group_bans.sql:141-162`
+  /// her çağrıda yeni kod üretir) → kullanıcıya gösterilen ilk kod anında
+  /// geçersiz oluyordu. Üstelik başarıda `navigator.pop()` çağrıldığı için iki
+  /// eşzamanlı istek **iki pop** yapıyor, gerçek cihazda kullanıcı fazladan bir
+  /// ekran geri düşüyordu (probda `Bad state: No element`).
+  ///
+  /// `_actionDialog` isteği onay diyaloğunun içinde koşturur: düğme kilitlenir,
+  /// gösterge döner ve sonuç gelmeden diyalog kapanmaz — ikinci çağrı yapısal
+  /// olarak imkânsız, tek pop kalır.
   Future<void> _regenerateCode(
     BuildContext context,
     WidgetRef ref,
     GroupRepository repo,
   ) async {
-    final ok = await _confirm(
-      context,
-      title: AppLocalizations.of(context).classroomKoduYenile,
-      message: AppLocalizations.of(context).classroomYeniBirDavetKodu,
-      action: AppLocalizations.of(context).classroomYenile,
-    );
-    if (!ok || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
     final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    try {
-      final code = await repo.regenerateInviteCode(group.id);
-      // Yeni davet kodu da groups tablosunda; akis tetiklenmez (bkz. _renameDialog).
-      ref.invalidate(userGroupsProvider);
-      navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.classroomYeniKodCode(code))),
-      );
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
+    final done = await _actionDialog<String>(
+      context,
+      title: l10n.classroomKoduYenile,
+      submitKey: const Key('regenerate-code-submit'),
+      submitLabel: l10n.classroomYenile,
+      busyLabel: l10n.classroomIsleniyor,
+      content: (ctx, setState, enabled) =>
+          Text(l10n.classroomYeniBirDavetKodu),
+      run: () => repo.regenerateInviteCode(group.id),
+    );
+    if (done == null) return;
+    // Yeni davet kodu da groups tablosunda; akis tetiklenmez (bkz. _renameDialog).
+    ref.invalidate(userGroupsProvider);
+    navigator.pop();
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.classroomYeniKodCode(done.value))),
+    );
   }
 
   Future<void> _deleteGroup(
@@ -619,28 +552,24 @@ class ClassDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     GroupRepository repo,
   ) async {
-    final ok = await _confirm(
-      context,
-      title: AppLocalizations.of(context).classroomGrubuSil,
-      message:
-          '"${group.name}" · '
-          '${AppLocalizations.of(context).classroomTumUyelerIcinKalici}. '
-          '${AppLocalizations.of(context).classroomBuIslemGeriAlinamaz}',
-      action: AppLocalizations.of(context).classroomSil,
-    );
-    if (!ok || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);
-    try {
-      await repo.deleteGroup(group.id);
-      ref.read(activeGroupIdProvider.notifier).select(null);
-      navigator.pop();
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
+    final done = await _actionDialog<void>(
+      context,
+      title: l10n.classroomGrubuSil,
+      submitKey: const Key('delete-group-submit'),
+      submitLabel: l10n.classroomSil,
+      busyLabel: l10n.classroomIsleniyor,
+      content: (ctx, setState, enabled) => Text(
+        '"${group.name}" · '
+        '${l10n.classroomTumUyelerIcinKalici}. '
+        '${l10n.classroomBuIslemGeriAlinamaz}',
+      ),
+      run: () => repo.deleteGroup(group.id),
+    );
+    if (done == null) return;
+    ref.read(activeGroupIdProvider.notifier).select(null);
+    navigator.pop();
   }
 
   Future<void> _showBannedMembers(
@@ -683,30 +612,15 @@ class ClassDetailScreen extends ConsumerWidget {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(member.displayName),
-                      trailing: TextButton(
-                        onPressed: () async {
-                          try {
-                            await repo.unbanMember(group.id, member.id);
-                            setDialogState(
-                              () => membersFuture = repo.listBannedMembers(
-                                group.id,
-                              ),
-                            );
-                          } on GroupException {
-                            if (dialogContext.mounted) {
-                              ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    AppLocalizations.of(
-                                      dialogContext,
-                                    ).authBeklenmeyenBirHataOlustu,
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: Text(AppLocalizations.of(context).safetyUnblock),
+                      // WP-540: eskiden düz bir `TextButton`dı — istek uçarken
+                      // hiçbir gösterge yoktu ve düğme etkin kaldığı için art
+                      // arda basış ikinci `unbanMember` çağrısı gönderiyordu.
+                      trailing: _UnbanButton(
+                        key: ValueKey('unban-${member.id}'),
+                        onUnban: () => repo.unbanMember(group.id, member.id),
+                        onDone: () => setDialogState(
+                          () => membersFuture = repo.listBannedMembers(group.id),
+                        ),
                       ),
                     );
                   },
@@ -1088,55 +1002,52 @@ class _MembersCard extends ConsumerWidget {
     Profile member,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await _confirm(
+    final messenger = ScaffoldMessenger.of(context);
+    final done = await _actionDialog<void>(
       context,
       title: l10n.classroomUyeyiCikar,
+      submitKey: const Key('remove-member-submit'),
+      submitLabel: l10n.classroomCikar,
+      busyLabel: l10n.classroomIsleniyor,
       // WP-446: onay metni artık eylemin KAPSAMINI da söylüyor. Eskiden
       // çıkarma ve yasak birebir aynı cümleyi gösteriyordu.
-      message:
-          '${l10n.classroomMemberdisplaynameGruptanCikarilsinMi(member.displayName)}'
-          '\n\n${l10n.classroomUyeyiCikarKapsam}',
-      action: l10n.classroomCikar,
+      content: (ctx, setState, enabled) => Text(
+        '${l10n.classroomMemberdisplaynameGruptanCikarilsinMi(member.displayName)}'
+        '\n\n${l10n.classroomUyeyiCikarKapsam}',
+      ),
+      run: () => repo.removeMember(group.id, member.id),
     );
-    if (!ok) return;
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    try {
-      await repo.removeMember(group.id, member.id);
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
+    if (done == null) return;
+    // WP-540: eskiden başarıda **hiçbir onay yoktu**; üye listesi akıştan
+    // güncellenene kadar yönetici eylemin işleyip işlemediğini bilmiyordu.
+    messenger.showSnackBar(SnackBar(content: Text(l10n.classroomUyeCikarildi)));
   }
 
+  /// 🔴 WP-540: yasaklama tamamen sessizdi (ölçüldü: `gosterge=false`,
+  /// `basari SnackBar=false`). Geri dönüşü zor bir moderasyon eylemi hem
+  /// göstergesiz hem onaysız koşuyordu.
   Future<void> _banMember(
     BuildContext context,
     GroupRepository repo,
     Profile member,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await _confirm(
+    final messenger = ScaffoldMessenger.of(context);
+    final done = await _actionDialog<void>(
       context,
       title: l10n.classroomUyeyiYasakla,
-      message:
-          '${l10n.classroomMemberdisplaynameGruptanYasaklansinMi(member.displayName)}'
-          '\n\n${l10n.classroomUyeyiYasaklaKapsam}',
-      action: l10n.classroomYasakla,
+      submitKey: const Key('ban-member-submit'),
+      submitLabel: l10n.classroomYasakla,
+      busyLabel: l10n.classroomIsleniyor,
+      content: (ctx, setState, enabled) => Text(
+        '${l10n.classroomMemberdisplaynameGruptanYasaklansinMi(member.displayName)}'
+        '\n\n${l10n.classroomUyeyiYasaklaKapsam}',
+      ),
+      run: () => repo.banMember(group.id, member.id),
     );
-    if (!ok || !context.mounted) return;
-    try {
-      await repo.banMember(group.id, member.id);
-    } on GroupException {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        );
-      }
-    }
+    if (done == null) return;
+    messenger.showSnackBar(SnackBar(content: Text(l10n.classroomUyeYasaklandi)));
   }
-
 }
 
 /// WP-483: grup üye satırındaki "dürtmesini sustur" eylemi.
@@ -1291,6 +1202,230 @@ class _MemberModerationMenu extends StatelessWidget {
       // Menü genişliği içeriğe göre; uzun çeviride sarmalanır, kırpılmaz.
       Flexible(child: Text(label)),
     ],
+  );
+}
+
+/// WP-540: yasağı kaldıran düğme — gösterge + tek gönderim.
+class _UnbanButton extends StatefulWidget {
+  const _UnbanButton({super.key, required this.onUnban, required this.onDone});
+
+  final Future<void> Function() onUnban;
+  final VoidCallback onDone;
+
+  @override
+  State<_UnbanButton> createState() => _UnbanButtonState();
+}
+
+class _UnbanButtonState extends State<_UnbanButton> {
+  bool _busy = false;
+
+  Future<void> _run() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await widget.onUnban();
+      if (!mounted) return;
+      widget.onDone();
+    } catch (failure) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text(groupActionErrorText(failure, l10n))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: _busy ? null : _run,
+      child: _busy
+          ? const SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(AppLocalizations.of(context).safetyUnblock),
+    );
+  }
+}
+
+/// WP-540: `GroupException` (ve ağ hatası) → kullanıcı metni.
+///
+/// Desen `core/l10n/nudge_error_text.dart`ten alındı: hata **kimliği** tek
+/// yerde metne çevrilir, böylece aynı sebep her ekranda aynı cümleyi üretir.
+/// Eskiden grup tarafında beş ayrı sebep tek bir "Beklenmeyen bir hata oluştu."
+/// cümlesine iniyordu.
+///
+/// 🔴 Kimlik `message` üzerinden okunuyor çünkü `GroupException` bir `code`
+/// alanı taşımıyor ve iki repository de bu WP'nin sahip listesinde değil.
+/// Eşleşen belirteçler bilerek **ASCII**: l10n kapısı `app/lib` içindeki Türkçe
+/// karakterli literal'leri reddediyor, ayrıca ASCII belirteç iki uçta da aynen
+/// duruyor. Kaynakları:
+///   * `public_name_not_allowed` → `0094_public_name_filter.sql:47` +
+///     `in_memory_group_repository.dart:127`
+///   * `group_banned`            → `0093_group_bans.sql:185`
+///   * `engellendi`              → `in_memory_group_repository.dart:256`
+///     (bellek-içi uç kod yerine cümle taşıyor, ikisi de eşleşmeli)
+///   * `Grup dolu`               → `0093_group_bans.sql` (SQL bu dizeyi kendisi
+///     raise ediyor) + `in_memory_group_repository.dart:261`
+///   * `Bu koda ait grup`        → iki repository de aynen üretir
+///   * `not_authenticated`       → `0093_group_bans.sql`
+///
+/// `GroupException` **olmayan** hata ağ katmanından gelir: Supabase repository
+/// yalnız `PostgrestException`ı sarıyor, bağlantı kopunca `SocketException` /
+/// `ClientException` sarılmadan yukarı çıkar. Eski `on GroupException`
+/// blokları bunu hiç yakalamıyordu.
+String groupActionErrorText(Object error, AppLocalizations l10n) {
+  if (error is! GroupException) return l10n.profileSunucuyaUlasilamadi;
+  final message = error.message;
+  if (message.contains('public_name_not_allowed')) {
+    return l10n.moderationPublicNameRejected;
+  }
+  if (message.contains('group_banned') || message.contains('engellendi')) {
+    return l10n.classroomGrubaKatilmanEngellendi;
+  }
+  if (message.contains('Grup dolu')) return l10n.classroomGrupDolu;
+  if (message.contains('Bu koda ait grup')) return l10n.commonBuKodaAitGrup;
+  if (message.contains('not_authenticated')) {
+    return l10n.profileOturumBulunamadiGirisYap;
+  }
+  return l10n.authBeklenmeyenBirHataOlustu;
+}
+
+/// Başarıyla biten `_actionDialog` sonucunun sarmalayıcısı.
+///
+/// `T?` yetmezdi: `void`/`bool` dönen eylemlerde "iptal edildi" ile "başarıyla
+/// bitti ama değer null/false" ayırt edilemezdi.
+class _Completed<T> {
+  const _Completed(this.value);
+
+  final T value;
+}
+
+/// 🔴 WP-540: isteği **kendi içinde koşan** eylem diyaloğu.
+///
+/// Bu ekrandaki yönetici eylemlerinin tamamı aynı kusuru taşıyordu: diyalog
+/// onay alır almaz kapanıyor, istek göstergesiz uçuyor ve düğme etkin kaldığı
+/// için ikinci basış ikinci sunucu çağrısı üretiyordu (davet kodu yenilemede
+/// ölçüldü: `TOPLAM regenerate=2`, iki farklı kod).
+///
+/// Desen WP-530/532'nin (`class_switcher.dart`) aynısı ve aynı dosyadaki doğru
+/// örneklerle (`_LeaveGroupTile`, avatar yükleme) uyumlu:
+///   * `onPressed: running ? null : submit` **ve** `submit` içinde
+///     `if (running) return` — ikincisi klavye/erişilebilirlik yolunu da kapar,
+///   * `barrierDismissible: false` + `PopScope(canPop: !running)` — istek
+///     ortasında diyalog kapanamaz, dolayısıyla **çift `Navigator.pop`** da
+///     olamaz,
+///   * hata diyaloğun **içinde** gösterilir; düğme yeniden etkinleşir.
+Future<_Completed<T>?> _actionDialog<T>(
+  BuildContext context, {
+  required String title,
+  required Widget Function(BuildContext, StateSetter, bool) content,
+  required String submitLabel,
+  required String busyLabel,
+  required Key submitKey,
+  required Future<T> Function() run,
+  String? Function(AppLocalizations)? validate,
+}) {
+  return showDialog<_Completed<T>>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) {
+      var running = false;
+      String? error;
+      final l10n = AppLocalizations.of(ctx);
+      return StatefulBuilder(
+        builder: (ctx, setState) {
+          final currentError = error;
+
+          Future<void> submit() async {
+            if (running) return;
+            final invalid = validate?.call(l10n);
+            if (invalid != null) {
+              setState(() => error = invalid);
+              return;
+            }
+            setState(() {
+              running = true;
+              error = null;
+            });
+            try {
+              final value = await run();
+              if (ctx.mounted) Navigator.pop(ctx, _Completed<T>(value));
+            } catch (failure) {
+              if (!ctx.mounted) return;
+              setState(() {
+                running = false;
+                error = groupActionErrorText(failure, l10n);
+              });
+            }
+          }
+
+          return PopScope(
+            canPop: !running,
+            child: AlertDialog(
+              title: Text(title),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // İstek uçarken içerik de kilitlenir; aksi hâlde kullanıcı
+                    // gönderilmiş değeri değiştirip yanlış sonucu bekler.
+                    AbsorbPointer(
+                      absorbing: running,
+                      child: content(ctx, setState, !running),
+                    ),
+                    if (currentError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        currentError,
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: running ? null : () => Navigator.pop(ctx),
+                  child: Text(l10n.classroomVazgec),
+                ),
+                FilledButton(
+                  key: submitKey,
+                  onPressed: running ? null : submit,
+                  child: running
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                            // Dar telefonda AlertDialog 280 dp; uzun çeviri
+                            // eylem satırını taşırıyordu (WP-532 ölçümü).
+                            Flexible(
+                              child: Text(
+                                busyLabel,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(submitLabel),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
   );
 }
 

@@ -203,7 +203,12 @@ void main() {
         findsOneWidget,
         reason: 'Hata diyalog içinde gösterilmeli, akış kaybolmamalı.',
       );
-      expect(find.text('Beklenmeyen bir hata oluştu.'), findsOneWidget);
+      // 🔴 WP-540: burada `'Beklenmeyen bir hata oluştu.'` bekleniyordu ve bu
+      // iddia YANLIŞ davranışı kilitliyordu — WP-532 kapsam dışı bıraktığı
+      // için ("davet kodu yanlış olduğunda kullanıcı hâlâ genel mesajı
+      // görüyor"), test o kusuru sözleşmeye çevirmişti. Sebep artık koddan
+      // okunuyor (`groupActionErrorText`), kullanıcı ne düzelteceğini biliyor.
+      expect(find.text('Bu koda ait grup bulunamadı.'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(
         tester.widget<FilledButton>(submit).onPressed,
