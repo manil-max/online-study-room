@@ -215,6 +215,10 @@ def build_gates() -> list[Gate]:
         # eksigi derlemeden once, saniyeler icinde olcer.
         Gate("play-firebase", "Play flavor Firebase/ikon kaynagi", 0,
              [py, "scripts/test_all.py", "--internal-play-firebase"]),
+        # WP-537: `open_filex` eklentisi dort genis medya iznini Play
+        # surumune tasiyordu; karsiligi olan kod Play'de hic calismiyor.
+        Gate("play-manifest", "Play manifest izin sozlesmesi", 0,
+             [py, "scripts/test_all.py", "--internal-play-manifest"]),
         # WP-505: pin alti workflow adiminda duruyor; biri kayarsa goldenlar
         # kod degismeden kirmiziya duser.
         Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
@@ -432,6 +436,98 @@ def internal_flutter_pin() -> int:
         f"OK: {checked} flutter-action adimi da {expected} surumune pinli "
         "(.flutter-version)."
     )
+    return 0
+
+
+def internal_play_manifest() -> int:
+    r"""WP-537: Play surumu, Play'de HIC CALISMAYAN bir ozellik icin genis
+    medya izinleri istiyordu.
+
+    Olculdu (v61 turu): `playRelease` birlestirilmis manifestinde
+    READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO ve
+    READ_EXTERNAL_STORAGE vardi. Hicbiri bizim manifestimizde yazili degil --
+    `open_filex` eklentisi kendi manifestinde bildiriyor ve manifest
+    birlestirme uygulamaya tasiyor. O eklentinin tek kullanim yeri sideload
+    updater'i, o da Play surumunde kapali.
+
+    Play tarafinda bedeli somut: READ_MEDIA_IMAGES/VIDEO "Photo and Video
+    Permissions" beyanini, READ_MEDIA_AUDIO ise "Music and audio files"
+    kisitli izin beyanini tetikler.
+
+    Kapi iki katmanli olcer:
+      1. Kaynak: `src/play/AndroidManifest.xml` her birini `tools:node=remove`
+         ile dusuruyor mu? (Her zaman olculur.)
+      2. Cikti: birlestirilmis playRelease manifesti diskteyse, izinlerin
+         gercekten dusdugu dogrulanir. (Gradle kosmadiysa ATLANIR -- ve bu
+         durum ciktida acikca yazilir, sessizce yesil sayilmaz.)
+    """
+    import re
+
+    android = APP / "android" / "app"
+    play_manifest = android / "src" / "play" / "AndroidManifest.xml"
+    problems: list[str] = []
+
+    banned = [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+    ]
+
+    if not play_manifest.exists():
+        print(f"FAIL: {play_manifest.relative_to(ROOT)} yok.")
+        return 1
+
+    source = play_manifest.read_text(encoding="utf-8")
+    # Yorumlar atilir: yorum icindeki izin adi kapiyi yaniltmamali.
+    stripped = re.sub(r"<!--.*?-->", "", source, flags=re.S)
+
+    if "xmlns:tools" not in stripped:
+        problems.append(
+            "src/play/AndroidManifest.xml `xmlns:tools` bildirmiyor; "
+            "`tools:node` calismaz"
+        )
+
+    for permission in banned:
+        pattern = re.compile(
+            r'<uses-permission[^>]*android:name\s*=\s*"' + re.escape(permission)
+            + r'"[^>]*tools:node\s*=\s*"remove"',
+            re.S,
+        )
+        if not pattern.search(stripped):
+            problems.append(
+                f"play manifesti {permission} iznini dusurmuyor "
+                "(tools:node=remove yok) -> Play beyan formu tetiklenir"
+            )
+
+    merged = sorted(
+        (APP / "build").glob(
+            "app/intermediates/merged_manifest*/playRelease/**/AndroidManifest.xml"
+        )
+    )
+    if not merged:
+        print(
+            "NOT: birlestirilmis playRelease manifesti diskte yok, cikti "
+            "katmani olculmedi (gradle :app:processPlayReleaseManifest)."
+        )
+    else:
+        for path in merged:
+            body = path.read_text(encoding="utf-8", errors="replace")
+            for permission in banned:
+                if permission in body:
+                    problems.append(
+                        f"{path.name} ({path.parent.name}) hala {permission} "
+                        "tasiyor"
+                    )
+
+    if problems:
+        print(f"FAIL ({len(problems)}):")
+        for problem in problems:
+            print(f"    - {problem}")
+        return 1
+
+    measured = "kaynak + birlestirilmis cikti" if merged else "yalniz kaynak"
+    print(f"Play manifest izin sozlesmesi tamam ({measured}).")
     return 0
 
 
@@ -769,6 +865,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-firebase", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-play-manifest", action="store_true",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--internal-android-smoke", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -781,6 +879,8 @@ def main() -> int:
         return internal_flutter_pin()
     if args.internal_play_firebase:
         return internal_play_firebase()
+    if args.internal_play_manifest:
+        return internal_play_manifest()
     if args.internal_android_smoke:
         return internal_android_smoke()
 

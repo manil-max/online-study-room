@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!--
       WP-110: Play Store kanalı.
       REQUEST_INSTALL_PACKAGES buraya EKLENMEZ (main'de de yok).
@@ -6,6 +8,43 @@
       WP-128: distributionChannel meta-data denetim/grep için; Dart otoritesi
       FLUTTER_APP_FLAVOR + DISTRIBUTION_CHANNEL (DistributionConfig).
     -->
+
+    <!--
+      WP-537: `open_filex` eklentisi DÖRT geniş medya iznini kendi manifestinde
+      bildiriyor ve manifest birleştirme bunları uygulamaya taşıyor. Ölçüldü:
+      `playRelease` birleştirilmiş manifestinde READ_MEDIA_IMAGES,
+      READ_MEDIA_VIDEO, READ_MEDIA_AUDIO ve READ_EXTERNAL_STORAGE vardı —
+      hiçbiri bizim manifestimizde yazılı değil.
+
+      🔴 Bu izinlerin karşılığı olan tek kod yolu `updater_dialog.dart`
+      (indirilen APK'yı açmak) ve o yol Play sürümünde ZATEN KAPALI
+      (`DistributionConfig.allowsSideloadUpdates == false`). Yani Play sürümü,
+      hiç çalışmayacak bir özellik için kullanıcının müzik ve video
+      kütüphanesine erişim istiyordu.
+
+      Play tarafında bedeli somut: READ_MEDIA_IMAGES/VIDEO "Photo and Video
+      Permissions" beyanını, READ_MEDIA_AUDIO ise "Music and audio files"
+      kısıtlı izin beyanını tetikler. Bir çalışma uygulamasının müzik
+      kütüphanesine erişme gerekçesi yok; ilk gönderimde en olası soru budur.
+
+      Avatar/ekran görüntüsü seçme bundan ETKİLENMEZ: `image_picker_android`
+      bu izinleri bildirmiyor, sistem foto seçicisini kullanıyor.
+
+      Kalıcı kapı: test_all.py icindeki `play-manifest` kapisi.
+    -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VIDEO"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
+
     <application>
         <meta-data
             android:name="com.manilmax.online_study_room.DISTRIBUTION_CHANNEL"

@@ -80,6 +80,14 @@ jobs:
       - name: Play flavor Firebase ve ikon kaynağı
         run: python scripts/test_all.py --internal-play-firebase
 
+      # 🔴 WP-537: `open_filex` eklentisi READ_MEDIA_IMAGES/VIDEO/AUDIO ve
+      # READ_EXTERNAL_STORAGE izinlerini kendi manifestinde bildiriyor ve
+      # birleştirme bunları Play sürümüne taşıyordu. Karşılığı olan kod
+      # (sideload updater) Play'de zaten kapalı. Bu adım izinlerin
+      # düşürüldüğünü her push'ta ölçer.
+      - name: Play manifest izin sözleşmesi
+        run: python scripts/test_all.py --internal-play-manifest
+
   # 🔴 Altı Edge Function (1601 satır, içinde kullanıcı verisi silen
   # `purge-accounts`) hiçbir yerde tip denetiminden geçmiyordu. Denetim ilk
   # açıldığında **altısı da** düştü; hepsi düzeltildi (yakalananlar: `catch`
