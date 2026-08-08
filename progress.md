@@ -5347,6 +5347,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-508** Kart üstünden kaydırma | Android telefon (ana ekran, en az iki ekran boyu kart dizilimi) | Parmak *Şu an çalışanlar* / *Bugünün özeti* / *Görevler* kartının üstündeyken sayfa normal kayıyor ve sahte kaydırma (esneme) animasyonu görünmüyor; kart içeriği hücreye **sığmadığında** (çok üyeli grup) kart kendi içinde kaydırılıyor ve hiçbir üye kaybolmuyor; ısı haritası/ritim kartlarında yatay kaydırma çalışmaya devam ediyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-510** Tam ekran sohbet | Android telefon (sohbeti olan grup; en az 10 mesaj) | Sohbet ekranının tepesinde grup adı yazıyor, altında kutu/kart yok — mesajlar ekranın tamamını kullanıyor; yazma alanına dokununca klavye açılıyor ve yazma alanı klavyenin üstünde kalıyor, mesaj listesi kayabiliyor; mesaj gönderilince liste en alta geliyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
@@ -8061,6 +8062,56 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   (deno bu makinede kurulu değil). Başlık satırının yüksekliği değiştiği için
   ayrıca golden turu koşuldu: **49/49 yeşil**.
 - **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel kabul bekliyor.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-510: Tam ekran sohbet — "pencere içinde pencere" bitti 💬
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (v59 saha geri bildirimi · madde 2 + E5)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor
+- **Bağımlılık:** WP-509 ✅ (`ClassChatCard`'ın ikinci çağıranını kaldırdı)
+- **Ne yapıldı:**
+  1. `ClassChatScreen` üç kattan tek kata indi: başlıkta **grup adı**, gövdede
+     `Column(Expanded(mesaj listesi), yazma alanı)`. Eski hâl `AppBar("Sohbet")`
+     → dış `ListView` → grup adı satırı → sabit yükseklikli kart idi.
+  2. `ClassChatCard`'ın `Card` kabuğu, iç "Sohbet" başlığı ve
+     **`messageListHeight` parametresi** kaldırıldı. Widget artık verilen alanın
+     tamamını kaplar; sınırlı yükseklikli bir ebeveyn (`Scaffold.body`) ister.
+     🔴 E5: parametre bırakılsaydı "kart içinde kart" bir gün geri gelirdi.
+  3. Kart dolgusu gidince mesajlar ekran kenarına yapışacaktı; dolgu mesaj
+     listesinin kendisine taşındı. Yazma alanının altına `getSafePadding`
+     eklendi (klavye açıkken `paddingOf(...).bottom` zaten 0'a düşer, çift
+     boşluk olmaz).
+- **Klavye:** `Scaffold`un **varsayılan** `resizeToAvoidBottomInset` davranışı
+  yeterli — açıkça `true` yazmak ölü satır olurdu. Bunun yerine davranış teste
+  bağlandı: 320 dp'lik klavye ineriyle yazma alanı ve Gönder düğmesi görünür
+  bölgede kalıyor, daralan yalnız mesaj listesi oluyor.
+- **Ölçüm:** 360×800 dp ekranda mesaj listesi ekranın **%60'ından fazlasını**
+  kaplıyor. Eski hâlde liste `(ekranYüksekliği - 260).clamp(300, 560)` idi ve
+  üstüne AppBar + grup adı satırı + kart dolgusu ekrandan düşüyordu.
+- **Değişen dosyalar:** `app/lib/features/classroom/widgets/class_chat_screen.dart` ·
+  `app/lib/features/classroom/widgets/class_chat_card.dart` ·
+  `app/test/features/classroom/chat_fullscreen_wp510_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok. **Yeni l10n anahtarı yok.** `classroomSohbet`
+  anahtarı hâlâ kullanılıyor (grup başlığındaki simgenin tooltip'i), yani ölü
+  anahtar oluşmadı.
+- **Kabul (ölçülebilir):**
+  1. ✅ Başlıkta grup adı; ekranda ikinci bir "Sohbet" katmanı yok.
+  2. ✅ `ClassChatCard`'ı saran `Card` yok.
+  3. ✅ Gövdede tek `ListView` var (dıştan saran ikinci kaydırıcı yok).
+  4. ✅ Liste ekranın %60'ından fazlasını kaplıyor.
+  5. ✅ Listeyi saran sabit yükseklikli `SizedBox` yok.
+  6. ✅ Klavye açıkken yazma alanı + Gönder görünür; `TextField` yüksekliği
+     değişmiyor, yalnız liste daralıyor.
+- **Kapsam notu (bilerek yapılmadı):** Sınıf adı `ClassChatCard` olarak kaldı,
+  artık bir "kart" olmasa da. Yeniden adlandırma iki test dosyasına ve az önce
+  commit'lenen WP-509 testine dokunurdu; kabul kriterlerinden hiçbirine
+  izlenmiyor. İstenirse ayrı kozmetik WP.
+- **Test:** 8 yeni iddia. Komşu takım (classroom + `async_empty_state_wp495b` +
+  `classroom_screen_test`) **65/65 yeşil** — `ClassChatCard`'ı doğrudan kuran
+  üç eski test de dahil (hepsi `Scaffold.body` içinde olduğu için sınırlı
+  yükseklik zaten sağlanıyor).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel/klavye kabulü bekliyor.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/istanbul_calendar.dart';
+import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/report_target.dart';
@@ -15,15 +16,20 @@ import '../../profile/widgets/profile_tap.dart';
 import '../../safety/block_user_action.dart';
 import '../../safety/report_sheet.dart';
 
+/// Grup sohbeti: mesaj listesi + yazma alanı.
+///
+/// 🔴 WP-510: bu widget eskiden bir `Card` kabuğu içindeydi ve mesaj
+/// listesine `messageListHeight` ile **sabit** yükseklik veriyordu. Tam ekran
+/// sohbetin içine konduğunda "pencere içinde pencere" çıkıyor, liste ekranın boş
+/// kalan yerini kullanmıyor ve klavye açılınca yazma alanı doğru davranmıyordu.
+///
+/// Kabuk ve parametre kaldırıldı: widget artık **verilen alanın tamamını**
+/// kaplar, yani sınırlı yükseklikli bir ebeveyn ister (`Scaffold.body`).
+/// Parametre bırakılsaydı aynı "kart içinde kart" bir gün geri dönerdi.
 class ClassChatCard extends ConsumerStatefulWidget {
-  const ClassChatCard({
-    super.key,
-    required this.group,
-    this.messageListHeight = 280,
-  });
+  const ClassChatCard({super.key, required this.group});
 
   final StudyGroup group;
-  final double messageListHeight;
 
   @override
   ConsumerState<ClassChatCard> createState() => _ClassChatCardState();
@@ -57,82 +63,71 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
         ? const AsyncValue<List<ChatMessage>>.loading()
         : messagesAsync;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.forum_outlined),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context).classroomSohbet,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Mesaj listesi boş kalan alanın **tamamını** alır; klavye açılınca
+        // `Scaffold` gövdeyi kısaltır ve daralan yalnız bu parça olur.
+        Expanded(
+          child: gatedMessages.when(
+            data: (messages) {
+              // WP-126: engellenen kullanıcı mesajlarını gizle.
+              final blocked = blockedAsync.value ?? const <String>{};
+              final visible = blocked.isEmpty
+                  ? messages
+                  : messages
+                        .where((m) => !blocked.contains(m.userId))
+                        .toList(growable: false);
+              return _MessageList(messages: visible, currentUserId: user?.id);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Text(
+                AppLocalizations.of(context).classroomSohbetYuklenemedi,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: widget.messageListHeight,
-              child: gatedMessages.when(
-                data: (messages) {
-                  // WP-126: engellenen kullanıcı mesajlarını gizle.
-                  final blocked = blockedAsync.value ?? const <String>{};
-                  final visible = blocked.isEmpty
-                      ? messages
-                      : messages
-                            .where((m) => !blocked.contains(m.userId))
-                            .toList(growable: false);
-                  return _MessageList(
-                    messages: visible,
-                    currentUserId: user?.id,
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(
-                  child: Text(
-                    AppLocalizations.of(context).classroomSohbetYuklenemedi,
-                    style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ),
+        Padding(
+          // Alt güvenli alan yazma alanına eklenir; klavye açıkken
+          // `MediaQuery.paddingOf(...).bottom` zaten 0'a düşer (çift boşluk yok).
+          padding: getSafePadding(
+            context,
+            const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 3,
+                  maxLength: kMaxChatMessageLength,
+                  enabled: user != null && !_sending,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context).classroomMesajYaz,
+                    counterText: '',
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    minLines: 1,
-                    maxLines: 3,
-                    maxLength: kMaxChatMessageLength,
-                    enabled: user != null && !_sending,
-                    textInputAction: TextInputAction.newline,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context).classroomMesajYaz,
-                      counterText: '',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  tooltip: AppLocalizations.of(context).classroomGonder,
-                  onPressed: user == null || _sending ? null : _send,
-                  icon: _sending
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send),
-                ),
-              ],
-            ),
-          ],
+              const SizedBox(width: 8),
+              IconButton.filled(
+                tooltip: AppLocalizations.of(context).classroomGonder,
+                onPressed: user == null || _sending ? null : _send,
+                icon: _sending
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -182,6 +177,9 @@ class _MessageList extends StatelessWidget {
 
     return ListView.builder(
       reverse: true,
+      // Kart kabuğu gidince iç dolgu da gitti; mesajlar ekran kenarına
+      // yapışmasın diye dolgu listenin kendisine taşındı (WP-510).
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       itemCount: messages.length,
       itemBuilder: (context, index) {
         final message = messages[messages.length - 1 - index];

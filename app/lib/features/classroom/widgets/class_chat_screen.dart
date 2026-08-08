@@ -1,36 +1,31 @@
-import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/models/study_group.dart';
 import 'class_chat_card.dart';
 
-import '../../../core/widgets/safe_screen_padding.dart';
-
+/// Grup sohbeti — tam ekran.
+///
+/// 🔴 WP-510: ekran eskiden `AppBar("Sohbet")` + gövdede bir `ListView`
+/// idi; listenin içinde önce grup adı, sonra sabit yükseklikli bir sohbet
+/// **kartı** duruyordu. Üç kat: başlık → ad → kutu içinde sohbet. Yan etkisi
+/// yalnız görsel değildi: sabit yükseklikli liste ekranın boş kalan yerini
+/// kullanmıyor, dıştaki `ListView` yüzünden yazma alanı klavyeyle birlikte
+/// doğru davranmıyordu.
+///
+/// Şimdi tek kat: başlıkta grup adı, gövdede mesaj listesi + yazma alanı.
+/// Klavye `Scaffold`un varsayılan `resizeToAvoidBottomInset` davranışıyla
+/// gövdeyi kısaltır; daralan yalnız mesaj listesidir.
 class ClassChatScreen extends StatelessWidget {
   const ClassChatScreen({super.key, required this.group});
 
   final StudyGroup group;
 
   @override
-  Widget build(BuildContext context) {
-    final messageListHeight = (MediaQuery.sizeOf(context).height - 260).clamp(
-      300.0,
-      560.0,
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).classroomSohbet)),
-      body: ListView(
-        padding: getSafeVerticalPadding(context),
-        children: [
-          Text(group.name, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          ClassChatCard(
-            group: group,
-            messageListHeight: messageListHeight.toDouble(),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      // Uzun grup adı başlığı taşırmasın; adın kanonik yeri artık burası.
+      title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+    ),
+    body: ClassChatCard(group: group),
+  );
 }
