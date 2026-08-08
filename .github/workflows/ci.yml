@@ -224,3 +224,128 @@ jobs:
             SUPABASE_ANON_KEY = 'ci-placeholder-anon-key'
           } | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
       - run: flutter test --tags=golden --dart-define-from-file=env.json --concurrency=1
+
+  # 🔴 WP-516: Android tarafında HİÇBİR gerçek çalışma zamanı testi yoktu.
+  # `integration-tests` işi `-d windows` ile koşar, `android-unit` JVM'de sahte
+  # prefs kullanır, `app/android/app/src/androidTest/` boştur. v58'de geri sayım
+  # ve pomodoro açılışta çöküyordu (Dart `setInt` → Android `putLong`; native
+  # `getInt` okuyunca `ClassCastException` süreci öldürüyordu) ve **18 kapının
+  # hiçbiri kırmızı dönmedi.** Bu iş, sayacı gerçek bir Android sürecinde
+  # başlatıp durduran tek kapıdır.
+  #
+  # ⏱️ ~10-15 dk sürer, bu yüzden her PR'da değil; yalnız `main` push'unda ve
+  # elle tetiklemede (yayın öncesi tur) koşar.
+  #
+  # Matris API 30 + 33: v58 çökmesi API sürümüne duyarlıydı (bildirim izni ve
+  # foreground service davranışı 33'te farklı).
+  android-emulator:
+    name: Android emülatör smoke (sayaç)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 33]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # 🔴 WP-505: surum PINLI. Pinsizken runner o gunku stable'i
+          # kuruyordu ve yerelde uretilen goldenlar alt-piksel farkiyla
+          # kirmiziya dusuyordu (olculdu: 288x225 vs 288x224, sonra
+          # %4.61 raster farki). Tek kaynak: repo kokundeki
+          # `.flutter-version`. Degeri `scripts/test_all.py
+          # --internal-flutter-pin` her kosumda dogrular.
+          flutter-version: 3.44.2
+
+      # KVM olmadan emülatör yazılım emülasyonuna düşer ve boot süresi
+      # 10 dk'yı aşar. `-no-snapshot` yine de veriliyor: snapshot geri
+      # yüklenirse test bayat bir prefs durumuyla açılabilir.
+      - name: KVM erişimi
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # APK derlemesi `validateLocalEnvironment` Gradle kapısından geçer:
+      # `local` flavor için CHANNEL/APP_ENVIRONMENT/GIT_COMMIT_SHA/MIGRATION_HEAD
+      # zorunludur. Bu yüzden diğer işlerdeki iki anahtarlık sahte env.json
+      # yetmez; şablonun kendisi kopyalanır (yeni bir literal pin doğmasın).
+      # Secret gerekmez: `ALLOW_IN_MEMORY=true` + boş Supabase alanları.
+      - name: Sahte env.json (local flavor; secret gerekmez)
+        working-directory: app
+        run: cp env.local.example.json env.json
+
+      - name: flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Emülatörde sayaç smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: app
+          # `set -e` YOK: kırmızıyı yutmadan logcat'i toplayabilmek için çıkış
+          # kodu elle taşınır. Aksi hâlde test düştüğünde crash tamponu hiç
+          # okunmaz ve asıl kanıt kaybolur.
+          script: |
+            set -uo pipefail
+            LOG_DIR="$GITHUB_WORKSPACE/emulator-logs"
+            mkdir -p "$LOG_DIR"
+            CRASH_LOG="$LOG_DIR/crash-api${{ matrix.api-level }}.log"
+            DEVICE="$(adb devices | awk '/\tdevice$/ {print $1; exit}')"
+            echo "Cihaz: $DEVICE"
+            adb logcat -c
+            status=0
+            # 🔴 APK once derlenip `install -g` (tum runtime izinleri ver) ile
+            # kurulur, sonra test kosar. Sebebi olculdu: API 33'te ilk `Baslat`
+            # POST_NOTIFICATIONS diyalogunu acar, kimse dokunmadigi icin diyalog
+            # ekranda kalir ve ikinci `Baslat`
+            # `PlatformException(permissionRequestInProgress)` firlatir — kapi
+            # sayacla ilgisi olmayan bir sebeple kirmizi duserdi. `flutter test`
+            # ayni APK'yi yeniden kurar; `-r` runtime izinlerini korur.
+            flutter build apk --debug --flavor local \
+              --dart-define-from-file=env.json || status=$?
+            if [ $status -eq 0 ]; then
+              adb -s "$DEVICE" install -r -t -g \
+                build/app/outputs/flutter-apk/app-local-debug.apk || status=$?
+            fi
+            if [ $status -eq 0 ]; then
+              flutter test -d "$DEVICE" --flavor local \
+                integration_test/android_timer_smoke_test.dart \
+                --dart-define-from-file=env.json || status=$?
+            fi
+            adb logcat -b crash -d > "$CRASH_LOG" || true
+            adb logcat -d -s flutter:V AndroidRuntime:E > "$LOG_DIR/flutter-api${{ matrix.api-level }}.log" || true
+            # Sessiz geçme yok: süreç çökmüşse `flutter test` bazen yalnız
+            # "Lost connection" der ve kök neden yalnız crash tamponundadır.
+            if grep -q 'ClassCastException' "$CRASH_LOG"; then
+              echo "::error::logcat crash tamponunda ClassCastException var — v58 sınıfı Dart↔native prefs tip kayması."
+              status=1
+            fi
+            if grep -q 'com.manilmax.online_study_room' "$CRASH_LOG"; then
+              echo "::error::Uygulama süreci logcat crash tamponuna düştü."
+              status=1
+            fi
+            exit $status
+
+      - name: logcat artefaktı
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-logcat-api${{ matrix.api-level }}
+          path: emulator-logs/
+          if-no-files-found: warn

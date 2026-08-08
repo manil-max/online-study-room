@@ -3,7 +3,7 @@
 
     python scripts/test_all.py            # T0+T1+T2 (varsayilan tur)
     python scripts/test_all.py --fast     # T0+T1 (dakika alti, kod yazarken)
-    python scripts/test_all.py --full     # + golden + Windows entegrasyon
+    python scripts/test_all.py --full     # + golden + Windows/Android entegrasyon
     python scripts/test_all.py --only contract,analyze
 
 Tasarim kararlari:
@@ -81,6 +81,46 @@ def _needs(binary: str):
 def _needs_env_json() -> tuple[bool, str]:
     if not (APP / "env.json").exists():
         return False, "app/env.json yok — `docs/recovery/ENVIRONMENT-MATRIX.md`"
+    return True, ""
+
+
+def _needs_android_device() -> tuple[bool, str]:
+    """Emulator/cihaz smoke'u yalniz gercek bir Android hedefi varken kosar.
+
+    ATLANDI yesil DEGILDIR: bu kapi kosmadiginda tur `3` ile biter ve ozet
+    tablosunda sebebiyle listelenir. Kapinin asil evi CI'daki `android-emulator`
+    isidir (matris API 30 + 33).
+    """
+    if shutil.which("adb") is None:
+        return False, "`adb` bu makinede kurulu degil (CI'da emulator job'i kosar)"
+    probe = subprocess.run(
+        ["adb", "devices"], capture_output=True, text=True, timeout=60
+    )
+    if probe.returncode != 0:
+        return False, "`adb devices` calismadi — Android SDK platform-tools eksik"
+    booted = [
+        line.split("\t")[0]
+        for line in probe.stdout.splitlines()[1:]
+        if line.strip().endswith("\tdevice")
+    ]
+    if not booted:
+        return False, "Acik Android cihaz/emulator yok (CI'da emulator job'i kosar)"
+    ok, reason = _needs_env_json()
+    if not ok:
+        return ok, reason
+    # APK derlemesi `validateLocalEnvironment` Gradle kapisindan gecer; beta/
+    # staging sekilli bir env.json ile `--flavor local` derlemesi kapiyi
+    # anlamsiz bir Gradle hatasiyla kirmiziya dusururdu.
+    import json
+    try:
+        env = json.loads((APP / "env.json").read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as err:
+        return False, f"app/env.json okunamadi: {err}"
+    if env.get("CHANNEL") != "local" or env.get("APP_ENVIRONMENT") != "local":
+        return False, (
+            "app/env.json `local` flavor'a ait degil "
+            "(`cp env.local.example.json env.json`)"
+        )
     return True, ""
 
 
@@ -183,6 +223,13 @@ def build_gates() -> list[Gate]:
               "integration_test/v8_critical_flows_test.dart",
               "--dart-define-from-file=env.json"],
              cwd=APP, precondition=_needs_env_json),
+        # 🔴 WP-516: v58'de geri sayim + pomodoro Android'de aciliste
+        # cokuyordu (Dart `setInt` -> `putLong`, native `getInt` ->
+        # ClassCastException) ve 18 kapinin hicbiri kirmizi donmedi. Bu kapi
+        # sayaci GERCEK bir Android surecinde baslatip durduran tek kapidir.
+        Gate("android-smoke", "Android emulator sayac smoke", 3,
+             [py, "scripts/test_all.py", "--internal-android-smoke"],
+             precondition=_needs_android_device),
         Gate("pgtap", "pgTAP yerel replay", 3,
              [PWSH, "-NoProfile", "-NonInteractive", "-File",
               "tooling/supabase/local.ps1", "-Action", "baseline"],
@@ -210,6 +257,67 @@ def internal_deno_check() -> int:
         print("KIRMIZI tip denetimi: " + ", ".join(failed))
         return 1
     return 0
+
+
+def internal_android_smoke() -> int:
+    """Sayac smoke'unu acik emulator/cihazda kostur, sonra crash tamponunu tara.
+
+    🔴 `flutter test` tek basina yetmez: native taraf sureci oldururse kosum
+    yalniz "Lost connection to device" der, kok neden **yalniz** logcat crash
+    tamponunda durur. CI'daki `android-emulator` isi de ayni iki adimi yapar;
+    yerel ile CI ayni seyi olcsun diye mantik burada tek yerde.
+    """
+    devices = subprocess.run(
+        ["adb", "devices"], capture_output=True, text=True, timeout=60
+    )
+    booted = [
+        line.split("\t")[0]
+        for line in devices.stdout.splitlines()[1:]
+        if line.strip().endswith("\tdevice")
+    ]
+    if not booted:
+        print("Acik Android cihaz/emulator yok.")
+        return 1
+    device = booted[0]
+    print(f"Cihaz: {device}")
+
+    subprocess.run(["adb", "-s", device, "logcat", "-c"], timeout=60)
+
+    # 🔴 APK once derlenir ve `install -g` ile TUM runtime izinleri verilerek
+    # kurulur. Sebebi olculdu (API 33): ilk `Baslat` POST_NOTIFICATIONS
+    # diyalogunu acar, diyalog ekranda kalir ve ikinci `Baslat`
+    # `PlatformException(permissionRequestInProgress)` firlatir — kapi sayacla
+    # ilgisi olmayan bir sebeple kirmizi duserdi. `flutter test` ayni APK'yi
+    # yeniden kurar; `-r` verilmis izinleri korur.
+    apk = APP / "build" / "app" / "outputs" / "flutter-apk" / "app-local-debug.apk"
+    steps: list[list[str]] = [
+        [_exe("flutter"), "build", "apk", "--debug", "--flavor", "local",
+         "--dart-define-from-file=env.json"],
+        ["adb", "-s", device, "install", "-r", "-t", "-g", str(apk)],
+        [_exe("flutter"), "test", "-d", device, "--flavor", "local",
+         "integration_test/android_timer_smoke_test.dart",
+         "--dart-define-from-file=env.json"],
+    ]
+    status = 0
+    for argv in steps:
+        status = subprocess.run(argv, cwd=APP).returncode
+        if status != 0:
+            break
+
+    crash = subprocess.run(
+        ["adb", "-s", device, "logcat", "-b", "crash", "-d"],
+        capture_output=True, text=True, errors="replace", timeout=120,
+    ).stdout
+    if "ClassCastException" in crash:
+        print("KIRMIZI: logcat crash tamponunda ClassCastException var — "
+              "v58 sinifi Dart<->native prefs tip kaymasi.")
+        status = 1
+    if "com.manilmax.online_study_room" in crash:
+        print("KIRMIZI: uygulama sureci logcat crash tamponuna dustu.")
+        status = 1
+    if status != 0:
+        print(crash[-4000:])
+    return status
 
 
 def internal_flutter_pin() -> int:
@@ -420,7 +528,7 @@ def main() -> int:
     parser.add_argument("--fast", action="store_true",
                         help="yalniz T0+T1 (dakika alti)")
     parser.add_argument("--full", action="store_true",
-                        help="golden + Windows entegrasyon + pgTAP dahil")
+                        help="golden + Windows/Android entegrasyon + pgTAP dahil")
     parser.add_argument("--only", default="",
                         help="virgulle ayrilmis kapi anahtarlari")
     parser.add_argument("--list", action="store_true", help="kapilari listele")
@@ -430,6 +538,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-flutter-pin", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-android-smoke", action="store_true",
+                        help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     if args.internal_deno_check:
@@ -438,6 +548,8 @@ def main() -> int:
         return internal_migration_head()
     if args.internal_flutter_pin:
         return internal_flutter_pin()
+    if args.internal_android_smoke:
+        return internal_android_smoke()
 
     gates = build_gates()
     if args.list:

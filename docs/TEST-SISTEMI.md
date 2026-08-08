@@ -35,6 +35,7 @@ vardır: kapı bilerek bozulmuş bir girdiye kırmızı dönmüyorsa, kapı yokt
 | 2b | Android native JVM testleri | `app/android/app/src/test/**` | Kotlin servis/widget/prefs davranışı | ✅ `android-unit` ana tester kapısında |
 | 3 | Golden testleri | `--tags=golden` (Windows job) | Tema/görsel regresyon | ✅ |
 | 4 | Entegrasyon | `app/integration_test/` (Windows job) | Kritik kullanıcı akışları | ✅ WP-465'te CI'a bağlandı |
+| 4b | **Android emülatör smoke (çalışma zamanı)** | `app/integration_test/android_timer_smoke_test.dart` (CI `android-emulator`, API 30 + 33) | Sayacın gerçek Android sürecinde başlaması/durması; Dart↔native prefs tip sözleşmesi | ✅ WP-516 |
 | 5 | Veritabanı (pgTAP) | `supabase/tests/**` (44 dosya) | RLS, invariant, RPC davranışı | ✅ 647 assertion |
 | 6 | **İstemci ↔ sunucu sözleşmesi (statik)** | `scripts/backend_contract_audit.py` | Dart/Edge çağrısı ile SQL imzasının kayması | ✅ 91 çağrı, self-test'li |
 | 6b | **Repository kablo testleri (çalışma zamanı)** | `app/test/support/supabase_wire_harness.dart` | RPC adı/yanıt ayrıştırma/hata eşlemesi | ✅ 20/22 repository |
@@ -148,6 +149,57 @@ ortamda purge herkese açık olmamalı.
 
 ---
 
+## 3c. Katman 4b — Android emülatör smoke
+
+```bash
+cd app && flutter test -d <emulator> --flavor local \
+  integration_test/android_timer_smoke_test.dart --dart-define-from-file=env.json
+```
+
+Yerelde tek komutla: `python scripts/test_all.py --only android-smoke`
+(emülatör/adb yoksa **ATLANDI** + gerekçe; ATLANDI yeşil değildir, tur `3`
+ile biter). CI'da `.github/workflows/ci.yml` → `android-emulator` işi, matris
+API 30 + 33, yalnız `main` push'unda ve elle tetiklemede.
+
+**Neden var.** v58'de geri sayım ve pomodoro Android'de açılışta çöküyordu:
+Dart `prefs.setInt` Android'e **`putLong`** yazar, native taraf aynı anahtarı
+`getInt` ile okuyunca `ClassCastException` fırlatır ve bu bir
+receiver/servis içindeyse **uygulama sürecini** öldürür. O turda 18 kapının
+hiçbiri kırmızı dönmedi — çünkü `integration` işi `-d windows` ile koşuyor,
+`android-unit` JVM'de sahte prefs kullanıyor ve `app/android/app/src/androidTest/`
+boş. Yani hiçbir kapı sayacı gerçek bir Android sürecinde çalıştırmıyordu.
+
+**Ne ölçer.** Uygulama açılır, sayaç **geri sayım → pomodoro → kronometre**
+sırasıyla başlatılıp durdurulur; her adımdan sonra süreç ayakta ve sayaç
+ekranı çizili olmalıdır. Prefs **mock'lanmaz** — mock tam da ölçülmek istenen
+Dart↔native köprüsünü hiç kurmaz. Tip sözleşmesi iki katmanda ölçülür:
+
+1. **Yazıcı sözleşmesi (yarış yok).** `start()` döner dönmez, native geri
+   yazım diske düşmeden, Dart'ın prefs önbelleğindeki her sayısal sayaç
+   anahtarı `int` mi diye bakılır. Native `TimerStateStore` aynı anahtarları
+   `putLong` ile geri yazdığı için, yalnız diskteki son değere bakan bir
+   ölçüm tip kaymasını maskeleyebilirdi.
+2. **Cihaz round-trip.** `prefs.reload()` sonrası değerler gerçek Android
+   `SharedPreferences` deposundan okunur; plugin köprüsünün tamsayıyı tamsayı
+   döndürdüğü ve native yazımın Dart yazımıyla aynı tipte buluştuğu cihazda
+   doğrulanır.
+
+CI işi ayrıca `logcat -b crash` tamponunu artefakt olarak yükler ve tamponda
+`ClassCastException` ya da uygulama paket adı görülürse job'ı **kırmızı**
+düşürür: süreç öldüğünde `flutter test` bazen yalnız "Lost connection to
+device" der ve kök neden yalnız crash tamponundadır.
+
+> §0 gereği kapı **kasten kırık girdiyle** sınanır: `_persistActiveTimer`
+> içinde bir sayaç anahtarının `setInt`'i `setDouble` yapılır ve smoke'un
+> kırmızı düştüğü görülür. WP-516'da ölçüldü (emülatör API 33):
+> `timer_active_target_seconds` `setDouble` yapıldığında kapı
+> `Expected: <Instance of 'int'> / Actual: <60.0>` ile **kırmızı** (çıkış 1),
+> satır geri alınınca `All tests passed!` (çıkış 0). Bu prob CI adımı değil,
+> kapıyı değiştiren WP'nin borcudur — kapsanan anahtar kümesi büyüdüğünde
+> tekrarlanır.
+
+---
+
 ## 4. Bilinen boşluklar (kapatılmadı — bilerek yazılıyor)
 
 | # | Boşluk | Risk | Durum |
@@ -158,7 +210,7 @@ ortamda purge herkese açık olmamalı.
 | G4 | 33 dosyaya hiç dokunulmamış (54'tü) | Orta | 🟡 Çoğu ekran/widget. Liste: `--top` |
 | G5 | pgTAP yerel replay | Düşük | 🟢 Docker Desktop başlatıldı; tester'ın eski `local.ps1 -Test` çağrısı `-Action baseline` yapıldı. `0119` dahil 48 dosya / 678 test yerelde yeşil |
 | G6 | Realtime (`.stream()`) yolları | Düşük | 🟡 websocket taşır; http koşum takımı görmez. Bilinçli sınır |
-| G7 | İki fiziksel cihaz + Android process/isolate yaşam döngüsü | Yüksek | 🔴 JVM/Dart testleri protokol ve saf projeksiyonu yakalar; OEM arka plan politikası, gerçek FCM ve iki cihaz görünürlüğü yalnız staging cihaz matrisiyle kanıtlanabilir. WP-482'nin kalan kapısı |
+| G7 | İki fiziksel cihaz + Android process/isolate yaşam döngüsü | Yüksek | 🟡 WP-516 ilk gerçek Android çalışma zamanı kapısını kurdu: emülatörde (API 30 + 33) sayaç üç modda başlatılıp durdurulur, süreç ayakta kalır ve Dart↔native prefs tip sözleşmesi ölçülür — v58 çökme sınıfı artık kapıda görünür (§3c). **Kalan:** OEM arka plan politikası, gerçek FCM, iki cihaz görünürlüğü ve uzun soak; bunlar yalnız staging cihaz matrisiyle kanıtlanır. WP-482'nin kalan kapısı |
 
 ### Yeni bir Supabase repository testi nasıl yazılır
 
@@ -202,8 +254,8 @@ python scripts/test_all.py --full
 ```
 
 `--fast` yalnız saniyelik kapılar + `flutter analyze`; varsayılan tur buna tam
-Flutter paketi, Android native JVM testleri ve kapsam ratchet'ini ekler; `--full` golden, Windows entegrasyon ve
-pgTAP yerel replay'i de koşturur. Tek kapı için `--only <anahtar>`, liste için
+Flutter paketi, Android native JVM testleri ve kapsam ratchet'ini ekler; `--full` golden, Windows entegrasyon,
+Android emülatör smoke ve pgTAP yerel replay'i de koşturur. Tek kapı için `--only <anahtar>`, liste için
 `--list`.
 
 **Çıkış kodu sözleşmesi:** `0` = her kapı koştu ve geçti · `1` = kırmızı var ·
