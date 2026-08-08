@@ -2270,11 +2270,22 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final build = await _clientBuildNumber();
     try {
       await repo.finalizeLiveRun(token);
-      await repo.recordVerifiedSessionRollout(
-        platform: _rolloutPlatform,
-        clientBuild: build,
-        capability: true,
-        outcome: LiveRolloutOutcome.verifiedFinalize,
+      // WP-507: rollout kaydı SAF TELEMETRİDİR — kullanıcının Durdur'unu
+      // bekletmesi için sebep yok. `await` edildiği sürece durdurma zincirine
+      // ikinci bir ağ turu daha ekliyordu (saha bulgusu: "bazen sayacı
+      // kapatırken 3 sn bekliyor"). Oturum bir üstteki `finalizeLiveRun` ile
+      // sunucuda zaten kapandı; bu satırın gecikmesi ya da kaybolması kaydın
+      // doğruluğunu değiştirmez. Hata yolundaki aynı çağrı (aşağıda) zaten
+      // ateşle-unut yazılmıştı; başarı yolu artık onunla tutarlı.
+      unawaited(
+        repo
+            .recordVerifiedSessionRollout(
+              platform: _rolloutPlatform,
+              clientBuild: build,
+              capability: true,
+              outcome: LiveRolloutOutcome.verifiedFinalize,
+            )
+            .catchError((_) {}),
       );
       ref.invalidate(userSessionsProvider);
     } catch (_) {

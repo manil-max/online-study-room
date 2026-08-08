@@ -754,6 +754,10 @@
   "@classroomDurdur": {
     "description": "Classroom user-facing text. Source: Durdur"
   },
+  "classroomDurduruluyor": "Stopping…",
+  "@classroomDurduruluyor": {
+    "description": "Classroom user-facing text. Source: Durduruluyor…"
+  },
   "classroomDongu": "Cycle",
   "@classroomDongu": {
     "description": "Classroom user-facing text. Source: Döngü"

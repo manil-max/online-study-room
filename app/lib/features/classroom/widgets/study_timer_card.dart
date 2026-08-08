@@ -400,9 +400,26 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                                     ? null
                                     : () =>
                                           _stopTimer(context, timer, notifier),
-                                icon: const Icon(Icons.stop),
+                                // WP-507: durdurma zinciri (native uzlaşma +
+                                // sunucu finalize) bazen saniyeler sürüyor.
+                                // Buton yalnız griye düşünce kullanıcı "tuş
+                                // öldü" sanıyordu; ilerleme görünür olmalı.
+                                icon: timer.isStopping
+                                    ? const SizedBox.square(
+                                        dimension: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.stop),
                                 label: Text(
-                                  AppLocalizations.of(context).classroomDurdur,
+                                  timer.isStopping
+                                      ? AppLocalizations.of(
+                                          context,
+                                        ).classroomDurduruluyor
+                                      : AppLocalizations.of(
+                                          context,
+                                        ).classroomDurdur,
                                 ),
                               )
                             : FilledButton.icon(
