@@ -91,8 +91,17 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 Assert-Equal $contract.staging.migration_head '0124' 'WP-549 turu staging hedefi 0124'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0124 apply icin staging tek seferlik acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
+# 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
+# KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
+# saglik satiri configured / 0 kuyruk / 0 takili. Hata production'da CANLI:
+# sayaci bir kez calistirmis, push kaydi olan, grubunda rapor acilmis ya da
+# hakkinda yaptirim uygulanmis kullanici HIC silinemiyor. Sahip apply'a izin
+# verdi; production kapisini acan commit otomatik guvenlik siniflandiricisi
+# tarafindan engellendi ve zorlanmadi. Devam icin sahip tarafli bir izin kurali
+# gerekiyor. Kapi acilinca bu iki satir 0124/$true olur, apply sonrasi
+# post-check 0124 verince ayri bir commit ile geri kilitlenir.
 Assert-Equal $contract.production.migration_head '0123' 'WP-522 turu production hedefi 0123'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0123 apply bitti, production yeniden kilitli'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply bekliyor, production hala kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
