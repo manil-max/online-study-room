@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/time_engine/lap_analysis.dart';
 import '../../data/models/timer_preset.dart';
 import '../../data/providers/alarm_providers.dart';
-import '../home/widgets/card_data_gate.dart';
+import '../../core/widgets/error_retry_view.dart';
 
 class TimersScreen extends ConsumerWidget {
   const TimersScreen({super.key, this.embedded = false});

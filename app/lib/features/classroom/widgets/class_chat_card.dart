@@ -12,7 +12,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
-import '../../home/widgets/card_data_gate.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../../safety/block_user_action.dart';
 import '../../safety/report_sheet.dart';

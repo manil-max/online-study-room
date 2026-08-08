@@ -13,7 +13,7 @@ import '../../core/time_engine/clock_permissions.dart';
 import '../../core/time_engine/exact_alarm_permission.dart';
 import '../../data/models/alarm_rule.dart';
 import '../../data/providers/alarm_providers.dart';
-import '../home/widgets/card_data_gate.dart';
+import '../../core/widgets/error_retry_view.dart';
 import 'alarm_ringing_screen.dart';
 
 class AlarmsScreen extends ConsumerWidget {

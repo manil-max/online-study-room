@@ -47,6 +47,7 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_moderati
 import 'package:online_study_room/features/classroom/widgets/class_chat_card.dart';
 import 'package:online_study_room/features/clock/alarms_screen.dart';
 import 'package:online_study_room/features/clock/timers_screen.dart';
+import 'package:online_study_room/core/widgets/error_retry_view.dart';
 import 'package:online_study_room/features/home/widgets/card_data_gate.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
