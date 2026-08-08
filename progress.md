@@ -109,7 +109,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-521** (2026-08-08). WP-507…WP-513 v59 saha geri
+- **Son WP numarası:** **WP-523** (2026-08-08). WP-507…WP-513 v59 saha geri
   bildirimi dalgasıdır (kart kaydırma · Gruplar üst düzeni · tam ekran sohbet ·
   dürtme · taç kademeleri · Durdur gecikmesi · ajan altyapısı); hepsi
   commit'lendi, cihaz kabulü bekliyor. **Yürütme modeli 2026-08-08'de tek lider
@@ -8463,6 +8463,67 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   yol tercih edilir** — sorunu ortadan kaldırır, kollamaya çalışmaz.
 - **Kabul:** kırık girdi (bashism geri konur) → kapı **kırmızı** düşer; bu
   ölçüm teslim özetinde sayıyla yazılı olur.
+
+---
+
+### WP-522: SSS içeriği her dilde 13 → 33 satır ✅
+- **Program/Faz:** Faz F5 · Küçük (içerik) · **Durum:** [x] Bitti ·
+  **Commit:** `2b6f334` · **Apply:** `1798420` + `c929749`
+- **Neden var:** sahip v60'ı telefonda denedi ve tek eksik olarak SSS'yi
+  söyledi: *"SSS kısmında daha fazla soru cevap olabilir, eksik bence şuanda."*
+  Tabloda dil başına 13 satır vardı (`0091` 12 + `0118` 1).
+- **Ne yapıldı:** `0123_faq_expansion.sql` her dile **20 satır** ekledi
+  (toplam 33/dil, TR+EN eşzamanlı). Konular: başlangıç/davet kodu · sayaç
+  modları · uygulama kapanınca sayaç · Durdur'daki kısa bekleme · günlük
+  hedef · sayaç bildirimi görünmüyor · kamp ateşi · grup sohbeti · ad
+  karakter sınırı · grup yöneticisi yetkileri · dürtme susturma · taç
+  kademeleri · tema · istatistik/oturum geçmişi · bildir/engelle · veri dışa
+  aktarma · hesap silme · şifre sıfırlama · güncellemeler · Araçlar sekmesi.
+- **Cevaplar koddan yazıldı, plandan değil.** Her satırın dosya:satır dayanağı
+  migration başlığındadır. Yazarken **üç iddiam kod tarafından düzeltildi:**
+  dürtme susturma kişinin profilinde değil grup ekranındaki üye satırında
+  (`class_detail_screen.dart:1204`); tam ekran sohbet kart başlığından değil
+  Gruplar üst şeridindeki simgeden (`classroom_screen.dart:271`); hesap silme
+  Profil değil Ayarlar altında (`settings_screen.dart:208`).
+- **Bilerek yazılmayan:** masaüstündeki 6 haneli şifre kodu yolu. Free tier
+  e-posta şablonu kilidi nedeniyle çalışmıyor; çalışmayan yolu SSS'ye yazmak
+  destek yükü üretir. SSS yalnız Android bağlantı yolunu anlatıyor.
+- **Test:** `supabase/tests/048_faq_expansion.test.sql` (7 iddia). En değerlisi
+  **TR/EN satır sayısı eşitliği** — bundan sonra tek dile SSS ekleyen her
+  migration bu kapıda kırmızı düşer, yani `0118`'in dersi kalıcı kapıya
+  dönüştü. Ayrıca: iki dilde ≥33 yayımlanmış satır, 20 `sort_order` yuvası,
+  hiçbir cevabın 120 karakterin altında olmaması, tekrar apply'da kopya
+  üretmemesi.
+- **Kapı:** contract · migration-head · guard · preflight yeşil. migration-head
+  kapısı **kırık girdiyle sınandı**: pin 0122'ye döndürülünce KIRMIZI düştü,
+  geri alınca yeşil. pgTAP yerel replay Docker nedeniyle koşmuyor → 048 yalnız
+  CI'da ölçülür.
+- **Yayın:** apply staging run 31258097990 + production run 31258274401, ikisi
+  de post-check `0123`. **Yeni APK yok ve gerekmiyor** — satırlar sunucudan
+  okunuyor. Canlı doğrulama: production anon REST `faq_entries` sayımı
+  **tr=33, en=33** (uygulanmış migration değil, gerçek satır sayısı ölçüldü).
+
+---
+
+### WP-523: Durdur'daki kalan 1-3 saniye ⏱️
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [ ] Bekliyor
+- **Neden var:** sahip v60 cihaz kabulünde: *"sayaç durdurmada artık
+  durduruluyor yazıyor ama gene 2-3 sn bekleniyor, en azından bu iyi oldu…
+  sorun yok ama sadece o kadar uzun bekletmese güzel olabilir."* Yani
+  WP-507 (telemetri `await`i düştü + spinner) **algıyı** düzeltti, **süreyi**
+  düzeltmedi. Bu bir kabul notu, hata bildirimi değil.
+- **Ölçülmemiş olan:** 2-3 saniyenin nerede geçtiği. Aday üç yer var ve
+  hangisinin baskın olduğu **bilinmiyor**: (a) oturumu yazan RPC'nin ağ gidiş
+  dönüşü, (b) yazma sonrası yapılan yenileme/invalidate turları, (c) native
+  servisin durdurma + prefs commit'i. **İlk iş ölçüm** — kör optimizasyon
+  yapılmamalı.
+- **Yol (öneri):** durdurmayı iyimser yap — UI süreyi anında dondurup kaydı
+  arka planda kesinleştirsin, hata olursa geri al. Bunun tuzağı kayıtlı:
+  UI kendi gösterdiği sayıyı kaynaktan kopararak dondurursa WP-250 sınıfı
+  hata geri gelir; iyimser yol **kaydın kesinleştiğini** ayrı göstermelidir.
+- **Kabul:** Durdur'a basıldıktan sonra sayı **300 ms içinde** donar; kayıt
+  kesinleşmesi ayrı ve sessiz ilerler; ağ hatasında kullanıcı bilgilendirilir
+  ve süre kaybolmaz. Ölçüm teslim özetinde milisaniyeyle yazılı olur.
 
 ---
 
