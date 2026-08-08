@@ -324,8 +324,24 @@ jobs:
             # satirda oldu, yani smoke CI'da HIC kosmadi -- kapi vardi, hicbir sey
             # olcmuyordu. `set -u` POSIX'tir. pipefail'in korudugu tek yer cihaz
             # kesfiydi; o artik acik bir bos kontrolle korunuyor.
+            # 🔴 WP-553: TANI SATIRLARI EN BASTA, `set -u`'DAN ONCE.
+            # v62 turunda (run 31274760889) her iki matris kolonu da adimin
+            # ILK 20 ms'sinde `exit 1` verdi ve TEK SATIR cikti uretmedi --
+            # yani "Cihaz: ..." echo'suna bile varamadi. Ciktisiz bir kirmizi
+            # teshis edilemez; bu blok kok nedeni bir sonraki kosumda gorunur
+            # kilar. `set -u` altinda TANIMSIZ bir degisken genislemesi dash'i
+            # aninda dusurur ve bu, gozlenen 20 ms'lik olumun en olasi sebebi
+            # (`$GITHUB_WORKSPACE` bu action'in alt kabuguna gecmemis olabilir).
+            echo "PWD=$PWD"
+            echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<tanimsiz>}"
+            echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-<tanimsiz>}"
+            command -v adb || echo "UYARI: adb PATH'te yok"
+            command -v flutter || echo "UYARI: flutter PATH'te yok"
+
             set -u
-            LOG_DIR="$GITHUB_WORKSPACE/emulator-logs"
+            # Tanimsizsa calisma dizinine dus: tani ciktisi ucmasin diye
+            # LOG_DIR yuzunden olmek kabul edilemez.
+            LOG_DIR="${GITHUB_WORKSPACE:-$PWD}/emulator-logs"
             mkdir -p "$LOG_DIR"
             CRASH_LOG="$LOG_DIR/crash-api${{ matrix.api-level }}.log"
             DEVICE="$(adb devices | awk '/\tdevice$/ {print $1; exit}')"
