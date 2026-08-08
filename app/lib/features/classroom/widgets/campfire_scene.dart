@@ -17,10 +17,10 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
-import '../../profile/widgets/social_profile_dialog.dart';
 import 'camp_critter.dart';
 import 'campfire/layered_campfire_fire.dart';
 import 'campfire_layout.dart';
+import 'nudge_action.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
@@ -437,19 +437,21 @@ class _SceneLayoutState extends State<_SceneLayout>
           curve: Curves.easeOutCubic,
           left: p.x - _CritterBody.boxFor(p.scale) / 2,
           top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
-          child: GestureDetector(
-            onTap: p.camper.isBlocked
-                ? null
-                : () => SocialProfileDialog.show(context, p.camper.member),
-            child: _CritterBody(
-              camper: p.camper,
-              depth: p.depth,
-              scale: p.scale,
-              back: p.back,
-              phase: p.phase,
-              isNight: widget.sky.isNight,
-              controller: _controller,
-            ),
+          // 🔴 WP-511 / E1: burada ikinci bir `GestureDetector` vardı ve
+          // `SocialProfileDialog` açıyordu — ama **hiç çalışmıyordu**: çocuğu
+          // `_CritterBody` kendi handler'ını `HitTestBehavior.opaque` ile
+          // kuruyor ve jest arenasında en içteki kazanıyor. Kodda iki farklı
+          // "üyeye tıklayınca ne olsun" tasarımı duruyordu, biri tümüyle ölü.
+          // Kanonik olan çalışanıdır: kampçı alt sayfası (`_showCamperDetails`),
+          // çünkü dürtme de oraya eklendi.
+          child: _CritterBody(
+            camper: p.camper,
+            depth: p.depth,
+            scale: p.scale,
+            back: p.back,
+            phase: p.phase,
+            isNight: widget.sky.isNight,
+            controller: _controller,
           ),
         );
 
@@ -852,51 +854,79 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
       return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CustomPaint(
-                size: const Size(72, 72),
-                painter: CritterPainter(
-                  species: speciesFor(camper.animal.id),
-                  pose: CritterPose.idle,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(name, style: theme.textTheme.titleLarge),
-              Text(
-                '${camper.animal.label(AppLocalizations.of(context))} 🏕️',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: dot,
-                      shape: BoxShape.circle,
-                    ),
+          // 🔴 WP-511: alt sayfa varsayılan olarak ekranın 9/16'sını geçemez.
+          // Dürtme düğmesi eklenince içerik kısa ekranda taşıyor (ölçüldü: 600 dp
+          // yükseklikte 2,5 px) ve büyük yazı ölçeğinde gerçek cihazda da taşar.
+          // Kaydırıcı olmadan taşan kısım **hiç görülemez** olurdu.
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomPaint(
+                  size: const Size(72, 72),
+                  painter: CritterPainter(
+                    species: speciesFor(camper.animal.id),
+                    pose: CritterPose.idle,
                   ),
-                  const SizedBox(width: 6),
-                  Text(label, style: theme.textTheme.bodyMedium),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _StatRow(
-                label: AppLocalizations.of(context).classroomBugunkuToplam,
-                value: formatHumanSeconds(camper.recordedToday + live),
-              ),
-              if (status == PresenceStatus.studying)
-                _StatRow(
-                  label: AppLocalizations.of(context).classroomSuAnkiOturum,
-                  value: formatHms(live),
                 ),
-            ],
+                const SizedBox(height: 8),
+                Text(name, style: theme.textTheme.titleLarge),
+                Text(
+                  '${camper.animal.label(AppLocalizations.of(context))} 🏕️',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: dot,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(label, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _StatRow(
+                  label: AppLocalizations.of(context).classroomBugunkuToplam,
+                  value: formatHumanSeconds(camper.recordedToday + live),
+                ),
+                if (status == PresenceStatus.studying)
+                  _StatRow(
+                    label: AppLocalizations.of(context).classroomSuAnkiOturum,
+                    value: formatHms(live),
+                  ),
+                // WP-511: sayfa bugüne kadar salt okunurdu. Dürtme mantığı
+                // **kopyalanmadı**; üye satırıyla aynı bileşen kullanılıyor.
+                //
+                // 🔴 `onBeforeAction` boşuna değil: SnackBar'ı çizen `Scaffold`
+                // bu modal alt sayfanın **altında** kalır, yani sayfa kapanmadan
+                // gönderildi/hata mesajı hiç görünmezdi (ölü düğme hissi).
+                Consumer(
+                  builder: (consumerContext, ref, _) {
+                    final groupId = ref.watch(userGroupProvider).value?.id;
+                    if (groupId == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: NudgeAction(
+                        groupId: groupId,
+                        recipient: camper.member,
+                        isRecipientStudying: camper.studying,
+                        style: NudgeActionStyle.labeled,
+                        onBeforeAction: () => Navigator.pop(ctx),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       );

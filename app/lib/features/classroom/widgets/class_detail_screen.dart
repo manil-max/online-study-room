@@ -28,6 +28,7 @@ import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import '../../safety/report_sheet.dart';
 import 'group_avatar.dart';
+import 'nudge_action.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
 /// alt kısım ayarlar (sınıftan çık) ve admin işlemleri (ad değiştir, kod yenile,
@@ -863,7 +864,6 @@ class _MembersCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(groupRepositoryProvider);
-    final currentUser = ref.watch(authStateProvider).value;
     final l10n = AppLocalizations.of(context);
     final titleNames = {
       for (final achievement in kAchievementDictV3(l10n))
@@ -902,10 +902,8 @@ class _MembersCard extends ConsumerWidget {
           for (final m in members)
             _memberRow(
               context,
-              ref,
               member: m,
               repo: repo,
-              currentUser: currentUser,
               titleName: titleNames[m.titleAchievementId],
               isStudying: studyingIds.contains(m.id),
               isMuted: mutedIds.contains(m.id),
@@ -935,11 +933,9 @@ class _MembersCard extends ConsumerWidget {
   /// `ListTile`ın iki satırlık 72 dp taban yüksekliği burada `minHeight` olarak
   /// açıkça duruyor, aksi hâlde eylemi olan satır olmayandan yüksek olurdu.
   Widget _memberRow(
-    BuildContext context,
-    WidgetRef ref, {
+    BuildContext context, {
     required Profile member,
     required GroupRepository repo,
-    required Profile? currentUser,
     required String? titleName,
     required bool isStudying,
     required bool isMuted,
@@ -993,12 +989,13 @@ class _MembersCard extends ConsumerWidget {
               ),
               if (showActions) ...[
                 _MemberActionSlot(
-                  child: _NudgeButton(
+                  // WP-511: mantık artık ortak (`nudge_action.dart`); kamp ateşi
+                  // üye sayfası da aynı bileşeni kullanır.
+                  child: NudgeAction(
                     key: ValueKey('nudge-${member.id}'),
+                    groupId: group.id,
+                    recipient: member,
                     isRecipientStudying: isStudying,
-                    onSend: currentUser == null
-                        ? null
-                        : () => _sendNudge(context, ref, currentUser, member),
                   ),
                 ),
                 _MemberActionSlot(
@@ -1137,96 +1134,6 @@ class _MembersCard extends ConsumerWidget {
     }
   }
 
-  Future<void> _sendNudge(
-    BuildContext context,
-    WidgetRef ref,
-    Profile sender,
-    Profile recipient,
-  ) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context);
-    try {
-      await ref
-          .read(nudgeRepositoryProvider)
-          .sendNudge(groupId: group.id, sender: sender, recipient: recipient);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.classroomRecipientdisplaynameDurtuldu(recipient.displayName),
-          ),
-        ),
-      );
-    } on NudgeException catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
-    }
-  }
-}
-
-/// WP-484: grup üye satırındaki dürtme düğmesi.
-///
-/// Alıcı çalışıyorken düğme eskiden `onPressed: null` ile **devre dışıydı**.
-/// Devre dışı `IconButton` dokunmaya hiç tepki vermez ve açıklama yalnız
-/// `tooltip`te durur; tooltip ise mobilde uzun basmayla çıkar. Kullanıcı
-/// dokunuyor, hiçbir şey olmuyordu — sahibin "bir kere çıktı, daha çıkmadı"
-/// dediği davranış budur (V57-N08).
-///
-/// Düğme artık etkin ve dokununca açıklamayı gösteriyor. Sunucuya **çağrı
-/// yapılmaz**: kapı istemcide kalır, aksi hâlde spam koruması boşa çıkar.
-class _NudgeButton extends StatefulWidget {
-  const _NudgeButton({
-    super.key,
-    required this.isRecipientStudying,
-    required this.onSend,
-  });
-
-  final bool isRecipientStudying;
-
-  /// `null` ise oturum yok — düğme gerçekten devre dışıdır.
-  final VoidCallback? onSend;
-
-  @override
-  State<_NudgeButton> createState() => _NudgeButtonState();
-}
-
-class _NudgeButtonState extends State<_NudgeButton> {
-  /// Ekranda duran açıklama. Art arda dokunuşta SnackBar kuyruğunun şişmemesi
-  /// için bastırma penceresi sabit bir süre değil, **uyarının kendi ömrüdür**:
-  /// uyarı kapanır kapanmaz aynı üye için yeniden gösterilebilir.
-  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _notice;
-
-  void _handlePressed() {
-    final onSend = widget.onSend;
-    if (onSend == null) return;
-    if (!widget.isRecipientStudying) {
-      onSend();
-      return;
-    }
-    if (_notice != null) return;
-    final notice = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(context).classroomStudyingNudgeUnavailable,
-        ),
-      ),
-    );
-    _notice = notice;
-    notice.closed.whenComplete(() {
-      if (!mounted) return;
-      if (identical(_notice, notice)) _notice = null;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return IconButton(
-      tooltip: widget.isRecipientStudying
-          ? l10n.classroomStudyingNudgeUnavailable
-          : l10n.classroomDurt,
-      icon: const Icon(Icons.notifications_active_outlined),
-      onPressed: widget.onSend == null ? null : _handlePressed,
-    );
-  }
 }
 
 /// WP-483: grup üye satırındaki "dürtmesini sustur" eylemi.

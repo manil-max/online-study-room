@@ -5348,6 +5348,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-508** Kart üstünden kaydırma | Android telefon (ana ekran, en az iki ekran boyu kart dizilimi) | Parmak *Şu an çalışanlar* / *Bugünün özeti* / *Görevler* kartının üstündeyken sayfa normal kayıyor ve sahte kaydırma (esneme) animasyonu görünmüyor; kart içeriği hücreye **sığmadığında** (çok üyeli grup) kart kendi içinde kaydırılıyor ve hiçbir üye kaybolmuyor; ısı haritası/ritim kartlarında yatay kaydırma çalışmaya devam ediyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-510** Tam ekran sohbet | Android telefon (sohbeti olan grup; en az 10 mesaj) | Sohbet ekranının tepesinde grup adı yazıyor, altında kutu/kart yok — mesajlar ekranın tamamını kullanıyor; yazma alanına dokununca klavye açılıyor ve yazma alanı klavyenin üstünde kalıyor, mesaj listesi kayabiliyor; mesaj gönderilince liste en alta geliyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-511** Kamp ateşinde dürtme | İki Android cihaz (aynı grupta iki hesap) | Kamp ateşinde bir arkadaşın hayvanına dokununca açılan sayfada "Dürt" düğmesi var; basınca sayfa kapanıyor ve "… dürtüldü" yazısı görünüyor, karşı cihaza bildirim düşüyor; kendi hayvanına dokununca Dürt düğmesi hiç görünmüyor; karşı taraf çalışırken basınca "odağını bölmemek için dürtme kapalı" çıkıyor ve bildirim gitmiyor; büyük yazı ölçeğinde sayfa taşmıyor (kaydırılabiliyor). Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
@@ -8115,6 +8116,69 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   üç eski test de dahil (hepsi `Scaffold.body` içinde olduğu için sınırlı
   yükseklik zaten sağlanıyor).
 - **Kanıt etiketi:** `Kodda doğrulandı` → cihazda görsel/klavye kabulü bekliyor.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-511: Kamp ateşinde dürtme + ölü dokunma davranışı temizlendi 🔔
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (v59 saha geri bildirimi · madde 5 + E1)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor
+- **Ne yapıldı:**
+  1. Dürtme mantığı ortak bileşene çıkarıldı: **`features/classroom/widgets/nudge_action.dart`**
+     (`NudgeAction` + `NudgeActionStyle`). Grup üye satırı ve kamp ateşi üye
+     sayfası **aynı** bileşeni kullanır. Kopyalansaydı biri şunlardan birini
+     kaçırırdı: hata metinleri (`core/l10n/nudge_error_text.dart`), sunucu odak
+     korumasının (`0116_nudge_focus_guard.sql`) istemci karşılığı, "kendine
+     dürtme" kapısı.
+  2. `class_detail_screen.dart` içindeki private `_NudgeButton` ve `_sendNudge`
+     kaldırıldı; satır artık ortak bileşeni kuruyor. `_MuteNudgeButton`
+     **dokunulmadı** — susturma bu WP'nin kapsamında değil.
+  3. `campfire_scene.dart` `_showCamperDetails` alt sayfasına yazılı dürtme
+     düğmesi eklendi (`NudgeActionStyle.labeled`). Kendi kendini dürtme
+     **hiç çizilmiyor**; engellenen üyeye zaten dokunulamıyor.
+  4. 🔴 **E1 kapandı.** Sahnede iki farklı "üyeye tıklayınca ne olsun" tasarımı
+     vardı: dıştaki `GestureDetector` `SocialProfileDialog` açıyordu, ama çocuğu
+     `_CritterBody` kendi handler'ını `HitTestBehavior.opaque` ile kurduğu için
+     jest arenasında hep içteki kazanıyordu — dıştaki **hiç çalışmıyordu**.
+     **Karar:** kanonik olan çalışanıdır (kampçı alt sayfası), çünkü dürtme de
+     oraya eklendi. Ölü `GestureDetector` ve öksüz kalan
+     `social_profile_dialog.dart` import'u kaldırıldı.
+- 🔴 **Testin bulduğu gerçek hata (tahmin değil, ölçüm):** düğme eklenince alt
+  sayfa **taştı** (`RenderFlex overflowed by 2.5 pixels`, 600 dp yükseklikte).
+  Alt sayfa varsayılan olarak ekranın 9/16'sını geçemez; büyük yazı ölçeğinde
+  gerçek cihazda da taşardı ve taşan kısım **hiç görülemezdi**. Sayfa içeriği
+  `SingleChildScrollView` ile sarıldı.
+- 🔴 **`onBeforeAction` kancası neden var:** SnackBar'ı çizen `Scaffold` modal
+  alt sayfanın **altında** kalır. Sayfa kapanmadan "dürtüldü"/hata mesajı hiç
+  görünmezdi — yani düğme çalışsa bile kullanıcıya "öldü" gibi gelirdi. Kabuğu
+  kapatmak çağıranın işi; bileşen içinde bulunduğu kabuğu tanımaz. Messenger ve
+  metin, kabuk kapanmadan **önce** okunuyor (sonra `context` ölür).
+- **Değişen dosyalar:** `app/lib/features/classroom/widgets/nudge_action.dart` (yeni) ·
+  `app/lib/features/classroom/widgets/class_detail_screen.dart` ·
+  `app/lib/features/classroom/widgets/campfire_scene.dart` ·
+  `app/test/features/classroom/campfire_nudge_wp511_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok. **Yeni l10n anahtarı yok** (`classroomDurt`,
+  `classroomStudyingNudgeUnavailable`, `classroomRecipientdisplaynameDurtuldu`
+  zaten vardı).
+- **RLS/Güvenlik:** Yeni sunucu yüzeyi yok; aynı `send_nudge` RPC'si çağrılıyor.
+  Odak koruması (`0116`) ve engelleme sunucuda; istemci kapısı **ikinci
+  katman** olarak duruyor (çalışan üyeye çağrı hiç çıkmıyor — testte sayıldı).
+- **Kabul (ölçülebilir):**
+  1. ✅ Kampçıya dokununca kampçı alt sayfası açılıyor (profil diyaloğu değil).
+  2. ✅ Başkasının sayfasında "Dürt" düğmesi var.
+  3. ✅ Dürtme gönderiliyor (`sendCount == 1`), alt sayfa kapanıyor ve
+     "… dürtüldü" mesajı görünüyor.
+  4. ✅ Kendi sayfasında "Dürt" **yok**.
+  5. ✅ Çalışan üyede sunucuya çağrı 0; ekranda odak açıklaması çıkıyor.
+  6. ✅ Grup üye satırı da `NudgeAction` kuruyor (tek bileşen kanıtı).
+- **Test:** 6 yeni iddia; mevcut `nudge_studying_feedback_test` ve
+  `nudge_mute_trigger_test` refactor sonrası **değiştirilmeden** yeşil kaldı —
+  davranışın aynı olduğunun en güçlü kanıtı budur.
+  🔴 İki kritik iddia **kasten kırık girdiyle** sınandı: "kendine dürtme" kapısı
+  ve `onBeforeAction` çağrısı tek tek devre dışı bırakıldığında ikisi de
+  kırmızıya düştü.
+  `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı** (deno kurulu değil).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda kabul bekliyor.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
