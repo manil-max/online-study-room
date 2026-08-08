@@ -19,9 +19,9 @@ final supportRepositoryProvider = Provider<SupportRepository>((ref) {
 });
 
 final faqEntriesProvider = FutureProvider<List<FaqEntry>>((ref) async {
-  final locale = ref.watch(appLanguageProvider) == AppLanguage.english
-      ? 'en'
-      : 'tr';
+  // WP-526: tercih DEGIL, cozulmus dil. `system` seciliyken cihazin dili
+  // kullanilir; eski kod `system`'i Turkce sayiyordu.
+  final locale = ref.watch(contentLanguageCodeProvider);
   final entries = await ref
       .watch(supportRepositoryProvider)
       .fetchPublishedFaq(locale);

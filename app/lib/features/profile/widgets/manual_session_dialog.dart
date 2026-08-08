@@ -190,7 +190,9 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
       initialDate: _date,
       firstDate: DateTime(now.year - 2),
       lastDate: now, // gelecek tarih seçilemez
-      locale: Locale('tr'),
+      // WP-526: locale VERILMEZ. Sabit `Locale('tr')` takvimi Ingilizce
+      // kullaniciya da Turkce gosteriyordu; parametre bos birakilinca picker
+      // ortamdaki (arayuzun) dilini kullanir.
     );
     if (picked != null) setState(() => _date = picked);
   }

@@ -26,9 +26,9 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     final l10n = AppLocalizations.of(context);
     final entries = ref.watch(faqEntriesProvider);
     final isSignedIn = ref.watch(authStateProvider).value != null;
-    final locale = ref.watch(appLanguageProvider) == AppLanguage.english
-        ? 'en'
-        : 'tr';
+    // WP-526: cevrimdisi yedek liste de ARAYUZUN dilini izlemeli. Eski kod
+    // tercihi okuyup `system`'i Turkce sayiyordu.
+    final locale = ref.watch(contentLanguageCodeProvider);
     final serverEntries = switch (entries) {
       AsyncData(:final value) => value,
       _ => null,

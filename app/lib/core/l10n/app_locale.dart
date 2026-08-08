@@ -1,5 +1,6 @@
 import 'dart:ui' show Locale, PlatformDispatcher, TextDirection;
 
+import 'package:flutter/widgets.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,6 +43,18 @@ Locale _fromSystem(Locale? systemLocale) {
   return const Locale('en');
 }
 
+/// Cihazin dili.
+///
+/// 🔴 `PlatformDispatcher.instance` DEGIL, binding uzerinden okunur. Test
+/// binding'i `PlatformDispatcher.instance`'i degistirmez; dogrudan ona bakan
+/// kod testte cihaz dili ayarlanamaz hale gelir ve "sistem dili" davranisi
+/// hic sinanamaz. WP-526'da tam bu oldu: sistem+Turkce testi, kod dogru olsa
+/// bile host dilini okuyup kirmizi dustu.
+Locale platformLocale() {
+  final binding = WidgetsBinding.instance;
+  return binding.platformDispatcher.locale;
+}
+
 bool isRtlLocale(Locale locale) => false;
 
 TextDirection textDirectionForLocale(Locale locale) =>
@@ -65,17 +78,13 @@ class AppLanguageNotifier extends Notifier<AppLanguage> {
     final preference = appLanguageFromPreferences(
       ref.watch(sharedPreferencesProvider),
     );
-    setActiveAppLocale(
-      resolvePreferredAppLocale(PlatformDispatcher.instance.locale, preference),
-    );
+    setActiveAppLocale(resolvePreferredAppLocale(platformLocale(), preference));
     return preference;
   }
 
   Future<void> setLanguage(AppLanguage preference) async {
     state = preference;
-    setActiveAppLocale(
-      resolvePreferredAppLocale(PlatformDispatcher.instance.locale, preference),
-    );
+    setActiveAppLocale(resolvePreferredAppLocale(platformLocale(), preference));
     await ref
         .read(sharedPreferencesProvider)
         .setString(_appLanguagePreferenceKey, preference.name);
@@ -85,3 +94,19 @@ class AppLanguageNotifier extends Notifier<AppLanguage> {
 final appLanguageProvider = NotifierProvider<AppLanguageNotifier, AppLanguage>(
   AppLanguageNotifier.new,
 );
+
+/// Sunucudan gelen İÇERİĞİN (SSS gibi) hangi dilde istendiği.
+///
+/// 🔴 Bunu `appLanguageProvider`'dan doğrudan türetme. O provider kullanıcının
+/// **tercihini** tutar ve tercih üç değerlidir: `system`, `english`, `turkish`.
+/// `preference == AppLanguage.english ? 'en' : 'tr'` yazmak `system`'i sessizce
+/// Türkçe sayar — telefonu İngilizce olan kullanıcı arayüzü İngilizce görür
+/// ama içeriği Türkçe alır. Sahip bunu 2026-08-08'de sahada yakaladı (SSS
+/// soruları İngilizce dilde Türkçe geliyordu).
+///
+/// Etkin dil daima [resolvePreferredAppLocale] üzerinden çözülür; `system`
+/// seçiliyken cihazın dili kullanılır.
+final contentLanguageCodeProvider = Provider<String>((ref) {
+  final preference = ref.watch(appLanguageProvider);
+  return resolvePreferredAppLocale(platformLocale(), preference).languageCode;
+});
