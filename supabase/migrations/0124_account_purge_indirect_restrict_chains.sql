@@ -439,23 +439,33 @@ end;
 $wp549$;
 
 -- --- 5.2 Grup metrikleri projeksiyonu -------------------------------------
--- Ayni sinif: `refresh_group_metrics_for_session` zinciri
--- `achievement_metric_progress` ve `group_achievement_daily`ye yazar
--- (`0053:69`, `0062:93`, `0063:588`). Govde `0063:478` ile birebir ayni.
+-- Ayni sinif: bu zincir `achievement_metric_progress` ve
+-- `group_achievement_daily`ye yazar (`0053:69`, `0062:93`, `0063:588`).
+--
+-- 🔴 GOVDE KAYNAGI: `0080_session_group_attribution.sql:224`, `0063:478` DEGIL.
+-- Ilk yazimda govde `0063`ten kopyalanmisti ve CI bunu yakaladi:
+--   011_session_group_attribution.test.sql test 6
+--   "secondary daily progression remains zero after the session projector runs"
+-- kirmizi dustu. Sebep: `0080` (WP-336) bu fonksiyonu YENIDEN tanimlayip
+-- oturum-basina-tek-grup atfina gecirmisti
+-- (`refresh_group_metrics_for_session_id`, oturum id'sini de alir). `0063`
+-- govdesini geri yazmak o atfi sessizce iptal ediyor ve ilerleme kullanicinin
+-- TUM gruplarina yaziliyordu. Yani duzeltme, bir baska sozlesmeyi bozuyordu.
+--
+-- Ders: `create or replace` ile bir tetikleyici govdesi yeniden yazilirken
+-- kaynak, o fonksiyonun EN SON tanimi olmalidir; ilk tanimi degil.
 create or replace function public._study_session_project_group_metrics()
 returns trigger language plpgsql security definer set search_path = public as $wp549$
 begin
   if tg_op <> 'DELETE' then
-    perform public.refresh_group_metrics_for_session(
-      new.user_id,
-      new.start_time,
+    perform public.refresh_group_metrics_for_session_id(
+      new.id, new.user_id, new.start_time,
       public._equal_source_effective_end(new.start_time, new.end_time, new.duration_seconds)
     );
   end if;
   if tg_op <> 'INSERT' and public._account_still_exists(old.user_id) then
-    perform public.refresh_group_metrics_for_session(
-      old.user_id,
-      old.start_time,
+    perform public.refresh_group_metrics_for_session_id(
+      old.id, old.user_id, old.start_time,
       public._equal_source_effective_end(old.start_time, old.end_time, old.duration_seconds)
     );
   end if;
