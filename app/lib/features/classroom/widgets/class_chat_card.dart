@@ -54,13 +54,26 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
     // mesajı bir kare görünür. Sohbet, roster'ın aksine sunucuda süzülmüyor
     // (`0095` sohbeti kapsamaz) — süzgeç yalnız burada, o yüzden küme beklenir.
     //
-    // 🔴 Hata dalı bilerek beklemez: küme çağrısı düşerse sohbeti tamamen
-    // kapatmak yerine eski davranışa (süzgeçsiz liste) dönülür. Kalıcı bir
-    // moderasyon hatası sohbeti kullanılamaz hâle getirmemeli.
+    // 🔴 WP-538: hata dalı ESKİDEN süzgeçsiz listeye düşüyordu ("moderasyon
+    // hatası sohbeti kullanılamaz hâle getirmesin"). O takas yanlış tarafı
+    // seçmiş: ölçüldü, küme çağrısı hata verince engellenen kişinin mesajları
+    // GÖRÜNÜR hâle geliyordu. Birini taciz ettiği için engelleyen kullanıcı,
+    // tek bir ağ hatasında onun mesajlarını yeniden görüyor — ve Play'e
+    // "engelleme var" diye beyan verdiğimiz özellik sessizce kapanıyor.
+    //
+    // Yeni sözleşme: **küme bilinmiyorsa mesaj çizilmez.** Daha önce yüklenmiş
+    // bir küme varsa (AsyncValue hatada önceki değeri taşır) onunla süzülür ve
+    // sohbet çalışmaya devam eder; hiç bilinmiyorsa hata durumu gösterilir.
     final blockedAsync = ref.watch(blockedUserIdsProvider);
-    final blockedPending = !blockedAsync.hasValue && !blockedAsync.hasError;
-    final gatedMessages = blockedPending
-        ? const AsyncValue<List<ChatMessage>>.loading()
+    final knownBlocked = blockedAsync.value;
+    final blockedUnknown = knownBlocked == null;
+    final gatedMessages = blockedUnknown
+        ? (blockedAsync.hasError
+              ? AsyncValue<List<ChatMessage>>.error(
+                  blockedAsync.error!,
+                  blockedAsync.stackTrace ?? StackTrace.current,
+                )
+              : const AsyncValue<List<ChatMessage>>.loading())
         : messagesAsync;
 
     return Column(
@@ -72,7 +85,9 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
           child: gatedMessages.when(
             data: (messages) {
               // WP-126: engellenen kullanıcı mesajlarını gizle.
-              final blocked = blockedAsync.value ?? const <String>{};
+              // WP-538: buraya yalnız küme BİLİNİYORKEN gelinir; `?? {}`
+              // yedeği artık "hata varsa süzme" anlamına gelmiyor.
+              final blocked = knownBlocked ?? const <String>{};
               final visible = blocked.isEmpty
                   ? messages
                   : messages
