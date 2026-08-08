@@ -109,7 +109,13 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-488** (2026-08-01). WP-429 release kilidi tamamlandı;
+- **Son WP numarası:** **WP-513** (2026-08-08). WP-507…WP-513 v59 saha geri
+  bildirimi dalgasıdır (kart kaydırma · Gruplar üst düzeni · tam ekran sohbet ·
+  dürtme · taç kademeleri · Durdur gecikmesi · ajan altyapısı); hepsi
+  commit'lendi, cihaz kabulü bekliyor. **Yürütme modeli 2026-08-08'de tek lider
+  ajan + alt ajanlara geçti** (`.agents/AGENTS.md §1`); aşağıdaki Ajan A–D /
+  PLAN 5 kayıtları **tarihseldir**, kural değildir.
+- **Önceki numara:** WP-488 (2026-08-01). WP-429 release kilidi tamamlandı;
   WP-430…WP-467 PLAN 5 uygulama, kabul ve teslim zinciridir. WP-468…WP-473
   (bölüm `5.K`) 2026-07-31 tur kapanış denetiminden doğdu: kapı onarımı ve
   turun bıraktığı sessiz borcun kapatılması. Ürün zinciri onlardan sonra sürer.
@@ -5345,10 +5351,10 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-417** Tanıtım turu sadeleştirme | Android + Windows | Ana ekranda yalnız "kartları düzenle" balonu çıkıyor (genel bakış + sayaç turu yok); istatistiklerde hiç tur açılmıyor. Commit: `d0751a0`. **Cihazda doğrulanmalı.** |
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
-| **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
-| **WP-508** Kart üstünden kaydırma | Android telefon (ana ekran, en az iki ekran boyu kart dizilimi) | Parmak *Şu an çalışanlar* / *Bugünün özeti* / *Görevler* kartının üstündeyken sayfa normal kayıyor ve sahte kaydırma (esneme) animasyonu görünmüyor; kart içeriği hücreye **sığmadığında** (çok üyeli grup) kart kendi içinde kaydırılıyor ve hiçbir üye kaybolmuyor; ısı haritası/ritim kartlarında yatay kaydırma çalışmaya devam ediyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
-| **WP-510** Tam ekran sohbet | Android telefon (sohbeti olan grup; en az 10 mesaj) | Sohbet ekranının tepesinde grup adı yazıyor, altında kutu/kart yok — mesajlar ekranın tamamını kullanıyor; yazma alanına dokununca klavye açılıyor ve yazma alanı klavyenin üstünde kalıyor, mesaj listesi kayabiliyor; mesaj gönderilince liste en alta geliyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
-| **WP-511** Kamp ateşinde dürtme | İki Android cihaz (aynı grupta iki hesap) | Kamp ateşinde bir arkadaşın hayvanına dokununca açılan sayfada "Dürt" düğmesi var; basınca sayfa kapanıyor ve "… dürtüldü" yazısı görünüyor, karşı cihaza bildirim düşüyor; kendi hayvanına dokununca Dürt düğmesi hiç görünmüyor; karşı taraf çalışırken basınca "odağını bölmemek için dürtme kapalı" çıkıyor ve bildirim gitmiyor; büyük yazı ölçeğinde sayfa taşmıyor (kaydırılabiliyor). Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `556800c`. **Cihazda doğrulanmalı.** |
+| **WP-508** Kart üstünden kaydırma | Android telefon (ana ekran, en az iki ekran boyu kart dizilimi) | Parmak *Şu an çalışanlar* / *Bugünün özeti* / *Görevler* kartının üstündeyken sayfa normal kayıyor ve sahte kaydırma (esneme) animasyonu görünmüyor; kart içeriği hücreye **sığmadığında** (çok üyeli grup) kart kendi içinde kaydırılıyor ve hiçbir üye kaybolmuyor; ısı haritası/ritim kartlarında yatay kaydırma çalışmaya devam ediyor. Commit: `95dcf3a`. **Cihazda doğrulanmalı.** |
+| **WP-510** Tam ekran sohbet | Android telefon (sohbeti olan grup; en az 10 mesaj) | Sohbet ekranının tepesinde grup adı yazıyor, altında kutu/kart yok — mesajlar ekranın tamamını kullanıyor; yazma alanına dokununca klavye açılıyor ve yazma alanı klavyenin üstünde kalıyor, mesaj listesi kayabiliyor; mesaj gönderilince liste en alta geliyor. Commit: `9dfc3b7`. **Cihazda doğrulanmalı.** |
+| **WP-511** Kamp ateşinde dürtme | İki Android cihaz (aynı grupta iki hesap) | Kamp ateşinde bir arkadaşın hayvanına dokununca açılan sayfada "Dürt" düğmesi var; basınca sayfa kapanıyor ve "… dürtüldü" yazısı görünüyor, karşı cihaza bildirim düşüyor; kendi hayvanına dokununca Dürt düğmesi hiç görünmüyor; karşı taraf çalışırken basınca "odağını bölmemek için dürtme kapalı" çıkıyor ve bildirim gitmiyor; büyük yazı ölçeğinde sayfa taşmıyor (kaydırılabiliyor). Commit: `a59ebf7`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
@@ -5364,7 +5370,8 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-501** Grup başarımı seçili gruptan (`0121`) | Database Gates local replay → staging apply → Android telefon (**iki gruba** üye, aynı hafta ikisinde de birinci olmuş hesap) | (1) CI local replay job'ında `046` 16/16 yeşil. (2) Şema uygulandıktan sonra Lider Kurt ilerlemesi **2 değil 1** gösteriyor. (3) Grup değiştirince (sınıf seçici) değer o grubun gerçeğine dönüyor. (4) Daha önce kazanılmış kademe/XP **duruyor**, geri alınmamış. Commit: `28d6a57`. **Cihazda doğrulanmalı.** |
 | **WP-503** Dağılım grafiği Y ekseni | Android telefon (İstatistik → kişisel → oturum dağılımı; 14 / 30 / 90 günün üçü de) | Dağılım grafiğinin sol ekseninde iki sayı üst üste binmiyor; en alttaki `0` artık yazmıyor; her sayının hizasında bir ızgara çizgisi var (çizgisiz sayı ya da sayısız çizgi kalmıyor). Commit: `0d5a82e`. **Cihazda doğrulanmalı.** |
 | **WP-504** Kalan gömülü metinler | Android telefon, **cihaz dili İngilizce** (ana ekran kart ekleme sayfası; profil → oturum geçmişi; profil → taç kademeleri) | Kart ekleme başlığında "12 cards", oturum geçmişi satırında "3 sessions" yazıyor ("kart"/"oturum" değil); dili Türkçe'ye alınca "12 kart"/"3 oturum" oluyor; taç kademeleri sayfasında XP değerleri iki dilde de "250 XP" görünüyor. Commit: `7f7e436`. **Cihazda doğrulanmalı.** |
-| **WP-512** Taç kademeleri ikinci kapı | Android telefon (Profil → Başarımlar; XP'si olan hesap) | Rütbe adı + toplam XP satırının sağında ⓘ ipucu görünüyor; satıra dokununca XP eşikleri sayfası açılıyor; hemen altındaki 6 renkli kademe şeridine dokununca da aynı sayfa açılıyor; sayfada kullanıcının bulunduğu kademe işaretli; iki dokunma alanı da ≥ 48 dp. Commit: `d0fef93` + `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-512** Taç kademeleri ikinci kapı | Android telefon (Profil → Başarımlar; XP'si olan hesap) | Rütbe adı + toplam XP satırının sağında ⓘ ipucu görünüyor; satıra dokununca XP eşikleri sayfası açılıyor; hemen altındaki 6 renkli kademe şeridine dokununca da aynı sayfa açılıyor; sayfada kullanıcının bulunduğu kademe işaretli; iki dokunma alanı da ≥ 48 dp. Commit: `d0fef93` + `1f065d3`. **Cihazda doğrulanmalı.** |
+| **WP-507** Durdur gecikmesi + ilerleme göstergesi | Android telefon (**zayıf/yavaş ağ**: kenar çekim ya da uçak modundan yeni dönmüş) | Sayacı durdurunca ekran ~3 sn takılmadan kapanıyor; basıldığı andan kapanana kadar düğmede dönen halka + "Durduruluyor…" görünüyor (gri ölü tuş hissi yok); kayıt kaybolmuyor — durdurulan oturumun süresi istatistikte ve seride doğru. Commit: `0272acb`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
 (2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
@@ -8180,6 +8187,80 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı** (deno kurulu değil).
 - **Kanıt etiketi:** `Kodda doğrulandı` → cihazda kabul bekliyor.
 - **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-507: Durdur telemetriyi beklemiyor, buton ilerlemeyi gösteriyor ⏹️
+- **Program/Faz:** Faz F5 · Orta (v59 saha geri bildirimi · madde 10)
+- **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Commit:** `0272acb`
+- **Problem:** Sahip "bazen sayacı kapatırken 3 sn bekliyor, sonra kapatıyor;
+  her zaman olmuyor" dedi. Teşhis `docs/qa/V59-FIELD-FEEDBACK.md` madde 10'da
+  hazırdı; yeniden üretilmedi.
+- **Ne yapıldı:**
+  1. `study_providers.dart` `_finalizeVerifiedRun`: başarı yolundaki
+     `recordVerifiedSessionRollout` **await ediliyordu**. Bu saf telemetri —
+     oturum bir üstteki `finalizeLiveRun` ile sunucuda zaten kapanıyor. Yani
+     Durdur ikinci bir ağ turunu daha bekliyordu. Artık `unawaited` +
+     `catchError`; hata yolundaki aynı çağrı zaten ateşle-unut yazılmıştı.
+  2. `study_timer_card.dart:399`: `isStopping` iken düğme yalnız griye
+     düşüyordu (yazı aynı, spinner yok) → "tuş öldü" hissi. Artık spinner +
+     "Durduruluyor…". Yeni anahtar `classroomDurduruluyor` (TR+EN).
+- 🔴 **Kasten kapsam dışı bırakılanlar:** `stop()` içindeki **await sırası**
+  değiştirilmedi — her await'in başındaki yorum WP-250/241/243/246/233/104'te
+  kapatılmış gerçek saha hatalarını tutuyor (şişmiş toplam süre, çift oturum,
+  hayalet oturum). Zincire **timeout eklenmedi**: `_finish()` `finally`'de
+  olduğu için timeout "kayıt yazılmadan sayaç kapandı" riski doğurur; o adım
+  sahibin cihaz tanılama kaydı gelmeden yapılmaz.
+- **Değişen dosyalar:** `app/lib/data/providers/study_providers.dart` ·
+  `app/lib/features/classroom/widgets/study_timer_card.dart` ·
+  `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb` ·
+  `app/test/features/classroom/timer_stop_telemetry_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok.
+- **Test:** 3 yeni iddia. Kapı **kasten kırık girdiyle** sınandı: telemetri
+  tekrar await'e çevrilince ikisi de kırmızı düştü, düzeltmeyle 3/3 yeşil.
+  İddialar telemetrinin **silinmesini** de yakalar (çağrının gerçekten
+  yapıldığı ayrıca ölçülüyor).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda kabul bekliyor.
+
+---
+
+### WP-513: Ajan altyapısı lider + alt ajan modeline geçirildi 🧭
+- **Program/Faz:** Faz F5 · Küçük (süreç/altyapı; sahip 2026-08-08 talebi)
+- **Durum:** [x] Tamamlandı · **Commit:** `0271bc5`
+- **Problem:** Üç ayrı doküman üç farklı çalışma modeli anlatıyordu:
+  `.agents/AGENTS.md` "varsayılan 3–4 ajan paralel" · `progress.md` "paralel
+  model kapandı, tek ajan" · fiili durum ise **tek lider ajan + onun açtığı alt
+  ajanlar**. Yeni açılan her alt ajan bu çelişkili kuralı okuyup yanlış başlardı
+  (kendine lane claim etmeye çalışmak, `progress.md`'ye yazmak, tam test kapısını
+  koşturup pub kilidinde asılmak).
+- **Ne yapıldı:**
+  1. `.agents/AGENTS.md §1` baştan yazıldı: sahiplik **claim'le değil lider
+     atamasıyla** gelir (§1.1); liderin denetim borcu tanımlandı — her commit
+     `git show --stat` ile sızıntıya karşı okunur, ajan iddiası dosya:satır
+     açılarak doğrulanır, kapı **birleşik durumda** koşar (§1.2); paylaşılan
+     dizin kuralları tek yerde toplandı (§1.5): `git add -A` · `git checkout --`
+     · eş zamanlı tam test kapısı yasak. Git disiplini §1.5 → §1.6'ya kaydı.
+  2. `worker`: claim/lane protokolü kaldırıldı, yerine **sınır doğrulama** geldi
+     (SAHİP listesi yoksa başlama). `progress.md`'ye yazmıyor; tam kapıyı
+     koşturmuyor; teslim özeti artık kart içeriğinin kaynağı.
+  3. `planner`: planlama bir **lider rolü**. Kart formatından `Ajan`/lane alanı
+     çıktı, `Commit` alanı girdi; dalga boyu sınırı (3–4 alt ajan) ve "her ajan
+     kendi testini koşmaz" kuralı eklendi.
+  4. `tester`: kapı bir lider rolü. Varsayılan turun **T3'ü koşmadığı**
+     (golden / Windows entegrasyon / pgTAP yalnız `--full`) ve Android tarafında
+     **hiçbir gerçek çalışma zamanı testi olmadığı** açıkça yazıldı.
+  5. `AGENTS.md` + `CLAUDE.md` işaretçileri ve `docs/KALITE-PROGRAMI.md §7`
+     eşgüdüm kuralı aynı modele çekildi; `docs/AJAN-KULLANIM.md` sahibin el
+     kitabı olarak yeniden yazıldı (v7 / WP-37–45 kalıntıları temizlendi).
+- **İptal edilen düzenler** (dosyada "diriltme" notuyla işaretli): "3–4 ajan
+  paralel varsayılan" · PLAN 5 / `Ajan A`…`Ajan D` zincirleri · kendi kendine
+  lane claim · "çakışma görürsen dur ve sahibe sor".
+- **Değişen dosyalar:** `.agents/AGENTS.md` · `.agents/skills/worker/SKILL.md` ·
+  `.agents/skills/planner/SKILL.md` · `.agents/skills/tester/SKILL.md` ·
+  `AGENTS.md` · `CLAUDE.md` · `docs/AJAN-KULLANIM.md` · `docs/KALITE-PROGRAMI.md`
+- **Kapsam dışı:** Kod ve test dosyası yok; `progress.md`'nin tarihsel PLAN 5
+  kayıtları **silinmedi** (tarihsel kayıttır, kural değil).
+- **Kanıt etiketi:** `Kodda doğrulandı` (doküman işi; cihaz kabulü gerekmez).
 
 ---
 
