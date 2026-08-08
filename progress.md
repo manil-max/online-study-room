@@ -109,7 +109,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-520** (2026-08-08). WP-507…WP-513 v59 saha geri
+- **Son WP numarası:** **WP-521** (2026-08-08). WP-507…WP-513 v59 saha geri
   bildirimi dalgasıdır (kart kaydırma · Gruplar üst düzeni · tam ekran sohbet ·
   dürtme · taç kademeleri · Durdur gecikmesi · ajan altyapısı); hepsi
   commit'lendi, cihaz kabulü bekliyor. **Yürütme modeli 2026-08-08'de tek lider
@@ -8441,6 +8441,28 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   yakalanmamış hata üretiyor. Kullanıcı hızlı iki kez basarsa sahada da olur.
 - **Kabul:** diyalog açıkken ikinci başlatma hata fırlatmıyor; sayaç ya
   başlıyor ya sessizce bekliyor. Test: iki hızlı başlatma.
+
+---
+
+### WP-521: "pipefail geri gelmesin" sözleşme testi ⛔
+- **Program/Faz:** Faz F5 · Küçük (test altyapısı) · **Durum:** [ ] Bekliyor
+- **Neden var:** WP-516'nın emülatör job'ı CI'da **hiç koşmadı** — script `sh`
+  (dash) ile koşuyor ve `set -o pipefail` ilk satırda öldürüyordu. Düzeltildi
+  (`195de3d`), ama satırın geri gelmesini engelleyen bir kapı **yok**.
+- 🔴 **Denedim, başaramadım (dürüst kayıt):** `guard.tests.ps1` içine
+  `$ciWorkflow -match '(?m)^\s*set\s[^#]*pipefail'` kontrolü yazdım. Regex
+  tek başına doğru eşliyordu — enstrümante edip ölçtüm: `rx=True`. Buna rağmen
+  kırık girdi diskteyken kapı **yeşil kalmaya devam etti** ve sebebi
+  bulunamadı. Çalıştığını kanıtlayamadığım kapıyı bırakmak, hiç kapı
+  olmamasından kötüdür (bu WP'nin bütün dersi bu), o yüzden blok geri alındı.
+- **Sıradaki adım için ipucu:** meta-kontrolü PowerShell içinde değil,
+  `scripts/test_all.py` tarafında Python ile yazmak daha güvenli olabilir —
+  eşleşme orada doğrudan gözlenebilir. Alternatif: emülatör script'ini
+  `scripts/ci/android-emulator-smoke.sh` dosyasına taşıyıp `bash` shebang'i
+  ile çağırmak; o zaman bashism meşru olur ve kontrol gereksizleşir. **İkinci
+  yol tercih edilir** — sorunu ortadan kaldırır, kollamaya çalışmaz.
+- **Kabul:** kırık girdi (bashism geri konur) → kapı **kırmızı** düşer; bu
+  ölçüm teslim özetinde sayıyla yazılı olur.
 
 ---
 
