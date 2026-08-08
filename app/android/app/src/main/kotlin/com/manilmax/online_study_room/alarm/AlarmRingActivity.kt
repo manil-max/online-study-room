@@ -286,9 +286,12 @@ class AlarmRingActivity : ComponentActivity() {
                 return
             }
         }
-        NativeAlarmScheduler.cancel(this, kind, alarmId)
+        // WP-557 (Hata 1): "Kapat" yalnız çalanı susturur. Öncesi `cancel(...)`
+        // PendingIntent'i tamamen iptal ediyordu; aynı (kind,id) tek
+        // PendingIntent kullandığı için FIRE anında kurulan **bir sonraki**
+        // occurrence da siliniyordu — tekrarlayan alarm bir kez çalıp ölüyordu.
+        NativeAlarmScheduler.dismiss(this, kind, alarmId)
         AlarmNotificationFallback.cancel(this, kind, alarmId)
-        // Tek seferlik / timer: mirror güncellemesi Dart tarafında boot reconcile ile
         stopAll()
         finish()
     }

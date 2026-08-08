@@ -25,7 +25,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 // goAsync: boot'ta biraz daha zaman
                 val pending = goAsync()
                 try {
-                    NativeAlarmScheduler.rescheduleFromMirror(context)
+                    // Bayrağı yalnız bu yol basar: Dart kanalından gelen
+                    // reschedule bayrak basarsa her açılışta yeniden doğar.
+                    NativeAlarmScheduler.rescheduleFromMirror(context, markPending = true)
                 } finally {
                     pending.finish()
                 }
@@ -43,13 +45,21 @@ class AlarmReceiver : BroadcastReceiver() {
                 val label = intent.getStringExtra(AlarmIds.EXTRA_LABEL)
                     ?: context.getString(com.manilmax.online_study_room.R.string.alarm_default_label)
                 NativeAlarmScheduler.writePendingRing(context, kind, id, label)
+                // WP-557 (Hata 1): bir sonraki occurrence BURADA kurulur.
+                // Öncesi: FIRE dalında hiç `scheduleAlarm` yoktu; Pzt-Cum 07:00
+                // alarmı bir kez çalıp bir daha asla kurulmuyordu. Çalmadan
+                // önce kurulur ki UI yolundaki bir hata alarmı kaybetmesin.
+                runCatching { NativeAlarmScheduler.advanceAfterFire(context, kind, id) }
+                    .onFailure { Log.e(TAG, "advanceAfterFire failed id=$id", it) }
                 launchRing(context, intent, kind, id)
             }
 
             AlarmIds.ACTION_DISMISS -> {
                 val kind = intent.getStringExtra(AlarmIds.EXTRA_KIND) ?: AlarmIds.KIND_ALARM
                 val id = intent.getStringExtra(AlarmIds.EXTRA_ID) ?: return
-                NativeAlarmScheduler.cancel(context, kind, id)
+                // `cancel` değil: aynı (kind,id) tek PendingIntent kullanır,
+                // körlemesine iptal az önce kurulan sonraki occurrence'ı siler.
+                NativeAlarmScheduler.dismiss(context, kind, id)
                 context.sendBroadcast(
                     Intent(AlarmIds.ACTION_STOP_SOUND).setPackage(context.packageName),
                 )

@@ -48,6 +48,17 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
       final c = a.hour.compareTo(b.hour);
       return c != 0 ? c : a.minute.compareTo(b.minute);
     });
+    // WP-557 (Hata 3): native FIRE dalı `clock_pending_ring_v1`e yazıyor ama
+    // `lib/` içinde tek bir okuyucusu yoktu; anahtar cihazda süresiz bayat
+    // kalıyordu. Artık tüketiliyor ve tüketildiğinde mirror AlarmRule
+    // gerçeğinden yeniden türetiliyor: native tarafın hesapladığı bir sonraki
+    // occurrence Dart `AlarmScheduler` ile uzlaştırılmış olur (skipNextOn
+    // tüketimi, saat/gün düzenlemesi, DST). `rescheduleAll()` de böylece
+    // gerçekten çağrılan bir yol olur.
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (NativeAlarmBridge.instance.consumePendingRing(prefs) != null) {
+      await rescheduleAll();
+    }
     return list;
   }
 
@@ -91,6 +102,9 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
     await saveAlarm(updated);
   }
 
+  /// Mirror'ı AlarmRule gerçeğinden yeniden türet ve native'e yaz.
+  ///
+  /// WP-557: `build()` içinde native bir çalma tüketildiğinde çağrılır.
   Future<void> rescheduleAll() async {
     await _syncNative();
   }

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb, defaultTargetPlatform, visibleForTesting, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -138,11 +138,7 @@ Future<void> main() async {
     debugPrint('AlarmNotificationService.initialize failed: $e\n$st');
   }
   if (isAndroid) {
-    final bridge = NativeAlarmBridge.instance;
-    if (bridge.consumeRescheduleFlag(prefs)) {
-      // Boot/timezone: native zaten mirror'dan kurdu; bayrağı temizle.
-    }
-    await bridge.rescheduleFromMirror();
+    await reconcileNativeAlarmsOnStart(prefs, NativeAlarmBridge.instance);
   }
 
   runApp(
@@ -171,6 +167,27 @@ Future<void> main() async {
       realtimeChannelCount: channelCount,
     );
   });
+}
+
+/// Açılışta native alarm zamanlayıcısını uzlaştırır (WP-557, Hata 2).
+///
+/// Mirror'dan yeniden kurma **yalnız** native boot/timezone alıcısı
+/// `RESCHEDULE_PENDING` bayrağını bastıysa yapılır.
+///
+/// Öncesi: bayrak okunup atılıyordu (`if` gövdesi boştu) ve
+/// `rescheduleFromMirror()` bayraktan bağımsız **her açılışta** koşuyordu.
+/// Mirror'da geçmişte kalmış bir `triggerAtMs` varsa native taraf onu
+/// "kaçırılmış alarm" sayıp anında tam ekran alarm + siren üretiyordu:
+/// sabah 07:00'de çalıp kapatılan alarm, 14:30'da uygulama açılınca yeniden
+/// çalıyordu. Native taraftaki `MISSED_TRIGGER_WINDOW_MS` penceresi bu
+/// kapının ikinci yarısıdır.
+@visibleForTesting
+Future<void> reconcileNativeAlarmsOnStart(
+  SharedPreferences prefs,
+  NativeAlarmBridge bridge,
+) async {
+  if (!bridge.consumeRescheduleFlag(prefs)) return;
+  await bridge.rescheduleFromMirror();
 }
 
 class OnlineStudyRoomApp extends ConsumerWidget {

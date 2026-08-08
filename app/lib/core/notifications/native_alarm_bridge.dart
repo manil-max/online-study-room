@@ -109,7 +109,11 @@ class NativeAlarmBridge {
     } catch (_) {}
   }
 
-  /// SharedPreferences mirror — boot receiver bunu okur.
+  /// SharedPreferences mirror — boot receiver ve native FIRE dalı bunu okur.
+  ///
+  /// WP-557: `days` / `date` / `skipNextOn` de yazılır. Bunlar olmadan native
+  /// taraf **bir sonraki** occurrence'ı hesaplayamaz; tekrarlayan alarm bir
+  /// kez çalıp uygulama açılana kadar bir daha kurulamıyordu.
   Future<void> writeAlarmMirror(
     SharedPreferences prefs,
     List<AlarmRule> alarms,
@@ -132,6 +136,10 @@ class NativeAlarmBridge {
         'vibrate': a.vibrate,
         'antiSnooze': a.antiSnooze,
         'snoozeMin': a.snoozeMinutes,
+        // Tekrar kuralı — native `nextOccurrenceMs` bunlarla çalışır.
+        'days': a.days,
+        'date': a.date?.toIso8601String(),
+        'skipNextOn': a.skipNextOn?.toIso8601String(),
       });
     }
     await prefs.setString(mirrorAlarmsKey, jsonEncode(list));
