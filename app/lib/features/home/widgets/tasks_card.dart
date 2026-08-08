@@ -6,6 +6,7 @@ import '../../../core/tasks/task_deadline.dart';
 import '../../../core/tasks/task_sections.dart';
 import '../../../data/providers/user_task_providers.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 
 /// Home dashboard: görev listesi — gör + renk + işaretle (WP-199).
 /// Ekleme/düzenleme yok (Araçlar sekmesi).
@@ -132,6 +133,11 @@ class TasksCard extends ConsumerWidget {
                       final show = active.take(TasksCard._maxVisible).toList();
                       final more = active.length - show.length;
                       return ListView.separated(
+                        // WP-508: bayrak verilmezse dikey `ListView`
+                        // `AlwaysScrollableScrollPhysics`e düşer ve sığan
+                        // içerikte bile sürüklemeyi yutar.
+                        physics: kCardOverflowScrollPhysics,
+                        primary: false,
                         padding: EdgeInsets.zero,
                         itemCount: show.length + (more > 0 ? 1 : 0),
                         separatorBuilder: (_, _) => Divider(

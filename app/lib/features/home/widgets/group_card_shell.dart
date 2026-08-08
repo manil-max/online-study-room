@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/study_group.dart';
+import 'card_scaffold.dart';
 
 /// Veri gelmeden çizilen yer tutucunun kimliği; testler bu anahtarla ölçer.
 const Key kGroupCardSkeletonKey = Key('groupCardSkeleton');
@@ -64,6 +65,7 @@ class GroupCardShell extends StatelessWidget {
     final theme = Theme.of(context);
     // WP-176: Home sabit hücrede taşmayı önlemek için bounded → iç scroll;
     // Groups ListView (unbounded) → iç scroll yok, dış liste kayar (WP-172).
+    // WP-508: bounded dalda da kaydırma yalnız gerçekten taştığında açılır.
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -118,9 +120,10 @@ class GroupCardShell extends StatelessWidget {
           );
 
           final unbounded = !constraints.maxHeight.isFinite;
+          // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: unbounded ? column : SingleChildScrollView(child: column),
+            child: unbounded ? column : cardScrollIfOverflows(child: column),
           );
         },
       ),
@@ -156,10 +159,7 @@ class GroupCardStatus extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.all(16),
             child: constraints.maxHeight.isFinite
-                ? SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    child: column,
-                  )
+                ? cardScrollIfOverflows(child: column)
                 : column,
           );
         },

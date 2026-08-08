@@ -42,9 +42,12 @@ class HeatmapCard extends ConsumerWidget {
               52,
             );
             // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).
-            return SingleChildScrollView(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+            // WP-508: ısı haritası gerçekten taşabilir, o yüzden kaydırma
+            // korunur — ama yalnız taşma varken; sığdığında iki eksende de
+            // sürükleme dış sayfaya bırakılır.
+            return cardScrollIfOverflows(
+              child: cardScrollIfOverflows(
+                axis: Axis.horizontal,
                 child: StudyHeatmap(sessions: sessions, weeks: weeks),
               ),
             );

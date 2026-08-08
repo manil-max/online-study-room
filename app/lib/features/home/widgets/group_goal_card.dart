@@ -16,6 +16,7 @@ import '../../classroom/widgets/class_switcher.dart';
 import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
+import 'card_scaffold.dart';
 import 'group_card_shell.dart';
 
 /// "Grup hedefi" kartı (§3.11): grubun bugünkü TOPLAM çalışması / günlük grup
@@ -151,9 +152,9 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
           // WP-172: ListView (sınırsız yükseklik) içinde nested scroll jesti yutmasın.
           final unbounded = !constraints.maxHeight.isFinite;
 
-          Widget maybeScroll(Widget child) => unbounded
-              ? child
-              : SingleChildScrollView(child: child);
+          // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
+          Widget maybeScroll(Widget child) =>
+              unbounded ? child : cardScrollIfOverflows(child: child);
 
           if (isCompact) {
             return Padding(

@@ -36,9 +36,11 @@ class RhythmCard extends ConsumerWidget {
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
         // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).
-        child: SingleChildScrollView(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+        // WP-508: ritim ızgarası gerçekten taşabilir, kaydırma korunur — ama
+        // yalnız taşma varken; sığdığında sürükleme dış sayfaya bırakılır.
+        child: cardScrollIfOverflows(
+          child: cardScrollIfOverflows(
+            axis: Axis.horizontal,
             child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
           ),
         ),

@@ -9,6 +9,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 
 /// Günlük hedef ilerlemesi + güncel seri (§3.11 kart). Hedefe ulaşılan oran bir
 /// halka göstergede; seri büyük "🔥 N gün" rozetinde gösterilir.
@@ -70,11 +71,19 @@ class GoalCard extends ConsumerWidget {
             ),
           );
 
+          // WP-508: sığan içerikte kaydırıcı kurulmaz (dış sayfa akar), taşarsa
+          // kart içinde kayar. Sınırsız yükseklikte (Gruplar listesi) hiç
+          // kaydırıcı olmaz — bu kart komşularındaki kontrolü hiç yapmıyordu.
+          final unbounded = !constraints.maxHeight.isFinite;
+          Widget maybeScroll(Widget child) =>
+              unbounded ? child : cardScrollIfOverflows(child: child);
+
           if (isCompact) {
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
+              child: maybeScroll(
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -125,8 +134,9 @@ class GoalCard extends ConsumerWidget {
 
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
+            child: maybeScroll(
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(

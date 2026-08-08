@@ -36,7 +36,8 @@ class RecordsCard extends ConsumerWidget {
             final cols = constraints.maxWidth > 400
                 ? 3
                 : (constraints.maxWidth > 250 ? 2 : 1);
-            return SingleChildScrollView(
+            // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
+            return cardScrollIfOverflows(
               child: StudyRecords(sessions: sessions, columns: cols),
             );
           },

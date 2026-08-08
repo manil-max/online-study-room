@@ -10,6 +10,7 @@ import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
+import 'card_scaffold.dart';
 
 /// Bugünün özeti: toplam süre + ders bazında oransal dağılım (§3.9 kart).
 /// Küçük boyutta yalnızca toplamı, orta/büyükte ders dağılımını gösterir.
@@ -56,39 +57,44 @@ class TodaySummaryCard extends ConsumerWidget {
               (constraints.maxHeight.isFinite && constraints.maxHeight < 140);
 
           if (isCompact) {
+            // WP-508: yalnız taşarsa kayar; sığdığında sürükleme dış sayfaya.
+            // Sınırsız yükseklikte (dar hücre + Gruplar listesi) kaydırıcı hiç
+            // kurulmaz — `goal_card`/`period_summary_card` ile aynı eksik kontrol.
+            final compactColumn = Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context).homeBugun,
+                  style: theme.textTheme.labelMedium,
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    formatHuman(total),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  breakdown.isEmpty
+                      ? AppLocalizations.of(context).homeKayitYok
+                      : '${breakdown.length} ders',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            );
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).homeBugun,
-                      style: theme.textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        formatHuman(total),
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      breakdown.isEmpty
-                          ? AppLocalizations.of(context).homeKayitYok
-                          : '${breakdown.length} ders',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: constraints.maxHeight.isFinite
+                  ? cardScrollIfOverflows(child: compactColumn)
+                  : compactColumn,
             );
           }
 
@@ -128,6 +134,11 @@ class TodaySummaryCard extends ConsumerWidget {
                           ),
                         )
                       : ListView.builder(
+                          // WP-508: bayrak verilmezse dikey `ListView`
+                          // `AlwaysScrollableScrollPhysics`e düşer ve sığan
+                          // içerikte bile sürüklemeyi yutar.
+                          physics: kCardOverflowScrollPhysics,
+                          primary: false,
                           itemCount: breakdown.length,
                           itemBuilder: (context, index) {
                             final entry = breakdown[index];

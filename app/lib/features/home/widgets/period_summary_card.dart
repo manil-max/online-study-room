@@ -7,6 +7,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
+import 'card_scaffold.dart';
 
 enum _Period { today, week, month, year }
 
@@ -151,32 +152,38 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
                   ],
                 );
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // WP-508: sığan içerikte kaydırıcı kurulmaz (dış sayfa akar), taşarsa
+          // kart içinde kayar. Sınırsız yükseklikte (Gruplar listesi) hiç
+          // kaydırıcı olmaz — bu kart komşularındaki kontrolü hiç yapmıyordu.
+          final column = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          AppLocalizations.of(context).homeDonemOzeti,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (isCompact) selector,
-                    ],
+                  Flexible(
+                    child: Text(
+                      AppLocalizations.of(context).homeDonemOzeti,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
-                  if (!isCompact) ...[const SizedBox(height: 12), selector],
-                  const SizedBox(height: 16),
-                  statsRow,
+                  const Spacer(),
+                  if (isCompact) selector,
                 ],
               ),
-            ),
+              if (!isCompact) ...[const SizedBox(height: 12), selector],
+              const SizedBox(height: 16),
+              statsRow,
+            ],
+          );
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: constraints.maxHeight.isFinite
+                ? cardScrollIfOverflows(child: column)
+                : column,
           );
         },
       ),

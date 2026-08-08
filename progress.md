@@ -5346,6 +5346,7 @@ geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-509** Gruplar üst düzeni | Android telefon (grubu olan hesap; **uzun adlı** grup; tanıtım turu sıfırlanmış) | Gruplar sekmesinin tepesinde eylem şeridi yok, kamp ateşi yukarı geldi ve durum çubuğunun altına girmiyor; grup adının sağında üç simge var (değiştir → sohbet → ayarlar) ve üçü de çalışıyor; uzun grup adı en az bir-iki kelime okunuyor; Gruplar turundaki "grup değiştir" balonu yeni düğmeyi gösteriyor (ekranın ortasında açılmıyor); grup ayarlarında sohbet kartı yok. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-508** Kart üstünden kaydırma | Android telefon (ana ekran, en az iki ekran boyu kart dizilimi) | Parmak *Şu an çalışanlar* / *Bugünün özeti* / *Görevler* kartının üstündeyken sayfa normal kayıyor ve sahte kaydırma (esneme) animasyonu görünmüyor; kart içeriği hücreye **sığmadığında** (çok üyeli grup) kart kendi içinde kaydırılıyor ve hiçbir üye kaybolmuyor; ısı haritası/ritim kartlarında yatay kaydırma çalışmaya devam ediyor. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-489** Dart↔native prefs tip sözleşmesi | Android telefon (ana ekranda sayaç widget'ı **yerleştirilmiş**) | Geri sayım ve pomodoro başlatılınca uygulama çökmüyor; `adb logcat -b crash` içinde `ClassCastException` yok (öncesi/sonrası iki kayıt). Bildirimden mola → çalışmaya dönüş turu çökmeden tamamlanıyor. **Cihazda doğrulanmalı.** |
 | **WP-493** Ana ekran üst güvenli alanı | Çentikli/delikli Android telefon (dik + yatay) | Ana ekranda ilk kartın üstü saat/pil simgelerinin altında kalıyor; karta uzun basıp düzenlemeye girip çıkınca üst boşluk birikmiyor; yatay modda kart çentiğin içine girmiyor. Commit: `1dd4a1f`. **Cihazda doğrulanmalı.** |
 | **WP-494** Grup üye akışı aboneliği | Android telefon + gerçek Supabase (grup detayı, en az iki üye) | Grup detayında liste artık sürekli yenilenip spinner'a düşmüyor; ekran dakikalarca açık kalınca da üye listesi sabit duruyor. Commit: `434cc58`. **Cihazda doğrulanmalı.** |
@@ -7897,6 +7898,76 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   (tarihsel hedef saklanmıyor — `0120` bunu bilerek seçti). Yani seri
   "bugünkü hedefe göre geçmiş" anlamındadır; sahte çalışma süresi
   **üretmez**, yalnız zaten var olan oturumları bugünkü eşikle değerlendirir.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-508: Kart üstünden kaydırınca sayfa kaymıyordu 🖐️
+- **Program/Faz:** PLAN 5 · Faz F5 · Orta (v59 saha geri bildirimi · madde 1)
+- **Ajan:** Claude · **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor
+- **Kaynak:** `docs/qa/V59-FIELD-FEEDBACK.md` §1 + 🔒 sahip kararı (2026-08-08)
+- **Kök neden (çizim değil, JEST hatası):** Pano hücresi her karta sabit piksel
+  yükseklik verir (`dashboard_card.dart` → `SizedBox`); kartlar o sınırlı kutuda
+  **koşulsuz** kaydırıcı kuruyordu. Flutter'da en içteki `Scrollable` dikey
+  sürüklemeyi gesture arena'da kazanır → içerik zaten sığdığı için hiçbir şey
+  oynamaz, **dış sayfa da kaymaz**; kullanıcı yalnız Android'in stretch
+  overscroll animasyonunu görür. Sahibin tarif ettiği "kaydırma animasyonu var
+  ama kaymıyor" tam olarak budur.
+  🔴 **İkinci, daha sinsi katman:** `physics`/`primary`/`controller` verilmemiş
+  **dikey `ListView`** `AlwaysScrollableScrollPhysics`e düşer
+  (`scroll_view.dart:141`). Yani "taşma yoksa jesti bırak" olan Flutter
+  varsayılanı bile devre dışı kalır. Sahaya çıkan üç kart (Şu an çalışanlar ·
+  Bugünün özeti · Görevler) tam olarak `ListView` kuranlardı; sekiz
+  `SingleChildScrollView` çağrısı varsayılan kural sayesinde tesadüfen doğru
+  davranıyordu — kural yazılı olmadığı için tek bayrakla geri kırılabilirdi.
+- **Ne yapıldı:** Tek ortak kural yazıldı, 13 çağrı ona bağlandı.
+  1. `card_scaffold.dart`: `CardOverflowScrollPhysics` +
+     `kCardOverflowScrollPhysics` + `cardScrollIfOverflows(...)`. Kural:
+     `shouldAcceptUserOffset` yalnız gerçek taşma varsa `true` → Flutter
+     `setCanDrag(false)` ile sürükleme tanıyıcısını hiç kurmaz, jest dış sayfaya
+     gider.
+  2. `ListView` kuran üç kart açık `physics: kCardOverflowScrollPhysics` +
+     `primary: false` aldı (`primary` olmazsa kart dış sayfanın controller'ını
+     devralır).
+  3. `goal_card` · `period_summary_card` · `today_summary_card` (kompakt dal)
+     kaydırıcıyı **koşulsuz** kuruyordu; komşularındaki `unbounded` kontrolü
+     eklendi — sınırsız kısıtta viewport zaten çöker.
+  4. `heatmap_card` / `rhythm_card`: içerik gerçekten taşabildiği için kaydırma
+     korundu, ama iki eksende de yalnız taşma varken.
+  5. `leaderboard_card` doldurma dalındaki `NeverScrollableScrollPhysics`
+     değiştirildi: sıralama sığmadığında alttaki üyeler kırpılıyor ve hiçbir
+     şekilde görülemiyordu — WP-497'nin aynı sınıfı.
+- **🔒 Sahip kararı uygulandı:** "Hiç kaydırma yok" çözümü REDDEDİLDİ; sığarsa
+  dış sayfa akar, taşarsa kart içinde kayar. İki yarım da testte ölçülüyor.
+- **Değişen dosyalar:** `app/lib/features/home/widgets/` altında
+  `card_scaffold` · `active_members_card` · `today_summary_card` · `goal_card` ·
+  `period_summary_card` · `records_card` · `heatmap_card` · `rhythm_card` ·
+  `tasks_card` · `leaderboard_card` · `group_goal_card` · `group_card_shell` ·
+  `app/test/features/home/card_scroll_gesture_wp508_test.dart` (yeni)
+- **Veri/Migration etkisi:** Yok. **Yeni l10n anahtarı yok.**
+- **Kabul (ölçülebilir):**
+  1. ✅ Sığan içerikte kart üstünden sürükleme → dış `SingleChildScrollView`
+     offset'i > 0 (7 kart: CardScaffold · Şu an çalışanlar · Bugünün özeti ·
+     Görevler · Günlük hedef · Dönem özeti · Rekorlar).
+  2. ✅ Taşan içerikte (12 aktif üye) kart kendi içinde kayıyor
+     (`position.pixels > 0`) ve dış sayfa **kaymıyor** (offset = 0).
+  3. ✅ Sınırsız yükseklikte üç kart hiç kaydırıcı kurmuyor, istisna atmıyor.
+  4. ✅ Her "sığan" iddiası önce kurulumun gerçekten sığdığını doğruluyor
+     (`maxScrollExtent == 0`); aksi hâlde test sessizce hiçbir şey ölçmezdi.
+- **Test:** 11 yeni iddia. 🔴 **Kapı kasten kırık girdiyle sınandı:** aynı test
+  dosyası düzeltme öncesi koda karşı koşuruldu (yol sınırlı `git stash`) →
+  **6 kırmızı** (Şu an çalışanlar · Bugünün özeti · Görevler + üç sınırsız
+  yükseklik iddiası); düzeltmeden sonra **11/11 yeşil**. Mevcut
+  `group_scroll_nesting_test.dart` yalnız sınırsız yolu koruyordu, hata tam o
+  boşluktan girmişti.
+  `flutter test --tags golden` **49/49 yeşil** (görsel değişiklik yok).
+  `python scripts/test_all.py`: **15 kapı · 0 kırmızı · 2 atlandı** (deno kurulu
+  değil, CI'da koşar).
+- **Kanıt etiketi:** `Kodda doğrulandı` → cihazda parmakla kabul bekliyor.
+- **Kapsam dışı bırakılan, bildirilen bulgu:** `today_summary_card`ın
+  **kompakt olmayan** dalı sınırsız yükseklikte `Expanded` yüzünden `RenderFlex`
+  hatası verir. Bu kart bugün hiç sınırsız bağlama konmuyor, kaydırma hatasıyla
+  ilgisi yok; ayrı WP olmalı.
 - **Model önerisi:** 🔵 Sonnet
 
 ---

@@ -15,6 +15,7 @@ import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
+import 'card_scaffold.dart';
 import 'group_card_shell.dart';
 
 /// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Boyuta göre üye
@@ -232,8 +233,9 @@ class LeaderboardCard extends ConsumerWidget {
             );
             return Padding(
               padding: const EdgeInsets.all(16),
+              // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
               child: isHeightBounded
-                  ? SingleChildScrollView(child: column)
+                  ? cardScrollIfOverflows(child: column)
                   : column,
             );
           }
@@ -249,7 +251,11 @@ class LeaderboardCard extends ConsumerWidget {
                 else
                   Expanded(
                     child: ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
+                      // WP-508: `NeverScrollable` idi — sıralama listeye
+                      // sığmadığında alttaki üyeler kırpılıyor ve hiçbir
+                      // şekilde görülemiyordu (WP-497'nin aynı sınıfı).
+                      physics: kCardOverflowScrollPhysics,
+                      primary: false,
                       itemCount: board.length,
                       itemBuilder: (context, i) => rowFor(i),
                     ),

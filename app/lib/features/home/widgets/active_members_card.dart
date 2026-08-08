@@ -13,6 +13,7 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 import 'group_card_shell.dart';
 
 /// "Şu an çalışanlar" kartı (§3.11): grupta o an **çalışıyor** durumundaki üyeler,
@@ -189,6 +190,11 @@ class ActiveMembersCard extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.all(16),
             child: ListView.builder(
+              // WP-508: sığan içerikte jest dış sayfaya bırakılır. Bayrak
+              // verilmezse dikey `ListView` `AlwaysScrollableScrollPhysics`e
+              // düşer ve sürükleme burada yutulur — sahibin bildirdiği belirti.
+              physics: kCardOverflowScrollPhysics,
+              primary: false,
               padding: EdgeInsets.zero,
               itemCount: bodyCount + 1,
               itemBuilder: (context, i) => i == 0
