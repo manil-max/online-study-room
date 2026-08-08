@@ -511,6 +511,25 @@ def internal_play_manifest() -> int:
                 "(tools:node=remove yok) -> Play beyan formu tetiklenir"
             )
 
+    # WP-546: Android varsayilani `allowBackup=true`. Supabase oturumu
+    # (refresh token dahil) `shared_prefs/*.xml` icinde duruyor -- olculdu:
+    # `Supabase.initialize` authOptions vermiyor, dolayisiyla varsayilan
+    # `SharedPreferencesLocalStorage(persistSessionKey: "sb-<ref>-auth-token")`
+    # devreye giriyor. Yedek acikken bu anahtar Google Drive yedegine ve
+    # cihaz-cihaz transferine giriyor. Kapatildi; kapi geri acilmasini engeller.
+    main_manifest = android / "src" / "main" / "AndroidManifest.xml"
+    if not main_manifest.exists():
+        problems.append("src/main/AndroidManifest.xml yok")
+    else:
+        main_source = re.sub(
+            r"<!--.*?-->", "", main_manifest.read_text(encoding="utf-8"), flags=re.S
+        )
+        if 'android:allowBackup="false"' not in main_source:
+            problems.append(
+                'src/main/AndroidManifest.xml `android:allowBackup="false"` '
+                "bildirmiyor -> Supabase refresh token'i cihaz yedegine girer"
+            )
+
     merged = sorted(
         (APP / "build").glob(
             "app/intermediates/merged_manifest*/playRelease/**/AndroidManifest.xml"
@@ -530,6 +549,11 @@ def internal_play_manifest() -> int:
                         f"{path.name} ({path.parent.name}) hala {permission} "
                         "tasiyor"
                     )
+            if 'android:allowBackup="false"' not in body:
+                problems.append(
+                    f"{path.name} ({path.parent.name}) birlestirilmis manifesti "
+                    'android:allowBackup="false" tasimiyor'
+                )
 
     if problems:
         print(f"FAIL ({len(problems)}):")

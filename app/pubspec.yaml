@@ -44,7 +44,12 @@ dependencies:
   shared_preferences: ^2.5.5
   home_widget: ^0.9.3
   flutter_local_notifications: ^22.0.1
-  flutter_foreground_task: ^9.2.2
+  # WP-546: uretim kodu kullaniyor (main.dart -> Supabase icin global HTTP
+  # zaman asimi istemcisi, WP-542). Ayrica Supabase kablo testleri sahte
+  # istemciyi buradan aliyor. Dev bagimliligiyken kok pakette derleme zamani
+  # cozuluyordu ama sozlesme yanlisti: uretim importu dev bagimliligina
+  # dayanamaz.
+  http: ^1.6.0
   # WP-266: Uygulama kapalıyken de ulaşan Android remote push taşıması.
   firebase_core: ^4.12.1
   firebase_messaging: ^16.4.3
@@ -72,11 +77,6 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
-  # Supabase repository kablo testleri icin (test/support/supabase_wire_harness.dart):
-  # SupabaseClient'a sahte bir http istemcisi verilerek GERCEK PostgREST sorgu
-  # ureticisi kosturulur. supabase uzerinden zaten geliyordu ama gecisli bir
-  # paketi import etmek analyze uyarisi uretir; acik bagimlilik sart.
-  http: ^1.6.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

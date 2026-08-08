@@ -23,7 +23,9 @@
     <application
         android:label="${appName}"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="announcements" />
@@ -79,10 +81,6 @@
         </receiver>
         <receiver
             android:name=".widgets.WidgetRefreshReceiver"
-            android:exported="false" />
-        <service
-            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:foregroundServiceType="dataSync"
             android:exported="false" />
         <!-- WP-42/51: Sayacın native foreground servisi. Widget/bildirim Başlat-Durdur
              uygulama kapalıyken de bunu ayağa kaldırır; oturum kaydı app açılışında

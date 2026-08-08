@@ -5,11 +5,6 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// WP-542: `http` su an yalniz dev_dependency (Supabase kablo testleri icin).
-// Kok pakette dev bagimliliklari derleme zamaninda da cozulur, bu yuzden
-// calisir; kalici cozum pubspec'te `dependencies` altina tasimaktir. pubspec bu
-// is paketinin SAHIP yollarinda olmadigi icin burada lint bastiriliyor.
-// ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
