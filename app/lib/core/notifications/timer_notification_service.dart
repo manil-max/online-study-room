@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +114,11 @@ class TimerNotificationService implements TimerNotificationGateway {
     FlutterLocalNotificationsPlugin(),
   );
 
+  /// Testte taze örnek: `_initialized` ve bekleyen izin isteği sıfırlanmış olur
+  /// (singleton `instance` bunları testler arasında taşır).
+  @visibleForTesting
+  TimerNotificationService.forTest() : this._(FlutterLocalNotificationsPlugin());
+
   static const int _notificationId = 7001;
   // Yeni kanal id: eski `study_timer_ongoing` LOW importance ile oluşturulmuştu ve
   // Android kanal importance'ını kilitler (koddan değiştirmek etkisizdir). Canlı
@@ -127,6 +133,10 @@ class TimerNotificationService implements TimerNotificationGateway {
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
+  // WP-520: izin diyaloğu açıkken uçan istek. Android aynı anda ikinci izin
+  // isteğini `permissionRequestInProgress` koduyla reddeder; ikinci `Başlat`ı
+  // platforma hiç götürmeyip bekleyen sonucu paylaşırız.
+  Future<void>? _pendingPermissionRequest;
 
   @override
   Stream<TimerNotificationAction> get commands => _commands.stream;
@@ -153,15 +163,36 @@ class TimerNotificationService implements TimerNotificationGateway {
     _initialized = true;
   }
 
+  /// WP-520: **hiçbir koşulda hata fırlatmaz** — sayaç başlatma izin isteğine
+  /// bağlı değildir, izin yoksa yalnız bildirim olmaz.
   @override
-  Future<void> requestPermissionIfNeeded() async {
-    if (!_isAndroid) return;
-    await initialize();
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+  Future<void> requestPermissionIfNeeded() {
+    if (!_isAndroid) return Future<void>.value();
+    final pending = _pendingPermissionRequest;
+    // Diyalog açıkken gelen ikinci basış: ikinci platform çağrısı üretilmez,
+    // ilk isteğin sonucu paylaşılır.
+    if (pending != null) return pending;
+    final request = _requestNotificationsPermission();
+    _pendingPermissionRequest = request;
+    // Sonuç ne olursa olsun kilidi aç; aksi halde bir kez başarısız olan izin
+    // isteği sonraki bütün başlatmaları sessizce engellerdi.
+    return request.whenComplete(() => _pendingPermissionRequest = null);
+  }
+
+  Future<void> _requestNotificationsPermission() async {
+    try {
+      await initialize();
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestNotificationsPermission();
+    } on PlatformException catch (error) {
+      // Örn. `permissionRequestInProgress`: izin diyaloğu zaten açık. Kullanıcı
+      // için doğru davranış çökmek değil, izinsiz devam etmektir.
+      // (Geliştirici logu — kullanıcıya görünmez, bu yüzden İngilizce.)
+      debugPrint('timer notification permission request failed: ${error.code}');
+    }
   }
 
   @override
