@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/group_error_text.dart';
 import '../../../core/validation/name_limits.dart';
 import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
@@ -449,8 +450,8 @@ Future<StudyGroup?> _promptJoinGroup(BuildContext context, WidgetRef ref) {
               // 🔴 WP-540: burada BEŞ ayrı sebep tek cümleye iniyordu — kod
               // yanlış · yasaklısın (`group_banned`) · grup dolu · oturum yok ·
               // ağ. Kullanıcı hangisini düzelteceğini bilemiyordu.
-              // `groupActionErrorText` (class_detail_screen.dart) sebebi
-              // koddan okur; desen `core/l10n/nudge_error_text.dart`.
+              // `groupActionErrorText` (core/l10n/group_error_text.dart)
+              // sebebi koddan okur; desen `core/l10n/nudge_error_text.dart`.
               if (!ctx.mounted) return;
               setState(() {
                 submitting = false;

@@ -540,7 +540,7 @@ class _SubjectSelector extends StatelessWidget {
           value: const _SubjectMenuResult.pick(null),
           child: _subjectMenuRow(
             theme,
-            'Genel (ders yok)',
+            AppLocalizations.of(context).classroomGenelDersYok,
             theme.colorScheme.onSurfaceVariant,
             selectedId == null,
           ),

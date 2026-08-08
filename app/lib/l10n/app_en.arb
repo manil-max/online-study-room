@@ -806,6 +806,10 @@
   "@classroomGenel": {
     "description": "Classroom user-facing text. Source: Genel"
   },
+  "classroomGenelDersYok": "General (no subject)",
+  "@classroomGenelDersYok": {
+    "description": "Classroom user-facing text. Source: Genel (ders yok)"
+  },
   "classroomGeriSayim": "Countdown",
   "@classroomGeriSayim": {
     "description": "Classroom user-facing text. Source: Geri sayım"
@@ -3058,7 +3062,7 @@
   "@notificationsSessizSaatleriEtkinlestir": {
     "description": "Notifications user-facing text. Source: Sessiz saatleri etkinleştir"
   },
-  "notificationsSinifArkadaslarinSeniDurttugunde": "Report when your classmates nudge you",
+  "notificationsSinifArkadaslarinSeniDurttugunde": "Notify me when your classmates nudge you",
   "@notificationsSinifArkadaslarinSeniDurttugunde": {
     "description": "Notifications user-facing text. Source: Sınıf arkadaşların seni dürttüğünde bildir"
   },

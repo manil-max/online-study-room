@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/l10n/group_error_text.dart';
 import '../../../core/time_engine/group_time_zone_label.dart';
 import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
-import '../../../data/repositories/group_repository.dart';
 import 'group_avatar.dart';
 
 /// Yalnızca RPC'nin döndürdüğü güvenli açık-grup özetlerini gösterir. Davet
@@ -77,9 +77,14 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
         _hasMore = page.length == _pageSize;
         _error = null;
       });
-    } on GroupException catch (error) {
+      // 🔴 WP-551: burada `on GroupException` yaziyordu. Ag kopunca Supabase
+      // repository'den `SocketException` / `ClientException` sarilmadan cikar
+      // ve bu blok onu yakalamazdi: `_error` null kalir, `finally` yalnizca
+      // `_loading = false` yapardi ve kullanici hata yerine bos "grup
+      // bulunamadi" listesini gorurdu (yakalanmamis async hata bonus).
+    } catch (failure) {
       if (!mounted || requestVersion != _requestVersion) return;
-      setState(() => _error = error);
+      setState(() => _error = failure);
     } finally {
       if (mounted && requestVersion == _requestVersion) {
         setState(() {
@@ -107,10 +112,13 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.groupDiscoveryJoined)),
       );
-    } on GroupException {
+      // 🔴 WP-551: her sebep tek bir genel cumleye iniyordu (yasakli / grup
+      // dolu / oturum yok / ad reddedildi / ag). `groupActionErrorText` ayni
+      // ceviriciyi davet kodu akisiyla paylasir.
+    } catch (failure) {
       if (mounted) {
         messenger.showSnackBar(
-          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+          SnackBar(content: Text(groupActionErrorText(failure, l10n))),
         );
       }
     } finally {
@@ -219,7 +227,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.authBeklenmeyenBirHataOlustu),
+              Text(groupActionErrorText(_error!, l10n)),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _load,
