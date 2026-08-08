@@ -109,7 +109,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-513** (2026-08-08). WP-507…WP-513 v59 saha geri
+- **Son WP numarası:** **WP-520** (2026-08-08). WP-507…WP-513 v59 saha geri
   bildirimi dalgasıdır (kart kaydırma · Gruplar üst düzeni · tam ekran sohbet ·
   dürtme · taç kademeleri · Durdur gecikmesi · ajan altyapısı); hepsi
   commit'lendi, cihaz kabulü bekliyor. **Yürütme modeli 2026-08-08'de tek lider
@@ -8261,6 +8261,186 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - **Kapsam dışı:** Kod ve test dosyası yok; `progress.md`'nin tarihsel PLAN 5
   kayıtları **silinmedi** (tarihsel kayıttır, kural değil).
 - **Kanıt etiketi:** `Kodda doğrulandı` (doküman işi; cihaz kabulü gerekmez).
+
+---
+
+### WP-515: Bugünün özeti kartı sınırsız yükseklikte patlıyor 📐
+- **Program/Faz:** Faz F5 · Küçük (WP-508 ajanının bulduğu, bilerek dokunulmayan hata)
+- **Durum:** [x] Kod tamamlandı — cihaz kabulü bekliyor · **Commit:** `199fab8`
+- **Problem (kodda doğrulandı):** `today_summary_card.dart:107` **compact olmayan**
+  dal bir `Column` kuruyor ve `:126`'da `Expanded` kullanıyor. Dal yalnız
+  `maxWidth >= 180` **ve** yükseklik kısıtı sonsuz olduğunda seçilebiliyor
+  (`isCompact` yükseklik eşiğini yalnız `maxHeight.isFinite` iken uyguluyor,
+  `:55-57`). Sonsuz yükseklikte `Expanded` (flex > 0) → `RenderFlex` hatası;
+  içindeki `ListView.builder` de `shrinkWrap` olmadığı için ayrıca patlar.
+  Yani: geniş **ve** sınırsız bir bağlamda (Gruplar listesi gibi) kart çöker.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/home/widgets/today_summary_card.dart`
+  - `app/test/features/home/` altında bu karta ait yeni/mevcut test
+- **DOKUNMA:** `card_scaffold.dart` (WP-508'in kanonik yardımcıları
+  `cardScrollIfOverflows` / `kCardOverflowScrollPhysics` aynen kullanılacak,
+  değiştirilmeyecek) · diğer kart dosyaları.
+- **Çözüm yönü:** `bounded = constraints.maxHeight.isFinite` türet;
+  `Column.mainAxisSize` bounded'da `max`, değilse `min`; `Expanded` yalnız
+  bounded'da kurulsun; `ListView.builder` sınırsızda `shrinkWrap: true` alsın.
+  Compact dal WP-508'de zaten doğru — dokunma.
+- **Kapsam dışı:** `isCompact` eşiklerini (180 / 140) değiştirmek; kartın görsel
+  tasarımı; aynı deseni taşıyan `goal_card` / `period_summary_card` (ayrı WP).
+- **Kabul (ölçülebilir):**
+  1. Kart sınırsız yükseklikli **ve** 360 dp genişlikli bir bağlamda
+     `FlutterError` üretmeden çiziliyor (test hata toplayıcıyla ölçülür).
+  2. Sınırsızda ders dağılımı **görünmeye devam ediyor** — compact düzene
+     düşülmüyor (yani içerik kaybı yok).
+  3. Bounded ızgara hücresinde davranış birebir aynı kalıyor (mevcut testler
+     değiştirilmeden yeşil).
+- **Tuzaklar:** Sorunu "sınırsızda compact'a düş" diye kapatmak kolay ama içerik
+  kaybettirir; kabul kriteri 2 bunu yakalar.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### WP-516: Android emülatör smoke kapısı 🤖
+- **Program/Faz:** Faz F5 · Büyük (test altyapısı)
+- **Durum:** [x] Kod tamamlandı · **Commit:** `1529df1` + `81d82e4` (adb çözücü düzeltmesi)
+- 🔴 **Kabul durumu dürüst kayıt:** kapı **API 33'te gerçek emülatörde** ölçüldü
+  (`wp516_api33` AVD'si diskte, `C:\Android\Sdk` altında API 33 sistem imajı
+  kurulu — lider ayrıca doğruladı). Kasten kırık girdi denemesi yapıldı:
+  `timer_active_target_seconds` `setInt`→`setDouble` çevrilince kapı
+  `Actual: <60.0>` ile kırmızı düştü, geri alınınca yeşil. **API 30 kolonu
+  yerelde koşmadı** (o sistem imajı kurulu değil) — ilk `main` push'undaki CI
+  matrisinde görülecek.
+- **Liderin denetimi:** `git show --stat 1529df1` yalnız 4 SAHİP yolunu içeriyor,
+  sızıntı yok. `81d82e4` kapının `adb`'yi PATH dışında da bulmasını sağladı;
+  öncesinde çalışan bir SAHİP varken kapı yine ATLANDI dönüyordu.
+- **Problem (ölçüldü):** Android tarafında **hiçbir gerçek çalışma zamanı testi
+  yok.** `integration` kapısı `flutter test -d windows` ile koşuyor
+  (`ci.yml:174`), `android-unit` JVM'de sahte prefs kullanıyor,
+  `app/android/app/src/androidTest/` boş. v58'de geri sayım + pomodoro açılışta
+  çöküyordu (Dart `setInt` → prefs `putLong`, native `getInt` okuyunca
+  `ClassCastException`) ve **18 kapının hiçbiri kırmızı dönmedi.** Bu, kalan tek
+  sert kapsam boşluğudur (`docs/TEST-SISTEMI.md`).
+- **SAHİP dosyalar (yaz):**
+  - `app/integration_test/android_timer_smoke_test.dart` (yeni)
+  - `.github/workflows/ci.yml` (yeni `android-emulator` job'ı)
+  - `scripts/test_all.py` (yeni T3 kapısı + precondition)
+  - `docs/TEST-SISTEMI.md` (G5 boşluk satırı güncellenir)
+- **DOKUNMA:** `app/lib/**` (bu WP kod davranışı değiştirmez — bulunan hata ayrı
+  WP olur) · `app/android/**` kaynak · diğer workflow'lar.
+- **Adımlar:**
+  - [ ] Smoke testi: uygulamayı aç → **geri sayım** başlat/durdur → **pomodoro**
+        başlat/durdur → normal sayaç başlat/durdur. Her adımdan sonra uygulama
+        süreci **ayakta** ve sayaç ekranı çizilmiş olmalı.
+  - [ ] CI job'ı `reactivecircus/android-emulator-runner@v2`, matris **API 30 +
+        API 33** (v58 çökmesi API sürümüne duyarlıydı), `flutter-version`
+        `.flutter-version`'dan pinli (WP-505 dersi: pinsiz runner golden'ı da
+        bozmuştu).
+  - [ ] `logcat -b crash` çıktısı artefakt olarak yüklensin; `ClassCastException`
+        görülürse job **kırmızı** düşsün (sessiz geçme yok).
+  - [ ] `test_all.py`'ye T3 kapısı: yerelde emülatör/adb yoksa **ATLANDI** +
+        gerekçe (yeşil sayma).
+- **Kapsam dışı:** Gerçek cihaz farm'ı (Firebase Test Lab), UI golden'ı
+  Android'de koşturmak, mevcut Windows entegrasyon kapısını kaldırmak.
+- **Kabul (ölçülebilir):**
+  1. Job iki API sürümünde de yeşil koşuyor.
+  2. 🔴 **Kapı kasten kırık girdiyle sınanır:** `TimerPrefs`'te bir anahtar
+     bilerek `setInt`→`setDouble` gibi tip değiştirilince job **kırmızı** düşer.
+     Bu adım yapılmadan WP kapanmaz — v58'in tam hatası budur.
+  3. `test_all.py --list` kapıyı gösteriyor; emülatörsüz hostta ATLANDI diyor.
+- **Tuzaklar:** Emülatör job'ı yavaştır (~10-15 dk) → yalnız `main` push'unda ve
+  release öncesi koşsun, her PR'da değil. KVM olmadan `-no-snapshot` şart.
+- **Model önerisi:** 🔴 Opus
+
+---
+
+### WP-517: Ad karakter sınırı (istemci + sunucu + mevcut veri) 🔤
+- **Program/Faz:** Faz F5 · Orta (v59 saha maddesi 9)
+- **Durum:** [x] Kod tamamlandı — **şema uygulanmayı ve cihaz kabulünü bekliyor**
+  · **Commit:** `96755e0`
+- **Sahip kararı (kapandı):** kişi adı **24**, grup adı **30** (2026-08-08,
+  parametrik önizlemeden seçildi).
+- **Problem (kodda doğrulandı):** Dört giriş noktasının hiçbirinde `maxLength`
+  yok — `profile_screen.dart:241`, `class_detail_screen.dart:327`,
+  `class_switcher.dart:211`, `auth_screen.dart` `_nameController` — ve
+  `display_name` / `study_groups.name` için DB'de `char_length` kısıtı yok. Tek
+  istisna `0032_public_group_discovery.sql:96` (64): yani 64+ karakterli adla
+  grup **oluşturulabiliyor** ama keşif listesinde **sessizce görünmüyor**.
+- **SAHİP dosyalar (yaz):** dört giriş ekranı · `supabase/migrations/0122_*.sql`
+  (yeni) · `supabase/tests/` pgTAP · ilgili widget testleri ·
+  `tooling/release/deploy-contract.json` + `001_schema_contract` (head pini)
+- **Adımlar:**
+  - [ ] **Önce sayı seçimi:** sahibe parametrik önizleme (ad uzunluğu vs. üye
+        satırı / kamp ateşi etiketi / grup başlığı). Öneri 24 (kişi) / 30 (grup).
+        Sahip seçer, seçilen sayı teste sabit değer olarak girer.
+  - [ ] İstemci `maxLength` + sayaç göstergesi, dört noktada.
+  - [ ] 🔴 **Migration sırası şart:** önce mevcut veriyi ölç ve kırp, **sonra**
+        CHECK ekle. Ters sıra production'da patlar ve burada yerel replay
+        **yok** (Docker bu hostta kalkmıyor).
+  - [ ] Keşif 64 tutarsızlığı kapansın: yeni sınır her yerde aynı olsun.
+  - [ ] pgTAP: sınır üstü ad reddediliyor; sınırdaki ad kabul ediliyor;
+        kırpılmış eski satır keşifte **görünüyor**.
+- **Kapsam dışı:** Ad içerik denetimi (küfür/benzersizlik), emoji politikası,
+  görünen ad değiştirme sıklığı limiti.
+- **Kabul (ölçülebilir):**
+  1. Dört giriş noktasında da sınırın üstünde karakter **yazılamıyor**.
+  2. Sunucu sınır üstü adı reddediyor (pgTAP kanıtı).
+  3. Staging'de sınır üstü **mevcut** satır kalmadı; migration hatasız uygulandı.
+  4. Keşifte "oluşturulabiliyor ama görünmüyor" durumu üretilemiyor.
+- **Tuzaklar:** CHECK'i veri temizliğinden önce yazmak; head pinini üç yerden
+  yalnız ikisinde ilerletmek (`deploy-contract.json` **ve** `001_schema_contract`
+  içinde hem sayı hem head).
+- **Model önerisi:** 🔴 Opus
+
+---
+
+### WP-518: Yayın notları kapısı — v59 boş notla çıkmıştı 📝
+- **Program/Faz:** Faz F5 · Küçük (yayın altyapısı) · **Commit:** `8ac0410`
+- **Durum:** [x] Tamamlandı
+- 🔴 **Ölçülen olay:** v59 etiketi 2026-08-07'de atıldı, GitHub Release oluştu,
+  `app-release.apk` **5 kez indirildi** — ama ne `CHANGELOG.md`'de ne
+  `app/assets/release_notes.json`'da kaydı vardı. Kullanıcı uygulama içindeki
+  "Güncelleme notları" ekranını v59 için **boş** gördü.
+- **Kök neden:** `.agents/AGENTS.md §4.1` bu iki kaydı zorunlu tutuyordu ama
+  **zorlayan hiçbir kapı yoktu.** `release-notes-contract.ps1` yalnız jargon
+  denetliyor ve **hiçbir workflow onu çağırmıyordu** (öksüz kapı — v55'teki
+  "adı kritik akışlar olan test hiçbir kapıda koşmuyordu" ile aynı sınıf).
+- **Ne yapıldı:** `Assert-ReleaseNotesEntry` (DeployGuard) + `release-preflight`
+  çağrısı + 6 senaryo testi + öksüz jargon sözleşmesi artık turda koşuyor.
+  CHANGELOG'a v60 ve **geriye dönük v59** girdisi, `release_notes.json`'a
+  stable 59 + 60 kayıtları (TR+EN), `pubspec` 1.0.60+60.
+- **Kanıt etiketi:** `Kodda doğrulandı` — kapı iki kırık girdiyle sınandı.
+
+---
+
+### WP-519: Native yazım Dart'ın yalnız-Dart anahtarlarını düşürüyor ⚠️
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [ ] Bekliyor · **Commit:** —
+- **Kaynak:** WP-516 emülatör turunda ölçüldü (alt ajan bulgusu, bilerek
+  düzeltilmedi — sayaç kritik alan, ayrı WP ister).
+- **Bulgu:** Sayaç başlatıldıktan ~3 sn sonra cihaz deposunda `started_at_ms`
+  ve `cycle` **vardı**, yalnız-Dart olan `timer_active_accumulated_seconds`
+  **yoktu**.
+- **Muhtemel kök neden:** `TimerStateStore.writeRunning(...).commit()`
+  (`TimerStateStore.kt:141-160`) tüm haritayı tek seferde yazıyor ve Dart'ın az
+  önce yazdığı yalnız-Dart anahtarlarını (`accumulated_seconds`, `command_seq`,
+  `updated_at`, mirror anahtarları) düşürebiliyor.
+- **Etkisi (doğrulanmalı):** soğuk geri yüklemede birikmiş sürenin **0'a
+  dönmesi**. Sahip bunu bildirmedi; belirti üretilebilir mi, ilk iş bu.
+- **SAHİP yollar (öneri):** `app/android/.../TimerStateStore.kt` + iki uçlu
+  sözleşme testi. **DOKUNMA:** `study_providers.dart` `stop()` await sırası
+  (WP-507 kartındaki gerekçe geçerli).
+- **Tuzak:** "eksik anahtarı Dart'tan tekrar yaz" yaması kök nedeni gizler;
+  yazımın hangi anahtarları koruduğu sabitlenmeli.
+
+---
+
+### WP-520: Bildirim izni ikinci basışta yakalanmamış hata 🔔
+- **Program/Faz:** Faz F5 · Küçük · **Durum:** [ ] Bekliyor · **Commit:** —
+- **Kaynak:** WP-516 emülatör turu (API 33).
+- **Bulgu:** `TimerNotificationService.requestPermissionIfNeeded`
+  (`timer_notification_service.dart:157-165`) `PlatformException`'ı yakalamıyor.
+  İzin diyaloğu açıkken ikinci `Başlat`, `permissionRequestInProgress` ile
+  yakalanmamış hata üretiyor. Kullanıcı hızlı iki kez basarsa sahada da olur.
+- **Kabul:** diyalog açıkken ikinci başlatma hata fırlatmıyor; sayaç ya
+  başlıyor ya sessizce bekliyor. Test: iki hızlı başlatma.
 
 ---
 
