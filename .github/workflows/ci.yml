@@ -302,11 +302,21 @@ jobs:
           # kodu elle taşınır. Aksi hâlde test düştüğünde crash tamponu hiç
           # okunmaz ve asıl kanıt kaybolur.
           script: |
-            set -uo pipefail
+            # 🔴 Bu blok `sh -c` ile kosar (action boyle cagiriyor), bash ile DEGIL.
+            # `set -o pipefail` bir bashism'dir ve dash'te "Illegal option" ile
+            # ANINDA duser: v60 turunda iki matris kolonu da (API 30 + 33) ilk
+            # satirda oldu, yani smoke CI'da HIC kosmadi -- kapi vardi, hicbir sey
+            # olcmuyordu. `set -u` POSIX'tir. pipefail'in korudugu tek yer cihaz
+            # kesfiydi; o artik acik bir bos kontrolle korunuyor.
+            set -u
             LOG_DIR="$GITHUB_WORKSPACE/emulator-logs"
             mkdir -p "$LOG_DIR"
             CRASH_LOG="$LOG_DIR/crash-api${{ matrix.api-level }}.log"
             DEVICE="$(adb devices | awk '/\tdevice$/ {print $1; exit}')"
+            if [ -z "$DEVICE" ]; then
+              echo "::error::adb hicbir hazir cihaz bildirmedi; emulator boot etmemis."
+              exit 1
+            fi
             echo "Cihaz: $DEVICE"
             adb logcat -c
             status=0
