@@ -177,7 +177,13 @@ jobs:
       # Bu adim AAB derlemesinin HEMEN ardindan kosar, yani birlestirilmis
       # manifest tazedir; `--require-merged` bayragi cikti katmanini ZORUNLU
       # kilar (yoksa/bayatsa kirmizi duser, sessizce yesil saymaz).
-      - name: Play manifest izin sozlesmesi (birlestirilmis cikti)
+      # WP-567: bu adim artik KARA LISTE degil BEYAZ LISTE olcer. Gonderilen
+      # AAB'deki her uses-permission / uses-feature / foregroundServiceType,
+      # scripts/test_all.py icindeki PLAY_ALLOWED_* kumelerinde tek satir
+      # gerekcesiyle yazili olmak zorunda. Kara liste yalniz ADI KONMUS izinleri
+      # goruyordu; bir eklenti guncellemesinin getirdigi BEKLENMEDIK izin sessizce
+      # gecerdi ve ancak Play inceleme reddinde ogrenilirdi.
+      - name: Play manifest izin sozlesmesi (birlestirilmis cikti + beyaz liste)
         if: needs.preflight.outputs.channel == 'stable'
         run: python3 ../scripts/test_all.py --internal-play-manifest --require-merged
       - name: Play AAB artefaktini paketle

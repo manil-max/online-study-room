@@ -439,6 +439,75 @@ def internal_flutter_pin() -> int:
     return 0
 
 
+# ── WP-567: Play izin sozlesmesi — BEYAZ LISTE ─────────────────────────────
+#
+# Kara liste (asagidaki `banned`) yalniz ADI KONMUS izinleri arar. Bir eklenti
+# guncellemesi BEKLENMEDIK bir izin getirirse kapi sessizce yesil kalir ve
+# bunu ancak Play inceleme reddinde ogreniriz -- v61'de tam olarak bu oldu.
+# Bu yuzden birlestirilmis `playRelease` manifestindeki HER `uses-permission`
+# burada yazili olmak zorundadir; yazili olmayan kapiyi kirmizi dusurur.
+#
+# Deger = tek satir gerekce: izin nereden geliyor, hangi ozellik kullaniyor,
+# Play'de hangi beyana denk dusuyor. Gerekcesi bulunamayan izin buraya
+# EKLENMEZ; once gerekce bulunur ya da izin `src/play` manifestinde
+# `tools:node="remove"` ile dusurulur.
+#
+# Kaynak sutunu olculdu (v62, `:app:processPlayReleaseManifest` +
+# `manifest-merger-blame-play-release-report.txt`), tahmin degil.
+PLAY_ALLOWED_PERMISSIONS: dict[str, str] = {
+    "android.permission.INTERNET":
+        "src/main:3 — Supabase/FCM/guncelleme ag cagrilari; normal izin, Play beyani yok.",
+    "android.permission.POST_NOTIFICATIONS":
+        "src/main:5 — kalici sayac bildirimi + alarm + duyuru; Android 13+ calisma zamani izni, Play beyani yok.",
+    "android.permission.FOREGROUND_SERVICE":
+        "src/main:8 — StudyTimerService'in on kosulu; tur beyani FOREGROUND_SERVICE_* izinleriyle yapilir.",
+    "android.permission.FOREGROUND_SERVICE_DATA_SYNC":
+        "src/main:9 — StudyTimerService API 29-33 yolu (dataSync); Play 'On plan hizmeti' beyani + video kanit.",
+    "android.permission.FOREGROUND_SERVICE_SPECIAL_USE":
+        "src/main:13 — ayni servisin API 34+ yolu (8 saatlik sayac); Play beyani ayrica PROPERTY_SPECIAL_USE_FGS_SUBTYPE metnini ister.",
+    "android.permission.WAKE_LOCK":
+        "src/main:14 — sayac servisi ve calan alarm sirasinda CPU uyanik kalir; normal izin, Play beyani yok.",
+    "android.permission.RECEIVE_BOOT_COMPLETED":
+        "src/main:15 — TimerBootReceiver + alarm.AlarmReceiver yeniden kurulumu; normal izin, Play beyani yok.",
+    "android.permission.SCHEDULE_EXACT_ALARM":
+        "src/main:17 — Saat/alarm; kullanicidan istenir (ExactAlarmHelper.kt) ve Play 'Tam alarmlar' beyani yalniz USE_EXACT_ALARM'da tetiklenir.",
+    "android.permission.VIBRATE":
+        "src/main:19 — alarm calisi ve bildirim titresimi; normal izin, Play beyani yok.",
+    "android.permission.USE_FULL_SCREEN_INTENT":
+        "src/main:20 — AlarmRingActivity kilit ekraninda calar (ExactAlarmHelper.kt:157,213); Play 'Tam ekran amaci' beyani: alarm gerekcesi.",
+    "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS":
+        "src/main:22 — OEM'in sayac servisini oldurmesine karsi muafiyet ekrani (ExactAlarmHelper.kt:151,174); Play hassas kullanim gerekcesi ister.",
+    "android.permission.ACCESS_NETWORK_STATE":
+        "`firebase_messaging` eklenti sizintisi — FCM baglanti durumu; normal izin, Play beyani yok.",
+    "android.permission.USE_BIOMETRIC":
+        "`passkeys_android` sizintisi (supabase_flutter -> passkeys transitif); normal izin, calisma zamani diyalogu ve Play beyani yok.",
+    "android.permission.USE_CREDENTIALS":
+        "`passkeys_android` sizintisi; API 23'te kaldirilmis eski hesap izni, sistemde etkisiz, Play beyani yok.",
+    "android.permission.CREDENTIAL_MANAGER_SET_ORIGIN":
+        "`passkeys_android` sizintisi; yalniz ayricalikli uygulamalara verilir, normal uygulamada etkisiz, Play beyani yok.",
+    "com.google.android.c2dm.permission.RECEIVE":
+        "`com.google.firebase:firebase-messaging:25.1.0` — FCM mesaj alimi; imza korumali, Play beyani yok.",
+    "com.manilmax.online_study_room.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION":
+        "`androidx.core:core:1.18.0` `<applicationId>.` onekiyle uretir; ContextCompat.registerReceiver icin signature korumali, Play beyani yok.",
+}
+
+# Olculdu: birlestirilmis playRelease manifestinde HIC `uses-feature` yok. Bos
+# kume bilinclidir -- her `uses-feature` Play'de cihaz filtrelemesi kurar
+# (uymayan cihaz magazada uygulamayi hic gormez), yani sessizce gelmesi kabul
+# edilemez.
+PLAY_ALLOWED_FEATURES: dict[str, str] = {}
+
+# Play, on plan hizmetini TUR BASINA beyan ettirir ve her tur icin ayri
+# gerekce + video kanit ister. Ikinci bir turun sessizce gelmesi, gonderimi
+# beyansiz birakir.
+PLAY_ALLOWED_FGS_TYPES: dict[str, str] = {
+    "dataSync":
+        "StudyTimerService API 29-33 yolu (src/main/AndroidManifest.xml:95); Play FGS beyani + video kanit.",
+    "specialUse":
+        "Ayni servisin API 34+ yolu; beyan ayrica PROPERTY_SPECIAL_USE_FGS_SUBTYPE metnini ister (src/main/AndroidManifest.xml:97-99).",
+}
+
+
 def internal_play_manifest(require_merged: bool = False) -> int:
     r"""WP-537: Play surumu, Play'de HIC CALISMAYAN bir ozellik icin genis
     medya izinleri istiyordu.
@@ -461,18 +530,28 @@ def internal_play_manifest(require_merged: bool = False) -> int:
     bu hata surum yayinlamayi bloke etti. `SCHEDULE_EXACT_ALARM` kalir ve
     kullanicidan istenir.
 
+    WP-567: kara liste TEK BASINA yetmez. `banned` yalniz adi konmus izinleri
+    arar; bir eklenti guncellemesi beklenmedik bir izin getirdiginde kapi
+    sessizce yesil kalir. Bu yuzden cikti katmani artik BEYAZ LISTE olcer:
+    birlestirilmis manifestteki her `uses-permission` / `uses-feature` /
+    `foregroundServiceType` beklenen kumede (yukaridaki PLAY_ALLOWED_*)
+    olmak zorundadir. Kara liste KALDI -- adi konmus yasak bir niyet
+    belgesidir ve daha iyi hata mesaji verir.
+
     Kapi iki katmanli olcer:
       1. Kaynak: `src/play/AndroidManifest.xml` her birini `tools:node=remove`
          ile dusuruyor mu? (Her zaman olculur.)
       2. Cikti: birlestirilmis playRelease manifesti diskteyse, izinlerin
-         gercekten dusdugu dogrulanir. (Gradle kosmadiysa ATLANIR -- ve bu
-         durum ciktida acikca yazilir, sessizce yesil sayilmaz.)
+         gercekten dusdugu VE beyaz liste disina cikilmadigi dogrulanir.
+         (Gradle kosmadiysa ATLANIR -- ve bu durum ciktida acikca yazilir,
+         sessizce yesil sayilmaz.)
     """
     import re
 
     android = APP / "android" / "app"
     play_manifest = android / "src" / "play" / "AndroidManifest.xml"
     problems: list[str] = []
+    seen_permissions: set[str] = set()
 
     banned = [
         # WP-544: Play "Tam alarmlar" beyani yalnizca calar saat / takvim
@@ -567,8 +646,9 @@ def internal_play_manifest(require_merged: bool = False) -> int:
             else "diskte yok"
         )
         message = (
-            f"birlestirilmis playRelease manifesti {reason}, cikti katmani "
-            "olculmedi (gradle :app:processPlayReleaseManifest)."
+            f"birlestirilmis playRelease manifesti {reason}, cikti katmani ve "
+            "izin BEYAZ LISTESI olculmedi "
+            "(gradle :app:processPlayReleaseManifest)."
         )
         if require_merged:
             problems.append(
@@ -591,6 +671,42 @@ def internal_play_manifest(require_merged: bool = False) -> int:
                     f"{path.name} ({path.parent.name}) birlestirilmis manifesti "
                     'android:allowBackup="false" tasimiyor'
                 )
+            # WP-567 beyaz liste. Yorumlar atilir: yorum icindeki izin adi ne
+            # kapiyi yaniltir ne de beyaz liste kaydi ister.
+            scan = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+            where = f"{path.name} ({path.parent.name})"
+            names = set(re.findall(
+                r'<uses-permission[^>]*android:name\s*=\s*"([^"]+)"', scan
+            ))
+            seen_permissions.update(names)
+            for name in sorted(names):
+                if name not in PLAY_ALLOWED_PERMISSIONS:
+                    problems.append(
+                        f"{where} BEYAZ LISTE DISI izin tasiyor: {name} "
+                        "-- PLAY_ALLOWED_PERMISSIONS'ta yok. Ya tek satir "
+                        "gerekcesiyle ekle ya da src/play manifestinde "
+                        'tools:node="remove" ile dusur.'
+                    )
+            for name in sorted(set(re.findall(
+                r'<uses-feature[^>]*android:name\s*=\s*"([^"]+)"', scan
+            ))):
+                if name not in PLAY_ALLOWED_FEATURES:
+                    problems.append(
+                        f"{where} BEYAZ LISTE DISI uses-feature tasiyor: "
+                        f"{name} -- PLAY_ALLOWED_FEATURES'ta yok; Play'de "
+                        "cihaz filtrelemesi kurar."
+                    )
+            for raw in sorted(set(re.findall(
+                r'android:foregroundServiceType\s*=\s*"([^"]+)"', scan
+            ))):
+                for token in sorted({t.strip() for t in raw.split("|")}):
+                    if token and token not in PLAY_ALLOWED_FGS_TYPES:
+                        problems.append(
+                            f"{where} BEYAZ LISTE DISI foregroundServiceType "
+                            f"tasiyor: {token} (tam deger: {raw}) -- "
+                            "PLAY_ALLOWED_FGS_TYPES'ta yok; Play her FGS turu "
+                            "icin ayri beyan + video kanit ister."
+                        )
 
     if problems:
         print(f"FAIL ({len(problems)}):")
@@ -598,8 +714,16 @@ def internal_play_manifest(require_merged: bool = False) -> int:
             print(f"    - {problem}")
         return 1
 
-    measured = "kaynak + birlestirilmis cikti" if merged else "yalniz kaynak"
-    print(f"Play manifest izin sozlesmesi tamam ({measured}).")
+    if merged:
+        print(
+            "Play manifest izin sozlesmesi tamam (kaynak + birlestirilmis "
+            f"cikti; {len(seen_permissions)} izin beyaz listeden gecti)."
+        )
+    else:
+        print(
+            "Play manifest izin sozlesmesi tamam (yalniz kaynak; beyaz liste "
+            "OLCULMEDI)."
+        )
     return 0
 
 
