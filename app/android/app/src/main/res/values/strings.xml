@@ -2,7 +2,13 @@
 <!-- Default locale = English (WP-88). Turkish in values-tr. Brand "Odak Kampı" stays untranslated. -->
 <resources>
     <!-- Brand (do not translate product name) -->
-    <string name="brand_name">Odak Kampı</string>
+    <string name="brand_name">Focus Camp</string>
+    <!-- WP-529: uygulama adi (launcher etiketi). Dile gore cozulur; magaza
+         listesiyle ayni olmali. Ingilizce kullanici "Focus Camp" indirip
+         telefonunda "Odak Kampi" gormemeli. -->
+    <string name="app_name_stable">Focus Camp</string>
+    <string name="app_name_beta">Focus Camp BETA</string>
+    <string name="app_name_local">Focus Camp LOCAL</string>
     <string name="alarm_default_label">Alarm</string>
     <string name="timer_default_label">Timer</string>
     <string name="preview_label">Preview</string>

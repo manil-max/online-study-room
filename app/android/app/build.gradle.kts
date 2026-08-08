@@ -144,7 +144,10 @@ android {
         create("stable") {
             dimension = "channel"
             // Dart tarafı: --dart-define=DISTRIBUTION_CHANNEL=githubStable (CI release.yml)
-            manifestPlaceholders["appName"] = "Odak Kampı"
+            // WP-529: ad artik SABIT DEGIL, dile gore cozulen bir kaynak.
+            // Telefonu Ingilizce olan kullanici magazada "Focus Camp" gorup
+            // indiriyordu ama uygulama adi "Odak Kampi" kaliyordu.
+            manifestPlaceholders["appName"] = "@string/app_name_stable"
             manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom"
         }
         create("beta") {
@@ -153,7 +156,7 @@ android {
             // Kanalın semver ön-sürüm kimliği release manifestinden gelir
             // (örn. 1.0.42-beta.1); ikinci bir "-beta" suffix eklenmez.
             // Dart: --dart-define=DISTRIBUTION_CHANNEL=githubBeta
-            manifestPlaceholders["appName"] = "Odak Kampı BETA TEST"
+            manifestPlaceholders["appName"] = "@string/app_name_beta"
             manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom.beta"
         }
         create("play") {
@@ -162,7 +165,7 @@ android {
             // WP-128: Flutter derlemesi FLUTTER_APP_FLAVOR=play enjekte eder; Dart
             // DistributionConfig flavor==play iken define unutulsa bile sideload updater kapalı.
             // --dart-define=DISTRIBUTION_CHANNEL=play hâlâ önerilir (açık niyet / CI).
-            manifestPlaceholders["appName"] = "Odak Kampı"
+            manifestPlaceholders["appName"] = "@string/app_name_stable"
             manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom"
             manifestPlaceholders["distributionChannel"] = "play"
         }
@@ -170,7 +173,7 @@ android {
             dimension = "channel"
             applicationIdSuffix = ".local"
             versionNameSuffix = "-local"
-            manifestPlaceholders["appName"] = "Odak Kampı LOCAL"
+            manifestPlaceholders["appName"] = "@string/app_name_local"
             manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom.local"
         }
 

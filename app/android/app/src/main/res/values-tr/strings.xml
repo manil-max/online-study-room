@@ -2,6 +2,9 @@
 <!-- Turkish locale (WP-88). Default values/ is English. -->
 <resources>
     <string name="brand_name">Odak Kampı</string>
+    <string name="app_name_stable">Odak Kampı</string>
+    <string name="app_name_beta">Odak Kampı BETA TEST</string>
+    <string name="app_name_local">Odak Kampı LOCAL</string>
     <string name="alarm_default_label">Alarm</string>
     <string name="timer_default_label">Zamanlayıcı</string>
     <string name="preview_label">Önizleme</string>

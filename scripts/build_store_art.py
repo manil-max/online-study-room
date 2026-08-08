@@ -50,7 +50,7 @@ def store_icon() -> Path:
     return path
 
 
-def feature_graphic() -> Path:
+def feature_graphic(title_text: str, subtitle_text: str, name: str) -> Path:
     """1024x500. Play bunu kirpabilir ve ustune metin bindirebilir; bu yuzden
     yazi sol yarida ve kenarlardan uzak durur.
 
@@ -98,8 +98,6 @@ def feature_graphic() -> Path:
     title = ImageFont.truetype(str(FONT), 72)
     subtitle = ImageFont.truetype(str(FONT), 30)
 
-    title_text = "Odak Kampı"
-    subtitle_text = "Arkadaşlarınla birlikte çalış"
     draw.text((72, 190), title_text, font=title, fill=(255, 252, 245, 255))
     draw.text((74, 288), subtitle_text, font=subtitle, fill=EMBER)
 
@@ -113,13 +111,30 @@ def feature_graphic() -> Path:
             f"Yazi gorsele giriyor: metin {right_edge}px, gorsel {art_x}px"
         )
 
-    path = OUT / "play-feature-graphic-1024x500.png"
+    path = OUT / name
     canvas.convert("RGB").save(path, "PNG")
     print(f"  metin sag kenari {right_edge}px, gorsel {art_x}px'de basliyor")
     return path
 
 
-for produced in (store_icon(), feature_graphic()):
+# TR ve EN listeleri AYRI gorsel ister: EN kullaniciya Turkce yazili bir
+# grafik gostermek, iki dilli listenin butun amacini bozar. Ikon dil bagimsiz
+# (uzerinde yazi yok), o yuzden tek dosya yeter.
+produced_files = (
+    store_icon(),
+    feature_graphic(
+        "Odak Kampı",
+        "Arkadaşlarınla birlikte çalış",
+        "play-feature-graphic-1024x500.png",
+    ),
+    feature_graphic(
+        "Focus Camp",
+        "Study together with friends",
+        "play-feature-graphic-en-1024x500.png",
+    ),
+)
+
+for produced in produced_files:
     with Image.open(produced) as check:
         print(f"{produced.name}: {check.size} {check.mode} "
               f"{produced.stat().st_size // 1024} KB")
