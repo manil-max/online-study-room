@@ -9103,14 +9103,29 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 ---
 
 ### WP-557: Alarm — tekrar kurulmama + hayalet alarm
-- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Devam ediyor
-- WP-556 bulgu 1 ve 2 + olu `consumePendingRing`. Iki uclu test isteniyor
-  (Dart + saf JVM Kotlin).
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`d1e566d`)
+- WP-556 bulgu 1 ve 2 + olu `consumePendingRing`. Tekrarlayan alarm artik her
+  occurrence'ta yeniden kuruluyor; hayalet alarm kapandi.
 
 ---
 
 ### WP-558: Widget israfi, boot tazelemesi, olu native yollar
-- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Devam ediyor
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam
+  (`29b37d7` + lider devami `84a8671`)
+- **Olculen kazanc:** bir istatistik guncelleme turu **37 platform cagrisi** ->
+  **0**; sayac widget'i 18 -> 1; baslangic doldurma 21 -> 1. Yayindaki tek
+  widget o veriyi zaten okumuyordu (kendi kaynagindan okuyor), yani 17 yazma
+  bastan bosunaydi.
+- Ulasilamaz "mola" yolunda uykuda bir tuzak vardi; ajan tuzagi yamamak yerine
+  **olu yolu kokten sildi** — dogrusu buydu.
+- 🔴 Ders: bir test olu kodun **silinmesini engelliyordu** (varligini sart
+  kosuyordu); iddia tersine cevrildi. Yedi sabotajin yedisi kirmizi.
+- Lidere devredilen tek kalem `WidgetRefreshReceiver` idi: sinifi tek basina
+  silmek `MissingClass` lint'ini (severity Error) tetikleyip release derlemesini
+  kiriyor; sinif + manifest kaydi **birlikte** silinmeliydi ve manifest o sirada
+  WP-559'un yoluydu. `84a8671` ile kapandi
+  (`processPlayReleaseManifest` BUILD SUCCESSFUL, birlestirilmis manifestte 0
+  gecis).
 - WP-556 bulgu 9/10/12/13 + kanal adi (bulgu 8). Kapatilmis widget'lara giden
   yayinin tek allowlist ile kapilanmasi, `updatePeriodMillis="0"`, boot'ta
   `TimerWidgets.updateAll`, olu `WidgetRefreshReceiver`/`ACTION_START_BREAK`/
@@ -9121,12 +9136,122 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 ---
 
 ### WP-559: Native yuzeyler uygulama dilini kullansin
-- **Program/Faz:** Faz F5 · Orta · **Durum:** [~] Devam ediyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`43d6615`)
 - WP-556 bulgu 3. `res/xml/locales_config.xml` + manifest `localeConfig` + dil
   degisiminde native'e iletme. WP-526 bu isi yalniz Dart tarafinda yapmisti;
   bildirim/widget/alarm ekrani hala cihaz dilinde.
 
 ---
+
+---
+
+### WP-560: Cikmaz sokak hata ekranlari
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`5a534fd`)
+- WP-550'nin lidere devrettigi dort yer: `card_data_gate.dart` (13 kartin ortak
+  kapisi), `alarms_screen:56/108`, `timers_screen:66-67/92`, `class_chat_card:99`.
+  Hepsinde olculen sey ayni: kullanici hatayi goruyor ama yapabilecegi bir sey
+  yok — ya da hatayi hic gormuyor (`alarms:56` `SizedBox.shrink()` idi: izin
+  probu patlayinca "kesin alarm izni kapali" uyarisi sessizce kayboluyordu).
+- 🔴 **Kok bulgu, kozmetik degil:** sohbetin hata dali HIC CALISMIYORDU.
+  Riverpod 3'te hic deger vermemis bir `StreamProvider` hata aldiginda durum
+  `AsyncError` degil, hatayi tasiyan `AsyncLoading` olur; `AsyncValue.when`
+  varsayilan `skipError: false` ile once `isLoading`e baktigi icin `error:` kolu
+  bu senaryoda hic calismaz. Kullanicidaki karsiligi: ag hatasinda "Sohbet
+  yuklenemedi." yerine **sonsuz spinner** — WP-538 fail-closed sozlesmesiyle
+  birlesince sohbet kalici kilit. Cozum `.when` yerine `hasError && !hasValue`.
+- 12 test, bes sabotajin besi kirmizi. Tekrar-dene sozle degil sahte depodaki
+  cagri sayaciyla olculur (1 -> 2).
+
+---
+
+### WP-561: Istatistik dogrulugu (gece yarisi + dogu saat dilimleri)
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`8e1facf`)
+- Sekiz ayri sayi hatasi, hepsi once/sonra sayisiyla olculdu:
+  23:00'da baslayan kosu 01:30'da "Bugun 2 sa 30 dk" gosterip Durdur'da **0**'a
+  dusuyordu (artik 1 sa 30 dk); `startOfMonth(31 Agu 21:30Z)` 1 Agustos diyordu
+  (artik 1 Eylul, "Ay" donemi 32 gun degil); 90 gunde 300 sa calisanda "Tumu"
+  ortalamasi **37 sn/gun** cikiyordu (artik 3 sa 20 dk, ufka takilan kartlar
+  basligta "· 90 gun" der); Sali 12:00'da bu hafta 7200 vs gecen hafta 25200
+  ("hep kotuye gidiyorsun") artik 7200 vs 7200; `{gun:3600, gun+1:0, gun+2:3600}`
+  serisi 3 diyordu, artik 1.
+- UTC+4 ve dogusundaki cihazlarda `dayOf(dayOf(x))` anahtari bir gun geri
+  kaydiriyordu; donusum artik **idempotent**. Bu tek duzeltme
+  `class_stats_view`, `canonical_stats_projection`, `study_heatmap` ve
+  `task_deadline` icindeki cift-cevrimleri de kendiliginden kapatti.
+- 🔴 Uc yalanci yesil de bu turda soktu: gece yarisi testi `liveWorkSeconds: 0`
+  vererek bozulan tek terimi test disinda birakiyordu; iki donem testi
+  `expect(from, startOfYear(now))` yani "uygulama = uygulama" idi.
+- **Acik kalan (ayri WP):** gece yarisini asan oturum hala butunuyle
+  `dayOf(start)` gunune yaziliyor. Kirpma hatayi 2:35->0'dan 1:30->0'a
+  kucultur; dogru cozum oturumu gece yarisinda ikiye bolmek.
+
+---
+
+### WP-562: Ortak `ErrorRetryView` `core/widgets/`e tasindi
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`abada52`)
+- WP-560 sinifi dogdugu yerde birakmisti; sonucu uc ozellik paketinin
+  (classroom + clock x2) ORTAK bir hata widget'i icin `home` paketinin bir pano
+  karti dosyasini import etmesiydi. Uclu de o dosyadan yalniz `ErrorRetryView`i
+  aliyordu. Davranis degismedi (tek satir mantik dokunulmadi), yalniz yer.
+
+---
+
+### WP-563: Dart tarafindaki olu sayac-bildirimi yolu silindi
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`a99e316`)
+- `showRunning(...)` uretimde hicbir yerden cagrilmiyordu: `app/lib` icinde
+  yalniz arayuz bildirimi ve gerceklemesi vardi; tek gercek cagri yeri olmasi
+  gereken `_syncTimerNotification()` sadece `cancel()` cagiriyor. Kullanicinin
+  gordugu bildirimi Kotlin uretiyor (`StudyTimerService.kt:358-411`).
+  `expandedBody` `showRunning`in icinde bile cagrilmiyordu — iki kat olu.
+- 🔴 **Bedeli:** `timer_notification_service_test.dart`'in **uc testinin ucu de**
+  yalniz bu olu kodun metin bicimini olcuyordu. Yesil ama hicbir sey
+  kanitlamiyordu; yayindaki metin Kotlin'den geliyor. Dosya komple silindi
+  (canli izin yuzeyi zaten `timer_notification_permission_wp520_test.dart`ta).
+- Yerine iki uclu regresyon kapisi kondu (`timer_notification_surface_wp563_test.dart`):
+  derleme zamani (arayuzu tam kapsayan sahte) + kaynak taramasi. Iki sabotaj
+  birbirinden bagimsiz kirmizi verdi.
+
+---
+
+### WP-564: Release preflight kapisi hem yanlis kirmiziydi hem de olcmedigini olcuyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`ca2c884`)
+- Tam kapiyi temiz bir worktree'de kosturunca tek kirmizi buydu: "Release
+  contract rejects migration head 0124 for stable." **Kod dogruydu, kapi
+  yanlisti** — stable kolunda head simetrisi yoktu. Beta kolu dogru kurulmustu
+  (yerel head staging'e esitse pozitif, degilse fail-closed); stable kolu
+  pozitifi KOSULSUZ kosuyordu, yani yerel head production'in onune gectigi anda
+  (migration yazildi, henuz uygulanmadi — mesru durum) kapi kirmiziya dusuyordu.
+- 🔴 **Altindaki asil hata:** head/kontrat kontrolu Play AAB kontrolunden ONCE
+  kosuyor. Yani WP-527'nin "AAB adimi silinmis workflow kirmizi dusmeli"
+  negatiflerinin hepsi AAB yuzunden degil head uyusmazligi yuzunden kirmizi
+  oluyordu — `release.yml`den Play yolunu **tamamen** silsen bile testler yesil
+  kalirdi. Kapi vardi, olctugu sey yoktu.
+- Cozum: `-DeployContractPath` enjeksiyonu (yalniz test; bos birakilinca kontrat
+  her zaman repodaki dosyadan okunur) + her negatifte hata MESAJININ dogrulanmasi
+  ("kirmizi dustu" yetmez, DOGRU SEBEPLE dusmeli) + enjeksiyonun arka kapiya
+  donusmedigi iddiasi (hicbir workflow bu bayragi gecemez).
+- Dort sabotajin dordu kirmizi; bunlardan biri eski testte YESIL kalirdi ve
+  hatanin kanitidir.
+
+---
+
+### WP-565: Gece yarisi flake'i + koruyucunun kendisi test edilmiyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`d53ac29`)
+- Kod degismeden kirmizi/yesil olculdu: 2026-08-09 saat 00:5x'te
+  `today_summary_unbounded_wp515` 4 test + `ux_quick_wins_wp555` 1 test kirmizi,
+  01:04'te ayni agac 5/5 yesil. Iki bagimsiz olcum (WP-561 lane'i tam suite'te,
+  lider ayri worktree'de). Sebep kosum saati: oturum `DateTime.now() - 1 saat`
+  ile kuruluyor, gun siniri `Europe/Istanbul`; 00:00-01:00 arasinda oturum
+  **dune** duser.
+- Bu yeni bir hata degil — v49 surum kosumunu (00:00 Istanbul) tam bu sinif
+  kirmisti ve `test/support/istanbul_fixture.dart` bunun icin yazilmisti. Iki
+  dosya da yardimciyi **kullanmiyordu**.
+- 🔴 **Asil bulgu:** yardimci artik dort test dosyasini koruyor ve **tek bir
+  testi yoktu**. `istanbul_fixture_wp565_test.dart` (5 test) bunu kapatir ve
+  enjekte `now` kullanir — yani gece yarisi penceresini beklemeden olcer.
+  Kirpma satiri kaldirilinca 5 testin 3'u kirmizi.
+- **Kalan:** ayni desen `app/test` icinde 21 dosyada daha var; hepsi tuzakli
+  degil, yalniz iddiasi "bugun"e dayananlar. Tarama ayri WP.
 
 ## Bekleyen Uygulanabilir WP'ler
 
