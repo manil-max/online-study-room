@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/validation/name_limits.dart';
 import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/anchored_menu.dart';
@@ -212,6 +213,9 @@ Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
                   controller: controller,
                   autofocus: true,
                   textCapitalization: TextCapitalization.words,
+                  // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+                  // `_promptText` (davet kodu) bilerek sınırsız — o ad değil.
+                  maxLength: kGroupNameMaxLength,
                   decoration: InputDecoration(labelText: l10n.classroomGrupAdi),
                 ),
                 const SizedBox(height: 16),

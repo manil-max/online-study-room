@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/navigation/nav_index.dart';
+import '../../core/validation/name_limits.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
@@ -242,6 +243,8 @@ Future<void> _editName(
         controller: controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
+        // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+        maxLength: kDisplayNameMaxLength,
         decoration: InputDecoration(labelText: l10n.profileGorunenAd),
       ),
       actions: [

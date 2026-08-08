@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/validation/name_limits.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
@@ -143,6 +144,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       TextFormField(
                         controller: _nameController,
                         textInputAction: TextInputAction.next,
+                        // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+                        maxLength: kDisplayNameMaxLength,
                         decoration: InputDecoration(
                           labelText: l10n.authGorunenAd,
                           prefixIcon: const Icon(Icons.person_outline),

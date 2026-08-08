@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/l10n/nudge_error_text.dart';
 import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/validation/name_limits.dart';
 import '../../../core/time_engine/group_time_zone_label.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/number_stepper.dart';
@@ -324,6 +325,8 @@ class ClassDetailScreen extends ConsumerWidget {
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
+          // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+          maxLength: kGroupNameMaxLength,
           decoration: InputDecoration(
             labelText: AppLocalizations.of(context).classroomGrupAdi,
           ),
