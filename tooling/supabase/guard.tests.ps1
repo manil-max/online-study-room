@@ -57,11 +57,20 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # ratchet'in degeri tam olarak "her acilis testi elle degistirmeyi gerektirir"
 # olmasindadir, o yuzden gevsetilmedi. Kosum bitti; iki bayrak da re-lock
 # edildi (staging run 31247059415 + 31247380398, production run 31247209137).
-Assert-Equal $contract.staging.migration_head '0121' 'v59 sonrasi staging gercek head 0121'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'WP-506 kosumu bitti, staging yeniden kilitli'
+# 2026-08-08 (v60 zinciri, WP-507...518): sahip yayin yetkisini oturum icinde
+# verdi ("sen yap direkt yetki sende gerekeni"). Tam kapi 19 kapi / 0 kirmizi /
+# 4 atlandi ile gecti; icinde GERCEK API 33 emulatorunde kosan sayac smoke'u da
+# var (177 s, uc mod basla/durdur, cokme yok). Kontrat hedefi bu tur icin
+# 0122'ye (ad uzunlugu kisitlari) pinlenir ve deploy_enabled iki ortamda da
+# TEK bir apply icin acilir. Post-check 0122 verir vermez ayri bir commit ile
+# iki bayrak da $false'a re-lock edilir ve asagidaki iki satir geri cevrilir.
+# release_enabled BILEREK false kalir -- stable release ayri, tek seferlik
+# confirmation string'iyle gecer (bkz. release-gate.ps1).
+Assert-Equal $contract.staging.migration_head '0122' 'v60 turu staging hedefi 0122'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'v60 turu: staging 0122 apply icin acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
-Assert-Equal $contract.production.migration_head '0121' 'v59 sonrasi production gercek head 0121'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'WP-506 kosumu bitti, production yeniden kilitli'
+Assert-Equal $contract.production.migration_head '0122' 'v60 turu production hedefi 0122'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'v60 turu: production 0122 apply icin acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin

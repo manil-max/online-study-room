@@ -2,14 +2,14 @@
   "schema_version": 1,
   "local_migration_head": "0122",
   "staging": {
-    "migration_head": "0121",
-    "deploy_enabled": false,
+    "migration_head": "0122",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED after the 2026-08-08 WP-506 backfill run: staging ran backfill-goals twice (runs 31247059415 and 31247380398; 8 events written, then 0 - idempotency verified in the field). No migration was applied; head stays 0121. No further apply or release is authorized; a new scoped owner authorization is required."
+    "hold_reason": "OPEN for the 2026-08-08 v60 chain (WP-507...518): apply migration 0122 (name length limits) to staging. Owner GO given in-session (\"sen yap direkt yetki sende gerekeni\") after the full gate came back 19 gates / 0 red / 4 skipped, including a real API 33 emulator timer smoke. Scope is ONE apply only: migration 0122. No backfill, no repair, no reset. This flag will be re-lock'ed to false in a separate commit immediately after the post-check confirms head 0122."
   },
   "production": {
-    "migration_head": "0121",
-    "deploy_enabled": false,
+    "migration_head": "0122",
+    "deploy_enabled": true,
     "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED after the 2026-08-08 WP-506 backfill run: production ran backfill-goals once (run 31247209137; 43 events written into goal_progress_events, history reaching back to 2026-06-21). No migration was applied; head stays 0121. The free-plan no-backup/no-PITR/no-rollback waiver stays on record. No further apply or release is authorized without a new scoped owner authorization."
+    "hold_reason": "OPEN for the 2026-08-08 v60 chain (WP-507...518): apply migration 0122 (name length limits) to production. Owner GO given in-session (\"sen yap direkt yetki sende gerekeni\") after the full gate came back 19 gates / 0 red / 4 skipped, including a real API 33 emulator timer smoke. Scope is ONE apply only: migration 0122. No backfill, no repair, no reset. This flag will be re-lock'ed to false in a separate commit immediately after the post-check confirms head 0122. The free-plan no-backup/no-PITR/no-rollback waiver stays on record (production.backup_waiver, owner 2026-07-27)."
   }
 }
