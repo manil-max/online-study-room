@@ -11,9 +11,29 @@ void main() {
     expect(LegalDocuments.community(turkish: false), contains('Prohibited'));
   });
 
-  test('public URL only when LEGAL_BASE_URL set (default empty)', () {
-    // Default compile: no LEGAL_BASE_URL
-    expect(LegalDocuments.hasPublicLegalSite, isFalse);
-    expect(LegalDocuments.publicUrl('legal/privacy-tr.html'), isNull);
+  // WP-525: bu test eskiden "varsayilan derlemede LEGAL_BASE_URL bostur"
+  // diyordu ve `hasPublicLegalSite`i kosulsuz `false` bekliyordu. Adres yayin
+  // derlemesine baglaninca (release.yml env.json) CI'da kirmizi dustu --
+  // urunde bir hata yoktu, testin varsayimi eskimisti.
+  //
+  // Dogru sozlesme "adres bos" degil, "adres nasil kurulur": bos ise yol
+  // uretilmez, doluysa taban + yol birlestirilir ve tabandaki fazladan `/`
+  // yutulur. Iki hal de burada olculur, hangi derleme oldugu fark etmez.
+  test('public URL is built only from a configured LEGAL_BASE_URL', () {
+    final base = LegalDocuments.legalBaseUrl.trim();
+    final url = LegalDocuments.publicUrl('legal/privacy-tr.html');
+
+    if (base.isEmpty) {
+      expect(LegalDocuments.hasPublicLegalSite, isFalse);
+      expect(url, isNull);
+      return;
+    }
+
+    expect(LegalDocuments.hasPublicLegalSite, isTrue);
+    expect(url, isNotNull);
+    expect(url, startsWith('https://'));
+    expect(url, endsWith('/legal/privacy-tr.html'));
+    // Tabanda sondaki egik cizgi varsa cift `//` uretilmemeli.
+    expect(url!.substring('https://'.length), isNot(contains('//')));
   });
 }
