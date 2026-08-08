@@ -130,6 +130,53 @@ jobs:
           import hashlib,json,pathlib
           p=pathlib.Path('$OUT'); pathlib.Path('platform-manifest.json').write_text(json.dumps({'schemaVersion':1,'platform':'android','status':'complete','channel':'${{ needs.preflight.outputs.channel }}','gitCommitSha':'${{ needs.preflight.outputs.git_sha }}','migrationHead':'${{ needs.preflight.outputs.migration_head }}','artifacts':[{'name':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}]},indent=2)+'\n')
           PY
+      # WP-527: Play Store yeni uygulamada APK degil AAB ister. AAB YALNIZ
+      # stable kanalda uretilir; beta GitHub sideload kanalidir ve Play'e girmez.
+      #
+      # DISTRIBUTION_CHANNEL secimi: env.json'daki deger `github`, Play build'i
+      # icin `play` olmalidir. `--dart-define` ile ezmek yerine AYRI dosya
+      # uretiliyor -- ayni anahtar hem `--dart-define-from-file` hem
+      # `--dart-define` ile verilirse hangisinin kazandigi flutter_tools ic
+      # detayidir ve surumle degisebilir; ayri dosyada belirsizlik yok.
+      # Asagidaki iddialar iki dosyanin YALNIZ bu anahtarda ayrildigini ve
+      # APK'nin env.json'unun bozulmadigini derleme aninda kanitlar.
+      - name: Play AAB env dosyasi (DISTRIBUTION_CHANNEL=play)
+        if: needs.preflight.outputs.channel == 'stable'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          base = json.loads(pathlib.Path('env.json').read_text())
+          assert base['DISTRIBUTION_CHANNEL'] == 'github', base['DISTRIBUTION_CHANNEL']
+          assert base['LEGAL_BASE_URL'], 'LEGAL_BASE_URL Play derlemesinde de zorunlu'
+          play = dict(base, DISTRIBUTION_CHANNEL='play')
+          pathlib.Path('env.play.json').write_text(json.dumps(play))
+          again = json.loads(pathlib.Path('env.json').read_text())
+          assert again == base, 'APK env.json Play adimi tarafindan degistirildi'
+          drop = lambda d: {k: v for k, v in d.items() if k != 'DISTRIBUTION_CHANNEL'}
+          assert drop(play) == drop(base), 'env.play.json tek anahtar disinda ayrilmali'
+          PY
+      - name: Play AAB derle (yalniz stable)
+        if: needs.preflight.outputs.channel == 'stable'
+        run: flutter build appbundle --release --flavor play --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.play.json
+      - name: Play AAB artefaktini paketle
+        if: needs.preflight.outputs.channel == 'stable'
+        shell: bash
+        run: |
+          AAB=$(find build/app/outputs/bundle -name '*.aab' -print -quit)
+          test -n "$AAB"
+          cp -- "$AAB" build/app/outputs/flutter-apk/app-play-release.aab
+          cd build/app/outputs/flutter-apk
+          test -f app-play-release.aab
+          sha256sum app-play-release.aab > app-play-release.aab.sha256
+          python - <<'PY'
+          import hashlib, json, pathlib
+          aab = pathlib.Path('app-play-release.aab')
+          manifest = pathlib.Path('platform-manifest.json')
+          data = json.loads(manifest.read_text())
+          data['artifacts'].append({'name': aab.name, 'sha256': hashlib.sha256(aab.read_bytes()).hexdigest()})
+          manifest.write_text(json.dumps(data, indent=2) + '\n')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: android-release
@@ -182,6 +229,7 @@ jobs:
           generate_release_notes: true
           files: |
             release-assets/android/*.apk
+            release-assets/android/*.aab
             release-assets/android/*.sha1
             release-assets/android/*.sha256
             release-assets/release-manifest.json
@@ -246,6 +294,7 @@ jobs:
           generate_release_notes: true
           files: |
             release-assets/android/*.apk
+            release-assets/android/*.aab
             release-assets/android/*.sha1
             release-assets/android/*.sha256
             release-assets/windows/*.msix

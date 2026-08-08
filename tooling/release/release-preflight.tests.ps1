@@ -112,9 +112,61 @@ if ($preflightSource -notmatch 'Assert-ReleaseNotesEntry') {
   throw 'release-preflight.ps1 must call Assert-ReleaseNotesEntry; an uncalled gate is not a gate.'
 }
 
+# ---------------------------------------------------------------------------
+# WP-527: Play AAB kapisi
+#
+# Play Console yeni uygulamada APK kabul etmez, AAB ister. Adim release.yml'den
+# duserse yayin turu yesil biter ama Play'e yuklenecek artefakt hic uretilmemis
+# olur. Bu repoda "kural yaziliydi, cagiran yoktu" hatasi iki kez uretime cikti;
+# bu yuzden kapi hem POZITIF hem de KIRIK GIRDI ile olculur.
+# ---------------------------------------------------------------------------
+
+# Pozitif: mevcut release.yml ile stable preflight yesil.
+& $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+
+# Kirik girdi: AAB yolunun her bir parcasi tek tek silinmis bir workflow
+# kopyasinda kapi KIRMIZI dusmeli. Gercek dosyaya dokunulmaz.
+$brokenWorkflowPath = Join-Path ([IO.Path]::GetTempPath()) "wp527-release-$([guid]::NewGuid().ToString('N')).yml"
+try {
+  foreach ($removal in @(
+    @{ Name = 'appbundle build step removed'; Pattern = 'flutter build appbundle[^\r\n]*' },
+    @{ Name = 'play env file reference removed'; Pattern = 'env\.play\.json' },
+    @{ Name = 'stable-only guard removed'; Pattern = "if: needs\.preflight\.outputs\.channel == 'stable'" },
+    @{ Name = 'DISTRIBUTION_CHANNEL=play removed'; Pattern = "DISTRIBUTION_CHANNEL='play'" },
+    @{ Name = 'LEGAL_BASE_URL assertion removed'; Pattern = "assert base\['LEGAL_BASE_URL'\]" },
+    @{ Name = 'env.json corruption check removed'; Pattern = 'assert again == base' },
+    @{ Name = 'aab sha256 step removed'; Pattern = 'sha256sum app-play-release\.aab' },
+    @{ Name = 'aab never published as release asset'; Pattern = 'release-assets/android/\*\.aab' }
+  )) {
+    [IO.File]::WriteAllText($brokenWorkflowPath, ($releaseWorkflow -replace $removal.Pattern, ''))
+    $failed = $false
+    try {
+      & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath | Out-Null
+    } catch { $failed = $true }
+    if (-not $failed) {
+      throw "Play AAB gate must fail closed: $($removal.Name)"
+    }
+    Write-Host "Play AAB gate red on broken input: $($removal.Name)"
+  }
+
+  # Geri al: bozulmamis kopya yine YESIL. Kapi her girdiye kirmizi demiyor.
+  [IO.File]::WriteAllText($brokenWorkflowPath, $releaseWorkflow)
+  & $script -Channel stable -Tag v60 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath | Out-Null
+
+  # Beta kanali Play'e girmez: AAB'siz workflow beta preflight'i bloklamamali.
+  [IO.File]::WriteAllText($brokenWorkflowPath, ($releaseWorkflow -replace 'flutter build appbundle[^\r\n]*', ''))
+  if ($head -eq $stagingHead) {
+    & $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly -ReleaseWorkflowPath $brokenWorkflowPath | Out-Null
+  }
+} finally {
+  if (Test-Path -LiteralPath $brokenWorkflowPath) {
+    Remove-Item -LiteralPath $brokenWorkflowPath -Force
+  }
+}
+
 # Jargon sozlesmesi: kullaniciya gorunen notlarda teknik metin olmayacak.
 & (Join-Path $repoRoot 'tooling/release/release-notes-contract.ps1') `
   -UserNotesPath (Join-Path $repoRoot 'app/assets/release_notes.json') `
   -TechnicalLogPath (Join-Path $repoRoot 'tooling/release/release_notes_technical.json') | Out-Null
 
-Write-Host 'Release preflight tests: 9 passed (release-notes gate included).'
+Write-Host 'Release preflight tests: 10 passed (release-notes + Play AAB gates included).'

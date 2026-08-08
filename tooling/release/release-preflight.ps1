@@ -10,6 +10,9 @@ param(
   [string]$ProductionProjectRef,
   [string]$ProductionConfirmation,
   [string]$ProductionEvidence,
+  # WP-527: kapinin kirik girdiyle sinanabilmesi icin workflow yolu
+  # enjekte edilebilir. Bos birakilinca gercek repo dosyasi okunur.
+  [string]$ReleaseWorkflowPath,
   [switch]$ValidateOnly,
   [string]$EvidenceRoot
 )
@@ -54,6 +57,48 @@ if ($contract.$environment.migration_head -ne $ExpectedMigrationHead) {
 # WP-518: yayin notlari GERCEKTEN var mi. v59 bu kontrol olmadigi icin bos
 # "Guncelleme notlari" ekraniyla cikti (APK 5 kez indirildi).
 Assert-ReleaseNotesEntry -Tag $Tag -Channel $Channel -BuildNumber $code -RepoRoot $repoRoot
+
+# WP-527: Play AAB adimi stable workflow'unda GERCEKTEN duruyor mu.
+#
+# Sebep tahmin degil, bu repoda iki kez olculdu: kural yaziliydi ama cagiran
+# yoktu (release-notes-contract.ps1 hicbir workflow'dan cagrilmiyordu, v59 bos
+# "Guncelleme notlari" ekraniyla cikti). Play Console yeni uygulamada APK degil
+# AAB ister; adim workflow'dan duserse yayin turu yesil biter ama Play'e
+# yuklenecek artefakt hic uretilmemis olur -- ve bunu kimse fark etmez.
+if ($Channel -eq 'stable') {
+  $workflowPath = if ([string]::IsNullOrWhiteSpace($ReleaseWorkflowPath)) {
+    Join-Path $repoRoot '.github\workflows\release.yml'
+  } else {
+    $ReleaseWorkflowPath
+  }
+  if (-not (Test-Path -LiteralPath $workflowPath -PathType Leaf)) {
+    throw "Release workflow not found for the Play bundle gate: $workflowPath"
+  }
+  $workflowSource = Get-Content -LiteralPath $workflowPath -Raw -Encoding UTF8
+  # 🔴 `\S+` KULLANMA: build-name/build-number degerleri `${{ ... }}` ifadesidir
+  # ve icinde bosluk vardir; `\S+` sessizce eslesmez ve kapi hep kirmizi kalir.
+  if ($workflowSource -notmatch 'flutter build appbundle --release --flavor play --build-name=.+ --build-number=.+ --dart-define-from-file=env\.play\.json') {
+    throw 'Stable release must build the Play AAB with the play flavor, release version metadata and the play env file.'
+  }
+  foreach ($playMarker in @(
+    # Play adimlari yalniz stable kanalda kosar (beta sideload kalir).
+    "if: needs.preflight.outputs.channel == 'stable'",
+    # DISTRIBUTION_CHANNEL Play derlemesinde `play` olmali; ayri env dosyasi.
+    "DISTRIBUTION_CHANNEL='play'",
+    # LEGAL_BASE_URL Play derlemesinde de bulunmali.
+    "assert base['LEGAL_BASE_URL']",
+    # APK derlemesinin env.json'u Play adimindan etkilenmemeli.
+    'assert again == base',
+    # Artefakt + SHA-256 uretimi ve yayinlanmasi.
+    'app-play-release.aab',
+    'sha256sum app-play-release.aab',
+    'release-assets/android/*.aab'
+  )) {
+    if ($workflowSource -notmatch [regex]::Escape($playMarker)) {
+      throw "Stable release workflow is missing the Play AAB path: $playMarker"
+    }
+  }
+}
 
 $result = [ordered]@{
   schema_version = 1
