@@ -17,6 +17,8 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/chat_providers.dart';
+import 'package:online_study_room/data/providers/moderation_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_moderation_repository.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_chat_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
@@ -79,6 +81,12 @@ Widget _chatHarness() {
         (ref) => Stream.value([message]),
       ),
       chatRepositoryProvider.overrideWithValue(InMemoryChatRepository()),
+      // WP-538: sohbet, engelli kullanici kumesi BILINMEDEN mesaj cizmez
+      // (fail-closed). Kapi `--dart-define-from-file=env.json` ile kostugu
+      // icin varsayilan depo Supabase olur ve testte hic cozulmez.
+      moderationRepositoryProvider.overrideWithValue(
+        InMemoryModerationRepository(),
+      ),
     ],
   );
 }
@@ -184,6 +192,12 @@ void main() {
               _group.id,
             ).overrideWith((ref) => Stream.value([mine])),
             chatRepositoryProvider.overrideWithValue(InMemoryChatRepository()),
+      // WP-538: sohbet, engelli kullanici kumesi BILINMEDEN mesaj cizmez
+      // (fail-closed). Kapi `--dart-define-from-file=env.json` ile kostugu
+      // icin varsayilan depo Supabase olur ve testte hic cozulmez.
+      moderationRepositoryProvider.overrideWithValue(
+        InMemoryModerationRepository(),
+      ),
           ],
         ),
       );
