@@ -18,6 +18,8 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/chat_providers.dart';
+import 'package:online_study_room/data/providers/moderation_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_chat_repository.dart';
 import 'package:online_study_room/features/classroom/widgets/class_chat_card.dart';
 import 'package:online_study_room/features/classroom/widgets/class_chat_screen.dart';
@@ -72,6 +74,16 @@ Future<void> _pumpChat(
           _group.id,
         ).overrideWith((ref) => Stream.value(_messages)),
         chatRepositoryProvider.overrideWithValue(InMemoryChatRepository()),
+        // WP-538 sonrasi ZORUNLU: sohbet, engelli kullanici kumesi BILINMEDEN
+        // mesaj cizmez (ag hatasi engellemeyi sessizce kapatmasin diye kasten
+        // fail-closed). Kapi `--dart-define-from-file=env.json` ile kostugu
+        // icin varsayilan moderasyon deposu Supabase olur, testte hicbir zaman
+        // cozulmez ve liste sonsuza dek bos kalir; yerlesim iddialarinin hepsi
+        // anlamsizca kirmizi duser.
+        // Olculdu: bu override olmadan bu dosyada 8 testin 6'si kirmizi.
+        moderationRepositoryProvider.overrideWithValue(
+          InMemoryModerationRepository(),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('tr'),
