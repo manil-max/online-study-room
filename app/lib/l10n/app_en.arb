@@ -878,6 +878,14 @@
   "@classroomKatil": {
     "description": "Classroom user-facing text. Source: Katıl"
   },
+  "classroomGrubaKatiliniyor": "Joining…",
+  "@classroomGrubaKatiliniyor": {
+    "description": "Classroom user-facing text. Source: Katılıyor…"
+  },
+  "classroomGrubaKatildin": "You joined the group.",
+  "@classroomGrubaKatildin": {
+    "description": "Classroom user-facing text. Source: Gruba katıldın."
+  },
   "classroomKaydet": "Save",
   "@classroomKaydet": {
     "description": "Classroom user-facing text. Source: Kaydet"

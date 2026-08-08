@@ -246,7 +246,8 @@ Future<StudyGroup?> _promptCreateGroup(
                       autofocus: true,
                       textCapitalization: TextCapitalization.words,
                       // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
-                      // `_promptText` (davet kodu) bilerek sınırsız — o ad değil.
+                      // `_promptJoinGroup` (davet kodu) bilerek sınırsız — o ad
+                      // değil.
                       maxLength: kGroupNameMaxLength,
                       decoration: InputDecoration(
                         labelText: l10n.classroomGrupAdi,
@@ -358,67 +359,147 @@ Future<StudyGroup?> _promptCreateGroup(
 
 /// Sınıfa katılma akışı: davet kodu sorar, katar, o sınıfı aktif yapar.
 /// Başarılıysa true döner.
+///
+/// 🔴 WP-532: grup kurmanın (WP-530) ikizi kusur burada da ölçüldü. Eski akış
+/// "Katıl"a basınca diyaloğu **anında kapatıyordu**, `joinGroup` isteği
+/// göstergesiz uçuyordu ve başarıda hiçbir onay yoktu. Prob çıktısı:
+/// "1. basıştan sonra diyalog açık mı? false", "ilerleme göstergesi var mı?
+/// false", "bitişte başarı göstergesi (SnackBar) var mı? false". Kullanıcı
+/// "olmadı" sanıp akışı yeniden açınca **ikinci `joinGroup` çağrısı** gidiyordu
+/// (prob: "TOPLAM joinGroup çağrısı = 2"). Sunucu tarafı bunu yutuyor —
+/// `join_group` RPC'si (`0093_group_bans.sql`) zaten üyeyse grubu aynen döner —
+/// yani kurmadaki gibi çift kayıt oluşmuyor; ama kullanıcı yine boş ekrana
+/// bakıyor ve gereksiz ikinci tur atılıyor. İstek artık diyaloğun **içinde**
+/// koşar.
 Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
-  final code = await _promptText(
-    context,
-    title: AppLocalizations.of(context).classroomGrubaKatil,
-    label: AppLocalizations.of(context).classroomDavetKodu,
-    action: AppLocalizations.of(context).classroomKatil,
-    uppercase: true,
-  );
-  if (code == null || code.trim().isEmpty) return false;
-
   final user = ref.read(authStateProvider).value;
   if (user == null) return false;
-  if (!context.mounted) return false;
-  final messenger = ScaffoldMessenger.of(context);
-  final genericError = AppLocalizations.of(
-    context,
-  ).authBeklenmeyenBirHataOlustu;
-  try {
-    final group = await ref
-        .read(groupRepositoryProvider)
-        .joinGroup(inviteCode: code, member: user);
-    ref.read(activeGroupIdProvider.notifier).select(group.id);
-    return true;
-  } on GroupException {
-    messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    return false;
+  final group = await _promptJoinGroup(context, ref, user);
+  if (group == null) return false;
+
+  ref.read(activeGroupIdProvider.notifier).select(group.id);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).classroomGrubaKatildin),
+      ),
+    );
   }
+  return true;
 }
 
-/// Tek alanlı metin diyaloğu (ad / kod). İptal → null.
-Future<String?> _promptText(
-  BuildContext context, {
-  required String title,
-  required String label,
-  required String action,
-  bool uppercase = false,
-}) {
+/// Davet kodu sorar **ve gruba katılır**. Katılınan grubu döner; vazgeçilirse
+/// veya kod boşsa null.
+Future<StudyGroup?> _promptJoinGroup(
+  BuildContext context,
+  WidgetRef ref,
+  Profile member,
+) {
   final controller = TextEditingController();
-  return showDialog<String>(
+  return showDialog<StudyGroup>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        textCapitalization: uppercase
-            ? TextCapitalization.characters
-            : TextCapitalization.words,
-        decoration: InputDecoration(labelText: label),
-        onSubmitted: (_) => Navigator.pop(ctx, controller.text),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(AppLocalizations.of(context).classroomVazgec),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, controller.text),
-          child: Text(action),
-        ),
-      ],
-    ),
+    // WP-532: istek uçarken bariyere dokunmak kullanıcıyı yine göstergesiz
+    // ekranda bırakırdı. Vazgeçmenin açık düğmesi var.
+    barrierDismissible: false,
+    builder: (ctx) {
+      var submitting = false;
+      String? error;
+      final l10n = AppLocalizations.of(ctx);
+      return StatefulBuilder(
+        builder: (ctx, setState) {
+          final currentError = error;
+
+          Future<void> submit() async {
+            // İkinci basış: düğme zaten devre dışı; bu ikinci kapı aynı
+            // sözleşmeyi klavye/erişilebilirlik yollarına karşı da tutar.
+            if (submitting) return;
+            if (controller.text.trim().isEmpty) {
+              Navigator.pop(ctx);
+              return;
+            }
+            setState(() {
+              submitting = true;
+              error = null;
+            });
+            try {
+              final group = await ref
+                  .read(groupRepositoryProvider)
+                  .joinGroup(inviteCode: controller.text, member: member);
+              if (ctx.mounted) Navigator.pop(ctx, group);
+            } on GroupException {
+              if (!ctx.mounted) return;
+              setState(() {
+                submitting = false;
+                error = l10n.authBeklenmeyenBirHataOlustu;
+              });
+            }
+          }
+
+          return PopScope(
+            canPop: !submitting,
+            child: AlertDialog(
+              title: Text(l10n.classroomGrubaKatil),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      enabled: !submitting,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        labelText: l10n.classroomDavetKodu,
+                      ),
+                      onSubmitted: (_) => submit(),
+                    ),
+                    if (currentError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        currentError,
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(ctx),
+                  child: Text(l10n.classroomVazgec),
+                ),
+                FilledButton(
+                  key: const Key('join-group-submit'),
+                  onPressed: submitting ? null : submit,
+                  child: submitting
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                            // Diyalog dar telefonda 280dp ile sınırlı; uzun
+                            // çeviri taşmasın diye esnek.
+                            Flexible(
+                              child: Text(
+                                l10n.classroomGrubaKatiliniyor,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(l10n.classroomKatil),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
   );
 }
