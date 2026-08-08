@@ -29,18 +29,20 @@ Hosted staging projesi fresh olduğunda `cron` şeması bulunup `pg_cron` extens
 henüz kurulu olmayabilir. Tarihsel ve remote'a uygulanmış `0053` değiştirilmez.
 Önce salt-okunur durum/migration geçmişi alınır; sonra yalnız izole staging ref'ine
 kilitli sabit allowlist sorgusu `create extension if not exists pg_cron;` çalışır.
-Wrapper serbest SQL kabul etmez ve production ref'ini reddeder:
+Wrapper serbest SQL kabul etmez ve production ref'ini reddeder. Aşağıdaki
+`<4-digit-head>` yer tutucusuna `tooling/release/deploy-contract.json`
+içindeki güncel head yazılır:
 
 ```powershell
 ./tooling/supabase/staging-prerequisites-owner.ps1 `
   -Action inspect `
   -ExpectedGitSha '<40-char-sha>' `
-  -ExpectedMigrationHead '0063'
+  -ExpectedMigrationHead '<4-digit-head>'
 
 ./tooling/supabase/staging-prerequisites-owner.ps1 `
   -Action bootstrap `
   -ExpectedGitSha '<40-char-sha>' `
-  -ExpectedMigrationHead '0063'
+  -ExpectedMigrationHead '<4-digit-head>'
 ```
 
 Parola `Read-Host -AsSecureString` ile yalnız görünür terminal oturumunda alınır.
@@ -49,30 +51,24 @@ durum sorguları temizlenmiş evidence manifestine kaydedilir.
 
 ## Deploy contract
 
-`tooling/release/deploy-contract.json` tek public kapıdır. Şu anda (2026-07-24, WP-293):
+`tooling/release/deploy-contract.json` tek public kapıdır ve local/staging/production
+migration head'lerinin, `deploy_enabled` / `release_enabled` bayraklarının ve HOLD
+gerekçelerinin **tek kanonik kaynağıdır**. Bu README bilerek hiçbir head numarası
+veya kapı durumu tekrarlamaz — tekrarlanan her değer bayatlıyor (bu bölüm uzun süre
+`0070` yazdı). Güncel değer için doğrudan contract dosyası okunur.
 
-- local head `0070`;
-- staging kabul head'i `0070`, apply/release staging QA için açık;
-- production kabul head'i `0070` (**etkin şema**), apply/release **kapalıdır** (`deploy_enabled: false`).
+Kalıcı kurallar:
 
-`0066–0070` migration'ları production'a manuel yolla (allowlist/hash korumalı
-`remote.ps1 manual-push-0066-0070`) uygulandı; Database Gates ve Production Push
-Activation koşumları 2026-07-23'te başarılı oldu. Production **etkin şeması `0070`**,
-ancak CLI migration history uzlaştırılmamış olarak kalır
-(`docs/recovery/PRODUCTION-BASELINE.md` §3 — `supabase_migrations.schema_migrations`
-production'da yok).
-
-> **Not (WP-293, 2026-07-24):** `0066–0070` terfisi için açılmış olan production
-> `deploy_enabled` **kapatıldı** (`true → false`) — terfi tamamlandı ve açık kalan
-> kapı kazara production apply'ına izin veriyordu (aynı desen WP-255'te v42 için de
-> yaşandı). Bir sonraki production mutasyonu için bilinçli olarak, backup+dry-run+
-> somut kullanıcı GO ile yeniden açılmalıdır. `guard.tests.ps1` bu beklentiye çekildi.
-
-WP-229'un `0063` eşit-kaynak migration'ı staging'e uygulandıktan sonra linked
-pgTAP'ın bulduğu fresh-hosted cron/explicit-grant parity açığı tarihsel dosyalar
-değişmeden ileri `0064` ile kapatılır. Transaction-local sentetik fixture linked
-test sonunda rollback olur. Bu izin production'a taşınmaz: production WP-232
-staging+cihaz+soak+backup+dry-run ve somut GO kapısına kadar HOLD durumundadır.
+- Bir apply/release turu bittiğinde ilgili bayrak **ayrı bir commit'te** yeniden
+  `false`'a kilitlenir; açık kalan kapı kazara production apply'ına izin verir
+  (bu hata WP-255 ve WP-293'te iki kez yaşandı).
+- Head numarası dört ayrı yerde pinlidir; contract güncellenirken `guard.tests.ps1`
+  iddiaları da aynı commit'te güncellenir, yoksa guard kırmızı olur.
+- Production CLI migration history uzlaştırılmamış olarak kalır
+  (`docs/recovery/PRODUCTION-BASELINE.md` §3 — `supabase_migrations.schema_migrations`
+  production'da yok); bu tarihsel bir kayıttır, bugünkü head için contract'a bakılır.
+- WP-229 eşit-kaynak/ödül zinciri onarımı **tamamlandı**; eski `0063`/`0064` HOLD
+  anlatımı kalktı, güncel durum contract dosyasındadır.
 
 ## GitHub kurulumu (owner)
 
@@ -147,8 +143,9 @@ ve loga yazılmadan seçilerek üretilir:
 `beta-build.ps1` staging define manifestini sistem geçici dizininde oluşturur ve
 her sonuçta siler. Mevcut `app/env.json` okunmaz, taşınmaz veya overwrite edilmez;
 öncesi/sonrası SHA-256 eşitliği manifestte `local_env_preserved=true` olarak
-kanıtlanır. WP-230 kimliği `1.0.42-beta.1+4201`, backend staging ve migration head
-`0064` olmalıdır; artefakt manifesti APK SHA-256'sını kaydeder.
+kanıtlanır. Artefakt manifesti APK SHA-256'sını kaydeder. (Tarihsel örnek: WP-230
+turunda beklenen kimlik `1.0.42-beta.1+4201`, backend staging, head `0064` idi;
+bugünkü beklenen sürüm `app/pubspec.yaml`, beklenen head `deploy-contract.json`.)
 
 `production-apply` bunlara ek olarak protected `production` Environment onayı,
 `tooling/release/production-backup-checklist.example.json` sözleşmesine uyan
@@ -188,7 +185,8 @@ try {
 Remove-Item Env:SUPABASE_DB_PASSWORD
 ```
 
-Komut mevcut HOLD boyunca remote'a ulaşmadan reddedilir. WP-229 kabulü ve contract
-güncellemesi sonrasında aynı komut güvenli dry-run yapar. Stale link hatasında
+`deploy-contract.json` ilgili ortam için kapıyı kapalı tutuyorsa komut remote'a
+ulaşmadan reddedilir; kapı açıkken aynı komut güvenli dry-run yapar. Stale link
+hatasında
 yalnız local link bilgisini kaldırmak için `supabase unlink` kullanılır; remote
 reset yapılmaz.

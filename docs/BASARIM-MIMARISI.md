@@ -1,7 +1,9 @@
 # Odak Kampı — Başarım 3.0 & XP Ledger Mimarisi
 
-> **Durum:** Tasarım Aşamasında (Kullanıcıdan kademe girdileri bekleniyor)
-> **İlgili Faz:** V8 sonrası (Faz 3)
+> **Durum:** Uygulandı. İstemci tarafı `app/lib/core/stats/achievement_ledger_engine.dart`,
+> sunucu tarafı `supabase/migrations/0024_achievements_ledger.sql` (+ `0025`, `0027`).
+> Aşağıdaki gövde hâlâ yürürlükteki mimaridir; kademe/XP eşiklerinin güncel
+> değeri için migration zincirine ve `achievement_ledger_engine.dart`'a bakılır.
 
 ## 1. Mimari Hedefler
 Mevcut sistemde (v7) başarımların ilerlemesi ve XP (deneyim puanı) istemci tarafında hesaplanıp sunucuya gönderilmektedir. Bu durum, API'yi dinleyen veya uygulamanın kaynak kodunu değiştiren kötü niyetli kullanıcıların sahte XP ve başarım (rozet) basmasına olanak tanımaktadır.

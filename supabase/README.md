@@ -38,9 +38,8 @@ Bu komut `supabase/config.toml`, `roles.sql`, bütün migration'lar, sentetik
 - Production verisi staging'e kopyalanmaz; staging sentetik test hesabı/fixture
   kullanır.
 
-## Geçici kurtarma HOLD'u
+## Apply/release kapıları ve migration head
 
-`0063_equal_study_sources.sql` production'a ve staging'e uygulanmaz. WP-229
-eşit-kaynak/ödül zinciri onarımını kabul edilmiş ileri migration olarak
-tamamlayana kadar `tooling/release/deploy-contract.json` staging ve production
-apply/release kapılarını kapalı tutar.
+Local, staging ve production migration head'lerinin ve apply/release
+kapılarının tek kanonik kaynağı `tooling/release/deploy-contract.json`'dır;
+bu README hiçbir head numarası tekrarlamaz.

@@ -1,5 +1,10 @@
 # WP-225 — Production Freeze ve Adli Baseline
 
+> ⚠️ **TARİHSEL YAKALAMA — bugünkü durum değildir.** Aşağıdaki head, ortam ve
+> `PENDING`/`ABSENT` satırları yalnız yakalama tarihindeki fotoğraftır.
+> Local/staging/production migration head'lerinin ve apply/release kapılarının
+> tek kanonik kaynağı `tooling/release/deploy-contract.json`'dır.
+
 > Yakalama başlangıcı: 2026-07-20 10:43 (Europe/Istanbul)
 > Hedef: `production / read-only`
 > Yakalama tamamlanışı: 2026-07-20 12:10 (Europe/Istanbul)

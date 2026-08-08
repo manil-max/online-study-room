@@ -1,5 +1,10 @@
 # WP-226 — Local Migration Baseline ve History Uzlaşması
 
+> ⚠️ **TARİHSEL YAKALAMA — bugünkü durum değildir.** Aşağıdaki head, ortam ve
+> `PENDING`/`ABSENT` satırları yalnız yakalama tarihindeki fotoğraftır.
+> Local/staging/production migration head'lerinin ve apply/release kapılarının
+> tek kanonik kaynağı `tooling/release/deploy-contract.json`'dır.
+
 > Yakalama: 2026-07-20 (Europe/Istanbul)
 >
 > Local head: `0063` · Production: salt-okunur karşılaştırma
