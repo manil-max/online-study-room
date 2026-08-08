@@ -5,11 +5,14 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../core/animals/camp_animal.dart';
 import '../../core/l10n/app_locale.dart';
 import '../../core/tour/tour_controller.dart';
+import '../../core/utils/duration_format.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/notification_providers.dart';
+import '../../data/providers/study_providers.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../admin/admin_screen.dart';
 import '../desktop/desktop_surface.dart';
 import '../notifications/announcements_screen.dart';
@@ -25,6 +28,7 @@ import 'appearance_screen.dart';
 import 'data_export_screen.dart';
 import 'feedback_screen.dart';
 import 'widgets/camp_animal_picker.dart';
+import 'widgets/goal_editor_dialog.dart';
 import 'widgets/unread_message_badge.dart';
 
 /// Ayarlar: davranışları değiştirmeden, bulunabilir bilgi mimarisi sunar.
@@ -56,6 +60,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) setState(() => _animalOverride = picked);
   }
 
+  /// WP-555: gunluk hedef uygulamada **tek** noktadan (sayac karti) degistirilebiliyordu
+  /// ve Ayarlar'da `goal` kelimesi hic gecmiyordu. Diyalog yeniden yazilmadi;
+  /// `showGoalEditorDialog` ayni sinirlarla (en az 15 dk, 0-23 sa / 0-59 dk)
+  /// paylasilan yerinden cagriliyor.
+  Future<void> _editDailyGoal(int currentMinutes) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final result = await showGoalEditorDialog(
+      context,
+      initialMinutes: currentMinutes,
+    );
+    if (result == null || !mounted) return;
+    try {
+      await ref.read(authRepositoryProvider).updateDailyGoal(result);
+      ref.invalidate(authStateProvider);
+    } on AuthException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    }
+  }
+
   Future<void> _resetTours() async {
     await ref.read(tourControllerProvider.notifier).resetAll();
     await ref.read(onboardingCompletedProvider.notifier).reset();
@@ -75,6 +101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final language = ref.watch(appLanguageProvider);
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
+    final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
     // WP-421: zincirin ikinci halkasi.
     final unreadReplies =
@@ -246,6 +273,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _SettingsSection(
                 title: l10n.settingsSectionStudyPreferences,
                 children: [
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-daily-goal'),
+                      leading: const Icon(Icons.flag_outlined),
+                      title: Text(l10n.profileGunlukHedef),
+                      // Deger `activeAppLocale` global'i yerine ekranin kendi
+                      // dilinden turetilir; ayni satir iki dilde de dogru okur.
+                      subtitle: Text(
+                        formatHumanForLocale(goalMinutes * 60, l10n.localeName),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: profile == null
+                          ? null
+                          : () => _editDailyGoal(goalMinutes),
+                    ),
+                  ),
                   _SettingsCard(
                     child: ListTile(
                       leading: Text(

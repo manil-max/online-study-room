@@ -9,7 +9,6 @@ import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
 import '../../data/models/study_session.dart';
 import '../../data/models/subject.dart';
-import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
 import 'widgets/manual_session_dialog.dart';
@@ -27,7 +26,6 @@ class SessionHistoryScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
-    final hasGroup = ref.watch(userGroupProvider).value != null;
 
     final body = sessionsAsync.when(
       loading: () => Center(child: CircularProgressIndicator()),
@@ -52,12 +50,11 @@ class SessionHistoryScreen extends ConsumerWidget {
         ),
       ),
       data: (sessions) {
-        if (!hasGroup) {
-          return _centerInfo(
-            theme,
-            AppLocalizations.of(context).profileKayitEklemekIcinOnce,
-          );
-        }
+        // WP-555: burada `if (!hasGroup) return "once bir gruba katil"` vardi.
+        // Yapay kapiydi: manuel ekleme akisi (`addManualSessionFlow`) grup
+        // sarti aramaz ve grupsuz kullanici ayni akisi sayac kartindan zaten
+        // calistirabiliyordu. Onboarding grup adimini atlatabildigi icin
+        // grupsuz kullanici gercek bir durum; kendi gecmisini goremiyordu.
         if (sessions.isEmpty) {
           return _centerInfo(theme, l10n.profileHenuzKaydinYok);
         }
@@ -69,16 +66,15 @@ class SessionHistoryScreen extends ConsumerWidget {
       return Stack(
         children: [
           Positioned.fill(child: body),
-          if (hasGroup)
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: FloatingActionButton.extended(
-                onPressed: () => _addManual(context, ref),
-                icon: Icon(Icons.add),
-                label: Text(l10n.profileManuelEkle),
-              ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () => _addManual(context, ref),
+              icon: Icon(Icons.add),
+              label: Text(l10n.profileManuelEkle),
             ),
+          ),
         ],
       );
     }
@@ -87,13 +83,11 @@ class SessionHistoryScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).profileCalismaKayitlarim),
       ),
-      floatingActionButton: hasGroup
-          ? FloatingActionButton.extended(
-              onPressed: () => _addManual(context, ref),
-              icon: Icon(Icons.add),
-              label: Text(l10n.profileManuelEkle),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _addManual(context, ref),
+        icon: Icon(Icons.add),
+        label: Text(l10n.profileManuelEkle),
+      ),
       body: body,
     );
   }

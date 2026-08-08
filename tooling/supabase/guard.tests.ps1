@@ -77,8 +77,19 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # post-check 0123 verdi. Iki bayrak da $false'a re-lock edildi; head'ler
 # 0123'te kalici gercek durumu yansitiyor. Yeni APK/tag turu YOK: SSS satirlari
 # sunucudan okunur, v60 kurulu cihazda ekran yenilenince gorunur.
-Assert-Equal $contract.staging.migration_head '0123' 'WP-522 turu staging hedefi 0123'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0123 apply bitti, staging yeniden kilitli'
+# 2026-08-08 (WP-549): hesap silme DORT dolayli `restrict` FK zinciri, BES
+# yaz-geri tetikleyicisi ve IKI degismezlik guard'i yuzunden dusuyordu -- yani
+# sayaci bir kez calistirmis, push kaydi olan ya da grubunda rapor acilmis
+# kullanicilar HIC silinemiyordu. Play hesap silmeyi zorunlu tutuyor ve
+# `docs/legal/ACCOUNT-DELETION.*` kosulsuz soz veriyor, dolayisiyla beyan
+# fiilen yanlisti. Kontrat hedefi 0124'e pinlendi, staging deploy_enabled TEK
+# bir apply icin acildi (sahip izni oturum icinde, bu kapsam gosterilerek).
+# KANIT: CI yerel replay (gercek Postgres + pgTAP) commit 5d64464'te YESIL,
+# run 31277161339. Onceki iki tur KIRMIZIYDI ve ikisi de gercek kusurdu.
+# Post-check 0124 verince ayri bir commit ile bayrak $false'a ve asagidaki iki
+# satir geri cevrilir.
+Assert-Equal $contract.staging.migration_head '0124' 'WP-549 turu staging hedefi 0124'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0124 apply icin staging tek seferlik acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 Assert-Equal $contract.production.migration_head '0123' 'WP-522 turu production hedefi 0123'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0123 apply bitti, production yeniden kilitli'

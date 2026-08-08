@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -10,6 +12,10 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import 'group_avatar.dart';
+
+/// WP-555: arama kutusunda her tusa bir RPC gidiyordu ("matematik" = 9 istek).
+/// Kullanici yazmayi birakinca **tek** istek gitsin diye bekleme suresi.
+const kGroupDiscoverySearchDebounce = Duration(milliseconds: 300);
 
 /// Yalnızca RPC'nin döndürdüğü güvenli açık-grup özetlerini gösterir. Davet
 /// kodu, yönetici/üye profili veya grup çalışma verisi bu ekrana taşınmaz.
@@ -35,6 +41,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
   var _onlyWithCapacity = false;
   Object? _error;
   int _requestVersion = 0;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -44,8 +51,27 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
 
   @override
   void dispose() {
+    // Ekran kapandiktan sonra tetiklenen zamanlayici `_load()` -> `setState`
+    // demektir; iptal edilmezse "setState after dispose" hatasi duser.
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Her tusa degil, yazma durunca yukler.
+  void _onSearchChanged(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(kGroupDiscoverySearchDebounce, () {
+      if (!mounted) return;
+      _load();
+    });
+  }
+
+  /// Acik kullanici eylemi (gonder / yenile / filtre): beklemeden yukle, ama
+  /// bekleyen debounce'i dusur ki ardindan ikinci bir istek gitmesin.
+  void _loadNow() {
+    _searchDebounce?.cancel();
+    _load();
   }
 
   Future<void> _load({bool reset = true}) async {
@@ -143,15 +169,15 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
               child: TextField(
                 controller: _searchController,
                 textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _load(),
-                onChanged: (_) => _load(),
+                onSubmitted: (_) => _loadNow(),
+                onChanged: _onSearchChanged,
                 decoration: InputDecoration(
                   hintText: l10n.groupDiscoverySearchHint,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     tooltip: l10n.classroomYenile,
                     icon: const Icon(Icons.refresh),
-                    onPressed: _load,
+                    onPressed: _loadNow,
                   ),
                   border: const OutlineInputBorder(),
                 ),
@@ -196,7 +222,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
                               ? null
                               : value;
                         });
-                        _load();
+                        _loadNow();
                       },
                     ),
                   ),
@@ -205,7 +231,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
                     selected: _onlyWithCapacity,
                     onSelected: (selected) {
                       setState(() => _onlyWithCapacity = selected);
-                      _load();
+                      _loadNow();
                     },
                   ),
                 ],
@@ -230,7 +256,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
               Text(groupActionErrorText(_error!, l10n)),
               const SizedBox(height: 12),
               OutlinedButton(
-                onPressed: _load,
+                onPressed: _loadNow,
                 child: Text(l10n.groupDiscoveryRetry),
               ),
             ],
