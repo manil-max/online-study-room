@@ -467,7 +467,13 @@ def internal_play_firebase() -> int:
 
     android = APP / "android" / "app"
     gradle_path = android / "build.gradle.kts"
-    gradle = gradle_path.read_text(encoding="utf-8", errors="replace")
+    gradle_raw = gradle_path.read_text(encoding="utf-8", errors="replace")
+    # 🔴 Yorum satirlari ATILIR. Kirik girdi olcumunde yakalandi: `res.srcDir`
+    # satirini SILMEK kapiyi kirmizi dusuruyordu ama basina `//` koymak
+    # dusurmuyordu -- oysa bir satiri devre disi birakmanin en yaygin yolu
+    # yorum yapmaktir. Yorumdaki metin Gradle icin yok hukmundedir; kapi da
+    # oyle gormelidir.
+    gradle = re.sub(r"(?m)//.*$", "", gradle_raw)
     problems: list[str] = []
 
     app_id_match = re.search(r'applicationId\s*=\s*"([^"]+)"', gradle)

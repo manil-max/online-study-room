@@ -72,6 +72,14 @@ jobs:
       - name: Flutter sürümü her workflow'da aynı
         run: python scripts/test_all.py --internal-flutter-pin
 
+      # 🔴 WP-533: `play` flavor'ı v61'e kadar HİÇ derlenmedi, bu yüzden hiç
+      # ölçülmedi de. İlk derlendiğinde iki ayrı eksik peş peşe patladı:
+      # `google-services.json` yok, sonra `res` dizini yok (`@mipmap/
+      # ic_launcher` çözülemiyor). İkisi de 15 dakikalık yayın derlemesinin
+      # ortasında görüldü. Bu adım aynı eksikleri saniyeler içinde yakalar.
+      - name: Play flavor Firebase ve ikon kaynağı
+        run: python scripts/test_all.py --internal-play-firebase
+
   # 🔴 Altı Edge Function (1601 satır, içinde kullanıcı verisi silen
   # `purge-accounts`) hiçbir yerde tip denetiminden geçmiyordu. Denetim ilk
   # açıldığında **altısı da** düştü; hepsi düzeltildi (yakalananlar: `catch`
