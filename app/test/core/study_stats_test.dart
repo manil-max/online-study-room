@@ -90,6 +90,85 @@ void main() {
       );
     });
 
+    // 🔴 WP-561: yukarıdaki test adı "gece yarısı" diyor ama `liveWorkSeconds: 0`
+    // veriyordu — gece yarısında bozulan TEK terimi (canlı süre) test dışında
+    // bırakıyordu, yani YALANCI YEŞİLDİ. Gerçek senaryo aşağıda.
+    group('WP-561: gece yarısını aşan koşuda canlı terim', () {
+      final start = _ist(2026, 8, 7, 23, 0); // 7 Ağustos 23:00
+      final at0130 = _ist(2026, 8, 8, 1, 30); // 8 Ağustos 01:30
+      final elapsed = at0130.difference(start).inSeconds; // 9000 = 2 sa 30 dk
+
+      test('yalnız bugüne düşen kısım eklenir (2:30 değil 1:30)', () {
+        expect(elapsed, 9000);
+        expect(
+          resolveTodayDisplayTotal(
+            recordedToday: 0,
+            liveWorkSeconds: elapsed,
+            liveStartedAt: start,
+            nowInstant: at0130,
+            today: dayOf(at0130),
+          ),
+          5400,
+          reason:
+              'eski davranış 9000 ("Bugün 2 sa 30 dk") gösteriyor, Durdur\'da '
+              'oturum dayOf(start)=7 Ağustos\'a yazılınca 0\'a düşüyordu',
+        );
+      });
+
+      test('gece yarısından SONRA başlayan koşu kırpılmaz', () {
+        final lateStart = _ist(2026, 8, 8, 0, 45);
+        expect(
+          resolveTodayDisplayTotal(
+            recordedToday: 600,
+            liveWorkSeconds: at0130.difference(lateStart).inSeconds,
+            liveStartedAt: lateStart,
+            nowInstant: at0130,
+            today: dayOf(at0130),
+          ),
+          600 + 2700,
+        );
+      });
+
+      test('kırpma settling terimiyle birlikte de çalışır', () {
+        expect(
+          resolveTodayDisplayTotal(
+            recordedToday: 1200,
+            liveWorkSeconds: elapsed,
+            settlingSeconds: 300,
+            settlingBaseline: 1200,
+            settlingDay: dayOf(at0130),
+            liveStartedAt: start,
+            nowInstant: at0130,
+            today: dayOf(at0130),
+          ),
+          1500 + 5400,
+        );
+      });
+
+      test('liveStartedAt verilmezse eski (kırpmasız) davranış korunur', () {
+        // Sözleşme: kırpma yalnız kaynak bilgisi verildiğinde uygulanır;
+        // saf çağrılar (grup/özet yüzeyleri) etkilenmez.
+        expect(
+          resolveTodayDisplayTotal(
+            recordedToday: 0,
+            liveWorkSeconds: elapsed,
+            today: dayOf(at0130),
+          ),
+          9000,
+        );
+      });
+
+      test('liveSecondsToday: sınırlar', () {
+        expect(liveSecondsToday(startedAt: null, now: at0130), 0);
+        expect(liveSecondsToday(startedAt: start, now: at0130), 5400);
+        // Gelecekte başlamış (saat kayması) → negatif değil 0.
+        expect(
+          liveSecondsToday(startedAt: _ist(2026, 8, 8, 2), now: at0130),
+          0,
+        );
+      });
+    });
+
     test('araya başka bir kayıt girse de düşmez', () {
       // Manuel ekleme vs. recorded'ı 3600 → 5400 yaptı; settling hâlâ bekliyor.
       expect(

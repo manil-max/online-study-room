@@ -85,8 +85,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // Ömür: özetten (period == all Toplam kartı için).
     final lifetime = summary?.lifetimeSeconds;
 
-    // Döneme göre ortalama + hafta içi/sonu.
-    final avgPeriod = dailyAverageSeconds(periodSessions, from, to);
+    // Döneme göre hafta içi/sonu (ortalama aşağıda, veri ufkuna kırpılarak).
     final split = weekdayWeekendSplit(periodSessions);
 
     if (sessions.isEmpty) {
@@ -140,6 +139,25 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // Gün→saniye haritası: rekor/heatmap tüm sıcak pencere; trend alt seçici.
     final dailyTotalsMap = dailyTotals(sessions);
     final periodTotalSec = totalSeconds(periodSessions);
+
+    // 🔴 WP-561: "Tümü" (`from == DateTime(2000)`) ve "Yıl" dönemlerinde payda
+    // takvim gününden geliyordu (≈9718 gün) ama pay yalnız 90 günlük **sıcak
+    // pencereden** (`kUserSessionsHotWindowDays`) hesaplanıyor. 300 saat çalışmış
+    // kullanıcıda "Toplam: 300 sa" ile "Günlük Ortalama: 37 sn" yan yana
+    // çıkıyordu. Payda artık verinin gerçekten bulunduğu ufka kırpılır.
+    final avgWindow = averageWindow(
+      periodFrom: from,
+      hotWindowStart: sessionHotWindowStart(now: now),
+      dayTotals: dailyTotalsMap,
+    );
+    // Dönem ufkun gerisine uzanıyorsa kartlar 90 günle **sınırlıdır**; sessiz
+    // çelişki yerine başlıkta söylenir.
+    final hotLimited = avgWindow.hotLimited;
+    final avgPeriod = dailyAverageSeconds(periodSessions, avgWindow.from, to);
+    final periodLabel = statsPeriodLabel(l10n, period);
+    final scopeSuffix = hotLimited
+        ? ' · ${l10n.statsStreakGun(kUserSessionsHotWindowDays.toString())}'
+        : '';
 
     return ListView(
       controller: _scrollController,
@@ -223,8 +241,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         ),
         const SizedBox(height: 16),
         Text(
-          '${AppLocalizations.of(context).statsCalismaSaatleri} · '
-          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+          '${l10n.statsCalismaSaatleri} · $periodLabel$scopeSuffix',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -248,9 +265,21 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
               height: 140,
               child: Builder(
                 builder: (context) {
-                  final series = lastNDays(
-                    periodSessions,
-                    period.chartDays(),
+                  // 🔴 WP-561: pencere artık DÖNEME bağlı. Eskiden
+                  // `lastNDays(periodSessions, …, totals: dailyTotalsMap)`
+                  // çağrılıyordu: `totals` verildiği için `periodSessions`
+                  // argümanı **hiç okunmuyordu** (ölü parametre, üstelik iki
+                  // argüman birbiriyle çelişiyordu) ve pencere daima
+                  // `DateTime.now()`da bitiyordu — "Geçen ay"a gidildiğinde
+                  // başlık geçen ayı, grafik bu ayın son günlerini gösteriyordu.
+                  final chartEnd = dayOf(to);
+                  final chartStart = chartEnd.subtract(
+                    Duration(days: period.chartDays() - 1),
+                  );
+                  final series = dailyRange(
+                    sessions,
+                    chartStart,
+                    chartEnd,
                     totals: dailyTotalsMap,
                   );
                   if (series.isEmpty || series.every((d) => d.seconds == 0)) {
@@ -276,8 +305,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         ),
         const SizedBox(height: 16),
         Text(
-          '${AppLocalizations.of(context).statsOturumDagilimi} · '
-          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+          '${l10n.statsOturumDagilimi} · $periodLabel$scopeSuffix',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -297,8 +325,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         ),
         const SizedBox(height: 16),
         Text(
-          '${AppLocalizations.of(context).statsHaftalikRitim} · '
-          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+          '${l10n.statsHaftalikRitim} · $periodLabel$scopeSuffix',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -310,8 +337,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         ),
         const SizedBox(height: 16),
         Text(
-          '${AppLocalizations.of(context).statsDersBazindaDagilimSon} · '
-          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+          '${l10n.statsDersBazindaDagilimSon} · $periodLabel$scopeSuffix',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -702,16 +728,16 @@ class _WeekComparisonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final thisWeekStart = startOfWeek(now);
-    final lastWeekStart = thisWeekStart.subtract(const Duration(days: 7));
-    final lastWeekEnd = thisWeekStart.subtract(const Duration(days: 1));
-
-    final thisWeek = totalSeconds(inRange(sessions, thisWeekStart, now));
-    final lastWeek = totalSeconds(
-      inRange(sessions, lastWeekStart, lastWeekEnd),
-    );
+    // 🔴 WP-561: kısmî hafta tam haftayla kıyaslanıyordu (bkz.
+    // [weekOverWeekSeconds]); Salı günü kullanıcı hep "kötüye gidiyorum"
+    // görüyordu.
+    final wow = weekOverWeekSeconds(sessions, now: now);
+    final thisWeek = wow.thisWeek;
+    final lastWeek = wow.lastWeek;
     final diff = thisWeek - lastWeek;
-    final improved = diff >= 0;
+    // `diff == 0` iken eskiden `improved = true` olup yeşil "+0 dk" yazıyordu.
+    final improved = diff > 0;
+    final flat = diff == 0;
 
     return Card(
       child: Padding(
@@ -744,17 +770,27 @@ class _WeekComparisonCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  improved ? Icons.arrow_upward : Icons.arrow_downward,
+                  flat
+                      ? Icons.trending_flat
+                      : improved
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
                   size: 18,
-                  color: improved
+                  color: flat
+                      ? theme.colorScheme.onSurfaceVariant
+                      : improved
                       ? subjectColor('chart-2')
                       : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${improved ? '+' : '-'}${formatHuman(diff.abs())}',
+                  flat
+                      ? formatHuman(0)
+                      : '${improved ? '+' : '-'}${formatHuman(diff.abs())}',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: improved
+                    color: flat
+                        ? theme.colorScheme.onSurfaceVariant
+                        : improved
                         ? subjectColor('chart-2')
                         : theme.colorScheme.error,
                   ),

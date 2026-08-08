@@ -226,6 +226,11 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
       settlingSeconds: timer.settlingSeconds,
       settlingBaseline: timer.settlingBaseline,
       settlingDay: timer.settlingDay,
+      // WP-561: gece yarısını aşan koşuda canlı terim bugüne düşen kısma
+      // kırpılır — yoksa 23:00'da başlayan koşu 01:30'da "Bugün 2 sa 30 dk"
+      // gösterip Durdur'da 0'a düşüyordu.
+      liveStartedAt: timer.startedAt,
+      nowInstant: now,
       today: todayKey,
     );
     final notifier = ref.read(studyTimerProvider.notifier);

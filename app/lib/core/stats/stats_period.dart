@@ -94,10 +94,13 @@ class StatsPeriodSelection {
         final from = DateTime(s.year, s.month, s.day + 7 * offset);
         return (from, DateTime(from.year, from.month, from.day + 7));
       case StatsPeriod.month:
-        final from = DateTime(n.year, n.month + offset, 1);
+        // WP-561: `n.month` ham cihaz duvar saatiydi; taban artık İstanbul ayı.
+        final base = startOfMonth(n);
+        final from = DateTime(base.year, base.month + offset, 1);
         return (from, DateTime(from.year, from.month + 1, 1));
       case StatsPeriod.year:
-        final from = DateTime(n.year + offset, 1, 1);
+        final base = startOfYear(n);
+        final from = DateTime(base.year + offset, 1, 1);
         return (from, DateTime(from.year + 1, 1, 1));
       case StatsPeriod.today:
       case StatsPeriod.all:

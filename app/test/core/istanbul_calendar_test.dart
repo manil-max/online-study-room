@@ -58,6 +58,54 @@ void main() {
     });
   });
 
+  // 🔴 WP-561: bu dosyanın başlığındaki "Testler UTC girdi kullanır" cümlesi
+  // aynı zamanda bir KÖR NOKTAYDI: UTC(+0) ve İstanbul(+3), gün anahtarının
+  // bozulduğu eşiğin (cihaz offset'i > +03:00) ALTINDA kalıyor. Aşağıdaki
+  // grup eşiğin ÜSTÜNÜ de kapsar.
+  group('WP-561 gün anahtarı idempotenttir (cihaz offset\'i eşiğin üstünde)', () {
+    // Anahtar `DateTime(y,m,d)` ile, yani CİHAZ yerel saatinde kurulur; kod onu
+    // sürekli tekrar `istanbulDay`'den geçirir. UTC+4 ve doğusunda yerel gece
+    // yarısı hâlâ önceki İstanbul günündedir → ikinci çevrim bir gün geri kayar.
+    final samples = [
+      DateTime.utc(2026, 8, 7, 20),
+      DateTime.utc(2026, 8, 7, 21, 30),
+      DateTime.utc(2025, 12, 31, 22),
+      DateTime.utc(2026, 3, 15, 9, 30),
+    ];
+
+    test('istanbulDay iki kez uygulanınca aynı günü verir', () {
+      for (final x in samples) {
+        final once = istanbulDay(x);
+        expect(istanbulDay(once), once, reason: '$x');
+      }
+    });
+
+    // Cihazın zaman dilimi test sürecinde değiştirilemez. Aynı hata sınıfı,
+    // offset'i AÇIKÇA alan kardeş fonksiyonla kanıtlanır: cihaz offset'inin
+    // (yerel UTC+3 / CI UTC) BATISINDAKİ bölgeler tam olarak "yerel gece yarısı
+    // hâlâ önceki bölge gününde" durumunu üretir.
+    for (final zone in const [
+      'Etc/GMT+4', // UTC-4
+      'Etc/GMT+11', // UTC-11
+      'America/New_York',
+    ]) {
+      test('calendarDayInTimeZone idempotent — $zone', () {
+        for (final x in samples) {
+          final once = calendarDayInTimeZone(x, zone);
+          expect(calendarDayInTimeZone(once, zone), once, reason: '$zone / $x');
+        }
+      });
+    }
+
+    test('koruma körleştirmez: UTC damgası her zaman çevrilir', () {
+      expect(
+        calendarDayInTimeZone(DateTime.utc(2026, 7, 1, 3, 30), 'America/New_York'),
+        DateTime(2026, 6, 30),
+      );
+      expect(istanbulDay(DateTime.utc(2026, 8, 7, 21, 30)), DateTime(2026, 8, 8));
+    });
+  });
+
   group('calendarDay', () {
     test('verilen değerin saatini düşürür (zaman dilimi çevirmeden)', () {
       final day = calendarDay(DateTime(2026, 7, 14, 23, 59, 59));

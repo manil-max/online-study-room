@@ -1,16 +1,26 @@
 import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/stats/stats_period.dart';
-import '../../../core/stats/study_stats.dart';
 
 /// WP-163: genişletilmiş dönem (year + custom + kıyas).
 enum AnalyticsPeriodKind { today, week, month, year, all, custom }
 
 class AnalyticsPeriod {
-  const AnalyticsPeriod(this.kind, {this.customFrom, this.customTo});
+  const AnalyticsPeriod(
+    this.kind, {
+    this.customFrom,
+    this.customTo,
+    this.offset = 0,
+  });
 
   final AnalyticsPeriodKind kind;
   final DateTime? customFrom;
   final DateTime? customTo;
+
+  /// 🔴 WP-561: WP-554 ile gelen dönem gezinmesi bu katmana hiç taşınmıyordu;
+  /// "Geçen hafta" başlığının altında **bu haftanın** toplamı çıkıyordu.
+  /// `==`/`hashCode`'a dâhildir — aksi hâlde family provider cache'i iki farklı
+  /// dönemi aynı anahtarda toplar ve yanlış veri servis eder.
+  final int offset;
 
   static const week = AnalyticsPeriod(AnalyticsPeriodKind.week);
 
@@ -19,18 +29,19 @@ class AnalyticsPeriod {
       other is AnalyticsPeriod &&
       other.kind == kind &&
       other.customFrom == customFrom &&
-      other.customTo == customTo;
+      other.customTo == customTo &&
+      other.offset == offset;
 
   @override
-  int get hashCode => Object.hash(kind, customFrom, customTo);
+  int get hashCode => Object.hash(kind, customFrom, customTo, offset);
 
   (DateTime from, DateTime to) range({DateTime? now}) {
     final n = now ?? DateTime.now();
     return switch (kind) {
-      AnalyticsPeriodKind.today => StatsPeriod.today.range(now: n),
-      AnalyticsPeriodKind.week => StatsPeriod.week.range(now: n),
-      AnalyticsPeriodKind.month => StatsPeriod.month.range(now: n),
-      AnalyticsPeriodKind.year => (startOfYear(n), n),
+      AnalyticsPeriodKind.today => _stats(StatsPeriod.today).range(now: n),
+      AnalyticsPeriodKind.week => _stats(StatsPeriod.week).range(now: n),
+      AnalyticsPeriodKind.month => _stats(StatsPeriod.month).range(now: n),
+      AnalyticsPeriodKind.year => _stats(StatsPeriod.year).range(now: n),
       AnalyticsPeriodKind.all => StatsPeriod.all.range(now: n),
       AnalyticsPeriodKind.custom => (
         customFrom ?? istanbulDay(n),
@@ -38,6 +49,9 @@ class AnalyticsPeriod {
       ),
     };
   }
+
+  StatsPeriodSelection _stats(StatsPeriod p) =>
+      StatsPeriodSelection(period: p, offset: offset);
 }
 
 /// StatsPeriod → AnalyticsPeriod köprüsü.
@@ -58,5 +72,8 @@ AnalyticsPeriod analyticsPeriodFromSelection(StatsPeriodSelection s) {
     analyticsPeriodFromStats(s.period).kind,
     customFrom: s.customFrom,
     customTo: s.customTo,
+    // WP-561: gezinme (WP-554 okları) buradan geçmeden analytics katmanına
+    // ulaşamıyordu.
+    offset: s.supportsNavigation ? s.offset : 0,
   );
 }

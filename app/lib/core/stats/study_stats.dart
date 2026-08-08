@@ -20,10 +20,22 @@ DateTime startOfWeek(DateTime t) {
 }
 
 /// Ayın başlangıcı (ayın 1'i 00:00).
-DateTime startOfMonth(DateTime t) => DateTime(t.year, t.month, 1);
+///
+/// 🔴 WP-561: bileşenler **İstanbul gününden** alınır. Ham `t.month` kullanmak
+/// cihazın duvar saatine güvenmekti: Almanya'da (UTC+2) 31 Ağustos 23:30 yerel
+/// = 1 Eylül 00:30 İstanbul; `dayOf` 1 Eylül derken `startOfMonth` 1 Ağustos
+/// diyordu → "Ay" dönemi 32 gün oluyordu.
+DateTime startOfMonth(DateTime t) {
+  final d = dayOf(t);
+  return DateTime(d.year, d.month, 1);
+}
 
-/// Yılın başlangıcı (1 Ocak 00:00).
-DateTime startOfYear(DateTime t) => DateTime(t.year, 1, 1);
+/// Yılın başlangıcı (1 Ocak 00:00). Bileşenler İstanbul gününden alınır (bkz.
+/// [startOfMonth]); 31 Aralık 23:30 (UTC+2) İstanbul'da yeni yıldır.
+DateTime startOfYear(DateTime t) {
+  final d = dayOf(t);
+  return DateTime(d.year, 1, 1);
+}
 
 /// Toplam çalışma süresi (saniye).
 int totalSeconds(Iterable<StudySession> sessions) =>
@@ -68,15 +80,32 @@ int secondsOnDay(Iterable<StudySession> sessions, DateTime day) {
 /// Kayıt yerleşmeden önce `recordedToday == settlingBaseline` → sonuç
 /// `baseline + settling`; yerleştikten sonra `recordedToday` aynı değere ulaşır →
 /// **iki durumda da aynı sayı** (ne zıplama ne düşme).
+/// 🔴 WP-561: [liveStartedAt] + [nowInstant] verilirse canlı terim gece
+/// yarısında **kırpılır** (bkz. [liveSecondsToday]). Gece yarısı koruması
+/// önceden yalnız `settling` terimine uygulanmıştı; `live` her dalda koşulsuz
+/// ekleniyordu. 23:00'da başlayan koşuda ekran 01:30'da "Bugün 2 sa 30 dk"
+/// yazıyor, Durdur'da oturum `dayOf(start)` = dünkü güne yazıldığı için
+/// **2:35'ten 0:00'a** düşüyordu (hedef halkası da %100 → %0).
 int resolveTodayDisplayTotal({
   required int recordedToday,
   required int liveWorkSeconds,
   int settlingSeconds = 0,
   int settlingBaseline = 0,
   DateTime? settlingDay,
+  DateTime? liveStartedAt,
+  DateTime? nowInstant,
   required DateTime today,
 }) {
-  final live = liveWorkSeconds < 0 ? 0 : liveWorkSeconds;
+  var live = liveWorkSeconds < 0 ? 0 : liveWorkSeconds;
+  if (live > 0 && liveStartedAt != null && nowInstant != null) {
+    // Kırpma her karede kaynaktan yeniden hesaplanır; WP-250 sözleşmesi gereği
+    // ekran kendi gösterdiği sayıyı dondurmaz.
+    final todayPart = liveSecondsToday(
+      startedAt: liveStartedAt,
+      now: nowInstant,
+    );
+    if (todayPart < live) live = todayPart;
+  }
   final base = recordedToday < 0 ? 0 : recordedToday;
   if (settlingSeconds <= 0 || settlingDay == null) return base + live;
   // Aralık başka bir Istanbul gününe aitse (gece yarısını aşan oturum) bugüne
@@ -84,6 +113,22 @@ int resolveTodayDisplayTotal({
   if (!isSameDay(dayOf(settlingDay), dayOf(today))) return base + live;
   final settled = settlingBaseline + settlingSeconds;
   return (base > settled ? base : settled) + live;
+}
+
+/// WP-561: Süregelen (henüz kaydedilmemiş) bir koşunun **yalnız bugüne düşen**
+/// saniyesi: `now - max(startedAt, bugünün İstanbul 00:00'ı)`.
+///
+/// Gece yarısını aşan koşuda dünkü kısım bugünün toplamına sızmaz. Aritmetik
+/// epoch üzerinden yapılır; `DateTime.difference` ile `TZDateTime` karışımına
+/// güvenilmez.
+int liveSecondsToday({required DateTime? startedAt, required DateTime now}) {
+  if (startedAt == null) return 0;
+  final dayStart = istanbulDayStart(now).microsecondsSinceEpoch;
+  final started = startedAt.microsecondsSinceEpoch;
+  final from = started > dayStart ? started : dayStart;
+  final secs =
+      (now.microsecondsSinceEpoch - from) ~/ Duration.microsecondsPerSecond;
+  return secs > 0 ? secs : 0;
 }
 
 /// Gün → toplam saniye haritası (yalnızca verisi olan günler).
@@ -150,6 +195,59 @@ double dailyAverageSeconds(
   final days = to.difference(from).inDays + 1;
   if (days <= 0) return 0;
   return totalSeconds(inRange(sessions, from, to)) / days;
+}
+
+/// 🔴 WP-561: "Günlük Ortalama" penceresi.
+///
+/// `StatsPeriod.all` `from`'u `DateTime(2000)` verir; `year` de çoğu zaman
+/// sıcak pencerenin (90 gün) gerisine uzanır. Payda takvim gününden
+/// (≈9718 gün) gelirken **pay yalnız sıcak pencereden** geldiği için 300 saat
+/// çalışmış kullanıcıda "Toplam: 300 sa" ile "Günlük Ortalama: 37 sn" yan yana
+/// çıkıyordu ("Yıl"da ~2,5 kat düşük).
+///
+/// Payda, dönemin **veri ufkuyla kesişimine** kırpılır: ufuk = sıcak pencere
+/// başlangıcı ile ilk veri gününün **geç** olanı. [hotLimited] doğruysa kartlar
+/// dönemin tamamını değil sıcak pencereyi anlatır; yüzey bunu **söylemelidir**
+/// (sessiz çelişki kabul edilmez).
+({DateTime from, bool hotLimited}) averageWindow({
+  required DateTime periodFrom,
+  required DateTime hotWindowStart,
+  required Map<DateTime, int> dayTotals,
+}) {
+  final start = dayOf(periodFrom);
+  var horizon = dayOf(hotWindowStart);
+  // Dönem sıcak pencerenin içinde kalıyorsa payda dokunulmaz: "Hafta"/"Ay"da
+  // çalışılmayan günler bilerek paydada sayılır (davranış değişmez).
+  if (!start.isBefore(horizon)) return (from: start, hotLimited: false);
+  DateTime? firstData;
+  for (final e in dayTotals.entries) {
+    if (e.value <= 0) continue;
+    if (firstData == null || e.key.isBefore(firstData)) firstData = e.key;
+  }
+  // Kullanıcı sıcak pencereden daha yeniyse payda onun ilk gününden başlar
+  // ("başladığından beri günlük ortalama"), yoksa sıcak pencere başından.
+  if (firstData != null && firstData.isAfter(horizon)) horizon = firstData;
+  return (from: horizon, hotLimited: true);
+}
+
+/// 🔴 WP-561: "Bu hafta vs geçen hafta" — **kısmî** haftayı **kısmî** haftayla
+/// kıyaslar. Eskiden `thisWeek` Pazartesi→şimdi, `lastWeek` tam 7 gündü; Salı
+/// günü kullanıcı matematiksel olarak her zaman "kötüye gidiyorum" görüyordu.
+/// Europe/Istanbul yaz saati uygulamadığından "geçen haftanın aynı anı" tam
+/// olarak `now - 7 gün`dür.
+({int thisWeek, int lastWeek}) weekOverWeekSeconds(
+  Iterable<StudySession> sessions, {
+  required DateTime now,
+}) {
+  final thisWeekStart = startOfWeek(now);
+  final lastWeekStart = thisWeekStart.subtract(const Duration(days: 7));
+  final lastWeekEnd = thisWeekStart.subtract(const Duration(days: 1));
+  final cutoff = now.subtract(const Duration(days: 7));
+  final thisWeek = totalSeconds(inRange(sessions, thisWeekStart, now));
+  final lastWeek = inRange(sessions, lastWeekStart, lastWeekEnd)
+      .where((s) => s.start.isBefore(cutoff))
+      .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+  return (thisWeek: thisWeek, lastWeek: lastWeek);
 }
 
 /// Hafta içi (Pzt–Cum) ve hafta sonu (Cmt–Paz) toplam süreleri.
@@ -235,7 +333,15 @@ int longestStudyStreak(
   Iterable<StudySession> sessions, {
   Map<DateTime, int>? totals,
 }) {
-  final days = (totals ?? dailyTotals(sessions)).keys.toList()..sort();
+  // WP-561: değere bakılmadan `.keys` kullanmak 0 saniyelik günü de "çalışılmış"
+  // sayıyordu (`activeDayCount` doğru şekilde `> 0` filtreler). Sıfırlanmış /
+  // silinmiş bir gün rekor seriyi şişiriyordu.
+  final days =
+      (totals ?? dailyTotals(sessions)).entries
+          .where((e) => e.value > 0)
+          .map((e) => e.key)
+          .toList()
+        ..sort();
   if (days.isEmpty) return 0;
   var best = 1;
   var cur = 1;

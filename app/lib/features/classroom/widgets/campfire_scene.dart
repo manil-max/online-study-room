@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/animals/camp_animal.dart';
+import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/time_engine/sky_phase.dart';
 import '../../../core/time_engine/solar_anchors.dart';
@@ -177,12 +178,19 @@ class _Camper {
   bool get studying => status == PresenceStatus.studying;
   DateTime? get startedAt => studying ? presence?.startedAt : null;
 
+  /// Süregelen oturumun toplam uzunluğu ("Şu anki oturum" sayacı).
   int liveExtra(DateTime now) {
     final s = startedAt;
     if (s == null) return 0;
     final diff = now.difference(s).inSeconds;
     return diff > 0 ? diff : 0;
   }
+
+  /// WP-561: **bugünkü toplama** eklenecek canlı süre — yalnız bugüne düşen
+  /// kısım. Gece yarısını aşan oturumda `recordedToday + liveExtra` dünkü
+  /// saatleri bugüne sayıyordu ve oturum bittiğinde sayı sıfıra düşüyordu.
+  int liveTodayExtra(DateTime now) =>
+      liveSecondsToday(startedAt: startedAt, now: now);
 
   /// Çalışan her fazda kızartır; çalışmayan yalnız gerçek gece fazında uyur.
   CritterPose poseAt({required bool isNight}) => studying
@@ -890,7 +898,9 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
       AppLocalizations.of(context).classroomCevrimdisi,
     ),
   };
-  final live = camper.liveExtra(DateTime.now());
+  final sheetNow = DateTime.now();
+  final live = camper.liveExtra(sheetNow);
+  final liveToday = camper.liveTodayExtra(sheetNow);
   final name = _camperName(AppLocalizations.of(context), camper);
 
   showModalBottomSheet<void>(
@@ -943,7 +953,7 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
                 const SizedBox(height: 16),
                 _StatRow(
                   label: AppLocalizations.of(context).classroomBugunkuToplam,
-                  value: formatHumanSeconds(camper.recordedToday + live),
+                  value: formatHumanSeconds(camper.recordedToday + liveToday),
                 ),
                 if (status == PresenceStatus.studying)
                   _StatRow(
