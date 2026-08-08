@@ -55,6 +55,29 @@ Iterable<StudySession> inRange(
   });
 }
 
+/// Bir anın ait olduğu **İstanbul gününe** düşen oturumlar.
+///
+/// 🔴 WP-571: bu yardımcı, tek satırlık bir seçimin üç yerde doğru bir yerde
+/// yanlış yazılmasını engellemek için var. `StudySession.day` bir İstanbul gün
+/// **anahtarıdır**; onu cihazın ham `DateTime.now()`u ile kıyaslamak, cihazın
+/// yerel TARİHİ İstanbul TARİHİNDEN farklı olduğu her an yanlış günü seçer.
+/// Pencere genişliği offset farkı kadardır: UTC cihazda İstanbul 00:00–03:00,
+/// New York'ta **her gün 7 saat**. Ölçüldü: CI koşucusu (TZ=UTC) üzerinde
+/// `today_summary_unbounded_wp515_test` dört test "Matematik bulunamadı" ile
+/// kırmızıydı; aynı testler Europe/Istanbul makinede yeşildi — yani hata
+/// testte değil üründeydi ve TR dışındaki her kullanıcıyı etkiliyordu.
+///
+/// [instant] tam an ya da gün anahtarı olabilir; [dayOf] idempotenttir.
+List<StudySession> sessionsOnDay(
+  Iterable<StudySession> sessions,
+  DateTime instant,
+) {
+  final target = dayOf(instant);
+  return sessions
+      .where((s) => isSameDay(s.day, target))
+      .toList(growable: false);
+}
+
 /// Belirli bir gündeki toplam süre (saniye).
 /// [day] tam an veya gün anahtarı olabilir; her iki taraf da Istanbul gününe indirgenir.
 int secondsOnDay(Iterable<StudySession> sessions, DateTime day) {

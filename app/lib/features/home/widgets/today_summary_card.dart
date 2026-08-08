@@ -34,7 +34,11 @@ class TodaySummaryCard extends ConsumerWidget {
     final sessions = sessionsAsync.value!;
     final subjects = subjectsAsync.value!;
     final now = DateTime.now();
-    final today = sessions.where((s) => isSameDay(s.day, now)).toList();
+    // 🔴 WP-571: eskiden `isSameDay(s.day, now)` idi — İstanbul gün anahtarı
+    // cihazın HAM yerel anıyla kıyaslanıyordu. Bkz. [sessionsOnDay]; ürünün
+    // geri kalanı (`secondsOnDay`, `inRange`, `session_history_screen`) zaten
+    // iki tarafı da İstanbul gününe indirgiyordu, bu kart tek istisnaydı.
+    final today = sessionsOnDay(sessions, now);
     final total = totalSeconds(today);
     final breakdown = subjectBreakdown(today);
 
