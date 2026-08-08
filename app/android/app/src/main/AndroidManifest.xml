@@ -20,12 +20,17 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- Saat P1: pil optimizasyonu muafiyeti iste (OEM kill engeli) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- WP-559: per-app locale. `localeConfig` olmadan Android 13+
+         `LocaleManager.setApplicationLocales` cagrisini yok sayar; native
+         bildirim/widget/alarm metinleri uygulamada secilen dili degil CIHAZ
+         dilini kullanir (telefon TR + uygulama EN -> bildirim "Durdur"). -->
     <application
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
-        android:fullBackupContent="false">
+        android:fullBackupContent="false"
+        android:localeConfig="@xml/locales_config">
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="announcements" />

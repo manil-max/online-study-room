@@ -22,6 +22,14 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// Bilinen sınır: FCM arka plan isolate'i ayrı bir bellek alanıdır ve orada
 /// [activeAppLocale] varsayılan değerindedir, yani o yoldaki bildirim cihazın
 /// diline düşer. Bu, düzeltme öncesi davranışın aynısıdır — kötüleşme yok.
+///
+/// 🔴 Bu dosyanın kapsamı YALNIZ Dart'tır. Native yüzeyler — sayaç bildirimi
+/// (`StudyTimerService`), widget (`StudyWidgetProviders`), alarm ekranı
+/// (`AlarmRingActivity`) — metnini buradan değil `getString(R.string…)` ile
+/// alır ve o çağrı `Configuration.locale`e bakar. WP-526 bu sınırı yanlışlıkla
+/// "yalnız FCM isolate'i" sanıyordu; gerçekte native yüzeyin tamamı cihaz
+/// dilindeydi. Çözüm WP-559'da native tarafa taşındı: `localeConfig` +
+/// `LocaleManager.setApplicationLocales` (bkz. [applyNativeAppLocale]).
 Future<AppLocalizations> loadSystemLocalizations([Locale? requested]) {
   final resolved = requested == null
       ? activeAppLocale

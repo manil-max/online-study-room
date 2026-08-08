@@ -1,11 +1,14 @@
 package com.manilmax.online_study_room
 
+import android.app.LocaleManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
+import androidx.annotation.RequiresApi
 import com.manilmax.online_study_room.timer.StudyTimerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -35,11 +38,21 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "getInitialAction") {
-                result.success(initialAction)
-                initialAction = null
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "getInitialAction" -> {
+                    result.success(initialAction)
+                    initialAction = null
+                }
+                // WP-559: uygulama ici dil secimini NATIVE yuzeye tasir.
+                // Bildirim/widget/alarm metinleri getString(R.string...) ile
+                // cozulur; o da Configuration.locale'e, yani per-app override
+                // yoksa CIHAZ diline bakar. Bos liste = override temizle
+                // ("sistem" secildi), yoksa kullanici sistem diline donemez.
+                "setApplicationLocales" -> {
+                    val tags = call.argument<List<String>>("languageTags").orEmpty()
+                    result.success(applyApplicationLocales(tags))
+                }
+                else -> result.notImplemented()
             }
         }
 
@@ -129,6 +142,31 @@ class MainActivity : FlutterActivity() {
         if (!timerStateReceiverRegistered) return
         runCatching { unregisterReceiver(timerStateReceiver) }
         timerStateReceiverRegistered = false
+    }
+
+    /** Uygulanabildi mi? API 33 altinda per-app locale API'si YOKTUR -> false
+     *  doner ve o cihazlarda native metinler cihaz dilinde kalir. Cagiran
+     *  (Dart) donusu okur, sessiz eksik degildir. */
+    private fun applyApplicationLocales(languageTags: List<String>): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        return runCatching { applyApplicationLocalesTiramisu(languageTags) }
+            .getOrDefault(false)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun applyApplicationLocalesTiramisu(languageTags: List<String>): Boolean {
+        val manager = getSystemService(LocaleManager::class.java) ?: return false
+        val requested = if (languageTags.isEmpty()) {
+            LocaleList.getEmptyLocaleList()
+        } else {
+            LocaleList.forLanguageTags(languageTags.joinToString(","))
+        }
+        // Ayni degeri yeniden yazma: setApplicationLocales Activity'yi yeniden
+        // yaratir. Acilista kosulan "mevcut tercihi bir kez uygula" adimi bu
+        // kontrol olmadan her acilista bir recreate turu dogururdu.
+        if (manager.applicationLocales == requested) return true
+        manager.applicationLocales = requested
+        return true
     }
 
     override fun onNewIntent(intent: Intent) {

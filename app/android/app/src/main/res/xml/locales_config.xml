@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-559: uygulama-basina (per-app) dil listesi.
+     Bu dosya olmadan Android 13+ per-app locale override'i KABUL ETMEZ ve
+     `LocaleManager.setApplicationLocales` sessizce etkisiz kalir; native
+     bildirim/widget/alarm metinleri cihaz diline dusmeye devam eder.
+
+     🔴 Liste yalniz YAYINLANAN dilleri icerir: `app/l10n.yaml` -> `lib/l10n`
+     altinda yalniz `app_en.arb` + `app_tr.arb` var. `lib/l10n_dormant/`
+     altindaki ar/de yayin girdisi DEGILDIR; buraya eklenirse sistem
+     ayarlarinda cevirisi olmayan dil secilebilir hale gelir.
+     `res/values-*` dizinleriyle de hizali kalmali (bkz.
+     scripts/l10n_android_audit.py). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="tr" />
+</locale-config>

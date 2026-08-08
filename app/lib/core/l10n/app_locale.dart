@@ -1,5 +1,10 @@
+import 'dart:async' show unawaited;
 import 'dart:ui' show Locale, PlatformDispatcher, TextDirection;
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb, visibleForTesting;
+import 'package:flutter/services.dart'
+    show MethodChannel, MissingPluginException, PlatformException, ServicesBinding;
 import 'package:flutter/widgets.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,6 +85,71 @@ void setActiveAppLocale(Locale locale) {
   _activeAppLocale = locale;
 }
 
+/// WP-559: uygulama ici dil secimini NATIVE yuzeye tasiyan kanal.
+///
+/// Neden gerekli: bildirim (`StudyTimerService`), widget
+/// (`StudyWidgetProviders`) ve alarm ekrani (`AlarmRingActivity`) metinlerini
+/// `getString(R.string...)` ile cozer. O cagri `Configuration.locale`e, yani
+/// per-app override yoksa **CIHAZ diline** bakar. WP-526 bunu yalniz Dart
+/// tarafinda duzeltmisti; native yuzey hic dokunulmamisti, yani telefonu
+/// Turkce olup uygulamada Ingilizce secen kullanici bildirimde "Durdur"
+/// goruyordu.
+const _localeChannel = MethodChannel(
+  'com.manilmax.online_study_room/device_integrations',
+);
+
+/// Tercihin native karsiligi (BCP-47 etiketleri).
+///
+/// 🔴 Tercih UC degerlidir. `system` icin **bos liste** gonderilir: per-app
+/// override'i temizler. Buraya cihaz dilinin cozulmus halini (`en`/`tr`)
+/// yazmak override'i kilitler ve kullanici telefon dilini degistirdiginde
+/// uygulama eski dilde kalir.
+List<String> nativeLanguageTagsFor(AppLanguage preference) {
+  return switch (preference) {
+    AppLanguage.english => const ['en'],
+    AppLanguage.turkish => const ['tr'],
+    AppLanguage.system => const <String>[],
+  };
+}
+
+/// Yalniz Android'de anlamli; Windows/web'de kanal yok (MissingPluginException
+/// firtinasi olmasin diye pesinen kesilir).
+bool _nativeLocaleChannelEnabled =
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+@visibleForTesting
+set debugNativeLocaleChannelEnabled(bool value) =>
+    _nativeLocaleChannelEnabled = value;
+
+/// Secimi native tarafa iletir.
+///
+/// Doner: native gercekten uyguladi mi. API 33 altinda `LocaleManager` yoktur
+/// -> `false`; o cihazlarda native metinler cihaz dilinde kalir.
+Future<bool> applyNativeAppLocale(AppLanguage preference) async {
+  if (!_nativeLocaleChannelEnabled) return false;
+  // 🔴 Binding kurulmamis olabilir: saf `test()` govdesi ya da arka plan
+  // isolate'i. `MethodChannel.binaryMessenger` `ServicesBinding.instance`e
+  // bakar ve orada "Binding has not yet been initialized" ile duser --
+  // [platformLocale] ile birebir ayni tuzak (WP-526). Once yoklanir; yoksa
+  // iletilecek native yuzey de yoktur.
+  try {
+    ServicesBinding.instance;
+  } catch (_) {
+    return false;
+  }
+  try {
+    final applied = await _localeChannel.invokeMethod<bool>(
+      'setApplicationLocales',
+      <String, Object?>{'languageTags': nativeLanguageTagsFor(preference)},
+    );
+    return applied ?? false;
+  } on MissingPluginException {
+    return false;
+  } on PlatformException {
+    return false;
+  }
+}
+
 class AppLanguageNotifier extends Notifier<AppLanguage> {
   @override
   AppLanguage build() {
@@ -87,12 +157,18 @@ class AppLanguageNotifier extends Notifier<AppLanguage> {
       ref.watch(sharedPreferencesProvider),
     );
     setActiveAppLocale(resolvePreferredAppLocale(platformLocale(), preference));
+    // WP-559: acilista da uygulanir. Tercih onceki oturumda secilmis olabilir;
+    // per-app override yalnizca `setLanguage` aninda yazilsaydi, uygulamayi
+    // silip kuran ya da override'i sistem ayarlarindan degistiren kullanicida
+    // native metinler yeniden cihaz diline duserdi.
+    unawaited(applyNativeAppLocale(preference));
     return preference;
   }
 
   Future<void> setLanguage(AppLanguage preference) async {
     state = preference;
     setActiveAppLocale(resolvePreferredAppLocale(platformLocale(), preference));
+    await applyNativeAppLocale(preference);
     await ref
         .read(sharedPreferencesProvider)
         .setString(_appLanguagePreferenceKey, preference.name);

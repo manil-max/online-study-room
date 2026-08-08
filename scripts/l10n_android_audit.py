@@ -21,6 +21,13 @@ ROOT = Path(__file__).resolve().parents[1]
 ANDROID_MAIN = ROOT / "app/android/app/src/main"
 VALUES_EN = ANDROID_MAIN / "res/values/strings.xml"
 VALUES_TR = ANDROID_MAIN / "res/values-tr/strings.xml"
+LOCALES_CONFIG = ANDROID_MAIN / "res/xml/locales_config.xml"
+MANIFEST = ANDROID_MAIN / "AndroidManifest.xml"
+MAIN_ACTIVITY = (
+    ANDROID_MAIN / "kotlin/com/manilmax/online_study_room/MainActivity.kt"
+)
+APP_LOCALE_DART = ROOT / "app/lib/core/l10n/app_locale.dart"
+LOCALE_TAG_RE = re.compile(r'<locale\s+android:name="([^"]+)"')
 
 KEY_RE = re.compile(r'<string\s+name="([^"]+)"')
 VALUE_RE = re.compile(r'<string\s+name="([^"]+)">(.*?)</string>', re.S)
@@ -48,6 +55,103 @@ def values(path: Path) -> dict[str, str]:
     return dict(VALUE_RE.findall(path.read_text(encoding="utf-8")))
 
 
+def per_app_locale_errors() -> list[str]:
+    """WP-559: uygulama dili native yuzeye gercekten iletiliyor mu?
+
+    Olculdu (bagimsiz denetim): bildirim/widget/alarm metinleri
+    `getString(R.string...)` ile cozuluyordu; o cagri `Configuration.locale`e,
+    yani per-app override yoksa CIHAZ diline bakar. Telefon TR + uygulamada EN
+    secili kullanici arayuzu Ingilizce, bildirimi Turkce goruyordu. WP-526 ayni
+    hatayi yalniz Dart tarafinda kapatmisti.
+
+    Zincirin DORT halkasi da olculur; biri kopunca ozellik sessizce olur:
+      1. `res/xml/locales_config.xml` var ve yalniz yayinlanan dilleri sayiyor,
+      2. manifest `<application>` etiketi onu `android:localeConfig` ile bildiriyor,
+      3. Dart tarafi dil degisiminde native'e `setApplicationLocales` gonderiyor
+         ve `system` icin BOS liste yolluyor (override temizlenmezse kullanici
+         sistem diline donemez),
+      4. native taraf o cagriyi `LocaleManager` ile karsiliyor.
+    """
+    errors: list[str] = []
+
+    # 1. locales_config.xml
+    if not LOCALES_CONFIG.is_file():
+        errors.append(
+            "res/xml/locales_config.xml yok -> Android 13+ per-app locale "
+            "override'i kabul etmez, native metinler cihaz dilinde kalir"
+        )
+        declared: list[str] = []
+    else:
+        config_text = LOCALES_CONFIG.read_text(encoding="utf-8")
+        declared = sorted(LOCALE_TAG_RE.findall(config_text))
+        # Yayinlanan diller = lib/l10n altindaki .arb dosyalari.
+        published = sorted(
+            path.stem.removeprefix("app_")
+            for path in (ROOT / "app/lib/l10n").glob("app_*.arb")
+        )
+        if declared != published:
+            errors.append(
+                f"locales_config.xml dilleri {declared}, yayinlanan .arb "
+                f"dilleri {published} ile ayni olmali (l10n_dormant/ yayin "
+                "girdisi degildir)"
+            )
+
+    # 2. manifest bildirimi
+    if not MANIFEST.is_file():
+        errors.append("AndroidManifest.xml yok")
+    else:
+        manifest_text = MANIFEST.read_text(encoding="utf-8")
+        manifest_code = re.sub(r"<!--.*?-->", "", manifest_text, flags=re.S)
+        application = re.search(r"<application\b[^>]*>", manifest_code, re.S)
+        if application is None:
+            errors.append("AndroidManifest.xml icinde <application> bulunamadi")
+        elif 'android:localeConfig="@xml/locales_config"' not in application.group(0):
+            errors.append(
+                "manifest <application> etiketinde "
+                'android:localeConfig="@xml/locales_config" yok -> '
+                "setApplicationLocales sessizce etkisiz kalir"
+            )
+
+    # 3. Dart -> native cagrisi
+    if not APP_LOCALE_DART.is_file():
+        errors.append("app/lib/core/l10n/app_locale.dart yok")
+    else:
+        dart_text = APP_LOCALE_DART.read_text(encoding="utf-8")
+        dart_code = re.sub(r"^\s*///.*?$", "", dart_text, flags=re.M)
+        dart_code = re.sub(r"//.*?$", "", dart_code, flags=re.M)
+        if "'setApplicationLocales'" not in dart_code:
+            errors.append(
+                "app_locale.dart dil degisimini native'e iletmiyor "
+                "('setApplicationLocales' cagrisi yok) -> bildirim/widget/alarm "
+                "cihaz dilinde kalir"
+            )
+        if "AppLanguage.system => const <String>[]" not in dart_code:
+            errors.append(
+                "app_locale.dart `system` tercihinde per-app override'i "
+                "temizlemiyor (bos etiket listesi yok) -> kullanici sistem "
+                "diline donemez"
+            )
+
+    # 4. native karsilayici
+    if not MAIN_ACTIVITY.is_file():
+        errors.append("MainActivity.kt yok")
+    else:
+        kt_code = re.sub(
+            r"//.*?$", "", MAIN_ACTIVITY.read_text(encoding="utf-8"), flags=re.M
+        )
+        if '"setApplicationLocales"' not in kt_code:
+            errors.append(
+                "MainActivity.kt `setApplicationLocales` metodunu karsilamiyor"
+            )
+        if "LocaleManager" not in kt_code or "applicationLocales" not in kt_code:
+            errors.append(
+                "MainActivity.kt per-app locale'i LocaleManager ile "
+                "uygulamiyor -> Dart cagrisi bosa gider"
+            )
+
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     if not VALUES_EN.is_file() or not VALUES_TR.is_file():
@@ -71,6 +175,8 @@ def main() -> int:
             "native locale resource dirs must be exactly ['values-tr']; "
             f"found {locale_dirs}"
         )
+
+    errors.extend(per_app_locale_errors())
 
     en_values = values(VALUES_EN)
     expected_en_fallbacks = {
@@ -108,7 +214,8 @@ def main() -> int:
 
     print(
         f"OK: {len(en)} string keys EN=TR parity; default native fallback is "
-        "English; no hardcoded TR user strings in kt/layout."
+        "English; no hardcoded TR user strings in kt/layout; per-app locale "
+        "(locales_config + manifest + Dart->native setApplicationLocales) wired."
     )
     return 0
 
