@@ -1,6 +1,6 @@
 # Gizlilik Politikası — Odak Kampı
 
-**Sürüm:** 2026-07-17 · **Uygulama:** Odak Kampı (`com.manilmax.online_study_room`)  
+**Sürüm:** 2026-08-08 · **Uygulama:** Odak Kampı (`com.manilmax.online_study_room`)  
 **İşleyici:** Uygulama geliştiricisi (iletişim: uygulama içi “Geri bildirim” ve mağaza geliştirici e-postası)
 
 Bu metin bilgilendirme amaçlıdır; avukat onaylı hukuki görüş yerine geçmez.
@@ -15,6 +15,7 @@ Bu metin bilgilendirme amaçlıdır; avukat onaylı hukuki görüş yerine geçm
 | Sosyal | grup üyeliği, sohbet, dürtme | Birlikte çalışma |
 | Destek | geri bildirim, ekler | Destek |
 | Cihaz/tercih | dil, tema, bildirim, telemetri tercihi | Deneyim |
+| Cihaz ve push kimlikleri | uygulama kurulum kimliği, Firebase Cloud Messaging jetonu, platform, uygulama sürümü, dil, saat dilimi | Bildirimleri cihazlarınıza ulaştırmak; her cihaz için tek kayıt tutmak |
 | Telemetri (isteğe bağlı) | çökme türü, senkron olay sayıları | Kalite (Sentry); e-posta/token gönderilmez |
 
 ## 2. İşleyiciler
@@ -26,7 +27,8 @@ Bu metin bilgilendirme amaçlıdır; avukat onaylı hukuki görüş yerine geçm
 ## 3. Saklama ve silme
 
 Hesap silme isteği (uygulama içi) → **geri alma penceresi** → planlı kalıcı silme.  
-Ayrıntılı takvim: `DATA-RETENTION-SCHEDULE.md`. Pipeline tamamlanana kadar metin “istek + geri alma + planlı silme” modelini tarif eder.
+Neyin silindiği ve neyin saklandığı için: `DATA-RETENTION-SCHEDULE.md` ve `ACCOUNT-DELETION.tr.md`.
+Planlı silme işi her iki ortamda da çalışıyor; silme elle yapılmıyor.
 
 ## 4. Çocuklar
 

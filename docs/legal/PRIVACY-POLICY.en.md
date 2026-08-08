@@ -1,6 +1,6 @@
 # Privacy Policy — Odak Kampı
 
-**Version:** 2026-07-17 · **App:** Odak Kampı (`com.manilmax.online_study_room`)  
+**Version:** 2026-08-08 · **App:** Odak Kampı (`com.manilmax.online_study_room`)  
 **Controller:** App developer (in-app feedback + store developer email)
 
 This text is informational and is not a substitute for legal advice.
@@ -15,6 +15,7 @@ This text is informational and is not a substitute for legal advice.
 | Social | membership, chat, nudges | Co-study |
 | Support | tickets, attachments | Support |
 | Device prefs | language, theme, notifications, telemetry toggle | UX |
+| Device & push identifiers | app installation id, Firebase Cloud Messaging token, platform, app version, locale, time zone | Delivering push notifications to your devices; keeping one entry per device |
 | Telemetry (optional) | crash type, sync counters | Quality (Sentry); no email/tokens |
 
 ## 2. Processors
@@ -26,7 +27,8 @@ This text is informational and is not a substitute for legal advice.
 ## 3. Retention & deletion
 
 Account deletion request (in-app) → **cooling-off window** → scheduled hard delete.  
-See `DATA-RETENTION-SCHEDULE.md`. Until the full pipeline ships, the policy describes request + grace + planned purge.
+See `DATA-RETENTION-SCHEDULE.md` and `ACCOUNT-DELETION.en.md` for what is deleted and what is kept.
+The scheduled purge job runs on both environments; deletion is not manual.
 
 ## 4. Children
 
