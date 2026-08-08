@@ -17,20 +17,30 @@ description: >
 
 Kullanıcı (kısa): **"planner'ı oku ve şunu planla: …"** / **"V8-A'yı WP'lere böl"** / **"şu fikri işe çevir"**.
 
+> **Planlama bir LİDER rolüdür** (`.agents/AGENTS.md §1`). `progress.md`'nin tek yazarı
+> liderdir; planner o dosyaya yazan roldür. Lider planner'ı **alt ajan olarak** açarsa
+> alt ajan kartları **metin olarak döndürür**, `progress.md`'ye kendisi yazmaz — dosyaya
+> lider işler. İki planner aynı anda çalışmaz.
+
 ---
 
 ## Adım 0 — İlk iş: repo & progress'i gerçeğe uydur (ZORUNLU, planlamadan önce)
 
-> **Neden:** 4 ajan paralel çalışınca kimi worker commit atmayı, kimi `progress.md`'yi güncellemeyi unutur. Bu yüzden Aktif Çalışma Kaydı yalanlar: bitmiş işler hâlâ "aktif" görünür, çakışma matrisi bozulur, yeni plan yanlış zemine oturur. **Planner önce ortalığı toparlar, sonra planlar.** Yanlış progress üstüne plan kurma.
+> **Neden:** Alt ajanlar `progress.md`'ye yazmaz ve birbirini görmez; kartların gerçekle
+> uyumu tamamen liderin disiplinine bağlıdır. Bir tur kaçtığında Aktif Çalışma Kaydı
+> yalanlar: commit'lenmiş iş hâlâ `Commit: bekleyen` görünür, bitmiş WP "aktif" kalır,
+> yeni plan yanlış zemine oturur. **Planner önce ortalığı toparlar, sonra planlar.**
+> Yanlış progress üstüne plan kurma.
 
 Planlamaya geçmeden şu uyumlamayı yap:
 
 1. **Gerçeği topla:** `git status`, `git log --oneline -15`, `git branch` oku. Neyin commit edildiğini, hangi dalların açık olduğunu, commit edilmemiş (dirty) değişiklik olup olmadığını çıkar.
-2. **progress.md ↔ gerçek karşılaştır:** Aktif Çalışma Kaydı'ndaki her lane için sor:
-   - Kodu bitmiş ama hâlâ `[~] Aktif` mi görünüyor? → **`## Test için bekleyenler`e taşı** (özet + ne bekleniyor + commit/dal + `Cihazda doğrulanmalı`), lane'i `[x] Boşta` yap.
+2. **progress.md ↔ gerçek karşılaştır:** her WP kartı için sor:
+   - Kodu bitmiş ama hâlâ "aktif/geliştiriliyor" mu görünüyor? → **`## Test için bekleyenler`e taşı** (özet + ne bekleniyor + commit SHA + `Cihazda doğrulanmalı`).
    - Ürün kabulü almış ama Aktif/Plan'da mı duruyor? → **Tamamlanan**'a taşı; Plan/Aktif'ten sil (aynı WP iki başlıkta olmaz).
-   - Lane'de "aktif" yazıyor ama karşılık gelen commit/dal yok mu? → kullanıcıya **somut bildir** ("Codex WP-68 kodu commit edilmemiş görünüyor").
-3. **Commit boşluklarını yüzeye çıkar:** commit edilmemiş worker çıktısı varsa, kimin neyi commit etmesi gerektiğini kullanıcıya net söyle. Planner kod commit'lemez; ama **progress.md/doküman uyumlamasını kendi commit'ler** (tek düzenli commit).
+   - Kartta `Commit: bekleyen` yazıyor ama `git log`'da commit var mı? → **SHA'yı yaz.** Bu, en sık kaçan hijyen kalemidir.
+   - Commit'i olan ama kartı hiç yazılmamış WP var mı? → kartı üret (alt ajan `progress.md`'ye yazmaz, kart borcu liderdedir).
+3. **Commit boşluklarını yüzeye çıkar:** commit edilmemiş worker çıktısı varsa somut bildir. Planner kod commit'lemez; ama **progress.md/doküman uyumlamasını kendi commit'ler** (tek düzenli commit).
 4. **Tekilleştir & tutarlılık:** aynı WP'nin mükerrer kartları, çelişen durum etiketleri, stale faz/sürüm notları temizlenir. `Son WP numarası`'nı `progress.md` "Proje Gerçekleri"nden teyit et.
 5. **Ancak progress.md gerçeği yansıtınca** çakışma matrisini kur ve yeni WP'leri planla. Aktif lane = o an gerçekten dosya yazan ajan; **park (Test için bekleyenler) çakışma saymaz.**
 
@@ -78,8 +88,7 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 ```markdown
 ### WP-N: [Kısa Ad] [emoji]
 - **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1)
-- **Ajan:** — (atanınca lane doldurur)
-- **Durum:** [ ] Bekliyor
+- **Durum:** [ ] Bekliyor  ·  **Commit:** bekleyen (lider SHA'yı buraya yazar)
 - **Problem:** Ne çözülüyor, kullanıcı beklentisi ne.
 - **Kapsam dışı:** Bu WP'nin YAPMAYACAĞI şeyler (scope creep kalkanı). **Boş bırakılamaz** — worker'ın diff'i bu listeye karşı denetlenir (AGENTS.md §2 Kapsam Disiplini, §3 DoD).
 - **SAHİP dosyalar (yaz):**
@@ -98,8 +107,14 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 - **Tuzaklar:** bilinen riskler.
 - **Model önerisi:** 🔵 Sonnet / 🟣 Pro / 🔴 Opus
 
-> **Not:** WP kartında "dal" alanı **yoktur** — herkes `main`'de çalışır (AGENTS.md §1.5). İstenirse `wpNN-kisa-ad` yalnız commit mesajı/kapsam etiketi olarak kullanılabilir, branch değil.
+> **Not:** WP kartında "dal" ve "lane" alanı **yoktur** — herkes `main`'de çalışır ve
+> sahiplik lider tarafından atanır (AGENTS.md §1.1/§1.6). İstenirse `wpNN-kisa-ad`
+> yalnız commit mesajı/kapsam etiketi olarak kullanılabilir, branch değil.
 ```
+
+**SAHİP / DOKUNMA / Kapsam dışı üçlüsü kartın en kritik parçasıdır:** lider alt ajanı
+açarken bu üç alanı prompt'a birebir kopyalar, alt ajan da yalnız onlara güvenir
+(`worker/SKILL.md` Adım 0). Bu alanlar belirsizse alt ajan başlayamaz.
 
 ### Kalite kriteri: kabul "ölçülebilir" olmalı
 "Apple seviyesinde / profesyonel" yazma. Örnek iyi kriterler (KALITE-PROGRAMI §4.4): oturum sonrası UI ≤ 1 sn güncellenir · widget ≤ 5 sn · sayaç 8 saatte ≤ ±1 sn · aynı kademe iki kez XP vermez · tema değişince UI yüzeylerinin ≥ %95'i token'dan · WCAG AA kontrast · Samsung+Pixel matrisinde kanıt.
@@ -117,15 +132,24 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 ### 3. Büyük programlar aynı anda açılmaz
 **Saat, Tema, Başarım** aynı anda planlanmaz — üçü de theme/navigation/profile/provider paylaşır. Aynı anda en fazla **iki çalışma hattı**; ikisi de büyük programsa dur.
 
-### 4. Aktif Çalışma Kaydı ile karşılaştır
-`progress.md`'deki her **aktif** lane'in SAHİP/ortak yüzeyini yeni WP'lerle kıyasla. **`## Test için bekleyenler` (park) çakışma saymaz** — orada yazan lane yoktur; yeni worker o dosyalara girebilir (bug çıkarsa ayrı debug WP). Yalnız gerçekten dosya yazan aktif lane bloklar. Riskliyse WP'nin sonuna açık not:
+### 4. Aynı dalgada açılacak WP'leri kıyasla
+Çakışmayı artık alt ajan değil **lider** çözer; planner'ın işi liderin serileştirme
+kararını **kartın içine yazmaktır**. Aynı dalgada açılacak WP'lerin SAHİP/DOKUNMA
+yüzeylerini birbiriyle kıyasla. **`## Test için bekleyenler` (park) çakışma saymaz** —
+orada aktif yazar yoktur; yeni WP o dosyalara girebilir (bug çıkarsa ayrı debug WP).
+Riskliyse WP'nin sonuna açık not:
 ```
-> ⚠️ Çakışma: WP-N `app_theme.dart`'a giriyor; şu an Codex WP-M orada aktif. → WP-N'yi WP-M kabulünden SONRA başlat.
+> ⚠️ Çakışma: WP-N ve WP-M ikisi de `app_theme.dart`'a giriyor. → Aynı dalgada açma; WP-N commit'lendikten SONRA WP-M.
 ```
 Temizse:
 ```
-> ✅ Çakışma yok: WP-N ve WP-M ortak SAHİP dosyası yok, sıcak dosya paylaşmıyor.
+> ✅ Çakışma yok: WP-N ve WP-M ortak SAHİP dosyası yok, sıcak dosya paylaşmıyor — aynı dalgada açılabilir.
 ```
+
+### 4.1 Dalga boyu sınırı
+Bir dalgada aynı anda **en fazla 3–4 alt ajan** önerilir; hepsi ayrık SAHİP yollarına
+sahip olmalıdır. Test kapısı bu sayıdan bağımsızdır — dalga bitince **lider tek turda**
+koşturur (AGENTS.md §1.2/§1.5). Planner "her ajan kendi testini koşsun" diye plan yazmaz.
 
 ### 5. Bağımlılık zinciri
 Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılığı yaz; kabul edilmeden başlatma önermez.
@@ -183,4 +207,5 @@ Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılı
 > **Uyumlama (Adım 0):** progress.md gerçeğe uyduruldu — [taşınan kartlar: … aktif→park/tamamlanan], [commit boşluğu: … ajan şunu commit'lememiş / yok]. Doküman uyumlaması commit'lendi.
 > **WP-N** ve **WP-M** hazır (Program: V8-A/B).
 > Çakışma kontrolü: ✅ ortak SAHİP dosya yok / ⚠️ şu risk var → şu öneri. (Park'takiler çakışma saymaz.)
-> Kabul kriterleri ölçülebilir; DoD gömülü. Açık karar(lar): … Onay verirsen worker'a "şu WP'yi yap" diyebilirsin.
+> Kabul kriterleri ölçülebilir; DoD gömülü. Açık karar(lar): …
+> Onay verirsen lider bu WP'leri alt ajanlara dağıtır (dalga: WP-N + WP-M paralel, WP-K sonra).

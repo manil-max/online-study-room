@@ -14,6 +14,12 @@
 - `planner'ı oku, şunu planla` → `.agents/skills/planner/SKILL.md`.
 - `tester'ı oku ve teste başla` → `.agents/skills/tester/SKILL.md`; tüm kalite kapıları tek turda (`python scripts/test_all.py`).
 
+## Çalışma modeli (2026-08-08'den beri)
+**Tek lider ajan + onun açtığı alt ajanlar** (`.agents/AGENTS.md §1`). Sahip yalnız liderle konuşur.
+- Lider: işi böler, SAHİP yollarını **atar**, çıktıyı `git show --stat` ile denetler, `progress.md`'yi yazar, test kapısını **tek merkezden** koşturur, yayını yapar.
+- Alt ajan: yalnız verilen SAHİP yollarına yazar, kendi WP'sini commit'ler, `progress.md`'ye dokunmaz, tam kapıyı koşturmaz, push/tag/deploy yapmaz.
+- *İptal:* "3–4 ajan paralel varsayılan", PLAN 5 / `Ajan A–D`, kendi kendine lane claim.
+
 ## Kod yazmadan önce (varsayılan akış — açık proje sahibi emri `§0.1` ile üstündür)
-1. `progress.md` **Aktif Çalışma Kaydı**'nı oku; açık proje sahibi emri yoksa SAHİP dosyaları başka aktif ajanla çakışıyorsa **BAŞLAMA**, kullanıcıyı uyar.
-2. Kendi lane'ini claim et. **Tek dal `main` — branch/merge/push yok** (`§1.5`); her WP tek ayrık commit, yalnız kendi SAHİP yollarını stage'le.
+1. Görev metnindeki **SAHİP yollar** listesini oku; yoksa **BAŞLAMA**, liderden iste (`§1.1`).
+2. **Tek dal `main` — branch/merge/push yok** (`§1.6`); her WP tek ayrık commit, yalnız kendi SAHİP yollarını stage'le. Paylaşılan dizinde `git add -A` ve `git checkout --` yasak (`§1.5`).

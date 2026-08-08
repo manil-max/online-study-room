@@ -20,6 +20,12 @@ Kapsam verilmediyse kapsam **tüm repodur**.
 Dar tetikler de geçerlidir: *"tester'ı oku, dürtme tarafını test et"*,
 *"tester'ı oku, son commit'i test et"*.
 
+> **Test kapısı bir LİDER rolüdür** (`.agents/AGENTS.md §1.2`). Aynı çalışma dizininde
+> **aynı anda yalnız bir** `test_all.py` / `flutter test` koşar; ikincisi pub/build
+> kilidinde asılır. Bu yüzden alt ajanlar tam kapıyı koşturmaz; lider alt ajanlar
+> bittikten sonra **birleşik durumda** tek tur atar. Alt ajanların tek tek yeşili
+> birleşik yeşil demek değildir.
+
 ---
 
 ## 0. Bu rolün tek yasası
@@ -93,7 +99,17 @@ Kapı listesi: `python scripts/test_all.py --list`.
 |---|---|---|
 | Edge Function (`deno check`/`test`) | Deno kurulu değilse atlanır | CI `edge-functions` işi |
 | pgTAP yerel replay | Docker motoru kalkmıyor | CI `database-gates.yml` |
-| Windows entegrasyon / golden | Koşar ama dakikalar sürer | CI Windows işleri |
+| Windows entegrasyon / golden | Koşar ama dakikalar sürer; **yalnız `--full`** | CI Windows işleri |
+| Android cihaz/emülatör | **Hiçbir kapıda koşmuyor** | Henüz hiçbir yerde — bilinen boşluk |
+
+> ⚠️ Varsayılan tur (`test_all.py`, bayraksız) T0+T1+T2'dir: **golden, Windows
+> entegrasyon ve pgTAP KOŞMAZ.** "Tam kapı geçti" demeden önce hangi bayrakla
+> koştuğuna bak. Yayın öncesi tur `--full` olmak zorundadır.
+>
+> ⚠️ Android tarafında **hiçbir gerçek çalışma zamanı** test edilmiyor: `integration`
+> kapısı `-d windows` ile koşar, `android-unit` JVM'de sahte prefs kullanır,
+> `app/android/app/src/androidTest/` boştur. v58'de geri sayım çökmesi tam bu
+> boşluktan geçti. Raporda bunu **boşluk** olarak yaz, "atlandı" diye geçiştirme.
 
 Bunlar **boşluk değil, koşum yeri farkı**. Raporda "atlandı, CI'da koşuyor"
 diye geçir; "geçti" deme. pgTAP host sınırıdır — kod değişikliğiyle
@@ -159,7 +175,7 @@ süre veya kullanıcı kimliği **göndermemelidir** (`auth.uid()` sunucudadır)
   yap ve teslim özetinde ayrı başlıkta bildir; kapsamlıysa `progress.md`'ye WP
   kartı olarak yaz, kendi başına genişletme (`AGENTS.md §2` Kapsam Disiplini).
 - Commit disiplini worker ile aynıdır: tek dal `main`, yalnız kendi dosyaların,
-  `git add -A` yasak (`AGENTS.md §1.5`).
+  `git add -A` ve paylaşılan dosyada `git checkout --` yasak (`AGENTS.md §1.5/§1.6`).
 - `flutter analyze` `--dart-define-from-file` bayrağını **kabul etmez**;
   `run/test/build` alır. Koşucu bunu zaten doğru geçirir.
 

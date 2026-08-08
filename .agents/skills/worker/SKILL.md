@@ -14,59 +14,76 @@ description: >
 
 ## Tetik
 
-Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP olabilir).
+Worker artık **lider ajanın açtığı bir alt ajandır** (`.agents/AGENTS.md §1`).
+Görev, lider tarafından verilen prompt'un içinde gelir ve şunları içerir:
 
-PLAN 5 / v57 için ikinci kanonik kısa tetik:
-**"`progress.md`'yi oku, sen Ajan X'sin."** Buradaki `X`, A–D'den biridir.
-Bu tetikte kullanıcı ayrıca WP numarası vermek zorunda değildir; worker
-`progress.md` içindeki hazır Ajan X zincirinden sıradaki uygun WP'yi kendisi
-bulur.
+```
+WP-N: <kısa ad>
+SAHİP yollar (yaz):   <tam yol listesi>
+DOKUNMA (oku, yazma): <sıcak/başka WP dosyaları>
+Kabul kriterleri:     <ölçülebilir>
+Kapsam dışı:          <yapmayacakların>
+```
+
+Sahip doğrudan **"worker'ı oku, WP-N'yi yap"** derse de aynı akış işler; o zaman
+SAHİP listesini `progress.md`'deki WP kartından oku.
+
+> **İPTAL:** "`progress.md`'yi oku, sen Ajan X'sin" tetikleyicisi, `Ajan A`…`Ajan D`
+> zincirleri ve kendi kendine lane claim etme kaldırıldı. Kapsamı sen seçmezsin.
 
 ---
 
 ## Akış (özet)
 
 ```
-1. progress.md oku            → kendi önceden tanımlı Ajan X kaydı + sıradaki WP
-2. AGENTS.md + KALITE-PROGRAMI → kural + kabul kriterleri + DoD
-3. ÇAKIŞMA ÖN-KONTROLÜ (Adım 0) → gerekiyorsa DUR ve UYAR
-4. CLAIM et                   → mevcut Ajan X kaydını doldur (iki-aşamalı)
-5. Tasarım/teknik tasarımı netleştir → belirsizlik varsa sor
-6. ORTAM ÖN-KONTROLÜ          → local/staging/production hedefini doğrula; varsayılan local
-7. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
-8. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
-9. PLAN 5 zincirini sürdür     → committen sonra sıradaki hazır WP'ye geç; bağımlılıkta izle
-                                ve commit görünür görünmez otomatik devam et
+1. Görev metnini oku          → SAHİP yollar + kabul kriterleri + kapsam dışı
+2. AGENTS.md + KALITE-PROGRAMI → kural + DoD
+3. SAHİP listesi yoksa DUR    → liderden iste, tahmin etme
+4. Tasarım/teknik netleştir   → belirsizlik varsa lidere sor
+5. ORTAM ÖN-KONTROLÜ          → local/staging/production hedefi; varsayılan local
+6. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
+7. Doğrula                    → flutter analyze 0 uyarı (tam kapı LİDERİN işi)
+8. Commit                     → tek ayrık commit, yalnız SAHİP yollar
+9. Lidere rapor ver           → dosya:satır kanıtıyla; progress.md'ye DOKUNMA
 ```
 
 ---
 
-## Adım 0 — Çakışma Ön-Kontrolü (kod yazmadan ÖNCE, zorunlu)
+## Adım 0 — Sınırını doğrula (kod yazmadan ÖNCE, zorunlu)
 
-`.agents/AGENTS.md §1.2`'yi uygula:
+`.agents/AGENTS.md §1.1`'i uygula. Çakışmayı artık sen çözmezsin — **lider zaten
+serileştirdi.** Senin borcun sınırını doğrulamaktır:
 
-1. **Tüm Aktif Çalışma Kaydı'nı oku** (her lane).
-2. Verilen görevin **SAHİP yolları + ortak/riskli yüzeyini**, diğer aktif lane'lerin SAHİP/ortak yüzeyi ve §1.4 sıcak dosyalarıyla karşılaştır.
-3. Şu durumlardan biri varsa **BAŞLAMA, kullanıcıyı somut ve gerekçeli uyar:**
-   - SAHİP yol kesişimi · ortak sıcak dosya · aynı/çakışan migration · büyük program (Saat/Tema/Başarım) eşzamanlılığı · henüz kabul edilmemiş bir WP'ye bağımlılık.
-4. Uyarı, hangi lane/WP ile, hangi dosyada, **neden** sorun olacağını ve **somut öneri** (serileştir / kapsamı daralt / farklı WP) içerir. Örnek şablon `AGENTS.md §1.2`'de.
-5. Çakışma yoksa → CLAIM (Adım 1) → kaydı **yeniden oku** → hâlâ temizse başla.
+1. Görev metnindeki **SAHİP yollar** listesini oku. Yoksa veya belirsizse
+   **BAŞLAMA**, liderden net liste iste.
+2. Yapacağın değişikliğin gerçekten o listenin içinde kaldığını kontrol et.
+   Bir dosyaya daha yazman gerekiyor mu? → **dur, liderden iste.** Kendi başına
+   listeyi genişletme.
+3. `AGENTS.md §1.4` sıcak dosyalarından birine gireceksen (özellikle
+   `pubspec.yaml`, `main.dart`, `core/theme/**`, `core/navigation/**`,
+   `supabase/migrations/**`, `*.arb`) bu görev metninde **açıkça yazılı olmalı.**
+   Yazılı değilse dur ve sor.
+4. `progress.md`'ye asla yazma — o dosyanın tek yazarı liderdir.
 
-> **Kullanıcı görevi sana açıkça vermiş olsa bile bu kural geçerlidir.** "Bana verildi" çakışmayı geçersiz kılmaz — çakışma görürsen BAŞLAMA, uyar, onay bekle. Emin değilsen çakışma **var** say ve sor. "Belki sorun olmaz" ile başlama.
+> "Belki sorun olmaz" ile SAHİP listesinin dışına çıkma. Bu repoda tek bir taşkın
+> commit, başka ajanın commit'lenmemiş işini bir kez sildi.
 
 ---
 
-## Adım 1 — CLAIM (başlamadan önce)
+## Adım 1 — Paylaşılan dizin kuralları (başlamadan oku)
 
-> **Dal YOK.** Herkes doğrudan `main`'de çalışır; çakışma ayrık SAHİP dosyalar + Aktif Çalışma Kaydı ile önlenir (AGENTS.md §1.5). `git switch -c` / branch / merge / push yapma.
+> **Dal YOK.** Herkes doğrudan `main`'de çalışır. `git switch -c` / branch / merge /
+> push yapma (AGENTS.md §1.6).
 
-1. PLAN 5'te yalnız kullanıcı tarafından verilen **mevcut `### Ajan X` kaydını**
-   doldur: Durum `[~] Aktif`, güncel WP, aşama `Geliştiriliyor`, **SAHİP
-   yollar**, **ortak/riskli yüzey**, **Dal: `main`**, başlangıç + son güncelleme
-   (Europe/Istanbul), not. `Claude/Gemini/Codex/Worker/Lane X` adıyla yeni kayıt
-   oluşturma; eski lane adlarını geri getirme. PLAN 5 dışındaki işte format
-   `AGENTS.md §1.1`'dir.
-2. Claim'i yaz → kaydı **yeniden oku** (iki-aşamalı); bu sırada başkası aynı kapsamı aldıysa geri çekil ve uyar.
+Alt ajanlar **aynı klasörü paylaşır**. Bu yüzden:
+
+- **`git add -A` ve `git commit -a` yasak.** Yalnız açık yollarla stage et.
+- **`git checkout -- <yol>` yasak.** Başkasının commit'lenmemiş işini siler.
+- **Tam test kapısını (`test_all.py`, çıplak `flutter test`) koşturma.** Pub/build
+  kilidi yüzünden iki ajan birden koşarsa ikisi de asılır. Kapıyı lider tek merkezden
+  koşturur. Sen `flutter analyze` koşarsın; tek dosyalık `flutter test <yol>` ancak
+  lider açıkça izin verdiyse.
+- `index.lock` görürsen başka ajan commit ediyordur; kısa bekle, yeniden dene.
 
 ---
 
@@ -105,31 +122,22 @@ Backend, migration, Edge Function, secret veya release işi varsa `docs/ORTAM-MI
 
 ---
 
-## Lane & progress.md Yaşam Döngüsü
+## progress.md — sen yazmazsın
 
-`progress.md` plan listesi değil, **canlı durum kaynağıdır.** Her durum değişiminden hemen önce dosyayı yeniden oku; yalnız **kendi lane + kendi WP kartına dar patch** uygula. Tüm dosyayı stale kopyadan yeniden yazma; başka ajanların kartlarını ve güncel faz etiketlerini koru.
+`progress.md` plan listesi değil, **canlı durum kaynağıdır** — ve **tek yazarı liderdir**
+(`AGENTS.md §1.1`, §1.4 sıcak dosya). Alt ajan olarak:
 
-- PLAN 5'te canlı kayıtlar yalnız `Ajan A`…`Ajan D`dir. Model/ürün adı
-  (`Gemini`, `Claude`, `Codex`, `Grok`), `Worker`, eski `Ajan E`…`Ajan H`
-  veya yeni `Lane X` başlığı oluşturulmaz. Worker yalnız kendisine verilen Ajan X
-  kutusunu ve kendi WP kartını düzenler.
-- Anlamlı her geçişte (başlat / blokla / devret / **test için parka al** / tamamlandı) `progress.md` anında güncellenir.
-- **Aktif Çalışma Kaydı yalnız GERÇEKTEN yazılan işi tutar.** PLAN 5 worker'ı bir
-  WP commit'inden sonra zincirindeki sonraki WP hazırsa aynı Ajan X kutusunda
-  ona geçer; bağımlılık hazır değilse kutuyu `[!] BEKLİYOR: WP-N / commit`
-  yapar; zincir bittiyse `[x] ZİNCİR TAMAMLANDI` yapar. Cihaz kabulü bekleyen
-  kanıtı kartta ve Ajan C join kapısında gösterir. PLAN 5 dışındaki tekil işte
-  kod bitip cihaz/demo bekleyen kart `## Test için bekleyenler`e taşınır ve lane
-  boşalır.
-- **PLAN 5'te bekleme terminal durum değildir.** Bağımlılık bekleyen worker final
-  yanıt verip sohbeti idle bırakmaz. Kendi Ajan X kaydını bekleme koşuluyla
-  güncelledikten sonra, en fazla 60 saniyelik bounded kontrollerle `progress.md`,
-  `git log` ve migration/sıcak-dosya kilidini yeniden okur; bağımlılık commit'i
-  görünür görünmez aynı sohbet/ajan WP'yi claim edip uygular. Ortam heartbeat
-  desteği veriyorsa, bu kontrol için **kendi sohbetine** kısa aralıklı heartbeat
-  kurar ve bağımlılık çözülünce onu durdurur. Kullanıcıdan “devam et” promptu
-  istemez; kullanıcı açıkça durdurmadıkça zinciri bittiğinde ancak final verir.
-- Handoff: WP başka ajana geçiyorsa tek editte yeni lane'e taşınır + kısa handoff notu.
+- WP kartını, durum satırını, Aktif Çalışma Kaydı'nı, "Test için bekleyenler"
+  bölümünü ve özet tablolarını **okursun, yazmazsın.**
+- Kendine lane açmazsın. `Ajan A`…`Ajan D`, `Lane X`, `Worker`, model adı
+  (`Claude`/`Codex`/`Gemini`/`Grok`) başlıkları **kaldırıldı** — geri getirme.
+- Kartta yazması gereken her şeyi (ne yapıldı, hangi dosyalar, hangi test, cihazda
+  ne doğrulanacak) **teslim özetinde lidere** verirsin; kartı lider işler.
+- Bekleme terminal durum değildir ama bekleyeceğin şeyi de sen kovalamazsın:
+  bağımlılık çözülmemişse lidere **neyi beklediğini** söyleyip bitirirsin.
+
+> Sebep: `progress.md` bu repodaki en sık çakışan dosya. Tek elde toplanınca hem
+> çakışma hem "iki başlıkta aynı WP" sorunu biter.
 
 ---
 
@@ -140,48 +148,61 @@ Tüm adımlar `[x]` olduğunda:
 ### 1. Doğrula
 ```bash
 cd app
-flutter analyze                       # 0 uyarı (bayraksız)
-flutter test                          # yeşil
-flutter test --tags golden            # tema/görsel değiştiyse
+flutter analyze                       # 0 uyarı (bayraksız) — bu SENİN borcun
 ```
 ```bash
 git diff --stat                       # kapsam denetimi
 ```
 `git diff`'i **satır satır** oku: kabul kriterine izlenmeyen her satırı geri al (alakasız format/refactor/yeniden adlandırma dahil).
 
-Hatayla **commit atma** — önce düzelt. Mümkünse gerçek cihaz kanıtı (ekran görüntüsü/video) topla.
+> **Tam test kapısını sen koşturmazsın.** `flutter test`, `flutter test --tags golden`
+> ve `python scripts/test_all.py` **liderin** işidir — iki ajan birden koşarsa pub/build
+> kilidinde asılırlar (AGENTS.md §1.5). Yazdığın testin adını teslim özetine yaz,
+> lider birleşik turda koşturur. Tek dosyalık `flutter test <yol>` ancak lider açıkça
+> izin verdiyse.
 
-### 2. Durumu güncelle + LANE'İ BIRAK (iki olasılık)
+Analyze hatasıyla **commit atma** — önce düzelt.
 
-> **Altın kural:** İş bitince lane'ini **aktif** bırakma. Aktif kalan lane diğer worker'ları çakışma gerekçesiyle bloklar ve "en basit WP bile tekte kapanmaz". İki yol da lane'i boşaltır.
-
-- **Cihaz QA + ürün kabulü VARSA (tam bitti):** kartı diğer başlıklardan kaldır → `## Tamamlanan İş Paketleri` altına ekle (kapsam + değişen dosyalar/ne yapıldı/test/kanıt). Lane: `Durum: [x] Boşta`, `Aktif WP: —`. Aynı WP iki başlıkta **asla** bulunmaz.
-
-- **Kod+otomatik test bitti ama cihaz QA / ürün demosu gerekiyor (EN SIK DURUM):**
-  1. Kartı **Aktif Çalışma Kaydı'ndan çıkar** → `## Test için bekleyenler` bölümüne taşı: özet + **ne bekleniyor** (cihaz/demo) + son commit + kanıt etiketi `Cihazda doğrulanmalı`. Üstteki özet tablosuna da bir satır ekle.
-  2. **Kendi lane'ini boşalt:** `Durum: [x] Boşta`, `Aktif WP: —`.
-  3. Bu bölüm **aktif çalışma DEĞİLDİR** — kimse claim etmez, başka WP'yi engellemez. Böylece bir sonraki worker çakışma ön-kontrolünde bu WP'yi "test bekliyor" görür, üstünden geçer ve **hemen yeni işe başlar**.
-  4. Kabul gelince kart **Tamamlanan**'a taşınır; cihazda bug çıkarsa **ayrı debug WP** açılır (aynı kartı diriltme).
-
-> Yani "işi bitirmek" = lane'i serbest bırakmak. Testi sen beklemezsin; parka koyar, çıkarsın.
-
-### 3. Commit (`main`, yalnız kendi SAHİP yolların)
+### 2. Commit (`main`, yalnız kendi SAHİP yolların)
 ```bash
 git add <yalnız kendi SAHİP dosyaların>   # git add -A YASAK
 git commit -m "WP-N: [kısa açıklama]"      # main üzerinde
 ```
-**Push yok** (istenmedikçe). WP başına **tek ayrık commit**. Branch/merge YOK — herkes `main`'de (AGENTS.md §1.5). `index.lock` görürsen başka ajan commit ediyordur; kısa bekle, yeniden dene.
+**Push yok. Tag yok. Remote deploy yok.** WP başına **tek ayrık commit**. Branch/merge
+YOK — herkes `main`'de (AGENTS.md §1.6). `index.lock` görürsen başka ajan commit
+ediyordur; kısa bekle, yeniden dene.
 
-### 4. Teslim özeti (kullanıcıya)
-Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kanıt etiketi** (Kodda doğrulandı / Cihazda doğrulanmalı) · varsa uygulanması gereken migration · açık kalan `Ürün kararı`.
+Commit'ten sonra kendin denetle:
+```bash
+git show --stat HEAD                  # SAHİP listesi dışında dosya var mı?
+```
+Fazla dosya çıktıysa **bildir** — lider bunu zaten kontrol edecek, gizleme.
+
+### 3. Teslim özeti (LİDERE)
+
+`progress.md`'yi sen yazmadığın için kartın içeriği bu özetten üretilir. Eksik bırakma:
+
+- **Ne yapıldı** — madde madde, kabul kriterine karşılık gelecek şekilde.
+- **Değişen dosyalar** — tam yollar + commit SHA.
+- **Yazılan/değişen testler** — dosya adları (lider birleşik turda koşturacak).
+- **Kanıt etiketi** — `Kodda doğrulandı` (dosya:satır ver) / `Cihazda doğrulanmalı`
+  (cihazda tam olarak neye bakılacağını yaz) / `Ürün kararı gerekiyor`.
+- **Uygulanması gereken migration** varsa numarası + geri alma notu.
+- **Yapmadıkların** — kapsam dışı bıraktığın, fark ettiğin ama dokunmadığın sorunlar.
+
+İddia ettiğin her şeyin dosya:satır karşılığı olsun. Lider bunları **açıp okuyacak**;
+plandan yazılmış iddia bu repoda birkaç kez yakalandı.
 
 ---
 
 ## Karar Alma
 
 - Küçük teknik karar (değişken adı, widget seçimi) → kendin al, devam et.
-- Belirsiz kabul kriteri / birden çok yaklaşım / geri dönüşü zor karar → `progress.md`'ye `⚠️ Soru` yaz, **dur ve sor** (`Ürün kararı gerekiyor`).
+- Belirsiz kabul kriteri / birden çok yaklaşım / geri dönüşü zor karar → **lidere sor**
+  (`progress.md`'ye yazma). Lider gerekirse sahibe taşır (`Ürün kararı gerekiyor`).
 - Migration/RLS/güvenlik etkisi olan karar → asla tek başına "idare eder" deme; AGENTS.md §2 güvenlik kurallarına göre değerlendir, gerekirse sor.
+- Sahip **bu sohbette doğrudan sana** açık emir verdiyse `AGENTS.md §0.1` geçerlidir:
+  emir tüm repo kurallarının üstündedir, uygula ve lidere bildir.
 
 ---
 
@@ -189,7 +210,10 @@ Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kan
 
 | Tuzak | Çözüm |
 |---|---|
-| Çakışma ön-kontrolünü atlamak | Adım 0 zorunlu — başlamadan tüm Aktif Kayıt okunur |
+| SAHİP listesi dışına yazmak | Adım 0 zorunlu — liste yoksa başlama, liderden iste |
+| `progress.md`'ye yazmak | Tek yazarı lider; kart içeriğini teslim özetinde ver |
+| Tam test kapısını koşturmak | Kilit riski — `test_all.py`/çıplak `flutter test` liderin işi |
+| `git add -A` / `git checkout --` | Paylaşılan dizinde başka lane'in işini sızdırır/siler |
 | `analyze`'e `--dart-define-from-file` vermek | analyze bu bayrağı kabul etmez; bayraksız çalıştır |
 | Tek repo implementasyonu güncellemek | `supabase/` + `in_memory/` birlikte |
 | XP/başarıyı istemcide yazmak | Server-authoritative; ledger + idempotent event |

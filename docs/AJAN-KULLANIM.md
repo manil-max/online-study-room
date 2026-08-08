@@ -1,50 +1,68 @@
 # Ajan Kullanım Kılavuzu (senin için tek sayfa)
 
-> Ajanları (Claude / Gemini / Codex) nasıl süreceğinin kısa el kitabı. Güncel WP listesi her zaman `progress.md`'dedir. Sistem kuralları: `.agents/AGENTS.md`.
+> Ajanları nasıl süreceğinin kısa el kitabı. Güncel WP listesi her zaman `progress.md`'dedir.
+> Sistem kuralları: `.agents/AGENTS.md`.
 
-## 1. Prompt kalıpların (kopyala-yapıştır)
+## 1. Çalışma modeli — tek muhatap
+
+**Sen yalnız lider ajanla konuşursun.** Lider işi böler, alt ajanları kendisi açar,
+çıktılarını denetler, testi koşturur, `progress.md`'yi yazar.
+
+Yani artık **birden fazla sohbete tek tek prompt kopyalamıyorsun.** Bir tane söylüyorsun,
+lider dağıtıyor.
+
+| Eskiden | Şimdi |
+|---|---|
+| 3–4 ayrı sohbet açardın | Tek sohbet |
+| Her birine ayrı prompt yapıştırırdın | Lidere tek cümle |
+| Ajanlar birbirini "çakışma var mı" diye sorardı | Lider zaten sıraya koyar |
+| Sana çakışma sorusu gelirdi | Gelmez — lider çözer |
+
+## 2. Prompt kalıpların (kopyala-yapıştır)
 
 | Ne için | Yazacağın prompt |
 |---|---|
 | Kısa istekten plan | `planner'ı oku, şunu planla: <tek cümle istek>` |
-| Fazı WP'lere bölme | `planner'ı oku, Saat programını WP'lere böl` |
 | İş yaptırma | `worker'ı oku, WP-N'yi yap` |
-| WP dışı küçük iş (kod ortaksa) | `worker'ı oku` + ne istediğin (çakışma kontrolü çalışsın) |
-| WP dışı, koda dokunmayan iş | Doğrudan yaz (araştır, açıkla, düzelt) |
-
-**Not:** "worker'ı oku" tek başına ajanı kurallara yönlendirir ama hangi işi yapacağını bilmez. **Her zaman WP numarasını ekle:** `worker'ı oku, WP-44'ü yap`.
-
-## 2. Ajan sana çakışma sorusu sorarsa
-Üç cevaptan biri:
-- `WP-M bitene kadar bekle`
-- `kapsamı sadece <X dosya/alan> ile sınırla, başla`
-- `onun yerine WP-K'yı yap`
+| Birden çok iş | `WP-N, WP-M, WP-K'yı yap` — lider dalgayı kendi kurar |
+| Test | `tester'ı oku ve teste başla` |
+| Koda dokunmayan iş | Doğrudan yaz (araştır, açıkla, raporla) |
 
 ## 3. Senin (insan) kapıların — ajan bunları KAPATAMAZ
+
 Ajan en fazla **"otomatik test geçti"**ye kadar götürür. Gerisi sende:
-1. **Dağıtım** — `progress.md`'den WP seç, bağımlılığa uy, ayrı ajanlara ayrık WP ver.
-2. **Çakışma kararı** — ajan uyarırsa yukarıdaki 3 cevaptan biri.
-3. **Gerçek cihaz QA + kabul** — APK'yı Samsung/Pixel'de dene; beklediğin gibiyse kabul, değilse geri gönder.
-4. **Canlı Supabase migration** — WP-38'in verdiği SQL'i SQL Editor'da sırayla uygula.
-6. **Ürün kararları + sürüm** — `Ürün kararı gerekiyor` etiketliler ve sürüm etiketi (`git tag vN && git push origin vN`).
+
+1. **Gerçek cihaz QA + kabul** — APK'yı telefonda dene; beklediğin gibiyse kabul et,
+   değilse geri gönder.
+2. **Ürün kararları** — `Ürün kararı gerekiyor` etiketli maddeler.
+3. **Yayın tetiği** — migration apply + tag + release yalnız sen
+   **"cihaz testine gönder"** (veya net eşdeğeri) dediğinde başlar.
+   Sen demeden lider bunlara dokunmaz.
 
 ## 4. Günlük ritim
-1. `progress.md` → hazır/bağımsız WP'leri gör.
-2. Her ajana bir WP: `worker'ı oku, WP-N'yi yap`.
-3. Uyarı gelirse karar ver; bitince cihazda dene → kabul.
-4. Kabulde çalışma kaydını kapat; migration gerekiyorsa uygula.
-5. Yeni iş lazımsa: `planner'ı oku, şunu planla: …`.
 
-## 5. Hangi ajana hangi iş (model)
-`progress.md` her WP'de öneriyor:
-- **🔴 Opus** → native / riskli / büyük (ör. WP-40–43).
-- **🟣 Pro** → orta (ör. WP-38/39).
-- **🔵 Sonnet** → küçük UI (ör. WP-44/45).
-En güçlü modeli en riskli işe ver.
+1. Lidere ne istediğini söyle (tek cümle yeter).
+2. Lider planlar → onaylarsın.
+3. Lider alt ajanlara dağıtır, bitince **birleşik testi** koşturur ve sana sonucu
+   rakamla söyler ("15 kapı, 0 kırmızı, 2 atlandı").
+4. Sen cihazda denersin → kabul edersin.
+5. Yayın istiyorsan tetik cümlesini yazarsın.
 
-## 6. Şu an dağıtıma hazır (anlık — güncel liste `progress.md`)
-- **Hemen paralel (çakışmasız):** WP-37, WP-38, WP-44, WP-45.
-- **V8-A zinciri:** WP-40 (temel) → sonra WP-41 ve WP-42 (ikisi sırayla, paralel değil) → sonra WP-43.
+## 5. Lider sana rapor verirken neye bakacaksın
+
+- **Rakam var mı?** "Testler geçti" yetmez; kaç kapı, kaçı kırmızı, kaçı atlandı.
+- **Atlanan kapı yeşil değildir.** Sebebi yazılmalı.
+- **Kanıt etiketi var mı?** `Kodda doğrulandı` / `Cihazda doğrulanmalı` /
+  `Ürün kararı gerekiyor`.
+- **Cihazda neye bakacağın yazıyor mu?** Yazmıyorsa iste.
+
+## 6. Bilinen boşluk (dürüst kayıt)
+
+Android tarafında **hiçbir gerçek çalışma zamanı testi yok.** Entegrasyon testi Windows'ta
+koşuyor, native testler JVM'de sahte veriyle koşuyor. v58'deki geri sayım çökmesi tam bu
+boşluktan geçti. Emülatör kapısı planlı iştir (`docs/TEST-SISTEMI.md`).
 
 ## 7. Sürüm
-v7 yayında (özellik sürümü). İlk **kalite-kapılı** stable önerisi **v8 "Güven Sürümü"** — kalite kapısından (AGENTS.md §3) geçmeden numara kesinleşmez.
+
+Güncel sürüm ve yayın zinciri `progress.md` → **Proje Gerçekleri** bölümündedir.
+Buraya sabit sürüm numarası yazma — eskiyor.

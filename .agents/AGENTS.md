@@ -43,83 +43,92 @@ Bir şey söylerken şu üç etiketten biri kullanılır (kullanıcı varsayıml
 
 ---
 
-## 1. Çok-Ajanlı Çalışma ve Çakışma Protokolü (KRİTİK)
+## 1. Lider Ajan + Alt Ajan Protokolü (KRİTİK)
 
-Bu projede varsayılan olarak aynı anda **3–4 ajan paralel** çalışır. Ürün sahibinin
-2026-07-30 tarihli açık kararıyla **PLAN 5 / v57 yalnız dört adlandırılmış Codex
-ajanı (A–D)** ile yürütülür. Eski sekizli A–H düzeni iptal edilmiştir; PLAN 5
-`progress.md` içindeki dört zincir, ayrık SAHİP yolları ve ortak
-migration/sıcak-dosya/test kilitleriyle yürür. Tek paylaşılan gerçek
-`progress.md`'deki **Aktif Çalışma Kaydı**dır. Ajanlar birbirinin belleğini
-görmez; koordinasyon yalnız bu dosya üzerindendir.
+**Yürürlükteki model (2026-08-08 sahip kararı): tek lider ajan + onun açtığı alt ajanlar.**
 
-### 1.1 Kural A — Görevi alır almaz "claim" et
+Proje sahibi **yalnız lider ajanla** konuşur. Lider işi böler, alt ajanlara dağıtır,
+çıktıyı denetler, kapıyı koşturur ve `progress.md`'yi yazar. Alt ajan sahibe rapor
+vermez — lideri raporlar.
 
-Bir ajan bir Faz/WP almaya başlar başlamaz, **kod yazmadan önce** `progress.md`'deki Aktif Çalışma Kaydı'na kendi lane'ini işler:
+> **İPTAL EDİLEN DÜZENLER (diriltme):** "3–4 ajan paralel varsayılan" · PLAN 5 /
+> `Ajan A`…`Ajan D` zincirleri · sekizli `Ajan E`…`Ajan H` · ajanın kendi kendine
+> `progress.md`'ye lane claim etmesi · iki-aşamalı claim · "çakışma görürsen dur ve
+> sahibe sor" akışı. Bunların yerine artık **§1.1 sahiplik atama** geçerlidir.
+> Sebep: claim protokolü ajanların birbirini görebildiğini varsayıyordu; göremiyorlar.
+> Tek gerçek koordinatör lider ajandır.
 
-**PLAN 5 istisnası:** Kullanıcı “`progress.md`'yi oku, sen Ajan X'sin” dediyse
-worker yalnız önceden oluşturulmuş `Ajan A`…`Ajan D` kaydından kendisine
-atananı doldurur. `Claude`, `Gemini`, `Codex`, `Grok`, `Worker`, eski
-`Ajan E`…`Ajan H` veya yeni `Lane X` başlığı açmaz.
+### 1.1 Sahiplik atamayla gelir, claim'le değil
 
-**PLAN 5 zincir devamlılığı:** Bir WP commitlenir commitlenmez aynı Ajan X,
-zincirindeki sonraki hazır WP'yi alır. Bağımlılık gerçekse `[!] BEKLİYOR` kaydı
-yazar fakat sohbeti/final cevabı kapatmaz; `progress.md` ve git geçmişini bounded
-aralıklarla izler, bağımlılık commit'i görünür görünmez otomatik devam eder.
-Bu, kullanıcıdan yeni prompt isteme sebebi değildir. Yalnız kullanıcı açıkça
-durdurursa veya zincir tamamen biterse ajan kapanır.
+Bir alt ajan **kendi kapsamını kendisi seçmez.** Lider, alt ajanı açarken görev
+metninin içinde şunları **açıkça** verir; alt ajan bunların dışına çıkmaz:
 
 ```
-### <Ajan> Lane
-- Durum: [~] Aktif
-- Faz/WP: V8-A · WP-40
-- Aşama: Geliştiriliyor
-- SAHİP yollar: app/lib/features/clock/**, app/lib/core/notifications/timer_*
-- Ortak/riskli yüzey: pubspec.yaml (yeni paket), migration 0024, AndroidManifest.xml
-- Dal: main   (tek dal — §1.5; çakışma ayrık SAHİP dosyalarla önlenir)
-- Başlangıç: 2026-07-12 15:40 (Europe/Istanbul)
-- Son güncelleme: 2026-07-12 15:40
-- Not: —
+WP-N: <kısa ad>
+SAHİP yollar (yaz):   <tam yol listesi — bu listeye girmeyen dosyaya yazma>
+DOKUNMA (oku, yazma): <sıcak/başka lane dosyaları>
+Kabul kriterleri:     <ölçülebilir>
+Kapsam dışı:          <bu WP'nin yapmayacakları>
 ```
 
-### 1.2 Kural B — Başlamadan önce çakışma ön-kontrolü yap ve gerekiyorsa UYAR
+- SAHİP listesi verilmemişse alt ajan **başlamaz**, liderden ister.
+- Alt ajan `progress.md`'ye **hiç dokunmaz.** WP kartını, durum satırını ve Aktif
+  Çalışma Kaydı'nı yalnız lider yazar. (Bu kural, en sık çakışan dosyayı tek elde
+  toplar.)
+- Alt ajan başka bir alt ajan **açmaz.** Alt ajan doğurmak yalnız liderin işidir.
 
-> **BU KURAL, KULLANICI GÖREVİ AÇIKÇA ATAMIŞ OLSA BİLE GEÇERLİDİR.** "Bana bu WP verildi" diye çakışmayı görmezden gelme. Görev sana verilmiş olması, başka bir ajanla aynı anda çalışmanın güvenli olduğu anlamına gelmez. Çakışma görürsen **işe BAŞLAMA**, önce uyar, kullanıcının kararını bekle.
+### 1.2 Liderin denetim borcu (atlanamaz)
 
-Kod yazmadan önce ajan **tüm Aktif Çalışma Kaydı'nı okur** ve verilen görevi diğer aktif lane'lerle karşılaştırır. Aşağıdakilerden biri varsa **DURUR ve kullanıcıyı uyarır** (kendi başına başlamaz):
+Lider "ajan bitirdim dedi"yi kanıt saymaz. Her alt ajan bitişinde sırayla:
 
-- **Dosya çakışması:** Verilen WP'nin SAHİP yolları başka aktif lane'in SAHİP/ortak yollarıyla kesişiyor.
-- **Ortak "sıcak dosya":** İki iş aynı anda §1.4'teki sıcak dosyalara giriyor.
-- **Migration sırası:** İki iş aynı/çakışan migration numarasına ya da bağımlı şema alanına dokunuyor.
-- **Büyük program çakışması:** Saat, Tema ve Başarım aynı anda açık (üçü de theme/navigation/profile/provider yüzeylerini paylaşır — asla üçü birden).
-- **Bağımlılık hazır değil:** Görev, henüz "Ürün kabulü"nden geçmemiş başka bir WP'nin çıktısına dayanıyor.
+1. `git show --stat <sha>` — commit **yalnız** o WP'nin SAHİP yollarını mı içeriyor?
+   Fazla dosya varsa sızıntı olmuştur; düzelt, "muhtemelen zararsızdır" deme.
+2. Ajanın iddia ettiği dosya:satır'ı **kendin aç ve oku.** Bu repoda ajan raporları
+   birkaç kez koddan değil plandan yazıldı.
+3. Tüm alt ajanlar bitince **birleşik durumda** tam kapı: `python scripts/test_all.py`
+   (yayın öncesi `--full`). Alt ajanların tek tek yeşili birleşik yeşil demek değildir.
 
-Uyarı formatı (Türkçe, somut, gerekçeli):
+### 1.3 Yalnız kendi kulvarına yaz
 
-> ⚠️ **Çakışma uyarısı:** Bana **WP-74**'ü verdin ama şu an **Gemini WP-67**'yi yapıyor (Aşama: Geliştiriliyor). İkisi de `app/lib/core/theme/app_theme.dart` ve `pubspec.yaml`'a yazıyor; aynı anda çalışırsak (1) tema token'larında çakışan tanımlar, (2) `pubspec` merge conflict, (3) tutarsız golden test çıkar. **Öneri:** WP-74'ü WP-67 "Ürün kabulü"nden sonra başlat **ya da** kapsamını yalnız `features/clock/**` ile sınırlayıp temaya dokunma. Nasıl ilerleyeyim?
-
-Çakışma yoksa: claim'i yaz → **kaydı yeniden oku** (iki-aşamalı claim; bu sırada başkası aynı kapsamı almışsa geri çekil ve uyar) → başla.
-
-### 1.3 Kural C — Yalnız kendi kulvarına yaz
-
-- **Sadece kendi WP'nin SAHİP dosyalarına yaz.** Başka WP'nin SAHİP dosyasına ASLA dokunma (okuyabilirsin).
-- `progress.md`'de **yalnız kendi lane'ini ve kendi WP kartını** düzenle. Başka lane'lerin kartlarını okuma-dışı bırakma; reassign yoksa dokunma.
+- Sadece verilen SAHİP yollarına yaz. Başka WP'nin dosyasına **ASLA** yazma (okuyabilirsin).
 - Yeni dosya yalnız kendi feature klasörüne.
-- Ortak dosya değişikliği gerekiyorsa **WP'de açıkça yazılı olmalı**; değilse dur ve sor.
+- SAHİP listesinde olmayan bir dosyayı değiştirmek gerekiyorsa **dur ve liderden iste.**
+- Fark ettiğin ilgisiz sorunu **düzeltme, bildir** (§2 Kapsam Disiplini).
 
-### 1.4 Sıcak dosyalar (aynı anda iki WP giremez — planner serileştirir)
+### 1.4 Sıcak dosyalar (aynı anda tek yazar — lider serileştirir)
 
-`progress.md` (yalnız kendi lane) · `app/pubspec.yaml` · `app/lib/main.dart` · `app/lib/core/navigation/**` · `app/lib/core/theme/**` · `supabase/migrations/**` (numara sırası) · l10n/generated dosyalar · `AndroidManifest.xml`.
+`progress.md` (**yalnız lider**) · `app/pubspec.yaml` · `app/lib/main.dart` ·
+`app/lib/core/navigation/**` · `app/lib/core/theme/**` · `supabase/migrations/**`
+(numara sırası) · l10n/generated dosyalar (`app/lib/l10n/*.arb`) · `AndroidManifest.xml` ·
+`tooling/release/deploy-contract.json`.
 
-### 1.5 Git disiplini — tek dal (`main`), branch/merge/push yok
+Bu dosyalardan birine iki WP birden girecekse lider **serileştirir** — aynı anda iki
+alt ajana vermez.
 
-Ajanlar aynı çalışma dizinini paylaşır ve doğrudan `main` üzerinde çalışır. Çakışma; branch, PR veya auto-merge ile değil, **Aktif Çalışma Kaydı + ayrık SAHİP dosyalar** ile önlenir.
+### 1.5 Paylaşılan çalışma dizini (alt ajanlar aynı klasörde koşar)
 
-- Yeni branch açma, merge yapma veya push etme; kullanıcı özellikle istemedikçe bu işlemler yapılmaz.
-- Her WP için tek, ayrık commit atılır.
-- Commit öncesi `flutter analyze` (0 uyarı) ve `flutter test` yeşil olmalıdır.
-- Yalnız kendi SAHİP dosyalarını açık yollarla stage/commit et. **`git add -A`** ve `git commit -a` yasaktır.
+Alt ajanlar **ayrı worktree değil, aynı klasörü** paylaşır. Bu üç kural buradan çıkar:
+
+- **`git add -A` / `git commit -a` YASAK.** Başka lane'in commit'lenmemiş satırlarını
+  senin commit'ine sızdırır. Yalnız açık yollarla stage et.
+- **Paylaşılan dosyada `git checkout -- <path>` YASAK.** Başka lane'in işini siler.
+  Geri alman gereken şey varsa index'e `hash-object` + `update-index` ile yaz.
+- **Aynı anda iki `flutter test` / `test_all.py` koşmaz.** Pub/build kilidi yüzünden
+  ikisi de asılı kalır (bir kapı 30 dk ilerlemiyorsa ve CPU ~0 ise, yavaş değil
+  **kilitli**dir). Bu yüzden **alt ajan tam kapıyı koşturmaz**; kapıyı lider tek
+  merkezden koşturur. Alt ajan en fazla `flutter analyze` ve liderin açıkça izin
+  verdiği **tek dosyalık** `flutter test <yol>` koşar.
 - `index.lock` görülürse başka bir ajan commit ediyordur; kısa süre bekleyip yeniden dene.
+
+### 1.6 Git disiplini — tek dal (`main`), branch/merge/push yok
+
+- Yeni branch açma, merge yapma veya push etme; kullanıcı özellikle istemedikçe yapılmaz.
+- Her WP için tek, ayrık commit atılır. Alt ajan **kendi WP'sini kendisi commit'ler**,
+  yalnız SAHİP yollarını açık yolla stage ederek.
+- Commit öncesi `flutter analyze` 0 uyarı olmalıdır. Test yeşilliği birleşik kapıda
+  lider tarafından doğrulanır (§1.2 adım 3).
+- Tag, push, release, remote deploy **alt ajanın işi değildir** — yalnız lider, yalnız
+  sahibin açık tetikleyicisiyle (§4, `docs/ORTAM-MIGRATION-YONETISIMI.md`).
 
 CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA kalite kapısı olmaya devam eder.
 

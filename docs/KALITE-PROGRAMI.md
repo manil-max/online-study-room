@@ -90,12 +90,13 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 ## 7. Program Sırası ve Eşzamanlılık (CANLI)
 
 **Eşzamanlılık kuralı:** Varsayılan programlarda aynı anda **en fazla iki çalışma
-hattı**. Ürün sahibinin 2026-07-30 tarihli açık kararıyla **PLAN 5 / v57**, yalnız
-`progress.md` içindeki A–D zincirleri, ayrık SAHİP yolları ve migration /
-sıcak-dosya / tam-test kilitleri korunarak **dört Codex ajanı** ile yürütülür.
-Bu istisna başka programa taşınmaz. Aynı fiziksel dosyada iki aktif yazar, aynı
+hattı**. Ürün sahibinin 2026-08-08 tarihli kararıyla yürütme modeli **tek lider ajan +
+onun açtığı alt ajanlar**dır (`.agents/AGENTS.md §1`); bir dalgada en fazla **3–4 alt
+ajan**, hepsi liderin atadığı ayrık SAHİP yollarıyla. *PLAN 5 / v57'nin `progress.md`
+içindeki A–D zincirleri iptal edilmiştir.* Aynı fiziksel dosyada iki aktif yazar, aynı
 anda iki migration yazarı veya aynı anda iki tam Flutter kalite koşumu yine
-yasaktır. **Saat, Tema ve Başarım aynı anda açılamaz** — üçü de ortak
+yasaktır — kalite koşumunu **yalnız lider, dalga bitince, tek merkezden** yapar.
+**Saat, Tema ve Başarım aynı anda açılamaz** — üçü de ortak
 theme/navigation/profile/provider yüzeylerine dokunur, büyük çakışma yaratır.
 
 ### Program durumu
