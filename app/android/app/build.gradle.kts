@@ -183,6 +183,18 @@ android {
     // gerçek beta ile application id/ad/auth/cache/widget alanı yine ayrıdır.
     sourceSets.getByName("local").res.srcDir("src/beta/res")
 
+    // WP-533: play, stable ile AYNI applicationId'yi tasir
+    // (com.manilmax.online_study_room) - ayni marka, ayni ikon. Launcher
+    // ikonu @mipmap/ic_launcher (src/main/AndroidManifest.xml:26) yalniz
+    // flavor res dizinlerinde duruyor ve src/play/res hic yoktu; play
+    // derlemesi kaynak baglamada duserdi.
+    // Firebase yapilandirmasi bu yolla VERILEMEZ: google-services eklentisi
+    // sourceSets'e degil sabit src/<flavor>/ yollarina bakar (v61 kosumunun
+    // hata metni bu listeyi yazar). Bu yuzden src/play/google-services.json
+    // ayri bir dosya olarak durur; stable ile birebir ayni kalmasi
+    // `scripts/test_all.py --internal-play-firebase` kapisiyla korunur.
+    sourceSets.getByName("play").res.srcDir("src/stable/res")
+
     // Local is intentionally not a registered FCM application. Disable the
     // Google Services processing task only for that developer-only flavor.
     applicationVariants.all {

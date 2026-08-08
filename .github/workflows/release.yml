@@ -63,6 +63,15 @@ jobs:
           $channel = '${{ steps.meta.outputs.channel }}'; $isBeta = $channel -eq 'beta'
           ./tooling/release/release-preflight.ps1 -Channel $channel -Tag '${{ steps.meta.outputs.tag }}' -ExpectedGitSha '${{ steps.meta.outputs.git_sha }}' -ExpectedMigrationHead '${{ steps.meta.outputs.migration_head }}' -ProjectRef $(if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }) -SupabaseUrl $(if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }) -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ProductionConfirmation '${{ inputs.production_confirmation }}' -ProductionEvidence '${{ inputs.production_evidence }}'
 
+      # WP-533: v61 stable turu 15 dakikalik derlemenin SONUNDA
+      # `processPlayReleaseGoogleServices` adiminda "File
+      # google-services.json is missing" ile dustu. `play` flavor'i
+      # WP-527'ye kadar hic derlenmemisti, yani eksik dosya hicbir kapida
+      # gorunmuyordu. Bu adim ayni eksigi derleme baslamadan, saniyeler
+      # icinde yakalar (Gradle/Flutter kurulumu istemez).
+      - name: Play flavor Firebase/ikon kaynagi
+        run: python3 scripts/test_all.py --internal-play-firebase
+
   android:
     needs: preflight
     runs-on: ubuntu-latest

@@ -209,6 +209,12 @@ def build_gates() -> list[Gate]:
         # bunu yakalamaz -- kapi yollari koddan tarayip karsilastirir.
         Gate("legal-site", "Yasal site sozlesmesi", 0,
              [py, "scripts/build_legal_site.py", "--check"]),
+        # WP-533: `play` flavor'i WP-527'ye kadar hic derlenmemisti; eksik
+        # google-services.json v61 yayin turunu
+        # processPlayReleaseGoogleServices adiminda dusurdu. Bu kapi ayni
+        # eksigi derlemeden once, saniyeler icinde olcer.
+        Gate("play-firebase", "Play flavor Firebase/ikon kaynagi", 0,
+             [py, "scripts/test_all.py", "--internal-play-firebase"]),
         # WP-505: pin alti workflow adiminda duruyor; biri kayarsa goldenlar
         # kod degismeden kirmiziya duser.
         Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
@@ -429,6 +435,181 @@ def internal_flutter_pin() -> int:
     return 0
 
 
+def internal_play_firebase() -> int:
+    """`play` flavor'inin Firebase yapilandirmasi ve ikon kaynagi gercekten var mi?
+
+    Kapinin sebebi olculdu (WP-533, v61 yayin kosumu 31263777781):
+
+        Execution failed for task ':app:processPlayReleaseGoogleServices'.
+        > File google-services.json is missing.
+          Searched: .../src/play/release/, .../src/release/play/, .../src/play/,
+                    .../src/release/, .../src/playRelease/, .../app/
+
+    `play` flavor'i WP-527'ye kadar HIC derlenmemisti; eksik dosya bu yuzden
+    aylarca gorunmedi ve ilk kosumda yayin turunu dusurdu. Derlenmeyen sey
+    olculmez, olculmeyen sey yayinda patlar -- bu kapi olcumu derlemeden ayirir
+    (saniyeler surer, Gradle/Flutter kurulumu istemez).
+
+    Hata metnindeki arama listesi onemli: google-services eklentisi dosyayi
+    SABIT `src/<flavor>/` yollarinda arar, Gradle `sourceSets` tanimlarina
+    bakmaz. Yani play'e Firebase yapilandirmasini sourceSets ile veremeyiz;
+    `src/play/google-services.json` ayri bir dosya olmak zorunda. Ayri dosya =
+    zamanla ayrisma riski, o yuzden burada stable ile BIREBIR ayni oldugu
+    (byte duzeyinde) dogrulanir.
+
+    Ayrica launcher ikonu olculur: `src/main/AndroidManifest.xml` her varyantta
+    `@mipmap/ic_launcher` ister ama mipmap kaynaklari yalniz flavor res
+    dizinlerinde durur. `src/play/res` hic yoktu; google-services duzeltilseydi
+    bile bir sonraki adim kaynak baglamada duserdi.
+    """
+    import json
+    import re
+
+    android = APP / "android" / "app"
+    gradle_path = android / "build.gradle.kts"
+    gradle = gradle_path.read_text(encoding="utf-8", errors="replace")
+    problems: list[str] = []
+
+    app_id_match = re.search(r'applicationId\s*=\s*"([^"]+)"', gradle)
+    if app_id_match is None:
+        print("FAIL: build.gradle.kts icinde applicationId bulunamadi.")
+        return 1
+    base_id = app_id_match.group(1)
+
+    # Yalniz `productFlavors { ... }` blogu taranir. Tum dosyaya acilan bir
+    # tarama `signingConfigs { create("release") }` satirini da yakalar ve
+    # `release` sahte bir flavor olarak olculurdu (bu kapi yazilirken oldu).
+    opened = gradle.find("productFlavors")
+    flavor_block = ""
+    if opened >= 0:
+        depth = 0
+        for index in range(gradle.index("{", opened), len(gradle)):
+            if gradle[index] == "{":
+                depth += 1
+            elif gradle[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    flavor_block = gradle[opened:index]
+                    break
+    starts = [
+        (m.group(1), m.end())
+        for m in re.finditer(r'create\("(\w+)"\)', flavor_block)
+    ]
+    if not starts:
+        print('FAIL: productFlavors icinde create("...") blogu bulunamadi.')
+        return 1
+    flavors: dict[str, str] = {}
+    for index, (name, offset) in enumerate(starts):
+        end = starts[index + 1][1] if index + 1 < len(starts) else len(flavor_block)
+        block = flavor_block[offset:end]
+        suffix = re.search(r'applicationIdSuffix\s*=\s*"([^"]+)"', block)
+        flavors[name] = base_id + (suffix.group(1) if suffix else "")
+
+    # google-services islemesi bilerek kapatilan flavor'lar (ornek: local).
+    exempt = set(re.findall(r'flavorName\s*==\s*"(\w+)"', gradle))
+
+    # sourceSets ile odunc alinan res dizinleri.
+    borrowed: dict[str, list[str]] = {}
+    for name, path in re.findall(
+        r'sourceSets\.getByName\("(\w+)"\)\.res\.srcDir\("([^"]+)"\)', gradle
+    ):
+        borrowed.setdefault(name, []).append(path)
+
+    project_ids: dict[str, str] = {}
+    for flavor in sorted(flavors):
+        expected = flavors[flavor]
+        config = android / "src" / flavor / "google-services.json"
+        if flavor in exempt:
+            if config.exists():
+                problems.append(
+                    f"{flavor}: google-services islemesi kapali ama "
+                    f"{config.relative_to(ROOT).as_posix()} yine de duruyor"
+                )
+            continue
+        if not config.exists():
+            problems.append(
+                f"{flavor}: {config.relative_to(ROOT).as_posix()} YOK "
+                "(eklenti yalniz sabit src/<flavor>/ yollarina bakar; "
+                "sourceSets bu dosyayi tasiyamaz)"
+            )
+            continue
+        try:
+            data = json.loads(config.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError) as err:
+            problems.append(f"{flavor}: google-services.json okunamadi/bozuk: {err}")
+            continue
+        packages = [
+            client.get("client_info", {})
+            .get("android_client_info", {})
+            .get("package_name")
+            for client in data.get("client", [])
+        ]
+        if expected not in packages:
+            problems.append(
+                f"{flavor}: applicationId {expected} google-services.json client "
+                f"listesinde yok ({packages}) -> derleme "
+                "process<Flavor>ReleaseGoogleServices adiminda duser"
+            )
+        project_ids[flavor] = str(data.get("project_info", {}).get("project_id", ""))
+
+    if len(set(project_ids.values())) > 1:
+        problems.append(
+            f"flavor'lar farkli Firebase projelerine bakiyor: {project_ids}"
+        )
+
+    # play <-> stable ayrisma kapisi: ayni applicationId ise dosya da ayni olmali.
+    if "play" in flavors and flavors.get("play") == flavors.get("stable"):
+        play_file = android / "src" / "play" / "google-services.json"
+        stable_file = android / "src" / "stable" / "google-services.json"
+        if play_file.exists() and stable_file.exists():
+            if play_file.read_bytes() != stable_file.read_bytes():
+                problems.append(
+                    "play ve stable ayni applicationId'yi kullaniyor ama "
+                    "google-services.json dosyalari ayrismis (byte farki) -- "
+                    "kopya guncel degil"
+                )
+    elif "play" in flavors:
+        problems.append(
+            f"play applicationId {flavors.get('play')} artik stable "
+            f"{flavors.get('stable')} ile ayni degil; play icin ayri bir Firebase "
+            "kaydi gerekir (sahip karari)"
+        )
+
+    # Launcher ikonu: main manifest her varyantta @mipmap/ic_launcher ister.
+    manifest = (android / "src" / "main" / "AndroidManifest.xml").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    icon = re.search(r'android:icon="@mipmap/(\w+)"', manifest)
+    if icon is not None:
+        for flavor in sorted(flavors):
+            roots = [android / "src" / flavor / "res"]
+            roots += [android / path for path in borrowed.get(flavor, [])]
+            found = any(
+                any(root.glob(f"mipmap-*/{icon.group(1)}.*"))
+                for root in roots
+                if root.is_dir()
+            )
+            if not found:
+                shown = [r.relative_to(ROOT).as_posix() for r in roots]
+                problems.append(
+                    f"{flavor}: @mipmap/{icon.group(1)} hicbir res kaynaginda yok "
+                    f"({shown}) -> kaynak baglama adiminda duser"
+                )
+
+    if problems:
+        print(f"FAIL ({len(problems)}):")
+        for problem in problems:
+            print(f"  - {problem}")
+        return 1
+    measured = sorted(set(flavors) - exempt)
+    print(
+        f"OK: {', '.join(measured)} flavor'larinin google-services.json'u var ve "
+        f"applicationId'siyle esliyor (proje {sorted(set(project_ids.values()))}); "
+        "play == stable birebir; tum flavor'larda launcher ikonu cozuluyor."
+    )
+    return 0
+
+
 def internal_migration_head() -> int:
     """Migration zincirini ve head pinlerini dogrula.
 
@@ -580,6 +761,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-flutter-pin", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-play-firebase", action="store_true",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--internal-android-smoke", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -590,6 +773,8 @@ def main() -> int:
         return internal_migration_head()
     if args.internal_flutter_pin:
         return internal_flutter_pin()
+    if args.internal_play_firebase:
+        return internal_play_firebase()
     if args.internal_android_smoke:
         return internal_android_smoke()
 
