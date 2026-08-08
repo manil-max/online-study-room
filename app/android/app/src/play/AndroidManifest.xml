@@ -45,6 +45,29 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove" />
 
+    <!--
+      WP-544: `USE_EXACT_ALARM` Play kanalindan DUSURULUR.
+
+      Play Console "Tam alarmlar" beyani yalnizca iki secenek sunuyor: uygulaman
+      "Calar saat" mi yoksa "Takvim" mi? Odak Kampi ikisi de degil (magaza
+      tanimi: calisma/odak uygulamasi). Formun kendi metni: temel islevin bunlar
+      degilse "izni tum kanallarda uygulamanizdan kaldirmaniz gerekir".
+      Olculdu: v61 gonderiminde bu hata sürüm yayinlamayi bloke etti.
+
+      Kaldirilan yalniz `USE_EXACT_ALARM` (on-verilen izin). `SCHEDULE_EXACT_ALARM`
+      KALIR ve kullanicidan istenir: `ExactAlarmHelper.kt` +
+      `lib/core/time_engine/exact_alarm_permission.dart`; istek noktasi
+      `features/clock/alarms_screen.dart`. Izin verilmezse
+      `ExactAlarmPermission.scheduleMode()` sessizce `inexactAllowWhileIdle`a
+      duser, yani alarm yine calar, saniyesi garanti olmaz.
+
+      GitHub kanallari (stable/beta) ETKILENMEZ: bu dosya yalniz play flavor'ina
+      uygulanir, oradaki alarm davranisi aynen kalir.
+    -->
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        tools:node="remove" />
+
     <application>
         <meta-data
             android:name="com.manilmax.online_study_room.DISTRIBUTION_CHANNEL"

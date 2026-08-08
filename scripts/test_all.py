@@ -454,6 +454,13 @@ def internal_play_manifest() -> int:
     Permissions" beyanini, READ_MEDIA_AUDIO ise "Music and audio files"
     kisitli izin beyanini tetikler.
 
+    WP-544: ayni listeye `USE_EXACT_ALARM` eklendi. Bu izin bizim kendi
+    manifestimizde yaziliydi (eklenti sizintisi degil). Play Console "Tam
+    alarmlar" beyani yalnizca "Calar saat" / "Takvim" secenegi sunuyor ve
+    ikisi de degilsen izni kaldirmani sart kosuyor. Olculdu: v61 gonderiminde
+    bu hata surum yayinlamayi bloke etti. `SCHEDULE_EXACT_ALARM` kalir ve
+    kullanicidan istenir.
+
     Kapi iki katmanli olcer:
       1. Kaynak: `src/play/AndroidManifest.xml` her birini `tools:node=remove`
          ile dusuruyor mu? (Her zaman olculur.)
@@ -468,6 +475,10 @@ def internal_play_manifest() -> int:
     problems: list[str] = []
 
     banned = [
+        # WP-544: Play "Tam alarmlar" beyani yalnizca calar saat / takvim
+        # uygulamalarini kabul ediyor; biz ikisi de degiliz. Izin geri
+        # sizarsa surum yayinlama yeniden bloke olur.
+        "android.permission.USE_EXACT_ALARM",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO",
