@@ -51,6 +51,10 @@ if ($contract.$environment.migration_head -ne $ExpectedMigrationHead) {
   throw "Release contract rejects migration head $ExpectedMigrationHead for $Channel."
 }
 
+# WP-518: yayin notlari GERCEKTEN var mi. v59 bu kontrol olmadigi icin bos
+# "Guncelleme notlari" ekraniyla cikti (APK 5 kez indirildi).
+Assert-ReleaseNotesEntry -Tag $Tag -Channel $Channel -BuildNumber $code -RepoRoot $repoRoot
+
 $result = [ordered]@{
   schema_version = 1
   kind = 'release-preflight'

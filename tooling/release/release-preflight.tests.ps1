@@ -68,4 +68,53 @@ if ($releaseWorkflow -match 'files:\s*release-assets/\*\*') {
   throw 'Release upload must use explicit public assets; recursive upload reintroduces duplicate platform manifest names.'
 }
 
-Write-Host 'Release preflight tests: 8 passed.'
+# ---------------------------------------------------------------------------
+# WP-518: yayin notlari kapisi
+#
+# 🔴 Bu kapinin varlik sebebi olculdu, tahmin degil: v59 etiketi 2026-08-07'de
+# atildi, GitHub Release olustu, APK 5 kez indirildi — ama ne CHANGELOG'da ne
+# `app/assets/release_notes.json`'da kaydi vardi. Kullanici uygulama icindeki
+# "Guncelleme notlari" ekranini BOS gordu. `.agents/AGENTS.md` §4.1 bu iki
+# kaydi zorunlu tutuyordu; zorlayan hicbir kapi yoktu.
+#
+# `release-notes-contract.ps1` de bu bosluga bakmiyordu (yalniz jargon
+# denetler) ve dahasi hicbir workflow onu cagirmiyordu. Iki eksik de burada
+# kapaniyor: varlik denetimi asagida, jargon denetimi en sonda kosuyor.
+# ---------------------------------------------------------------------------
+foreach ($present in @(
+  @{ Tag = 'v58'; Channel = 'stable'; Build = 58 },
+  @{ Tag = 'v59'; Channel = 'stable'; Build = 59 },
+  @{ Tag = 'beta-v4402'; Channel = 'beta'; Build = 4402 }
+)) {
+  Assert-ReleaseNotesEntry -Tag $present.Tag -Channel $present.Channel -BuildNumber $present.Build -RepoRoot $repoRoot
+}
+
+# Negatif: hic var olmayan etiket, ve VAR OLAN etiketin YANLIS build numarasi.
+# Ikincisi onemli — yalniz CHANGELOG basligina bakan bir kapi onu kacirirdi.
+foreach ($missing in @(
+  @{ Name = 'unknown tag'; Tag = 'v999'; Channel = 'stable'; Build = 999 },
+  @{ Name = 'changelog ok but notes entry missing'; Tag = 'v58'; Channel = 'stable'; Build = 9958 },
+  @{ Name = 'right build, wrong channel'; Tag = 'v58'; Channel = 'beta'; Build = 58 }
+)) {
+  $failed = $false
+  try {
+    Assert-ReleaseNotesEntry -Tag $missing.Tag -Channel $missing.Channel -BuildNumber $missing.Build -RepoRoot $repoRoot
+  } catch { $failed = $true }
+  if (-not $failed) {
+    throw "Release-notes gate must fail closed: $($missing.Name)"
+  }
+}
+
+# Preflight bu denetimi GERCEKTEN cagiriyor mu? Fonksiyon var olup cagrilmazsa
+# kapi yine oksuz kalir — v59 hatasi tam bu sinifta.
+$preflightSource = Get-Content -LiteralPath $script -Raw -Encoding UTF8
+if ($preflightSource -notmatch 'Assert-ReleaseNotesEntry') {
+  throw 'release-preflight.ps1 must call Assert-ReleaseNotesEntry; an uncalled gate is not a gate.'
+}
+
+# Jargon sozlesmesi: kullaniciya gorunen notlarda teknik metin olmayacak.
+& (Join-Path $repoRoot 'tooling/release/release-notes-contract.ps1') `
+  -UserNotesPath (Join-Path $repoRoot 'app/assets/release_notes.json') `
+  -TechnicalLogPath (Join-Path $repoRoot 'tooling/release/release_notes_technical.json') | Out-Null
+
+Write-Host 'Release preflight tests: 9 passed (release-notes gate included).'

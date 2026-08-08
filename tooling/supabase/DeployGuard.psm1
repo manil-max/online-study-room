@@ -656,6 +656,52 @@ function Assert-ExactReleaseIdentity {
   }
 }
 
+function Assert-ReleaseNotesEntry {
+  <#
+    WP-518: yayin notlarinin GERCEKTEN var oldugunu dogrular.
+
+    Neden var: `.agents/AGENTS.md` §4.1 "tag atmadan once CHANGELOG'da tag adini
+    iceren bir baslik VE release_notes.json'da ayni buildNumber/channel kaydi
+    bulunmalidir" diyordu, ama bunu zorlayan hicbir kapi yoktu.
+    `release-notes-contract.ps1` yalnizca metnin teknik jargon icermedigini
+    denetliyor ve dahasi hicbir workflow tarafindan cagrilmiyordu (oksuz kapi).
+
+    Sonuc olculdu: v59 (2026-08-07) yayinlandi, APK 5 kez indirildi, ama ne
+    CHANGELOG'da ne de release_notes.json'da kaydi vardi. Kullanici uygulama
+    icindeki "Guncelleme notlari" ekranini BOS gordu. Sessiz hata tam buydu.
+  #>
+  param(
+    [Parameter(Mandatory)][string]$Tag,
+    [Parameter(Mandatory)][ValidateSet('beta', 'stable')][string]$Channel,
+    [Parameter(Mandatory)][int]$BuildNumber,
+    [string]$RepoRoot = (Get-RepoRoot)
+  )
+
+  $changelogPath = Join-Path $RepoRoot 'CHANGELOG.md'
+  if (-not (Test-Path -LiteralPath $changelogPath -PathType Leaf)) {
+    throw 'CHANGELOG.md not found; release notes cannot be verified.'
+  }
+  $changelog = Get-Content -LiteralPath $changelogPath -Raw -Encoding UTF8
+  $headingPattern = '(?m)^##\s.*' + [regex]::Escape($Tag) + '(\s|/|\]|$)'
+  if ($changelog -notmatch $headingPattern) {
+    throw "CHANGELOG.md has no '## ...' heading for tag '$Tag'. Add it before tagging (AGENTS.md 4.1)."
+  }
+
+  $notesPath = Join-Path $RepoRoot 'app/assets/release_notes.json'
+  if (-not (Test-Path -LiteralPath $notesPath -PathType Leaf)) {
+    throw 'app/assets/release_notes.json not found; the in-app notes screen would be empty.'
+  }
+  # BOM ile yazilmis dosya: ConvertFrom-Json bas karakterde patlar.
+  $raw = (Get-Content -LiteralPath $notesPath -Raw -Encoding UTF8).TrimStart([char]0xFEFF)
+  $notes = $raw | ConvertFrom-Json
+  $match = @($notes.releases) | Where-Object {
+    [int]$_.buildNumber -eq $BuildNumber -and [string]$_.channel -eq $Channel
+  }
+  if (@($match).Count -eq 0) {
+    throw "release_notes.json has no '$Channel' entry with buildNumber $BuildNumber. The in-app update-notes screen would be empty for '$Tag'."
+  }
+}
+
 function Assert-ProductionApproval {
   param(
     [Parameter(Mandatory)][string]$ExpectedGitSha,
@@ -911,4 +957,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Get-GoalBackfillSql, Assert-GoalBackfillAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, Get-ProductionBaselineRepairArguments, Assert-ProductionBaselineRepair, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Get-GoalBackfillSql, Assert-GoalBackfillAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ReleaseNotesEntry, Assert-ProductionApproval, Get-ProductionBaselineRepairArguments, Assert-ProductionBaselineRepair, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

@@ -3,31 +3,123 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.60",
+                         "buildNumber":  60,
+                         "channel":  "stable",
+                         "date":  "2026-08-08",
+                         "title":  "v60: tam ekran sohbet, dürtme ve daha hızlı durdurma",
+                         "highlights":  [
+                                            "Sohbet tam ekran açılıyor; mesajlar kart içine sıkışmıyor ve klavye açıkken yazma alanı üstte kalıyor.",
+                                            "Grup değiştir düğmesi grup adının yanına indi; gruplar sekmesinin tepesindeki ayrı şerit kalktı.",
+                                            "Kamp ateşinde arkadaşının hayvanına dokunup onu dürtebilirsin; karşı taraf çalışıyorsa odağı korunuyor.",
+                                            "Taç kademeleri Başarımlar ekranından da açılıyor: rütbe satırına ya da renkli kademe şeridine dokun.",
+                                            "Sık sorulan sorular artık Ayarlar\u0027ın en altında, kendi Yardım bölümünde.",
+                                            "Ada karakter sınırı geldi: kişi adı 24, grup adı 30."
+                                        ],
+                         "fixes":  [
+                                       "Sayacı durdurmak bazen üç saniye bekliyordu; durdurma artık arka plandaki raporlamayı beklemiyor.",
+                                       "Durdur düğmesi gri kalıp ölü görünüyordu; artık dönen halka ve \"Durduruluyor…\" gösteriyor.",
+                                       "Kartın üstünden kaydırınca sayfa kaymıyordu; içerik sığdığında kart hareketi artık yutmuyor.",
+                                       "Bugün özeti kartı bazı yerleşimlerde hiç çizilmiyordu.",
+                                       "Kamp ateşinde hiç çalışmayan bir dokunma davranışı kaldırıldı.",
+                                       "Grup ayarlarındaki ikinci sohbet kartı kaldırıldı."
+                                   ],
+                         "notes":  [
+
+                                   ],
+                         "titleEn":  "v60: full-screen chat, nudges, and a faster stop",
+                         "highlightsEn":  [
+                                              "Chat opens full screen; messages are no longer squeezed into a fixed-height card and the composer stays above the keyboard.",
+                                              "The switch-group button moved next to the group name; the separate action strip at the top is gone.",
+                                              "You can nudge a friend by tapping their animal at the campfire; their focus is protected while they study.",
+                                              "Crown tiers now open from the achievements screen too: tap the rank row or the coloured tier strip.",
+                                              "Frequently asked questions now sit at the very bottom of settings, in their own help section.",
+                                              "Name length limits arrived: 24 characters for people, 30 for groups."
+                                          ],
+                         "fixesEn":  [
+                                         "Stopping the timer sometimes waited three seconds; it no longer waits for background reporting.",
+                                         "The stop button just greyed out and felt dead; it now shows a spinner and a stopping label.",
+                                         "Dragging from a card did not scroll the page; a card that fits its box no longer swallows the gesture.",
+                                         "The today-summary card was not drawn at all in some layouts.",
+                                         "A tap behaviour at the campfire that never worked was removed.",
+                                         "A duplicate chat card in group settings was removed."
+                                     ],
+                         "notesEn":  [
+
+                                     ]
+                     },
+                     {
+                         "versionName":  "1.0.59",
+                         "buildNumber":  59,
+                         "channel":  "stable",
+                         "date":  "2026-08-07",
+                         "title":  "v59: geri sayım çökmesi bitti, kartlar ve grafikler okunur oldu",
+                         "highlights":  [
+                                            "Sayaç tanılama kaydı okunabilir hâle geldi; aralıklı hataların kanıtı artık toplanabiliyor.",
+                                            "Seri rozeti sadeleşti: yalnız alev ve sayı, büyük yazı ölçeğinde de üst üste binmiyor.",
+                                            "Kalan İngilizce arayüz metinleri Türkçeye çevrildi."
+                                        ],
+                         "fixes":  [
+                                       "Geri sayım ve pomodoro açılışta çöküyordu; düzeltildi.",
+                                       "Kartlar veri gelirken \"kayıt yok\" ve \"0 dk\" gösteriyordu; artık önce yer tutucu görünüyor.",
+                                       "Aktif üye kartında sığmayan üye kayboluyordu; kart kaydırılabiliyor.",
+                                       "Üye listesinde uzun adlar tek harfe iniyordu.",
+                                       "Trend ve dağılım grafiklerinde eksen sayıları üst üste biniyordu.",
+                                       "Ana ekranın üstü çentikli telefonlarda durum çubuğunun altına giriyordu.",
+                                       "Grup detayında üye listesi sürekli yenileniyordu.",
+                                       "Grup başarımları birden fazla grubu birlikte sayıyordu.",
+                                       "Gün hedefi tamamlama serisi hiç yazılmıyordu; geçmiş kayıtlar da tamamlandı."
+                                   ],
+                         "notes":  [
+                                       "Bu kayıt sonradan eklendi: v59 yayına çıktığında sürüm notları girilmemişti."
+                                   ],
+                         "titleEn":  "v59: countdown crash fixed, cards and charts readable",
+                         "highlightsEn":  [
+                                              "The timer diagnostic log is now readable, so intermittent problems can be evidenced.",
+                                              "The streak badge is simpler: just the flame and the count, no overlap at large text sizes.",
+                                              "Remaining Turkish-only interface strings were translated."
+                                          ],
+                         "fixesEn":  [
+                                         "Countdown and pomodoro crashed on start; fixed.",
+                                         "Cards said \"no records\" and \"0 min\" while data was still loading; they now show a placeholder first.",
+                                         "Members that did not fit in the active-members card disappeared; the card scrolls now.",
+                                         "Long names collapsed to a single letter in the member list.",
+                                         "Axis numbers overlapped on the trend and distribution charts.",
+                                         "On notched phones the top of the home screen slid under the status bar.",
+                                         "The member list in group details refreshed continuously.",
+                                         "Group achievements counted several groups together.",
+                                         "The daily-goal streak was never written; past records were completed too."
+                                     ],
+                         "notesEn":  [
+                                         "This entry was added after the fact: v59 shipped without release notes."
+                                     ]
+                     },
+                     {
                          "versionName":  "1.0.58",
                          "buildNumber":  58,
                          "channel":  "stable",
                          "date":  "2026-08-01",
                          "title":  "v58: sayaç senkronu, widget ve yönetici güvenliği",
                          "highlights":  [
-                                            "Geri sayım ve Pomodoro ana ekran widget'ında kalan süreyi doğru gösteriyor.",
+                                            "Geri sayım ve Pomodoro ana ekran widget\u0027ında kalan süreyi doğru gösteriyor.",
                                             "Profil değişiklikleri anında yenileniyor; ünvan seçimi daha kompakt ve uzun ünvanlar grup satırını büyütmüyor.",
                                             "Seri göstergesi kişisel ilerlemeyi grup katkısından daha açık ayırıyor; görev tekrar metinleri seçilen aralığı söylüyor.",
                                             "Yönetici yanıtları canlı yenileniyor ve kullanıcıya bildirim olarak ulaşıyor.",
                                             "Yönetici duyurularında güvenli hedef seçimi, alan doğrulama ve silme onayı var.",
                                             "Ana ekran sadeleşti; düzenleme modu uzun basmayla açılıyor ve SSS içeriği yönetilebiliyor."
-                         ],
+                                        ],
                          "fixes":  [
-                                         "Diğer cihazdaki sayaç daha önce görülmüş bir durum yüzünden kaybolursa yeniden kuruluyor.",
-                                         "Telefon arka planda kısa süre sessiz kaldığında açık çalışma artık hemen kapanmıyor.",
-                                         "Uygulama arka plana geçerken ve geri gelirken sayaç durumu daha hızlı yenileniyor.",
-                                         "Dürtme başarısız olduğunda gerçek neden görünür; çalışan kişiyi dürtme ve susturma yolları sessiz kalmıyor.",
-                                         "Ana ekran widget'ında çalışan geri sayımın 00:00 göstermesi düzeltildi."
-                         ],
+                                       "Diğer cihazdaki sayaç daha önce görülmüş bir durum yüzünden kaybolursa yeniden kuruluyor.",
+                                       "Telefon arka planda kısa süre sessiz kaldığında açık çalışma artık hemen kapanmıyor.",
+                                       "Uygulama arka plana geçerken ve geri gelirken sayaç durumu daha hızlı yenileniyor.",
+                                       "Dürtme başarısız olduğunda gerçek neden görünür; çalışan kişiyi dürtme ve susturma yolları sessiz kalmıyor.",
+                                       "Ana ekran widget\u0027ında çalışan geri sayımın 00:00 göstermesi düzeltildi."
+                                   ],
                          "notes":  [
-                                         "Sayaç eşitleme düzeltmesi için iki cihazın da v58'e güncellenmesi gerekir.",
-                                         "Sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
-                                         "Fiziksel iki cihaz testi stable güncelleme kurulduktan sonra yapılacaktır."
-                         ],
+                                       "Sayaç eşitleme düzeltmesi için iki cihazın da v58\u0027e güncellenmesi gerekir.",
+                                       "Sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
+                                       "Fiziksel iki cihaz testi stable güncelleme kurulduktan sonra yapılacaktır."
+                                   ],
                          "titleEn":  "v58: timer sync, widgets and safer admin actions",
                          "highlightsEn":  [
                                               "Countdown and Pomodoro show the remaining time correctly on the home-screen widget.",
@@ -36,19 +128,19 @@
                                               "Admin replies refresh live and reach the user as a notification.",
                                               "Admin announcements now have safe target selection, field validation and delete confirmation.",
                                               "The home screen is cleaner; edit mode opens with a long press and FAQ content can be managed."
-                         ],
+                                          ],
                          "fixesEn":  [
-                                           "A timer on another device is rebuilt when a previously seen state would otherwise make it disappear.",
-                                           "A short background heartbeat gap no longer closes an active study run immediately.",
-                                           "Timer state refreshes faster when the app moves to the background or returns.",
-                                           "A failed nudge now shows the real reason; studying-user and mute paths no longer fail silently.",
-                                           "The home-screen widget no longer shows 00:00 for an active countdown."
-                         ],
+                                         "A timer on another device is rebuilt when a previously seen state would otherwise make it disappear.",
+                                         "A short background heartbeat gap no longer closes an active study run immediately.",
+                                         "Timer state refreshes faster when the app moves to the background or returns.",
+                                         "A failed nudge now shows the real reason; studying-user and mute paths no longer fail silently.",
+                                         "The home-screen widget no longer shows 00:00 for an active countdown."
+                                     ],
                          "notesEn":  [
-                                           "Both devices must be updated to v58 for the timer-sync fix.",
-                                           "The app must not be published before server preparation is complete.",
-                                           "Physical two-device acceptance will be performed after installing the stable update."
-                         ]
+                                         "Both devices must be updated to v58 for the timer-sync fix.",
+                                         "The app must not be published before server preparation is complete.",
+                                         "Physical two-device acceptance will be performed after installing the stable update."
+                                     ]
                      },
                      {
                          "versionName":  "1.0.57",
@@ -57,28 +149,28 @@
                          "date":  "2026-08-01",
                          "title":  "v57: sayaç güveni, izlenebilir moderasyon ve daha anlamlı ilerleme",
                          "highlights":  [
-                                            "Uygulama, bildirim ve ana ekran widget'ındaki sayaç hareketleri artık aynı güvenli başlatma ve durdurma gerçeğini kullanıyor.",
+                                            "Uygulama, bildirim ve ana ekran widget\u0027ındaki sayaç hareketleri artık aynı güvenli başlatma ve durdurma gerçeğini kullanıyor.",
                                             "Geri bildirimler gerçek bir konuşma gibi ilerliyor; kullanıcı mesajları, yönetici yanıtları ve iç notlar birbirine karışmıyor.",
                                             "Şikâyetler karar için gereken bağlamı koruyor; yaptırımlar basamaklı, geri alınabilir ve itiraz edilebilir.",
                                             "Her N günde yinelenen görevler takvim düzenini koruyor; görevi satırından tamamlayıp geri alabiliyorsun.",
                                             "Seri alevi kişisel ilerlemeyi grup katkısından ayırıyor ve üç anlaşılır durumda gösteriyor.",
                                             "Kazandığın bir başarımı profil ünvanı seçebilir, profilinde ve grup listesinde gösterebilirsin.",
                                             "Çalışan kişi dürtülemiyor; aynı kişiye bekleme süresi 20 dakika ve yalnız çalışmaya dönüşen dürtmeler ilerleme sayılıyor.",
-                                            "Yayın yüzeyi Türkçe ve İngilizceyle, tek 1×1 Başlat/Durdur widget'ıyla sadeleştirildi."
-                         ],
+                                            "Yayın yüzeyi Türkçe ve İngilizceyle, tek 1×1 Başlat/Durdur widget\u0027ıyla sadeleştirildi."
+                                        ],
                          "fixes":  [
-                                         "Çevrimdışı bitmiş veya gecikmiş bir sayaç komutu başka cihazda hayalet çalışma başlatmıyor.",
-                                         "Şikâyetin yanlış kullanıcıya ya da yanlış grup bağlamına bağlanabildiği boşluklar kapatıldı.",
-                                         "Gruptan çıkış tekrar denendiğinde çift işlem üretmiyor ve geçmiş ilerleme kayıtlarını silmiyor.",
-                                         "E-posta değiştirme yeniden doğrulama istiyor; seçili ders hesap değişikliklerinde korunuyor.",
-                                         "Özel tarih aralığının uçları güvenli sıralanıyor; kamp ateşi ve tekrar eden ekran başlıkları sadeleştirildi.",
-                                         "Hesap silme isteğinin zamanlanması ve tekrar çalıştırılması güvenli hâle getirildi."
-                         ],
+                                       "Çevrimdışı bitmiş veya gecikmiş bir sayaç komutu başka cihazda hayalet çalışma başlatmıyor.",
+                                       "Şikâyetin yanlış kullanıcıya ya da yanlış grup bağlamına bağlanabildiği boşluklar kapatıldı.",
+                                       "Gruptan çıkış tekrar denendiğinde çift işlem üretmiyor ve geçmiş ilerleme kayıtlarını silmiyor.",
+                                       "E-posta değiştirme yeniden doğrulama istiyor; seçili ders hesap değişikliklerinde korunuyor.",
+                                       "Özel tarih aralığının uçları güvenli sıralanıyor; kamp ateşi ve tekrar eden ekran başlıkları sadeleştirildi.",
+                                       "Hesap silme isteğinin zamanlanması ve tekrar çalıştırılması güvenli hâle getirildi."
+                                   ],
                          "notes":  [
-                                         "Bu sürüm yeni sunucu davranışları gerektirir; sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
-                                         "Güncellemeden sonra uygulamayı bir kez kapatıp açmak önerilir.",
-                                         "Sayaç eşitlemesinin iki cihazda görünmesi bağlantı ve bildirim teslim süresine bağlıdır."
-                         ],
+                                       "Bu sürüm yeni sunucu davranışları gerektirir; sunucu hazırlığı tamamlanmadan uygulama yayımlanmamalıdır.",
+                                       "Güncellemeden sonra uygulamayı bir kez kapatıp açmak önerilir.",
+                                       "Sayaç eşitlemesinin iki cihazda görünmesi bağlantı ve bildirim teslim süresine bağlıdır."
+                                   ],
                          "titleEn":  "v57: trustworthy timers, accountable moderation and clearer progress",
                          "highlightsEn":  [
                                               "Timer actions in the app, notification and home-screen widget now share one safe start and stop truth.",
@@ -89,20 +181,20 @@
                                               "You can choose an achievement you earned as your profile title and show it on your profile and in the group list.",
                                               "People who are studying cannot be nudged; the wait is 20 minutes and only nudges that lead to studying count as progress.",
                                               "The release surface is simplified to Turkish and English with one polished 1×1 Start/Stop widget."
-                         ],
+                                          ],
                          "fixesEn":  [
-                                           "An offline or delayed timer command no longer starts a ghost session on another device.",
-                                           "Gaps that could attach a report to the wrong person or group context were closed.",
-                                           "Retrying group leave no longer creates duplicate work or removes historical progress.",
-                                           "Changing email now requires re-verification, while the selected subject survives account changes.",
-                                           "Custom date-range handles are safely ordered; campfire layouts and repeated screen headings are cleaner.",
-                                           "Scheduling and retrying an account-deletion request is now safer."
-                         ],
+                                         "An offline or delayed timer command no longer starts a ghost session on another device.",
+                                         "Gaps that could attach a report to the wrong person or group context were closed.",
+                                         "Retrying group leave no longer creates duplicate work or removes historical progress.",
+                                         "Changing email now requires re-verification, while the selected subject survives account changes.",
+                                         "Custom date-range handles are safely ordered; campfire layouts and repeated screen headings are cleaner.",
+                                         "Scheduling and retrying an account-deletion request is now safer."
+                                     ],
                          "notesEn":  [
-                                           "This release needs the accompanying server behaviour; the app must not be published before server preparation is complete.",
-                                           "Closing and reopening the app once after updating is recommended.",
-                                           "How quickly timer state appears on a second device depends on connectivity and notification delivery."
-                         ]
+                                         "This release needs the accompanying server behaviour; the app must not be published before server preparation is complete.",
+                                         "Closing and reopening the app once after updating is recommended.",
+                                         "How quickly timer state appears on a second device depends on connectivity and notification delivery."
+                                     ]
                      },
                      {
                          "versionName":  "1.0.56",
@@ -111,7 +203,7 @@
                          "date":  "2026-07-28",
                          "title":  "v56: sayaç eşitlemesi, engelleme ve destek kutusu elden geçti",
                          "highlights":  [
-                                            "Bildirimden ya da ana ekran widget'ından durdurduğunda diğer cihazdaki sayaç da duruyor.",
+                                            "Bildirimden ya da ana ekran widget\u0027ından durdurduğunda diğer cihazdaki sayaç da duruyor.",
                                             "Kamp ateşinin yeşil alanı iki katına çıktı; kalabalık gruplarda isimler artık üst üste binmiyor.",
                                             "Geri bildirim ekranı ikiye ayrıldı: Gönder ve Geri bildirimlerim. Gönderdiklerini ve gelen yanıtları tek yerden izliyorsun.",
                                             "Okunmamış bir yanıtın varsa profil, ayarlar ve geri bildirim adımlarının hepsinde işaret çıkıyor.",
@@ -119,50 +211,50 @@
                                             "Sık Sorulan Sorular giriş ekranının en altına taşındı, adının yanında (SSS) yazıyor.",
                                             "Başarım açıklamaları artık koşulu açıkça söylüyor: ne yapman ve ne kadar sürede yapman gerektiği yazıyor.",
                                             "Sürüm notları sadeleşti; derleme bilgisi Ayarlar içindeki Hakkında ekranına taşındı."
-                         ],
+                                        ],
                          "fixes":  [
-                                            "İstatistiklerde özel tarih aralığı takvimi düzeldi: hücrelerde tam tarih yerine gün sayısı yazıyor ve günler üst üste binmiyor.",
-                                            "İnternet yokken başlatıp durdurduğun çalışma, bağlanınca diğer cihazda kendiliğinden yeniden başlamıyor.",
-                                            "Engellediğin kişi artık tablolarda görünmüyor ve profili açılmıyor.",
-                                            "Tanıtım turu kısaldı: ana ekranda yalnız düzenleme adımı kaldı, istatistik turu kalktı.",
-                                            "Sürüm notlarında artık yalnız yayınlanmış sürümler listeleniyor.",
-                                            "İngilizce, Almanca ve Arapça cihazlarda Türkçe kalan metinler çevrildi.",
-                                            "Aynı kişi hakkında gelen şikâyetler yönetici tarafında tek satırda toplanıyor ve bildirim olarak da düşüyor."
-                         ],
+                                       "İstatistiklerde özel tarih aralığı takvimi düzeldi: hücrelerde tam tarih yerine gün sayısı yazıyor ve günler üst üste binmiyor.",
+                                       "İnternet yokken başlatıp durdurduğun çalışma, bağlanınca diğer cihazda kendiliğinden yeniden başlamıyor.",
+                                       "Engellediğin kişi artık tablolarda görünmüyor ve profili açılmıyor.",
+                                       "Tanıtım turu kısaldı: ana ekranda yalnız düzenleme adımı kaldı, istatistik turu kalktı.",
+                                       "Sürüm notlarında artık yalnız yayınlanmış sürümler listeleniyor.",
+                                       "İngilizce, Almanca ve Arapça cihazlarda Türkçe kalan metinler çevrildi.",
+                                       "Aynı kişi hakkında gelen şikâyetler yönetici tarafında tek satırda toplanıyor ve bildirim olarak da düşüyor."
+                                   ],
                          "notes":  [
-                                            "Sayaç eşitlemesi yalnız Android ve kronometre için geçerli; Pomodoro, geri sayım ve Windows dahil değil.",
-                                            "Eşitlemeyi denemek için iki cihazda da v56 gerekir.",
-                                            "Tablet yatay yerleşimi bu sürümde ele alınmadı.",
-                                            "Masaüstünde 6 haneli kodla şifre sıfırlama hâlâ çalışmıyor.",
-                                            "İngilizce cihazda simge altındaki ad yine Odak Kampı görünür; uygulama içinde Focus Camp yazar."
-                         ],
+                                       "Sayaç eşitlemesi yalnız Android ve kronometre için geçerli; Pomodoro, geri sayım ve Windows dahil değil.",
+                                       "Eşitlemeyi denemek için iki cihazda da v56 gerekir.",
+                                       "Tablet yatay yerleşimi bu sürümde ele alınmadı.",
+                                       "Masaüstünde 6 haneli kodla şifre sıfırlama hâlâ çalışmıyor.",
+                                       "İngilizce cihazda simge altındaki ad yine Odak Kampı görünür; uygulama içinde Focus Camp yazar."
+                                   ],
                          "titleEn":  "v56: timer sync, blocking and the support box overhauled",
                          "highlightsEn":  [
-                                            "Stopping from the notification or the home-screen widget now stops the timer on your other device too.",
-                                            "The campfire clearing is twice as tall, so names no longer overlap in crowded groups.",
-                                            "The feedback screen is split into two tabs: Send and My feedback. You can follow what you sent and the replies in one place.",
-                                            "An unread reply now shows a marker on your profile, settings and feedback entries.",
-                                            "You can attach a photo to a report or a support question.",
-                                            "Frequently asked questions moved to the bottom of the sign-in screen.",
-                                            "Achievement descriptions now state the condition plainly: what to do and within how long.",
-                                            "Release notes are simpler; build details moved to the About screen inside Settings."
-                         ],
+                                              "Stopping from the notification or the home-screen widget now stops the timer on your other device too.",
+                                              "The campfire clearing is twice as tall, so names no longer overlap in crowded groups.",
+                                              "The feedback screen is split into two tabs: Send and My feedback. You can follow what you sent and the replies in one place.",
+                                              "An unread reply now shows a marker on your profile, settings and feedback entries.",
+                                              "You can attach a photo to a report or a support question.",
+                                              "Frequently asked questions moved to the bottom of the sign-in screen.",
+                                              "Achievement descriptions now state the condition plainly: what to do and within how long.",
+                                              "Release notes are simpler; build details moved to the About screen inside Settings."
+                                          ],
                          "fixesEn":  [
-                                            "The custom date-range calendar in Statistics is fixed: cells show the day number instead of a full date, and days no longer overlap.",
-                                            "A session you start and stop while offline no longer restarts by itself on your other device once you reconnect.",
-                                            "Someone you blocked no longer appears in tables and their profile cannot be opened.",
-                                            "The intro tour is shorter: only the editing step remains on the home screen and the statistics tour is gone.",
-                                            "Release notes now list published versions only.",
-                                            "Text that stayed Turkish on English, German and Arabic devices is now translated.",
-                                            "Reports about the same person are grouped into a single row for admins and now raise a notification."
-                         ],
+                                         "The custom date-range calendar in Statistics is fixed: cells show the day number instead of a full date, and days no longer overlap.",
+                                         "A session you start and stop while offline no longer restarts by itself on your other device once you reconnect.",
+                                         "Someone you blocked no longer appears in tables and their profile cannot be opened.",
+                                         "The intro tour is shorter: only the editing step remains on the home screen and the statistics tour is gone.",
+                                         "Release notes now list published versions only.",
+                                         "Text that stayed Turkish on English, German and Arabic devices is now translated.",
+                                         "Reports about the same person are grouped into a single row for admins and now raise a notification."
+                                     ],
                          "notesEn":  [
-                                            "Timer sync covers Android and the stopwatch only; Pomodoro, countdown and Windows are not included.",
-                                            "Both devices need v56 to try the sync.",
-                                            "Tablet landscape layout is not addressed in this release.",
-                                            "Resetting the password with a six-digit code still does not work on desktop.",
-                                            "On English devices the launcher label still reads Odak Kampı; inside the app it reads Focus Camp."
-                         ]
+                                         "Timer sync covers Android and the stopwatch only; Pomodoro, countdown and Windows are not included.",
+                                         "Both devices need v56 to try the sync.",
+                                         "Tablet landscape layout is not addressed in this release.",
+                                         "Resetting the password with a six-digit code still does not work on desktop.",
+                                         "On English devices the launcher label still reads Odak Kampı; inside the app it reads Focus Camp."
+                                     ]
                      },
                      {
                          "versionName":  "1.0.55",
@@ -181,48 +273,48 @@
                                             "Başarımların hepsinde nasıl kazanıldığı yazıyor."
                                         ],
                          "fixes":  [
-                                            "İki cihazın açıkken ikincisinden Durdur'a basmak koşuyu gerçekten bitiriyor; eskiden yalnız o cihazdaki görüntü duruyordu.",
-                                            "Widget ve bildirimde sayaç boştayken 00:00 yazıyor; başlatınca ilk saniyeden itibaren doğru ilerliyor.",
-                                            "Tanıtım turunda üst üste binen düğmeler ayrıldı; tur sıfırlandığında hem ekran turları hem ipuçları birlikte sıfırlanıyor.",
-                                            "Ayarlar yeniden düzenlendi, en çok kullanılanlar üste alındı.",
-                                            "İstatistiklerde özel tarih aralığını takvimin uçlarını sürükleyerek seçebiliyorsun.",
-                                            "Kamp ateşi biraz aşağı indi, sahnenin dikey dengesi düzeltildi.",
-                                            "Güncelleme notlarında kullanıcıya teknik satırlar görünmüyor."
-                                        ],
+                                       "İki cihazın açıkken ikincisinden Durdur\u0027a basmak koşuyu gerçekten bitiriyor; eskiden yalnız o cihazdaki görüntü duruyordu.",
+                                       "Widget ve bildirimde sayaç boştayken 00:00 yazıyor; başlatınca ilk saniyeden itibaren doğru ilerliyor.",
+                                       "Tanıtım turunda üst üste binen düğmeler ayrıldı; tur sıfırlandığında hem ekran turları hem ipuçları birlikte sıfırlanıyor.",
+                                       "Ayarlar yeniden düzenlendi, en çok kullanılanlar üste alındı.",
+                                       "İstatistiklerde özel tarih aralığını takvimin uçlarını sürükleyerek seçebiliyorsun.",
+                                       "Kamp ateşi biraz aşağı indi, sahnenin dikey dengesi düzeltildi.",
+                                       "Güncelleme notlarında kullanıcıya teknik satırlar görünmüyor."
+                                   ],
                          "notes":  [
-                                            "Bu sürüm sunucu tarafında da değişiklik taşır; güncelledikten sonra uygulamayı bir kez tamamen kapatıp açman önerilir.",
-                                            "Engellediğin kişi kamp ateşinde sahneden silinmez; kimliği gizlenir, katılımcı sayısı doğru kalır.",
-                                            "Sayaç eşitlemesi hâlâ yalnız Android ve kronometre modunu kapsıyor; Pomodoro, geri sayım ve Windows dahil değil.",
-                                            "Tablet yatay yerleşimi bu sürümde de ele alınmadı.",
-                                            "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
-                                        ],
+                                       "Bu sürüm sunucu tarafında da değişiklik taşır; güncelledikten sonra uygulamayı bir kez tamamen kapatıp açman önerilir.",
+                                       "Engellediğin kişi kamp ateşinde sahneden silinmez; kimliği gizlenir, katılımcı sayısı doğru kalır.",
+                                       "Sayaç eşitlemesi hâlâ yalnız Android ve kronometre modunu kapsıyor; Pomodoro, geri sayım ve Windows dahil değil.",
+                                       "Tablet yatay yerleşimi bu sürümde de ele alınmadı.",
+                                       "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+                                   ],
                          "titleEn":  "v55: blocking, reporting and help that actually work",
                          "highlightsEn":  [
-                                            "Someone you block can no longer nudge you, and you cannot nudge them either — blocking now holds on the server, not just on screen.",
-                                            "The report button is reachable from four different places and tells you what happens after you send it.",
-                                            "The app now has a Frequently Asked Questions screen; it opens without signing in and even in airplane mode.",
-                                            "Questions, feedback and reports now land in a single support inbox.",
-                                            "A group owner can ban a member for good; a banned person cannot rejoin even with a valid invite code.",
-                                            "The invite code can be regenerated with one tap, and the old code stops working immediately.",
-                                            "Display names and group names no longer accept abusive words.",
-                                            "Every achievement now says how it is earned."
-                                        ],
+                                              "Someone you block can no longer nudge you, and you cannot nudge them either — blocking now holds on the server, not just on screen.",
+                                              "The report button is reachable from four different places and tells you what happens after you send it.",
+                                              "The app now has a Frequently Asked Questions screen; it opens without signing in and even in airplane mode.",
+                                              "Questions, feedback and reports now land in a single support inbox.",
+                                              "A group owner can ban a member for good; a banned person cannot rejoin even with a valid invite code.",
+                                              "The invite code can be regenerated with one tap, and the old code stops working immediately.",
+                                              "Display names and group names no longer accept abusive words.",
+                                              "Every achievement now says how it is earned."
+                                          ],
                          "fixesEn":  [
-                                            "With two devices open, pressing Stop on the second one now really ends the run; before, only that device's display stopped.",
-                                            "The widget and the notification show 00:00 while the timer is idle, and count correctly from the first second after you start.",
-                                            "Overlapping buttons in the intro tour were separated; resetting the tour now clears both the screen tours and the tips.",
-                                            "Settings were reorganised, with the most used items moved to the top.",
-                                            "In statistics you can now pick a custom range by dragging the ends of the calendar.",
-                                            "The campfire moved down a little and the vertical balance of the scene was corrected.",
-                                            "Update notes no longer show technical lines to users."
-                                        ],
+                                         "With two devices open, pressing Stop on the second one now really ends the run; before, only that device\u0027s display stopped.",
+                                         "The widget and the notification show 00:00 while the timer is idle, and count correctly from the first second after you start.",
+                                         "Overlapping buttons in the intro tour were separated; resetting the tour now clears both the screen tours and the tips.",
+                                         "Settings were reorganised, with the most used items moved to the top.",
+                                         "In statistics you can now pick a custom range by dragging the ends of the calendar.",
+                                         "The campfire moved down a little and the vertical balance of the scene was corrected.",
+                                         "Update notes no longer show technical lines to users."
+                                     ],
                          "notesEn":  [
-                                            "This release also changes the server side; after updating, closing and reopening the app once is recommended.",
-                                            "A person you block is not removed from the campfire scene; their identity is hidden and the participant count stays correct.",
-                                            "Timer sync still covers only Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
-                                            "The tablet landscape layout was not addressed in this release either.",
-                                            "On desktop, resetting the password with a 6-digit code still does not work."
-                                        ]
+                                         "This release also changes the server side; after updating, closing and reopening the app once is recommended.",
+                                         "A person you block is not removed from the campfire scene; their identity is hidden and the participant count stays correct.",
+                                         "Timer sync still covers only Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
+                                         "The tablet landscape layout was not addressed in this release either.",
+                                         "On desktop, resetting the password with a 6-digit code still does not work."
+                                     ]
                      },
                      {
                          "versionName":  "1.0.54",
@@ -1454,9 +1546,9 @@
 
                                      ],
                          "notesEn":  [
-                                       "Stats Beta flag defaults off; enable in Settings.",
+                                         "Stats Beta flag defaults off; enable in Settings.",
                                          "This draft beta lets you try the new statistics screen."
-                                   ]
+                                     ]
                      },
                      {
                          "versionName":  "1.0.29",

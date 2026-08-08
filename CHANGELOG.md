@@ -4,6 +4,70 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v60 / 1.0.60+60] - 2026-08-08
+
+> **Saha geri bildirimi sürümü.** v59 sonrası sahibin bildirdiği on madde ve
+> denetimde çıkan altı ek bulgu kapandı. Ağırlık gruplar sekmesi, sohbet ve
+> sayaç durdurma davranışında.
+
+### Yenilikler
+- **Sohbet tam ekran açılıyor.** Mesajlar artık kart içinde sabit yüksekliğe
+  sıkışmıyor; klavye açıkken yazma alanı üstte kalıyor.
+- **Grup değiştir düğmesi grup adının yanına indi.** Gruplar sekmesinin
+  tepesindeki ayrı şerit kalktı, kamp ateşi yukarı geldi.
+- **Kamp ateşinde arkadaşını dürtebilirsin.** Hayvanına dokununca açılan
+  sayfada Dürt düğmesi var; karşı taraf çalışıyorsa odağı korunuyor.
+- **Taç kademeleri Başarımlar ekranından da açılıyor.** Rütbe adı + toplam
+  puan satırına ya da renkli kademe şeridine dokunmak yeterli.
+- **SSS artık Ayarlar'ın en altında**, kendi "Yardım" bölümünde. Önce Hakkında
+  ekranına girmek gerekmiyor.
+- Ada karakter sınırı geldi: kişi adı 24, grup adı 30.
+
+### Düzeltmeler
+- **Sayacı durdurmak bazen üç saniye bekliyordu.** Durdurma artık arka plandaki
+  raporlamayı beklemiyor; düğme de gri kalmak yerine dönen halka ve
+  "Durduruluyor…" gösteriyor.
+- **Kartın üstünden kaydırınca sayfa kaymıyordu.** İçerik karta sığdığında kart
+  artık kaydırma hareketini yutmuyor; taştığında kart içinde kayıyor ve
+  hiçbir satır kaybolmuyor.
+- Bugün özeti kartı bazı yerleşimlerde hiç çizilmiyordu.
+- Kamp ateşinde hiç çalışmayan bir dokunma davranışı kaldırıldı.
+- Grup ayarlarındaki ikinci sohbet kartı kaldırıldı.
+
+### Notlar
+- Bu sürümün maddeleri `docs/qa/V59-FIELD-FEEDBACK.md` içinde dosya ve satır
+  kanıtlarıyla kayıtlıdır.
+
+## [v59 / 1.0.59+59] - 2026-08-07
+
+> **Kararlılık ve okunabilirlik sürümü.** Geri sayım/pomodoro açılış çökmesi,
+> "yükleniyor" ile "kayıt yok" karışması ve grafik/liste okunabilirliği kapandı.
+>
+> ⚠️ Bu kayıt **sonradan** eklendi (v60 hazırlığında, 2026-08-08). v59 etiketi
+> 2026-08-07'de atıldı ama ne burada ne `app/assets/release_notes.json`'da
+> kaydı yoktu; uygulama içindeki "Güncelleme notları" ekranı bu sürüm için
+> **boş** göründü. Kalıcı önlem aynı turda eklendi: yayın ön denetimi artık
+> etiketin bu iki kaydını arıyor ve yoksa fail-closed durur.
+
+### Yenilikler
+- Sayaç tanılama kaydı okunabilir hâle geldi (aralıklı hataların kanıtı için).
+- Seri rozeti sadeleşti: yalnız alev ve sayı; büyük yazı ölçeğinde de üst üste
+  binmiyor.
+- Kalan İngilizce arayüz metinleri çevrildi.
+
+### Düzeltmeler
+- **Geri sayım ve pomodoro açılışta çöküyordu.** Yerel ayar tipi uyuşmazlığı
+  düzeltildi.
+- **Kartlar veri gelirken "kayıt yok" / "0 dk" gösteriyordu.** Artık önce yer
+  tutucu, sonra gerçek veri görünüyor; çevrimdışında ayrı mesaj çıkıyor.
+- Aktif üye kartında sığmayan üye kayboluyordu; kart artık kaydırılabiliyor.
+- Üye listesinde uzun adlar tek harfe iniyordu.
+- Trend ve dağılım grafiklerinde eksen sayıları üst üste biniyordu.
+- Ana ekranın üstü çentikli telefonlarda durum çubuğunun altına giriyordu.
+- Grup detayında üye listesi sürekli yenilenip yükleniyora düşüyordu.
+- Grup başarımları birden fazla grubu birlikte sayıyordu.
+- Gün hedefi tamamlama serisi hiç yazılmıyordu; geçmiş kayıtlar da tamamlandı.
+
 ## [v58 / 1.0.58+58] - 2026-08-01
 
 > **Senkron ve saha güveni sürümü.** v57 sonrası geri bildirimler sayaç,
