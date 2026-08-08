@@ -8412,7 +8412,18 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 ---
 
 ### WP-519: Native yazım Dart'ın yalnız-Dart anahtarlarını düşürüyor ⚠️
-- **Program/Faz:** Faz F5 · Orta · **Durum:** [ ] Bekliyor · **Commit:** —
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kapandı — **KART YANLIŞTI**
+  · **Commit:** — (kod değişmedi, iddia ölçülerek çürütüldü, 2026-08-08)
+- 🔴 **DÜZELTME (lider ölçümü):** Kartın "etkisi" bölümü yanlıştı.
+  `accumulatedSeconds` **ölü alandır**: soğuk geri yüklemede hiçbir yerde
+  okunmuyor, oturum süresi `startedAt`/`end` farkından hesaplanıyor.
+  Ölçüm: geri yüklemeye `state.accumulatedSeconds=99999` enjekte edildi →
+  kaydedilen oturum sayısı 1, süre `[60]` (etkilenmedi). Yani anahtarın
+  düşmesinin kullanıcıya yansıyan bir bedeli yok.
+- **Durabilir ders:** kart kodun kendisinden değil plandan yazılmıştı; aynı
+  hata bu turda birkaç kez tekrarlandı. Cihaz gözlemi ("anahtar yok") ile
+  kullanıcı etkisi ("süre kaybolur") ayrı iddialardır ve ikincisi ayrıca
+  ölçülmelidir.
 - **Kaynak:** WP-516 emülatör turunda ölçüldü (alt ajan bulgusu, bilerek
   düzeltilmedi — sayaç kritik alan, ayrı WP ister).
 - **Bulgu:** Sayaç başlatıldıktan ~3 sn sonra cihaz deposunda `started_at_ms`
@@ -8433,7 +8444,7 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 ---
 
 ### WP-520: Bildirim izni ikinci basışta yakalanmamış hata 🔔
-- **Program/Faz:** Faz F5 · Küçük · **Durum:** [ ] Bekliyor · **Commit:** —
+- **Program/Faz:** Faz F5 · Küçük · **Durum:** [x] Bitti · **Commit:** `47707d5`
 - **Kaynak:** WP-516 emülatör turu (API 33).
 - **Bulgu:** `TimerNotificationService.requestPermissionIfNeeded`
   (`timer_notification_service.dart:157-165`) `PlatformException`'ı yakalamıyor.
@@ -8506,7 +8517,15 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 ---
 
 ### WP-523: Durdur'daki kalan 1-3 saniye ⏱️
-- **Program/Faz:** Faz F5 · Orta · **Durum:** [ ] Bekliyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [~] WP-542'de ele alındı
+- 🔎 **Kök neden 2026-08-08'de ÖLÇÜLDÜ** (bağımsız denetim ajanı): kartın
+  "aday üç yer" listesindeki (a) doğruydu ve tek başına baskındı. `stop()`
+  önce `_reconcileBackgroundTimer()`, sonra `_recordSession → addSession →
+  flushPending + _remote.addSession` zincirini `await` ediyor ve **hiçbirinde
+  timeout yok** (`grep -rn "\.timeout(" app/lib/` → 3 sonuç, hiçbiri sayaç
+  yolunda değil). İyi ağda 2-3 sn, kötü ağda TCP zaman aşımına kadar
+  (~1-2 dk) `_finish()` çalışmıyor: buton kilitli, FGS bildirimi hâlâ
+  "çalışıyor", `_publishPresence(offline)` gitmiyor.
 - **Neden var:** sahip v60 cihaz kabulünde: *"sayaç durdurmada artık
   durduruluyor yazıyor ama gene 2-3 sn bekleniyor, en azından bu iyi oldu…
   sorun yok ama sadece o kadar uzun bekletmese güzel olabilir."* Yani
@@ -8649,6 +8668,196 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - **Kanit iddia degil:** `gradlew :app:processStableReleaseManifest`
   kosturuldu, birlestirilmis manifest'te
   `android:label="@string/app_name_stable"` okundu.
+
+---
+
+### WP-530: Kayit ve grup kurma akislarinda geri bildirim
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `b2c1d3e`
+- **Kaynak:** sahip Console kurulumu sirasinda bildirdi: *"hesap olusturma
+  fln seylerinde arayuz cok hizli hareket ediyor... bir anda sign in kismina
+  atiyor"* ve *"grup kurarken kur dedim 5-6 sn bos bos bir sey gelmedi,
+  sonrasinda geldi, 2. denedim"*.
+- **Alt ajan yapti, lider denetledi.** Kayit sonrasi dogrulama mesaji ve grup
+  kurmada calisma gostergesi eklendi.
+- 🔴 **Regresyon uretti:** `authStateProvider` diyalog acilmadan ONCE okundu;
+  akis ilk karelerde null oldugu icin diyalog **hic acilmadi**
+  (`group_discovery_screen_test` kirmizi). WP-535'te duzeltildi. Ders:
+  Riverpod'da auth akisini kapi olarak kullanma, eylem aninda oku.
+
+---
+
+### WP-531: Data safety envanteri cihaz kimligini YANLIS "Hayir" diyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `dc6ef1e`
+- Play "Veri guvenligi" formu icin hazirlanan envanter, cihaz tanimlayicisi
+  toplanmiyor diyordu; kod tersini soyluyordu. Yanlis beyan Play'de kaldirma
+  sebebidir. Envanter kodla eslendi.
+
+---
+
+### WP-532: Davet koduyla katilma akisinda geri bildirim
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `e515817`
+- WP-530'un ikizi: davet koduyla katilmada da bekleme sessizdi.
+
+---
+
+### WP-533: Play flavor'i icin Firebase + launcher ikonu, kapiya baglandi
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti ·
+  **Commit:** `84a8c0e` (+ `f59e6e5` kapi sertlestirmesi)
+- **Neden:** ilk AAB derlemesi **iki kez** patladi: once `src/play/
+  google-services.json` yoktu, sonra `src/play/res` olmadigi icin
+  `@mipmap/ic_launcher` cozulemedi. `play` flavor'i o gune kadar hicbir
+  workflow'da derlenmemisti (WP-527 kartindaki "olculmeyen" tam buydu).
+- 🔴 **Lider denetiminde yalanci yesil yakalandi:** alt ajanin ekledigi
+  `play-firebase` kapisi, ilgili satir **yorum satirina alindiginda** yesil
+  kaliyordu (yalniz silinince kirmizi oluyordu). Kapi yorumlari soyup
+  olcecek sekilde yeniden yazildi ve CI'a baglandi.
+
+---
+
+### WP-534/535: Kesilen hata metni + grup kurma diyalogunun acilmamasi
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `4b018e5`
+- **Kaynak:** sahip ekran goruntusu: *"burada hata tam okunmuyor"* — sifre
+  degistirme kutusunda hata "The new password cannot be th..." diye
+  kesiliyordu. Kok neden Flutter varsayilani: `InputDecoration.errorMaxLines`
+  = 1. Cozum tek tek alanlara degil **temaya** yazildi (`errorMaxLines: 3`),
+  aksi halde eklenen her yeni alan ayni hatayi yeniden uretir.
+- 🔴 **Kendi testim yalanci yesildi:** ilk surum `Text.maxLines` alanina
+  bakiyordu ve duzeltme kaldirilinca da geciyordu. Yeniden yazildi, artik
+  **cizilen yuksekligi** olcuyor (kisa hata 16.0px = tek satir, uzun hata
+  >24px = sarmis).
+- WP-535: WP-530'un urettigi regresyon (auth okumasi `submit()` icine tasindi).
+
+---
+
+### WP-536: Ag hatasi artik "mevcut sifre hatali" diye raporlanmiyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `0e007fb`
+- **Kaynak:** sahip: *"dogru sifre girmeme ragmen bir kac kez hata veriyor,
+  oyle girebiliyorum."*
+- **Kok neden:** `changePassword` mevcut sifreyi `signInWithPassword` ile
+  dogruluyor ve o cagridan gelen **her** `AuthException` — hiz siniri haric —
+  `invalidCurrentPassword` sayiliyordu. Ag hatasi (`gotrue` onu
+  `AuthRetryableFetchException` olarak sarar) da bu kovaya dusuyordu.
+- 🔴 **Kendi testim yalanci yesildi:** ilk surum kaynak taramasiydi; ilgili
+  satirin basina `if (false && ...)` yazinca metin dosyada durdugu icin test
+  gecmeye devam etti. Yeniden yazildi: gercek `SupabaseAuthRepository` +
+  sahte HTTP istemcisi ile **davranis** olculuyor.
+
+---
+
+### WP-537: Play surumu artik muzik/video/foto izni istemiyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `e360f2d`
+- **Olculdu:** `playRelease` birlestirilmis manifestinde READ_MEDIA_IMAGES,
+  READ_MEDIA_VIDEO, READ_MEDIA_AUDIO ve READ_EXTERNAL_STORAGE vardi. Hicbiri
+  bizim manifestimizde yazili degil — `open_filex` eklentisi bildiriyor,
+  manifest birlestirme uygulamaya tasiyor. O eklentinin tek kullanim yeri
+  sideload updater'i, o da Play surumunde **kapali**.
+- **Cozum:** `src/play/AndroidManifest.xml` icinde dordu de
+  `tools:node="remove"`. Kalici kapi: `test_all.py` → `play-manifest`
+  (iki katmanli: kaynak + birlestirilmis cikti; cikti katmani yoksa bunu
+  **acikca yazar**, sessizce yesil saymaz).
+- **Sonradan dogrulandi:** bu izinler v61 gonderiminde Play Console'da gercek
+  beyan hatasi uretti. Yani kapi kurgusal degil, olculmus bir yayin engeli.
+
+---
+
+### WP-538: Engelleme, ag hatasinda sessizce kapaniyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `57d1d86`
+- Engellenen kullanici listesi cekilemezse sohbet **suzgecsiz** listeye
+  dusuyordu: ag bir an titredigi anda engelledigin kisinin mesajlari geri
+  geliyordu. Artik engelli kume bilinmiyorsa mesaj cizilmiyor (fail-closed).
+- 🔴 **Eski test uretim kodundan hicbir sey import etmiyordu**: suzgeci test
+  icinde yeniden yazip kendi ciktisini dogruluyordu; `class_chat_card`
+  icindeki suzgec tamamen silinse bile yesil kalirdi. Gercek testle
+  degistirildi.
+
+---
+
+### WP-539: Kimlik akisinda yalan mesaj, sessiz dugme ve cikmaz yol
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Bitti · **Commit:** `097965c`
+  · **Alt ajan yapti.**
+- On maddelik supurge. En agiri **cikmaz sokak**: giris ekrani "kodu gir"
+  yolu sunuyordu ama ucretsiz plan e-posta sablonunu kilitledigi icin o kod
+  **hicbir zaman gelmiyordu** — kullanici sonsuz donguye giriyordu. Dugme
+  artik cizilmiyor; ekran silinmedi, `RESET_WITH_CODE_ENABLED` bayragiyla
+  SMTP gelince acilir.
+- Ikinci agir: silme isteginin **iptal kapisi**, durum sorgusu hata verirse
+  kayboluyordu → 14 gunluk pencerede iptal edilemez hale geliyordu. Artik
+  hata halinde fail-safe taraf iptal kapisidir.
+- Iki yalanci yesil kapatildi. **11 sabotajin 11'i kirmizi.**
+- **Lidere birakilan:** `in_memory_auth_repository` hala kodsuz istisna
+  firlatiyor (demo/offline modda generic mesaj); `signUp`'in "dogrulama
+  bekliyor" dali hala metne bakiyor.
+
+---
+
+### WP-540: Grup yonetim eylemlerinde geri bildirim ve cift gonderim
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Bitti · **Commit:** `d18e333`
+  · **Alt ajan yapti.**
+- Davet kodu yenilemede cift gonderim (iki farkli kod uretiyordu), sessiz
+  yasaklama, durtmede cift gonderim, bos girdide sessiz kapanma, bes hata
+  sebebinin tek generic cumleye dusmesi.
+- **Yan bulgu:** `GroupException` **olmayan** hata hic yakalanmiyordu —
+  repository yalniz `PostgrestException`i sariyor, ag kopunca `SocketException`
+  sarilmadan cikiyor → gosterge sonsuza dek donuyor ve `PopScope` yuzunden
+  diyalog kapanmiyordu (kullanici kilitleniyordu).
+- 6 sabotaj, 6 kirmizi. `join_group_feedback_wp532_test.dart:206`'daki bir
+  yalanci yesil de duzeltildi.
+
+---
+
+### WP-541: Buyuk yazi olceginde erisilemeyen ekranlar + tema korumasiz renkler
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Bitti · **Commit:** `f4a6e0e`
+  · **Alt ajan yapti.**
+- **YAYIN ENGELI olcusunde:** grupsuz bos durumda hic kaydirici yoktu; sistem
+  yazisini buyutmus kullanicida "Koda katil" ve "Gruplari kesfet" viewport
+  disinda kaliyor ve **kaydirilamiyordu** — davet kodu almis yeni kullanici
+  uygulamaya giremiyordu. Olcum (360x720, scale 2.0): Join[682..762] ve
+  Discover[770..850] EKRAN-DISI, scrollable=0.
+- "Bugun ozeti" basligi **varsayilan** yazi olcusunde bile 320px'te 19px
+  tasiyordu. Gorev aciliyet renkleri sabit hex'ti: "Gecikti" kirmizisi 11 koyu
+  temada 2.1-2.9 kontrast veriyordu (metin-disi 3.0 tabaninin bile altinda).
+  Artik aciklik zeminden turetiliyor, 15 preset x 2 parlaklik x 2 zemin →
+  hepsi >= 4.5.
+- 4 sabotaj, 4 kirmizi.
+
+---
+
+### WP-542: Durdurma ag turunu bekliyor + sessiz sure kaybi
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Devam ediyor
+- WP-523'un kok nedeni + iki sessiz veri kaybi. Ayrinti WP-523 kartinda.
+
+---
+
+### WP-543: Elle kurulan realtime kanallari yeniden baglanmada tazelenmiyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `a4a036b`
+  · **Alt ajan yapti.**
+- `study_sessions` ve `group_daily_totals`, `.stream()` yerine elle kurulmus
+  kanal kullaniyordu ve `subscribe()`'a durum callback'i vermiyordu. Soket
+  kopup geri gelince **hicbir refetch tetiklenmiyordu**: liste bir sonraki
+  postgres olayina kadar donmus kaliyordu; kopukluk sirasinda baska cihazda
+  yazilan oturumlar hic gorunmuyordu. Paketin kendisi `.stream()` yolunda
+  bunu yapiyor (`supabase_stream_builder.dart:227-232`), yani bu iki akis
+  projedeki **tek korumasiz** akislardi.
+- Ikinci belirti: soket sessizce dustugunde `addError` hic calismadigi icin
+  offline katmanin yeniden baglanma dongusu de uyanmiyordu.
+- Olcum: rejoin sonrasi select/RPC sayisi 1 → 2; kanal hatasinda akisa dusen
+  hata 0 → 1. Iki tur sabotaj, ikisi de kirmizi (birincisi callback'in
+  varligini, ikincisi gercek refetch'i olcuyor).
+
+---
+
+### WP-544: Play surumunden USE_EXACT_ALARM dusuruldu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `5fe5c5b`
+- **Kaynak:** v61 AAB gonderiminde Play Console surum yayinlamayi BLOKE etti.
+  "Tam alarmlar" beyani yalnizca "Calar saat" / "Takvim" seceneklerini
+  sunuyor; ucuncu secenek yok. Odak Kampi ikisi de degil, dolayisiyla form
+  durustce doldurulamaz — formun kendi metni izni kaldirmayi sart kosuyor.
+- **Kaybedilmeyen:** `SCHEDULE_EXACT_ALARM` kaldi ve zaten kullanicidan
+  isteniyor (`ExactAlarmHelper.kt`, `exact_alarm_permission.dart`,
+  `alarms_screen.dart:47`). Izin verilmezse `scheduleMode()` sessizce
+  `inexactAllowWhileIdle`a duser: alarm calar, saniyesi garanti olmaz.
+  GitHub kanallari (stable/beta) etkilenmedi.
+- Kapi genisletildi; iki katmanda da sabotajla sinandi.
 
 ---
 
