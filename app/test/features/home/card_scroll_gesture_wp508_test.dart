@@ -29,6 +29,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/stats/istanbul_calendar.dart';
 import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
@@ -51,6 +52,8 @@ import 'package:online_study_room/features/home/widgets/tasks_card.dart';
 import 'package:online_study_room/features/home/widgets/today_summary_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/istanbul_fixture.dart';
 
 final _group = StudyGroup(
   id: 'g-1',
@@ -195,6 +198,13 @@ void main() {
         tester,
         card: const TodaySummaryCard(),
         overrides: _statsOverrides(),
+      );
+      // WP-566: kart ders kirilimi listesini gercekten kurmus olmali; bos
+      // kart hic `Scrollable` kurmaz ve jest iddiasi bosa doner.
+      expect(
+        find.text('Matematik'),
+        findsOneWidget,
+        reason: 'kurulum bozuk: bugunun ders kirilimi cizilmedi',
       );
       await _expectOuterScrolls(
         tester,
@@ -380,6 +390,25 @@ void main() {
       });
     }
   });
+
+  // 🔴 WP-566 kaniti: tuzak gece yarisi PENCERESINI beklemeden
+  // olculur. Enjekte edilen `now` gunun 24 saatini tarar, yani sonuc kosum
+  // saatinden bagimsizdir. Fixture ham `DateTime.now().subtract`a donerse (ya
+  // da yardimcidaki kirpma kalkarsa) 01:00 oncesi ornekler kirmizi doner.
+  test('WP-566: kart oturumu gunun HER saatinde bugune duser', () {
+    // 21:00Z = ertesi gun 00:00 Istanbul (UTC+3).
+    final istanbulMidnight = DateTime.utc(2026, 8, 9, 21);
+    for (var minute = 0; minute < 24 * 60; minute += 15) {
+      final now = istanbulMidnight.add(Duration(minutes: minute));
+      expect(
+        _todaySessions(now: now).single.day,
+        istanbulDay(now),
+        reason:
+            'Istanbul ${minute ~/ 60}:${(minute % 60).toString().padLeft(2, '0')} '
+            '- fixture oturumu bugune dusmedi, ders kirilimi hic cizilmez.',
+      );
+    }
+  });
 }
 
 List<Override> _activeMembersOverrides(int count) => [
@@ -393,21 +422,31 @@ List<Override> _activeMembersOverrides(int count) => [
   ),
 ];
 
+/// `TodaySummaryCard` yalniz **bugune** dusen oturumlari toplar
+/// (`today_summary_card.dart` -> `sessionsOnDay(sessions, now)`).
+///
+/// 🔴 WP-566 gece yarisi tuzagi: burada eskiden ham
+/// `DateTime.now() - 1 saat` vardi. Urunun gun siniri `Europe/Istanbul`;
+/// kosum 00:00-01:00 arasina denk gelirse oturum DUNE duser ve kart ders
+/// kirilimi `ListView`ini **hic kurmaz** -- yani WP-508'in olctugu jest tuzagi
+/// (sigan icerikte kaydirici kuran kart) sahnede hic bulunmaz ve iki test
+/// sessizce olcmeyi birakir. Ayni pencere `today_summary_unbounded_wp515`i
+/// kirmisti (2026-08-09 00:5x kirmizi, 01:04 hicbir kod degismeden yesil).
+List<StudySession> _todaySessions({DateTime? now}) => [
+  StudySession(
+    id: 's1',
+    userId: 'u1',
+    subjectId: 'sub-1',
+    start: agoWithinIstanbulToday(const Duration(hours: 1), now: now),
+    end: now ?? DateTime.now(),
+    durationSeconds: 3600,
+    source: StudySource.live,
+  ),
+];
+
 List<Override> _statsOverrides() => [
   authStateProvider.overrideWith((ref) => Stream.value(_member(1))),
-  userSessionsProvider.overrideWith(
-    (ref) => Stream.value(<StudySession>[
-      StudySession(
-        id: 's1',
-        userId: 'u1',
-        subjectId: 'sub-1',
-        start: DateTime.now().subtract(const Duration(hours: 1)),
-        end: DateTime.now(),
-        durationSeconds: 3600,
-        source: StudySource.live,
-      ),
-    ]),
-  ),
+  userSessionsProvider.overrideWith((ref) => Stream.value(_todaySessions())),
   userSubjectsProvider.overrideWith(
     (ref) => Stream.value(<Subject>[
       const Subject(id: 'sub-1', userId: 'u1', name: 'Matematik', color: 'chart-1'),

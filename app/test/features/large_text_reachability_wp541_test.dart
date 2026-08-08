@@ -24,6 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/stats/istanbul_calendar.dart';
 import 'package:online_study_room/core/tasks/task_deadline.dart';
 import 'package:online_study_room/core/theme/app_theme.dart';
 import 'package:online_study_room/core/theme/warning_tokens.dart';
@@ -40,6 +41,8 @@ import 'package:online_study_room/features/home/widgets/today_summary_card.dart'
 import 'package:online_study_room/features/stats/stats_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/istanbul_fixture.dart';
 
 /// Olculen telefon matrisi: en dar yaygin cihaz, referans cihaz, genis cihaz.
 const List<(double, double)> _screens = [(320, 640), (360, 720), (411, 731)];
@@ -159,6 +162,28 @@ List<Override> _statsOverrides(SharedPreferences prefs) => [
   dailyGoalMinutesProvider.overrideWithValue(120),
 ];
 
+/// WP-541/3'un olctugu kart yalniz **bugune** dusen oturumlari toplar
+/// (`today_summary_card.dart` -> `sessionsOnDay(sessions, now)`).
+///
+/// 🔴 WP-566 gece yarisi tuzagi: burada eskiden ham
+/// `DateTime.now() - 12 saat` vardi. Urunun gun siniri `Europe/Istanbul`;
+/// kosum 00:00-12:00 arasina denk gelirse oturum DUNE duser, kart "12s 34dk"
+/// yerine "0 dk" + bos durum cizer ve tasma olcumu hicbir sey olcmez. Yani
+/// tuzak gunun YARISINDA aciktir. Olcum (2026-08-09 02:5x): asagidaki
+/// "Matematik" iddiasi bu fixture ile 6/6 KIRMIZI, duzeltmeden sonra yesil.
+/// `agoWithinIstanbulToday` geri gidisi bugunun icinde tutar.
+List<StudySession> _todaySessions({DateTime? now}) => [
+  StudySession(
+    id: 's1',
+    userId: 'u1',
+    subjectId: 'sub-1',
+    start: agoWithinIstanbulToday(const Duration(hours: 12), now: now),
+    end: now ?? DateTime.now(),
+    durationSeconds: 12 * 3600 + 34 * 60,
+    source: StudySource.live,
+  ),
+];
+
 List<Override> _summaryOverrides() => [
   authStateProvider.overrideWith(
     (ref) => Stream.value(
@@ -166,17 +191,7 @@ List<Override> _summaryOverrides() => [
     ),
   ),
   userSessionsProvider.overrideWith(
-    (ref) => Stream.value(<StudySession>[
-      StudySession(
-        id: 's1',
-        userId: 'u1',
-        subjectId: 'sub-1',
-        start: DateTime.now().subtract(const Duration(hours: 12)),
-        end: DateTime.now(),
-        durationSeconds: 12 * 3600 + 34 * 60,
-        source: StudySource.live,
-      ),
-    ]),
+    (ref) => Stream.value(_todaySessions()),
   ),
   userSubjectsProvider.overrideWith(
     (ref) => Stream.value(<Subject>[
@@ -315,6 +330,9 @@ void main() {
           // Yalancı yeşile karşı: veri kapısı acikken kart govdesi hic
           // cizilmez ve tabii ki tasmaz.
           expect(find.text('Bugün özeti'), findsOneWidget);
+          // WP-566: basligin YANINDAKI toplam sure ile ders satiri gercekten
+          // cizilmis olmali; bos kart zaten tasmaz (yalanci yesil).
+          expect(find.text('Matematik'), findsOneWidget);
         });
       }
     }
@@ -370,6 +388,26 @@ void main() {
           }
         });
       }
+    }
+  });
+
+  // 🔴 WP-566 kaniti: yukaridaki tuzak gece yarisi PENCERESINI
+  // beklemeden olculur. Enjekte edilen `now` gunun 24 saatini tarar, yani
+  // sonuc kosum saatinden bagimsizdir. Fixture ham `DateTime.now().subtract`a
+  // donerse (ya da yardimcidaki kirpma kalkarsa) 12:00 oncesi her ornek
+  // kirmizi doner.
+  test('WP-566: ozet oturumu gunun HER saatinde bugune duser', () {
+    // 21:00Z = ertesi gun 00:00 Istanbul (UTC+3).
+    final istanbulMidnight = DateTime.utc(2026, 8, 9, 21);
+    for (var minute = 0; minute < 24 * 60; minute += 15) {
+      final now = istanbulMidnight.add(Duration(minutes: minute));
+      expect(
+        _todaySessions(now: now).single.day,
+        istanbulDay(now),
+        reason:
+            'Istanbul ${minute ~/ 60}:${(minute % 60).toString().padLeft(2, '0')} '
+            '- fixture oturumu bugune dusmedi, kart bos cizer.',
+      );
     }
   });
 }
