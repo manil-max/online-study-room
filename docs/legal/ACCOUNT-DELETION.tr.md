@@ -1,6 +1,7 @@
-# Hesap ve Veri Silme — Odak Kampı
+# Hesap ve Veri Silme — Focus Camp / Odak Kampı
 
-**Sürüm:** 2026-08-08 · **Uygulama:** Odak Kampı (`com.manilmax.online_study_room`)
+**Sürüm:** 2026-08-08 · **Uygulama:** Focus Camp (Türkçe cihazlarda **Odak Kampı**)
+· Paket adı: `com.manilmax.online_study_room`
 
 Bu sayfa hesabını ve verilerini nasıl sildireceğini anlatır.
 

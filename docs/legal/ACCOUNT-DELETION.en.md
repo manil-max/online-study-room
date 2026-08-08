@@ -1,6 +1,7 @@
-# Account and Data Deletion — Odak Kampı (Focus Camp)
+# Account and Data Deletion — Focus Camp / Odak Kampı
 
-**Version:** 2026-08-08 · **App:** Odak Kampı (`com.manilmax.online_study_room`)
+**Version:** 2026-08-08 · **App:** Focus Camp (shown as **Odak Kampı** on Turkish devices)
+· Package name: `com.manilmax.online_study_room`
 
 This page explains how to delete your account and your data.
 
