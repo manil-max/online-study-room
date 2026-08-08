@@ -109,7 +109,7 @@
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
   Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
-- **Son WP numarası:** **WP-523** (2026-08-08). WP-507…WP-513 v59 saha geri
+- **Son WP numarası:** **WP-529** (2026-08-08). WP-507…WP-513 v59 saha geri
   bildirimi dalgasıdır (kart kaydırma · Gruplar üst düzeni · tam ekran sohbet ·
   dürtme · taç kademeleri · Durdur gecikmesi · ajan altyapısı); hepsi
   commit'lendi, cihaz kabulü bekliyor. **Yürütme modeli 2026-08-08'de tek lider
@@ -8524,6 +8524,131 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - **Kabul:** Durdur'a basıldıktan sonra sayı **300 ms içinde** donar; kayıt
   kesinleşmesi ayrı ve sessiz ilerler; ağ hatasında kullanıcı bilgilendirilir
   ve süre kaybolmaz. Ölçüm teslim özetinde milisaniyeyle yazılı olur.
+
+---
+
+### WP-524: Hesap silme purge zinciri production'da baglandi (KRITIK)
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `bf5bdf3`
+- **Bulgu (kodda dogrulandi):** `staging-purge-activation.yml` 2026-07-31'de
+  zinciri **yalniz staging'de** bagladi. Production'da `0113` cron'u
+  migration'la kuruldu ama `purge-accounts` Edge function'i production'a hic
+  deploy edilmedi ve `configure_purge` hic cagrilmadi. Yapilandirma yoksa
+  `_request_scheduled_account_purge()` **sessizce cikar**. Yani production'da
+  kullanici "hesabimi sil" der, satir `scheduled` yazilir, 14 gun gecer ve
+  **hicbir sey silinmez** -- WP-464'te staging'de kapatilan hatanin aynisi
+  production'da acik duruyordu. Repo secret listesi de dogruladi: hicbir
+  ortamda `PURGE_CRON_SECRET` yok (aktivasyon kosumunda uretiliyor).
+- **Neden Play islerinden once:** formda "hesap ve veriler silinir" demeden
+  once silmenin gercekten kostugunu olcmek gerekir.
+- **Kanit:** run 31259909837 -- `configuration_status: "configured"`,
+  dry-run `processed=0, dry_run=true, message="no due jobs"`. Hicbir hesap
+  silinmedi. Saglik iddiasi bilerek `configured` uzerinedir: yapilandirilmamis
+  kuyruk sifir hata uretir ve "saglikli" gorunur.
+
+---
+
+### WP-525: Yasal metinler canli HTTPS adresinde
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti ·
+  **Commit:** `0f77e48` (+ `d96141e` Pages duzeltmesi)
+- **Neden:** Play gizlilik politikasi icin canli adres, veri silme beyani icin
+  ayri adres ister. Metinler repoda vardi ama **hicbir yerde yayinlanmiyordu**
+  ve `LEGAL_BASE_URL` hicbir ortam dosyasinda tanimli degildi.
+- **Ne yapildi:** `scripts/build_legal_site.py` (dis bagimlilik yok) +
+  `legal-site.yml` (GitHub Pages) + `ACCOUNT-DELETION.{tr,en}.md`. Silme
+  sayfasi uydurulmadi: 14 gun grace `0037/0113`'ten, "takma kimlige cevrilen
+  kayitlar" bolumu `0114`'un set null + sha256(uid) deseninden yazildi.
+- **Kapi:** uygulama yasal adresi **kod icinde** kuruyor
+  (`legal_center_screen.dart`). Site o dosyayi uretmezse kullanici 404 gorur
+  ve hicbir derleme hatasi yakalamaz. `--check` yollari **koddan tarayip**
+  karsilastiriyor; tarama bozulursa (hic yol bulunamazsa) kapi bilerek kirmizi
+  duser. `test_all.py` T0 kapisi `legal-site`.
+- **Kirik girdiyle sinandi:** `PAGES`'ten `legal/privacy-en.html` silinince
+  kirmizi dustu, geri konunca yesil.
+- **Ilk kosumda gercek hata yakalandi:** paragraf satir satir islendigi icin
+  iki satira yayilan kalin metin donusmuyor, sayfada ham yildiz kaliyordu.
+  Markdown'un yumusak/sert satir sonu ayrimi uygulandi.
+- **Canli dogrulama:** 6 adres HTTP 200. Deploy isi "success" demekle
+  yetinmiyor, dort kritik sayfayi 200 donene kadar cagiriyor.
+
+---
+
+### WP-526: Icerik arayuzun dilinde geliyor (SSS Ingilizce'de Turkce cikiyordu)
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `643c9f6`
+- **Sahip bulgusu (saha):** "SSS'lerde sorularda Ingilizce yok, dil eng
+  seciliyken sorular ve cevaplar Turkce."
+- **Kok neden tek satir, iki yerde:**
+  `ref.watch(appLanguageProvider) == AppLanguage.english ? 'en' : 'tr'`.
+  `AppLanguage` **uc** degerli (system/english/turkish); bu ifade `system`'i
+  sessizce Turkce sayiyor. Telefonu Ingilizce olan kullanici arayuzu Ingilizce
+  gorup icerigi Turkce aliyordu.
+- **Duzeltme:** tercih degil **cozulmus dil** -- `contentLanguageCodeProvider`.
+- **Test kendi olcum aracini duzeltti:** ilk kosumda "sistem+Turkce" senaryosu
+  kod dogru oldugu halde kirmizi dustu. Sebep: `PlatformDispatcher.instance`
+  test binding'ini dinlemez, yani sistem dili davranisi **hic sinanamiyormus**.
+  Okuma `WidgetsBinding.instance.platformDispatcher` uzerine alindi.
+- **Taramayla iki hata daha:** elle sure eklerken acilan takvim sabit
+  `Locale('tr')` idi; `loadSystemLocalizations` daima sistem dilini kullanip
+  kullanicinin tercihini yok sayiyordu (bildirimler yanlis dilde).
+- **Kalici kapi (sahibin "butun projeyi taramak lazim" istegi):**
+  `app/test/core/locale_wiring_contract_test.dart` `lib/` altini tariyor ve iki
+  deseni yasakliyor. Kapinin kendisi "hic dosya goremiyorsam kirmizi dus"
+  iddiasi tasiyor. Kirik girdiyle sinandi (dosya:satir vererek kirmizi).
+
+---
+
+### WP-527: Play icin AAB uretim yolu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Bitti · **Commit:** `ffe6027`
+  · **Alt ajan yapti, lider denetledi.**
+- **Neden:** Play yeni uygulamada AAB ister; `release.yml` yalniz APK
+  uretiyordu ve `play` flavor'i hicbir workflow'da derlenmiyordu.
+- **Lider denetimi:** `git show --stat` -> yalniz dort SAHIP yol, sizma yok.
+  Kapiyi **kendim kirik girdiyle sinadim**: `appbundle` -> `apk` yapinca
+  preflight dogru mesajla kirmizi dustu, geri alinca yesil. Alt ajanin kendi
+  olcumu sekiz ayri parcayi tek tek silip sekizinde de kirmizi aldi.
+- **Olculmeyen:** gercek `flutter build appbundle` **hic kosmadi**; ilk kez
+  v61 yayininda CI'da kosacak. O adimin ilk turu gozetilmeli.
+- **Sahip karari (2026-08-08):** Play kendi app signing key'ini uretecek.
+  Sonuc: GitHub'dan kurmus 3 kisi Play surumune guncelleyemez, kaldirip
+  yeniden kurarlar; hesap verisi sunucuda oldugu icin kaybolmaz. Iki kanal
+  kalici olarak birbirine gecissizdir. Ayrinti `docs/play-store/AAB-YOLU.md`.
+
+---
+
+### WP-528: Play listing gorselleri uretildi
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti ·
+  **Commit:** `124904b` (+ `b2fc7f4` EN varyanti)
+- Sahip "gorsel falan yok ki bende" dedi. Ikon ve one cikan grafik uretilebilir
+  seyler; `scripts/build_store_art.py` ile uretiliyor (tek seferlik el isi
+  degil). Kaynak uydurulmadi: uygulamanin **gercekten yayinladigi** adaptive
+  icon foreground'u kullanildi -- yeni logo tasarlamak bu ajanin isi degil.
+- One cikan grafikte **uc tur hata olcularak** duzeltildi: opak daire yaziyi
+  yutuyordu; `Image.radial_gradient` maskesi kenarda sifirlanmadigi icin arka
+  planda duz dikey cizgi kaliyordu (x=434 ve x=262'de piksel sicramasi
+  olculdu); maske buyutulunce isik zemini yikadi. Son cozum es merkezli
+  dairelerle maske -> yaricap disinda deger kesin 0. Olcum: komsu piksel
+  sicramasi en fazla 2/255.
+- Script yazinin gorsele girmedigini **olcuyor** ve girerse durup hata veriyor.
+- Ekran goruntuleri bilerek uretilmedi: gercek veriyle sahibin telefonundan
+  gelmeli, her dil icin ayri.
+
+---
+
+### WP-529: Uygulama adi dile gore cozuluyor
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Bitti · **Commit:** `b2fc7f4`
+- **Sahip karari:** Play'de tek uygulama, iki dilli tek liste; varsayilan dil
+  Ingilizce. Bu karar bir kod eksigini acti: telefondaki uygulama adi
+  **herkeste sabit "Odak Kampi"** idi. Ingiliz kullanici magazada Focus Camp
+  gorup indirecek, telefonunda Odak Kampi yazacakti.
+- **Cozum:** etiket artik dile gore cozulen bir kaynak
+  (`@string/app_name_stable`). Ayri string **adlari** kullanildi cunku `local`
+  flavor'i beta'nin res dizinini paylasiyor; ayni anahtari iki dizinde
+  tanimlamak kaynak catismasi uretirdi.
+- `brand_name` de Ingilizcede Focus Camp oldu (tek kullanim yeri:
+  `AlarmNotificationFallback.kt:72`). WP-88'in "marka cevrilmez" notu bilerek
+  degistirildi -- iki dilli magaza listesi o kurali gecersiz kiliyor.
+- **Kanit iddia degil:** `gradlew :app:processStableReleaseManifest`
+  kosturuldu, birlestirilmis manifest'te
+  `android:label="@string/app_name_stable"` okundu.
 
 ---
 

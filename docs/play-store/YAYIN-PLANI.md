@@ -10,9 +10,25 @@
 
 Sırayla git. Her maddede tam olarak ne yazacağın/yükleyeceğin yazılı.
 
+### 0. Karar: tek uygulama, iki dilli tek liste (2026-08-08)
+Ayrı uygulama açılmıyor. Tek listenin altında iki dil olur:
+
+| | Varsayılan (dünya) | Türkçe |
+|---|---|---|
+| Uygulama adı | Focus Camp | Odak Kampı |
+| Açıklamalar | İngilizce | Türkçe |
+| Ekran görüntüleri | İngilizce arayüz | Türkçe arayüz |
+| Öne çıkan grafik | `play-feature-graphic-en-1024x500.png` | `play-feature-graphic-1024x500.png` |
+| İkon | aynı dosya (üzerinde yazı yok) | aynı dosya |
+
+**İmzalama kararı (geri dönüşü yok):** Play kendi app signing key'ini üretir.
+Sonucu: GitHub'dan kurmuş 3 kişi Play sürümüne güncelleyemez, önce kaldırıp
+yeniden kurarlar. Hesap verisi sunucuda olduğu için kaybolmaz. Ayrıntı ve
+kabul edilen diğer sonuçlar: `docs/play-store/AAB-YOLU.md`.
+
 ### 1. Uygulamayı oluştur
-- **Uygulama adı:** Odak Kampı
-- **Varsayılan dil:** Türkçe (İngilizce'yi sonra ekleyeceğiz)
+- **Uygulama adı:** Focus Camp
+- **Varsayılan dil:** English (United States) — Türkçe çeviri olarak eklenecek
 - **Uygulama / Oyun:** Uygulama · **Ücretsiz / Ücretli:** Ücretsiz
 - **Paket adı (değiştirilemez, dikkat):** `com.manilmax.online_study_room`
 
@@ -65,12 +81,19 @@ An alarm, a standalone timer and a task list are included.
 The app works in Turkish and English.
 ```
 
-### 3. Görseller — **bunları senin hazırlaman gerekiyor**
-Repoda hazır listing görseli yok, bunlar bende üretilemez:
-- **Uygulama ikonu:** 512×512 PNG (şeffaf olmayan, kare)
-- **Öne çıkan grafik (feature graphic):** 1024×500 PNG/JPG
-- **Telefon ekran görüntüsü:** en az 2 tane, 4 tanesi daha iyi. Telefondan
-  ekran görüntüsü al yeter. Önerim: kamp ateşi · sayaç · istatistik · gruplar.
+### 3. Görseller
+İkon ve öne çıkan grafik **üretildi**, `references/play-store/` altında:
+- `play-icon-512.png` — her iki dilde de aynı (üzerinde yazı yok)
+- `play-feature-graphic-1024x500.png` — Türkçe liste
+- `play-feature-graphic-en-1024x500.png` — İngilizce liste
+
+Üreten komut: `python scripts/build_store_art.py` (görsel değişirse yeniden
+koştur, elle düzenleme).
+
+**Ekran görüntüleri sahipten:** her dil kendi görüntüsünü ister.
+- Uygulamayı İngilizce yap → 4 görüntü (kamp ateşi · sayaç · istatistik · gruplar)
+- Türkçeye al → aynı 4 görüntü
+- Toplam 8
 
 ### 4. Gizlilik ve veri
 Bu iki adres **canlı**, doğrudan yapıştır:

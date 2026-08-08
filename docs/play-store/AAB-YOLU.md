@@ -78,14 +78,30 @@ yeniden imzalar. Pratik sonuçları:
   *App integrity → App signing* sayfasındaki değer kullanılır, yerel
   `key.jks`'inki değil.
 
-> ⚠️ **Aynı paket adı, farklı imza.** `play` flavor'ı stable ile aynı
-> `applicationId`'yi kullanır (`com.manilmax.online_study_room`,
-> `build.gradle.kts:159`). GitHub'dan kurulmuş stable sürüm bizim `key.jks`
-> imzasını, Play sürümü Google'ın app signing key imzasını taşır. Android
-> **imza değişen güncellemeyi reddeder**: Play sürümü GitHub sürümünün üzerine
-> kurulamaz, önce kaldırmak gerekir (yerel veri gider). Bugün stable'ı 3 kişi
-> GitHub'dan kullanıyor — Play'e geçişte bu kişilere önce kaldır/yeniden kur
-> denmelidir. `Cihazda doğrulanmalı`.
+> ⚠️ **Aynı paket adı, farklı imza — SAHİP KARARI VERİLDİ (2026-08-08).**
+> `play` flavor'ı stable ile aynı `applicationId`'yi kullanır
+> (`com.manilmax.online_study_room`, `build.gradle.kts`). GitHub'dan kurulmuş
+> stable sürüm bizim `key.jks` imzasını taşır; Play sürümü Google'ın app
+> signing key imzasını taşıyacak. Android **imza değişen güncellemeyi
+> reddeder**.
+>
+> Sahip iki yolu duyduktan sonra şunu seçti: **"Play kendi anahtarını
+> üretsin; GitHub'dakiler uygulamayı yeniden indirir."** Yani kendi
+> anahtarımızı Play'e app signing key olarak vermiyoruz.
+>
+> Bunun kabul edilen sonuçları:
+>
+> - Bugün GitHub'dan kurmuş 3 kişi Play sürümüne **güncelleyemez**. Önce
+>   uygulamayı kaldırıp Play'den kurmaları gerekir.
+> - **Hesap verisi kaybolmaz** — oturumlar, gruplar, istatistikler sunucuda
+>   duruyor; kullanıcı yeniden giriş yapınca hepsi geri gelir. Kaybolan yalnız
+>   cihazdaki yerel tercihler (tema, ana ekran düzeni, sayaç yerel durumu).
+> - İki kanal kalıcı olarak **birbirine geçişsizdir**: GitHub sürümünden
+>   Play sürümüne (veya tersi) kaldırmadan geçilemez. Bu geri döndürülemez;
+>   Play'e ilk yüklemeden sonra app signing key değiştirilemez.
+> - Play sürümünde uygulama içi güncelleyici zaten kapalı (`play` flavor'ı),
+>   yani Play kullanıcısı güncellemeyi Play'den alır. GitHub kanalı
+>   kendi APK'sıyla devam eder.
 
 ## 4. Sahip: AAB'yi nereden alıp nereye yükleyecek
 
