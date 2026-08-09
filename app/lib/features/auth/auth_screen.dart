@@ -6,6 +6,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../support/faq_screen.dart';
+import 'password_reset_platform.dart';
 import 'reset_with_code_screen.dart';
 
 /// 🔴 WP-539: e-postadaki 6 haneli kod yolu **derleme zamanı kapalıdır**.
@@ -184,9 +185,53 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
+  /// WP-616: masaüstünde sıfırlamanın **çalışan ucu yok** — o yüzden
+  /// çalışıyormuş gibi davranmıyoruz.
+  ///
+  /// 🔴 Eskiden buradaki tek dal her platformda `sendPasswordResetEmail`
+  /// çağırıp "Şifre sıfırlama bağlantısı e-postana gönderildi." yazıyordu.
+  /// Windows'ta o bağlantı Android'e özel bir scheme'e çıkıyor ve açılmıyor;
+  /// yedek kod ekranı da ücretsiz katmanda kapalı (gerekçe:
+  /// `password_reset_platform.dart`). Sonuç: kullanıcı hesabını kaybediyor,
+  /// ekran ona "gönderildi" diyordu. Artık masaüstünde e-posta gönderilmez,
+  /// kullanıcıya **gerçekten çalışan yol** söylenir.
+  Future<void> _showDesktopResetUnavailable(AppLocalizations l10n) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const Key('auth-reset-desktop-unavailable'),
+        icon: const Icon(Icons.phonelink_erase_outlined),
+        title: Text(l10n.authSifirlamaMasaustundeCalismiyorBaslik),
+        content: SingleChildScrollView(
+          child: Text(
+            l10n.authSifirlamaMasaustundeCalismiyorGovde,
+            key: const Key('auth-reset-desktop-body'),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.authAnladim),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _sendPasswordReset() async {
     final l10n = AppLocalizations.of(context);
     final email = _emailController.text.trim();
+    // 🔴 WP-616: gönderimden ÖNCE. Masaüstünde istek sunucuya hiç gitmez;
+    // gitseydi kullanıcı açılamayan bir bağlantı bekleyecekti.
+    if (!passwordResetLinkOpensHere()) {
+      setState(() {
+        _error = null;
+        _info = null;
+        _emailNotConfirmed = false;
+      });
+      await _showDesktopResetUnavailable(l10n);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;

@@ -6669,6 +6669,20 @@
   "@authCevrimdisiAcildi": {
     "description": "WP-603 snackbar shown once when the app finished cold start from the locally stored session because the network never answered. A real user on the metro watched a spinner for 20 s and the app never opened; opening offline must be stated, not silent."
   },
+  "profileGunlukHedefGuncellendi": "Your daily goal was updated.",
+  "@profileGunlukHedefGuncellendi": {"description": "Confirmation shown after the daily goal is saved."},
+  "profileGunlukHedefKaydedilemedi": "The daily goal could not be saved. Check your connection and try again.",
+  "@profileGunlukHedefKaydedilemedi": {"description": "Error shown when saving the daily goal fails (network or server)."},
+  "profileKampHayvaniGuncellendi": "Your camp animal was updated.",
+  "@profileKampHayvaniGuncellendi": {"description": "Confirmation shown after the camp animal is saved."},
+  "profileKampHayvaniKaydedilemedi": "The camp animal could not be saved. Check your connection and try again.",
+  "@profileKampHayvaniKaydedilemedi": {"description": "Error shown when saving the camp animal fails (network or server)."},
+  "profileGorunenAdGuncellendi": "Your display name was updated.",
+  "@profileGorunenAdGuncellendi": {"description": "Confirmation shown after the display name is saved."},
+  "profileGorunenAdKaydedilemedi": "The display name could not be saved. Check your connection and try again.",
+  "@profileGorunenAdKaydedilemedi": {"description": "Error shown when saving the display name fails (network or server)."},
+  "profileProfilFotografiYuklenemedi": "The profile photo could not be uploaded. Check your connection and try again.",
+  "@profileProfilFotografiYuklenemedi": {"description": "Error shown when uploading the profile photo fails (network or server)."},
   "clockAlarmMasaustundeCalmaz": "Alarms do not ring in the desktop build: you can create and edit them here, but the sound and the notification only happen in the phone app.",
   "@clockAlarmMasaustundeCalmaz": {
     "description": "WP-611 banner pinned to the top of the alarm tab on desktop. Scheduling silently threw there, so an alarm could be saved, listed and never ring; the limit has to be stated on the surface that promises it."
@@ -6685,18 +6699,10 @@
   "@notificationsIzinMasaustundeGecersiz": {
     "description": "WP-611 note replacing the permission button on desktop, where pressing it threw before reaching the SnackBar and looked like a dead button."
   },
-  "profileGunlukHedefGuncellendi": "Your daily goal was updated.",
-  "@profileGunlukHedefGuncellendi": {"description": "Confirmation shown after the daily goal is saved."},
-  "profileGunlukHedefKaydedilemedi": "The daily goal could not be saved. Check your connection and try again.",
-  "@profileGunlukHedefKaydedilemedi": {"description": "Error shown when saving the daily goal fails (network or server)."},
-  "profileKampHayvaniGuncellendi": "Your camp animal was updated.",
-  "@profileKampHayvaniGuncellendi": {"description": "Confirmation shown after the camp animal is saved."},
-  "profileKampHayvaniKaydedilemedi": "The camp animal could not be saved. Check your connection and try again.",
-  "@profileKampHayvaniKaydedilemedi": {"description": "Error shown when saving the camp animal fails (network or server)."},
-  "profileGorunenAdGuncellendi": "Your display name was updated.",
-  "@profileGorunenAdGuncellendi": {"description": "Confirmation shown after the display name is saved."},
-  "profileGorunenAdKaydedilemedi": "The display name could not be saved. Check your connection and try again.",
-  "@profileGorunenAdKaydedilemedi": {"description": "Error shown when saving the display name fails (network or server)."},
-  "profileProfilFotografiYuklenemedi": "The profile photo could not be uploaded. Check your connection and try again.",
-  "@profileProfilFotografiYuklenemedi": {"description": "Error shown when uploading the profile photo fails (network or server)."}
+  "authSifirlamaMasaustundeCalismiyorBaslik": "Password reset does not work on this computer",
+  "@authSifirlamaMasaustundeCalismiyorBaslik": {"description": "WP-616: title of the desktop password reset notice."},
+  "authSifirlamaMasaustundeCalismiyorGovde": "The reset link only opens in the Android app on your phone; it does not open on the desktop build. That is why we are not sending you an email that would not work.\n\nWhat works: open Odak Kampi on your Android phone, tap \"Forgot my password\" on the sign-in screen, open the emailed link on the phone and set a new password. Then sign in here with the new password.\n\nIf you do not have an Android phone you cannot reset your password right now. If you still know it, sign in and change it from Account > Change password.",
+  "@authSifirlamaMasaustundeCalismiyorGovde": {"description": "WP-616: text saying desktop password reset does not work and showing the path that does (the phone app)."},
+  "authAnladim": "Got it",
+  "@authAnladim": {"description": "WP-616: button that dismisses the informational dialog."}
 }
