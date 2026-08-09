@@ -14,10 +14,15 @@ import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/second_ticker.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
+import '../../../data/models/report_target.dart';
+import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../safety/block_user_action.dart';
+import '../../safety/peer_safety_actions.dart';
+import '../../safety/report_sheet.dart';
 import 'camp_critter.dart';
 import 'campfire/layered_campfire_fire.dart';
 import 'campfire_layout.dart';
@@ -683,7 +688,7 @@ class _StudyingBadge extends StatelessWidget {
 /// Kütüğünde oturan tombul hayvan (gövde). İsim/süre ayrı katmanda ([_MemberLabel])
 /// üstte çizilir ki ateşin arkasındaki üyede bile okunur kalsın. Çalışan
 /// marşmelov pozunda, diğer üyeler sakin oturuştadır.
-class _CritterBody extends StatelessWidget {
+class _CritterBody extends ConsumerWidget {
   const _CritterBody({
     required this.camper,
     required this.depth,
@@ -712,11 +717,18 @@ class _CritterBody extends StatelessWidget {
   static const double anchor = 0.82;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final studying = camper.studying;
     final offline = camper.status == PresenceStatus.offline;
     final box = boxFor(scale);
     final species = speciesFor(camper.animal.id);
+    // 🔴 WP-617 / Riverpod 3 tuzagi: bu deger alt sayfanin icinde `ref.read`
+    // ile okunuyordu ve HEP null geliyordu — dinleyicisi olmayan bir
+    // `StreamProvider` her `read`de yeniden kurulur, `.value` bos kalir.
+    // Sonuc: "kendi kartimda gosterme" kapisi HERKESI eliyordu, yani
+    // bildir/engelle hic cizilmiyordu. `watch` burada, yani gercekten
+    // dinleyicisi olan `build` icinde durur.
+    final viewerId = ref.watch(authStateProvider).value?.id;
 
     final baseOpacity = studying ? 1.0 : (offline ? 0.36 : 0.58);
 
@@ -737,7 +749,7 @@ class _CritterBody extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: camper.isBlocked
               ? null
-              : () => _showCamperDetails(context, camper),
+              : () => _showCamperDetails(context, ref, camper, viewerId),
           child: ExcludeSemantics(
             child: Stack(
               children: [
@@ -894,7 +906,12 @@ String _camperSemanticsLabel(AppLocalizations l10n, _Camper camper) {
   return l10n.a11yCampfireMember(_camperName(l10n, camper), status);
 }
 
-void _showCamperDetails(BuildContext context, _Camper camper) {
+void _showCamperDetails(
+  BuildContext context,
+  WidgetRef ref,
+  _Camper camper,
+  String? viewerId,
+) {
   final status = camper.status;
   final (Color dot, String label) = switch (status) {
     PresenceStatus.studying => (
@@ -994,6 +1011,45 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
                     );
                   },
                 ),
+                // 🔴 WP-617: kamp atesinde bildir/engelle yolu HIC yoktu. Kamp
+                // atesi uygulamanin iki imza yuzeyinden biri ve orada bir
+                // uyeye dokunan kullanicinin elindeki tek eylem "durt"tu; yani
+                // rahatsiz eden kisiyi engellemek icin onun SOHBETE MESAJ
+                // YAZMASINI beklemek gerekiyordu. Google Play kullanici
+                // uretimi icerik barindiran uygulamalarda bildirme/engelleme
+                // yolu ister — bu bir kolaylik degil, kapi.
+                //
+                // Kendi satirinda gosterilmez; `showActions` karsiligi.
+                if (viewerId != null && camper.member.id != viewerId) ...[
+                  const Divider(height: 24),
+                  // 🔴 Alt sayfa eylemden ONCE kapatilir: rapor sayfasi da bir
+                  // modal, engelleme onayindan sonraki SnackBar'i cizen
+                  // `Scaffold` ise bu sayfanin ALTINDA kalir (`onBeforeAction`
+                  // ile ayni tuzak). Disaridaki `context`/`ref` kullanilir,
+                  // cunku bu sayfanin kendi `ctx`i pop'tan sonra oludur.
+                  ...peerSafetyTiles(
+                    ctx,
+                    onReport: () {
+                      Navigator.pop(ctx);
+                      showReportSheet(
+                        context,
+                        ref,
+                        target: ReportTarget.profile(
+                          userId: camper.member.id,
+                          hint: camper.member.displayName,
+                        ),
+                      );
+                    },
+                    onBlock: () {
+                      Navigator.pop(ctx);
+                      confirmAndBlockUser(
+                        context,
+                        ref,
+                        userId: camper.member.id,
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),

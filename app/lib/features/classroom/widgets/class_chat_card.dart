@@ -14,8 +14,7 @@ import '../../../data/providers/moderation_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../profile/widgets/profile_tap.dart';
-import '../../safety/block_user_action.dart';
-import '../../safety/report_sheet.dart';
+import '../../safety/peer_safety_actions.dart';
 
 /// Grup sohbeti: mesaj listesi + yazma alanı.
 ///
@@ -187,9 +186,9 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
 
     setState(() => _sending = true);
     final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
+    final genericError = l10n.authBeklenmeyenBirHataOlustu;
+    final networkError = l10n.profileSunucuyaUlasilamadi;
     try {
       await ref
           .read(chatRepositoryProvider)
@@ -201,6 +200,19 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
       _controller.clear();
     } on ChatException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
+      // 🔴 WP-617: burada YALNIZ `on ChatException` vardi. Depo ise sadece
+      // `PostgrestException`i o ture sariyor (`supabase_chat_repository.dart`);
+      // ag kopunca `SocketException` / `ClientException` SARILMADAN yukari
+      // cikiyor ve bu blok onu yakalamiyordu. Kullanicidaki karsiligi tam
+      // sessizlik: mesaj gitmiyor, metin kutusu temizlenmiyor, hicbir uyari
+      // cikmiyor (yakalanmamis async hata bonus).
+      //
+      // Cozum icat edilmedi: WP-551'de kesif ekraninda ayni zincir bulunup
+      // duzeltilmisti ve sozlesme `core/l10n/group_error_text.dart:36-37`
+      // icinde duruyor — alan disi hata = "Sunucuya ulasilamadi". Ayni cumle
+      // burada da soylenir, cunku sebep ayni.
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(networkError)));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -246,58 +258,23 @@ class _MessageBubble extends ConsumerWidget {
   final ChatMessage message;
   final bool mine;
 
-  Future<void> _showPeerActions(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context);
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // WP-446: iki eylem birbirine benziyor ama kapsamları taban
-              // tabana zıt — biri yöneticiye gider, diğeri yalnız bu hesabın
-              // görünümünü değiştirir. Alt satır bu ayrımı ekranda söyler.
-              ListTile(
-                leading: const Icon(Icons.flag_outlined),
-                title: Text(l10n.safetyReport),
-                subtitle: Text(l10n.safetyReportKapsam),
-                isThreeLine: false,
-                onTap: () => Navigator.pop(ctx, 'report'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.block),
-                title: Text(l10n.safetyBlock),
-                subtitle: Text(l10n.safetyBlockKapsam),
-                isThreeLine: false,
-                onTap: () => Navigator.pop(ctx, 'block'),
-              ),
-            ],
-          ),
-        );
-      },
+  /// WP-617: alt sayfanın gövdesi `features/safety/peer_safety_actions.dart`e
+  /// taşındı — davranış aynen korunarak. Gerekçe: aynı iki eylem artık kamp
+  /// ateşinde ve grup üye listesinde de gerekiyor; burada `private` kalsaydı
+  /// diğer yüzeylere kopyalanır ve kapsam metinleri zamanla ayrışırdı.
+  Future<void> _showPeerActions(BuildContext context, WidgetRef ref) {
+    return showPeerSafetyActions(
+      context,
+      ref,
+      userId: message.userId,
+      // WP-439: mesaj hedefi grup bağlamıyla birlikte gider; sunucu ortak
+      // aktif üyelik ve görünürlüğü bu grupla doğrular.
+      reportTarget: ReportTarget.message(
+        messageId: message.id,
+        groupId: message.groupId,
+        hint: message.body,
+      ),
     );
-    if (!context.mounted || selected == null) return;
-
-    if (selected == 'report') {
-      await showReportSheet(
-        context,
-        ref,
-        // WP-439: mesaj hedefi grup bağlamıyla birlikte gider; sunucu ortak
-        // aktif üyelik ve görünürlüğü bu grupla doğrular.
-        target: ReportTarget.message(
-          messageId: message.id,
-          groupId: message.groupId,
-          hint: message.body,
-        ),
-      );
-      return;
-    }
-
-    if (selected == 'block') {
-      await confirmAndBlockUser(context, ref, userId: message.userId);
-    }
   }
 
   @override

@@ -29,6 +29,7 @@ import '../../../data/providers/presence_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
+import '../../safety/peer_safety_actions.dart';
 import '../../safety/report_sheet.dart';
 import 'group_avatar.dart';
 import 'nudge_action.dart';
@@ -855,6 +856,7 @@ class _MembersCard extends ConsumerWidget {
           for (final m in members)
             _memberRow(
               context,
+              ref: ref,
               member: m,
               repo: repo,
               titleName: titleNames[m.titleAchievementId],
@@ -887,6 +889,7 @@ class _MembersCard extends ConsumerWidget {
   /// açıkça duruyor, aksi hâlde eylemi olan satır olmayandan yüksek olurdu.
   Widget _memberRow(
     BuildContext context, {
+    required WidgetRef ref,
     required Profile member,
     required GroupRepository repo,
     required String? titleName,
@@ -900,6 +903,28 @@ class _MembersCard extends ConsumerWidget {
     return InkWell(
       key: memberRowKey(member.id),
       onTap: () => SocialProfileDialog.show(context, member),
+      // 🔴 WP-617: bildir/engelle satırdan **kısayolla** da açılır.
+      //
+      // Dördüncü bir eylem yuvası bilerek eklenmedi: WP-498 ada kalan genişliği
+      // 320 dp ekranda ölçtü (üç yuvayla 108 dp) ve dördüncü yuva onu 96 dp
+      // tabanının altına indirirdi — sahibin "ad tek harfe düşüyor"
+      // şikâyeti aynen geri gelirdi. Yönetici menüsüne eklemek de olmaz:
+      // WP-446 grup yasağı ile hesap-kapsamlı engellemenin **aynı menüde aynı
+      // ada** düşmesini yasakladı.
+      //
+      // Uzun basma burada TEK yol değil (WP-446 dersi): görünür yol satıra
+      // dokunup profili açmaktır, bildir/engelle orada da durur.
+      onLongPress: showActions
+          ? () => showPeerSafetyActions(
+              context,
+              ref,
+              userId: member.id,
+              reportTarget: ReportTarget.profile(
+                userId: member.id,
+                hint: member.displayName,
+              ),
+            )
+          : null,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 72),
         child: Padding(
@@ -1139,6 +1164,15 @@ class _MuteNudgeButtonState extends ConsumerState<_MuteNudgeButton> {
     } on NudgeException catch (error) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
+      // 🔴 WP-617: ag hatasi bu daldan kacip sessizce yutuluyordu — susturma
+      // uygulanmiyor, kullanici hicbir sey gormuyor, simge eski halinde
+      // kaliyordu. Kardesi `muted_nudges_screen.dart` bu yedegi zaten
+      // tasiyordu; grup icindeki ikiz yol tasimiyordu.
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileSunucuyaUlasilamadi)),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }

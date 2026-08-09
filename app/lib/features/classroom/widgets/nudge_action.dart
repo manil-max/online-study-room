@@ -136,6 +136,16 @@ class _NudgeActionState extends ConsumerState<NudgeAction> {
       );
     } on NudgeException catch (error) {
       messenger.showSnackBar(SnackBar(content: Text(error.localize(l10n))));
+      // 🔴 WP-617: `NudgeException` disi hicbir sey yakalanmiyordu. Depo yalniz
+      // `PostgrestException`i `NudgeException`a ceviriyor
+      // (`supabase_nudge_repository.dart`), yani ag kopunca hata sarilmadan
+      // yukari cikiyor: gosterge kapaniyor ama ne "durtuldu" ne de bir hata
+      // cumlesi cikiyor — dugme olu gorunuyordu.
+      // Sozlesme `core/l10n/group_error_text.dart:36-37` ile ayni.
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileSunucuyaUlasilamadi)),
+      );
     } finally {
       _setSending(false);
     }
