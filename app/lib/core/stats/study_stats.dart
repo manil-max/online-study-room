@@ -351,7 +351,32 @@ int currentStreak(
   return streak;
 }
 
+/// Bir gün anahtarının **takvim sıra numarası** (epoch'tan beri geçen gün).
+///
+/// 🔴 WP-636: bileşenler UTC'ye sabitlenir. Gün anahtarı `DateTime(y, m, d)`
+/// ile, yani cihazın YEREL gece yarısı olarak kurulur; iki anahtar arasındaki
+/// GEÇEN SÜRE cihazın DST'sine bağlıdır ve 24 saat olmak zorunda değildir.
+/// Takvim farkı ise offset'ten bağımsızdır — karşılaştırma bu sayı üzerinden
+/// yapılırsa cihazın saat dilimi sonucu değiştiremez.
+int _calendarDayIndex(DateTime day) =>
+    DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
+    Duration.millisecondsPerDay;
+
 /// En uzun (üst üste en az 1 sn çalışılan) gün serisi — "rekor seri" (§3.11).
+///
+/// Ardışıklık **takvimseldir**, aritmetik değil.
+///
+/// 🔴 WP-636: eski ölçü `days[i].difference(days[i - 1]).inDays == 1` idi. Bu
+/// iki gün anahtarı arasında geçen SÜREdir; DST uygulayan bir cihazda gece
+/// yarısıdan gece yarısına 23 ya da 25 saat olur ve hata İKİ YÖNLÜdür:
+///
+/// - **şişirme:** ilkbahar ileri alması sonrası 2 günlük boşluk 47 saattir,
+///   `inDays` bunu 1 sayar → çalışılmayan gün köprülenir, rekor seri uydurulur;
+/// - **düşürme:** ardışık iki gün 23 saattir, `inDays` bunu 0 sayar → gerçek
+///   seri sessizce kırılır.
+///
+/// Ayrıca aynı takvim gününü gösteren iki farklı anahtar (UTC damgası + yerel
+/// anahtar) bir BOŞLUK değildir; seriyi kırmaz, atlanır.
 int longestStudyStreak(
   Iterable<StudySession> sessions, {
   Map<DateTime, int>? totals,
@@ -359,17 +384,17 @@ int longestStudyStreak(
   // WP-561: değere bakılmadan `.keys` kullanmak 0 saniyelik günü de "çalışılmış"
   // sayıyordu (`activeDayCount` doğru şekilde `> 0` filtreler). Sıfırlanmış /
   // silinmiş bir gün rekor seriyi şişiriyordu.
-  final days =
-      (totals ?? dailyTotals(sessions)).entries
-          .where((e) => e.value > 0)
-          .map((e) => e.key)
-          .toList()
-        ..sort();
+  final days = <int>[
+    for (final e in (totals ?? dailyTotals(sessions)).entries)
+      if (e.value > 0) _calendarDayIndex(e.key),
+  ]..sort();
   if (days.isEmpty) return 0;
   var best = 1;
   var cur = 1;
   for (var i = 1; i < days.length; i++) {
-    if (days[i].difference(days[i - 1]).inDays == 1) {
+    final step = days[i] - days[i - 1];
+    if (step == 0) continue; // aynı gün, iki temsil — boşluk değil
+    if (step == 1) {
       cur++;
       if (cur > best) best = cur;
     } else {

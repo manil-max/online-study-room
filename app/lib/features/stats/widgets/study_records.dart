@@ -76,7 +76,13 @@ class StudyRecords extends ConsumerWidget {
         : '';
     final totalScope = lifetimeSeconds == null ? windowScope : '';
     final longest = longestStudyStreak(sessions, totals: daily);
-    final activeDays = daily.length;
+    // 🔴 WP-636: `daily.length` gün SAYISIydı, çalışılan gün sayısı değil —
+    // 0 saniyelik (sıfırlanmış/silinmiş) bir gün de haritada anahtar açar ve
+    // "Aktif gün" döşemesini şişirirdi. WP-561 bu `> 0` kuralını rekor seri
+    // için koymuş, komşu döşemede uygulanmamıştı; iki döşeme farklı gün
+    // tanımıyla yan yana duruyordu. Grup kartı (`class_stats_view`) zaten
+    // [activeDayCount] kullanıyor — tek kural, tek yardımcı.
+    final activeDays = activeDayCount(daily);
 
     // En verimli gün.
     DateTime? bestDay;
