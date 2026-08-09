@@ -175,8 +175,13 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # Hesap silme tuzagi (0124/WP-549) `_account_still_exists` ile kapatildi ve
 # tests/052 `delete from auth.users`in hala calistigini ayrica olcuyor.
 # GERI ALINAMAZ: dusen satirlar zaten hak edilmemisti.
-Assert-Equal $contract.production.migration_head '0127' 'WP-634 production hedefi 0127'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0126+0127 apply icin production kapisi TEK SEFERLIK acik'
+# APPLY BASARILI, KAPI GERI KILITLENDI (run 31334051017): post-check uc
+# sutunda da 0127. Backfill "8 kullanici uzlastirildi" dedi -- bu ISLENEN
+# profil sayisidir, yanlis bulunan degil; defteri zaten oturumlariyla uyusan
+# kullanicida uzlastirma etkisizdir. Gocun kendi dogrulamasi gecti.
+# 🔴 Ayni kosumda yerel replay "0 kullanici" derken uzak apply 8 dedi.
+Assert-Equal $contract.production.migration_head '0127' 'production hedefi 0127: apply basarili'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0127 apply bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
