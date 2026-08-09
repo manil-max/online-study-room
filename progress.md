@@ -9335,6 +9335,118 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   gercek durum odur, yalniz kapi kapanir.
 - Kapilar: `--only guard,migration-head` -> 2/2 GECTI.
 
+---
+
+### WP-573: "Tumu"/"Yil" istatistigi sessizce 90 gune kirpiliyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`837aab7`)
+- `analyticsUserSessionsInRangeProvider` yazilmisti ama **hicbir yerden
+  izlenmiyordu**; kartlar 90 gunluk sicak pencereden ciziliyordu. 400 gunluk
+  gecmiste "Toplam" **90 sa** yerine **710 sa** olmaliydi; ders kirilimda
+  Matematik satiri **hic yoktu** (620 sa kayip).
+- 🔴 Bosluğun kaniti: mevcut testler iki sabotaji da GOREMEDI —
+  `analytics_delivery_test` provider'i test ediyor ama ekrana baglandigini hic
+  olcmuyor, `PersonalStatsView` testleri yalniz "mount oldu mu" diyor.
+- Kapsam etiketinin ANLAMI degisti: artik "donem ufku asiyor mu" degil,
+  "kartlar gercekten 90 gunle mi sinirli" sorusunu yanitliyor.
+
+---
+
+### WP-574: Kamp atesinde MOLA gorunmuyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`ce06fe9`)
+- `poseAt` yalniz `studying` ve gece/gunduze bakiyordu; molada olan uye gunduz
+  **cevrimdisi biriyle birebir ayni** ciziliyordu. Eski test bunu ENCODE
+  ediyordu (`idle hasLength(2)`), yani hatayi sozlesmeye cevirmisti.
+- Olu `CritterPose.working` silindi (uretici yoktu). WP-558 tuzagi buradaydi:
+  bir iddia sembolun VARLIGINI sart kosuyordu; tersine cevrildi.
+- 🔴 **Ajanin kendi testinde yakaladigi kusur:** ilk golden YETERSIZDI. Uretim
+  olceginde bir karakter karenin ~%3'u; kollar yukari/asagi farki platform
+  raster toleransinin (%0.5) ALTINDA kaliyordu ve golden sabotaj altinda YESIL
+  donuyordu — yani susleme idi. Karakter buyutulup fark %1.58'e cikarildi.
+  Poz secimi olcekten bagimsiz oldugu icin iddia degismedi.
+- Gece dali hala mola ile cevrimdisini ayni ciziyor; bilincli, testle kilitli.
+
+---
+
+### WP-575: Sinav geri sayimi (D-Day) pano karti
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`b5211a4`)
+- Salt-okunur ozellik degerlendirmesi 27 oneriden yalniz dordune "YAP" dedi;
+  bu onlardan biri. Yeni izin yok, yeni veri yok, tamamen cihaz ici.
+- Gun hesabi `istanbulDay` ile; tarih `YYYY-MM-DD` olarak saklaniyor. Epoch
+  saklansaydi geri okurken cihaz offset'ine bagli bir AN olurdu — WP-561 ve
+  WP-571'in kok nedeni tam buydu.
+- Bos durum `card_data_gate` desenini izliyor ("tarih sec", bos kutu degil);
+  gecmis tarihte "gecti" der, negatif sayi gostermez.
+- Sahibe kalan: kartta sinav ADI yok ("YKS'ye 214 gun" degil, "Sinav geri
+  sayimi / 214 gun kaldi"). Ad alani istenirse ayri WP.
+
+---
+
+### WP-576: Ekransiz iki notifier + sahte yogunluk ayari silindi
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`2175b59`)
+- Tur kronometresi ve dunya saati sehirleri kalicilik anahtarlariyla tam
+  yazilmisti ama `lib/` icinde TEK okuyucusu yoktu: ekranlarini `1bf619f`
+  (WP-264, 2026-07-23) silmis, saglayicilari birakmisti.
+- `DashboardGridDensity` bes degerliydi, `columns` HER ZAMAN 32 donuyor,
+  `set()` argumani yok sayiyor, prefs anahtari yalniz YAZILIYORDU — her
+  aciliste bosuna disk yazmasi.
+- 🔴 Yine bir test olu kodu KILITLIYORDU (`dashboard_card_test.dart:262`):
+  `.set(columns6)` cagirip "yine 32" diyordu. Iddia gercege cevrildi.
+- Yeni kapi `dead_surface_wp576_test.dart`: izlenen dosyalarda bildirilen HER
+  provider'in gercek bir tuketicisi var; emekli prefs anahtarlari geri dogamaz.
+  Dort sabotajin dordu kirmizi.
+
+---
+
+### WP-578: Windows dagitimi ZIP-oncelikli (MSIX KURULAMIYOR)
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`adef6c6`)
+- 🔴 **Uretilen MSIX hicbir kullanicida kurulamiyor.** `pubspec`te sertifika
+  yok; `msix` paketi pub.dev'de HERKESE ACIK dagitilan `test_certificate.pfx`ye
+  (parola `1234`) dusuyor ve `publisher:` anahtarini eziyor. Sertifika oznesi
+  olculdu: `CN=Msix Testing, O=Msix Testing Corporation`. Windows paketi
+  `0x800B010A` ile REDDEDIYOR.
+- Dokumanlar buna "SmartScreen uyarisi, beklenen QA" diyordu — YANLIS, sert
+  blok. Duzeltildi ve ayrim yazildi: ZIP'in ilk calistirmasinda SmartScreen
+  uyarisi gercekten cikar ve GECILEBILIR; MSIX kurulumu ise HIC baslamaz.
+- Ayrica sessiz basarisizlik: `OpenFilex.open()` Windows'ta `cmd /c start`
+  demek ve hemen 0 donuyor, yani App Installer sonradan patlasa bile uygulama
+  "basarili" sayiyordu. Hash tutmazsa dosya artik SILINIYOR ve kendi cumlesi
+  gosteriliyor (eskiden "Kurulum iptal edildi." ile ayni metne dusuyordu).
+- Yeni akis: ZIP indir -> SHA-256 dogrula (Windows'ta ATLANAMAZ) -> klasoru ac
+  + ne yapilacagini adim adim soyle. Calisan uygulamanin uzerine yazilamayacagi
+  ACIKCA anlatiliyor.
+
+---
+
+### WP-584: Baska bolgenin gece yarisi "gun anahtari" sayiliyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`b059254`)
+- `_isDayKey` yalniz "UTC degil + saat alanlari sifir" diyordu. Bir
+  `TZDateTime(Asia/Dubai, 2026-08-09)` bu kapidan CEVRILMEDEN geciyor ve
+  `istanbulDay` **9 Agustos** donuyordu; dogrusu **8 Agustos**.
+- Uretimde bugun tetiklenmiyor (`DateTime.now()` tam mikrosaniye sifirda
+  gelmiyor) ama WP-326 grup takvimi yolu (`calendarDayInTimeZone`) tam oraya
+  dogru gidiyordu. Urun diff'i **tek kod satiri**: `value is! tz.TZDateTime`.
+- WP-561'in kazandigi `dayOf(dayOf(x)) == dayOf(x)` invariant'i korundu ve
+  testle kilitlendi. Butun cagri yerleri tarandi: davranisi degisen tek sinif
+  Istanbul disi bir bolgenin `TZDateTime`inin cekirdege girmesi.
+
+---
+
+### WP-591: Bes cikmaz hata dali daha; ikisinde METIN de yanlisti
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`59fe329`)
+- Duyurular "Beklenmeyen bir hata olustu." diyordu (neyin yuklenemedigini
+  soylemiyor). Uc guvenlik dali `safetyActionFailed` kullaniyordu — o cumle bir
+  EYLEMIN basarisiz oldugunu anlatir, oysa orada YUKLEME basarisiz. Kullaniciya
+  YANLIS sey soyleniyordu.
+- En pahalisi "Kendi kisitlarim": kullanici hakkindaki yaptirimi goremezse
+  ITIRAZ DA EDEMEZ.
+- 🔴 Test yazarken olculdu: sabit "1 -> 2" sayaci iddiasi bu repoda YANLIS
+  olur — Riverpod 3'te autoDispose provider'lar widget testinde her karede
+  yeniden kuruluyor (tek `pumpAndSettle` icinde **11 kurulum**). Onun yerine
+  dogal churn ile tiklamanin farki olculuyor ve sayac icin autoDispose OLMAYAN
+  bir provider seciliyor.
+- Yeni l10n anahtari EKLENMEDI: o sirada uc ajan ayni `.arb` dosyalarina
+  yaziyordu.
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
