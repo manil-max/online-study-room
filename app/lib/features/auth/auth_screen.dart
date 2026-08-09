@@ -48,6 +48,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   String? _error;
   String? _info;
 
+  /// WP-587: hesap **var** ama e-postası doğrulanmamış.
+  ///
+  /// Bu duruma iki yoldan gelinir ve ikisi de aynı çıkmazdır: kayıt
+  /// oturum döndürmedi (doğrulama bekleniyor) ya da giriş
+  /// [AuthErrorCode.emailNotConfirmed] ile düştü. Yeniden gönder düğmesi
+  /// **yalnız** burada çizilir; koşulsuz çizilirse kullanıcı hiç
+  /// gelmeyecek bir postayı beklemeye davet edilmiş olur.
+  bool _emailNotConfirmed = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -63,6 +72,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _loading = true;
       _error = null;
       _info = null;
+      _emailNotConfirmed = false;
     });
 
     final auth = ref.read(authRepositoryProvider);
@@ -96,6 +106,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         accountCreated = l10n.authEpostaDogrulamaGonderildi;
       }
       setState(() {
+        // WP-587: iki uç da aynı gerçeği anlatır — hesap oluştu, e-posta
+        // doğrulanmadı. Kayıt ucu kodsuz gelir (depo cümleyi taşır),
+        // giriş ucu kodla gelir; ikisini de tek duruma indiriyoruz.
+        _emailNotConfirmed =
+            verifiedEmailNotice || e.code == AuthErrorCode.emailNotConfirmed;
         if (verifiedEmailNotice) {
           _info = l10n.commonEpostaDogrulamasiGerekiyor;
           _isRegister = false;
@@ -142,6 +157,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ],
       ),
     );
+  }
+
+  /// WP-587: doğrulama e-postası gelmediyse kullanıcının tek çıkışı.
+  ///
+  /// [_emailNotConfirmed] burada **sıfırlanmaz**: hız sınırına takılınca
+  /// düğme kaybolsaydı kullanıcı yine çıkışsız kalırdı.
+  Future<void> _resendVerificationEmail() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+    });
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .resendVerificationEmail(_emailController.text);
+      setState(() => _info = l10n.authDogrulamaPostasiYenidenGonderildi);
+    } on AuthException catch (e) {
+      setState(() => _error = _localizedAuthError(l10n, e));
+    } catch (_) {
+      setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _sendPasswordReset() async {
@@ -266,6 +306,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         style: TextStyle(color: theme.colorScheme.primary),
                       ),
                     ],
+                    // 🔴 WP-587: kayıt doğrulama postası gelmediğinde
+                    // kullanıcının çıkışı YOKTU. Ne yapacağını söyleyen
+                    // satır ve yeniden gönderme düğmesi yalnız bu durumda
+                    // çizilir.
+                    if (_emailNotConfirmed) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.authDogrulamaPostasiGelenKutusuSpam,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      TextButton.icon(
+                        key: const Key('auth-resend-verification'),
+                        onPressed: _loading ? null : _resendVerificationEmail,
+                        icon: const Icon(Icons.forward_to_inbox_outlined),
+                        label: Text(l10n.authDogrulamaPostasiniYenidenGonder),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
@@ -316,6 +375,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               _isRegister = !_isRegister;
                               _error = null;
                               _info = null;
+                              _emailNotConfirmed = false;
                             }),
                       child: Text(
                         _isRegister

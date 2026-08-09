@@ -94,6 +94,25 @@ class InMemoryAuthRepository implements AuthRepository {
     return account.profile;
   }
 
+  /// WP-587: bu backend'in e-posta sağlayıcısı yok, bu yüzden gönderim
+  /// **taklit edilmez** — çağrı sayılır. Sayaç, giriş ekranındaki
+  /// "yeniden gönder" düğmesinin ölü anahtar olmadığını ölçen tek uçtur;
+  /// `onPressed` null'a çekilirse bu sayı 0'da kalır ve test kırmızı düşer.
+  int resendVerificationCalls = 0;
+
+  @override
+  Future<void> resendVerificationEmail(String email) async {
+    final key = email.trim().toLowerCase();
+    if (key.isEmpty || !key.contains('@')) {
+      throw const AuthException(
+        'auth_resend_invalid_email',
+        code: AuthErrorCode.invalidEmail,
+      );
+    }
+    // Hesap var/yok bilgisi sızdırılmaz (sendPasswordResetEmail kuralı).
+    resendVerificationCalls++;
+  }
+
   @override
   Future<void> sendPasswordResetEmail(String email) async {
     final key = email.trim().toLowerCase();

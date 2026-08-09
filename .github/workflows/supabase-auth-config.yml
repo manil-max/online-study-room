@@ -75,6 +75,13 @@ jobs:
           }
           echo "Target verified: $TARGET ($PROJECT_REF)"
 
+      # WP-587: bu adim YALNIZ OKUR (PATCH govdesine dokunulmadi). Kayit
+      # dogrulama bayraklari buraya eklendi cunku depo bugune kadar
+      # "e-posta dogrulamasi acik mi, posta gidebiliyor mu, saatte kac
+      # tane" sorularini HIC olcmemisti; kapali testte kullanicilar ayni
+      # gun kayit oluyor ve dogrulama postasi gelmezse "hesap var / giris
+      # yok" durumu olusuyor. smtp_host basilmaz, yalniz "kurulu mu"
+      # turevi basilir.
       - name: Read current auth config
         shell: bash
         run: |
@@ -83,6 +90,11 @@ jobs:
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             | jq '{site_url, uri_allow_list, mailer_otp_length,
+                   mailer_autoconfirm, external_email_enabled,
+                   rate_limit_email_sent,
+                   custom_smtp_configured: ((.smtp_host // "") != ""),
+                   confirmation_template_has_link:
+                     ((.mailer_templates_confirmation_content // "") | contains("{{ .ConfirmationURL }}")),
                    recovery_template_has_token:
                      ((.mailer_templates_recovery_content // "") | contains("{{ .Token }}"))}' \
             | tee "$RUNNER_TEMP/before.json"

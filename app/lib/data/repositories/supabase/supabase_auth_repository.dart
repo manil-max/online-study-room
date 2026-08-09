@@ -236,6 +236,34 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  /// WP-587: doğrulama e-postasını yeniden gönderir.
+  ///
+  /// `emailRedirectTo` kayıt/kurtarma ile **aynı** çözücüden gelir; aksi
+  /// hâlde yeniden gönderilen bağlantı Site URL'e düşer ve uygulamaya
+  /// dönmez (WP-287'de ölçülen hata).
+  ///
+  /// Mesajlar teknik ve İngilizcedir; kullanıcı metnini ekran `code`dan
+  /// üretir (WP-539 sözleşmesi, `_reauthFailure` notuyla aynı gerekçe).
+  @override
+  Future<void> resendVerificationEmail(String email) async {
+    final safe = email.trim();
+    if (safe.isEmpty || !safe.contains('@')) {
+      throw const AuthException(
+        'auth_resend_invalid_email',
+        code: AuthErrorCode.invalidEmail,
+      );
+    }
+    try {
+      await _client.auth.resend(
+        type: supa.OtpType.signup,
+        email: safe,
+        emailRedirectTo: await _recoveryRedirect(),
+      );
+    } on supa.AuthException catch (e) {
+      throw AuthException(_translate(e.message), code: _authCode(e));
+    }
+  }
+
   @override
   Future<void> sendPasswordResetEmail(String email) async {
     final safe = email.trim();

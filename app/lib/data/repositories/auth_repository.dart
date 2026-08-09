@@ -119,6 +119,20 @@ abstract class AuthRepository {
 
   Future<Profile> signIn({required String email, required String password});
 
+  /// WP-587: kayıt doğrulama e-postasını **yeniden** gönderir.
+  ///
+  /// 🔴 Neden sözleşmeye giriyor: e-posta doğrulaması açıkken kayıt bir
+  /// oturum döndürmez ([signUp] bunu söyler), fakat uygulamada o
+  /// e-postayı yeniden isteyecek **hiçbir yol yoktu** (`lib/` genelinde
+  /// `resend` araması 0 sonuç). Posta gelmezse — ücretsiz katmanın
+  /// saatlik gönderim sınırı, spam klasörü, kuyruğun düşmesi —
+  /// kullanıcının hesabı **var**, girişi yok ve çıkışı da yok.
+  ///
+  /// Sağlayıcı hız sınırına takılırsa çağrı
+  /// [AuthErrorCode.rateLimited] koduyla düşer: "biraz bekle" ile "bir
+  /// şeyler ters gitti" kullanıcıya aynı şeyi söylemez.
+  Future<void> resendVerificationEmail(String email);
+
   /// E-postaya şifre sıfırlama bağlantısı (ve şablonda `{{ .Token }}` varsa 6
   /// haneli kod) gönderir. Güvenlik için e-posta kayıtlı değilse bile kullanıcıya
   /// hesap var/yok bilgisi sızdırılmamalıdır (user-enumeration koruması).
