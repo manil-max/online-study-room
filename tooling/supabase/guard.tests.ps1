@@ -101,11 +101,16 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # hakkinda yaptirim uygulanmis kullanici HIC silinemiyor. Sahip apply'a izin
 # verdi; production kapisini acan commit otomatik guvenlik siniflandiricisi
 # tarafindan engellendi ve zorlanmadi. Devam icin sahip tarafli bir izin kurali
-# KAPI ACILDI (2026-08-09): sahip izni acikca verdi ve gate commit'i atildi.
-# Bu iki satir simdi 0124/$true. Apply bitip post-check 0124 verince AYRI bir
-# commit ile $false'a donecek; acik birakilan bayrak WP-506 kuralini ihlal eder.
-Assert-Equal $contract.production.migration_head '0124' 'WP-549 turu production hedefi 0124'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0124 production apply icin kapi ACIK (tek seferlik)'
+# 🔴 KAPI ACILDI VE APPLY BASARISIZ OLDU (2026-08-09, run 31323239616).
+# Uzak push, 0124'un 27. ifadesinde 'moderation_audit_append_only (42501)' ile
+# durdu: production'da moderation_audit_events uzerindeki yalniz-ekleme korumasi
+# migration'in KENDI backfill UPDATE'ini reddediyor. Staging'de gecmisti --
+# muhtemelen orada eslesen satir yoktu, yani UPDATE sifir satira dokundu ve
+# koruma hic tetiklenmedi. DOGRULANMADI.
+# Kapi ayni gun geri kilitlendi; kapsam harcandi ve YENILENMEDI. 0124
+# duzeltilmeden tekrar denenmemeli.
+Assert-Equal $contract.production.migration_head '0123' 'production hedefi 0123: 0124 apply BASARISIZ oldu'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply basarisiz, kapi yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
