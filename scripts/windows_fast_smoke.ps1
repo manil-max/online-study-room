@@ -136,6 +136,69 @@ try {
       throw 'Uygulama penceresi güvenli olarak yakalanamadı (PrintWindow başarısız).'
     }
     $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+
+    # 🔴 WP-602: "PrintWindow başarısızsa smoke da başarısız sayılır" cümlesi
+    # DOĞRU ama ETKİSİZ. Çağrı başarısız olmuyor: `True` dönüyor ve BOŞ BEYAZ
+    # bir istemci alanı üretiyor. Ölçüldü (2026-08-09, bu makine, gerçek
+    # Windows derlemesi): PrintWindow ve ekrandan `CopyFromScreen` — ikisi de
+    # başlık çubuğunu (native Win32) yakalıyor, Flutter'ın çizdiği istemci
+    # alanını yakalayamıyor; 25 saniye beklendiğinde de aynı. Sebep, Flutter'ın
+    # Windows'ta DirectComposition/ANGLE yüzeyine çizmesi — GDI'nın kör noktası.
+    #
+    # Bunun bedeli somut: manifest `screenshot` alanını KANIT diye kaydediyor,
+    # QA belgesi de "görüntü doğrulandı" yazıyordu. Kapının gerçek sinyali
+    # aşağıdaki PENCERE BAŞLIĞI kontrolü; ekran görüntüsü kanıt gibi sunulan
+    # boş bir dosyaydı. Bu depoda tekrarlayan hata: kapı vardı, ölçtüğü şey
+    # yoktu.
+    #
+    # Burada yapılan: yakalamayı DÜZELTMEK değil (GDI ile mümkün değil),
+    # DÜRÜST OLMAK. Boş görüntü artık boş olduğunu söylüyor.
+    # 🔴 Ölçüt "kaç farklı renk var" DEĞİL, "tek renk yüzeyin ne kadarını
+    # kaplıyor". İlk deneme renk sayısıyla yazılmıştı ve GERÇEK boş çıktıda 8
+    # renk saydığı için hatayı KAÇIRIYORDU: pencere kenarı/gölgesi örneklemeye
+    # sızıyor. Ölçüldü (aynı makine, aynı dosyalar):
+    #   gerçek boş yakalama  -> baskın oran 1.0000 (tek renk)
+    #   dolu bir arayüz      -> baskın oran 0.5142
+    # Ayrım temiz; eşik 0.98.
+    $dominantFraction = 1.0
+    $distinctColors = 1
+    $probe = New-Object System.Drawing.Bitmap $OutputPath
+    try {
+      # Kenarlardan içeri gir: başlık çubuğu ve pencere çerçevesi native
+      # olduğu için HER ZAMAN yakalanıyor; onları ölçmek boşluğu gizlerdi.
+      $insetX = [int]($probe.Width * 0.08)
+      $insetY = [int]($probe.Height * 0.12)
+      $x0 = $insetX; $x1 = $probe.Width - $insetX
+      $y0 = $insetY; $y1 = $probe.Height - $insetY
+      if (($x1 - $x0) -gt 8 -and ($y1 - $y0) -gt 8) {
+        $counts = @{}
+        $samples = 0
+        $stepX = [Math]::Max(1, [int](($x1 - $x0) / 100))
+        $stepY = [Math]::Max(1, [int](($y1 - $y0) / 100))
+        for ($px = $x0; $px -lt $x1; $px += $stepX) {
+          for ($py = $y0; $py -lt $y1; $py += $stepY) {
+            $argb = $probe.GetPixel($px, $py).ToArgb()
+            $counts[$argb] = 1 + [int]$counts[$argb]
+            $samples++
+          }
+        }
+        if ($samples -gt 0) {
+          $dominantFraction = [Math]::Round(
+            (($counts.Values | Sort-Object -Descending | Select-Object -First 1) / $samples), 4)
+          $distinctColors = $counts.Count
+        }
+      }
+    }
+    finally { $probe.Dispose() }
+    # Amaç "ekran DOĞRU mu" demek değil — o insan işi. Amaç "bu dosya kanıt
+    # sayılabilir mi" demek.
+    $screenshotUsable = $dominantFraction -lt 0.98
+    $screenshotNote = if ($screenshotUsable) { '' } else {
+      "Yakalanan istemci alani tek duze (baskin renk orani $dominantFraction, $distinctColors farkli renk): GDI Flutter yuzeyini goremiyor. Bu PNG KANIT DEGILDIR; kapinin gecerli sinyali pencere basligi kontroludur."
+    }
+    if (-not $screenshotUsable) {
+      Write-Warning $screenshotNote
+    }
   }
   finally {
     $graphics.Dispose()
@@ -160,7 +223,7 @@ try {
     throw ("Uygulama acildi ama Dart masaustu kurulumuna hic ulasmadi: pencere " +
       "basligi hala native bootstrap degeri ('$bootstrapTitle'). En olasi sebep " +
       "yapilandirma hata ekrani (ornegin invalid_version_build). Ekran " +
-      "goruntusu kanit olarak alindi: $OutputPath")
+      "goruntusu alindi (kanit sayilir mi: $screenshotUsable): $OutputPath")
   }
   if ([string]::IsNullOrWhiteSpace($observedTitle)) {
     throw "Pencere basligi bos; uygulama acilisi tamamlanmamis. Ekran goruntusu: $OutputPath"
@@ -177,13 +240,17 @@ try {
     timeoutSeconds = $TimeoutSeconds
     dismissInitialDialogRequested = [bool]$DismissInitialDialog
     screenshot = $OutputPath
+    # WP-602: dosyanın varlığı kanıt değildir; kullanılabilirliği ayrı alan.
+    screenshotUsable = $screenshotUsable
+    screenshotDominantColorFraction = $dominantFraction
+    screenshotNote = $screenshotNote
     window = "${width}x${height}"
   }
   $result | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
 
   Write-Output 'WINDOWS_FAST_SMOKE PASS'
   Write-Output ("mode={0}; pid={1}; visible_ms={2}; window={3}; title={4}" -f $result.launchMode, $result.processId, $result.visibleWindowWithinMs, $result.window, $result.windowTitle)
-  Write-Output ("screenshot={0}" -f $OutputPath)
+  Write-Output ("screenshot={0} (kanit_sayilir={1})" -f $OutputPath, $screenshotUsable)
   Write-Output ("manifest={0}" -f $manifestPath)
 }
 catch {

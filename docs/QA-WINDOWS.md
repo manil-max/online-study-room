@@ -12,8 +12,30 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows_fast_smoke.ps1 -NoLau
 Bu komut en fazla 10 saniye içinde açık `online_study_room` penceresine bağlanır,
 pencereyi öne getirir ve şu iki kanıtı yeniler:
 
-- `app/build/windows_fast_smoke.png` — kullanıcının anında bakacağı ekran görüntüsü
+- `app/build/windows_fast_smoke.png` — pencere yakalaması
 - `app/build/windows_fast_smoke.json` — PASS/FAIL, süreç, pencere boyutu ve süre
+
+🔴 **WP-602 — ekran görüntüsü bu makinede KANIT DEĞİL.** Ölçüldü (2026-08-09,
+gerçek Windows derlemesi, iki ayrı yöntemle: `PrintWindow` ve ekrandan
+`CopyFromScreen`): ikisi de başlık çubuğunu yakalıyor, **Flutter'ın çizdiği
+istemci alanını yakalayamıyor** — 25 saniye beklendiğinde de bomboş beyaz.
+Sebep, Flutter'ın Windows'ta DirectComposition/ANGLE yüzeyine çizmesi; GDI'nın
+kör noktası. Betikteki *"PrintWindow başarısızsa smoke da başarısız sayılır"*
+cümlesi doğru ama etkisizdi: çağrı **başarılı** dönüp boş görüntü üretiyor.
+
+Kapının **gerçek** sinyali bu değil, aşağıdaki **pencere başlığı** kontrolüdür
+(WP-465) ve o sağlam çalışıyor. Betik artık boş yakalamayı ölçüp söylüyor:
+manifestte `screenshotUsable` + `screenshotDominantColorFraction`, koşumda bir
+uyarı satırı. Ölçüt renk *sayısı* değil **baskın renk oranı** — ilk deneme renk
+sayısıyla yazılmıştı ve gerçek boş çıktıda 8 renk saydığı için hatayı
+kaçırıyordu (pencere kenarı/gölgesi örneklemeye sızıyor). Ayrım: boş yakalama
+`1.0000`, dolu bir arayüz `0.5142`; eşik `0.98`.
+
+**Sonuç:** görsel doğrulama gerekiyorsa ekrana **insan bakmalı**, ya da
+uygulamanın kendi katmanından `RenderRepaintBoundary.toImage()` ile alınmalı
+(WP-594 bunu yaptı). Bu PNG'ye bakıp "beyaz ekran" demek yanlış teşhis üretir —
+nitekim WP-594 kartındaki "bomboş beyaz" iddiasının kaynağı büyük olasılıkla
+budur.
 
 Uygulama açık değilse `-NoLaunch` parametresini kaldırmak, mevcut Release EXE'yi
 başlatır. Smoke'un açtığı uygulamayı ardından kapatmak istersen `-CloseAfter`
@@ -29,7 +51,9 @@ Hızlı görsel geliştirme döngüsü:
 
 1. Mevcut `env.json`u oturum sonunda geri yükleyen yerel çalışma aracını başlat: `powershell -ExecutionPolicy Bypass -File .\scripts\windows_local_dev.ps1`.
 2. Hot reload sonrası ikinci terminalde smoke komutunu `-NoLaunch` ile çalıştır.
-3. Yeni PNG'yi aç; PASS çıktısı olmayan değişiklik görsel olarak doğrulanmış sayılmaz.
+3. PASS çıktısı olmayan değişiklik doğrulanmış sayılmaz. **PNG'ye bakarak
+   görsel doğrulama yapma** — yukarıdaki WP-602 notu: bu makinede istemci alanı
+   yakalanmıyor.
 
 İlk Release kabuğu doğrulaması için aynı araç `-BuildOnly` ile çalıştırılır;
 ardından `windows_fast_smoke.ps1 -CloseAfter` çalışır. Araç, local InMemory
