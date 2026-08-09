@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-08-06** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-08-09** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. Eskiden buraya işaret
@@ -9560,6 +9560,79 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
      beyaz kaliyor (WP-569 calistirarak olctu).
   3. Odak halkasi `colorScheme.primary`e bagli; tema studyosunda palet yakin
      secilirse eriyor (bilinen "uyari rozeti tema cakismasi" deseninin aynisi).
+
+---
+
+### WP-596: Istatistik > Grup BOS dali cikmaz sokakti
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`6403188`)
+- WP-593'un ucuncu, acik kalan maddesi. Ekran "Grup istatistiklerini gormek
+  icin once bir gruba katil." diyor ve orada bitiyordu: katilmanin YOLUNU
+  vermiyordu. Ayni ekranin HATA dali WP-550'de cikis kazanmisti, BOS dal
+  unutulmustu. Bu turda dorduncu kez ayni desen: dogru cumle + hicbir cikis.
+- Test dokununca GERCEKTEN `GroupDiscoveryScreen` acildigini olcer; ayrica
+  grup VARKEN dugmenin HIC cizilmedigini (tek yonlu iddia kapani).
+
+---
+
+### WP-597: Windows icin UCRETSIZ Microsoft Store yolu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`b793814`)
+- 🔴 Windows dagitimi bir YANLIS VARSAYIMLA tikaliydi: "kurulabilir MSIX icin
+  sertifika satin almak gerekir" (~200-400 USD/yil). Bu Store DISI dagitim
+  icin dogru, Store icin YANLIS. Store'a gonderilen paketi Microsoft kendi
+  sertifikasiyla imzalar; gelistirici kaydi da artik ucretsiz. Yani para
+  odemeden kurulabilir paket cikarmanin yolu VARDI ve hat desteklemiyordu.
+- Uc repo degiskeni dolunca hat Store modunu acar (`msix:create --store`,
+  kimlik+yayinci AppxManifest'ten dogrulanir). Ucu de bossa davranis AYNEN
+  bugunku gibi; ikisi dolu biri bossa is BASLAMADAN durur.
+- 🔴 Asil korunan sey bir GERILEME: Store paketi IMZASIZDIR (kasitli). Imza
+  kapisi yalniz "pub.dev test sertifikasi mi?" diye baktigi icin Store
+  paketini "guvenilir" sayip Release'e koyardi — WP-590'in duzelttigi hatanin
+  AYNISI. Artik Store modunda yayin zorla kesilir.
+- WP-568 sozlesme testinin uc iddiasi kirmiziya dustu; ucu de guncellendi,
+  hicbiri zayiflatilmadi (kopya iddiasi satir-kosulu yerine HEDEFE cevrildi).
+- **Olculmeyen (durustce):** Store hesabi olmadan bu dal CI'da hic kosamaz.
+  Sahibin yapacaklari: `docs/WINDOWS-STORE-YOLU.md`.
+
+---
+
+### WP-595: 11 saatlik "calisma" hicbir yerde sorgulanmiyordu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [~] Korkuluk tamam (`f2b513c`),
+  KOK NEDEN acik (WP-598'e devredildi)
+- 🔴 **Gercek kullanici olayi** (2026-08-08 gecesi, sahibin kardesi). Kanit:
+  240 kayitlik sayac gunlugu. Tam teshis: `docs/analiz/WP-595-sayac-xp-teshis.md`.
+- Ne oldu: kullanici 22:40'ta durdurdu, **3 sn sonra yanlislikla yeniden
+  baslatti**, uygulamayi kapatti (sayac durmadi), sabah 10:02'de durdurunca
+  **11 sa 22 dk** kaydedildi, ~40.000 XP + alti basarim kademesi geldi.
+  Kaydi sildi; XP ve basarimlar GITMEDI.
+- Kok neden H1: Durdur ve Baslat **ayni dugme, ayni yer**. `stop()` ikinci
+  dokunusa karsi korunuyor (`_stopInFlight`, WP-246), `start()` KORUNMUYOR.
+  Gunlukte arka arkaya uc kez dur -> 6 sn / **1 sn** / 3 sn sonra baslat.
+- XP geri alinabilir mi: **hayir** — XP oturumlardan turetilmiyor,
+  append-only defterde biriken bakiye. Oturum silme deftere hic haber
+  vermiyor. Saat XP'si dogrudan bankalaniyor; kademe odulleri yalniz
+  "Topla"ya basilmadiysa iptal edilebilirdi — **sahip kardesin topladigini
+  bildirdi (2026-08-09), yani kalicilasti.**
+- Bu WP'de yapilan: `implausible_run_guard.dart` (saf, zaman enjekteli, esik
+  6 saat) + `TimerVerificationNotice` doldurma. O yuva WP-430'dan beri **olu
+  bir `SizedBox.shrink()`** idi ama iki ekranda da ciziliyordu.
+- 🔴 Kodda sahibin **onceki** ayni vakasi yaziliydi ("sabah kalktim sekiz saat
+  gorunuyordu", WP-430). Teshis araci yazilmis, korkuluk yazilmamis.
+
+---
+
+### WP-599: Gunluk, baslatmanin KAYNAGINI yazmiyor
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [~] Ajanda
+- Sahip sordu: "sayaci gercekten kardesim mi baslatti, emin miyiz?" Gunluk bu
+  soruyu **cevaplayamiyor**: `start()`'in iki farkli cagiran sinifi
+  (kullanici dugmesi / cihaz entegrasyonu — Samsung Routines, ana ekran
+  kisayolu) AYNI satiri yaziyor.
+- 🔴 Mevcut bir tasarim iddiasinin deligi: `study_providers.dart:2063-2067`
+  yorumu "her baslatmanin gorulebilir bir kaynagi olmali" diyor (WP-430) ama
+  koruma yalniz UZAK/AYNA baslatmalari kapsiyor; cihaz entegrasyonu
+  (`device_integration_listener.dart:26,33,37` -> `MainActivity.kt:172-176`)
+  disarida kalmis. Kural yaziliydi, bu yol kapsanmamisti.
+- Olayda kanitlanan: baslatma bu telefondan, uygulama icinden geldi (uzak
+  komut izi yok). Kanitlanamayan: parmak mi kisayol mu.
 
 ## Bekleyen Uygulanabilir WP'ler
 
