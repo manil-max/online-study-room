@@ -33,6 +33,73 @@ satın alınan **kod imzalama sertifikasının** fiyatıydı ve yalnızca
    - **Package/Properties/PublisherDisplayName** → örn. `Odak Kampı`
 6. Bu üçünü bana ver. (Sır değil — pakete zaten gömülüyorlar, gizlemeye gerek yok.)
 
+## Gönderim hazırlık tablosu (WP-605/606 · 2026-08-09)
+
+Sahip "hesap açma dışında her şey hazır olsun" dedi. Durum:
+
+| Gereken | Durum | Not |
+|---|---|---|
+| Paket üretimi (`msix:create --store`) | ✅ **Uçtan uca denendi** | Yer değiştirme kimliğiyle gerçek paket üretildi, aşağıya bak |
+| Paket sürüm şeması `1.0.<patch>.0` | ✅ | Store 4. alanın 0 olmasını ister; WP-568'den beri öyle |
+| Paket **imzasız** (Store imzalar) | ✅ **Doğrulandı** | Üretilen pakette `AppxSignature.p7x` yok |
+| Dil listesi | ✅ **Düzeltildi (WP-606)** | `tr-tr, en-us`; eskiden yalnız `tr-tr` idi |
+| Min/max Windows sürümü | ✅ | `min=10.0.17763` (Win10 1809), `maxTested=10.0.22621` |
+| Yetenekler | ✅ | `internetClient`, `runFullTrust` — fazlası yok |
+| Gizlilik politikası adresi | ✅ **Yayında** | `…/legal/privacy-tr.html`, sürüm 2026-08-08 |
+| Mağaza sayfası metinleri (TR + EN) | ✅ | `docs/store/MICROSOFT-STORE-LISTING.md` |
+| **Yüksek çözünürlüklü logo** | ❌ **SAHİPTEN GEREKİYOR** | Aşağıya bak |
+| **Ekran görüntüleri** | ❌ **SAHİPTEN GEREKİYOR** | En az 1 tane, 1366×768 veya daha büyük |
+| Yaş derecelendirme (IARC) anketi | ⚠️ Sahip dolduracak | Cevap taslağı listeleme belgesinde |
+| Windows App Certification Kit (WACK) | ⚠️ **Koşulamadı** | Yönetici izni istiyor; sahip yokken UAC onaylanamaz |
+
+### ❌ Logo: 256×256 yetmiyor (ölçüldü)
+
+`msix` paketi Store varlıklarını tek kaynak logodan üretiyor. Kaynağımız
+`windows/runner/resources/app_icon.ico` ve içindeki **en büyük görüntü 256×256**.
+Üretilen paketten ölçülen gerçek boyutlar:
+
+| Varlık | Üretilen | Durum |
+|---|---|---|
+| `Square150x150Logo.scale-400` | 600×600 | büyütülmüş |
+| `Wide310x150Logo.scale-400` | 1240×600 | büyütülmüş |
+| `LargeTile.scale-400` | 1240×1240 | büyütülmüş |
+| `SplashScreen.scale-400` | 2480×1200 | **~10× büyütülmüş** |
+
+Yani Başlat menüsündeki büyük kutu ve açılış ekranı **bulanık** çıkar.
+**Gereken:** kardeşindeki logodan **en az 1240×1240**, tercihen **2048×2048**
+şeffaf arka planlı **PNG**. Dosya gelince `logo_path` ona çevrilir, başka
+değişiklik gerekmez. (Logoya ben dokunmuyorum — sahip kararı.)
+
+### ❌ Ekran görüntüleri
+
+Store en az bir ekran görüntüsü ister (1366×768 – 3840×2160). Bunu üretmenin
+normal yolu ekranı yakalamak ama **bu makinede çalışmıyor**: GDI, Flutter'ın
+DirectComposition yüzeyini göremiyor (WP-602'de iki yöntemle ölçüldü, ikisi de
+bomboş beyaz veriyor). Seçenekler:
+
+1. **Sahip kendi çeker** — uygulamayı açıp `Win+Shift+S` ya da `Win+PrtScn`.
+   En doğal yol; gerçek verisiyle daha iyi görünür.
+2. Golden test altyapısından üretmek — teknik olarak mümkün ama ekranlar test
+   verisiyle dolar, mağaza sayfası için sönük kalır.
+
+**Öneri: sahip 4-6 ekran görüntüsü çeksin** (ana sayfa, sayaç, grup, istatistik,
+başarımlar, tema stüdyosu).
+
+### ⚠️ WACK koşulamadı — neden ve ne zaman koşacak
+
+`appcert.exe` bu makinede **kurulu** ama **yönetici izni** istiyor; sahip yokken
+UAC onayı verilemez. Ayrıca Store paketi imzasız olduğu için yerel makineye
+kurulamaz ve WACK kurulu uygulama üzerinde çalışır — kurmak için sertifika
+güven deposunu değiştirmek gerekir, o da yapılmaz.
+
+**Bu bir engel değil:** Microsoft aynı denetimleri gönderim sonrası
+sertifikasyonda kendisi koşturuyor. Sahip isterse gönderimden önce yönetici
+olarak şunu koşabilir (imzalı yerel paket gerektirir):
+
+```bash
+"C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe" reset
+```
+
 ## Bundan sonrasını hat kendi yapar
 
 Üç değer GitHub'da **repository variables** olarak girilir:
