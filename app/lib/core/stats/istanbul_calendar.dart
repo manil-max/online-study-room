@@ -23,7 +23,22 @@ tz.Location _loadIstanbul() {
 /// saat/dakika/saniye/milisaniye/mikrosaniye = 0) aynen döner. UTC damgaları
 /// (DB'den gelen gerçek anlar `DateTime.parse('…Z')` ile `isUtc == true`
 /// olur) bu kapıdan geçmez, hep çevrilir.
+///
+/// 🔴 WP-584: Kapı "yerel gece yarısı"nı tek başına yeterli saydığı için
+/// **başka bir bölgenin** gece yarısı da çevrilmeden geçiyordu: `TZDateTime.isUtc`
+/// yalnız konum UTC ise `true`dur ve `.hour/.minute/…` o bölgenin duvar saatini
+/// verir. Böylece `TZDateTime(Asia/Dubai, 2026, 8, 9)` — gerçekte İstanbul
+/// 8 Ağustos 23:00 — 9 Ağustos olarak dönüyordu. Grup takvimleri IANA bölge
+/// adıyla çalıştığı ve [calendarDayInTimeZone] yolu `TZDateTime` ürettiği için
+/// (WP-326) bu bir zaman bombasıydı.
+///
+/// Ayırt edici tip: gün anahtarı bu modülde **her zaman** düz
+/// `DateTime(y, m, d)` olarak kurulur (`_dayKeyIn`'in iki dönüşü de öyle).
+/// Dolayısıyla bir `TZDateTime` tanım gereği anahtar değil, kendi bölgesini
+/// taşıyan bir **an**dır ve her zaman çevrilir — bu, WP-561'in kazandığı
+/// idempotensi kaybettirmez.
 bool _isDayKey(DateTime value) =>
+    value is! tz.TZDateTime &&
     !value.isUtc &&
     value.hour == 0 &&
     value.minute == 0 &&
