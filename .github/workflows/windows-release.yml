@@ -156,18 +156,38 @@ jobs:
           # imzalanır ve pubspec'teki `publisher` değeri bu özneyle EZİLİR.
           # Böyle imzalanmış paketi kullanıcı KURAMAZ: Windows güvenilmeyen
           # zinciri 0x800B010A ile reddeder — bu bir SmartScreen uyarısı değil,
-          # sert bloktur. docs/WINDOWS-RELEASE-GATE.md zaten "stable imzasız
-          # dağıtım stable sayılmaz" diyordu; kural yazılıydı ama çağıran yoktu.
+          # sert bloktur.
+          #
+          # 🔴 WP-590: bu kapı eskiden `throw` ediyordu. `throw` paketleme
+          # adımından ÖNCE olduğu için iş orada ölüyor, `upload-artifact` hiç
+          # koşmuyordu; yani KURULABİLEN taşınabilir ZIP de yayınlanmıyordu.
+          # Kırık olan MSIX'tir, ZIP değil. Kapı artık işi düşürmez: yalnız
+          # MSIX'i yayından ALIKOYAR, sebebi manifeste ve koşum uyarısına yazar.
           $testPublisher = 'CN=Msix Testing, O=Msix Testing Corporation, S=Some-State, C=US'
           $trusted = $packageIdentity.Publisher -ne $testPublisher
-          if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable' -and '${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -ne 'true') {
-            throw 'Stable MSIX herkese açık test sertifikasıyla imzalanmış; kullanıcı kuramaz. Gerçek kod imzası ekle veya WINDOWS_ALLOW_TEST_SIGNING=true ile bilerek onayla (docs/WINDOWS-RELEASE-GATE.md).'
+          $publishMsix = $true
+          $withheldReason = ''
+          if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable') {
+            if ('${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -eq 'true') {
+              Write-Host '::warning title=Windows imzası güvenilmez::Stable MSIX herkese açık test sertifikasıyla imzalı; WINDOWS_ALLOW_TEST_SIGNING=true verildiği için BİLEREK yayınlanıyor. Kullanıcı bu paketi 0x800B010A ile kuramaz.'
+            } else {
+              $publishMsix = $false
+              $withheldReason = 'Stable MSIX herkese açık test sertifikasıyla imzalanmış; kullanıcı onu 0x800B010A ile kuramaz. Bu yüzden MSIX YAYINLANMADI, taşınabilir ZIP yayınlandı. Gerçek kod imzası ekle veya WINDOWS_ALLOW_TEST_SIGNING=true ile bilerek onayla (docs/WINDOWS-RELEASE-GATE.md).'
+              Write-Host "::warning title=Windows MSIX yayınlanmadı::$withheldReason"
+            }
           }
           "publisher=$($packageIdentity.Publisher)" >> $env:GITHUB_OUTPUT
           "trusted=$($trusted.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "msix_published=$($publishMsix.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "withheld_reason=$withheldReason" >> $env:GITHUB_OUTPUT
 
       - name: Zorunlu Windows artefaktlarını paketle
         shell: pwsh
+        env:
+          # Sebep metni tırnak/karakter kaçışına takılmasın diye adım gövdesine
+          # `${{ }}` ile değil ortam değişkeniyle giriyor.
+          MSIX_PUBLISHED: ${{ steps.package.outputs.msix_published }}
+          MSIX_WITHHELD_REASON: ${{ steps.package.outputs.withheld_reason }}
         run: |
           $ErrorActionPreference = 'Stop'
           $out = 'build/windows-dist'; New-Item -ItemType Directory -Force -Path $out | Out-Null
@@ -175,19 +195,24 @@ jobs:
           $msix = Get-ChildItem -Path $release -Filter *.msix -File | Select-Object -First 1
           if (-not $msix) { throw 'Zorunlu MSIX artefaktı üretilemedi.' }
           $prefix = '${{ steps.msix.outputs.prefix }}'
-          $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut
           # 🔴 `msix:create` paketi Release klasörünün İÇİNE yazar. ZIP
           # eskiden klasörü olduğu gibi sıkıştırdığı için taşınabilir arşiv kendi
           # kurulumunun bir kopyasını taşıyordu (gereksiz ~2x indirme).
           $zipItems = Get-ChildItem -Path $release | Where-Object { $_.Extension -ne '.msix' }
           if (-not $zipItems) { throw 'Release klasöründe paketlenecek dosya yok.' }
+          # 🔴 WP-590: taşınabilir ZIP KOŞULSUZ üretilir ve yayınlanır —
+          # kullanıcıda gerçekten çalışan tek Windows artefaktı odur. MSIX ise
+          # yalnız imzası güvenilirken (veya WINDOWS_ALLOW_TEST_SIGNING ile
+          # bilerek onaylanmışken) dağıtım klasörüne kopyalanır.
           $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path $zipItems.FullName -DestinationPath $zipOut -Force
-          $items = @($msixOut, $zipOut) | ForEach-Object {
+          $published = @($zipOut)
+          if ($env:MSIX_PUBLISHED -eq 'true') { $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut; $published += $msixOut }
+          $items = @($published | ForEach-Object {
             $name = Split-Path $_ -Leaf; $hash = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
             Set-Content "$_.sha256" -Value "$hash  $name" -NoNewline
             @{ name = $name; sha256 = $hash }
-          }
-          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true') }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
+          })
+          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true'); msixPublished = ($env:MSIX_PUBLISHED -eq 'true'); msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
 
       - uses: actions/upload-artifact@v4
         with:

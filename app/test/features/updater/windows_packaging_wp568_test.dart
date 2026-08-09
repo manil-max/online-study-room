@@ -19,6 +19,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// aynı soruyu koruyor, yalnız doğru artefaktı gösteriyor; MSIX'in CI/Release
 /// tarafındaki adı ise ikincil artefakt olarak korunmaya devam ediyor.
 ///
+/// **WP-590 güncellemesi:** imza kapısı artık **işi düşürmüyor**. Eskiden
+/// stable kanalda güvenilmez imza `throw` ediyordu; `throw` paketleme adımından
+/// ÖNCE olduğu için `upload-artifact` hiç koşmuyor ve **çalışan ZIP de**
+/// yayınlanmıyordu. Kapı artık yalnız MSIX'i yayından alıkoyar, sebebini
+/// `platform-manifest.json`a ve koşum uyarısına yazar.
+///
 /// Aradan biri yeniden adlandırılsa hiçbir test kırmızıya düşmezdi; sonuç
 /// kullanıcıda "güncelleme yok" ya da "indirdi ama kuramadı" olarak görünürdü.
 /// Bu yüzden iddialar metin düzeyinde: korunması gereken şey zaten iki ayrı
@@ -28,6 +34,30 @@ void main() {
   final releaseWorkflow = _read('../.github/workflows/release.yml');
   final updaterSource = _read('lib/features/updater/updater_service.dart');
   final pubspec = _read('pubspec.yaml');
+
+  /// İmza kapısının karar gövdesi: `$testPublisher` satırından adım
+  /// çıktılarının sonuna kadar. Bölge dışına bakan bir iddia kapıyı değil
+  /// dosyanın rastgele bir yerindeki metni ölçer.
+  String signingGate() {
+    const start = r'$testPublisher =';
+    const end = r'"withheld_reason=$withheldReason" >> $env:GITHUB_OUTPUT';
+    final from = windowsWorkflow.indexOf(start);
+    final to = windowsWorkflow.indexOf(end);
+    expect(from, isNonNegative, reason: 'İmza kapısı bulunamadı.');
+    expect(
+      to,
+      greaterThan(from),
+      reason:
+          'Kapı `withheld_reason` çıktısını üretmiyor; alıkoyma sebebi '
+          'paketleme adımına hiç ulaşamaz.',
+    );
+    return windowsWorkflow.substring(from, to + end.length);
+  }
+
+  List<String> workflowLinesWith(String needle) => windowsWorkflow
+      .split('\n')
+      .where((line) => line.contains(needle))
+      .toList();
 
   group('WP-568 artefakt adı zinciri', () {
     test('uygulamanın aradığı ZIP adları tam olarak beta + stable', () {
@@ -180,7 +210,7 @@ void main() {
       expect(windowsWorkflow, contains(r'$packageIdentity.Version -ne'));
     });
 
-    test('stable kanalda test sertifikası fail-closed', () {
+    test('stable kanalda test sertifikası MSIX\'i yayından düşürür', () {
       expect(
         windowsWorkflow,
         contains("'CN=Msix Testing, O=Msix Testing Corporation, S=Some-State, C=US'"),
@@ -231,17 +261,169 @@ void main() {
     test('ZIP artefaktının yanında SHA-256 dosyası üretilir', () {
       expect(
         windowsWorkflow,
-        contains(r'@($msixOut, $zipOut)'),
+        contains(r'$published = @($zipOut)'),
         reason:
             'Bütünlük dosyası döngüsünden ZIP çıkarılırsa uygulama '
             '`<ad>.zip.sha256` bulamaz; WP-578 Windows kolunda doğrulama '
-            'atlanamaz (fail-closed), yani güncelleme tamamen durur.',
+            'atlanamaz (fail-closed), yani güncelleme tamamen durur. WP-590 '
+            'sonrası ZIP bu yayın listesinin KOŞULSUZ ilk üyesidir.',
       );
     });
 
     test('Release iş akışı ZIP ve sha256 asset\'lerini yayınlar', () {
       expect(releaseWorkflow, contains('release-assets/windows/*.zip'));
       expect(releaseWorkflow, contains('release-assets/windows/*.sha256'));
+    });
+  });
+
+  group('WP-590 kapı MSIX\'i alıkoyar, işi düşürmez', () {
+    test('güvenilmez imza stable kanalda işi DÜŞÜRMEZ', () {
+      expect(
+        signingGate(),
+        isNot(contains('throw')),
+        reason:
+            'Kapı eskiden burada `throw` ediyordu ve `throw` paketleme '
+            'adımından ÖNCE geldiği için `upload-artifact` hiç koşmuyordu: '
+            'kurulabilen ZIP de yayınlanmıyordu. v62 en azından ZIP '
+            'çıkarabilmişti, yani `throw` bir GERİLEME. Kırık olan MSIX, '
+            'ZIP değil.',
+      );
+    });
+
+    test('güvenilmez MSIX dağıtım klasörüne KOPYALANMAZ', () {
+      final copies = workflowLinesWith('Copy-Item');
+      expect(copies, isNotEmpty, reason: 'MSIX kopyalama satırı kayboldu.');
+      for (final line in copies) {
+        expect(
+          line,
+          contains(r"if ($env:MSIX_PUBLISHED -eq 'true')"),
+          reason:
+              'Kopyalama koşulsuz kalırsa kurulamayan MSIX yeniden '
+              'release-assets/windows içine girer ve GitHub Release\'e '
+              'eklenir; kullanıcı ~40 MB indirip 0x800B010A ile karşılaşır.\n'
+              'Satır: $line',
+        );
+      }
+    });
+
+    test('taşınabilir ZIP koşulsuz üretilir ve yayınlanır', () {
+      final zipLines = workflowLinesWith('Compress-Archive');
+      expect(
+        zipLines,
+        hasLength(1),
+        reason: 'ZIP üretimi tek satırdan gelmeli; yoksa yolu ölçemeyiz.',
+      );
+      expect(
+        zipLines.single,
+        isNot(contains('MSIX_PUBLISHED')),
+        reason:
+            'ZIP imza kararına bağlanamaz — kullanıcıda gerçekten çalışan '
+            'tek Windows artefaktı odur.',
+      );
+      expect(windowsWorkflow, contains(r'$published = @($zipOut)'));
+      expect(
+        windowsWorkflow,
+        contains(r'$items = @($published | ForEach-Object {'),
+        reason:
+            'Yayın listesi ZIP ile başlamazsa hem `<ad>.zip.sha256` hem de '
+            'manifest artefakt kaydı ZIP\'i kaçırır.',
+      );
+    });
+
+    test('koşum çıktısı alıkoymayı okunur bir ::warning:: ile söyler', () {
+      final gate = signingGate();
+      expect(
+        gate,
+        contains(
+          r'Write-Host "::warning title=Windows MSIX yayınlanmadı::$withheldReason"',
+        ),
+        reason:
+            'Sessiz alıkoyma yayın sonrası "MSIX nerede?" sorusunu '
+            'hatırlamaya bırakır; koşumun kendisi söylemeli.',
+      );
+      expect(
+        gate,
+        contains('::warning title=Windows imzası güvenilmez::'),
+        reason:
+            'Bayrakla BİLEREK yayınlanan kurulamaz MSIX de koşumda görünür '
+            'olmalı; sessiz muafiyet unutulur.',
+      );
+    });
+
+    test('platform manifesti güvenilmez imzayı ve sebebini taşır', () {
+      expect(
+        windowsWorkflow,
+        contains(r"trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true')"),
+      );
+      expect(
+        windowsWorkflow,
+        contains(r"msixPublished = ($env:MSIX_PUBLISHED -eq 'true')"),
+        reason:
+            'Manifest hangi artefaktın yayınlandığını söylemezse `artifacts` '
+            'listesindeki eksik MSIX kaza mı karar mı belli olmaz.',
+      );
+      expect(
+        windowsWorkflow,
+        contains(r'msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON'),
+        reason: '`trusted=false` tek başına "neden yayınlanmadı"yı söylemez.',
+      );
+    });
+
+    test('WINDOWS_ALLOW_TEST_SIGNING=true eski davranışı korur', () {
+      final gate = signingGate();
+      final flagBranch = gate.indexOf(
+        r"if ('${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -eq 'true') {",
+      );
+      final otherwise = gate.indexOf('} else {');
+      final withhold = gate.indexOf(r'$publishMsix = $false');
+      expect(flagBranch, isNonNegative, reason: 'Muafiyet kolu kayboldu.');
+      expect(otherwise, greaterThan(flagBranch));
+      expect(
+        withhold,
+        greaterThan(otherwise),
+        reason:
+            'Alıkoyma YALNIZ `else` kolunda olmalı; bayrak kolunda da '
+            'alıkoyulursa `WINDOWS_ALLOW_TEST_SIGNING` "bilerek onaylıyorum" '
+            'anlamını yitirir ve ölü anahtara döner.',
+      );
+      expect(
+        RegExp(r'\$publishMsix = \$false').allMatches(gate),
+        hasLength(1),
+        reason: 'İkinci bir alıkoyma yolu kapının okunmasını imkânsızlaştırır.',
+      );
+    });
+
+    test('beta kanalı kapıdan etkilenmez', () {
+      final gate = signingGate();
+      final stableOnly = gate.indexOf(
+        r"if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable') {",
+      );
+      expect(
+        stableOnly,
+        isNonNegative,
+        reason: 'Kapı stable kanala kilitli değil.',
+      );
+      expect(
+        gate.indexOf(r'$publishMsix = $false'),
+        greaterThan(stableOnly),
+        reason:
+            'Alıkoyma stable koşulunun dışına çıkarsa beta MSIX\'i de yayından '
+            'düşer; beta bu WP\'de değişmiyor.',
+      );
+    });
+
+    test('Release adımı eşleşmeyen MSIX glob\'unda kırmızıya düşmez', () {
+      expect(
+        releaseWorkflow,
+        isNot(contains('fail_on_unmatched_files')),
+        reason:
+            'Ölçüldü (softprops/action-gh-release@v2, pin 3bb1273, '
+            'src/main.ts): bayrak verilmezse eşleşmeyen glob yalnız '
+            '"does not match any files" UYARISI üretir, iş düşmez. Bayrak '
+            'true yapılırsa MSIX alıkonan her stable yayın komple kırmızıya '
+            'düşer — yani kapı yine çalışan ZIP\'i öldürür.',
+      );
+      expect(releaseWorkflow, contains('release-assets/windows/*.zip'));
     });
   });
 
