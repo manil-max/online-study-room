@@ -119,8 +119,14 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # "0 kullanici uzlastirildi" derken UZAK staging "1 kullanici uzlastirildi"
 # dedi. Yerel kapi hicbir sey olcmedi cunku taze veritabaninda profil yok --
 # 0124'un uretime ulasmasini saglayan korlugun ta kendisi.
-Assert-Equal $contract.staging.migration_head '0127' 'WP-634 staging hedefi 0127: apply basarili'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0127 staging apply bitti, yeniden kilitli'
+# 🔴 0128 ICIN ACILDI (WP-635): 0126'nin sebep oldugu URETIM REGRESYONUNU
+# onarir. Kilit satiri her basarim icin TEKtir ve en yuksek kademeyi tasir;
+# 0126 onu "dusen kademe" ile eslestirip SILIYORDU, boylece hak edilmis
+# kademeler de ekrandan kayboldu. Artik siliniyor degil DUSURULUYOR, silinmis
+# satirlar defterden yeniden turetiliyor ve donmus "en iyi" degeri gercege
+# cekiliyor. tests/054, 052'nin goremedigi boslugu kapatir.
+Assert-Equal $contract.staging.migration_head '0128' 'WP-635 staging hedefi 0128 (onarim)'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0128 apply icin staging kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
