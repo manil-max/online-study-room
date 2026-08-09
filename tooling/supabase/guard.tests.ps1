@@ -145,8 +145,12 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # CI bu commit'te TAM yesil: iki Android emulator kosumu, Windows golden ve
 # Windows entegrasyon dahil (run 31325823506). Bu gecenin onceki her CI turu
 # bir sonraki push tarafindan iptal edilmisti; bu kodun ilk TAM dogrulamasi.
-Assert-Equal $contract.production.migration_head '0125' 'WP-630 production hedefi 0125'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0125 apply icin production kapisi TEK SEFERLIK acik'
+# APPLY BASARILI, KAPI GERI KILITLENDI (run 31326411420): post-check uc
+# sutunda da 0125. Uc ortam da artik 0125'te; surum hatti head uyusmazligi
+# yuzunden KILITLI DEGIL. release_enabled yine de kasten false -- surum
+# cikarmak sahibin acik sozunu ve tek seferlik GO string'ini gerektirir.
+Assert-Equal $contract.production.migration_head '0125' 'production hedefi 0125: apply basarili'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0125 apply bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
