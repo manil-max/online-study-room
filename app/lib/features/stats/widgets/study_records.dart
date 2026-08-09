@@ -8,6 +8,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
+import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 
 List<String> _months(BuildContext context) => [
@@ -75,7 +76,17 @@ class StudyRecords extends ConsumerWidget {
         ? ' · ${AppLocalizations.of(context).statsStreakGun(kUserSessionsHotWindowDays.toString())}'
         : '';
     final totalScope = lifetimeSeconds == null ? windowScope : '';
-    final longest = longestStudyStreak(sessions, totals: daily);
+    // 🔴 WP-637: "Rekor seri" GÜNLÜK HEDEF serisidir. Eskiden "o gün en az 1
+    // saniye kayıt var mı" ile sayılıyordu — yani hemen altındaki "Aktif gün"
+    // döşemesiyle aynı gün tanımı, iki farklı isimle. Sahip kararı: seri
+    // ürünün kendi günlük seri kuralına (`currentStreak` eşiği) bağlanır,
+    // "Aktif gün" ayrı ölçü olarak AYNEN kalır.
+    final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
+    final longest = longestStudyStreak(
+      sessions,
+      totals: daily,
+      goalSeconds: goalSeconds,
+    );
     // 🔴 WP-636: `daily.length` gün SAYISIydı, çalışılan gün sayısı değil —
     // 0 saniyelik (sıfırlanmış/silinmiş) bir gün de haritada anahtar açar ve
     // "Aktif gün" döşemesini şişirirdi. WP-561 bu `> 0` kuralını rekor seri

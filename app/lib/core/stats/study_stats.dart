@@ -362,7 +362,27 @@ int _calendarDayIndex(DateTime day) =>
     DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
     Duration.millisecondsPerDay;
 
-/// En uzun (üst üste en az 1 sn çalışılan) gün serisi — "rekor seri" (§3.11).
+/// En uzun **hedef serisi** rekoru — "rekor seri" (§3.11).
+///
+/// 🔴 WP-637 — sahip kararı. Bu rekor "o gün en az 1 saniye kayıt var mı"
+/// kuralıyla sayılıyordu; sahip gördü ve reddetti: *"en uzun seri demişsin,
+/// onu normal günlük seriye bağla o zaman. aktif gün var zaten ayrı olarak,
+/// onu saymasına gerek yok."* Ölçü artık ürünün KENDİ günlük seri kuralıdır:
+/// bir gün seriye ancak **günlük hedefi tutturursa** girer
+/// (`günün toplamı >= [goalSeconds]`) — [currentStreak] ile birebir aynı eşik.
+/// "En az 1 saniye" ölçüsü zaten [activeDayCount] ("Aktif gün") döşemesinde
+/// ayrı duruyor; iki döşeme aynı sayıyı iki isimle anlatıyordu.
+///
+/// [goalSeconds] **saf parametredir** — bu dosya hiçbir sağlayıcı okumaz.
+/// Kişisel yüzey kullanıcının günlük hedefini, grup geneli grup hedefini, üye
+/// başına ölçüm o ÜYENİN kendi hedefini (`Profile.dailyGoalMinutes`) geçirir.
+/// Hedef yoksa (≤ 0) seri hesaplanamaz: [currentStreak] gibi 0 döner.
+///
+/// Varsayılan `1` yalnız WP-637'den ÖNCE yazılmış çağrıların derlenebilmesi
+/// içindir (`test/core/study_stats_test.dart`,
+/// `test/core/stats_correctness_wp561_test.dart`); `lib/` içinde hedefsiz TEK
+/// bir çağrı yoktur. Bu rekoru gösterecek yeni bir yüzey hedefini AÇIKÇA
+/// geçirmelidir, yoksa sahibin reddettiği kurala geri düşer.
 ///
 /// Ardışıklık **takvimseldir**, aritmetik değil.
 ///
@@ -376,25 +396,31 @@ int _calendarDayIndex(DateTime day) =>
 ///   seri sessizce kırılır.
 ///
 /// Ayrıca aynı takvim gününü gösteren iki farklı anahtar (UTC damgası + yerel
-/// anahtar) bir BOŞLUK değildir; seriyi kırmaz, atlanır.
+/// anahtar) bir BOŞLUK değildir; süreleri o günün toplamında BİRLEŞİR.
 int longestStudyStreak(
   Iterable<StudySession> sessions, {
   Map<DateTime, int>? totals,
+  int goalSeconds = 1,
 }) {
-  // WP-561: değere bakılmadan `.keys` kullanmak 0 saniyelik günü de "çalışılmış"
-  // sayıyordu (`activeDayCount` doğru şekilde `> 0` filtreler). Sıfırlanmış /
-  // silinmiş bir gün rekor seriyi şişiriyordu.
+  if (goalSeconds <= 0) return 0;
+  // Önce takvim gününe indirgenir (aynı günü gösteren iki anahtar TOPLANIR),
+  // sonra hedef eşiği uygulanır: eşik günün TOPLAMINA bakar, tek kayda değil.
+  final byDay = <int, int>{};
+  for (final e in (totals ?? dailyTotals(sessions)).entries) {
+    final index = _calendarDayIndex(e.key);
+    byDay[index] = (byDay[index] ?? 0) + e.value;
+  }
+  // WP-561: 0 saniyelik (sıfırlanmış/silinmiş) gün sayılmaz. Hedef ≥ 1 olduğu
+  // için bu kural kendiliğinden de sağlanır; iddiası testte açıkça durur.
   final days = <int>[
-    for (final e in (totals ?? dailyTotals(sessions)).entries)
-      if (e.value > 0) _calendarDayIndex(e.key),
+    for (final e in byDay.entries)
+      if (e.value > 0 && e.value >= goalSeconds) e.key,
   ]..sort();
   if (days.isEmpty) return 0;
   var best = 1;
   var cur = 1;
   for (var i = 1; i < days.length; i++) {
-    final step = days[i] - days[i - 1];
-    if (step == 0) continue; // aynı gün, iki temsil — boşluk değil
-    if (step == 1) {
+    if (days[i] - days[i - 1] == 1) {
       cur++;
       if (cur > best) best = cur;
     } else {

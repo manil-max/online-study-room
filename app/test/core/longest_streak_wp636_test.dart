@@ -17,6 +17,12 @@ import 'package:timezone/timezone.dart' as tz;
 /// cihazda o ifadenin ürettiği AN, `tz.TZDateTime(berlin, y, m, d)` ile
 /// birebir aynıdır. Yani buradaki anahtarlar uydurma değil, DST uygulayan bir
 /// cihazın gerçekten ürettiği anahtarlardır.
+///
+/// 🔴 WP-637 sonrası: rekorun KURALI değişti (artık "≥ 1 sn çalışılan gün"
+/// değil, "günlük hedefi tutturan gün" — bkz. `longest_streak_wp637_test.dart`),
+/// ardışıklığın ÖLÇÜSÜ değişmedi. Bu dosyanın konusu ikincisidir; o yüzden her
+/// çağrı artık hedefini AÇIKÇA geçirir ve günler hedefi tutturacak şekilde
+/// kurulur — böylece ölçülen tek değişken takvim farkı olarak kalır.
 tz.Location _berlin() {
   tz_data.initializeTimeZones();
   return tz.getLocation('Europe/Berlin');
@@ -52,7 +58,7 @@ void main() {
       final totals = _totals(gapped);
       expect(activeDayCount(totals), 5, reason: 'ölçüm: 5 aktif gün var');
       expect(
-        longestStudyStreak(const [], totals: totals),
+        longestStudyStreak(const [], totals: totals, goalSeconds: 3600),
         1,
         reason: 'her gün tek başına — en uzun ardışık seri 1 olmalı',
       );
@@ -68,7 +74,10 @@ void main() {
       ];
       final totals = _totals(days);
       expect(activeDayCount(totals), 30);
-      expect(longestStudyStreak(const [], totals: totals), 15);
+      expect(
+        longestStudyStreak(const [], totals: totals, goalSeconds: 3600),
+        15,
+      );
     });
   });
 
@@ -79,7 +88,10 @@ void main() {
       final totals = _totals([
         for (var i = 0; i < 30; i++) base.add(Duration(days: i)),
       ]);
-      expect(longestStudyStreak(const [], totals: totals), 30);
+      expect(
+        longestStudyStreak(const [], totals: totals, goalSeconds: 3600),
+        30,
+      );
     });
 
     test('en uzun blok kazanır (3 / 5 / 2 → 5)', () {
@@ -89,7 +101,10 @@ void main() {
         for (var i = 5; i < 10; i++) base.add(Duration(days: i)),
         for (var i = 12; i < 14; i++) base.add(Duration(days: i)),
       ];
-      expect(longestStudyStreak(const [], totals: _totals(days)), 5);
+      expect(
+        longestStudyStreak(const [], totals: _totals(days), goalSeconds: 3600),
+        5,
+      );
     });
 
     test('oturumlardan (totals verilmeden) da aynı sonuç', () {
@@ -100,7 +115,9 @@ void main() {
         _s(DateTime.utc(2026, 5, 2, 20), 1800), // aynı gün ikinci oturum
         _s(DateTime.utc(2026, 5, 4, 9), 1800),
       ];
-      expect(longestStudyStreak(sessions), 2);
+      // Hedef 1800: 1 ve 2 Mayıs tutturur (2 Mayıs iki oturumla 3600), 4 Mayıs
+      // da tutturur ama 3 Mayıs boştur → en uzun blok 2.
+      expect(longestStudyStreak(sessions, goalSeconds: 1800), 2);
     });
   });
 
@@ -123,7 +140,11 @@ void main() {
         reason: 'kurulum doğrulaması: gerçekten 47 saat',
       );
       expect(
-        longestStudyStreak(const [], totals: {d29: 3600, d31: 3600}),
+        longestStudyStreak(
+          const [],
+          totals: {d29: 3600, d31: 3600},
+          goalSeconds: 3600,
+        ),
         1,
         reason: '30 Mart çalışılmadı — 29 ve 31 ardışık değildir',
       );
@@ -137,7 +158,11 @@ void main() {
       final d30 = tz.TZDateTime(berlin, 2026, 3, 30);
       expect(d30.difference(d29).inHours, 23);
       expect(
-        longestStudyStreak(const [], totals: {d29: 3600, d30: 3600}),
+        longestStudyStreak(
+          const [],
+          totals: {d29: 3600, d30: 3600},
+          goalSeconds: 3600,
+        ),
         2,
         reason: '29 ve 30 Mart takvimde ardışıktır',
       );
@@ -148,7 +173,14 @@ void main() {
       final d25 = tz.TZDateTime(berlin, 2026, 10, 25);
       final d26 = tz.TZDateTime(berlin, 2026, 10, 26);
       expect(d26.difference(d25).inHours, 25);
-      expect(longestStudyStreak(const [], totals: {d25: 3600, d26: 3600}), 2);
+      expect(
+        longestStudyStreak(
+          const [],
+          totals: {d25: 3600, d26: 3600},
+          goalSeconds: 3600,
+        ),
+        2,
+      );
     });
 
     test('aynı takvim gününü gösteren iki anahtar seriyi kırmaz', () {
@@ -159,7 +191,10 @@ void main() {
         DateTime.utc(2026, 5, 1): 1800,
         DateTime(2026, 5, 2): 3600,
       };
-      expect(longestStudyStreak(const [], totals: totals), 2);
+      expect(
+        longestStudyStreak(const [], totals: totals, goalSeconds: 1800),
+        2,
+      );
     });
   });
 
@@ -174,14 +209,18 @@ void main() {
             d.add(const Duration(days: 1)): 0,
             d.add(const Duration(days: 2)): 3600,
           },
+          goalSeconds: 3600,
         ),
         1,
       );
     });
 
     test('veri yoksa 0', () {
-      expect(longestStudyStreak(const []), 0);
-      expect(longestStudyStreak(const [], totals: const {}), 0);
+      expect(longestStudyStreak(const [], goalSeconds: 3600), 0);
+      expect(
+        longestStudyStreak(const [], totals: const {}, goalSeconds: 3600),
+        0,
+      );
     });
   });
 }

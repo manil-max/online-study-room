@@ -180,14 +180,26 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final allTimeTotal = totalOfDayTotals(groupDay);
     final activeDays = activeDayCount(groupDay);
     final peak = peakDay(groupDay);
-    final recordStreak = longestStudyStreak(const [], totals: groupDay);
-    // En istikrarlı üye: en uzun (ardışık çalışılan gün) serisi.
+    // 🔴 WP-637: grup rekor serisi de HEDEF serisidir. Grup tarafında "hedef"
+    // grubun günlük hedefidir (gauge ile aynı `goalSeconds`): grup toplamı o
+    // gün grup hedefini tutturduysa gün seriye girer.
+    final recordStreak = longestStudyStreak(
+      const [],
+      totals: groupDay,
+      goalSeconds: goalSeconds,
+    );
+    // En istikrarlı üye: en uzun günlük HEDEF serisi. WP-253 "herkesin günlük
+    // hedefi bilinmez" diyordu; artık biliniyor — `group_member_directory`
+    // (0115) satırı `daily_goal_minutes` taşıyor, yani her üye KENDİ hedefiyle
+    // ölçülür. Grup hedefini tek üyeye uygulamak üçüncü bir yanlış metrik
+    // olurdu (bir kişi tek başına grup hedefini nadiren tutturur).
     String? consistentName;
     var consistentStreak = 0;
     for (final m in members) {
       final st = longestStudyStreak(
         const [],
         totals: userDayTotals(stats, m.id),
+        goalSeconds: m.dailyGoalMinutes * 60,
       );
       if (st > consistentStreak) {
         consistentStreak = st;
