@@ -223,15 +223,53 @@ android {
     buildTypes {
         release {
             // Yayınlanan TÜM APK'lar aynı kalıcı release anahtarıyla imzalanmalı.
-            // key.properties yoksa debug imzasına düşmek yerine release derlemesini durdur.
-            if (!keystorePropertiesFile.exists()) {
-                throw GradleException(
-                    "Release imzası için android/key.properties gerekli. " +
-                        "Debug imzalı release APK üretimi engellendi."
-                )
+            // key.properties yoksa debug imzasına düşmek yerine release derlemesi
+            // durdurulur — ama bu kontrol artık AŞAĞIDA, ÇALIŞMA zamanında yapılır.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
             }
-            signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+// 🔴 WP-580: imza kapısı KONFIGÜRASYON zamanından ÇALIŞMA zamanına alındı.
+//
+// Eskiden `throw GradleException(...)` doğrudan `buildTypes { release { … } }`
+// bloğunun içindeydi. O blok, hangi task çalıştırılırsa çalıştırılsın Gradle
+// projeyi yapılandırırken DEĞERLENDİRİLİR. Sonucu: `key.properties` olmayan bir
+// makinede `assembleLocalDebug` bile — hatta `--dry-run` bile — "Release imzası
+// için android/key.properties gerekli" diyerek düşüyordu.
+//
+// Bedeli somut ve ölçüldü: CI'daki "Android emülatör smoke (sayaç)" işi,
+// WP-572'nin satır-satır kabuk tuzağı düzeltildikten sonra ilk kez gerçekten
+// koştu, emülatörü buldu ("Cihaz: emulator-5554") ve tam APK derlemesinde bu
+// kapıya çarptı (koşum 31285409925, job 93173161286,
+// `Gradle task assembleLocalDebug failed`). Yani sayacı gerçek bir Android
+// sürecinde çalıştıran TEK kapı, imzalama sırrı gerektirmeyen bir DEBUG
+// derlemesi yüzünden bloklanıyordu. CI'da release anahtarı YOK ve OLMAMALI:
+// `local` flavor geliştirici/test derlemesidir.
+//
+// Yeni kural aynı sertlikte ama doğru yerde: release ARTEFAKTI üreten task
+// çalışmadan hemen önce kontrol edilir. Debug derlemeleri etkilenmez, imzasız
+// release hâlâ imkânsızdır.
+val requireReleaseKeystore = tasks.register("requireReleaseKeystore") {
+    group = "verification"
+    doLast {
+        if (!keystorePropertiesFile.exists()) {
+            throw GradleException(
+                "Release imzası için android/key.properties gerekli. " +
+                    "Debug imzalı release APK/AAB üretimi engellendi."
+            )
+        }
+    }
+}
+
+// `package…Release` gerçek paketleme task'ıdır; `assemble`/`bundle` yaşam
+// döngüsü task'larıdır. Üçü de bağlanır: hangisi çağrılırsa çağrılsın kapı önce
+// koşar. Debug varyantları bilerek EŞLEŞMEZ.
+tasks.configureEach {
+    if (name.matches(Regex("^(package|assemble|bundle)[A-Za-z]*Release[A-Za-z]*$"))) {
+        dependsOn(requireReleaseKeystore)
     }
 }
 

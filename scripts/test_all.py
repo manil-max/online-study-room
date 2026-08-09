@@ -219,6 +219,11 @@ def build_gates() -> list[Gate]:
         # surumune tasiyordu; karsiligi olan kod Play'de hic calismiyor.
         Gate("play-manifest", "Play manifest izin sozlesmesi", 0,
              [py, "scripts/test_all.py", "--internal-play-manifest"]),
+        # WP-580: imza kapisi konfigurasyon zamanindaydi ve KOSULAN HER
+        # task'i (debug dahil) dusuruyordu; Android emulator smoke'u da o
+        # yuzden ilk gercek kosumunda blokladi.
+        Gate("android-signing", "Android imza kapisi dogru katmanda", 0,
+             [py, "scripts/test_all.py", "--internal-android-signing"]),
         # WP-505: pin alti workflow adiminda duruyor; biri kayarsa goldenlar
         # kod degismeden kirmiziya duser.
         Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
@@ -730,6 +735,99 @@ def internal_play_manifest(require_merged: bool = False) -> int:
     return 0
 
 
+def internal_android_signing() -> int:
+    """Release imza kapisi DOGRU KATMANDA mi?
+
+    🔴 WP-580 — sebep olculdu, tahmin degil.
+
+    `app/android/app/build.gradle.kts` icinde `throw GradleException(...)`
+    dogrudan `buildTypes { release { ... } }` blogunun icindeydi. O blok, hangi
+    task calistirilirsa calistirilsin Gradle projeyi YAPILANDIRIRKEN
+    degerlendirilir. Sonucu: `key.properties` olmayan bir makinede
+    `assembleLocalDebug` bile -- hatta `--dry-run` bile -- "Release imzasi icin
+    android/key.properties gerekli" diyerek dusuyordu.
+
+    Bedeli: CI'daki "Android emulator smoke (sayac)" isi, WP-572 satir-satir
+    kabuk tuzagi kapandiktan sonra ILK KEZ gercekten kostu, emulatoru buldu
+    ("Cihaz: emulator-5554") ve tam APK derlemesinde bu kapiya carpti
+    (kosum 31285409925, job 93173161286). Sayaci gercek bir Android surecinde
+    calistiran TEK kapi, imzalama sirri gerektirmeyen bir DEBUG derlemesi
+    yuzunden bloklaniyordu.
+
+    Kapi iki yonlu: kontrol ne konfigurasyon zamanina geri donsun, ne de release
+    yolu kapisiz kalsin.
+    """
+    gradle = APP / "android" / "app" / "build.gradle.kts"
+    if not gradle.exists():
+        print("FAIL: app/android/app/build.gradle.kts yok")
+        return 1
+    body = gradle.read_text(encoding="utf-8", errors="replace")
+    problems: list[str] = []
+
+    # (a) `buildTypes { release { ... } }` blogu icinde throw OLMAMALI.
+    start = body.find("buildTypes {")
+    if start == -1:
+        problems.append("`buildTypes {` blogu bulunamadi — tarama bozuldu.")
+    else:
+        depth = 0
+        end = start
+        for index in range(start, len(body)):
+            char = body[index]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+        block = body[start:end]
+        if "throw" in block:
+            problems.append(
+                "`buildTypes` blogunun icinde `throw` var: bu KONFIGURASYON "
+                "zamaninda kosar ve `assembleLocalDebug` gibi DEBUG task'larini "
+                "da dusurur (WP-580). Kontrolu `requireReleaseKeystore` "
+                "task'ina tasi."
+            )
+
+    # (b) Calisma zamani kapisi var mi ve release task'larina BAGLI mi?
+    if 'tasks.register("requireReleaseKeystore")' not in body:
+        problems.append(
+            "`requireReleaseKeystore` task'i yok: imzasiz release'i durduran "
+            "calisma zamani kapisi kaybolmus."
+        )
+    if "dependsOn(requireReleaseKeystore)" not in body:
+        problems.append(
+            "`requireReleaseKeystore` hicbir task'a baglanmamis. Cagrilmayan "
+            "kapi kapi degildir."
+        )
+    if "Release[A-Za-z]*$" not in body:
+        problems.append(
+            "Release task eslesmesi bulunamadi: `package|assemble|bundle "
+            "...Release` zinciri kapiya baglanmali."
+        )
+    # Debug varyantlari BILEREK eslesmemeli.
+    if "Debug" in body and "dependsOn(requireReleaseKeystore)" in body:
+        wiring = body[body.find("tasks.configureEach {", body.find(
+            'tasks.register("requireReleaseKeystore")')):]
+        wiring = wiring[: wiring.find("\n}")]
+        if "Debug" in wiring:
+            problems.append(
+                "Imza kapisi Debug task'larina da baglanmis — WP-580'in "
+                "duzelttigi hatanin ta kendisi."
+            )
+
+    if problems:
+        print("FAIL (%d):" % len(problems))
+        for problem in problems:
+            print("    - " + problem)
+        return 1
+    print(
+        "Android imza kapisi tamam (kontrol calisma zamaninda, release "
+        "task'lari kapiya bagli, debug etkilenmiyor)."
+    )
+    return 0
+
+
 def internal_play_firebase() -> int:
     """`play` flavor'inin Firebase yapilandirmasi ve ikon kaynagi gercekten var mi?
 
@@ -1066,6 +1164,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-manifest", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-android-signing", action="store_true",
+                        help="yalniz Android imza kapisi katmani")
     parser.add_argument("--require-merged", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-android-smoke", action="store_true",
@@ -1082,6 +1182,8 @@ def main() -> int:
         return internal_play_firebase()
     if args.internal_play_manifest:
         return internal_play_manifest(require_merged=args.require_merged)
+    if args.internal_android_signing:
+        return internal_android_signing()
     if args.internal_android_smoke:
         return internal_android_smoke()
 
