@@ -66,7 +66,12 @@ class OfflineFirstStudyRepository
   /// Sinir olmadan asili bir istek mutasyonu ne sunucuya ne de kuyruga koyardi.
   final Duration _remoteDispatchTimeout;
 
-  bool _isFlushing = false;
+  /// WP-613: devam eden flush turu. Eskiden yalnizca bir `bool`du ve ikinci
+  /// cagiran SESSIZCE donuyordu — yani "kuyrugu bosalt" dedigin halde kaydin
+  /// hic denenmemis olabiliyordu. Tur paylasilinca cagiran taraf gercekten
+  /// bekler; [_dispatchQueuedSessionRemote] "hala kuyrukta mi" kontrolunu ancak
+  /// bu sayede anlamli yapabilir.
+  Future<void>? _flushInFlight;
 
   final List<DeadLetteredStudyMutation> _deadLetters = [];
 
@@ -125,9 +130,17 @@ class OfflineFirstStudyRepository
     outcome: outcome,
   );
 
-  Future<void> flushPending() async {
-    if (_isFlushing) return;
-    _isFlushing = true;
+  Future<void> flushPending() {
+    final active = _flushInFlight;
+    if (active != null) return active;
+    final future = _flushPendingImpl();
+    _flushInFlight = future;
+    return future.whenComplete(() {
+      if (identical(_flushInFlight, future)) _flushInFlight = null;
+    });
+  }
+
+  Future<void> _flushPendingImpl() async {
     final stopwatch = Stopwatch()..start();
     var pendingCount = 0;
     var appliedCount = 0;
@@ -168,7 +181,6 @@ class OfflineFirstStudyRepository
       await _cache.replacePendingStudyMutations(remaining);
       remainingCount = remaining.length;
     } finally {
-      _isFlushing = false;
       if (pendingCount > 0) {
         ObservabilityService.instance.outboxFlush(
           pendingCount: pendingCount,
@@ -182,8 +194,8 @@ class OfflineFirstStudyRepository
 
   @override
   Future<void> addSession(StudySession session) async {
-    await _writeSessionLocally(session);
-    await _dispatchAddSessionRemote(session);
+    await _writeSessionAheadOfRemote(session);
+    await _dispatchQueuedSessionRemote(session);
   }
 
   /// WP-542: Durdur'a basildiginda kullanicinin bekledigi tek is YEREL yazimdir.
@@ -197,8 +209,32 @@ class OfflineFirstStudyRepository
   /// `flushPending` sonradan akitir. Kullanici icin durdurma anliktir.
   @override
   Future<void> addSessionLocalFirst(StudySession session) async {
+    await _writeSessionAheadOfRemote(session);
+    unawaited(_dispatchQueuedSessionRemote(session));
+  }
+
+  /// WP-613 (SESSIZ VERI KAYBI): outbox kaydi uzak gonderimden ONCE yazilir.
+  ///
+  /// 🔴 Eski zincir: cache'e yaz → uzak turu `unawaited` birak → **yalniz hata
+  /// verirse** outbox'a kuyrukla. Kullanici Durdur'a basip uygulamayi hemen
+  /// kapatirsa (ya da Android sureci oldururse) o aralikta ne `catch` kosar ne
+  /// de outbox'a bir sey duser. Sonraki acilista ilk sunucu snapshot'i gelince
+  /// [_reconcileRemoteSessions] "sunucu + BEKLEYEN outbox" kumesini uretir;
+  /// yalniz cache'te duran oturum o kumede olmadigi icin
+  /// `saveUserSessions` onu cache'ten de siler. Uyari yok, telemetri yok:
+  /// kullanicinin calismasi yok olur.
+  ///
+  /// Cozum, kayit defterinin klasik kurali: **once niyet, sonra is.** Kayit
+  /// gonderilmeden once kalici kuyruga yazilir; gonderim basarili olunca
+  /// [flushPending] onu kuyruktan dusurur. Surec hangi anda olurse olsun
+  /// oturum ya kuyrukta ya sunucudadir — ikisinin arasinda bir bosluk yoktur.
+  ///
+  /// Kuyruk yazimi cache yazimindan da ONCE gelir: ikisinin arasinda olen bir
+  /// surecte oturum kuyruktan cache'e geri doner (`_reconcileRemoteSessions`),
+  /// ters sirada ise yine kaybolurdu.
+  Future<void> _writeSessionAheadOfRemote(StudySession session) async {
+    await _cache.queueStudyMutation(OfflineStudyMutation.add(session));
     await _writeSessionLocally(session);
-    unawaited(_dispatchAddSessionRemote(session));
   }
 
   Future<void> _writeSessionLocally(StudySession session) async {
@@ -206,15 +242,26 @@ class OfflineFirstStudyRepository
     await _publishLocalUserSessions(session.userId);
   }
 
-  Future<void> _dispatchAddSessionRemote(StudySession session) async {
+  /// Kuyruga yazilmis oturumu sunucuya akitir. Hata/zaman asimi kayip DEGILDIR:
+  /// kayit outbox'ta durur, sonraki tur (realtime snapshot, watch, sonraki
+  /// yazim) yeniden dener.
+  Future<void> _dispatchQueuedSessionRemote(StudySession session) async {
     try {
       await Future(() async {
         await flushPending();
-        await _remote.addSession(session);
+        // Devam eden bir tura katilmis olabiliriz; o tur kuyrugu BASINDA
+        // okudugu icin bizim taze kaydimizi hic gormemis olabilir. Kayit hala
+        // duruyorsa kendi turumuzu kosariz.
+        if (await _isQueued(session.id)) await flushPending();
       }).timeout(_remoteDispatchTimeout);
     } catch (_) {
-      await _cache.queueStudyMutation(OfflineStudyMutation.add(session));
+      // Bilincli yutma: kayit outbox'ta guvende.
     }
+  }
+
+  Future<bool> _isQueued(String sessionId) async {
+    final pending = await _cache.readPendingStudyMutations();
+    return pending.any((mutation) => mutation.sessionId == sessionId);
   }
 
   @override

@@ -110,50 +110,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     }
   }
 
-  Future<void> _stopTimer(
-    BuildContext context,
-    StudyTimerState timer,
-    StudyTimerNotifier notifier,
-  ) async {
-    if (!timer.isGlobalTimerMirror) {
-      await notifier.stop();
-      return;
-    }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppLocalizations.of(dialogContext).classroomStopTimerTitle),
-        content: Text(
-          AppLocalizations.of(dialogContext).classroomStopTimerMirrorBody,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(
-              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
-            ),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(AppLocalizations.of(dialogContext).classroomDurdur),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-    try {
-      await notifier.stopMirroredRun();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).classroomStopTimerMirrorFailed,
-          ),
-        ),
-      );
-    }
-  }
+  // WP-613: Durdur kuralı (ayna onayı + hata şeridi) artık
+  // `stopTimerFromSurface` içinde, tam ekran odak ekranıyla ORTAK. Burada
+  // kopyası durduğu sürece birini düzeltip diğerini unutmak serbestti; odak
+  // ekranı tam olarak öyle geride kalmıştı.
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +401,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                                 onPressed: timer.isStopping
                                     ? null
                                     : () =>
-                                          _stopTimer(context, timer, notifier),
+                                          stopTimerFromSurface(context, ref),
                                 // WP-507: durdurma zinciri (native uzlaşma +
                                 // sunucu finalize) bazen saniyeler sürüyor.
                                 // Buton yalnız griye düşünce kullanıcı "tuş

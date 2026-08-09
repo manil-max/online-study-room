@@ -1182,6 +1182,43 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await _publishGlobalTimerCommands();
   }
 
+  /// 🔴 WP-613: kalıcı bildirimi/widget'ı **şu anki faza** göre yeniden kurar.
+  ///
+  /// Native panel yalnız `handleStart`/`handleStop` komutlarında doğar; etiketi
+  /// ("Odaklanıyorsun" / mola), kronometre zemini ve düğmeleri o an prefs'ten
+  /// okunur ve bir daha tazelenmez (`StudyTimerService.kt` handleStart). Faz
+  /// geçişinde Dart'tan hiçbir komut gitmediği için bildirim koşunun **ilk
+  /// saniyesinde donuyordu**: pomodoro molasında hâlâ "Odaklanıyorsun" yazıyor,
+  /// süreyi ilk çalışma başlangıcından sayıyor ve `rest` fazında doğan
+  /// "Çalışmaya dön" düğmesi üretimde HİÇ çıkmıyordu. Uygulama kapalıyken
+  /// sayacın tek yüzeyi bu bildirimdir; yani kullanıcı molada olduğunu
+  /// göremiyor, molayı bitiremiyor ve yanlış süre görüyordu.
+  ///
+  /// Native tarafta değişiklik gerekmez: `handleStart` zaten yeni faz/başlangıç
+  /// ile store'u yazıp bildirimi baştan kurar. Yeni bir V2 `start` zarfı da
+  /// doğmaz — o kol yalnız `mode == "stopwatch" && phase == "work"` iken
+  /// çalışır, faz geçişi ise tanımı gereği pomodorodur.
+  ///
+  /// Ayna koşusu bu yoldan geçmez: ayna daima kronometredir, hedefi yoktur ve
+  /// `_startTick` onun için hiç kurulmaz. Yine de açıkça dışarıda tutulur.
+  Future<void> _pushRunPhaseToForegroundService() async {
+    final startedAt = state.startedAt;
+    if (!state.isRunning || startedAt == null || state.isGlobalTimerMirror) {
+      return;
+    }
+    await TimerForegroundService.start(
+      startedAt: startedAt,
+      mode: state.mode.name,
+      phase: state.phase.name,
+      cycle: state.cycle,
+      targetSeconds: state.phaseTargetSeconds,
+      subjectId: state.subjectId,
+      liveRunId: state.liveRunId,
+      liveRunToken: state.liveRunToken,
+      startOrigin: 'dart_app',
+    );
+  }
+
   /// Kuyruktaki V2 zarflarını sunucuya yayınlar. Yayın "yangına-at-unut"tur:
   /// ağ/RLS/flag hatası sayaç akışını kesmez, zarf kuyrukta kalır ve sonraki
   /// resume turunda yeniden denenir.
@@ -2557,6 +2594,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         settlingSeconds: settling,
         settlingBaseline: settlingBaseline,
         settlingDay: settlingDay,
+        // 🔴 WP-613: sayaç KENDİ bitti; kullanıcı Durdur'a basmadı.
+        endedByStopRequest: false,
       );
     } else {
       final now = DateTime.now();
@@ -2578,6 +2617,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         startedAt: now,
       );
       _persistActiveTimer();
+      // 🔴 WP-613: buradan native servise komut GİTMİYORDU. Bkz.
+      // [_pushRunPhaseToForegroundService] — bildirim koşunun ilk saniyesinde
+      // donuyor, molada "Odaklanıyorsun" diyor ve "Çalışmaya dön" düğmesi
+      // üretimde hiç çıkmıyordu.
+      unawaited(_pushRunPhaseToForegroundService());
       _startTick();
       unawaited(_syncTimerSurfaces());
     }
@@ -2630,12 +2674,19 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// bu geçişte state'e yazılır (pomodoro faz sonu gibi, kaydın `_finish`'ten
   /// SONRA yapıldığı yollar için). Verilmezse mevcut settling* değerleri
   /// korunur — `stop()` bunları zaten kendisi yazmıştır.
+  ///
+  /// 🔴 WP-613: [endedByStopRequest] koşunun **nasıl** bittiğini söyler.
+  /// `true` = bir durdurma isteği (ekran/bildirim/widget düğmesi, ayna
+  /// durdurma, uzak durdurma sinyali). `false` = koşu hedefine varıp kendi
+  /// kendine bitti. Ayrım WP-598 kaza penceresini doğru yere bağlar: pencere
+  /// "az önce DURDURDUN" iddiasıdır, doğal bitişte o iddia yalandır.
   void _finish({
     TimerEvent? lastEvent,
     int settlingSeconds = 0,
     int settlingBaseline = 0,
     DateTime? settlingDay,
     DateTime? globalTimerStoppedRemotelyAt,
+    bool endedByStopRequest = true,
   }) {
     // WP-430 / V56-S04: terminal geçişin **tek** kayıt noktası. Görünen süre ile
     // yazılacak oturum süresi burada birlikte ölçülür:
@@ -2675,7 +2726,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // WP-598: koşu bu an bitti. Bundan sonraki [kAccidentalRestartCooldown]
     // içinde gelen Başlat onay ister. Bekleyen onay da düşer: her durdurma
     // kendi penceresini açar.
-    _lastRunEndedAt = ref.read(studyTimerClockProvider)();
+    //
+    // 🔴 WP-613: pencereyi açan şey DURDURMA'dır, "koşunun bitmesi" değil.
+    // Damga koşulsuz basılınca 25 dakikalık geri sayım kendi kendine bittikten
+    // hemen sonra Başlat'a basan kullanıcıya "Az önce durdurdun; sayaç yeniden
+    // başlatılmadı" deniyordu. Kullanıcı durdurmamıştı: meşru "bir tur daha"
+    // akışı hem iki dokunuşa çıkıyor hem de yanlış bir sebep duyuyordu.
+    // Doğal bitişte pencere açılmaz ve eski bir pencere de taşınmaz.
+    _lastRunEndedAt = endedByStopRequest
+        ? ref.read(studyTimerClockProvider)()
+        : null;
     _restartConfirmationArmed = false;
     state = state.copyWith(
       isRunning: false,

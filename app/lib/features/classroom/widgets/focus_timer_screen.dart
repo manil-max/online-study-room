@@ -98,6 +98,64 @@ void listenTimerNotices(BuildContext context, WidgetRef ref) {
   presentBackgroundHint(ref.read(timerBackgroundHintNoticeProvider));
 }
 
+/// 🔴 WP-613: iki sayaç yüzeyinin ORTAK "Durdur" davranışı.
+///
+/// Kural üç maddedir ve tek yerde durur:
+///   1. Kendi koşumuz → doğrudan durdur.
+///   2. **Ayna** koşusu (başka cihazda başlamış) → önce onay sor; başka
+///      cihazdaki sayacı kapatmak kazara verilecek bir karar değildir.
+///   3. `stopMirroredRun()` fırlatabilir (kimlik yoksa `StateError`, sunucu
+///      reddi/ağ kopması `coordinator.stopMirroredRun`'dan) → yakala ve
+///      kullanıcıya söyle.
+///
+/// Kural neden buraya taşındı: tam ekran odak ekranı düğmeyi ham tear-off ile
+/// bağlıyordu (`onPressed: notifier.stop`). `VoidCallback` bağlamında fırlayan
+/// hata hiçbir yere ulaşmıyor; kullanıcı Durdur'a basıyor, sayaç akmaya devam
+/// ediyor ve tek kelime edilmiyordu — çıkmaz sokak. Kart aynı kuralı doğru
+/// uyguluyordu; aynı kuralın iki yüzeyde ayrık yaşaması WP-560'ın dersiydi
+/// ([listenTimerNotices] de bu yüzden burada duruyor).
+Future<void> stopTimerFromSurface(BuildContext context, WidgetRef ref) async {
+  final notifier = ref.read(studyTimerProvider.notifier);
+  if (!ref.read(studyTimerProvider).isGlobalTimerMirror) {
+    await notifier.stop();
+    return;
+  }
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(AppLocalizations.of(dialogContext).classroomStopTimerTitle),
+      content: Text(
+        AppLocalizations.of(dialogContext).classroomStopTimerMirrorBody,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(
+            MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+          ),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(AppLocalizations.of(dialogContext).classroomDurdur),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  try {
+    await notifier.stopMirroredRun();
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).classroomStopTimerMirrorFailed,
+        ),
+      ),
+    );
+  }
+}
+
 /// Tam ekran odak modunu açar (§3.12). Sistem çubukları gizlenir; çıkışta
 /// (ekran kapanınca) geri yüklenir.
 Future<void> openFocusTimer(BuildContext context) {
@@ -152,8 +210,9 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       if (s.id == timer.subjectId) selected = s;
     }
 
+    final now = DateTime.now();
     final elapsed = (timer.isRunning && timer.startedAt != null)
-        ? DateTime.now().difference(timer.startedAt!).inSeconds
+        ? now.difference(timer.startedAt!).inSeconds
         : 0;
     final target = timer.phaseTargetSeconds;
     final inWork = timer.phase == TimerPhase.work;
@@ -173,7 +232,15 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       settlingSeconds: timer.settlingSeconds,
       settlingBaseline: timer.settlingBaseline,
       settlingDay: timer.settlingDay,
-      today: DateTime.now(),
+      // 🔴 WP-613 — WP-561'in bu yüzeye uygulanmamış yarısı. Kırpma tam olarak
+      // bu iki argümana bağlıdır (`study_stats.dart`: `live > 0 &&
+      // liveStartedAt != null && nowInstant != null`). Argümansız çağrıda
+      // 23:00'da başlayan koşuda kart "Bugün 1 sa 30 dk" derken odak ekranı
+      // 01:30'da "2 sa 30 dk" diyor, Durdur'da ise sayı çöküyordu — çünkü
+      // oturum `dayOf(start)` ile DÜNE yazılır.
+      liveStartedAt: timer.startedAt,
+      nowInstant: now,
+      today: dayOf(now),
     );
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     final goalPct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
@@ -264,7 +331,11 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                           ? theme.colorScheme.error
                           : theme.colorScheme.primary,
                     ),
-                    onPressed: timer.isRunning ? notifier.stop : notifier.start,
+                    // WP-613: ham tear-off DEĞİL — ayna koşusunda onay ve
+                    // hata şeridi bu yüzeyde de çalışmalı.
+                    onPressed: timer.isRunning
+                        ? () => stopTimerFromSurface(context, ref)
+                        : notifier.start,
                     child: Icon(
                       timer.isRunning ? Icons.stop : Icons.play_arrow,
                       size: 44,
