@@ -101,10 +101,11 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # hakkinda yaptirim uygulanmis kullanici HIC silinemiyor. Sahip apply'a izin
 # verdi; production kapisini acan commit otomatik guvenlik siniflandiricisi
 # tarafindan engellendi ve zorlanmadi. Devam icin sahip tarafli bir izin kurali
-# gerekiyor. Kapi acilinca bu iki satir 0124/$true olur, apply sonrasi
-# post-check 0124 verince ayri bir commit ile geri kilitlenir.
-Assert-Equal $contract.production.migration_head '0123' 'WP-522 turu production hedefi 0123'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply bekliyor, production hala kilitli'
+# KAPI ACILDI (2026-08-09): sahip izni acikca verdi ve gate commit'i atildi.
+# Bu iki satir simdi 0124/$true. Apply bitip post-check 0124 verince AYRI bir
+# commit ile $false'a donecek; acik birakilan bayrak WP-506 kuralini ihlal eder.
+Assert-Equal $contract.production.migration_head '0124' 'WP-549 turu production hedefi 0124'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0124 production apply icin kapi ACIK (tek seferlik)'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
