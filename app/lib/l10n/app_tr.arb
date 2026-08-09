@@ -2026,5 +2026,6 @@
   "updaterKlasorAcilamadiPath": "Klasör açılamadı. Dosyayı elle aç: {path}",
   "classroomSayacCokUzunSuredirAcik": "Sayaç {duration} boyunca hiç durmadan çalışıyor. Unuttuysan, Durdur'a bastığında bu süre çalışma olarak kaydedilir; verilen XP ve başarımlar geri alınamaz.",
   "classroomSayacYenidenBaslatilmadi": "Az önce durdurdun; sayaç yeniden başlatılmadı. Yeni bir oturum başlatmak istiyorsan tekrar dokun.",
-  "classroomSayacArkaPlandaCalisir": "Sayaç arka planda çalışır: uygulamayı kapatsan da durmaz, süre işlemeye devam eder. Bitirince Durdur'a bas."
+  "classroomSayacArkaPlandaCalisir": "Sayaç arka planda çalışır: uygulamayı kapatsan da durmaz, süre işlemeye devam eder. Bitirince Durdur'a bas.",
+  "authCevrimdisiAcildi": "İnternet yok. Uygulama çevrimdışı açıldı; sayaç çalışır, kayıtların bağlantı gelince eşitlenir."
 }

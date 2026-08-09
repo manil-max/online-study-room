@@ -26,6 +26,9 @@ class AuthGate extends ConsumerStatefulWidget {
 class _AuthGateState extends ConsumerState<AuthGate> {
   late final StreamSubscription<void> _recoverySub;
 
+  /// WP-603: çevrimdışı açılış şeridi oturumda bir kez gösterilir.
+  bool _offlineNoticeShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,11 +58,41 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     super.dispose();
   }
 
+  /// Çevrimdışı açılışı tek bir şeritte duyurur.
+  ///
+  /// Kare sonuna erteleniyor: bayrak `authStateProvider` akışından kalkar ve
+  /// o an ekranda henüz `Scaffold` olmayabilir; `ScaffoldMessenger` mesajı
+  /// asacak bir yüzey ister.
+  void _announceOfflineOpen() {
+    if (_offlineNoticeShown) return;
+    _offlineNoticeShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger.showSnackBar(
+        SnackBar(
+          key: const Key('auth-gate-offline-notice'),
+          content: Text(AppLocalizations.of(context).authCevrimdisiAcildi),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // WP-266: token kaydı HomeShell'e bağlı kalmasın; auth/onboarding boyunca
     // kullanıcı+tercih değişimleri server device registry ile uzlaşsın.
     ref.watch(pushLifecycleListenerProvider);
+    // 🔴 WP-603: sessiz çevrimdışılık, kullanıcıya "uygulama bozuk" dedirtiyor.
+    // Açılış yerel oturumla tamamlandığında bunu BİR KEZ söyle; engelleme,
+    // yalnız bildir. `ref.listen` kullanılıyor çünkü olay bir DEĞİŞİM: bayrak
+    // açılıştan ~2 sn sonra kalkar, `build` içinde okunan anlık değer değil.
+    ref.listen<bool>(authOpenedOfflineProvider, (previous, next) {
+      if (!next || previous == true) return;
+      _announceOfflineOpen();
+    });
     final authState = ref.watch(authStateProvider);
     final l10n = AppLocalizations.of(context);
 

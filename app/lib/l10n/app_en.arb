@@ -6655,5 +6655,9 @@
   "classroomSayacArkaPlandaCalisir": "The timer runs in the background: closing the app does not stop it, time keeps counting. Press Stop when you are done.",
   "@classroomSayacArkaPlandaCalisir": {
     "description": "WP-598 one-time snackbar shown the first time the user starts the timer. Nothing in the app said that the foreground service keeps the timer running after the app is closed."
+  },
+  "authCevrimdisiAcildi": "No internet. The app opened offline; the timer works and your records sync once you are back online.",
+  "@authCevrimdisiAcildi": {
+    "description": "WP-603 snackbar shown once when the app finished cold start from the locally stored session because the network never answered. A real user on the metro watched a spinner for 20 s and the app never opened; opening offline must be stated, not silent."
   }
 }

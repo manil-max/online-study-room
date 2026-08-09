@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/daily_stat.dart';
 import '../../models/presence.dart';
+import '../../models/profile.dart';
 import '../../models/study_session.dart';
 
 class OfflineCacheStore {
@@ -16,6 +17,36 @@ class OfflineCacheStore {
   static const _presenceGroupsKey = '$_prefix:presence_groups';
   static const _studyMutationsKey = '$_prefix:study_mutations';
   static const _pendingPresenceKey = '$_prefix:pending_presence';
+  static const _profileKey = '$_prefix:profile';
+
+  /// WP-603: son bilinen iyi profil (çevrimdışı açılış yedeği).
+  ///
+  /// Neden gerekli: ağ yokken `SupabaseAuthRepository._profileFor` `profiles`
+  /// satırını çekemez ve profili `user_metadata`dan uydurur — ad boş, günlük
+  /// hedef ise VARSAYILAN (`kDefaultDailyGoalMinutes`) olur. Hedef yanlış olunca
+  /// ona bağlı her şey (ilerleme halkası, günlük hedef metni) çevrimdışıyken
+  /// yanlış görünür. Bu kayıt kullanıcının en son gördüğü gerçek profili döner.
+  ///
+  /// Senkron: çağrıldığı yer açılış yolunun ta kendisidir; `SharedPreferences`
+  /// zaten bellekte olduğundan buraya bir `await` daha eklemek maliyeti
+  /// azaltmaz, yalnız açılışa bir gecikme noktası daha ekler.
+  Profile? readProfile() {
+    final raw = _prefs.getString(_profileKey);
+    if (raw == null) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return Profile.fromMap(Map<String, dynamic>.from(decoded));
+    } catch (_) {
+      // Bozuk/eski biçimli kayıt açılışı DURDURMAZ; yedek yoksa çağıran taraf
+      // oturum metadata'sına düşer.
+      return null;
+    }
+  }
+
+  Future<void> saveProfile(Profile profile) async {
+    await _prefs.setString(_profileKey, jsonEncode(profile.toMap()));
+  }
 
   Future<List<StudySession>?> readUserSessions(String userId) async {
     final raw = _prefs.getString(_studyKey(userId));
