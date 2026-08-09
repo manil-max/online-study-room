@@ -29,6 +29,7 @@ class ErrorRetryView extends StatelessWidget {
     required this.message,
     required this.onRetry,
     this.dense = false,
+    this.retryLabel,
   });
 
   /// Katalogdan gelen kullanıcı cümlesi (l10n kapısı: metin burada doğmaz).
@@ -40,12 +41,18 @@ class ErrorRetryView extends StatelessWidget {
   /// Tek satırlık şeritler (yatay çip listesi gibi) için sıkışık düzen.
   final bool dense;
 
+  /// 🔴 WP-592: eylem her zaman "tekrar dene" değildir. Bildirim izni kapalıyken
+  /// doğru çıkış sistem ayarlarını açmaktır; düğmeye "Tekrar dene" yazmak
+  /// kullanıcıya yanlış şeyi vaat ederdi. Verilmezse katalogdaki ortak
+  /// "Tekrar dene" metni kullanılır — varsayılan davranış değişmedi.
+  final String? retryLabel;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final textStyle = theme.textTheme.bodyMedium?.copyWith(color: muted);
-    final label = AppLocalizations.of(context).commonTekrarDene;
+    final label = retryLabel ?? AppLocalizations.of(context).commonTekrarDene;
 
     if (dense) {
       return Padding(

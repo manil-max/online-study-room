@@ -22,6 +22,12 @@ class MockTimerNotificationService implements TimerNotificationService {
   Future<void> initialize() async {}
   @override
   Future<void> requestPermissionIfNeeded() async {}
+  // WP-592: izin OKUMA yuzeyi. Sahte servis "izin var" der ki bu ekranin
+  // testleri uyari seridiyle degil kendi konusuyla ilgilensin.
+  @override
+  Future<bool> hasPermission() async => true;
+  @override
+  Future<void> openSystemNotificationSettings() async {}
 }
 
 class MockStudyTimerNotifier extends StudyTimerNotifier {

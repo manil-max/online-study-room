@@ -1352,6 +1352,10 @@
   "@clockDuzenle": {
     "description": "Clock user-facing text. Source: Düzenle"
   },
+  "clockSayacBildirimiIzniKapali": "Notifications are off: the timer notification will not appear and you cannot stop the timer from it.",
+  "@clockSayacBildirimiIzniKapali": {
+    "description": "Clock timer card warning shown when Android notification permission is denied (WP-592). Source: Bildirim izni kapalı: sayaç bildirimi görünmez, sayacı bildirimden durduramazsın."
+  },
   "clockEksikIzinleriAc": "Enable missing permissions",
   "@clockEksikIzinleriAc": {
     "description": "Clock user-facing text. Source: Eksik izinleri aç"

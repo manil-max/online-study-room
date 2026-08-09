@@ -8,6 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../time_engine/clock_permissions.dart';
+
 final timerNotificationServiceProvider = Provider<TimerNotificationGateway>(
   (ref) => TimerNotificationService.instance,
 );
@@ -32,6 +34,34 @@ abstract interface class TimerNotificationGateway {
 
   Future<void> cancel();
 }
+
+/// WP-592: sayaç kartındaki "bildirim izni kapalı" şeridinin okuduğu yüzey.
+///
+/// 🔴 Bilerek [TimerNotificationGateway]'in **dışında** duruyor: o arayüzün
+/// tamamı `test/core/timer_notification_surface_wp563_test.dart` içindeki
+/// `_ExhaustiveGateway` tarafından derleme zamanında kapsanır. Oraya bir üye
+/// eklemek, WP-563'ün "bildirim üretme yüzeyi geri doğmasın" kapısını
+/// derlenemez hâle getirirdi. Ayrı arayüz iki kapıyı da canlı tutar.
+abstract interface class TimerNotificationPermissionGateway {
+  /// Kalıcı sayaç bildirimi kullanıcıya görünebiliyor mu?
+  Future<bool> hasPermission();
+
+  /// Sistemin bildirim ayarları sayfası — kullanıcının tek gerçek çıkışı.
+  Future<void> openSystemNotificationSettings();
+}
+
+final timerNotificationPermissionProvider =
+    Provider<TimerNotificationPermissionGateway>(
+      (ref) => TimerNotificationService.instance,
+    );
+
+/// Sayaç kartındaki uyarı şeridinin okuduğu durum.
+///
+/// 🔴 Belirsizlikte `true`: olmayan bir sorun için uyarı çizmek, uyarıyı hiç
+/// çizmemekten daha kötüdür (bkz. [TimerNotificationService.hasPermission]).
+final timerNotificationPermissionStatusProvider = FutureProvider<bool>(
+  (ref) => ref.watch(timerNotificationPermissionProvider).hasPermission(),
+);
 
 @pragma('vm:entry-point')
 void timerNotificationBackgroundHandler(NotificationResponse response) async {
@@ -58,7 +88,8 @@ void timerNotificationBackgroundHandler(NotificationResponse response) async {
   );
 }
 
-class TimerNotificationService implements TimerNotificationGateway {
+class TimerNotificationService
+    implements TimerNotificationGateway, TimerNotificationPermissionGateway {
   TimerNotificationService._(this._plugin);
 
   static final instance = TimerNotificationService._(
@@ -142,6 +173,33 @@ class TimerNotificationService implements TimerNotificationGateway {
       debugPrint('timer notification permission request failed: ${error.code}');
     }
   }
+
+  /// WP-592: izin **okunur, istenmez.** `false` yalnız Android'de ve platform
+  /// net biçimde "kapalı" dediğinde döner. Belirsizlikte (masaüstü, eklenti
+  /// çözülemedi, platform hatası) `true` döner: olmayan bir sorun için uyarı
+  /// çizmek, uyarıyı hiç çizmemekten daha kötüdür.
+  @override
+  Future<bool> hasPermission() async {
+    if (!_isAndroid) return true;
+    try {
+      await initialize();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      return await android?.areNotificationsEnabled() ?? true;
+    } on PlatformException catch (error) {
+      // (Geliştirici logu — kullanıcıya görünmez, bu yüzden İngilizce.)
+      debugPrint('timer notification permission probe failed: ${error.code}');
+      return true;
+    }
+  }
+
+  /// Sistem bildirim ayarları zaten `ClockPermissions` üzerinden açılıyor
+  /// (saat/alarm ekranları); kanal adı ikinci kez tanımlanmaz.
+  @override
+  Future<void> openSystemNotificationSettings() =>
+      ClockPermissions.instance.openNotificationSettings();
 
   @override
   Future<void> cancel() async {

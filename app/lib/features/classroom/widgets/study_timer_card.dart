@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/notifications/timer_notification_service.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
@@ -273,6 +275,36 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 🔴 WP-592: bildirim izni reddedilince sayaç GÖRÜNMEZ çalışıyordu
+                // ve kullanıcıya hiçbir yerde tek kelime söylenmiyordu.
+                // `notificationsEnabled` `lib/` içinde yalnız Profil → Ayarlar →
+                // Bildirim Merkezi'nde okunuyordu; sayacı başlatan kişi oraya
+                // hiç uğramaz. Karşılığı: kalıcı bildirim yok, bildirimden
+                // durdurma yok, kullanıcı "sayaç bozuk" der.
+                //
+                // İzin İSTENMEZ, yalnız OKUNUR: `requestPermissionIfNeeded`in
+                // "hiçbir koşulda hata fırlatmaz" sözleşmesi (WP-520) ve sayaç
+                // başlatmanın izinden bağımsız olması aynen korunur.
+                if (ref
+                        .watch(timerNotificationPermissionStatusProvider)
+                        .value ==
+                    false)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 6, 8, 0),
+                    child: ErrorRetryView(
+                      key: const Key('timer-notification-denied'),
+                      dense: true,
+                      message: AppLocalizations.of(
+                        context,
+                      ).clockSayacBildirimiIzniKapali,
+                      retryLabel: AppLocalizations.of(
+                        context,
+                      ).clockEksikIzinleriAc,
+                      onRetry: () => ref
+                          .read(timerNotificationPermissionProvider)
+                          .openSystemNotificationSettings(),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 6, 4, 0),
                   child: Row(

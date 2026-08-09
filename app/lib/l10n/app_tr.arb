@@ -302,6 +302,7 @@
   "clockDunyaSaati": "Dünya Saati",
   "clockDunyaSaatleri": "Dünya saatleri",
   "clockDuzenle": "Düzenle",
+  "clockSayacBildirimiIzniKapali": "Bildirim izni kapalı: sayaç bildirimi görünmez, sayacı bildirimden durduramazsın.",
   "clockEksikIzinleriAc": "Eksik izinleri aç",
   "clockErteleme": "Erteleme",
   "clockErtelemeIcinDeSoruyu": "Erteleme için de soruyu çöz",
