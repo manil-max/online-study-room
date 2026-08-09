@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$ExecutablePath,
     [string]$OutputDirectory,
@@ -50,11 +50,37 @@ function Get-ProcessSample {
     }
 }
 
-$resolvedExecutable = Resolve-Path -LiteralPath $ExecutablePath -ErrorAction Stop
+# 🔴 `-ValidateOnly` DOĞRULAMA modudur: ortamın ölçüme hazır olup olmadığını
+# SÖYLEMELİ. Eskiden `Resolve-Path -ErrorAction Stop` bu bloktan ÖNCE koşuyordu,
+# yani exe henüz derlenmemişken mod rapor vermek yerine yığın iziyle ÇÖKÜYORDU —
+# oysa insanın `-ValidateOnly` çalıştırmasının birinci sebebi tam da "hazır
+# mıyım?" sorusudur. Ölçmesi gereken şeyi ölçmeyen kapı, bu depoda tekrarlayan
+# hata. Artık eksik exe `ready = false` + sebep olarak RAPORLANIR; gerçek ölçüm
+# yolunda ise davranış aynen eskisi gibi serttir (eksik exe = durur).
+$resolvedExecutable = Resolve-Path -LiteralPath $ExecutablePath -ErrorAction SilentlyContinue
+if (-not $resolvedExecutable) {
+    if (-not $ValidateOnly) {
+        throw "Ölçülecek exe bulunamadı: $ExecutablePath (önce `flutter build windows --release`)."
+    }
+    [ordered]@{
+        schema_version = 1
+        ready = $false
+        reason = "Ölçülecek exe bulunamadı: $ExecutablePath"
+        remedy = 'app/ içinden: flutter build windows --release --dart-define-from-file=env.json'
+    } | ConvertTo-Json -Depth 4
+    exit 0
+}
+
 $processName = [IO.Path]::GetFileNameWithoutExtension($resolvedExecutable.Path)
+$alreadyRunning = Get-Process -Name $processName -ErrorAction SilentlyContinue
 $artifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedExecutable.Path).Hash.ToLowerInvariant()
 $validation = [ordered]@{
     schema_version = 1
+    # Açık süreç ölçümü kirletir; bunu ölçüm başlayınca değil DOĞRULAMADA
+    # söylemek, kullanıcıyı beş koşumluk bir hazırlıktan sonra duvara
+    # çarptırmamak demektir.
+    ready = (-not $alreadyRunning)
+    reason = if ($alreadyRunning) { "Açık $processName süreci var ($($alreadyRunning.Count) adet); ölçümden önce kapatın." } else { '' }
     executable_name = [IO.Path]::GetFileName($resolvedExecutable.Path)
     executable_sha256 = $artifactHash
     runs = $Runs
@@ -68,7 +94,6 @@ if ($ValidateOnly) {
     exit 0
 }
 
-$alreadyRunning = Get-Process -Name $processName -ErrorAction SilentlyContinue
 if ($alreadyRunning) {
     throw "Ölçümden önce açık $processName süreçlerini kapatın; mevcut süreçler değiştirilmeyecek."
 }

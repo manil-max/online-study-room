@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [string]$OutputPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'app\build\windows_shell_smoke.png')
 )

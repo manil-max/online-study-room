@@ -77,9 +77,20 @@ Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yaln
 
 ## 1. Artefakt kimliği
 
-🔴 **WP-578: birincil dağıtım yolu taşınabilir ZIP'tir.** MSIX üretilmeye devam
-eder ama imzasız olduğu için **kurulamaz** (`0x800B010A`); uygulama içi
-güncelleme onu hiç indirmez. Gerekçe ve karar: `docs/WINDOWS-RELEASE-GATE.md`.
+🔴 **WP-578: birincil dağıtım yolu taşınabilir ZIP'tir.** Gerekçe ve karar:
+`docs/WINDOWS-RELEASE-GATE.md`.
+
+🔴 **WP-590 güncellemesi — bu bölüm 2026-08-09'da düzeltildi.** Matris uzun süre
+stable MSIX'i *yayınlanan ama kurulamayan ikincil asset* diye tarif ediyordu.
+Artık öyle değil: imza kapısı güvenilmez MSIX'i **yayından alıkoyuyor**, yani
+stable Release'de `.msix` dosyası **hiç bulunmuyor**. Eski metni izleyen testçi
+olmayan bir dosyayı arayıp W-05'i haksız yere FAIL işaretlerdi.
+
+🔴 **WP-597 — kurulabilir paketin ücretsiz yolu var.** Microsoft Store'a
+gönderilen MSIX'i Microsoft kendi sertifikasıyla imzalar; sertifika satın almak
+gerekmez. Store modu açıkken paket `windows-store-package` **artefaktına** çıkar
+(Release varlıklarına değil — imzasızdır, indiren kuramaz). Sahibin adımları:
+`docs/WINDOWS-STORE-YOLU.md`.
 
 | Alan | Değer |
 |---|---|
@@ -87,9 +98,10 @@ güncelleme onu hiç indirmez. Gerekçe ve karar: `docs/WINDOWS-RELEASE-GATE.md`
 | **Stable ZIP asset (birincil)** | `odak-kampi-windows-stable.zip` |
 | **Beta ZIP asset (birincil)** | `odak-kampi-windows-beta.zip` |
 | Package identity | `OdakKampi.App` / `OdakKampi.App.Beta` (WP-568) |
-| Stable MSIX asset (ikincil, kurulamaz) | `odak-kampi-windows-stable.msix` |
-| Beta MSIX asset (ikincil, kurulamaz) | `odak-kampi-windows-beta.msix` |
-| SHA-256 | `*.zip.sha256` / `*.msix.sha256` |
+| Stable MSIX asset | **yayınlanmaz** — imza kapısı alıkoyar (WP-590); sebep `platform-manifest.json` içinde `signing.msixWithheldReason` |
+| Beta MSIX asset | kapı beta kanalını kapsamaz; beta zaten atlanıyor (sahip kararı) |
+| Store paketi (Store modu açıkken) | `odak-kampi-windows-stable-store.msix` — **ayrı artefakt**, Release'e girmez |
+| SHA-256 | `*.zip.sha256` (yayınlanan her dosyanın yanında) |
 | Etiket | `vN` / `beta-vN` (`N` = build number) |
 
 ## 2. Kurulum / güncelleme / kaldırma
@@ -103,8 +115,9 @@ Temiz hedefte iki-sürümlü MSIX koşumu için ayrıntılı ve redacted kanıt 
 | W-02 | İlk açılış (login veya demo) | PASS/FAIL | |
 | W-03 | **Yeni ZIP'i ayrı klasöre çıkar → aç → oturum/veri duruyor mu** | Veri kaybı 0 | |
 | W-04 | Klasörü sil (ZIP'te uninstall yok) → kalıntı/kısayol kontrolü | Not | |
-| W-05 | **İmzasız MSIX kurulumu `0x800B010A` ile REDDEDİLİR** — bu bir SmartScreen uyarısı değil, sert bloktur. ZIP'in ilk açılışındaki "bilinmeyen yayımcı" uyarısı ise geçilebilir. | Not | |
-| W-06 | MSIX kolu *(imza kararı gelmeden kabul kriteri değil)* | Bloklu | |
+| W-05 | **Release varlıkları arasında `.msix` OLMAMALI** (WP-590 kapısı alıkoyar). Varsa kapı delinmiş demektir: kullanıcı ~40 MB indirip `0x800B010A` ile karşılaşır. ZIP'in ilk açılışındaki "bilinmeyen yayımcı" uyarısı ise normaldir, geçilebilir. | PASS/FAIL | `platform-manifest.json` → `signing.msixPublished == false` + sebep dolu |
+| W-06 | Store modu **kapalıyken**: `windows-store-package` artefaktı **üretilmemeli** | PASS/FAIL | |
+| W-07 | Store modu **açıkken**: paket Partner Center'a yüklenir, Release varlıklarına **girmez** *(Store hesabı açılana kadar koşulamaz — `docs/WINDOWS-STORE-YOLU.md`)* | Bloklu | |
 
 ## 3. Platform matrisi
 
@@ -117,6 +130,44 @@ Temiz hedefte iki-sürümlü MSIX koşumu için ayrıntılı ve redacted kanıt 
 | W-14 | Multi-monitor taşınma | |
 | W-15 | Offline → online oturum | |
 | W-16 | Android + Windows aynı test hesabı (WP-64 ile) | |
+| W-17 | Açılış süresi + boşta RAM ölçümü (aşağıdaki komut) | |
+
+### 3.1 Performans temel ölçümü
+
+🔴 `scripts/windows_performance_baseline.ps1` **182 satırlık, çalışır durumda bir
+ölçüm aracı** — beş koşum, boşta örnekleme, yüzdelik hesabı, JSON çıktısı. Ama
+2026-08-09'a kadar repoda **hiçbir yerden çağrılmıyordu ve hiçbir belgede
+geçmiyordu**: yazılmış, kullanılmamış. Bu depoda tekrarlayan desen (bkz.
+WP-550'de `AppPullToRefresh`, WP-595'te `TimerVerificationNotice`).
+
+Önce ortam doğrulanır (Release derlemesi olmadan da koşar):
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows_performance_baseline.ps1 -ValidateOnly
+```
+
+`ready: true` gelince Release derlemesi yapılıp bayrak kaldırılır; sonuç
+`app/build/windows-performance-baseline/baseline-<zaman>.json` dosyasına yazılır.
+
+Script açık `online_study_room.exe` süreci varken **bilerek durur** — açık
+pencereler ölçümü kirletir ve script başkasının süreçlerini kapatmaz.
+`-ValidateOnly` bunu ölçüm başlamadan **önce** söyler.
+
+🔴 **`pwsh` DEĞİL `powershell`.** Bu makinede PowerShell 7 kurulu değil; CI
+`pwsh` kullanır ama yerelde Windows PowerShell 5.1 vardır. Belgeye önce `pwsh`
+yazılmıştı, çalıştırınca "terim tanınmıyor" verdi.
+
+🔴 **`-ValidateOnly` 2026-08-09'a kadar doğrulamıyordu, çöküyordu:** exe yolu
+`ValidateOnly` kontrolünden **önce** sert çözülüyordu, yani "hazır mıyım?" diye
+soran kişi rapor yerine yığın izi alıyordu. Artık `ready: false` + sebep + çare
+raporlanır.
+
+🔴 **`.ps1` dosyalarına UTF-8 BOM gerekiyor.** Windows PowerShell 5.1, BOM'suz
+dosyaları ANSI sanar; Türkçe mesajlar `Ã–lÃ§Ã¼lecek` gibi okunamaz çıkar — tam da
+hata mesajını okuman gereken anda. Repodaki `.ps1` dosyalarının **hiçbirinde**
+BOM yoktu; sahibin elle koşturduğu `scripts/windows_*.ps1` ailesine eklendi.
+`tooling/` altındakiler CI'da `pwsh` ile koştuğu için etkilenmiyor, ama yerelde
+koşulurlarsa aynı sorunu gösterirler.
 
 ## 4. Updater (uygulama içi)
 
