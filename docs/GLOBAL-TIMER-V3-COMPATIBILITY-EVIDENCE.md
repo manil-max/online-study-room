@@ -1,4 +1,13 @@
 # WP-337 — V3 legacy compatibility ve donuk kontrat kanıtı
+> 🔴 **TARIHSEL KAYIT — GUNCEL DEGIL (2026-08-10'da isaretlendi).**
+> Bu dosya V3 uyumluluk kaniti icindir ve o tur KAPANDI. Buradaki "yapilacak",
+> "acik" veya "karar bekliyor" ifadeleri artik gecerli DEGILDIR.
+> Guncel durum: [`../progress.md`](../progress.md) ·
+> baglayici urun kararlari: [`URUN-POLITIKALARI.md`](URUN-POLITIKALARI.md) ·
+> kalite/yayin kurallari: [`KALITE-PROGRAMI.md`](KALITE-PROGRAMI.md).
+> Silinmedi cunku baska belgeler hala buraya baglaniyor; icerik Git
+> gecmisinde de duruyor.
+
 
 > Tarih: 2026-07-26 · Hedef: Delivery C0 · Karar: **GO (yalnız staging V3 terfisi için)**
 >

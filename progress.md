@@ -10010,6 +10010,117 @@ alininca yesil.
    `migration-head` kapisi "pinler burada yazilidir" diyordu ve listesi eksikti.
    Bir kapinin sayisal iddiasi varsa (uc/bes/yedi yer), o sayi test edilmeli.
 
+## 2026-08-10 gecesi — v63 + v64 ve XP geri alma zinciri (WP-632…WP-639)
+
+### WP-632: Sinav geri sayimi — uc kayit, isim, sira, one cikarma
+Sahip karari (`URUN-POLITIKALARI` §8.1). Tek tarihten uc kayda gecildi; isim
+istege bagli, sirayi kullanici belirliyor, birini one cikarinca o buyuk
+gorunuyor.
+
+🔴 **Tasma iddiasi ilk halinde HICBIR SEY olcmuyordu.** "Istisna var mi" diye
+soruyordu; govde `cardScrollIfOverflows` icinde oldugu icin dikey tasma
+istisna ATMAZ, kaydirici yutar. Iddia "kullanici kaydirmak zorunda kaliyor mu"
+(`maxScrollExtent == 0`) olarak degistirilince GERCEK bir sorun buldu: kucuk
+kart + 3 kayit + one cikan sigmiyordu. Cozum kaydirmaya birakmak degil, o
+bilesimde kahraman duzeninden geri cekilmek.
+
+Testler iki gercek hata daha buldu: art arda eklenen iki sinav AYNI kimligi
+alabiliyordu (silme ikisini birden goturur), ve `AlertDialog` icindeki
+`TextField` duzeni ~99.000 piksel tasiriyordu.
+
+### WP-633: Sozlesme kapisi SATIR SONUNA bagliydi
+v63 yayin turu Windows isinde dustu: 2424 test gecti, 1 dustu. Dusen sey
+uygulama degil KAPININ KENDISIYDI — dosya icerigini metin olarak esliyor ve
+iddialar `
+` tasiyor; Windows kosucusunda git depoyu CRLF cikariyor. Ayni
+kapi Android'de yesil, Windows'ta kirmizi. Normallestirme okuyucu fonksiyona
+yazildi.
+
+### WP-634: Calisma kaydi silinince XP/basarim/tac artik GERI GIDIYOR
+Sahibin kardesinin sayaci gece boyu acik kaldi, ~11 saatlik sahte oturum
+yazildi, kaydi sildi — kazanim yerinde kaldi. Kok neden mimari: XP oturum
+listesinin fonksiyonu degil, oturum olaylarinin kalintisi.
+
+Cozum "su kadar cikar" DEGIL (ne kadar eklendigi hicbir yerde tutulmuyor),
+**gercek kayitlardan yeniden hesaplama**. Kapsam bilerek dar: saat XP'si,
+`marathon_total`, `steel_will`, `day_hero`. Baska yollardan verilen basarimlar
+ve kumulatif metrikler disarida — ilerlemelerini 0 sayip silseydik gercekten
+kazanilmis rozetler yok olurdu.
+
+`0126` tetikleyiciyi kurdu, `0127` gecmisi temizledi. Hesap silme tuzagi
+(`0124`/WP-549) `_account_still_exists` ile kapatildi.
+
+🔴 **Gecenin en ogretici satiri** `0127` kosumunda cikti:
+```
+yerel replay -> "0 kullanici uzlastirildi"
+uzak staging -> "1 kullanici uzlastirildi"
+```
+Yalnizca taze veritabaninda kosan bir kapi bu is sinifini HIC goremez.
+
+### 🔴 WP-635: WP-634 hak edilmis kademeleri EKRANDAN sildi — uretim regresyonu
+`user_achievements` her basarim icin TEK satir tutar (`0022:26`) ve satirdaki
+`tier` **eristigi en yuksek kademedir**. `0126` onu "dusen kademe" ile
+eslestirip SATIRIN TAMAMINI siliyordu. Sahibin `steel_will` satirinda 6
+yaziyordu; 5 ve 6 hak edilmeyince satir gitti ve hak edilen 1-4 de ekrandan
+kayboldu. Defterde duruyorlardi — **veri sagdi, ekranin okudugu satir yoktu.**
+
+Teshis tahminle degil **tek bir salt-okunur SQL sorgusuyla** kondu; sahip
+Supabase panelinden kosturdu. Canli veride tahminle ikinci hamle yapilmadi.
+
+`0128`: satir silinmiyor, kalan en yuksek kademeye dusuruluyor; silinmis
+satirlar defterden TURETILEREK geri konuyor; donmus "en iyi" degeri
+(`achievement_metric_progress`, `0050:296` kumulatif oldugu icin hic dusmez)
+gercek oturumlara cekiliyor. Uretimde **3 kilit satiri geri kondu**.
+
+🔴 `tests/052` bunu goremezdi: icindeki "hala hak edilen kademe KORUNUR" ters
+iddiasi **DEFTERE** bakiyordu, ekranin okudugu satira degil. `tests/054` o
+boslugu kapatti.
+
+### WP-636: "En uzun seri" ardisikligi SURE ile olculuyordu
+Sahibin hipotezi ("aktif gun sayiyor") yanlisti, ama olcerken gercek bir hata
+cikti: ardisiklik `difference().inDays` ile, yani GECEN SURE ile olculuyordu.
+DST uygulayan cihazda gece yarisidan gece yarisina 23/25 saat olur — hata iki
+yonlu: calisilmayan gun kopruleniyor ya da gercek seri sessizce kiriliyor.
+Takvim gun indeksine gecildi.
+
+### WP-637: "En uzun seri" YANLIS KURALA bagliydi — sahip reddetti
+Sahip: *"ne anlami var, en uzun seri demissin — onu normal gunluk seriye bagla.
+aktif gun var zaten ayri olarak."* Hakliydi: "o gun 1 saniye kayit var mi"
+kurali gercek bir sey olcmuyordu. Artik urunun kendi gunluk seri kurali
+(gunluk hedefi tutturdu mu) kullaniliyor. Grup tarafinda her uye KENDI
+hedefiyle olculuyor.
+
+### WP-638: Basarimlar ekrani gezerken kendini yeniliyordu
+Oturum akisi ayni icerigi tekrar tekrar YENI bir liste olarak yayinliyordu →
+Riverpod "degisti" saniyor → basarim senkronu kosuyor → sunucuya **yazma** →
+yazma baska akislari tetikliyor → ekran yeniden ciziliyor. Yani ekran
+gezilirken sunucuya yaziyordu. Icerik ozeti sinyaline gecildi: ayni icerik 3
+kez yayinlaninca **4 yazma → 1**.
+
+### WP-639: `goalSeconds` varsayilani SESSIZ YANLIS davranisa dusuruyordu
+WP-637 parametreyi `= 1` varsayilaniyla eklemisti (mesru sebeple: kapsam disi
+iki test dosyasi). Ama o varsayilan, hedefi gecirmeyi unutan her cagirani
+sahibin REDDETTIGI eski davranisa sessizce dusururdu. `required` yapildi.
+Bu soruyu **derleyici sormali, kullanici degil.**
+
+### Yayinlar
+- **v63** (2026-08-09): Android yayinlandi; Windows isi WP-633 yuzunden dustu,
+  o surumde Windows paketi YOK.
+- **v64** (2026-08-10): yukaridakilerin hepsi + Windows paketi.
+
+### Bu turun dersleri
+1. 🔴 **Dogruluk kaynagini test etmek yetmez — ekranin OKUDUGU satiri test et.**
+   `052` dogru bir ters iddia tasiyordu ve yine de gercek bir kullanici
+   regresyonu boyunca yesil kaldi, cunku yanlis katmana bakiyordu.
+2. **Canli veride tahminle ikinci hamle yapma.** Tek salt-okunur sorgu,
+   saatlerce surecek bir tahmin zincirini bir hamlede kesti.
+3. **Kapi platforma bagli olmamali.** Ayni kapinin Android'de yesil,
+   Windows'ta kirmizi olmasi kapinin kendi kusuruydu.
+4. **Sessiz yanlis varsayilan** bu turda iki kez cikti (aylik rapor `?? true`,
+   `goalSeconds = 1`). Ikisi de "derleyici sorsun" ile kapatildi.
+5. **Alt ajan hipotezi dogrulamali, tatmin etmemeli.** Iki ajan da sahibin
+   hipotezini reddedip GERCEK hatayi buldu — istenen davranis budur.
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı

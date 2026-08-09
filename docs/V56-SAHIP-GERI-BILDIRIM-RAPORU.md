@@ -1,4 +1,13 @@
 # v56 Ürün Sahibi Geri Bildirim Raporu
+> 🔴 **TARIHSEL KAYIT — GUNCEL DEGIL (2026-08-10'da isaretlendi).**
+> Bu dosya v56 sahip geri bildirimi icindir ve o tur KAPANDI. Buradaki "yapilacak",
+> "acik" veya "karar bekliyor" ifadeleri artik gecerli DEGILDIR.
+> Guncel durum: [`../progress.md`](../progress.md) ·
+> baglayici urun kararlari: [`URUN-POLITIKALARI.md`](URUN-POLITIKALARI.md) ·
+> kalite/yayin kurallari: [`KALITE-PROGRAMI.md`](KALITE-PROGRAMI.md).
+> Silinmedi cunku baska belgeler hala buraya baglaniyor; icerik Git
+> gecmisinde de duruyor.
+
 
 > **Tarih:** 30 Temmuz 2026
 > **Kaynak:** v56 stable sürümünün ürün sahibi ve sınırlı kullanıcı saha gözlemleri

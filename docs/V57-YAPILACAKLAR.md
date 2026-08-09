@@ -1,4 +1,13 @@
 # v57 Yapılacaklar — Ürün Güveni ve Mağaza Öncesi Son Büyük Tur
+> 🔴 **TARIHSEL KAYIT — GUNCEL DEGIL (2026-08-10'da isaretlendi).**
+> Bu dosya v57 yapilacaklar listesi icindir ve o tur KAPANDI. Buradaki "yapilacak",
+> "acik" veya "karar bekliyor" ifadeleri artik gecerli DEGILDIR.
+> Guncel durum: [`../progress.md`](../progress.md) ·
+> baglayici urun kararlari: [`URUN-POLITIKALARI.md`](URUN-POLITIKALARI.md) ·
+> kalite/yayin kurallari: [`KALITE-PROGRAMI.md`](KALITE-PROGRAMI.md).
+> Silinmedi cunku baska belgeler hala buraya baglaniyor; icerik Git
+> gecmisinde de duruyor.
+
 
 > **Tarih:** 30 Temmuz 2026
 > **Durum:** Ürün kapsamı ve kabul brief’i; teknik mimari/WP planı değildir
