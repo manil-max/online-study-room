@@ -329,5 +329,14 @@ String _read(String path) {
       '(çalışma dizini: ${Directory.current.path})',
     );
   }
-  return file.readAsStringSync();
+  // 🔴 SATIR SONU NORMALLESTIRILIR. Bu dosyadaki iddialarin cogu metin
+  // icinde \n tasiyor. Windows kosucusunda git `core.autocrlf` ile depoyu
+  // **CRLF** olarak cikariyor; Linux ta LF kaliyor. Sonuc: ayni kapi Android
+  // isinde YESIL, Windows isinde KIRMIZI dustu (v63 yayin turu, run
+  // 31330594205 -- 2424 test gecti, 1 dustu) ve kirilan sey uygulama degil
+  // KAPININ KENDISIYDI.
+  //
+  // Duzeltme tek tek iddialara degil BURAYA yaziliyor: yeni bir iddia
+  // eklerken kimse bu tuzagi yeniden kesfetmek zorunda kalmasin.
+  return file.readAsStringSync().replaceAll('\r\n', '\n');
 }
