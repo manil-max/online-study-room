@@ -6591,6 +6591,83 @@
     "description": "WP-575 countdown headline when the exam date is today (never \"0 days left\")."
   },
   "homeSinavGecti": "The exam has passed",
+  "homeSinavTarihiEklemekIcinDokun": "Tap the card to add one.",
+  "@homeSinavTarihiEklemekIcinDokun": {
+    "description": "WP-632 empty D-Day card hint: how to add the first exam."
+  },
+  "homeSinavVarsayilanAd": "Exam",
+  "@homeSinavVarsayilanAd": {
+    "description": "WP-632 default label when the user leaves the exam name blank."
+  },
+  "homeSinavlariDuzenle": "Edit exams",
+  "@homeSinavlariDuzenle": {
+    "description": "WP-632 title of the D-Day editor sheet."
+  },
+  "homeSinavEkle": "Add exam",
+  "@homeSinavEkle": {
+    "description": "WP-632 dialog title when creating a new exam entry."
+  },
+  "homeSinaviDuzenle": "Edit exam",
+  "@homeSinaviDuzenle": {
+    "description": "WP-632 dialog title when editing an existing exam entry."
+  },
+  "homeSinavAdi": "Exam name",
+  "@homeSinavAdi": {
+    "description": "WP-632 label of the optional exam name field."
+  },
+  "homeSinavAdiIstegeBagli": "Optional — leave it blank and it shows “Exam”.",
+  "@homeSinavAdiIstegeBagli": {
+    "description": "WP-632 helper text stating the exam name is optional."
+  },
+  "homeOneCikar": "Feature this",
+  "@homeOneCikar": {
+    "description": "WP-632 tooltip: make this exam the large one on the card."
+  },
+  "homeOneCikarmayiKaldir": "Remove from featured",
+  "@homeOneCikarmayiKaldir": {
+    "description": "WP-632 tooltip: drop the featured mark so all exams show equally."
+  },
+  "homeOneCikan": "featured",
+  "@homeOneCikan": {
+    "description": "WP-632 badge on the currently featured exam row."
+  },
+  "homeYukariTasi": "Move up",
+  "@homeYukariTasi": {
+    "description": "WP-632 tooltip: move this exam one place up."
+  },
+  "homeAsagiTasi": "Move down",
+  "@homeAsagiTasi": {
+    "description": "WP-632 tooltip: move this exam one place down."
+  },
+  "homeSinavSil": "Delete exam",
+  "@homeSinavSil": {
+    "description": "WP-632 tooltip for removing an exam entry."
+  },
+  "homeKaydet": "Save",
+  "@homeKaydet": {
+    "description": "WP-632 confirm button of the exam edit dialog."
+  },
+  "homeSinavEkleSayac": "{count, plural, other {Add exam ({count}/{max})}}",
+  "@homeSinavEkleSayac": {
+    "description": "WP-632 add button showing how many exams are stored out of the maximum.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSinavSiniriDoldu": "{max, plural, other {You can add up to {max} exams.}}",
+  "@homeSinavSiniriDoldu": {
+    "description": "WP-632 message shown when the exam limit is reached.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "@homeSinavGecti": {
     "description": "WP-575 countdown headline for a past exam date; a negative day count is never shown."
   },

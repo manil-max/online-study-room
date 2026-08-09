@@ -112,6 +112,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   /// WP-575: sınav tarihi **tek** noktadan (Ayarlar) ayarlanır; pano kartı
   /// yalnız okur.
+  ///
+  /// 🔴 WP-632 bunu değiştirdi: asıl düzenleme artık **kartın kendisinde**
+  /// (en fazla üç sınav, ad, sıra, öne çıkarma). Bu satır yine de duruyor ve
+  /// çalışıyor — `docs/URUN-POLITIKALARI.md` §1 regresyon politikası gereği
+  /// kullanıcının bildiği yol kaybolmaz. Buradan yalnız **öne çıkan** (yoksa
+  /// ilk) sınavın tarihi değiştirilir; hiç kayıt yoksa ilkini oluşturur.
   Future<void> _pickExamDate() async {
     final today = istanbulDay(ref.read(ddayClockProvider)());
     final initial = ref.read(examDateProvider) ?? today;
@@ -130,7 +136,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       lastDate: last,
     );
     if (picked == null) return;
-    await ref.read(examDateProvider.notifier).set(picked);
+    final list = ref.read(examListProvider);
+    final target = list.priority ?? (list.entries.isEmpty ? null : list.entries.first);
+    if (target == null) {
+      await ref.read(examListProvider.notifier).add(name: '', day: picked);
+    } else {
+      await ref.read(examListProvider.notifier).update(target.id, day: picked);
+    }
+  }
+
+  /// Ayarlardaki temizle düğmesi: yalnız hedef kaydı siler, listedeki diğer
+  /// sınavlara dokunmaz.
+  Future<void> _clearExamDate() async {
+    final list = ref.read(examListProvider);
+    final target = list.priority ?? (list.entries.isEmpty ? null : list.entries.first);
+    if (target == null) return;
+    await ref.read(examListProvider.notifier).remove(target.id);
   }
 
   Future<void> _resetTours() async {
@@ -362,8 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               key: const Key('settings-exam-date-clear'),
                               tooltip: l10n.profileSinavTarihiniTemizle,
                               icon: const Icon(Icons.close),
-                              onPressed: () =>
-                                  ref.read(examDateProvider.notifier).clear(),
+                              onPressed: _clearExamDate,
                             ),
                       onTap: _pickExamDate,
                     ),

@@ -170,7 +170,12 @@ void main() {
       expect(find.text(l10n.homeSinavGeriSayimi), findsOneWidget);
       expect(find.text(l10n.homeSinavTarihiSecilmedi), findsOneWidget);
       // Çıkmaz sokak yok: nereden ayarlanacağı söylenir (WP-560 dersi).
-      expect(find.text(l10n.homeSinavTarihiniAyarlardanSec), findsOneWidget);
+      //
+      // 🔴 WP-632: iddianın KORUDUĞU şey aynı — boş kart kullanıcıyı çıkışsız
+      // bırakmaz. Değişen yalnız çıkış yolu: düzenleme artık Ayarlar'da değil
+      // **kartın kendisinde** (proje sahibi kararı), o yüzden metin de karta
+      // dokunmayı söylüyor.
+      expect(find.text(l10n.homeSinavTarihiEklemekIcinDokun), findsOneWidget);
     });
 
     testWidgets('tarih seçilince kalan gün İstanbul gününden yazılır', (
@@ -331,18 +336,23 @@ void main() {
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(container.dispose);
-      final sub = container.listen(examDateProvider, (_, next) {});
+      // 🔴 WP-632: depolama tek tarihten LISTEYE geçti. Bu testin ölçtüğü iki
+      // şey aynen korunuyor -- saat bilgisi taşınmaz ve kayıt silinebilir --
+      // yalnız kapı değişti. Eski `examDateProvider.notifier` artık yok;
+      // sağlayıcı salt-okunur bir türev.
+      final sub = container.listen(examListProvider, (_, next) {});
       addTearDown(sub.close);
 
       // Saat bilgisi taşınmaz: kalıcı değer bir **an** değil takvim günüdür.
       await container
-          .read(examDateProvider.notifier)
-          .set(DateTime(2026, 6, 20, 13, 45));
-      expect(prefs.getString(kExamDateKey), '2026-06-20');
+          .read(examListProvider.notifier)
+          .add(name: 'YKS', day: DateTime(2026, 6, 20, 13, 45));
+      expect(prefs.getString(kExamListKey), contains('2026-06-20'));
       expect(container.read(examDateProvider), DateTime(2026, 6, 20));
 
-      await container.read(examDateProvider.notifier).clear();
-      expect(prefs.getString(kExamDateKey), isNull);
+      final id = container.read(examListProvider).entries.single.id;
+      await container.read(examListProvider.notifier).remove(id);
+      expect(container.read(examListProvider).entries, isEmpty);
       expect(container.read(examDateProvider), isNull);
     });
 
