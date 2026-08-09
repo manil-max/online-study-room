@@ -114,8 +114,13 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 0126 staging'e uygulandi (run 31333036931, post-check iki tarafta da 0126).
 # O kapsam HARCANDI; asagidaki kapi 0127 (gecmis temizligi) icin YENI bir
 # kapsamdir -- eski bayrak sessizce yeniden kullanilmadi.
-Assert-Equal $contract.staging.migration_head '0127' 'WP-634 staging hedefi 0127 (backfill)'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0127 apply icin staging kapisi TEK SEFERLIK acik'
+# 0127 staging'e uygulandi (run 31333835770, post-check iki tarafta da 0127).
+# 🔴 O kosum gecenin en ogretici satirini uretti: YEREL replay
+# "0 kullanici uzlastirildi" derken UZAK staging "1 kullanici uzlastirildi"
+# dedi. Yerel kapi hicbir sey olcmedi cunku taze veritabaninda profil yok --
+# 0124'un uretime ulasmasini saglayan korlugun ta kendisi.
+Assert-Equal $contract.staging.migration_head '0127' 'WP-634 staging hedefi 0127: apply basarili'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0127 staging apply bitti, yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -161,8 +166,17 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # sutunda da 0125. Uc ortam da artik 0125'te; surum hatti head uyusmazligi
 # yuzunden KILITLI DEGIL. release_enabled yine de kasten false -- surum
 # cikarmak sahibin acik sozunu ve tek seferlik GO string'ini gerektirir.
-Assert-Equal $contract.production.migration_head '0125' 'production hedefi 0125: apply basarili'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0125 apply bitti, production yeniden kilitli'
+#
+# 🔴 0126 + 0127 ICIN PRODUCTION KAPISI ACILDI (2026-08-09, WP-634).
+# Production 0125'te; tek push ikisini birden uygular.
+# 0126: oturum silinince XP/basarim/tac GERCEK kayitlardan yeniden hesaplanir.
+# 0127: tetikleyici olmadan once silmis kullanicilar icin bir kez kosar ve
+#       kendini dogrular (bakiye != defter toplami ise istisna atip geri sarar).
+# Hesap silme tuzagi (0124/WP-549) `_account_still_exists` ile kapatildi ve
+# tests/052 `delete from auth.users`in hala calistigini ayrica olcuyor.
+# GERI ALINAMAZ: dusen satirlar zaten hak edilmemisti.
+Assert-Equal $contract.production.migration_head '0127' 'WP-634 production hedefi 0127'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0126+0127 apply icin production kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
