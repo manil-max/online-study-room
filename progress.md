@@ -9710,6 +9710,31 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - `unknown` cizilmez: WP-599 oncesi satirlara "bilinmiyor" damgasi basmak
   gurultu; asil yanlis onlari "kullanici" saymak olurdu, o hic yapilmiyor.
 
+---
+
+### WP-603: Internet yokken uygulama 20 saniye cemberde takiliyordu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`17dc780`)
+- 🔴 Gercek sahip sikayeti (metroda): "20 saniye yukleniyor dedi, acilmadi."
+  Uygulamanin CEKIRDEK isi calisma sayaci; internetin olmadigi yer tam da
+  calisilan yerdir.
+- 20 saniyenin kaynagi ikiye bolunuyor ve **ikisi de olculdu**:
+  1. Supabase kutuphanesi oturum anahtarini tazelemeye calisiyor, ag yokken
+     **10 saniye** deniyor (SDK sabiti),
+  2. sonra profil istegi WP-542'nin **10 saniyelik** tavanina takiliyor.
+- 🔴 Ders: WP-542'de konulan tavan zincirin YALNIZ IKINCI YARISINI kapsiyordu;
+  "zaman asimi koyduk" denen yerde beklemenin yarisi hala tavansizdi.
+  WP-593'un 12 sn'lik esigi de kurtarmiyordu: doldugunda cikan "Tekrar dene /
+  Cikis yap" metroda iki kapali kapi.
+- Duzeltme: oturum akisi 2 sn'de cevap vermezse cihazdaki oturumdan girilir;
+  son profil (ad, gunluk hedef, avatar) cihazda saklanir; cevrimdisilik tek
+  seferlik bir seritle SOYLENIR, engellemez. Internet varken yedek hic calismaz.
+- Cevrimdisi sayac altyapisi ZATEN calisiyordu; onu bosa cikaran tek sey acilis
+  kapisiydi. Altyapi yeniden yazilmadi, kapi acildi.
+- **Acik kalanlar (durustce):** profil cekimi hala oturum yayinindan once
+  yapiliyor (kullaniciyi bekletmiyor ama arka planda bos tur donuyor) —
+  **ayri WP**; anahtar tazeleme tavansiz (SDK ici); guncelleme denetiminde
+  baglanti zaman asimi yok.
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
