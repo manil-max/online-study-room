@@ -71,7 +71,7 @@ on conflict (id) do nothing;
 \set report1  '47000000-0000-0000-0000-000000000001'
 \set report2  '47000000-0000-0000-0000-000000000002'
 
-select plan(26);
+select plan(29);
 
 -- ===========================================================================
 -- 1. Yapisal: dolayli zincirlerin FK aksiyonlari
@@ -354,6 +354,70 @@ select is(
     where action = 'wp549_actor_probe'),
   public.pseudonymous_user_hash(:'alpha'),
   'takma aktor kimligi silme sonrasi DEGISMEDEN durur (tetikleyici ezmez)'
+);
+
+-- ---------------------------------------------------------------------------
+-- §6.1-B: BACKFILL'IN KENDISI (uretimde kirilan ifade, run 31323239616)
+-- ---------------------------------------------------------------------------
+-- 🔴 Bu dosyanin ilk hali `0124` KOSTUKTAN SONRAKI davranisi olcuyordu; goc
+-- sirasindaki backfill ifadesini hic sinamadi. Sinayamazdi da: taze replay'de
+-- tablo BOSTUR, `where actor_hash is null` sifir satira dokunur ve tetikleyici
+-- hic ateslenmez. Uretimde satir vardi ve goc 42501 ile dustu.
+--
+-- Bu blok o durumu ELDE kurar: hash'i NULL bir "eski" satir uretir, once ciplak
+-- UPDATE'in HALA reddedildigini, sonra gocun kullandigi disable/enable
+-- sarmalinin GECTIGINI olcer. Ikisi birlikte olmazsa kapi olcmuyor demektir --
+-- yalniz ikincisi olsaydi guard'i tumden kaldiran bir "cozum" de gecerdi.
+
+insert into public.moderation_audit_events (entity_type, entity_id, action, actor_id)
+values ('sanction', gen_random_uuid(), 'wp549_backfill_probe', :'beta'::uuid);
+
+-- `0124` oncesi satiri taklit et: hash NULL, actor_id dolu.
+alter table public.moderation_audit_events
+  disable trigger moderation_audit_events_immutable;
+alter table public.moderation_audit_events
+  disable trigger a_moderation_audit_events_actor_hash;
+update public.moderation_audit_events
+   set actor_hash = null
+ where action = 'wp549_backfill_probe';
+alter table public.moderation_audit_events
+  enable trigger a_moderation_audit_events_actor_hash;
+alter table public.moderation_audit_events
+  enable trigger moderation_audit_events_immutable;
+
+select is(
+  (select actor_hash from public.moderation_audit_events
+    where action = 'wp549_backfill_probe'),
+  null,
+  'kurgu dogru: goc oncesi satir hash`siz duruyor'
+);
+
+-- 1) Ciplak backfill HALA reddedilmeli: degismezlik gevsetilmedi.
+select throws_ok(
+  $probe$
+    update public.moderation_audit_events
+       set actor_hash = public.pseudonymous_user_hash(actor_id)
+     where actor_hash is null and actor_id is not null
+  $probe$,
+  '42501',
+  'moderation_audit_append_only',
+  'ciplak backfill HALA reddedilir (uretimde dusen ifade birebir bu)'
+);
+
+-- 2) Gocun kullandigi sarmal gecer ve satiri gercekten doldurur.
+alter table public.moderation_audit_events
+  disable trigger moderation_audit_events_immutable;
+update public.moderation_audit_events
+   set actor_hash = public.pseudonymous_user_hash(actor_id)
+ where actor_hash is null and actor_id is not null;
+alter table public.moderation_audit_events
+  enable trigger moderation_audit_events_immutable;
+
+select is(
+  (select actor_hash from public.moderation_audit_events
+    where action = 'wp549_backfill_probe'),
+  public.pseudonymous_user_hash(:'beta'),
+  'disable/enable sarmali backfill`i GERCEKTEN tamamlar'
 );
 
 select * from finish();

@@ -592,9 +592,29 @@ $wp549$;
 alter table public.moderation_audit_events
   add column if not exists actor_hash text;
 
+-- 🔴 URETIMDE KIRILDI (run 31323239616, ifade 27): bu UPDATE, kendi cozumunu
+-- getiren guard'dan (asagida, `_moderation_audit_append_only` yeni hali) ONCE
+-- kosuyor. O anda hala `0106:48`in KOSULSUZ hali yuklu ve her UPDATE'i
+-- 42501 ile atiyor. Staging'de gecmesinin sebebi kod degil VERI: orada bu
+-- kosula uyan hic satir yoktu, UPDATE sifir satira dokundu, tetikleyici hic
+-- atesleneMEDI. Uretimde satir var.
+--
+-- Yeni guard sirayi degistirse bile YETMEZDI: o guard yalniz "actor_id dolu ->
+-- NULL, hash AYNI" gecisine izin verir; bu backfill tam tersini yapar
+-- (actor_id ayni kalir, hash DEGISIR). Yani dogru cozum siralama degil,
+-- degismezligi bu tek ifade suresince ACIKCA askiya almaktir.
+--
+-- `disable trigger` islem kapsamlidir: rollback'te kendiliginden geri gelir ve
+-- tabloyu ACCESS EXCLUSIVE ile kilitler, yani askidayken baska kimse yazamaz.
+alter table public.moderation_audit_events
+  disable trigger moderation_audit_events_immutable;
+
 update public.moderation_audit_events
 set actor_hash = public.pseudonymous_user_hash(actor_id)
 where actor_hash is null and actor_id is not null;
+
+alter table public.moderation_audit_events
+  enable trigger moderation_audit_events_immutable;
 
 comment on column public.moderation_audit_events.actor_hash is
   'WP-549: aktorun takma kimligi (sha256(uid), 0113/0114 ile ayni insa). '
