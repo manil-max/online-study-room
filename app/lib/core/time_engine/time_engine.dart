@@ -10,5 +10,6 @@ export 'device_timezone.dart';
 export 'epoch_clock.dart';
 export 'epoch_countdown.dart';
 export 'exact_alarm_permission.dart';
+export 'implausible_run_guard.dart';
 export 'lap_analysis.dart';
 export 'world_clock_math.dart';

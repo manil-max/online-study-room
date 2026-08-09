@@ -2,6 +2,9 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/warning_tokens.dart';
+import '../../../core/time_engine/implausible_run_guard.dart';
+import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../data/providers/study_providers.dart';
 
@@ -64,17 +67,82 @@ class TimerModeControls extends ConsumerWidget {
   }
 }
 
+/// Uyarı bloğunun kimliği; iki yönlü iddiayı testler bu anahtarla ölçer.
+const Key kImplausibleRunNoticeKey = Key('timer-implausible-run');
+
+/// 🔴 WP-595 — makul olmayan süre uyarısı.
+///
+/// Bu sınıf WP-430'dan beri **ölü bir `SizedBox.shrink()`** idi: sayaç
+/// çalışırken hem kartta hem tam ekran odakta çiziliyor ama hiçbir şey
+/// söylemiyordu. Yani iki sayaç yüzeyinde de hazır bir yuva vardı ve boştu.
+///
+/// Gerçek olay (2026-08-08 gecesi, sahibin kardeşi): sayaç 22:40'ta başladı,
+/// sabah 10:02'de durduruldu, **11 sa 22 dk** çalışma kaydedildi, XP ve
+/// başarım verildi. Kullanıcı çalışma kaydını sildi; XP ve başarım GİTMEDİ
+/// (`xp_ledger` append-only, `gamification_profiles.xp` biriken sayaç —
+/// `supabase/migrations/0024_achievements_ledger.sql`). Yani "Durdur"a basmak
+/// **geri alınamaz** bir işlemdi ve hiçbir yerde öyle yazmıyordu.
+///
+/// Burada yapılan tek şey doğruyu söylemek: koşu eşiği aştıysa süre ve sonuç
+/// açıkça yazılır. Uyarı **engellemez** — sayacı durdurmaz, kaydı iptal
+/// etmez, düğmeyi kilitlemez. Otomatik durdurma/iptal kararı ürün sahibinin,
+/// ve `study_providers.dart` sahipliği bu WP'de bu ajanda değildi.
 class TimerVerificationNotice extends StatelessWidget {
-  const TimerVerificationNotice({required this.timer, super.key});
+  const TimerVerificationNotice({required this.timer, this.now, super.key});
 
   final StudyTimerState timer;
 
+  /// Yalnız test enjeksiyonu için. Üretimde `null` → duvar saati.
+  /// Kural saf fonksiyonda ([implausibleRunElapsed]) yaşar; widget yalnız
+  /// çizer.
+  final DateTime? now;
+
   @override
   Widget build(BuildContext context) {
-    // Kaynağa göre XP/başarım farkı yok; kullanıcıya teknik oturum türü
-    // gösterilmez. Eski state'ler, yarıda kalmış eski sürümlerden geri
-    // dönüldüğünde güvenle yok sayılır.
-    return const SizedBox.shrink();
+    final elapsed = implausibleRunElapsed(
+      isRunning: timer.isRunning,
+      startedAt: timer.startedAt,
+      now: now ?? DateTime.now(),
+    );
+    if (elapsed == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    // 🔴 Renk paletten DEĞİL zeminden türetilir (WP-358). `colorScheme.error`
+    // kullanmak kırmızı ağırlıklı temada uyarıyı görünmez yapıyordu — tam da
+    // "kullanıcı hiçbir işaret görmedi" hatasını tekrarlardı.
+    final warn = warningColorsOn(theme.colorScheme.surface);
+    final duration = formatHumanForLocale(
+      elapsed.inSeconds,
+      Localizations.localeOf(context).languageCode,
+    );
+
+    return Container(
+      key: kImplausibleRunNoticeKey,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: warn.container,
+        border: Border.all(color: warn.border),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 18, color: warn.onContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              AppLocalizations.of(
+                context,
+              ).classroomSayacCokUzunSuredirAcik(duration),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: warn.onContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

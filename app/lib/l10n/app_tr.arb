@@ -2023,5 +2023,6 @@
   "updaterIndirilenDosyaPath": "İndirilen dosya: {path}",
   "updaterKlasoruAc": "Klasörü aç",
   "updaterDosyaDogrulanamadi": "İndirilen dosya doğrulanamadı (SHA-256 uyuşmuyor). Dosya silindi; tekrar dene.",
-  "updaterKlasorAcilamadiPath": "Klasör açılamadı. Dosyayı elle aç: {path}"
+  "updaterKlasorAcilamadiPath": "Klasör açılamadı. Dosyayı elle aç: {path}",
+  "classroomSayacCokUzunSuredirAcik": "Sayaç {duration} boyunca hiç durmadan çalışıyor. Unuttuysan, Durdur'a bastığında bu süre çalışma olarak kaydedilir; verilen XP ve başarımlar geri alınamaz."
 }
