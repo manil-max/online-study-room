@@ -72,14 +72,99 @@ jobs:
         run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
       - run: flutter build windows --release --build-name=${{ inputs.version_name }} --build-number=${{ inputs.build_number }} --dart-define-from-file=env.json
 
-      - name: MSIX oluştur
+      # 🔴 WP-568: Windows paket surumu iki ayri yerde yaziliyordu. Paket
+      # surumu `1.0.0.<build>` SABIT onekiyle uretiliyordu: kullanici "Yuklu
+      # uygulamalar"da 1.0.0.62 gorurken uygulama 1.0.62 diyordu; ustelik
+      # MSIX'in dorduncu alani Store gonderiminde 0 olmak zorunda oldugu icin o
+      # sema Store'a hic gonderilemezdi. Artik tek turetme var ve `version_name`
+      # ile `build_number` BIRBIRINI dogruluyor; ayrisirlarsa is paketleme
+      # baslamadan durur.
+      - name: MSIX kimlik ve sürüm sözleşmesi
+        id: msix
         shell: pwsh
         run: |
-          $pubspec = Get-Content pubspec.yaml -Raw
-          $updated = $pubspec -replace '(msix_version:\s*)[\d.]+', ('${1}1.0.0.${{ inputs.build_number }}')
-          if ($updated -eq $pubspec) { throw 'msix_version bulunamadı.' }
-          Set-Content pubspec.yaml -Value $updated -Encoding utf8
-          dart run msix:create --build-windows false
+          $ErrorActionPreference = 'Stop'
+          $channel = '${{ inputs.channel }}'
+          $versionName = '${{ inputs.version_name }}'
+          $build = [int]'${{ inputs.build_number }}'
+          if ($channel -eq 'beta') {
+            if ($versionName -notmatch '^1\.0\.(\d+)-beta\.(\d+)$') { throw "Beta sürüm adı 1.0.<patch>-beta.<sıra> olmalı: $versionName" }
+            $patch = [int]$Matches[1]; $sequence = [int]$Matches[2]
+            # AGENTS.md §4.1: beta build numarası patch*100 + sıra.
+            if ($build -ne ($patch * 100 + $sequence)) { throw "Beta build numarası sürüm adıyla uyuşmuyor: $build vs $versionName" }
+            $version = "1.0.$patch.$sequence"
+            # 🔴 Beta ve stable Android'de AYRI applicationId kullanıyor
+            # (AGENTS.md §4.1) ama Windows'ta ikisi de `OdakKampi.App` kimliğiyle
+            # paketleniyordu. Aynı kimlik = Windows için aynı uygulama: beta
+            # kurulumu stable'ı sessizce eziyordu, üstelik beta paket sürümü
+            # (build 4202) stable'ınkinden (build 62) yüksek kaldığı için
+            # kullanıcı bir daha stable'a dönemiyordu.
+            $identity = 'OdakKampi.App.Beta'
+          } else {
+            if ($versionName -notmatch '^1\.0\.(\d+)$') { throw "Stable sürüm adı 1.0.<patch> olmalı: $versionName" }
+            $patch = [int]$Matches[1]
+            if ($build -ne $patch) { throw "Stable build numarası sürüm adıyla uyuşmuyor: $build vs $versionName" }
+            $version = "1.0.$patch.0"
+            # Yayınlanmış stable kimliği kalıcıdır (docs/WINDOWS-RELEASE-GATE.md).
+            $identity = 'OdakKampi.App'
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "identity=$identity" >> $env:GITHUB_OUTPUT
+          "prefix=odak-kampi-windows-$channel" >> $env:GITHUB_OUTPUT
+          Write-Host "MSIX kimlik=$identity sürüm=$version"
+
+      - name: MSIX üret ve paketi doğrula
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $display = if ('${{ inputs.channel }}' -eq 'beta') { 'Odak Kampı (Beta)' } else { 'Odak Kampı' }
+          # 🔴 Bu adım eskiden pubspec.yaml'ı yerinde regex ile
+          # DEĞİŞTİRİYORDU. İki sorun: (1) paylaşılan sıcak dosyaya derleme
+          # ortasında yazmak, (2) aynı build numarası ikinci kez koşturulduğunda
+          # metin zaten hedef değere eşit olduğu için "msix_version bulunamadı"
+          # diye YANLIŞ KIRMIZI dönmek. `msix` bu değerleri komut satırından da
+          # alır (msix 3.18 configuration.dart: --version / --identity-name /
+          # --display-name pubspec'i ezer); pubspec'e dokunmuyoruz ve
+          # dokunmadığımızı hash ile kanıtlıyoruz.
+          $pubspecBefore = (Get-FileHash pubspec.yaml -Algorithm SHA256).Hash
+          dart run msix:create --build-windows false --version '${{ steps.msix.outputs.version }}' --identity-name '${{ steps.msix.outputs.identity }}' --display-name $display
+          if ($LASTEXITCODE -ne 0) { throw "msix:create başarısız (exit $LASTEXITCODE)." }
+          if ((Get-FileHash pubspec.yaml -Algorithm SHA256).Hash -ne $pubspecBefore) { throw 'pubspec.yaml MSIX adımında değişti.' }
+
+          $release = 'build/windows/x64/runner/Release'
+          $msix = Get-ChildItem -Path $release -Filter *.msix -File | Select-Object -First 1
+          if (-not $msix) { throw 'Zorunlu MSIX artefaktı üretilemedi.' }
+
+          # Bayrakların gerçekten pakete işlendiğini paketin KENDİSİNDEN oku;
+          # sessizce yok sayılan bir bayrak yanlış kimlikli paket üretir.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead($msix.FullName)
+          try {
+            $entry = $archive.GetEntry('AppxManifest.xml')
+            if (-not $entry) { throw 'MSIX içinde AppxManifest.xml yok.' }
+            $reader = New-Object IO.StreamReader($entry.Open())
+            try { $appxManifest = [xml]$reader.ReadToEnd() } finally { $reader.Dispose() }
+          } finally { $archive.Dispose() }
+
+          $packageIdentity = $appxManifest.Package.Identity
+          if ($packageIdentity.Name -ne '${{ steps.msix.outputs.identity }}') { throw "Paket kimliği beklenenden farklı: $($packageIdentity.Name)" }
+          if ($packageIdentity.Version -ne '${{ steps.msix.outputs.version }}') { throw "Paket sürümü beklenenden farklı: $($packageIdentity.Version)" }
+
+          # 🔴 İMZA GERÇEĞİ. `msix_config`e sertifika verilmediğinde paket,
+          # pub.dev'de herkese açık dağıtılan test sertifikasıyla (parola 1234)
+          # imzalanır ve pubspec'teki `publisher` değeri bu özneyle EZİLİR.
+          # Böyle imzalanmış paketi kullanıcı KURAMAZ: Windows güvenilmeyen
+          # zinciri 0x800B010A ile reddeder — bu bir SmartScreen uyarısı değil,
+          # sert bloktur. docs/WINDOWS-RELEASE-GATE.md zaten "stable imzasız
+          # dağıtım stable sayılmaz" diyordu; kural yazılıydı ama çağıran yoktu.
+          $testPublisher = 'CN=Msix Testing, O=Msix Testing Corporation, S=Some-State, C=US'
+          $trusted = $packageIdentity.Publisher -ne $testPublisher
+          if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable' -and '${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -ne 'true') {
+            throw 'Stable MSIX herkese açık test sertifikasıyla imzalanmış; kullanıcı kuramaz. Gerçek kod imzası ekle veya WINDOWS_ALLOW_TEST_SIGNING=true ile bilerek onayla (docs/WINDOWS-RELEASE-GATE.md).'
+          }
+          "publisher=$($packageIdentity.Publisher)" >> $env:GITHUB_OUTPUT
+          "trusted=$($trusted.ToString().ToLower())" >> $env:GITHUB_OUTPUT
 
       - name: Zorunlu Windows artefaktlarını paketle
         shell: pwsh
@@ -89,15 +174,20 @@ jobs:
           $release = 'build/windows/x64/runner/Release'
           $msix = Get-ChildItem -Path $release -Filter *.msix -File | Select-Object -First 1
           if (-not $msix) { throw 'Zorunlu MSIX artefaktı üretilemedi.' }
-          $prefix = "odak-kampi-windows-${{ inputs.channel }}"
+          $prefix = '${{ steps.msix.outputs.prefix }}'
           $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut
-          $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path (Join-Path $release '*') -DestinationPath $zipOut -Force
+          # 🔴 `msix:create` paketi Release klasörünün İÇİNE yazar. ZIP
+          # eskiden klasörü olduğu gibi sıkıştırdığı için taşınabilir arşiv kendi
+          # kurulumunun bir kopyasını taşıyordu (gereksiz ~2x indirme).
+          $zipItems = Get-ChildItem -Path $release | Where-Object { $_.Extension -ne '.msix' }
+          if (-not $zipItems) { throw 'Release klasöründe paketlenecek dosya yok.' }
+          $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path $zipItems.FullName -DestinationPath $zipOut -Force
           $items = @($msixOut, $zipOut) | ForEach-Object {
             $name = Split-Path $_ -Leaf; $hash = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
             Set-Content "$_.sha256" -Value "$hash  $name" -NoNewline
             @{ name = $name; sha256 = $hash }
           }
-          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
+          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true') }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
 
       - uses: actions/upload-artifact@v4
         with:
