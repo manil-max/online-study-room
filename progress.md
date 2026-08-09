@@ -9857,16 +9857,153 @@ yazilmis bir dosyaydi. Sahibin emri dogru cikti.
 
 - **Grup uye siniri 8** — 13 testci tek gruba sigmaz. **Sahip karari**; sahip
   "bosver simdilik" dedi.
-- **Surum hatti kilitli** — yerel head 0124, production pin 0123; preflight
-  ikisini birden sart kosuyor, tag atilsa bile durur. `0124` production'a
-  uygulanmadan **hicbir surum cikmaz**. Sahip karari (ajanlara pinler yasaklandi).
+- ~~**Surum hatti kilitli** — yerel head 0124, production pin 0123~~ →
+  **COZULDU (2026-08-09):** `0124` production'a uygulandi (run 31324086033),
+  production pin 0124. Yerel head artik 0125 (`WP-630`, henuz uygulanmadi);
+  monotonluk saglandigi icin surum hatti KILITLI DEGIL.
 - **Kurucunun gruptan cikma yolu yok** — dogru cozum sahiplik devri = yeni RPC
   + migration + UI. Urun karari.
-- **Bildirimden "Calismaya don" pomodoro dongusunu ilerletmiyor** —
-  `StudyTimerService.kt`; WP-613 sonrasi bu dugme ILK KEZ ulasilabilir oldu.
-  Native tarafi ayri WP.
-- **Cevrimdisi acilisin ilk saniyelerinde profil yazmalari sessizce dusuyor**
-  (DENETIM-auth RISK-6).
+- ~~**Bildirimden "Calismaya don" pomodoro dongusunu ilerletmiyor**~~ →
+  **COZULDU: WP-622** (`6d8d6a9`).
+- ~~**Cevrimdisi acilisin ilk saniyelerinde profil yazmalari sessizce
+  dusuyor**~~ (DENETIM-auth RISK-6) → **COZULDU: WP-624** (`d6633fc`).
+  Kimlik artik oturumdan cozuluyor; oturum GERCEKTEN yoksa gorunur hata atilir.
+
+## 2026-08-09 gecesi — turun kapanisi (WP-622…WP-631 + `0124` uretim apply'i)
+
+### WP-622: Bildirimden "Calismaya don" pomodoro turunu ilerletmiyordu
+`StudyTimerService.kt`. WP-613 bu dugmeyi ILK KEZ ulasilabilir yapmisti; native
+taraf tiklamayi aliyor ama dongu sayacini ilerletmiyordu.
+
+### WP-623: l10n kapisi ternary icindeki gomulu metni GOREMIYORDU
+Kapinin kendisi kordu: kosullu ifadenin iclerine yerlestirilmis Turkce metin
+taramadan kaciyordu. Kapi duzeltildi, kacan metin kataloga alindi.
+
+### WP-624: Acilisin ilk saniyelerinde profil yazmalari SESSIZCE dusuyordu
+Alti yazma metodu `if (cur == null) return;` ile basliyordu. `_current` ancak
+ilk profil turu bitince dolar ve **cevrimdisi acilista o tur ~20 saniye**
+(WP-603'te olculdu). Yani metroda uygulamayi acan kullanicinin ilk yirmi
+saniyedeki her ayar degisikligi hicbir sey yapmadan "basarili" donuyordu.
+
+🔴 WP-610/WP-619 bu yolu DAHA KOTU hale getirmisti: o WP'ler hata dallarini
+duzeltip **basarida onay gostermeye** basladi, ama bu yol hata atmiyor —
+sessizce donuyor. Sonuc: ekranda "kaydedildi", diskte hicbir sey.
+**Sessiz basarisizliktan beteri YALAN basaridir.** Kimlik artik oturumdan
+cozuluyor; oturum gercekten yoksa gorunur hata atilir.
+
+### WP-625: "Askiya Al" 100 YILLIK, kaydi olmayan ban kuruyordu
+Admin panelindeki askiya alma suresi hesabi tasiyordu; ustelik olay hicbir yere
+yazilmiyordu. Ayrica iki admin Edge Function'i **hicbir yerde deploy
+edilmiyordu** — panel dugmesi vardi, arkasi yoktu.
+
+### WP-626: Gonderilmeyen aylik rapor icin ACIK anahtar vaat ediliyordu
+`send-report`'u hicbir cron/is akisi/istemci cagirmiyor, iki fonksiyon da
+hicbir yerde deploy edilmiyor, e-posta saglayici anahtari hic tanimlanmiyor.
+Kullanici bugune kadar tek bir rapor almadi. Anahtar tercihi kaydetmeye devam
+ediyor ama arayuz artik gonderimin **baslamadigini SOYLUYOR** ("yakinda" rozeti
++ acik alt satir).
+
+### WP-627: ColorScheme container rolleri TANIMSIZDI
+Uc yerde okunmazlik uretiyordu; 46 kontrast ihlali → 0. Ikinci commit kapinin
+kendisini duzeltti: kontrast kapisi olctugu dosyanin **import grafigine** bagli
+olmasin (baska bir dosya import'u degistirse kapi sessizce kor kalirdi).
+
+### 🔴 WP-549: `0124` uretime uygulandi — IKI denemede
+**Kapatilan kusur CANLI'ydi:** sayaci bir kez calistirmis, push kaydi olan,
+grubunda rapor acilmis ya da hakkinda yaptirim uygulanmis kullanici hesabini
+**HIC** silemiyordu. `docs/legal/ACCOUNT-DELETION.*` kosulsuz soz veriyor ve
+Google Play sart kosuyor.
+
+**Ilk deneme BASARISIZ** (run 31323239616): uzak push 27. ifadede
+`moderation_audit_append_only (42501)` ile durdu. Kok neden siralamaydi —
+gocun kendi backfill'i, cozumu getiren guard'dan ONCE kosuyordu. Siralamayi
+degistirmek yetmezdi: yeni guard yalniz `actor_id dolu → NULL, hash AYNI`
+gecisine izin verir, backfill tersini yapar. Cozum degismezligi **o tek ifade
+suresince** acikca askiya almak (`disable trigger` → update → `enable`).
+
+🔴 **Staging'de neden gecmisti:** kod degil VERI. Orada eslesen satir yoktu,
+UPDATE sifir satira dokundu, tetikleyici hic ateslenmedi. Yani hem staging hem
+CI replay YESILDI ve **ikisi de olcmemisti**.
+
+**Ikinci deneme BASARILI** (run 31324086033): post-check uc sutunda da 0124.
+Dayanak uc bagimsiz kanitti: (1) 1–26. ifadeler basarisiz denemede GERCEK
+uretim verisinde zaten kostu — `ugc_reports validate constraint` dahil;
+(2) 27. ifade duzeltildi ve `tests/050` artik goc oncesi satiri ELDE kurup hem
+ciplak UPDATE'in HALA reddedildigini hem sarmalli olanin gectigini olcuyor;
+(3) 27'den sonrasi saf DDL. Kapi ayni gun geri kilitlendi.
+
+### WP-628: Urun politikalari yazildi + degismezlige kanitli istisna
+`docs/URUN-POLITIKALARI.md`. `RAKIPANALIZI-DEGERLENDIRME` §5 yayin kapisina IKI
+madde saymisti (politika metinleri + Play ulke listesi); birincisi 28
+Temmuz'dan beri yalniz analiz dosyasinin icindeydi, yani hicbir yerde
+baglayici degildi. Alti karar sabitlendi: regresyonda eski duzen secenek kalir ·
+kalici ucretsiz + reklamsiz · zorlama yok · durdur ≠ sil · acilista yalniz TR ·
+arac yiginina girilmez.
+
+`KALITE-PROGRAMI` §5.4'e iki satir eklendi, ikisi de bu turda ODENDI:
+1. Degismezlik kuralina **sartli** istisna. "Remote'a uygulanmis migration
+   immutable'dir" bugun uygulanamadi: goc staging'e uygulanmis ama
+   production'da KIRILIYORDU ve ileri migration cozum degil — `db push` kirik
+   gocu once kosturur, zincir hic ilerlemez. Sart: sapma yazilir · uygulanmis
+   ortamda veri etkisizligi KANITLANIR · olcen test ayni commit'te gelir.
+2. **"Taze kurulumda sifir satira dokunan ifade SINANDI sayilmaz."**
+
+### WP-629: Yaptirim uzlastirmasi yazilmisti ama CAGIRANI YOKTU
+`admin_reconcile_moderation_sanctions()` `0105`ten beri duruyor, yetkisi
+veriliyor, hatta bir test SQL metninde gectigini dogruluyor. `lib/` icinde TEK
+bir cagri yeri yoktu — yani ozellik yoktu.
+
+Sonucu sessiz bir yarim durum: yaptirimin auth adimi gecip kapanis cagrisi
+dusunce satir sonsuza kadar `pending` kalir. `pending` satir aktif yaptirim
+SAYILMAZ, yani kullanici aslinda cezasiz gezer, admin cezayi uyguladigini sanir
+ve kimse hata gormez — cunku hata yok, is yarida kaldi. Cagri yeri kuyruk
+acilisi (fonksiyon `is_super_admin()` istedigi icin cron ile kosamaz).
+
+### WP-630: Aylik rapor rizasi ON ISARETLI + cron yanlis ayi istiyordu
+`0030` sutunu `default true` ile kurmus, istemci de iki yerde `?? true`
+yaziyordu — on isaretli onay kutusu KVKK/GDPR'da gecerli riza degildir. Ikinci
+`?? true` daha sinsiydi: sutun okunamadiginda riza VAR sayiliyordu.
+
+Cron ayin 2'sinde kosup bir gun geri gidiyordu; bu ayin 1'ine duser, yani
+**yeni baslamis ayi** ister. Duzeltme araligi degistirmek degil govdeyi
+kaldirmak — `collect-reports` govde verilmediginde onceki ayi zaten dogru
+hesapliyor. Hesap tek yerde kaliyor.
+
+`0125` **HENUZ UYGULANMADI**; local head 0125, staging/production 0124.
+
+### 🔴 WP-631: Migration head BESINCI bir yerde de pinliymis — kapi bunu bilmiyordu
+WP-630 yerelde 20 kapinin hepsinden gecti, CI'da Database Gates kirmizi dustu:
+
+```
+# Failed test 1: "all 124 migrations are recorded"
+# Failed test 2: "0124 is the migration head"   have: 0125
+```
+
+`supabase/tests/001_schema_contract.test.sql` migration SAYISINI ve head'i
+ayrica iddia ediyor. `migration-head` kapisi uc pin sayiyordu ve kendi belgesi
+"head birden fazla yerde pinlidir, hangisinin kimin pesinden gitmesi gerektigi
+burada yazilidir" diyordu — **liste eksikti**. Yani kapi tam da uyardigi hataya
+karsi kordu; adi bile "uc yerde" diyordu.
+
+Kapi artik besinci pini de okuyor ve **dizindeki dosya sayisini** takip ediyor.
+Kasten eskitilerek sinandi: yanlis pin verildiginde kirmizi dusuyor, geri
+alininca yesil.
+
+### Bu kapanisin dersleri
+1. 🔴 **"Yesil" ile "olculdu" ayni sey degil.** `0124` hem staging'de hem CI
+   replay'inde yesildi ve ikisi de veriye dokunmamisti. Kural artik yazili: bos
+   veritabaninda sifir satira dokunan ifade SINANMAMISTIR.
+2. **Kirilmis kural sessizce cignenmez, sarti yazilir.** Degismezlik kurali
+   bugun uygulanamadi; dogru hamle onu gormezden gelmek degil, istisnayi uc
+   kanitlanabilir sarta baglamak oldu.
+3. **"Yazilmis ama cagirani yok" yine cikti** (WP-629). Bu tur icinde ucuncu
+   ornek: WP-611 (Windows alarmi), WP-625 (admin Edge deploy'u), WP-629.
+4. **Testin varsayilana yaslanmasi** WP-630'da yine kirmizi uretti; olculen sey
+   baslangic degerinden bagimsiz oldugu icin baslangic ACIKCA kuruldu. Bu tur
+   boyunca ALTINCI ornek.
+5. 🔴 **Kapinin kendi belgesi de kanittir — ve yanlis olabilir** (WP-631).
+   `migration-head` kapisi "pinler burada yazilidir" diyordu ve listesi eksikti.
+   Bir kapinin sayisal iddiasi varsa (uc/bes/yedi yer), o sayi test edilmeli.
 
 ## Bekleyen Uygulanabilir WP'ler
 

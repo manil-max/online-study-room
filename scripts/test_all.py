@@ -225,7 +225,7 @@ def build_gates() -> list[Gate]:
              [py, "scripts/l10n_audit.py", "--self-test"]),
         Gate("l10n-android", "Android kaynak metin denetimi", 0,
              [py, "scripts/l10n_android_audit.py"]),
-        Gate("migration-head", "Migration head uc yerde pinli", 0,
+        Gate("migration-head", "Migration head BES yerde pinli", 0,
              [py, "scripts/test_all.py", "--internal-migration-head"]),
         # WP-525: uygulama yasal sayfa adresini KOD ICINDE kuruyor. Site o
         # dosyayi uretmezse kullanici 404 gorur ve hicbir derleme hatasi
@@ -1069,7 +1069,12 @@ def internal_migration_head() -> int:
       (yeni bir dosya eklemek onlari ilerletmez) — bu yuzden yalniz
       `production <= staging <= local` monotonlugu aranir,
     * `guard.tests.ps1` icindeki staging head literali kontratla ayni olmalidir;
-      bu cift iki kez birbirinden ayri dustu.
+      bu cift iki kez birbirinden ayri dustu,
+    * 🔴 `supabase/tests/001_schema_contract.test.sql` migration SAYISINI ve
+      head'i ayrica iddia eder ve **dizindeki dosyalari** takip eder (kontrati
+      degil). 2026-08-09'da `0125` eklenince bu kapi YEREL YESIL verdi, CI
+      kirmizi dustu: bu pin listede YOKTU. Yani kapi tam da uyardigi hataya
+      karsi kordu. Kapi adi da "uc yerde" diyordu; bes yerde.
 
     Ayrica AGENTS.md §2 "Migration Baslik Kurali": ilk satir tam olarak
     `-- <dosya adi>` olmalidir.
@@ -1146,6 +1151,39 @@ def internal_migration_head() -> int:
             f"kontrat {staging_pin}"
         )
 
+    # 🔴 BESINCI PIN (2026-08-09'da acikga cikti). Bu kapi uc pin sayiyordu ve
+    # YEREL YESIL verirken CI kirmizi dustu: `001_schema_contract.test.sql`
+    # migration SAYISINI ve head'i ayrica iddia ediyor ve `0125` eklenince
+    # dustu. Kapinin kendi belgesi "head birden fazla yerde pinlidir" diyordu
+    # ama listesi eksikti -- yani kapi tam da uyardigi hataya karsi kordu.
+    schema_contract = ROOT / "supabase" / "tests" / "001_schema_contract.test.sql"
+    contract_sql = schema_contract.read_text(encoding="utf-8", errors="replace")
+    count_match = re.search(
+        r"from supabase_migrations\.schema_migrations\),\s*(\d+),",
+        contract_sql,
+    )
+    head_match = re.search(
+        r"select max\(version\) from supabase_migrations\.schema_migrations\),"
+        r"\s*'(\d{4})'",
+        contract_sql,
+    )
+    if count_match is None or head_match is None:
+        problems.append(
+            "001_schema_contract.test.sql icinde migration sayisi/head iddiasi "
+            "bulunamadi (kapi sessizce etkisizlesmis olabilir)"
+        )
+    else:
+        if int(count_match.group(1)) != len(migrations):
+            problems.append(
+                f"001_schema_contract.test.sql migration sayisi "
+                f"{count_match.group(1)} ama dizinde {len(migrations)} dosya var"
+            )
+        if head_match.group(1) != head:
+            problems.append(
+                f"001_schema_contract.test.sql head literali "
+                f"{head_match.group(1)} ama dizin head={head}"
+            )
+
     if problems:
         for line in problems:
             print(f"  - {line}")
@@ -1153,7 +1191,7 @@ def internal_migration_head() -> int:
     print(
         f"OK: {len(migrations)} migration kesintisiz, head {head}; "
         f"pinler local={local_pin} staging={staging_pin} "
-        f"production={production_pin}"
+        f"production={production_pin} schema-contract={head_match.group(1)}"
     )
     return 0
 
