@@ -15,6 +15,7 @@ import '../../data/models/alarm_rule.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../../core/widgets/error_retry_view.dart';
 import 'alarm_ringing_screen.dart';
+import 'platform_limit_banner.dart';
 
 class AlarmsScreen extends ConsumerWidget {
   const AlarmsScreen({super.key, this.embedded = false});
@@ -29,6 +30,15 @@ class AlarmsScreen extends ConsumerWidget {
 
     final body = Column(
       children: [
+        // 🔴 WP-611: masaüstünde alarm HİÇ kurulmuyor. Sekmeyi olduğu gibi
+        // bırakmak "vaat edilen ama çalışmayan" bir yüzeydir; sınır ekranın
+        // en üstünde, kapatılamaz biçimde yazılı durur.
+        if (!localNotificationsSupported)
+          PlatformLimitBanner(
+            key: const Key('alarms_desktop_limit_banner'),
+            message: AppLocalizations.of(context).clockAlarmMasaustundeCalmaz,
+            severe: true,
+          ),
         exactAsync.when(
           data: (status) {
             if (status != ExactAlarmStatus.denied) {

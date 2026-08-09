@@ -6668,5 +6668,21 @@
   "authCevrimdisiAcildi": "No internet. The app opened offline; the timer works and your records sync once you are back online.",
   "@authCevrimdisiAcildi": {
     "description": "WP-603 snackbar shown once when the app finished cold start from the locally stored session because the network never answered. A real user on the metro watched a spinner for 20 s and the app never opened; opening offline must be stated, not silent."
+  },
+  "clockAlarmMasaustundeCalmaz": "Alarms do not ring in the desktop build: you can create and edit them here, but the sound and the notification only happen in the phone app.",
+  "@clockAlarmMasaustundeCalmaz": {
+    "description": "WP-611 banner pinned to the top of the alarm tab on desktop. Scheduling silently threw there, so an alarm could be saved, listed and never ring; the limit has to be stated on the surface that promises it."
+  },
+  "clockZamanlayiciMasaustundeBildirimYok": "In the desktop build the timer only counts while the app is open; no system notification is shown when it finishes.",
+  "@clockZamanlayiciMasaustundeBildirimYok": {
+    "description": "WP-611 banner on the timer tab on desktop. The countdown itself works (Dart ticker) but no local notification is delivered when it ends."
+  },
+  "notificationsHatirlaticiMasaustundeYok": "Off in the desktop build — this reminder is only delivered on the phone.",
+  "@notificationsHatirlaticiMasaustundeYok": {
+    "description": "WP-611 subtitle of the streak/weekly reminder switches when the platform cannot deliver local notifications. The switch is disabled instead of silently doing nothing."
+  },
+  "notificationsIzinMasaustundeGecersiz": "The desktop build does not send operating-system notifications, so there is no permission to check here.",
+  "@notificationsIzinMasaustundeGecersiz": {
+    "description": "WP-611 note replacing the permission button on desktop, where pressing it threw before reaching the SnackBar and looked like a dead button."
   }
 }

@@ -20,6 +20,35 @@ final alarmNotificationServiceProvider = Provider<AlarmNotificationService>((
   return AlarmNotificationService.instance;
 });
 
+/// `flutter_local_notifications` bu platformda **kullanılabilir mi?**
+///
+/// 🔴 WP-611: bu kapı zaten [AlarmNotificationService.initialize] içinde vardı
+/// ama YALNIZ oraya uygulanmıştı. Masaüstünde kurulum atlanıp `_initialized`
+/// yine de `true` yazılıyor, sonra aynı eklentiye `zonedSchedule` / `cancel` /
+/// `show` çağrısı yapılıyordu. Kurulmamış eklenti bu çağrılarda istisna atar
+/// (Windows FFI: `StateError` "must be initialized before use"; test ortamı:
+/// `LateInitializationError`) ve Windows implementasyonu plugin registrant'ta
+/// **kayıtlı** olduğu için `resolvePlatformSpecificImplementation<...>()` null
+/// dönmez — yani `?.` bir kurtarma sağlamaz.
+///
+/// Sonuç sahada: Windows'ta alarm diske yazılıyor ama liste tazelenmiyor ve
+/// alarm hiç çalmıyordu. Kapı artık tek yerde tanımlıdır ve çağrı yüzeyinin
+/// **tamamına** uygulanır; hatırlatıcı servisi de aynı kapıyı paylaşır.
+///
+/// 🔴 Bu bir *sessiz yutma* değildir: özelliğin masaüstünde bulunmadığını
+/// kullanıcıya söyleyen yüzeyler `AlarmsScreen` / `TimersScreen` şeridi ve
+/// Bildirim Merkezi'ndeki devre dışı hatırlatıcı satırlarıdır. Kapıyı
+/// genişletirken o yüzeyleri de güncelle; yoksa "ayarı açtım, hiçbir şey
+/// olmadı" hatası geri gelir.
+///
+/// Platform `defaultTargetPlatform` üzerinden okunur (`dart:io Platform`
+/// değil): testte `debugDefaultTargetPlatformOverride` ile enjekte edilebilir.
+bool get localNotificationsSupported =>
+    !kIsWeb &&
+    defaultTargetPlatform != TargetPlatform.windows &&
+    defaultTargetPlatform != TargetPlatform.linux &&
+    defaultTargetPlatform != TargetPlatform.macOS;
+
 /// Alarm/timer planlama: **Android'de native AlarmManager birincil**;
 /// FLN yedek/status; masaüstü/web FLN veya no-op.
 class AlarmNotificationService {
@@ -54,10 +83,9 @@ class AlarmNotificationService {
 
     // Windows/macOS/Linux: FLN Windows settings zorunlu; Android-only init
     // MissingPlugin/Invalid argument fırlatıp log gürültüsü + boşa iş yapıyordu.
-    if (kIsWeb ||
-        defaultTargetPlatform == TargetPlatform.windows ||
-        defaultTargetPlatform == TargetPlatform.linux ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
+    // WP-611: aynı karar artık [localNotificationsSupported] ile tek yerden
+    // verilir ve plan/iptal/göster çağrılarına da uygulanır.
+    if (!localNotificationsSupported) {
       _initialized = true;
       return;
     }
@@ -124,7 +152,11 @@ class AlarmNotificationService {
       return;
     }
 
-    // Yedek: FLN (masaüstü / native yok)
+    // Yedek: FLN (native yok). WP-611: masaüstünde FLN de yok — kurulmamış
+    // eklentiye plan yazmak istisna atıyor, çağıran zincir (liste tazeleme)
+    // orada kopuyordu.
+    if (!localNotificationsSupported) return;
+
     final scheduled = tz.TZDateTime.from(next, tz.local);
     final mode = await _mode();
     await _plugin.zonedSchedule(
@@ -163,6 +195,9 @@ class AlarmNotificationService {
     if (_useNative) {
       await _bridge.cancel(kind: 'alarm', id: id);
     }
+    // WP-611: iptal her koşulda `_plugin.cancel` çağırıyordu; masaüstünde bu
+    // istisna atıp silme akışını yarıda kesiyordu (satır ekranda kalıyordu).
+    if (!localNotificationsSupported) return;
     await _plugin.cancel(id: _notifId(id));
   }
 
@@ -202,6 +237,11 @@ class AlarmNotificationService {
       return;
     }
 
+    // WP-611: masaüstünde FLN kurulu değil. Sayaç uygulama açıkken Dart
+    // ticker'ı ile çalışmaya devam eder; kurulmamış eklentiye plan yazma
+    // denemesi yalnız istisna üretiyordu.
+    if (!localNotificationsSupported) return;
+
     final remainingSec = instance.remainingAt(nowMs);
     if (remainingSec <= 0) {
       await cancelTimer(instance.id);
@@ -238,6 +278,7 @@ class AlarmNotificationService {
     if (_useNative) {
       await _bridge.cancel(kind: 'timer', id: id);
     }
+    if (!localNotificationsSupported) return;
     await _plugin.cancel(id: _notifId(id));
   }
 
@@ -249,6 +290,7 @@ class AlarmNotificationService {
 
   Future<void> showImmediate(String title, String body) async {
     await initialize();
+    if (!localNotificationsSupported) return;
     final l10n = await loadSystemLocalizations();
     final details = AndroidNotificationDetails(
       channelId,

@@ -2,10 +2,13 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/notifications/alarm_notification_service.dart'
+    show localNotificationsSupported;
 import '../../core/time_engine/lap_analysis.dart';
 import '../../data/models/timer_preset.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../../core/widgets/error_retry_view.dart';
+import 'platform_limit_banner.dart';
 
 class TimersScreen extends ConsumerWidget {
   const TimersScreen({super.key, this.embedded = false});
@@ -20,6 +23,16 @@ class TimersScreen extends ConsumerWidget {
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // WP-611: sayaç masaüstünde Dart ticker'ı ile gerçekten sayar, ama
+        // bittiğinde sistem bildirimi gösterilmez (FLN masaüstünde kurulmaz).
+        // Kısıt yazılmazsa kullanıcı uygulamayı küçültüp bildirim bekler.
+        if (!localNotificationsSupported)
+          PlatformLimitBanner(
+            key: const Key('timers_desktop_limit_banner'),
+            message: AppLocalizations.of(
+              context,
+            ).clockZamanlayiciMasaustundeBildirimYok,
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Column(

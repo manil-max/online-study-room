@@ -317,6 +317,14 @@ class _PermissionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    // 🔴 WP-611: bu düğme masaüstünde "bozuk düğme"ydi. `initialize()` FLN'e
+    // Android-only ayar veriyor, Windows `ArgumentError` atıyor ve `granted`
+    // hiç hesaplanmadığı için SnackBar satırına gelinmiyordu: basıyorsun,
+    // hiçbir şey olmuyor. Masaüstünde kontrol edilecek bir izin YOK — düğmeyi
+    // göstermek yerine nedenini yazıyoruz.
+    final supported = ref
+        .watch(reminderNotificationServiceProvider)
+        .isSupported;
     return Card(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -338,37 +346,44 @@ class _PermissionCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.notificationsBildirimlerCihazIznineBaglidir,
+              key: const Key('notification_permission_note'),
+              supported
+                  ? l10n.notificationsBildirimlerCihazIznineBaglidir
+                  : l10n.notificationsIzinMasaustundeGecersiz,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: supported
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.error,
               ),
             ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FilledButton.tonalIcon(
-                onPressed: () async {
-                  final granted = await ref
-                      .read(reminderNotificationServiceProvider)
-                      .requestPermissionIfNeeded();
-                  await ref
-                      .read(pushHealthProvider.notifier)
-                      .synchronize(force: true);
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        granted
-                            ? l10n.notificationsBildirimIzniVerildi
-                            : l10n.notificationsBildirimIzniVerilmediSistem,
+            if (supported) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FilledButton.tonalIcon(
+                  onPressed: () async {
+                    final granted = await ref
+                        .read(reminderNotificationServiceProvider)
+                        .requestPermissionIfNeeded();
+                    await ref
+                        .read(pushHealthProvider.notifier)
+                        .synchronize(force: true);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          granted
+                              ? l10n.notificationsBildirimIzniVerildi
+                              : l10n.notificationsBildirimIzniVerilmediSistem,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.notifications_active_outlined),
-                label: Text(l10n.notificationsBildirimIzniniKontrolEt),
+                    );
+                  },
+                  icon: const Icon(Icons.notifications_active_outlined),
+                  label: Text(l10n.notificationsBildirimIzniniKontrolEt),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -385,6 +400,14 @@ class _TypesCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(notificationPreferencesProvider.notifier);
     final l10n = AppLocalizations.of(context);
+    // 🔴 WP-611: iki akıllı hatırlatıcı masaüstünde tamamen erişilemezdi —
+    // anahtarın `onChanged`i izin çağrısını `await` ediyor, çağrı istisna
+    // atıyor ve tercih satırına HİÇ gelinmiyordu: anahtar geri kapanıyor,
+    // ekranda hata yok. Tercihi sessizce yazmak da yanlış olurdu (bildirim
+    // yine gelmezdi); satır devre dışı bırakılıp nedeni alt yazıya yazılır.
+    final smartSupported = ref
+        .watch(reminderNotificationServiceProvider)
+        .isSupported;
     return _SectionCard(
       icon: Icons.tune,
       title: l10n.notificationsBildirimTurleri,
@@ -406,33 +429,47 @@ class _TypesCard extends ConsumerWidget {
         ),
         const Divider(height: 1),
         SwitchListTile(
+          key: const Key('notification_smart_streak_switch'),
           secondary: const Icon(Icons.local_fire_department_outlined),
           title: Text(l10n.smartStreakReminder),
-          subtitle: Text(l10n.smartStreakReminderBody),
+          subtitle: Text(
+            smartSupported
+                ? l10n.smartStreakReminderBody
+                : l10n.notificationsHatirlaticiMasaustundeYok,
+          ),
           value: prefs.smartStreakReminderEnabled,
-          onChanged: (value) async {
-            if (value) {
-              await ref
-                  .read(reminderNotificationServiceProvider)
-                  .requestPermissionIfNeeded();
-            }
-            await notifier.setSmartStreakReminderEnabled(value);
-          },
+          onChanged: !smartSupported
+              ? null
+              : (value) async {
+                  if (value) {
+                    await ref
+                        .read(reminderNotificationServiceProvider)
+                        .requestPermissionIfNeeded();
+                  }
+                  await notifier.setSmartStreakReminderEnabled(value);
+                },
         ),
         const Divider(height: 1),
         SwitchListTile(
+          key: const Key('notification_smart_weekly_switch'),
           secondary: const Icon(Icons.calendar_view_week_outlined),
           title: Text(l10n.smartWeeklySummary),
-          subtitle: Text(l10n.smartWeeklySummaryBody),
+          subtitle: Text(
+            smartSupported
+                ? l10n.smartWeeklySummaryBody
+                : l10n.notificationsHatirlaticiMasaustundeYok,
+          ),
           value: prefs.smartWeeklySummaryEnabled,
-          onChanged: (value) async {
-            if (value) {
-              await ref
-                  .read(reminderNotificationServiceProvider)
-                  .requestPermissionIfNeeded();
-            }
-            await notifier.setSmartWeeklySummaryEnabled(value);
-          },
+          onChanged: !smartSupported
+              ? null
+              : (value) async {
+                  if (value) {
+                    await ref
+                        .read(reminderNotificationServiceProvider)
+                        .requestPermissionIfNeeded();
+                  }
+                  await notifier.setSmartWeeklySummaryEnabled(value);
+                },
         ),
         const Divider(height: 1),
         SwitchListTile(

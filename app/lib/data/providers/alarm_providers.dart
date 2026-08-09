@@ -68,16 +68,28 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
     } catch (_) {}
     final repo = ref.read(alarmRepositoryProvider);
     await repo.saveAlarm(alarm);
-    await _syncNative();
-    ref.invalidateSelf();
+    // 🔴 WP-611: planlama istisna atınca `invalidateSelf()` satırına HİÇ
+    // gelinmiyordu. Alarm diske yazılmış olmasına rağmen listede belirmiyor,
+    // kullanıcı kendi işleminin kaydedildiğinden bile emin olamıyordu
+    // (Windows'ta her kayıt böyleydi). `finally` istisnayı YUTMAZ — yalnız
+    // "diske yazılan şey ekranda görünür" garantisini planlamadan ayırır.
+    try {
+      await _syncNative();
+    } finally {
+      ref.invalidateSelf();
+    }
   }
 
   Future<void> deleteAlarm(String id) async {
     final repo = ref.read(alarmRepositoryProvider);
     await repo.deleteAlarm(id);
-    await ref.read(alarmNotificationServiceProvider).cancelAlarm(id);
-    await _syncNative();
-    ref.invalidateSelf();
+    // WP-611: silme de aynı desendeydi; satır ekranda kalmaya devam ediyordu.
+    try {
+      await ref.read(alarmNotificationServiceProvider).cancelAlarm(id);
+      await _syncNative();
+    } finally {
+      ref.invalidateSelf();
+    }
   }
 
   Future<void> toggleAlarm(String id, bool isActive) async {
@@ -317,9 +329,13 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     }
     await ref.read(alarmRepositoryProvider).saveTimerInstance(inst);
     final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
-    await _syncTimerNative(all);
-    _doneNotified.remove(inst.id);
-    ref.invalidateSelf();
+    // WP-611: bkz. `AlarmsNotifier.saveAlarm` — planlama listeyi rehin alamaz.
+    try {
+      await _syncTimerNative(all);
+    } finally {
+      _doneNotified.remove(inst.id);
+      ref.invalidateSelf();
+    }
   }
 
   Future<void> _showTimerDone(TimerInstance instance) async {
@@ -464,12 +480,16 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
       );
     }
     await ref.read(alarmRepositoryProvider).deleteTimerInstance(id);
-    await ref.read(alarmNotificationServiceProvider).cancelTimer(id);
     _doneNotified.remove(id);
     _studyCredited.remove(id);
-    final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
-    await _syncTimerNative(all);
-    ref.invalidateSelf();
+    // WP-611: kayıt silindi; iptal/planlama istisna atsa bile liste tazelenmeli.
+    try {
+      await ref.read(alarmNotificationServiceProvider).cancelTimer(id);
+      final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
+      await _syncTimerNative(all);
+    } finally {
+      ref.invalidateSelf();
+    }
   }
 
   Future<void> _mutate(
@@ -490,7 +510,10 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     if (!merged.any((t) => t.id == inst.id)) {
       merged.add(inst);
     }
-    await _syncTimerNative(merged);
-    ref.invalidateSelf();
+    try {
+      await _syncTimerNative(merged);
+    } finally {
+      ref.invalidateSelf();
+    }
   }
 }

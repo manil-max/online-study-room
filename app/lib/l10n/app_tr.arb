@@ -2028,5 +2028,9 @@
   "classroomSayacCokUzunSuredirAcik": "Sayaç {duration} boyunca hiç durmadan çalışıyor. Unuttuysan, Durdur'a bastığında bu süre çalışma olarak kaydedilir; verilen XP ve başarımlar geri alınamaz.",
   "classroomSayacYenidenBaslatilmadi": "Az önce durdurdun; sayaç yeniden başlatılmadı. Yeni bir oturum başlatmak istiyorsan tekrar dokun.",
   "classroomSayacArkaPlandaCalisir": "Sayaç arka planda çalışır: uygulamayı kapatsan da durmaz, süre işlemeye devam eder. Bitirince Durdur'a bas.",
-  "authCevrimdisiAcildi": "İnternet yok. Uygulama çevrimdışı açıldı; sayaç çalışır, kayıtların bağlantı gelince eşitlenir."
+  "authCevrimdisiAcildi": "İnternet yok. Uygulama çevrimdışı açıldı; sayaç çalışır, kayıtların bağlantı gelince eşitlenir.",
+  "clockAlarmMasaustundeCalmaz": "Alarmlar masaüstü sürümünde çalmaz: burada oluşturup düzenleyebilirsin ama saati geldiğinde ses ve bildirim yalnız telefondaki uygulamada verilir.",
+  "clockZamanlayiciMasaustundeBildirimYok": "Masaüstü sürümünde zamanlayıcı yalnız uygulama açıkken sayar; süre bitince sistem bildirimi gösterilmez.",
+  "notificationsHatirlaticiMasaustundeYok": "Masaüstü sürümünde kapalı — bu hatırlatma yalnız telefonda gönderilir.",
+  "notificationsIzinMasaustundeGecersiz": "Masaüstü sürümü işletim sistemi bildirimi göndermez; burada kontrol edilecek bir izin yok."
 }
