@@ -536,10 +536,39 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  /// 🔴 WP-624: profil yazmalarının hedef kullanıcı kimliği.
+  ///
+  /// Altı yazma metodu `final cur = _current; if (cur == null) return;` ile
+  /// başlıyordu — yani `_current` henüz dolmamışsa yazma **sessizce hiçbir şey
+  /// yapmadan başarıyla dönüyordu**. Çağıran bunu başarı sayıp kullanıcıya
+  /// onay gösteriyor; kullanıcı ayarını değiştirdiğini sanıyor, hiçbir şey
+  /// kaydedilmiyor.
+  ///
+  /// Pencere küçük değil: `_current` ancak ilk `_profileFor(...)` bitince
+  /// dolar ve çevrimdışı açılışta o tur ~20 saniye sürüyor (WP-603'te ölçüldü).
+  /// Yani metroda uygulamayı açan kullanıcının ilk yirmi saniyedeki her ayar
+  /// değişikliği sessizce kayboluyordu.
+  ///
+  /// 🔴 WP-610/WP-619 bu yolu **daha kötü** hâle getirmişti: o WP'ler hata
+  /// dallarını düzeltip başarıda onay göstermeye başladı, ama bu yol hata
+  /// atmıyor — sessizce dönüyor. Sonuç: ekranda "kaydedildi", diskte hiçbir şey.
+  /// Sessiz başarısızlıktan beteri, YALAN başarıdır.
+  ///
+  /// Çözüm: kimliği oturumdan al. Profil satırı henüz okunmamış olabilir ama
+  /// **kullanıcı kimliği açılıştan beri bellekte** (`setInitialSession`).
+  String _writeTargetId() {
+    final id = _current?.id ?? _client.auth.currentUser?.id;
+    if (id == null) {
+      // Gerçekten oturum yok: bu bir hata, sessizce yutulacak bir durum değil.
+      throw const AuthException('session_required');
+    }
+    return id;
+  }
+
   @override
   Future<void> updateDisplayName(String displayName) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     final name = displayName.trim();
     if (name.isEmpty) {
       throw const AuthException('Görünen ad boş olamaz.');
@@ -548,52 +577,52 @@ class SupabaseAuthRepository implements AuthRepository {
       await _client
           .from('profiles')
           .update({'display_name': name})
-          .eq('id', cur.id);
+          .eq('id', targetId);
     } on supa.PostgrestException catch (error) {
       if (error.message.contains('public_name_not_allowed')) {
         throw const AuthException('public_name_not_allowed');
       }
       rethrow;
     }
-    _current = cur.copyWith(displayName: name);
+    _current = cur?.copyWith(displayName: name);
     _emitProfile();
   }
 
   @override
   Future<void> updateDailyGoal(int minutes) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     final safe = minutes.clamp(1, 24 * 60);
     await _client
         .from('profiles')
         .update({'daily_goal_minutes': safe})
-        .eq('id', cur.id);
-    _current = cur.copyWith(dailyGoalMinutes: safe);
+        .eq('id', targetId);
+    _current = cur?.copyWith(dailyGoalMinutes: safe);
     _emitProfile();
   }
 
   @override
   Future<void> updateAnimal(String animal) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     final safe = animal.trim();
     if (safe.isEmpty) return;
-    await _client.from('profiles').update({'animal': safe}).eq('id', cur.id);
-    _current = cur.copyWith(animal: safe);
+    await _client.from('profiles').update({'animal': safe}).eq('id', targetId);
+    _current = cur?.copyWith(animal: safe);
     _emitProfile();
   }
 
   @override
   Future<void> updateTitle(String? achievementId) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     final safe = achievementId?.trim();
     final value = (safe == null || safe.isEmpty) ? null : safe;
     try {
       await _client
           .from('profiles')
           .update({'title_achievement_id': value})
-          .eq('id', cur.id);
+          .eq('id', targetId);
     } on supa.PostgrestException catch (error) {
       // 0115 trigger'i: kazanilmamis unvan sunucuda reddedilir. Ekran bu
       // durumu kullaniciya anlasilir gostersin diye kod korunur.
@@ -603,20 +632,20 @@ class SupabaseAuthRepository implements AuthRepository {
       rethrow;
     }
     _current = value == null
-        ? cur.copyWith(clearTitle: true)
-        : cur.copyWith(titleAchievementId: value);
+        ? cur?.copyWith(clearTitle: true)
+        : cur?.copyWith(titleAchievementId: value);
     _emitProfile();
   }
 
   @override
   Future<void> updateMonthlyReportOptIn(bool value) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     await _client
         .from('profiles')
         .update({'monthly_report_opt_in': value})
-        .eq('id', cur.id);
-    _current = cur.copyWith(monthlyReportOptIn: value);
+        .eq('id', targetId);
+    _current = cur?.copyWith(monthlyReportOptIn: value);
     _emitProfile();
   }
 
@@ -626,9 +655,9 @@ class SupabaseAuthRepository implements AuthRepository {
     required String contentType,
   }) async {
     final cur = _current;
-    if (cur == null) return;
+    final targetId = _writeTargetId();
     // Dosya yolu: <uid>/avatar — RLS politikası ilk klasörün uid olmasını şart koşar.
-    final path = '${cur.id}/avatar';
+    final path = '$targetId/avatar';
     try {
       await _client.storage
           .from('avatars')
@@ -646,8 +675,8 @@ class SupabaseAuthRepository implements AuthRepository {
       await _client
           .from('profiles')
           .update({'avatar_url': url})
-          .eq('id', cur.id);
-      _current = cur.copyWith(avatarUrl: url);
+          .eq('id', targetId);
+      _current = cur?.copyWith(avatarUrl: url);
       _emitProfile();
     } on supa.StorageException catch (e) {
       throw AuthException('Fotoğraf yüklenemedi: ${e.message}');
