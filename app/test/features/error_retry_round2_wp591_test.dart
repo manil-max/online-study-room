@@ -25,7 +25,6 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/widgets/error_retry_view.dart';
 import 'package:online_study_room/data/models/moderation_appeal.dart';
-import 'package:online_study_room/data/models/moderation_sanction.dart';
 import 'package:online_study_room/data/models/nudge_mute.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/moderation_providers.dart';

@@ -93,13 +93,26 @@ class ReleaseNotesService {
     );
   }
 
+  /// Acilista "Yenilikler" penceresi gosterilsin mi?
+  ///
+  /// 🔴 WP-593: burada `getInt(...) ?? 0` vardi, yani **hic kayit
+  /// olmayan** taze kurulum ile "0. build'i gormus" kullanici ayni sayiliyordu.
+  /// Sonuc: uygulamayi ilk kez kuran kisinin gordugu ilk ekran, giris ekranindan
+  /// bile once acilan bir degisiklik gunlugu oluyordu (`auth_gate.dart`
+  /// `initState`). Hic kullanmadigi bir surumun "yenilikleri" ilk izlenim
+  /// olamaz. Kayit yoksa pencere gosterilmez ve mevcut build "gorulmus"
+  /// isaretlenir; boylece BIR SONRAKI guncelleme normal yolundan gosterilir.
   Future<bool> shouldShowWhatsNew({int? currentBuildNumber}) async {
     final buildNumber =
         currentBuildNumber ??
         (int.tryParse((await _packageInfoLoader()).buildNumber) ?? 0);
     if (buildNumber <= 0) return false;
     final prefs = await _prefs();
-    final lastSeen = prefs.getInt(_kLastSeenBuild) ?? 0;
+    final lastSeen = prefs.getInt(_kLastSeenBuild);
+    if (lastSeen == null) {
+      await markBuildSeen(buildNumber);
+      return false;
+    }
     return buildNumber > lastSeen;
   }
 

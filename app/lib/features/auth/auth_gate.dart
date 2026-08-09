@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/push_notification_providers.dart';
 import '../../core/navigation/home_shell.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../l10n/app_localizations.dart';
 import '../onboarding/onboarding_prefs.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -71,9 +72,13 @@ class _AuthGateState extends ConsumerState<AuthGate> {
         if (!onboardingDone) return const OnboardingScreen();
         return const HomeShell();
       },
-      loading: () => Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: const Center(child: CircularProgressIndicator()),
+      // 🔴 WP-593: hata dali WP-539'da cikis kazandi ama YUKLEME dali
+      // duz spinner olarak kaldi. Oturum akisi hic cevap vermezse (uykuda
+      // kalan istek, DNS'te asili baglanti) cember sonsuza kadar doner ve
+      // kullanicinin tek caresi uygulamayi oldurmektir. Makul bir sure sonra
+      // ayni cikis burada da verilir.
+      loading: () => AuthGateLoadingView(
+        onRetry: () => ref.invalidate(authStateProvider),
       ),
       // 🔴 WP-539: burası **çıkışsız bir ekrandı** — tek bir hata cümlesi, hiç
       // düğme yok. Oturum akışı düştüğünde (bayat refresh token, sunucuya
@@ -115,6 +120,76 @@ class _AuthGateState extends ConsumerState<AuthGate> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Yukleme dalinin "bir yere varmiyor" esigi. Cold start'ta oturum okuma
+/// birkac saniye surebilir; bu sure dolduktan sonra sessiz beklemek degil
+/// konusmak gerekir.
+@visibleForTesting
+const Duration kAuthGateLoadingTimeout = Duration(seconds: 12);
+
+/// Once spinner, [kAuthGateLoadingTimeout] sonra cikisli mesaj.
+///
+/// "Tekrar dene" olu anahtar degildir: akisi yeniden kurar **ve** bekleme
+/// sayacini sifirlar, yani kullanici tekrar spinner gorur.
+///
+/// 🔴 Gorunur (private degil) cunku `AuthGate`in kendisi `initState` icinde
+/// Supabase'e bagli saglayicilar okuyor; butun kabugu widget testinde ayaga
+/// kaldirmak zaman asimi davranisini olcmek icin gereksiz ve kirilgan bir
+/// bagimlilik yaratirdi. Olculen sey burada dogrudan bu govdedir.
+@visibleForTesting
+class AuthGateLoadingView extends StatefulWidget {
+  const AuthGateLoadingView({super.key, required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  State<AuthGateLoadingView> createState() => _AuthGateLoadingState();
+}
+
+class _AuthGateLoadingState extends State<AuthGateLoadingView> {
+  Timer? _timer;
+  bool _stalled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _arm();
+  }
+
+  void _arm() {
+    _timer?.cancel();
+    _timer = Timer(kAuthGateLoadingTimeout, () {
+      if (mounted) setState(() => _stalled = true);
+    });
+  }
+
+  void _retry() {
+    widget.onRetry();
+    setState(() => _stalled = false);
+    _arm();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: Center(
+        child: _stalled
+            ? ErrorRetryView(
+                message: AppLocalizations.of(context).authOturumDurumuOkunamadi,
+                onRetry: _retry,
+              )
+            : const CircularProgressIndicator(),
       ),
     );
   }
