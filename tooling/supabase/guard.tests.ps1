@@ -102,8 +102,17 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # tests/051 backfill ifadesini GERCEK satirla olcuyor.
 # APPLY BASARILI, KAPI GERI KILITLENDI (run 31325827247): post-check uc
 # sutunda da 0125. Head 0125'te KALIR (gercek durum), yalniz kapi kapanir.
-Assert-Equal $contract.staging.migration_head '0125' 'WP-630 staging hedefi 0125: apply basarili'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0125 staging apply bitti, yeniden kilitli'
+#
+# 🔴 0126 ICIN STAGING KAPISI ACILDI (2026-08-09, WP-634).
+# Calisma kaydi silinince XP/basarim/tac artik geri gidiyor. Cikarma DEGIL,
+# gercek oturumlardan yeniden hesaplama. Kapsam dar: saat XP + marathon_total
+# + steel_will + day_hero; baska yollardan verilen basarimlara ve kumulatif
+# metriklere DOKUNMAZ (yoksa gercekten kazanilmis rozetler silinirdi).
+# study_sessions'a AFTER DELETE tetikleyicisi 0124/WP-549 sinifidir; kapi
+# `_account_still_exists` ile susturuldu ve tests/052 hesap silmenin hala
+# calistigini ayrica olcuyor (12 iddia, gercek Postgres, run 8c7eb16).
+Assert-Equal $contract.staging.migration_head '0126' 'WP-634 staging hedefi 0126'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0126 apply icin staging kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
