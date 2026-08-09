@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/session_window.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
@@ -32,6 +33,8 @@ class StudyRecords extends ConsumerWidget {
     required this.sessions,
     this.columns = 2,
     this.totals,
+    this.lifetimeSeconds,
+    this.windowLimited = false,
   });
 
   final List<StudySession> sessions;
@@ -41,13 +44,37 @@ class StudyRecords extends ConsumerWidget {
   /// bu widget (ve `longestStudyStreak`) haritayı yeniden kurmaz.
   final Map<DateTime, int>? totals;
 
+  /// 🔴 WP-612: "Toplam" döşemesi için **ömür boyu** saniye
+  /// (`UserStudySummary.lifetimeSeconds`). [sessions] her zaman SICAK
+  /// PENCEREdir (son [kUserSessionsHotWindowDays] gün); ondan hesaplanan
+  /// toplamı "Toplam" diye sunmak, 400 günlük geçmişi olan kullanıcıya kendi
+  /// süresinin dörtte birini göstermekti. `null` ise (özet henüz gelmedi ya da
+  /// hata verdi) pencere toplamına düşülür ve bu [windowLimited] ile SÖYLENİR.
+  final int? lifetimeSeconds;
+
+  /// 🔴 WP-612: veri gerçekten sıcak pencerenin gerisine uzanıyor mu. Doğruysa
+  /// pencereye bağlı döşemelerin etiketine kapsam eklenir ("· 90 gün") —
+  /// İstatistik ekranının WP-573'te kurduğu desenin aynısı.
+  ///
+  /// Yanlış yere asılan uyarı da bir yalandır (WP-585 dersi): çağıran bunu
+  /// ancak ÖLÇTÜĞÜNDE `true` geçmelidir, "belki" diye değil.
+  final bool windowLimited;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final months = _months(context);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
-    final total = totalSeconds(sessions);
+    // 🔴 WP-612: "Toplam" ömür boyu özetten gelir; yalnız özet yoksa pencere
+    // toplamına düşülür — ve o durumda kapsam etiketi bu döşemeye de asılır.
+    final total = lifetimeSeconds ?? totalSeconds(sessions);
     final daily = totals ?? dailyTotals(sessions);
+    // Rekor seri / en verimli gün / aktif gün / en çok ders SICAK PENCEREdir
+    // ve pencerenin dışına çıkamaz (rekor seri 90'ı hiçbir zaman aşamaz).
+    final windowScope = windowLimited
+        ? ' · ${AppLocalizations.of(context).statsStreakGun(kUserSessionsHotWindowDays.toString())}'
+        : '';
+    final totalScope = lifetimeSeconds == null ? windowScope : '';
     final longest = longestStudyStreak(sessions, totals: daily);
     final activeDays = daily.length;
 
@@ -83,19 +110,19 @@ class StudyRecords extends ConsumerWidget {
       _RecordTile(
         icon: Icons.timelapse,
         color: subjectColor('chart-1'),
-        label: AppLocalizations.of(context).statsToplam,
+        label: '${AppLocalizations.of(context).statsToplam}$totalScope',
         value: formatHuman(total),
       ),
       _RecordTile(
         icon: Icons.local_fire_department,
         color: subjectColor('chart-5'),
-        label: AppLocalizations.of(context).statsRekorSeri,
+        label: '${AppLocalizations.of(context).statsRekorSeri}$windowScope',
         value: AppLocalizations.of(context).statsStreakGun(longest.toString()),
       ),
       _RecordTile(
         icon: Icons.emoji_events_outlined,
         color: subjectColor('chart-3'),
-        label: AppLocalizations.of(context).statsEnVerimliGun,
+        label: '${AppLocalizations.of(context).statsEnVerimliGun}$windowScope',
         value: bestDay == null
             ? '—'
             : '${formatHuman(bestSeconds)}\n${bestDay!.day} ${months[bestDay!.month - 1]}',
@@ -103,7 +130,7 @@ class StudyRecords extends ConsumerWidget {
       _RecordTile(
         icon: Icons.calendar_month_outlined,
         color: subjectColor('chart-2'),
-        label: AppLocalizations.of(context).statsAktifGun,
+        label: '${AppLocalizations.of(context).statsAktifGun}$windowScope',
         value: AppLocalizations.of(
           context,
         ).statsStreakGun(activeDays.toString()),
@@ -111,7 +138,7 @@ class StudyRecords extends ConsumerWidget {
       _RecordTile(
         icon: Icons.menu_book_outlined,
         color: subjectColor('chart-4'),
-        label: AppLocalizations.of(context).statsEnCokDers,
+        label: '${AppLocalizations.of(context).statsEnCokDers}$windowScope',
         value: topSubject,
       ),
     ];

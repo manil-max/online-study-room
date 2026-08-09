@@ -68,8 +68,29 @@ class StatsPeriodSelection {
     final n = now ?? DateTime.now();
     if (offset != 0 && supportsNavigation) {
       final (from, endExclusive) = _shiftedBounds(n);
-      // Geçmiş dönem kapalıdır: `to` dönemin son anıdır, "şimdi" değil.
-      return (from, endExclusive.subtract(const Duration(milliseconds: 1)));
+      // 🔴 WP-612: geçmiş dönem kapalıdır — `to` dönemin son GÜNÜdür
+      // ("şimdi" değil) ve `from` gibi bir **gün anahtarıdır**.
+      //
+      // Eskiden `endExclusive.subtract(const Duration(milliseconds: 1))` idi:
+      // cihazın **yerel** 23:59:59.999'u. `istanbul_calendar._isDayKey` yalnız
+      // saat/dakika/… = 0 olan değeri anahtar sayar; 23:59:59.999 anahtar
+      // değildir, dolayısıyla İstanbul'a ÇEVRİLİR. Cihaz UTC+3'ün batısındaysa
+      // (UTC, tüm Avrupa, Amerika — ve CI koşucusu) o an İstanbul'da **ertesi
+      // gündür**: "geçen hafta" 7 değil 8 gün olur, günlük ortalama paydası da
+      // 8'e çıkar. TR'deki cihazda (UTC+3) üretilemediği için görünmüyordu.
+      //
+      // 🔴 "Düz gece yarısı son günü düşürür mü?" — HAYIR. `to`nun
+      // TÜM tüketicileri onu önce `dayOf()` ile güne indirir ve gün anahtarı
+      // karşılaştırır: `inRange` (`study_stats.dart:50-51`, `!d.isAfter(to)`),
+      // `userTotalsInRange`, `dailyAverageSeconds`, `dailyRange`,
+      // `analytics_query_providers.dart` `spanDays`, Supabase `_dateParam`,
+      // `personal_stats_view.dart` `chartEnd`. Hiçbiri `to`yu "an" olarak
+      // kıyaslamaz. `dayOf` gün anahtarında idempotent olduğu için kapanış
+      // günü **iki uç dâhil** kalır; ikinci çevrim tamamen ortadan kalkar.
+      return (
+        from,
+        DateTime(endExclusive.year, endExclusive.month, endExclusive.day - 1),
+      );
     }
     return switch (period) {
       StatsPeriod.today => (dayOf(n), n),

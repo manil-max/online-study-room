@@ -322,8 +322,16 @@ void main() {
       final thisWeek = startOfWeek(now);
       // Tarih SINIRI iddiası: bir önceki haftanın Pazartesi 00:00'ı…
       expect(from, thisWeek.subtract(const Duration(days: 7)));
-      // …ve o haftanın son anı (Pazar 23:59:59.999) — "şimdi" değil.
-      expect(to, thisWeek.subtract(const Duration(milliseconds: 1)));
+      // …ve o haftanın son GÜNÜ (Pazar) — "şimdi" değil.
+      //
+      // 🔴 WP-612: burada eskiden `thisWeek - 1ms` (cihazın YEREL 23:59:59.999'u)
+      // bekleniyordu ve iddia HAM `to` üzerindeydi. O değer gün anahtarı
+      // değildir; `dayOf` onu İstanbul'a çevirir ve UTC+3'ün batısındaki her
+      // cihazda (CI dâhil) gün BİR İLERİ kayardı — "geçen hafta" 8 gün olurdu.
+      // Bu satır hatayı ölçmüyor, SÖZLEŞMEYE çeviriyordu. Kapanış artık `from`
+      // gibi bir gün anahtarıdır; kaç GÜN kapsandığı ve saat dilimi davranışı
+      // `stats_bleeding_wp612_test.dart` içinde ölçülür.
+      expect(to, DateTime(2026, 3, 8));
       expect(to.isBefore(thisWeek), isTrue);
 
       expect(title(tester), 'Geçen hafta');
@@ -365,20 +373,15 @@ void main() {
       ).shifted(-1);
       final (mFrom, mTo) = month.range(now: now);
       expect(mFrom, DateTime(2025, 12, 1));
-      expect(
-        mTo,
-        DateTime(2026, 1, 1).subtract(const Duration(milliseconds: 1)),
-      );
+      // WP-612: kapanış = dönemin son GÜNÜ (gün anahtarı), son "an"ı değil.
+      expect(mTo, DateTime(2025, 12, 31));
 
       final year = const StatsPeriodSelection(
         period: StatsPeriod.year,
       ).shifted(-2);
       final (yFrom, yTo) = year.range(now: now);
       expect(yFrom, DateTime(2024, 1, 1));
-      expect(
-        yTo,
-        DateTime(2025, 1, 1).subtract(const Duration(milliseconds: 1)),
-      );
+      expect(yTo, DateTime(2024, 12, 31));
     });
 
     test('gezinme Bugün/Tümü/Özel için kapalı; offset aralığı bozmaz', () {

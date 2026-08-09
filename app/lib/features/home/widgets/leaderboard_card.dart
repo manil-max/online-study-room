@@ -6,6 +6,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/crowned_avatar.dart';
+import '../../../data/models/goal_streak.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -13,6 +14,7 @@ import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/profile_tap.dart';
+import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
 import 'card_scaffold.dart';
@@ -66,7 +68,9 @@ class LeaderboardCard extends ConsumerWidget {
           // Sabit başlık yüksekliği tahmini (dikey padding dahil): başlık satırı +
           // (yalnız geniş kartta) grup hedefi bloğu + listeden önceki boşluk.
           const rowHeight = 36.0;
-          final headerHeight = 32 + 24 + 12 + (isCompact ? 0.0 : 43.0);
+          // WP-612: hedef satırındaki rozet metin+ikon çiftinden birkaç piksel
+          // yüksek; tahmin onunla birlikte güncellendi.
+          final headerHeight = 32 + 24 + 12 + (isCompact ? 0.0 : 48.0);
 
           // Kart, başlık + en az bir satırı sığdıramayacak kadar kısaysa TÜM içerik
           // kaydırılır (Expanded yerine düz Column). Sınırsız yükseklikte (ListView)
@@ -97,10 +101,19 @@ class LeaderboardCard extends ConsumerWidget {
           final groupGoalPct = goalSeconds > 0
               ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0)
               : 0.0;
-          final groupStreak = currentStreak(
-            const [],
-            goalSeconds,
-            totals: groupDayTotals(stats),
+          // 🔴 WP-612: buradaki seri `currentStreak()` ile hesaplanıyordu —
+          // grace'siz ESKİ motor, üstelik `today` verilmediği için cihazın ham
+          // `DateTime.now()`u ile. "Grup hedefi" kartı (`group_goal_card.dart`)
+          // ise kanonik sunucu projeksiyonunu çiziyordu. İkisi de aynı ana
+          // ekranda alev + sayı gösterip FARKLI SAYI verebiliyordu; kullanıcının
+          // hangisinin doğru olduğunu ayırt etmesi imkânsızdı.
+          //
+          // `goal_streak_flame.dart` (GoalStreakBadge) zaten tam bu iş için
+          // yazılmıştı: "Bu sarmalayıcı iki motorun aynı ekranda yaşamasını
+          // engeller." Kart bunu iddia ediyordu, kodda engellenmemişti.
+          final streakScope = GoalStreakScope.group(
+            groupId: group.id,
+            timeZone: group.timeZone,
           );
 
           Profile? memberFor(String id) {
@@ -162,21 +175,13 @@ class LeaderboardCard extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (groupStreak > 0) ...[
-                    Icon(
-                      Icons.local_fire_department,
-                      size: 14,
-                      color: subjectColor('chart-5'),
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '$groupStreak',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: subjectColor('chart-5'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
+                  // Rozet koşulsuz çizilir (WP-481 sahip kararı): seri 0 iken
+                  // kaybolan gösterge "veri yok" ile "seri yok"u karıştırıyordu.
+                  GoalStreakBadge(
+                    scope: streakScope,
+                    size: GoalStreakFlameSize.compact,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     '%${(groupGoalPct * 100).round()}',
                     style: theme.textTheme.labelMedium?.copyWith(
