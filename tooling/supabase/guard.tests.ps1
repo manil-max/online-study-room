@@ -91,8 +91,17 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # purge saglik satiri configured / 0 kuyruk / 0 takili. Kontratin kendi yazili
 # taahhudu "post-check 0124 verince ayri bir commit ile bayrak $false'a" idi;
 # bayrak acik unutulmustu. Head 0124'te kalir (gercek durum), yalniz kapi kapanir.
-Assert-Equal $contract.staging.migration_head '0124' 'WP-549 turu staging hedefi 0124'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0124 apply bitti, staging yeniden kilitli'
+#
+# 🔴 0125 ICIN STAGING KAPISI ACILDI (2026-08-09, WP-630).
+# 0125 iki sey yapiyor: aylik rapor rizasi varsayilanini false'a cekiyor
+# (+ tek seferlik backfill) ve cron isini AYNI aralikla yeniden kuruyor,
+# yalniz govdeyi dusurerek (ay hesabi collect-reports'ta tek yerde kalsin).
+# profiles uzerinde degismezlik guard'i YOK ve iki tetikleyici de sutun
+# kapsamli (display_name / title_achievement_id), yani benim dokundugum
+# sutunda ateslenmiyor -- 0124'un dersi geregi VARSAYILMADI, bakildi.
+# tests/051 backfill ifadesini GERCEK satirla olcuyor.
+Assert-Equal $contract.staging.migration_head '0125' 'WP-630 staging hedefi 0125'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0125 apply icin staging kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
