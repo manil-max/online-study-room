@@ -111,9 +111,10 @@ Bu bir konsol ayarıdır, kod değil.
 bizi bitirir; onlar beş yıldır oradalar. Bizim kazandığımız yer sayacın hiç
 kaybetmemesi ve grubun canlı olması.
 
-**Tek istisna önerisi (henüz yapılmadı, yayın sonrası):** sınav geri sayımı
-(*"YKS'ye 214 gün"*). Neredeyse bedava, tek satır, TR öğrenci bağlamının tam
-merkezinde.
+**Tek istisna — ONAYLANDI (2026-08-09):** sınav geri sayımı (*"YKS'ye 214
+gün"*). Ana ekranda kart, en fazla üç tarih. Kapsam ve tasarım şartı **§8.1**.
+Bu istisnanın sınırı da orada: geri sayım bir **tarih gösterir**, ders programı
+/ hatırlatıcı / takvim ürünü hâline gelmez.
 
 ---
 
@@ -129,18 +130,46 @@ merkezinde.
 
 ---
 
-## 8. Yayın sonrasına kabul edilenler
+## 8. Backlog — proje sahibi 2026-08-09'da hepsini tek tek karara bağladı
 
-Sırayla — hiçbiri yayın kapısı değil:
+Bu liste eskiden "yayın sonrasına kabul edilenler" diye altı madde taşıyordu.
+Sahip hepsini gözden geçirdi; geriye **bir** yapılacak madde kaldı.
 
-1. Sıralamayı gizleme / kişisel hedef modu
-2. Sohbette görsel + alıntı
-3. Ders klasörü
-4. Çalışma dışı kategori
-5. Sınav geri sayımı (§6)
+### 8.1 YAPILACAK — Sınav geri sayımı (ana ekran kartı)
 
-~~Manuel oturuma "elle eklendi" etiketi~~ — **listeden çıkarıldı**, proje
-sahibi 2026-08-09'da istemediğini söyledi. Gerekçe ve bağlayıcılık için §7.
+**Sahip kararı ve kapsamı (2026-08-09):**
+
+- Ana ekranda bir **kart** olarak durur.
+- Kullanıcı **istediği tarihi** ekler (sınav adı + tarih).
+- **En fazla 3 tane** eklenebilir.
+- Tasarım **esnek** olmalı: kartın boyutu/yerleşimi 1, 2 ve 3 girdide de
+  bozulmadan çalışsın.
+
+🔴 **Önce önizleme, sonra kod.** Bu kozmetik bir iştir; ilk çıktı kod değil
+parametrik önizlemedir. Sahip boyut/yerleşim seçer, seçilen değer teste
+bağlanır. (Bu kural bu depoda daha önce ödendi: seçilmeden yazılan görsel iş
+iki kez baştan yapıldı.)
+
+**Neden bu madde kabul edildi, diğer araçlar reddedildi (§6):** araç yığınına
+girmiyoruz, ama bu tek istisna TR öğrenci bağlamının tam merkezinde —
+YKS/KPSS hazırlanan biri için sayaçtan sonraki en anlamlı sayı budur. Maliyeti
+neredeyse sıfır ve mevcut hiçbir akışı karmaşıklaştırmıyor.
+
+### 8.2 GELECEKTE OLABİLİR — Sohbette görsel + alıntı
+
+Sahip: *"büyük iş, belki gelecekte diye not et."* Backlog maddesi **değildir**;
+kendiliğinden sıraya girmez. Yeniden açılırsa görsel yükleme moderasyon
+yüzeyini de büyütür (depolama kapsamı, şikâyet akışı, saklama süresi) —
+kapsam o zaman baştan yazılmalı.
+
+### 8.3 KAPANDI — gerek görülmedi
+
+| Madde | Karar |
+|---|---|
+| Sıralamayı gizleme / kişisel hedef modu | **Silindi.** Sahip istemedi. |
+| Ders klasörü | **Silindi.** Sahip: gerek yok. |
+| Çalışma dışı kategori | **Silindi** — ihtiyaç zaten karşılanıyor: kullanıcı kendi kategorisini ekleyip kullanabiliyor. Ayrı bir "çalışma dışı" kavramı eklenmeyecek. |
+| Manuel oturuma "elle eklendi" etiketi | **Reddedildi**, bağlayıcı: §7. |
 
 **Zaten yapılmış olanlar:** AMOLED tema (`deep_amoled` paleti), hesap e-postası
 değiştirme (`account_settings_screen.dart`).
