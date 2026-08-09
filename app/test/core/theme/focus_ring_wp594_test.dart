@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/theme/app_theme.dart';
 import 'package:online_study_room/core/theme/focus_ring_tokens.dart';
-import 'package:online_study_room/core/theme/theme_presets.dart';
 import 'package:online_study_room/core/theme/warning_tokens.dart';
 import 'package:online_study_room/features/desktop/desktop_navigation_pane.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';

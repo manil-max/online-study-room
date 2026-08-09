@@ -279,7 +279,21 @@ void main() {
       // KIRMIZI HEDEF (WP-432): `stop(at:)` gerçek basma anını almalı; bugün
       // her zaman null gelir ve `DateTime.now()`a düşer.
       final notifier = _source(_notifierPath);
-      expect(notifier, contains('await stop(at: pending.at);'));
+      // 🔴 İddia BİÇİME değil BAĞA bakar. Eskiden tek satırlık
+      // `await stop(at: pending.at);` metni aranıyordu; WP-599 çağrıya bir
+      // parametre daha ekleyip satırı böldüğü an test kırmızıya düştü — oysa
+      // korunması gereken davranış (durdurma anının `pending.at`ten gelmesi)
+      // hiç bozulmamıştı. Biçime bakan iddia, ilgisiz bir değişiklikte yanlış
+      // kırmızı verir ve zamanla "şunu da gevşetelim" baskısı üretir.
+      final stopCall = notifier.indexOf('await stop(');
+      expect(stopCall, isNonNegative, reason: 'Kuyruktan Durdur çağrısı yok.');
+      expect(
+        notifier.substring(stopCall, stopCall + 160),
+        contains('at: pending.at'),
+        reason:
+            'Kuyruktan gelen Durdur, basma anını `pending.at` ile almıyor: '
+            'oturum sonu uygulamanın AÇILDIĞI ana kayar (hayalet süre).',
+      );
       expect(
         notifier,
         contains(

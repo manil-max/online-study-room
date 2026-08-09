@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/navigation/home_shell.dart';
-import 'package:online_study_room/core/navigation/profile_tab_badge.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/core/theme/warning_tokens.dart';
 import 'package:online_study_room/data/models/achievement_reward.dart';
