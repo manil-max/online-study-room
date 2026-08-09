@@ -35,6 +35,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     return SupabaseAuthRepository(
       Supabase.instance.client,
       recoveryRedirect: resolveRecoveryRedirect,
+      // WP-609: ağ yolu düşerse depo, metadata'dan eksik profil üretmek
+      // yerine önbellekteki son gerçek profili döndürür.
+      cachedProfile: () => ref.read(offlineCacheStoreProvider).readProfile(),
     );
   }
   final repo = InMemoryAuthRepository();

@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,14 +14,52 @@ import '../auth_repository.dart';
 /// için `recoveryRedirect` olarak korunur.
 typedef RecoveryRedirectResolver = Future<String?> Function();
 
+/// 🔴 WP-609 — çevrimdışı profil yedeğinin **saf** kararı.
+///
+/// Ağ yolu düştüğünde hangi profilin yayınlanacağını tek yerde belirler ve
+/// test edilebilir kılar. Eskiden bu karar `_profileFor`un içine gömülüydü ve
+/// koşulsuz `user_metadata` profiliydi — o profil yalnız `displayName` taşır,
+/// `dailyGoalMinutes` ve avatar **varsayılana** düşer.
+///
+/// Karşılığı sessiz bir veri kaybıydı: çevrimdışı açılışta WP-603 önbellekten
+/// doğru profili gösteriyor, arka plandaki ağ turu ~20 sn sonra başarısız
+/// olunca üstüne bu eksik profil yayınlanıyordu. Kullanıcı günlük hedefini
+/// önce doğru görüyor, sonra sessizce varsayılana dönüyordu; hedefe bağlı her
+/// şey (ilerleme halkası, "hedefi tuttun mu", seri tamamlama) o andan
+/// itibaren yanlış çalışıyordu.
+@visibleForTesting
+Profile offlineProfileFallback({
+  required String userId,
+  required String? metadataDisplayName,
+  required DateTime createdAt,
+  required Profile? cached,
+}) {
+  // Önbellek yalnız AYNI kullanıcıya aitse kullanılır: hesap değiştiren
+  // cihazda başkasının hedefini göstermek daha kötü bir hata olurdu.
+  if (cached != null && cached.id == userId) return cached;
+  return Profile(
+    id: userId,
+    displayName: metadataDisplayName ?? '',
+    createdAt: createdAt,
+  );
+}
+
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository(
     this._client, {
     RecoveryRedirectResolver? recoveryRedirect,
-  }) : _recoveryRedirect = recoveryRedirect ?? (() async => null);
+    Profile? Function()? cachedProfile,
+  }) : _recoveryRedirect = recoveryRedirect ?? (() async => null),
+       _cachedProfile = cachedProfile ?? (() => null);
 
   final supa.SupabaseClient _client;
+
+  /// 🔴 WP-609: ağ yolu başarısız olduğunda dönülecek **son gerçek** profil.
+  ///
+  /// Depo `OfflineCacheStore`u doğrudan tanımaz (katman sınırı); yalnız bir
+  /// okuyucu alır. Sağlayıcı bunu `offlineCacheStoreProvider`a bağlar.
+  final Profile? Function() _cachedProfile;
 
   /// Auth bağlantılarının döneceği derin bağlantı (Android) veya null.
   final RecoveryRedirectResolver _recoveryRedirect;
@@ -167,14 +205,24 @@ class SupabaseAuthRepository implements AuthRepository {
       if (row != null) return Profile.fromMap(row);
     } catch (_) {
       // Çevrimdışı veya geçici sunucu hatası: oturum geçerli ama profil satırı
-      // çekilemedi. Kullanıcıyı dışarı atma (oturum kalıcılığı) — metadata'dan
-      // geçici profille içeride tut; profil bağlanınca tekrar yüklenir.
+      // çekilemedi. Kullanıcıyı dışarı atma (oturum kalıcılığı).
+      //
+      // 🔴 WP-609 — buradaki yedek SESSİZ BİR VERİ KAYBIYDI. Aşağıdaki
+      // metadata profili yalnız `displayName` taşır; `dailyGoalMinutes`,
+      // avatar ve diğer alanlar **varsayılana** düşer. Çevrimdışı açılışta
+      // WP-603 önbellekten doğru profili gösteriyor, sonra bu ağ turu ~20 sn
+      // sonra başarısız olunca üstüne bu eksik profili yayınlıyordu: kullanıcı
+      // günlük hedefini doğru görüyor, sonra sessizce varsayılana dönüyordu.
+      // Hedefe bağlı her şey (ilerleme halkası, "hedefi tuttun mu", seri)
+      // o andan itibaren yanlış oluyordu.
     }
-    // Trigger henüz profili oluşturmadıysa veya çevrimdışıysak metadata'dan profil.
-    return Profile(
-      id: user.id,
-      displayName: (user.userMetadata?['display_name'] as String?) ?? '',
+    // Trigger henüz profili oluşturmadıysa ya da çevrimdışıysak: karar tek
+    // yerde, saf ve test edilebilir (bkz. [offlineProfileFallback]).
+    return offlineProfileFallback(
+      userId: user.id,
+      metadataDisplayName: user.userMetadata?['display_name'] as String?,
       createdAt: DateTime.now(),
+      cached: _cachedProfile(),
     );
   }
 
