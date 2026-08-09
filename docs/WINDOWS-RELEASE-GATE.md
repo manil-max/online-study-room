@@ -90,20 +90,32 @@ git tag beta-v9 && git push origin beta-v9
 - [ ] Log'da secret yok
 - [ ] Rollback planı: bir önceki bilinen-iyi ZIP
 
-### 🔴 Bilinen blok — stable Windows işi şu an düşer
+### ✅ Eski blok KALKTI (WP-590, 2026-08-09)
 
-`windows-release.yml` imza kapısı stable kanalda **fail-closed**: paket test
-sertifikasıyla imzalanmışsa iş `throw` eder. İş düştüğü için `upload-artifact`
-hiç koşmaz — yani **ZIP de yayınlanmaz**. Bu kapı WP-568'in kasıtlı kararıdır ve
-WP-578 ona dokunmadı.
+> 🔴 **Bu bölüm 2026-08-09'da düzeltildi.** Aşağıdaki metin uzun süre
+> *"stable Windows işi düşer, ZIP de yayınlanmaz"* diyordu ve **artık doğru
+> değil**. Bayat kalan bu paragraf, sürüm çıkarmayı gereksiz yere imkânsız
+> gösteriyordu. Denetimde (2026-08-09) yakalandı.
 
-Stable Windows ZIP çıkarmak için ikisinden biri gerekir:
+**Bugünkü gerçek:** imza kapısı **işi düşürmüyor**. `windows-release.yml`
+taşınabilir ZIP'i **koşulsuz** üretir ve yayınlar; yalnız güvenilmez imzalı
+MSIX'i yayından alıkoyar ve sebebini `platform-manifest.json` içindeki
+`signing.msixWithheldReason` alanına ve koşum uyarısına yazar.
 
-1. Gerçek kod imzalama sertifikası (satın alma kararı), ya da
-2. Repo değişkeni `WINDOWS_ALLOW_TEST_SIGNING=true` — MSIX yine kurulamaz ama iş
-   düşmez ve ZIP yayınlanır.
+Eski davranışın gerekçesi geçerliydi (kurulamayan MSIX kullanıcıya sunulmamalı)
+ama uygulaması yanlıştı: `throw` paketleme adımından **önce** olduğu için
+`upload-artifact` hiç koşmuyor ve **çalışan ZIP de** yayınlanmıyordu. Kırık
+olan MSIX'ti, ZIP değil.
 
-Beta kanalında böyle bir blok yok; kapı yalnız stable'da tetiklenir.
+**Kurulabilir paket isteniyorsa** artık üçüncü ve **ücretsiz** bir yol var:
+Microsoft Store'a gönderilen paketi Microsoft kendi sertifikasıyla imzalar —
+sertifika satın almak gerekmez. Bkz. `docs/WINDOWS-STORE-YOLU.md`.
+
+`WINDOWS_ALLOW_TEST_SIGNING=true` hâlâ duruyor ama artık "işi kurtarmak" için
+değil, **bilerek kurulamayan MSIX yayınlamak** için: kullanıcı onu `0x800B010A`
+ile kuramaz.
+
+Beta kanalında kapı zaten tetiklenmiyor.
 
 ## Geri alma
 

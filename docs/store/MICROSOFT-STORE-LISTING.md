@@ -481,9 +481,15 @@ Bunların dışında bu sayfadaki her kutu kopyala-yapıştır hazır.
 
 ## 17. Açık uç (bilmen gereken, listing dışı)
 
-**MSIX paketi şu an yalnız Türkçeyi beyan ediyor.**
-`app/pubspec.yaml` → `msix_config.languages: tr-tr`. Uygulama İngilizce de
-çalıştığı halde paket manifesti bunu söylemiyor; Store "bu uygulama Türkçe
-destekler" yazabilir ve İngilizce arayanlara daha az görünür. Düzeltmesi tek
-satır (`tr-tr, en-us`) ama kod tarafı — bu belge işinin kapsamı dışında.
-Söylediğinde ayrı bir WP'de düzeltilir.
+**~~MSIX paketi şu an yalnız Türkçeyi beyan ediyor.~~ — ÇÖZÜLDÜ (WP-606).**
+
+> 🔴 Bu madde yazıldığında **zaten düzeltilmişti**; düzeltme bu belgenin
+> commit'inden **önce** girmiş ama belge eski gerçeği yazmış. Denetimde
+> (2026-08-09) yakalandı ve burada düzeltildi. Ders: belge iddiadır, koda
+> bakmadan yazılmamalı.
+
+`app/pubspec.yaml` → `msix_config.languages: tr-tr, en-us`. Üretilen gerçek
+paketten doğrulandı: `AppxManifest.xml` içindeki `Resources` bölümü **iki dili
+de** taşıyor. Ayrıca bir sözleşme testi dil listesini
+`AppLocalizations.supportedLocales` ile bağlıyor — ileride üçüncü bir dil
+açılırsa paket sessizce geride kalamaz.
