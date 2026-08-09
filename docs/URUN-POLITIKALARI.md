@@ -121,6 +121,7 @@ merkezinde.
 
 | Talep | Karar | Gerekçe |
 |---|---|---|
+| **Manuel oturuma "elle eklendi" etiketi** | **Hayır** — *proje sahibi kararı, 2026-08-09* | Rakip analizi §4.2.6 ve `RAKIPANALIZI-DEGERLENDIRME` §3 bunu öneriyordu (kazanım eşit kalsın, sadece şeffaflık etiketi dursun). Sahip açıkça istemedi. Karar bağlayıcıdır: manuel ve sayaçla girilen süre **hiçbir yerde ayırt edilmez** — ne oturum geçmişinde, ne grup katkı listesinde, ne liderlik tablosunda. Yeniden önerilmez. |
 | Gün başlangıç saatini kullanıcı seçsin | **Hayır** | Rakibin şikâyeti 05:00 dayatması; istenen 00:00 ve **bizde zaten 00:00**. Ayarlanabilir yapmak `day` sütunu materialize olduğu için migration + backfill + tüm istatistik zinciri demek. Bedeli faydasından büyük. |
 | Sesli / görüntülü ortak seans | **Hayır** | Hem maliyet hem taciz cephesi; kalıcı ücretsizlik hedefiyle uyumsuz (§2). |
 | Boşta kalma tespiti | **Hayır** | §3. |
@@ -132,13 +133,14 @@ merkezinde.
 
 Sırayla — hiçbiri yayın kapısı değil:
 
-1. Manuel oturuma **"elle eklendi" etiketi** (ceza değil şeffaflık; kazanım eşit
-   kalır). Ayrıntı: `RAKIPANALIZI-DEGERLENDIRME` §3.
-2. Sıralamayı gizleme / kişisel hedef modu
-3. Sohbette görsel + alıntı
-4. Ders klasörü
-5. Çalışma dışı kategori
-6. Sınav geri sayımı (§6)
+1. Sıralamayı gizleme / kişisel hedef modu
+2. Sohbette görsel + alıntı
+3. Ders klasörü
+4. Çalışma dışı kategori
+5. Sınav geri sayımı (§6)
+
+~~Manuel oturuma "elle eklendi" etiketi~~ — **listeden çıkarıldı**, proje
+sahibi 2026-08-09'da istemediğini söyledi. Gerekçe ve bağlayıcılık için §7.
 
 **Zaten yapılmış olanlar:** AMOLED tema (`deep_amoled` paleti), hesap e-postası
 değiştirme (`account_settings_screen.dart`).

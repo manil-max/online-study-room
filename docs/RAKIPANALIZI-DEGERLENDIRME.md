@@ -112,6 +112,11 @@ alıntı · hesap e-postası değiştirme · ders klasörü · AMOLED tema · ç
 
 ## 3. Dokümanın kaçırdığı, kodda bulunan gerçek açık
 
+> 🔴 **REDDEDİLDİ — proje sahibi kararı, 2026-08-09.** Aşağıdaki "elle eklendi"
+> etiketi önerisi uygulanmayacak. Sahip açıkça istemedi. Manuel ve sayaçla
+> girilen süre hiçbir yerde ayırt edilmez. Bölüm analiz kaydı olarak duruyor,
+> **backlog maddesi değildir**. Bağlayıcı karar: `docs/URUN-POLITIKALARI.md` §7.
+
 **Manuel oturum tam XP alıyor ve hiçbir yerde işaretlenmiyor.**
 
 - `0063_equal_study_sources.sql:5` — *"source veya eski live_run bağı, XP/başarım/grup
