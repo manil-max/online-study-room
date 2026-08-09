@@ -261,6 +261,13 @@ void main() {
   });
 
   group('WP-539 iptal kapisi: durum sorgusu dusse de kaybolmaz', () {
+    // 🔴 WP-620 duzeltmesi: bu test eskiden `find.text('Silme planlandı —
+    // iptal et')` bekliyordu, yani WP-539'un **fazla ileri giden** yanini
+    // sozlesmeye cevirmisti. WP-539 hakliydi (iptal kapisi kaybolmamali) ama
+    // cozumu belirsizligi "aktif"e yuvarliyordu: silmeyi hic istememis
+    // kullanici, sadece ag kotu diye "hesabin silinecek" kartini goruyordu.
+    // Korunan sey ayni (iptal kapisi ayakta), degisen sey ekranin **hangi
+    // cumleyi kurdugu**. Ayrinti: account_settings_honesty_wp620_test.dart.
     testWidgets('sorgu hata verince iptal kapisi hala ekranda', (tester) async {
       final repo = await _pumpScreen(
         tester,
@@ -272,7 +279,7 @@ void main() {
       );
 
       expect(
-        find.text('Silme planlandı — iptal et'),
+        find.byKey(const Key('accountDeletionCancelPending')),
         findsOneWidget,
         reason:
             'ölçüm: eskiden 0 — bekleyen istek varken kart sessizce '
@@ -280,16 +287,25 @@ void main() {
             'hâle geliyordu',
       );
       expect(
-        find.text(
-          'Silme durumu okunamadı. Bekleyen bir isteğin varsa buradan '
-          'iptal edebilirsin.',
-        ),
+        find.text('Silme durumu okunamadı'),
         findsOneWidget,
         reason: 'kullanıcı durumun bilinmediğini de bilmeli',
       );
+      expect(
+        find.text('Silme planlandı — iptal et'),
+        findsNothing,
+        reason:
+            'WP-620: okunamayan durum "aktif" sayılamaz; bu cümle silmeyi hiç '
+            'istememiş kullanıcıya hesabının gittiğini söylüyordu',
+      );
 
       // Kapı ölü anahtar değil: dokununca gerçekten iptal RPC'si gidiyor.
-      await tester.tap(find.text('Silme planlandı — iptal et'));
+      // (360x800'de kart alt kenarı taşıyor; önce görünür alana getirilir.)
+      await tester.ensureVisible(
+        find.byKey(const Key('accountDeletionCancelPending')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('accountDeletionCancelPending')));
       await tester.pumpAndSettle();
       expect(repo.cancelCalls, 1);
       expect(find.text('Silme isteği iptal edildi.'), findsOneWidget);
