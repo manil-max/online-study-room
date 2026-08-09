@@ -178,7 +178,8 @@ void main() {
         'today:small',
       ]);
       expect(prefs.getStringList('dashboard_layout_v2_32'), isNotNull);
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
+      // WP-576: `dashboard_grid_density` artik yazilmiyor (okuyani yoktu).
+      expect(prefs.getString('dashboard_grid_density'), isNull);
     });
 
     test('setBounds carpisan kartlari asagi iter', () async {
@@ -239,7 +240,11 @@ void main() {
       ]);
     });
 
-    test('WP-186 density herkeste sabit 32; eski pref migrate', () async {
+    // WP-576: bu iki test eskiden olu bir ayari kilitliyordu. `set()` argumanini
+    // yok sayiyor, `columns` her zaman 32 donuyor, `dashboard_grid_density`
+    // yalniz YAZILIYOR ama `lib/` icinde hicbir yerde OKUNMUYORDU. Iddia artik
+    // gercek sozlesme: sutun sayisi sabit 32 ve eski anahtara dokunulmaz.
+    test('eski columns12 tercihi sutun sayisini degistirmez', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_grid_density': 'columns12',
       });
@@ -249,22 +254,13 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      expect(
-        container.read(dashboardGridDensityProvider),
-        DashboardGridDensity.columns32,
-      );
       expect(container.read(dashboardGridColumnsProvider), 32);
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
-
-      // set() de pin eder
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns6);
-      expect(container.read(dashboardGridColumnsProvider), 32);
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
+      // Eskiden burada 'columns32'ye "migrate" yazmasi vardi; okuyani olmadigi
+      // icin her aciliste bosuna diske yaziyordu.
+      expect(prefs.getString('dashboard_grid_density'), 'columns12');
     });
 
-    test('eski automatic tercihi 32 ye duser', () async {
+    test('eski automatic tercihi de sutun sayisini degistirmez', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_grid_density': 'automatic',
       });
@@ -274,12 +270,8 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      expect(
-        container.read(dashboardGridDensityProvider),
-        DashboardGridDensity.columns32,
-      );
       expect(container.read(dashboardGridColumnsProvider), 32);
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
+      expect(prefs.getString('dashboard_grid_density'), 'automatic');
     });
 
     test('varsayilan duzen 32 sutunda tasmadan olceklenir', () async {
@@ -290,8 +282,6 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      expect(DashboardGridDensity.columns32.columns, 32);
-      expect(DashboardGridDensity.columns32.label, '32');
       expect(container.read(dashboardGridColumnsProvider), 32);
 
       final layout = container.read(dashboardLayoutProvider);
@@ -299,7 +289,7 @@ void main() {
       for (final card in layout) {
         expect(card.x + card.w, lessThanOrEqualTo(32));
       }
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
+      expect(prefs.getString('dashboard_grid_density'), isNull);
     });
 
     test('yeni kart eklerken varsayilan boyut 32-gridde kullanislidir', () async {

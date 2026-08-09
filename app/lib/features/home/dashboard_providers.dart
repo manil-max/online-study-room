@@ -7,51 +7,15 @@ import 'dashboard_card.dart';
 const _kLayoutKey = 'dashboard_layout';
 const _kLayoutProfilePrefix = 'dashboard_layout_v2_';
 const _kLastColumnsKey = 'dashboard_grid_last_columns';
-const _kDensityKey = 'dashboard_grid_density';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
-/// WP-186: ızgara yoğunluğu herkeste sabit 32. Eski enum adları prefs migrate
-/// için tanınır ama runtime yalnız [columns32] döner.
-enum DashboardGridDensity {
-  columns6,
-  columns8,
-  columns12,
-  columns16,
-  columns32,
-}
-
-extension DashboardGridDensityX on DashboardGridDensity {
-  String get label => '32';
-
-  int get columns => 32;
-}
-
-class DashboardGridDensityNotifier extends Notifier<DashboardGridDensity> {
-  @override
-  DashboardGridDensity build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    // Eski 6/8/12/16/automatic → her zaman 32'ye yaz (bozulmadan düşer).
-    prefs.setString(_kDensityKey, DashboardGridDensity.columns32.name);
-    return DashboardGridDensity.columns32;
-  }
-
-  /// WP-186: seçici kaldırıldı; çağrılar yine 32'ye pin'ler (test uyumu).
-  void set(DashboardGridDensity value) {
-    state = DashboardGridDensity.columns32;
-    ref
-        .read(sharedPreferencesProvider)
-        .setString(_kDensityKey, DashboardGridDensity.columns32.name);
-  }
-}
-
-final dashboardGridDensityProvider =
-    NotifierProvider<DashboardGridDensityNotifier, DashboardGridDensity>(
-      DashboardGridDensityNotifier.new,
-    );
-
-final dashboardGridColumnsProvider = Provider<int>(
-  (ref) => ref.watch(dashboardGridDensityProvider).columns,
-);
+/// Izgara sütun sayısı — herkeste sabit 32 (WP-186 seçiciyi kaldırdı).
+///
+/// WP-576: seçilebilirlik taklidi silindi. Beş değerli `DashboardGridDensity`
+/// enum'u, argümanını yok sayan `set()`'i ve `dashboard_grid_density` prefs
+/// yazması ölüydü: `columns` her zaman 32 dönüyordu ve anahtarı `lib/` içinde
+/// okuyan tek satır yoktu.
+final dashboardGridColumnsProvider = Provider<int>((ref) => 32);
 
 String _profileKey(int columns) => '$_kLayoutProfilePrefix$columns';
 

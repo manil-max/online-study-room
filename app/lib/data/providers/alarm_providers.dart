@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,7 +10,6 @@ import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/time_engine/clock_study_recorder.dart';
 import '../../core/time_engine/epoch_clock.dart';
 import '../../core/time_engine/epoch_countdown.dart';
-import '../../core/time_engine/epoch_stopwatch.dart';
 import '../../core/time_engine/exact_alarm_permission.dart';
 import '../models/alarm_rule.dart';
 import '../models/timer_preset.dart';
@@ -494,146 +492,5 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     }
     await _syncTimerNative(merged);
     ref.invalidateSelf();
-  }
-}
-
-// ─── Lap stopwatch (WP-60) ─────────────────────────────────────────────────
-
-final stopwatchProvider =
-    NotifierProvider<StopwatchNotifier, EpochStopwatchState>(
-      StopwatchNotifier.new,
-    );
-
-class StopwatchNotifier extends Notifier<EpochStopwatchState> {
-  static const _prefsKey = 'clock_stopwatch_state_v1';
-  static const _creditedKey = 'clock_stopwatch_study_credited_ms';
-
-  @override
-  EpochStopwatchState build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    final raw = prefs.getString(_prefsKey);
-    if (raw != null) {
-      try {
-        return EpochStopwatchState.fromMap(
-          jsonDecode(raw) as Map<String, dynamic>,
-        );
-      } catch (_) {}
-    }
-    return EpochStopwatchState.idle;
-  }
-
-  Future<void> _persist() async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setString(_prefsKey, jsonEncode(state.toMap()));
-  }
-
-  int get nowMs => ref.read(epochClockProvider).nowMs();
-
-  int get _creditedMs =>
-      ref.read(sharedPreferencesProvider).getInt(_creditedKey) ?? 0;
-
-  Future<void> _setCreditedMs(int ms) async {
-    await ref.read(sharedPreferencesProvider).setInt(_creditedKey, ms);
-  }
-
-  /// Henüz çalışma kaydına yazılmamış süreyi yaz (pause / reset).
-  Future<void> _creditUnrecordedStudy() async {
-    final elapsed = state.elapsedMs(nowMs);
-    final already = _creditedMs;
-    final deltaMs = elapsed - already;
-    if (deltaMs < ClockStudyRecorder.minDurationSeconds * 1000) return;
-    final sec = deltaMs ~/ 1000;
-    final ok = await ref
-        .read(clockStudyRecorderProvider)
-        .recordDuration(durationSeconds: sec);
-    if (ok) {
-      await _setCreditedMs(already + sec * 1000);
-    }
-  }
-
-  void start() {
-    state = state.start(nowMs);
-    unawaited(_persist());
-  }
-
-  void pause() {
-    state = state.pause(nowMs);
-    unawaited(_persist());
-    unawaited(_creditUnrecordedStudy());
-  }
-
-  void toggle() {
-    final wasRunning = state.running;
-    state = state.toggle(nowMs);
-    unawaited(_persist());
-    if (wasRunning && !state.running) {
-      unawaited(_creditUnrecordedStudy());
-    }
-  }
-
-  void reset() {
-    // Sıfırlamadan önce kalan süreyi yaz
-    if (state.running) {
-      state = state.pause(nowMs);
-    }
-    unawaited(() async {
-      await _creditUnrecordedStudy();
-      state = state.reset();
-      await _setCreditedMs(0);
-      await _persist();
-    }());
-  }
-
-  void lap() {
-    state = state.lap(nowMs);
-    unawaited(_persist());
-  }
-}
-
-// ─── World clock cities ────────────────────────────────────────────────────
-
-final worldCitiesProvider =
-    NotifierProvider<WorldCitiesNotifier, List<({String label, String tz})>>(
-      WorldCitiesNotifier.new,
-    );
-
-class WorldCitiesNotifier extends Notifier<List<({String label, String tz})>> {
-  static const _key = 'world_clock_cities_v1';
-
-  @override
-  List<({String label, String tz})> build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    final raw = prefs.getStringList(_key);
-    if (raw == null || raw.isEmpty) {
-      return const [
-        (label: 'London', tz: 'Europe/London'),
-        (label: 'New York', tz: 'America/New_York'),
-        (label: 'Tokyo', tz: 'Asia/Tokyo'),
-        (label: 'Dubai', tz: 'Asia/Dubai'),
-      ];
-    }
-    return raw.map((e) {
-      final parts = e.split('|');
-      return (label: parts[0], tz: parts.length > 1 ? parts[1] : parts[0]);
-    }).toList();
-  }
-
-  Future<void> _save() async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setStringList(
-      _key,
-      state.map((e) => '${e.label}|${e.tz}').toList(),
-    );
-  }
-
-  Future<void> add(String label, String tzId) async {
-    if (state.any((e) => e.tz == tzId)) return;
-    state = [...state, (label: label, tz: tzId)];
-    await _save();
-  }
-
-  Future<void> remove(String tzId) async {
-    state = state.where((e) => e.tz != tzId).toList();
-    await _save();
   }
 }
