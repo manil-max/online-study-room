@@ -59,9 +59,78 @@ final timerNotificationPermissionProvider =
 ///
 /// 🔴 Belirsizlikte `true`: olmayan bir sorun için uyarı çizmek, uyarıyı hiç
 /// çizmemekten daha kötüdür (bkz. [TimerNotificationService.hasPermission]).
-final timerNotificationPermissionStatusProvider = FutureProvider<bool>(
-  (ref) => ref.watch(timerNotificationPermissionProvider).hasPermission(),
-);
+
+/// Öne gelme sayacı. Tazeleyici bunu artırır, durum sağlayıcısı bunu izler.
+///
+/// 🔴 Neden ayrı bir sinyal: tazeleyici doğrudan
+/// [timerNotificationPermissionStatusProvider]'ı geçersiz kılamaz — durum onu
+/// zaten izlediği için Riverpod bunu **döngüsel bağımlılık** sayıp atıyor
+/// (ölçüldü, ilk denemede tam bu hatayı verdi). Sinyali ayırmak döngüyü kırar:
+/// tazeleyici sayacı yazar, durum sayacı okur, kimse kimseyi izlemez.
+class _PermissionRefreshTick extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state = state + 1;
+}
+
+final _permissionRefreshTickProvider =
+    NotifierProvider<_PermissionRefreshTick, int>(_PermissionRefreshTick.new);
+
+final timerNotificationPermissionStatusProvider = FutureProvider<bool>((ref) {
+  // 🔴 WP-615: uygulama öne gelince yeniden okunur — bkz.
+  // [TimerNotificationPermissionRefresher].
+  ref.watch(timerNotificationPermissionRefresherProvider);
+  ref.watch(_permissionRefreshTickProvider);
+  return ref.watch(timerNotificationPermissionProvider).hasPermission();
+});
+
+/// 🔴 WP-615 — WP-592'nin (aynı gün eklendi) eksik yarısı.
+///
+/// Uyarı şeridi izin durumunu **bir kez** hesaplıyordu: sağlayıcı düz bir
+/// `FutureProvider`'dı ve repoda onu geçersiz kılan tek satır yoktu. Akış şuydu:
+///
+///   1. kullanıcı şeridi görüyor, "Eksik izinleri aç"a basıyor,
+///   2. sistem ayarlarında izni **veriyor**,
+///   3. uygulamaya dönüyor — **şerit hâlâ orada.**
+///
+/// Yani düzeltmenin kendisi kullanıcıya "yaptığın şey işe yaramadı" dedirtiyor.
+/// Şeridin tek çıkışı sistem ayarları olduğu için doğru tetikleyici **uygulamanın
+/// öne gelmesi**: kullanıcı oradan dönmeden durum değişemez.
+///
+/// WP-592'nin testi bunu göremezdi: sabit bir sahte geçit döndürdüğü için
+/// "durum yeniden okunuyor mu" sorusu hiç sorulmuyordu.
+class TimerNotificationPermissionRefresher with WidgetsBindingObserver {
+  TimerNotificationPermissionRefresher(this._ref);
+
+  final Ref _ref;
+  var _started = false;
+
+  void start() {
+    if (_started) return;
+    _started = true;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _ref.read(_permissionRefreshTickProvider.notifier).bump();
+  }
+
+  void dispose() {
+    if (!_started) return;
+    WidgetsBinding.instance.removeObserver(this);
+    _started = false;
+  }
+}
+
+final timerNotificationPermissionRefresherProvider =
+    Provider<TimerNotificationPermissionRefresher>((ref) {
+      final refresher = TimerNotificationPermissionRefresher(ref)..start();
+      ref.onDispose(refresher.dispose);
+      return refresher;
+    });
 
 @pragma('vm:entry-point')
 void timerNotificationBackgroundHandler(NotificationResponse response) async {
