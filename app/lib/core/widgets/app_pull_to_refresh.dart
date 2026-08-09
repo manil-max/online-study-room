@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/providers/analytics_query_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/notification_providers.dart';
@@ -115,6 +116,18 @@ Future<void> refreshAppData(WidgetRef ref) async {
   ref.invalidate(userAchievementsProvider(user.id));
   // Masaüstü listesinden gelen tek fazlalık; kaybolmasın diye tek kaynağa taşındı.
   ref.invalidate(pendingAchievementRewardSummaryProvider);
+
+  // 🔴 WP-585: analitik yolu bu listede YOKTU. WP-573'ten beri uzun dönem
+  // ("Yıl" / "Tümü") istatistiği ve grup katkı/alfa kartları **sunucudan**
+  // gelir; burada olmadıkları için yalnız DOLAYLI olarak (aşağıdaki
+  // `userSessionsProvider` bir dönem sıcak pencereye sığdığında) tazeleniyor,
+  // sunucu tarafı hiç yeniden okunmuyordu. Aşağı çekme jesti veri değişmemiş
+  // gibi görünüyordu. Family'nin kendisi invalidate edilir: canlı olan her
+  // dönem örneği yeniden çekilir.
+  ref.invalidate(analyticsUserDayTotalsProvider);
+  ref.invalidate(analyticsUserSessionsInRangeProvider);
+  ref.invalidate(analyticsGroupContributionProvider);
+  ref.invalidate(groupAlphaScoresProvider);
 
   // Kritik: kısa timeout ile bekle — ana istatistik / bugün / kamp ateşi.
   final critical = <Future<void>>[

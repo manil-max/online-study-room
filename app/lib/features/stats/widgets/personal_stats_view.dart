@@ -113,14 +113,20 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final longSessionsAsync = beyondHot
         ? ref.watch(analyticsUserSessionsInRangeProvider(analyticsPeriod))
         : null;
-    final serverSessions = longSessionsAsync?.value;
+    final serverRange = longSessionsAsync?.value;
     final periodSessions =
-        serverSessions ?? inRange(sessions, from, to).toList();
+        serverRange?.sessions ?? inRange(sessions, from, to).toList();
     // 🔴 Sunucu yolu gelmediyse (yükleniyor / hata) **sessizce** 90 güne
     // düşülmez: başlık kapsamı söyler ([scopeSuffix]), hata dalı ayrıca
     // tekrar-dene sunar ([scopeFailed]). Etiket artık "dönem ufku aşıyor mu"
     // değil "kartlar gerçekten 90 günle mi sınırlı" sorusunu yanıtlar.
-    final hotLimited = beyondHot && serverSessions == null;
+    //
+    // 🔴 WP-585: sunucu BOŞ dönüp provider sıcak pencereye geri düştüğünde de
+    // etiket yazılır ([AnalyticsRangeSessions.hotLimited]). Eskiden bu dalda
+    // `serverSessions != null` olduğu için view "veri geldi" sanıyor, kartlar
+    // 90 günü gösterirken başlık dönemin tamamını iddia ediyordu.
+    final hotLimited =
+        beyondHot && (serverRange == null || serverRange.hotLimited);
     final scopeFailed = longSessionsAsync?.hasError ?? false;
 
     // Döneme göre hafta içi/sonu (ortalama aşağıda, veri ufkuna kırpılarak).

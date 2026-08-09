@@ -3809,9 +3809,9 @@
   "@statsBugunkuGrupHedefi": {
     "description": "Stats user-facing text. Source: Bugünkü grup hedefi"
   },
-  "statsDersBazindaDagilimSon": "Distribution by subject (last 30 days)",
+  "statsDersBazindaDagilimSon": "Distribution by subject",
   "@statsDersBazindaDagilimSon": {
-    "description": "Stats user-facing text. Source: Ders bazında dağılım (son 30 gün)"
+    "description": "Stats user-facing text. Source: Ders bazında dağılım"
   },
   "statsDegistir": "Change",
   "@statsDegistir": {

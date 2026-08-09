@@ -64,19 +64,37 @@ final analyticsUserDayTotalsProvider =
       return const {};
     });
 
+/// Dönem oturumları + bu listenin dönemi gerçekten kapsayıp kapsamadığı.
+///
+/// 🔴 WP-585: sunucu boş dönerse sıcak pencereye geri düşülür ve bu geri düşme
+/// eskiden **sessizdi** — provider yalın bir liste döndürdüğü için ekran "veri
+/// geldi" sanıyor, kapsam etiketini ("· 90 gün") yazmıyordu. Kullanıcı 90
+/// günlük toplamı 400 günlük sanıyordu. Geri düşme kaldırılmadı: sunucu boş
+/// dönünce ekranı sıfırlamak ayrı bir yalan olurdu. Artık **söyleniyor**.
+typedef AnalyticsRangeSessions = ({
+  List<StudySession> sessions,
+  bool hotLimited,
+});
+
+const AnalyticsRangeSessions _emptyRange = (
+  sessions: <StudySession>[],
+  hotLimited: false,
+);
+
 /// Seçili dönem self oturumları (konu×gün, saat dağılımı vb.).
 final analyticsUserSessionsInRangeProvider =
-    FutureProvider.family<List<StudySession>, AnalyticsPeriod>((
+    FutureProvider.family<AnalyticsRangeSessions, AnalyticsPeriod>((
       ref,
       period,
     ) async {
       final user = ref.watch(authStateProvider).value;
-      if (user == null) return const [];
+      if (user == null) return _emptyRange;
       final (from, to) = period.range();
       final hot = ref.watch(userSessionsProvider).asData?.value;
       final spanDays = dayOf(to).difference(dayOf(from)).inDays;
       if (hot != null && spanDays <= 90) {
-        return inRange(hot, from, to).toList();
+        // Dönem zaten sıcak pencerenin içinde: liste dönemin tamamıdır.
+        return (sessions: inRange(hot, from, to).toList(), hotLimited: false);
       }
       final repo = ref.read(analyticsQueryRepositoryProvider);
       if (repo is InMemoryAnalyticsQueryRepository && hot != null) {
@@ -87,9 +105,15 @@ final analyticsUserSessionsInRangeProvider =
         from: from,
         to: to,
       );
-      if (rows.isNotEmpty) return rows;
-      if (hot != null) return inRange(hot, from, to).toList();
-      return const [];
+      if (rows.isNotEmpty) return (sessions: rows, hotLimited: false);
+      // Sunucu boş: sıcak pencere kısmî veri verebilir. Verirse İŞARETLENİR;
+      // yüzey kapsamı başlıkta yazar. Veremiyorsa gerçekten veri yoktur ve
+      // "90 gün" etiketi asılmaz (doğru veriye yanlış uyarı da bir yalandır).
+      if (hot != null) {
+        final partial = inRange(hot, from, to).toList();
+        if (partial.isNotEmpty) return (sessions: partial, hotLimited: true);
+      }
+      return _emptyRange;
     });
 
 final analyticsGroupContributionProvider =
