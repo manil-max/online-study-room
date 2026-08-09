@@ -9447,6 +9447,120 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - Yeni l10n anahtari EKLENMEDI: o sirada uc ajan ayni `.arb` dosyalarina
   yaziyordu.
 
+---
+
+### WP-585: Istatistik yuzeyinde uc tutarsizlik
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`23ad3ba`)
+- Baslik "Ders bazinda dagilim (son 30 gun)" diyordu; WP-573 sonrasi kart
+  hicbir donemde 30 gun degil. Kullanici "son 30 gun" okuyup 400 gunluk toplami
+  goruyordu.
+- `refreshAppData` — yenilemenin TEK kaynagi (WP-550) — analytics saglayicilarini
+  listelemiyordu; uzun donem verisi yalnizca DOLAYLI tazeleniyordu.
+- 🔴 Sessiz geri dusme kapsam etiketini YALAN SOYLETIYORDU: sunucu bos liste
+  donunce sicak pencereye dusuluyor ama "· 90 gun" etiketi YAZILMIYORDU, cunku
+  view "veri geldi" saniyordu. Kullanici eksik sayiyi TAM saniyordu.
+
+---
+
+### WP-587: Dogrulama maili gelmezse kullanicinin CIKISI yoktu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`0dde602`)
+- Play kapali testi onaylandiginda 13 kisi AYNI GUN kayit olacak; Supabase free
+  tier e-posta gonderimini siddetle kisitliyor. Uygulamada dogrulama e-postasini
+  yeniden gonderme yolu YOKTU (`resend` aramasi 0 sonuc): hesap var, giris yok,
+  cikis yok.
+- 🔴 Bu ayarin production'da acik mi kapali mi oldugunu repo HIC olcmemis:
+  teshis workflow'u dort alani yazdiriyor ama dogrulama bayragini yazdirmiyordu.
+  OKUMA adimina eklendi; PATCH govdesine dokunulmadi.
+- Hiz sinirina takilirsa generic mesaja DUSMEZ (WP-539 zinciri korundu).
+
+---
+
+### WP-588: 13 test kullanicisi birbirini bulamiyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`a5473f6`)
+- Davet kodu yalniz Gruplar -> ⚙ -> Bilgiler altinda ve SADECE kopyala idi;
+  kesif ekrani bosken duz bir cumleydi ve `RefreshIndicator` yalniz DOLU listede
+  kuruluyordu — kullanici asagi cekiyor, hicbir sey olmuyordu.
+- Uygulamanin CEKIRDEGI birlikte calismak; bu haliyle cekirdek hic test edilmezdi.
+- Varsayilan grup gizliligi (Ozel) DEGISTIRILMEDI — urun karari, sahibe soruldu;
+  yalnizca testle sabitlendi ki sessizce degismesin.
+
+---
+
+### WP-589: Grup kartlari ag hatasinda SONSUZA KADAR iskelet ciziyordu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`86297d8`)
+- 🔴 Planda olmayan kok bulgu: `userGroupProvider` HATAYI DUSURUYORDU.
+  `groupsAsync.whenData(...)` kullaniyordu; Riverpod 3'te hic deger vermemis bir
+  `StreamProvider` hata aldiginda durum `AsyncError` DEGIL, hatayi tasiyan
+  `AsyncLoading` olur ve `whenData` o durumda govdeyi atlar. Hata turetmede
+  KAYBOLUYORDU.
+  Karsiligi: grup akisi ilk yuklemede patlayinca DORT kart (siralama, grup
+  hedefi, grup trendi, su an calisanlar) sonsuza kadar ISKELET ciziyordu — ne
+  hata cumlesi ne tekrar-dene. Yani bu WP'nin duzeltecegi hata dali zaten HIC
+  CALISMIYORDU. WP-560 ayni tuzagi sohbette bulmustu; bu ikinci ornegi.
+- `class_stats_view` hata dali BOS dalla ayni cumleyi kullaniyordu: sunucuya
+  ulasilamayinca kullaniciya "bu donemde henuz calisma yok" deniyordu — grubu
+  hakkinda YANLIS bilgi. Yasak zaten yaziliydi, uygulanmamisti.
+
+---
+
+### WP-590: Imza kapisi CALISAN artefakti da olduruyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`e354394`)
+- WP-568'in `throw`u paketleme adimindan ONCE oldugu icin is orada oluyor ve
+  `upload-artifact` hic kosmuyordu: bir sonraki stable yayin HICBIR Windows
+  artefakti uretmezdi — WP-578'in birincil yol yaptigi calisan ZIP dahil.
+  v62 en azindan ZIP cikariyordu, yani bu bir GERILEME olurdu.
+- Kirik olan MSIX'tir, ZIP degil. Kapi artik isi dusurmuyor: ZIP kosulsuz
+  yayinlanir, guvenilmez MSIX yayindan ALIKONUR, sebep manifeste ve kosum
+  uyarisina yazilir.
+
+---
+
+### WP-592: Bildirim izni kapaliyken sayac GORUNMEZ calisiyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`25ca299`)
+- Izin reddedilince kullaniciya HICBIR YERDE tek kelime soylenmiyordu;
+  `notificationsEnabled` yalnizca Profil -> Ayarlar -> Bildirim Merkezi'nde
+  okunuyordu ve sayaci baslatan kisi oraya hic ugramaz. Karsiligi: kalici
+  bildirim yok, bildirimden durdurma yok, kullanici "sayac bozuk" der.
+- Okuma yuzeyi BILEREK `TimerNotificationGateway` disinda ayri bir arayuzde:
+  o arayuzun tamami WP-563'un derleme zamani kapisiyla kapsaniyor ve oraya uye
+  eklemek o kapiyi derlenemez hale getirirdi.
+- `ErrorRetryView`a istege bagli `retryLabel`: bildirim izni kapaliyken dogru
+  cikis sistem ayarlarini acmaktir; dugmeye "Tekrar dene" yazmak kullaniciya
+  YANLIS seyi vaat ederdi.
+- **Olculmeyen (durustce):** platform sondasinin kendisi widget testinde
+  olculemez; cihaz kabulune kalir.
+
+---
+
+### WP-593: Ilk acilisin iki purruzu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [~] Ikisi tamam (`903a0e9`),
+  ucuncusu ACIK
+- Yepyeni kurulumda gorulen ILK ekran, giris ekranindan bile once acilan
+  "Yenilikler" degisiklik gunluguydu (`getInt(...) ?? 0`: kayitsiz taze kurulum
+  ile "0. build'i gormus" kullanici ayni sayiliyordu).
+- `AuthGate` yukleme dali cikissiz/zaman asimsiz duz spinner'di; oturum akisi
+  cevap vermezse tek care uygulamayi oldurmekti. Hata dali WP-539'da cikis
+  kazanmisti, yukleme dali unutulmustu.
+- 🔴 Eski `release_notes_test` taze kurulum davranisini SOZLESMEYE cevirmisti
+  (`82c4bb0` ile daraltildi). Bu turda ucuncu kez: bir test yanlis davranisi
+  kilitliyor (WP-574 poz, WP-576 olu enum, WP-593 taze kurulum).
+- **ACIK:** Istatistik > Grup sekmesi "once bir gruba katil" diyor ama DUGME YOK
+  (`stats_screen.dart:147-160`). Ajan oraya gelemedi.
+
+---
+
+### WP-594: Masaustunun uc eksigi — **ACILMADI**
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [ ] Bekliyor
+- WP-569'un lidere devrettikleri; ajan limitte hicbir sey yapmadan dustu.
+  1. Masaustu sol panelinde ROZET YOK: `core/navigation/home_shell.dart:196-211`
+     mobil Profil sekmesine bekleyen odul / okunmamis duyuru / eksik birincil
+     grup rozetini basiyor, masaustu kolu (`:132`) hicbirini gecmiyor.
+  2. 🔴 Yanlis yapilandirmayla cikan surumde kullanici HICBIR MESAJ GORMUYOR:
+     `build_configuration_error_app.dart` mount'lu ama Windows'ta pencere bombos
+     beyaz kaliyor (WP-569 calistirarak olctu).
+  3. Odak halkasi `colorScheme.primary`e bagli; tema studyosunda palet yakin
+     secilirse eriyor (bilinen "uyari rozeti tema cakismasi" deseninin aynisi).
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
