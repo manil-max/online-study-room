@@ -6647,5 +6647,13 @@
         "type": "String"
       }
     }
+  },
+  "classroomSayacYenidenBaslatilmadi": "You just stopped the timer, so it was not restarted. Tap again if you want to start a new session.",
+  "@classroomSayacYenidenBaslatilmadi": {
+    "description": "WP-598 snackbar shown when the Start button is tapped within kAccidentalRestartCooldown (10 s) of a stop. The tap does not open a run; a second tap does. A real user restarted the timer 3 s after stopping it, left the app, and 11 h 22 m was recorded overnight."
+  },
+  "classroomSayacArkaPlandaCalisir": "The timer runs in the background: closing the app does not stop it, time keeps counting. Press Stop when you are done.",
+  "@classroomSayacArkaPlandaCalisir": {
+    "description": "WP-598 one-time snackbar shown the first time the user starts the timer. Nothing in the app said that the foreground service keeps the timer running after the app is closed."
   }
 }

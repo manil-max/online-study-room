@@ -14,6 +14,90 @@ import '../../../data/providers/subject_providers.dart';
 import 'clock_style.dart';
 import 'timer_mode_controls.dart';
 
+/// WP-598: iki sayaç yüzeyinin (kart + tam ekran odak) ortak, "bir kez göster"
+/// açıklamaları.
+///
+/// Kural ve metin seçimi TEK yerde durur; yüzeyler yalnız bu satırı çağırır.
+/// WP-560 dersi: aynı kuralı iki yüzeye kopyalamak, yarısını düzeltip diğerini
+/// unutmak demektir. (Fonksiyon bu dosyada duruyor çünkü `study_timer_card`
+/// zaten burayı import ediyor; ters yön iki dosya arasında döngü açardı.)
+///
+/// Kart ile odak ekranı aynı anda takılı olabilir — odak, kartın üstüne
+/// itilir. Bu yüzden açıklamayı yalnız **öndeki** rota gösterir; aksi hâlde
+/// aynı cümle iki kez kuyruğa girer.
+void listenTimerNotices(BuildContext context, WidgetRef ref) {
+  /// Sinyali **kareden sonra** gösterir ve orada tüketir.
+  ///
+  /// Neden kare sonrası: sinyal build sırasında okunuyor olabilir; o an
+  /// `showSnackBar` çağırmak "build sırasında setState" hatasıdır.
+  ///
+  /// Neden geri okuma (`ref.read(notice)`): kart ile odak ekranı aynı anda
+  /// takılı olabilir ve kart saniyede bir yeniden çizilir. İlk geri çağırım
+  /// sinyali tüketir, sonrakiler `false` görüp döner — aynı cümle iki kez
+  /// kuyruğa girmez.
+  void present({
+    required bool pending,
+    required NotifierProvider<TimerOneShotNoticeNotifier, bool> notice,
+    required String Function(AppLocalizations l10n) text,
+    required VoidCallback consume,
+    required Duration duration,
+  }) {
+    if (!pending) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      if (!ref.read(notice)) return;
+      // Yalnız öndeki rota gösterir; arkadaki kart sinyali tüketmez.
+      if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      consume();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(text(AppLocalizations.of(context))),
+          duration: duration,
+        ),
+      );
+    });
+  }
+
+  // 🔴 WP-598 (H1): reddedilen Başlat dokunuşu SESSİZ kalamaz; sessiz kalırsa
+  // kullanıcı "düğme bozuk" der. Ne olduğu ve ne yapması gerektiği söylenir.
+  void presentRestartNotice(bool pending) => present(
+    pending: pending,
+    notice: accidentalRestartNoticeProvider,
+    text: (l10n) => l10n.classroomSayacYenidenBaslatilmadi,
+    consume: () => ref.read(accidentalRestartNoticeProvider.notifier).clear(),
+    duration: const Duration(seconds: 5),
+  );
+
+  // WP-598 (H2): "uygulamayı kapatmak sayacı durdurmaz" — ömürde bir kez.
+  // Ömürlük bayrak burada, GÖSTERİLDİKTEN sonra yazılır: sayacı widget'tan
+  // başlatıp uygulamayı hemen açmayan kullanıcı açıklamayı kaybetmesin.
+  void presentBackgroundHint(bool pending) => present(
+    pending: pending,
+    notice: timerBackgroundHintNoticeProvider,
+    text: (l10n) => l10n.classroomSayacArkaPlandaCalisir,
+    consume: () =>
+        ref.read(studyTimerProvider.notifier).acknowledgeBackgroundHint(),
+    duration: const Duration(seconds: 6),
+  );
+
+  ref.listen<bool>(
+    accidentalRestartNoticeProvider,
+    (previous, pending) => presentRestartNotice(pending),
+  );
+  ref.listen<bool>(
+    timerBackgroundHintNoticeProvider,
+    (previous, pending) => presentBackgroundHint(pending),
+  );
+
+  // Riverpod'un `listen`i yalnız DEĞİŞİMİ taşır; sinyal biz takılmadan önce
+  // yakılmış olabilir (örn. sayaç widget'tan başlatıldı, uygulama sonra açıldı).
+  // Mount anındaki bekleyen sinyal bu yüzden ayrıca okunur.
+  presentRestartNotice(ref.read(accidentalRestartNoticeProvider));
+  presentBackgroundHint(ref.read(timerBackgroundHintNoticeProvider));
+}
+
 /// Tam ekran odak modunu açar (§3.12). Sistem çubukları gizlenir; çıkışta
 /// (ekran kapanınca) geri yüklenir.
 Future<void> openFocusTimer(BuildContext context) {
@@ -57,6 +141,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    listenTimerNotices(context, ref);
     final timer = ref.watch(studyTimerProvider);
     final notifier = ref.read(studyTimerProvider.notifier);
     final recorded = ref.watch(todayRecordedSecondsProvider);

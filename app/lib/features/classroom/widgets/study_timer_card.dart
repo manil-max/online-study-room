@@ -204,6 +204,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
       );
       ref.read(selectedStudySubjectFallbackNoticeProvider.notifier).clear();
     });
+    // WP-598: kaza korkuluğu + arka plan açıklaması. Kural odak ekranıyla ortak
+    // (`listenTimerNotices`), yüzeyler arasında sürüklenemez.
+    listenTimerNotices(context, ref);
 
     final now = DateTime.now();
     final elapsed = (timer.isRunning && timer.startedAt != null)

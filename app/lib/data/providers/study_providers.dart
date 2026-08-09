@@ -79,6 +79,81 @@ class SelectedStudySubjectFallbackNoticeNotifier extends Notifier<bool> {
   void clear() => state = false;
 }
 
+/// WP-598: "az önce durduruldu mu" penceresini ölçen saat.
+///
+/// Neden ayrı bir sağlayıcı: bu pencerenin testi zamanın **enjekte edilmesini**
+/// ister. Duvar saatini içeriden okuyan bir kural test edilemez, test edilemeyen
+/// kural da sessizce ölür (WP-595 `implausible_run_guard` aynı gerekçeyle
+/// yazıldı). Yalnız bu pencere buradan okur; koşunun `startedAt`i eskisi gibi
+/// `DateTime.now()`dır — iki saati karıştırmamak için.
+final studyTimerClockProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);
+
+/// Durdurmadan sonra Başlat'ın **onay** istediği pencere.
+///
+/// 🔴 Ölçüldü, tahmin edilmedi: 2026-08-08 gecesi gerçek kullanıcı sayacı arka
+/// arkaya üç kez durdurdu ve her seferinde 6 sn / 1 sn / 3 sn sonra yeniden
+/// başlattı (`docs/analiz/WP-595-sayac-xp-teshis.md` §1). Üçüncüsünde sonucu
+/// görmeden ekranı bıraktı; sabah 11 sa 22 dk "çalışma" kaydedildi ve verilen
+/// XP geri alınamadı. Kök neden: Durdur zinciri bitince AYNI konumdaki düğme
+/// "Çalışmaya başla"ya dönüyor, sabırsız parmak ikinci kez iniyor.
+///
+/// 10 sn ölçülen üç vakayı da kapsar. Pencere içindeki dokunuş **yasak değil,
+/// onaylıdır**: meşru "dersi değiştirip devam etme" akışı kilitlenmez, yalnız
+/// ikinci bir dokunuş ister.
+const Duration kAccidentalRestartCooldown = Duration(seconds: 10);
+
+/// Saf karar: bu Başlat isteği "az önce durdurdum" penceresine mi düşüyor?
+///
+/// [now] zorunludur, varsayılanı yoktur (bkz. [studyTimerClockProvider]).
+/// Saat geriye giderse ([now] < [lastStoppedAt]) fark negatif olur ve onay
+/// İSTENMEZ: geriye giden saat ayrı bir arızadır (WP-542); onu bu pencereyle
+/// karıştırmak kullanıcıyı kalıcı biçimde onay istemeye mahkûm ederdi.
+bool startNeedsRestartConfirmation({
+  required DateTime? lastStoppedAt,
+  required DateTime now,
+  Duration cooldown = kAccidentalRestartCooldown,
+}) {
+  if (lastStoppedAt == null) return false;
+  final sinceStop = now.difference(lastStoppedAt);
+  if (sinceStop.isNegative) return false;
+  return sinceStop < cooldown;
+}
+
+/// WP-598: yüzeyin bir kez gösterip temizlediği sinyal.
+///
+/// WP-468 kuralı: burada **metin değil sinyal** taşınır; cümleyi gösteren yüzey
+/// kendi `AppLocalizations`ından okur (provider katmanının `BuildContext`i yok).
+class TimerOneShotNoticeNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void show() => state = true;
+
+  void clear() => state = false;
+}
+
+/// "Az önce durdurdun; sayaç yeniden başlatılmadı" açıklaması.
+///
+/// Sessiz yutma yasak: reddedilen dokunuş kullanıcıya SÖYLENİR, yoksa
+/// "düğme bozuk" denir.
+final accidentalRestartNoticeProvider =
+    NotifierProvider<TimerOneShotNoticeNotifier, bool>(
+      TimerOneShotNoticeNotifier.new,
+    );
+
+/// WP-598 (H2): "uygulamayı kapatmak sayacı durdurmaz" açıklaması.
+///
+/// Foreground service'in devam etmesi tasarım gereğidir; hata bunun hiçbir
+/// yerde yazmamasıydı (`app_tr.arb` taramasında sıfır dize). Kalıcı bildirim
+/// metnini Kotlin üretir (WP-563: bu katmana bildirim yüzeyi eklemek yasak),
+/// bu yüzden bilgi **başlatma anındaki geri bildirime** konur — ömürde bir kez.
+final timerBackgroundHintNoticeProvider =
+    NotifierProvider<TimerOneShotNoticeNotifier, bool>(
+      TimerOneShotNoticeNotifier.new,
+    );
+
 /// FCM anlık sinyaldir, teslim garantisi değildir. Uygulama foreground'dayken
 /// bu düşük frekanslı snapshot turu iki açık cihazın FCM kaçırması durumunda da
 /// server-authoritative timer state'inde birleşmesini sağlar.
@@ -506,6 +581,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kSelectedStudySubjectPrefix = 'selected_study_subject.';
   static const _kGeneralStudySubject = '__general__';
 
+  /// WP-598 (H2): arka plan açıklaması gösterildi mi. Ömürde bir kez;
+  /// bayrağı **yüzey gösterdiğinde** yazarız ([acknowledgeBackgroundHint]),
+  /// başlatma anında değil — yoksa app kapalıyken (widget'tan) başlatılan
+  /// sayaçta açıklama hiç görülmeden "gösterildi" sayılırdı.
+  static const _kBackgroundHintSeen = 'timer_background_hint_seen';
+
   /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
   /// (start/stop), native→Dart (`reconcile`).
   static const MethodChannel _timerChannel = MethodChannel(
@@ -545,6 +626,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// gerçekten yeni bir native başlatma → benimsenir. Böylece "bildirimden
   /// başlatılanı uygulama içinden durduramama" yarışı içerik-temelli kapanır.
   int? _stoppedStartedAtMs;
+
+  /// WP-598: en son koşunun BİTTİĞİ an ([_finish] damgalar).
+  /// Kalıcı değildir: kaza penceresi saniyelerle ölçülür, araya soğuk açılış
+  /// giriyorsa dokunuş zaten kazara değildir.
+  DateTime? _lastRunEndedAt;
+
+  /// WP-598: pencere içindeki ilk dokunuş reddedilip açıklama gösterildi;
+  /// ikinci dokunuş artık bilinçlidir ve geçer.
+  bool _restartConfirmationArmed = false;
 
   /// [_reconcileInFlight]: eşzamanlı reconcile çağrılarını tek çalışmaya
   /// birleştirir. [_reconcileAgainRequested]: çalışırken yeni bir broadcast
@@ -1819,7 +1909,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       elapsedSeconds: _visibleElapsedSeconds,
     );
     if (pending.command == 'start' && !state.isRunning) {
-      start();
+      // WP-598: bu Başlat bildirimden/widget'tan geldi ve uygulama kapalıyken
+      // basıldı. Kaza korkuluğu burada REDDEDİLMEZ: ekranda gösterilecek bir
+      // açıklama yok, reddetmek sessiz yutma olurdu (düzeltmenin kendisi bir
+      // sessiz yutma üretemez).
+      start(guardAccidentalRestart: false);
     } else if (pending.command == 'stop' && state.isRunning) {
       // App-kapalı basılan Durdur'da gerçek durdurma anını (pending.at) kullan.
       await stop(at: pending.at);
@@ -1933,8 +2027,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   /// Çalışmaya başla (mevcut moda göre ilk fazı kurar).
-  void start() {
+  ///
+  /// WP-598: [guardAccidentalRestart] varsayılan olarak AÇIK — ekrandaki her
+  /// Başlat yüzeyi (kart + tam ekran odak) korumayı bedavaya alır, korumanın
+  /// yüzeylere kopyalanması gerekmez. Yalnız **geri bildirim kanalı olmayan**
+  /// çağrı yerleri kapatır: bildirim/widget kuyruğundan gelen Başlat uygulama
+  /// kapalıyken uygulanır, orada reddetmek sessiz yutma olurdu.
+  void start({bool guardAccidentalRestart = true}) {
     if (state.isRunning) return;
+    if (guardAccidentalRestart &&
+        !_acceptStartAfterStop(ref.read(studyTimerClockProvider)())) {
+      return;
+    }
     final now = DateTime.now();
     // WP-243: yeni çalışma başlıyor → önceki durdurma echo-koruması artık
     // geçersiz (bu başlatmanın ms'i farklı; eski ms'i tutmaya gerek yok).
@@ -1992,6 +2096,58 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     } else {
       _verifiedStartFuture = null;
     }
+    _teachBackgroundBehaviourOnce();
+  }
+
+  /// WP-598 (H1): "az önce durdurdum" penceresindeki Başlat'ı **onaya** bağlar.
+  ///
+  /// `true` → başlatma sürsün. `false` → bu dokunuş koşu AÇMAZ; kullanıcıya
+  /// ne olduğu söylenir ve bir sonraki dokunuş geçer.
+  ///
+  /// Asimetri kapanıyor: `stop()` WP-246'dan beri ikinci girişe karşı korunuyor
+  /// (`_stopInFlight`), `start()` korunmuyordu — gecenin 11 saatlik sahte
+  /// oturumu tam olarak bu boşluktan geçti.
+  bool _acceptStartAfterStop(DateTime now) {
+    if (!startNeedsRestartConfirmation(
+      lastStoppedAt: _lastRunEndedAt,
+      now: now,
+    )) {
+      // Pencere kapandı: normal başlatma. Bekleyen onay varsa da düşer.
+      _restartConfirmationArmed = false;
+      return true;
+    }
+    if (_restartConfirmationArmed) {
+      // Kullanıcı açıklamayı gördü ve bir kez daha dokundu → gerçekten istiyor.
+      _restartConfirmationArmed = false;
+      return true;
+    }
+    _restartConfirmationArmed = true;
+    ref.read(accidentalRestartNoticeProvider.notifier).show();
+    // `deferred` = istek düşürülmedi, ONAY bekliyor. Bir dahaki olayda günlükte
+    // "kaç kez kazara başlatılmaya çalışıldı" sorusunun cevabı budur.
+    _journalTransition(
+      event: TimerJournalEvents.startRequested,
+      reason: TimerJournalReasons.userAction,
+      outcome: TimerJournalOutcomes.deferred,
+      origin: TimerJournalOrigins.app,
+    );
+    return false;
+  }
+
+  /// WP-598 (H2): sayacın uygulama kapansa da çalıştığını **bir kez** söyler.
+  ///
+  /// Her açılışta bağıran uyarı değil: bayrak yazıldıktan sonra bir daha
+  /// gösterilmez.
+  void _teachBackgroundBehaviourOnce() {
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (prefs.getBool(_kBackgroundHintSeen) ?? false) return;
+    ref.read(timerBackgroundHintNoticeProvider.notifier).show();
+  }
+
+  /// Yüzey açıklamayı GÖSTERDİ → ömürlük bayrak şimdi yazılır.
+  void acknowledgeBackgroundHint() {
+    ref.read(timerBackgroundHintNoticeProvider.notifier).clear();
+    ref.read(sharedPreferencesProvider).setBool(_kBackgroundHintSeen, true);
   }
 
   Future<int> _clientBuildNumber() async {
@@ -2451,6 +2607,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // düşmeden gelen echo `reconcile` bu ms ile `running` okursa yeniden
     // benimsenmez (içerik-temelli durdurma yarışı koruması).
     _stoppedStartedAtMs = state.startedAt?.millisecondsSinceEpoch;
+    // WP-598: koşu bu an bitti. Bundan sonraki [kAccidentalRestartCooldown]
+    // içinde gelen Başlat onay ister. Bekleyen onay da düşer: her durdurma
+    // kendi penceresini açar.
+    _lastRunEndedAt = ref.read(studyTimerClockProvider)();
+    _restartConfirmationArmed = false;
     state = state.copyWith(
       isRunning: false,
       // WP-250: sayaç kapandı; "durduruluyor" ara durumu da bitti.
