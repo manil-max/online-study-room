@@ -56,8 +56,11 @@ class _NotificationPermissionsScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final profile = ref.watch(authStateProvider).value;
+    // 🔴 WP-626: profil yokken varsayılan AÇIK'tı. Hiç kimseye tek bir rapor
+    // e-postası gönderilmediği hâlde ekran "açık" gösteriyordu; bilinmeyen
+    // durumun varsayılanı vaat değil sessizlik olmalı.
     final reportOptIn =
-        _monthlyReportOptInOverride ?? profile?.monthlyReportOptIn ?? true;
+        _monthlyReportOptInOverride ?? profile?.monthlyReportOptIn ?? false;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -78,8 +81,29 @@ class _NotificationPermissionsScreenState
                 child: SwitchListTile(
                   key: const Key('monthly-report-opt-in'),
                   secondary: const Icon(Icons.mark_email_unread_outlined),
-                  title: Text(l10n.profileAylikCalismaRaporuEposta),
-                  subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
+                  // 🔴 WP-626: bu satır var olmayan bir özelliği vaat
+                  // ediyordu. `send-report` fonksiyonunu hiçbir cron, iş akışı
+                  // veya istemci çağırmıyor; iki fonksiyon da hiçbir yerde
+                  // deploy edilmiyor ve e-posta sağlayıcı anahtarı hiç
+                  // tanımlanmıyor. Kullanıcı bugüne kadar tek bir rapor
+                  // e-postası almadı. Eski alt satır ("Özetler ve kullanıcı
+                  // raporları" — aslında yönetim kartının metni) vaadi
+                  // pekiştiriyordu. Anahtar tercihi kaydetmeye devam ediyor
+                  // ama artık gönderimin başlamadığını SÖYLÜYOR.
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(l10n.profileAylikCalismaRaporuEposta),
+                      ),
+                      const SizedBox(width: 8),
+                      _ComingSoonBadge(
+                        label: l10n.notificationsAylikRaporYakinda,
+                      ),
+                    ],
+                  ),
+                  subtitle: Text(
+                    l10n.notificationsAylikRaporHenuzGonderilmiyor,
+                  ),
                   value: reportOptIn,
                   onChanged: profile == null || _savingMonthlyReport
                       ? null
@@ -92,6 +116,35 @@ class _NotificationPermissionsScreenState
             ),
             const ClockWidgetsScreen(embedded: true),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// WP-626: "henüz yok" rozeti. Renk tema paletinden bağımsız değil ama
+/// `tertiary`/`onTertiary` çifti her iki temada da okunur kalıyor; sabit
+/// değer verilirse kırmızı temada kaybolan uyarı rozetinin hatası tekrarlanır.
+class _ComingSoonBadge extends StatelessWidget {
+  const _ComingSoonBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const Key('monthly-report-coming-soon'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: scheme.onTertiaryContainer,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

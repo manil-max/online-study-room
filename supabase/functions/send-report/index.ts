@@ -40,7 +40,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    // 🔴 WP-626: anahtar HİÇ TANIMLI DEĞİLKEN eski kod aşağıdaki `[Mock]`
+    // dalına düşüyor, bir konsol satırı yazıyor ve işi `sent` işaretliyordu.
+    // Yani kuyruk boşalıyor, kullanıcıya hiçbir şey gitmiyor ve geriye
+    // "gönderildi" yazan bir satır kalıyordu — görünür bir boşluk görünmez
+    // bir yalana dönüşüyordu. Bu fonksiyonu bir cron'a bağlamak, düzeltmeden
+    // önce, hatayı gizlemek olurdu.
+    //
+    // Taklit yalnız `RESEND_API_KEY=mock` **açıkça** yazıldığında (yerel
+    // geliştirme) sürer. Anahtar yoksa koşum HİÇBİR SATIRA DOKUNMADAN reddedilir.
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    if (!RESEND_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          error: 'RESEND_API_KEY_MISSING',
+          message:
+            'E-mail provider is not configured; no queue row was touched. ' +
+            'Set RESEND_API_KEY, or RESEND_API_KEY=mock for local runs.',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 503,
+        },
+      )
+    }
 
     // WP-108 (B2): pending + failed (retry_count < 3). abandoned alınmaz.
     const { data: jobs, error: fetchError } = await supabaseAdmin
@@ -94,7 +117,7 @@ serve(async (req) => {
 
         const html = generateReportHtml(stats, job.report_month, tokenData.id)
 
-        if (RESEND_API_KEY && RESEND_API_KEY !== 'mock') {
+        if (RESEND_API_KEY !== 'mock') {
           const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
