@@ -36,42 +36,12 @@ jobs:
           flutter-version: 3.44.2
           cache: true
 
-      - name: Kanal/backend manifestini üret
-        shell: pwsh
-        env:
-          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
-          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
-          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
-          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
-        run: |
-          $isBeta = '${{ inputs.channel }}' -eq 'beta'
-          $manifest = @{
-            CHANNEL = '${{ inputs.channel }}'
-            APP_ENVIRONMENT = if ($isBeta) { 'staging' } else { 'production' }
-            ALLOW_IN_MEMORY = 'false'
-            SUPABASE_URL = if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
-            SUPABASE_ANON_KEY = if ($isBeta) { $env:STAGING_SUPABASE_ANON_KEY } else { $env:PRODUCTION_SUPABASE_ANON_KEY }
-            SUPABASE_PROJECT_REF = if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
-            STAGING_SUPABASE_PROJECT_REF = $env:STAGING_SUPABASE_PROJECT_REF
-            PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
-            GIT_COMMIT_SHA = '${{ inputs.git_sha }}'
-            MIGRATION_HEAD = '${{ inputs.migration_head }}'
-            APP_VERSION_NAME = '${{ inputs.version_name }}'
-            APP_BUILD_NUMBER = '${{ inputs.build_number }}'
-            DISTRIBUTION_CHANNEL = 'windows'
-          }
-          $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
-
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json --concurrency=1
-      - run: flutter test --tags=golden --dart-define-from-file=env.json --concurrency=1
-      - name: Kanal/backend fail-closed guard
-        run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
-      - run: flutter build windows --release --build-name=${{ inputs.version_name }} --build-number=${{ inputs.build_number }} --dart-define-from-file=env.json
-
+      # 🔴 WP-614: bu adim env.json'dan ONCEye alindi ve sirasi artik
+      # SOZLESMEDIR. `DISTRIBUTION_CHANNEL` bir derleme-zamani define'idir;
+      # Store paketinin magaza kanali olarak isaretlenebilmesi ancak Store
+      # modunun env.json yazilmadan ONCE bilinmesiyle mumkun. Eskiden Store
+      # karari burada, define ise yukarida veriliyordu: sonuc, magazadan
+      # kurulan pakette sideload updater'in ACIK kalmasiydi.
       # 🔴 WP-568: Windows paket surumu iki ayri yerde yaziliyordu. Paket
       # surumu `1.0.0.<build>` SABIT onekiyle uretiliyordu: kullanici "Yuklu
       # uygulamalar"da 1.0.0.62 gorurken uygulama 1.0.62 diyordu; ustelik
@@ -142,6 +112,148 @@ jobs:
           "store_publisher=$storePublisher" >> $env:GITHUB_OUTPUT
           "store_display=$storeDisplay" >> $env:GITHUB_OUTPUT
           Write-Host "MSIX kimlik=$identity sürüm=$version"
+
+      # 🔴 WP-614 — DAGITIM KANALI. Bu manifest **sideload/ZIP** derlemesini
+      # tanimlar: GitHub Releases'tan inen tasinabilir ZIP guncelleme
+      # kontrolunu yapmaya devam eder. Magaza paketi AYRI derlenir (asagida);
+      # ikisini tek derlemeden cikarmak, birinin politikasini otekine
+      # dayatmak demekti.
+      - name: Kanal/backend manifestini üret (sideload/ZIP derlemesi)
+        shell: pwsh
+        env:
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          $isBeta = '${{ inputs.channel }}' -eq 'beta'
+          $manifest = @{
+            CHANNEL = '${{ inputs.channel }}'
+            APP_ENVIRONMENT = if ($isBeta) { 'staging' } else { 'production' }
+            ALLOW_IN_MEMORY = 'false'
+            SUPABASE_URL = if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
+            SUPABASE_ANON_KEY = if ($isBeta) { $env:STAGING_SUPABASE_ANON_KEY } else { $env:PRODUCTION_SUPABASE_ANON_KEY }
+            SUPABASE_PROJECT_REF = if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
+            STAGING_SUPABASE_PROJECT_REF = $env:STAGING_SUPABASE_PROJECT_REF
+            PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
+            GIT_COMMIT_SHA = '${{ inputs.git_sha }}'
+            MIGRATION_HEAD = '${{ inputs.migration_head }}'
+            APP_VERSION_NAME = '${{ inputs.version_name }}'
+            APP_BUILD_NUMBER = '${{ inputs.build_number }}'
+            # Sideload kanali: updater ACIK olmali (ZIP kullanicisi guncellemeyi
+            # baska yerden alamaz). Magaza paketi bu degeri KULLANMAZ.
+            DISTRIBUTION_CHANNEL = 'windows'
+          }
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json --concurrency=1
+      - run: flutter test --tags=golden --dart-define-from-file=env.json --concurrency=1
+      # 🔴 WP-614: guard'a ikinci dosya eklendi. `distribution_channel.dart`
+      # yillardir "Faz H'de build oncesi bir kapi testi sarttir" diye yaziyordu
+      # ve o kapi hic yazilmamisti. Artik derlemeye giren `DISTRIBUTION_CHANNEL`
+      # define'i BILINEN bir deger olmak zorunda; magaza kanaliysa sideload
+      # updater'in kapali oldugu ayrica olculuyor. Yanlis yazilmis bir define
+      # (ornegin `microsoft-store`) eskiden sessizce `windows`a dusuyordu.
+      - name: Kanal/backend + dağıtım kanalı fail-closed guard
+        run: flutter test test/core/current_build_manifest_gate_test.dart test/core/config/distribution_define_wp614_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+      - name: Windows derlemesi (sideload/ZIP)
+        run: flutter build windows --release --build-name=${{ inputs.version_name }} --build-number=${{ inputs.build_number }} --dart-define-from-file=env.json
+
+      # 🔴 WP-614: ZIP artik burada, MSIX'ten ONCE uretiliyor. Sebep magaza
+      # paketinin AYRI bir derleme olmasi: Store derlemesi ayni Release
+      # klasorunu ezer, dolayisiyla sideload ZIP o ezilmeden alinmali.
+      - name: Taşınabilir ZIP'i sideload derlemesinden üret
+        id: zip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = 'build/windows-dist'; New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $release = 'build/windows/x64/runner/Release'
+          $prefix = '${{ steps.msix.outputs.prefix }}'
+          # 🔴 `msix:create` paketi Release klasörünün İÇİNE yazar. ZIP
+          # eskiden klasörü olduğu gibi sıkıştırdığı için taşınabilir arşiv kendi
+          # kurulumunun bir kopyasını taşıyordu (gereksiz ~2x indirme).
+          $zipItems = Get-ChildItem -Path $release | Where-Object { $_.Extension -ne '.msix' }
+          if (-not $zipItems) { throw 'Release klasöründe paketlenecek dosya yok.' }
+          # 🔴 WP-590: taşınabilir ZIP KOŞULSUZ üretilir ve yayınlanır —
+          # kullanıcıda gerçekten çalışan tek Windows artefaktı odur.
+          $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path $zipItems.FullName -DestinationPath $zipOut -Force
+          "zip=$zipOut" >> $env:GITHUB_OUTPUT
+          Write-Host "Taşınabilir ZIP: $zipOut"
+
+      # 🔴 WP-614 — YAYINLANAN ZIP HIC CALISTIRILMIYORDU.
+      # `scripts/windows_fast_smoke.ps1` (pencere basligini dogrulayan gercek
+      # smoke) repoda duruyor ama HICBIR is akisindan ve `test_all.py`'den
+      # cagrilmiyordu: kullaniciya gonderilen arsiv bir kez bile acilmadan
+      # yayinlaniyordu. Bu adim ZIP'i ACAR ve icinden cikan EXE'yi calistirir.
+      #
+      # NE OLCULUYOR: arsiv butunlugu + surecin ayakta kalmasi + Dart masaustu
+      # kurulumuna gercekten ULASILDIGI (pencere basligi native bootstrap
+      # degerinde kalirsa yapilandirma hata ekranindayiz demektir; v57'de tam
+      # bu durumda "PASS" verilmisti).
+      # NE OLCULMUYOR: ekranin dogru cizildigi. Olculdu (WP-602): GDI Flutter'in
+      # DirectComposition yuzeyini yakalayamiyor, uretilen PNG bos. Kapinin
+      # gecerli sinyali basliktir; ekran goruntusu kanit degildir.
+      #
+      # Iki deneme: soguk baslangicta 10 sn'lik pencere (betigin ust siniri)
+      # runner'da dar kalabilir. Ikisi de basarisizsa is KIRMIZI duser.
+      - name: Yayınlanan ZIP gerçekten açılıyor mu (windows_fast_smoke)
+        id: zipsmoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $extract = Join-Path $env:RUNNER_TEMP 'wp614-zip-smoke'
+          if (Test-Path -LiteralPath $extract) { Remove-Item -Recurse -Force -LiteralPath $extract }
+          Expand-Archive -LiteralPath '${{ steps.zip.outputs.zip }}' -DestinationPath $extract -Force
+          $exe = Join-Path $extract 'online_study_room.exe'
+          if (-not (Test-Path -LiteralPath $exe)) { throw "Yayinlanacak ZIP icinden uygulama cikmadi: $exe" }
+          $shot = Join-Path $extract 'wp614-zip-smoke.png'
+          $ok = $false
+          $lastError = ''
+          for ($attempt = 1; $attempt -le 2 -and -not $ok; $attempt++) {
+            try {
+              & ../scripts/windows_fast_smoke.ps1 -ExecutablePath $exe -OutputPath $shot -TimeoutSeconds 10 -CloseAfter
+              if ($LASTEXITCODE -ne 0) { throw "windows_fast_smoke.ps1 exit $LASTEXITCODE" }
+              $ok = $true
+            }
+            catch {
+              $lastError = $_.Exception.Message
+              Write-Host "::warning title=ZIP smoke denemesi $attempt basarisiz::$lastError"
+            }
+          }
+          if (-not $ok) { throw "Yayinlanacak ZIP acilmiyor; bu paket kullaniciya gonderilemez. Son hata: $lastError" }
+          "passed=true" >> $env:GITHUB_OUTPUT
+
+      # 🔴 WP-614 — MAGAZA PAKETI AYRI DERLENIR.
+      # `--store` yalnizca PAKETLEMEYI degistiriyordu; kanal define'i hala
+      # `windows` oldugu icin Microsoft Store'dan kuran kullaniciya "yeni surum
+      # var, ZIP indir" diyalogu cikiyordu. Bu hem magaza kurali ihlali hem de
+      # kullaniciyi bozuk bir yola sokan bir hata (magaza paketi kendini o
+      # ZIP'le guncelleyemez).
+      #
+      # Neden IKINCI derleme: `DISTRIBUTION_CHANNEL` derleme zamaninda gomulur.
+      # Tek derlemeden hem magaza hem sideload paketi cikarmak, ikisinden
+      # birine yanlis politikayi dayatmak demektir — ZIP kullanicisi
+      # guncellemesiz kalirdi. Ek maliyet yalnizca Store modu ACIKKEN olusur.
+      - name: Store derlemesi (mağaza kanalı — sideload updater KAPALI)
+        if: steps.msix.outputs.store_mode == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content -LiteralPath env.json -Raw | ConvertFrom-Json
+          $manifest.DISTRIBUTION_CHANNEL = 'microsoftStore'
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
+          $written = (Get-Content -LiteralPath env.json -Raw | ConvertFrom-Json).DISTRIBUTION_CHANNEL
+          if ($written -ne 'microsoftStore') { throw "Store manifesti yazilamadi: $written" }
+          flutter test test/core/current_build_manifest_gate_test.dart test/core/config/distribution_define_wp614_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+          if ($LASTEXITCODE -ne 0) { throw 'Store derlemesi kanal sozlesmesini gecemedi; magaza paketi uretilmedi.' }
+          flutter build windows --release --build-name=${{ inputs.version_name }} --build-number=${{ inputs.build_number }} --dart-define-from-file=env.json
+          if ($LASTEXITCODE -ne 0) { throw 'Store derlemesi basarisiz.' }
+          Write-Host '::notice title=Store derlemesi::Magaza paketi microsoftStore kanaliyla derlendi; sideload updater kapali.'
 
       - name: MSIX üret ve paketi doğrula
         id: package
@@ -246,16 +358,14 @@ jobs:
           $msix = Get-ChildItem -Path $release -Filter *.msix -File | Select-Object -First 1
           if (-not $msix) { throw 'Zorunlu MSIX artefaktı üretilemedi.' }
           $prefix = '${{ steps.msix.outputs.prefix }}'
-          # 🔴 `msix:create` paketi Release klasörünün İÇİNE yazar. ZIP
-          # eskiden klasörü olduğu gibi sıkıştırdığı için taşınabilir arşiv kendi
-          # kurulumunun bir kopyasını taşıyordu (gereksiz ~2x indirme).
-          $zipItems = Get-ChildItem -Path $release | Where-Object { $_.Extension -ne '.msix' }
-          if (-not $zipItems) { throw 'Release klasöründe paketlenecek dosya yok.' }
-          # 🔴 WP-590: taşınabilir ZIP KOŞULSUZ üretilir ve yayınlanır —
-          # kullanıcıda gerçekten çalışan tek Windows artefaktı odur. MSIX ise
-          # yalnız imzası güvenilirken (veya WINDOWS_ALLOW_TEST_SIGNING ile
-          # bilerek onaylanmışken) dağıtım klasörüne kopyalanır.
-          $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path $zipItems.FullName -DestinationPath $zipOut -Force
+          # 🔴 WP-590 + WP-614: taşınabilir ZIP KOŞULSUZ üretilir ve yayınlanır —
+          # kullanıcıda gerçekten çalışan tek Windows artefaktı odur. Üretimi
+          # yukarıdaki ayrı adıma taşındı (Store derlemesi Release klasörünü
+          # ezmeden ÖNCE alınmalı); burada yalnız varlığı fail-closed doğrulanır.
+          # MSIX ise yalnız imzası güvenilirken (veya WINDOWS_ALLOW_TEST_SIGNING
+          # ile bilerek onaylanmışken) dağıtım klasörüne kopyalanır.
+          $zipOut = Join-Path $out "$prefix.zip"
+          if (-not (Test-Path -LiteralPath $zipOut)) { throw "Tasinabilir ZIP uretilmemis: $zipOut" }
           $published = @($zipOut)
           if ($env:MSIX_PUBLISHED -eq 'true') { $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut; $published += $msixOut }
           # 🔴 WP-597: Store paketi AYRI klasöre gider. `$out` klasörünün tamamı
@@ -270,7 +380,13 @@ jobs:
             Set-Content "$_.sha256" -Value "$hash  $name" -NoNewline
             @{ name = $name; sha256 = $hash }
           })
-          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true'); msixPublished = ($env:MSIX_PUBLISHED -eq 'true'); msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON; storeMode = ('${{ steps.msix.outputs.store_mode }}' -eq 'true') }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
+          # 🔴 WP-614: manifest artik HANGI KANALLA derlendigini de tasiyor.
+          # "Store paketi magaza kanaliyla mi cikti" sorusu yayindan sonra
+          # hatirlamaya birakilamaz; `zipSmokePassed` de ZIP'in bir kez
+          # gercekten acildiginin kaydidir.
+          $storeMode = ('${{ steps.msix.outputs.store_mode }}' -eq 'true')
+          $distribution = @{ zip = 'windows'; storePackage = $(if ($storeMode) { 'microsoftStore' } else { '' }); zipSmokePassed = ('${{ steps.zipsmoke.outputs.passed }}' -eq 'true') }
+          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; distribution = $distribution; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true'); msixPublished = ($env:MSIX_PUBLISHED -eq 'true'); msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON; storeMode = $storeMode }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
 
       - uses: actions/upload-artifact@v4
         with:

@@ -57,6 +57,16 @@ jobs:
       - name: Kapının gerçekten reddettiğini kanıtla
         run: python scripts/backend_contract_audit.py --self-test
 
+      # 🔴 WP-614: kapsam kapısı KENDİ KENDİNİ İYİLEŞTİRİYORDU. Baseline
+      # dosyası yoksa onu o anki ölçümle yeniden yazıp `0` dönüyordu — yani
+      # eşiği silmek kapıyı geçmenin yoluydu; baseline'dan bir anahtar
+      # silinirse de o eşik sessizce hiç ölçülmüyordu. Bu adım kapıyı kasten
+      # bozuk girdiyle sınar (düşen kapsam, eksik eşik, silinmiş eşik dosyası,
+      # kritik yol listesinden çıkarılmış masaüstü/updater ağaçları).
+      # Saniyeler sürer ve lcov istemez, bu yüzden ucuz işte.
+      - name: Kapsam kapısı kendini sınar
+        run: python scripts/coverage_audit.py --self-test
+
       # 🔴 Migration head birden fazla yerde pinlidir ve iki turda üst üste biri
       # güncellenmeden commit atıldı; CI aynı yerden kırmızı düştü. Bu adım
       # zincirde boşluk, başlık kuralı ihlali ve kontrat ↔ guard.tests head
@@ -197,6 +207,23 @@ jobs:
   # Ayrı iş olmasının sebebi: `-d windows` gerçek bir Debug Windows derlemesi
   # yapar (dakikalar sürer). Golden işine eklenseydi hem o işin süresini
   # riske atardı hem de kırmızı düştüğünde hangisinin bozulduğu belirsiz olurdu.
+  #
+  # 🔴 WP-614: iş KOŞUYORDU ama ÖLÇMÜYORDU. Test masaüstü panelini bulamazsa
+  # sessizce mobil `NavigationBar`'a düşüp yeşil dönüyordu ve geçişleri
+  # tıklamıyor, `onSelected` geri çağrısını doğrudan çağırıyordu; yani
+  # `home_shell.dart` içindeki masaüstü dalı silinse bile bu iş yeşil kalırdı.
+  # Test artık masaüstü panelini ZORUNLU kılıyor ve sekmeleri gerçekten
+  # tıklıyor (bkz. dosyanın kendi başlık yorumu).
+  #
+  # ℹ️ BU İŞİN ÖLÇMEDİĞİ ŞEY, açıkça: **release (Release) derlemesi ve
+  # kullanıcıya giden ZIP**. Buradaki `-d windows` bir Debug derlemesidir ve
+  # `flutter_tester` yerine gerçek pencere açsa da yayınlanan arşivle aynı
+  # ikili değildir. Yayınlanan ZIP'i açıp çalıştıran kapı
+  # `windows-release.yml` içindeki "Yayınlanan ZIP gerçekten açılıyor mu"
+  # adımıdır (WP-614); orada `scripts/windows_fast_smoke.ps1` arşivden çıkan
+  # EXE'yi başlatır ve pencere başlığından Dart kurulumuna ulaşıldığını
+  # doğrular. Burada tekrarlanmıyor çünkü CI'da Release derlemesi + paketleme
+  # zinciri yok; sürüm işi zaten o zinciri kuruyor.
   integration-tests:
     name: Windows integration (critical flows)
     runs-on: windows-latest

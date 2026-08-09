@@ -51,12 +51,31 @@ BASELINE = ROOT / "tooling" / "quality" / "coverage-baseline.json"
 TOLERANCE = 0.5
 
 # Sahada para/veri/güvenlik etkisi olan yollar. Bunlar için eşik ayrı tutulur.
+#
+# 🔴 WP-614: liste bir **denetim bulgusuyla** genişledi. Masaüstü kabuğu ve
+# updater buraya hiç girmemişti; oysa Windows dağıtımının tamamı bu iki ağaçtan
+# geçiyor (kanal seçimi, sideload güncelleme, pencere kurulumu). "Genel ortalama
+# iyi" diye testsiz kalmaları kabul edilemez — kritik yol tanımı "para/veri"
+# değil "sahada kullanıcıyı bozan yol"dur.
 CRITICAL_PATHS = (
     "lib/core/stats/",
     "lib/core/tasks/",
     "lib/core/time_engine/",
     "lib/data/repositories/supabase/",
     "lib/data/providers/",
+    "lib/core/desktop/",
+    "lib/features/desktop/",
+    "lib/features/updater/",
+)
+
+# 🔴 Yukarıdaki listenin **sözleşme** kısmı. Bilerek ikinci kez yazıldı: bir
+# yol listeden sessizce silinirse `--self-test` kırmızıya düşer. Tek liste
+# olsaydı silme işlemi hiçbir kapıyı kızdırmadan geçerdi — bu deponun
+# tekrarlayan hatası (kapı vardı, ölçtüğü şey yoktu).
+REQUIRED_CRITICAL_PATHS = (
+    "lib/core/desktop/",
+    "lib/features/desktop/",
+    "lib/features/updater/",
 )
 
 # Kapsam ölçümü anlamsız olan üretilmiş/platform yüzeyleri.
@@ -139,6 +158,108 @@ def summarise(files: dict[str, tuple[int, int]]):
     }
 
 
+def evaluate(summary: dict, baseline: dict | None) -> list[str]:
+    """Ratchet kararı — saf fonksiyon, `--self-test` bunu doğrudan sınar.
+
+    🔴 WP-614: bu karar eskiden `main` içindeydi ve **kendi kendini
+    iyileştiriyordu**. Baseline dosyası yoksa kapı onu o anki ölçümle yeniden
+    yazıp `0` dönüyordu; yani eşiği silmek kapıyı sessizce geçmenin yoluydu.
+    Aynı şekilde baseline içinden bir anahtar silinirse `continue` deniyor,
+    yani o eşik hiç ölçülmüyordu. İkisi de artık KIRMIZI.
+    """
+    if baseline is None:
+        return [
+            f"baseline dosyası yok: {BASELINE.relative_to(ROOT).as_posix()}. "
+            "Kapı eşiksiz ölçüm yapamaz ve eşiği kendi kendine yazmaz — "
+            "dosyayı geri getirin veya kapsamı BİLEREK yükselten bir WP'de "
+            "`--update-baseline` çalıştırın."
+        ]
+
+    errors = []
+    for key, label in (("overall", "genel"), ("critical", "kritik yollar")):
+        floor = baseline.get(key)
+        if floor is None:
+            errors.append(
+                f"baseline içinde `{key}` eşiği yok: {label} kapsamı "
+                "ölçülmüyor. Eksik eşik = kapı değil."
+            )
+            continue
+        if summary[key] < floor - TOLERANCE:
+            errors.append(
+                f"{label} kapsamı düştü: %{summary[key]:.2f} < "
+                f"%{floor:.2f} (tolerans {TOLERANCE} puan)"
+            )
+    return errors
+
+
+def self_test() -> int:
+    """Kapıyı KASTEN bozuk girdiyle sına: kırmızıya düşmüyorsa kapı değildir.
+
+    Ucuz (lcov istemez), bu yüzden `test_all.py` T0'da koşar — kapsam kapısının
+    kendisi bozulursa dakikalar değil saniyeler içinde bilinir.
+    """
+    failures: list[str] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        print(f"  {'OK  ' if ok else 'FAIL'} {name}")
+        if not ok:
+            failures.append(f"{name}{(' — ' + detail) if detail else ''}")
+
+    good = {"overall": 70.0, "critical": 60.0}
+    floor = {"overall": 70.0, "critical": 60.0}
+
+    check(
+        "eşiğin üstündeki ölçüm geçer",
+        evaluate(good, floor) == [],
+    )
+    check(
+        "tolerans içi dalgalanma geçer",
+        evaluate({"overall": 69.6, "critical": 59.6}, floor) == [],
+    )
+    check(
+        "genel kapsam düşünce KIRMIZI",
+        len(evaluate({"overall": 60.0, "critical": 60.0}, floor)) == 1,
+    )
+    check(
+        "genel iyiyken bile kritik yol düşüşü KIRMIZI",
+        len(evaluate({"overall": 99.0, "critical": 40.0}, floor)) == 1,
+    )
+    check(
+        "baseline dosyası SİLİNİRSE kapı geçmez (fail-closed)",
+        evaluate(good, None) != [],
+        "baseline yoksa kapı kendi eşiğini yazıp geçiyordu",
+    )
+    check(
+        "baseline'dan anahtar silinirse KIRMIZI",
+        evaluate(good, {"overall": 70.0}) != [],
+        "eksik eşik sessizce atlanıyordu",
+    )
+
+    missing = [p for p in REQUIRED_CRITICAL_PATHS if p not in CRITICAL_PATHS]
+    check(
+        "kritik yol listesi masaüstü/updater ağaçlarını kapsıyor",
+        not missing,
+        f"eksik: {missing}",
+    )
+
+    real = load_baseline()
+    check(
+        "gerçek baseline dosyası var ve iki eşiği de taşıyor",
+        isinstance(real, dict)
+        and real.get("overall") is not None
+        and real.get("critical") is not None,
+        f"{BASELINE.relative_to(ROOT).as_posix()}",
+    )
+
+    if failures:
+        print(f"\nFAIL ({len(failures)}): kapsam kapısı kendini savunamıyor")
+        for failure in failures:
+            print(f"  - {failure}")
+        return 1
+    print("\nOK: kapsam kapısı bozuk girdide kırmızıya düşüyor.")
+    return 0
+
+
 def load_baseline() -> dict | None:
     if BASELINE.is_file():
         return json.loads(BASELINE.read_text(encoding="utf-8"))
@@ -164,6 +285,10 @@ def write_baseline(summary: dict) -> None:
 
 
 def main(argv: list[str]) -> int:
+    # `--self-test` lcov istemez; `collect()` çağrılmadan ÖNCE ele alınır.
+    if "--self-test" in argv:
+        return self_test()
+
     files = collect()
     summary = summarise(files)
 
@@ -200,24 +325,7 @@ def main(argv: list[str]) -> int:
         return 0
 
     baseline = load_baseline()
-    if baseline is None:
-        write_baseline(summary)
-        print(
-            f"OK: ilk baseline yazıldı -> {BASELINE.relative_to(ROOT).as_posix()}. "
-            "Bundan sonra kapsam bu değerin altına düşemez."
-        )
-        return 0
-
-    errors = []
-    for key, label in (("overall", "genel"), ("critical", "kritik yollar")):
-        floor = baseline.get(key)
-        if floor is None:
-            continue
-        if summary[key] < floor - TOLERANCE:
-            errors.append(
-                f"{label} kapsamı düştü: %{summary[key]:.2f} < "
-                f"%{floor:.2f} (tolerans {TOLERANCE} puan)"
-            )
+    errors = evaluate(summary, baseline)
 
     if errors:
         print(f"\nFAIL ({len(errors)}):")

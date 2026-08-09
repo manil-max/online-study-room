@@ -157,6 +157,29 @@ def _needs_android_device() -> tuple[bool, str]:
     return True, ""
 
 
+def _needs_windows_release_build() -> tuple[bool, str]:
+    """Yayinlanan Windows ikilisi yoksa smoke olcecek bir sey bulamaz.
+
+    🔴 WP-614: `scripts/windows_fast_smoke.ps1` repoda vardi ama HICBIR kapidan
+    ve HICBIR is akisindan cagrilmiyordu — yani kullaniciya giden Windows
+    paketi bir kez bile calistirilmadan yayinlaniyordu. Bu on kosul kapiyi
+    ATLANDI'ya dusurur (yesil DEGILDIR, tur `3` ile biter), boylece bosluk
+    sessiz kalmaz.
+    """
+    if os.name != "nt":
+        return False, "Windows disi makine — Windows ikilisi burada calismaz"
+    exe = (
+        APP / "build" / "windows" / "x64" / "runner" / "Release"
+        / "online_study_room.exe"
+    )
+    if not exe.exists():
+        return False, (
+            "Release derlemesi yok (app/build/windows/x64/runner/Release) — "
+            "once `flutter build windows --release --dart-define-from-file=env.json`"
+        )
+    return True, ""
+
+
 def _needs_docker() -> tuple[bool, str]:
     if shutil.which("docker") is None:
         return False, "Docker kurulu degil — pgTAP yalniz CI'da kosar"
@@ -228,6 +251,12 @@ def build_gates() -> list[Gate]:
         # kod degismeden kirmiziya duser.
         Gate("flutter-pin", "Flutter surumu her workflow'da ayni", 0,
              [py, "scripts/test_all.py", "--internal-flutter-pin"]),
+        # 🔴 WP-614: kapsam kapisi kendi kendini iyilestiriyordu — baseline
+        # dosyasi yoksa onu o anki olcumle YENIDEN YAZIP geciyordu. Yani esigi
+        # silmek kapiyi gecmenin yoluydu. Bu kapi, kapsam kapisini kasten bozuk
+        # girdiyle sinar; lcov istemedigi icin saniyeler surer.
+        Gate("coverage-self", "Kapsam kapisi kendini sinar", 0,
+             [py, "scripts/coverage_audit.py", "--self-test"]),
 
         # T1 — bagimsiz araclar; birbirinin dosyasina dokunmaz.
         Gate("analyze", "flutter analyze", 1,
@@ -283,6 +312,24 @@ def build_gates() -> list[Gate]:
         Gate("android-smoke", "Android emulator sayac smoke", 3,
              [py, "scripts/test_all.py", "--internal-android-smoke"],
              precondition=_needs_android_device),
+        # 🔴 WP-614: YAYINLANAN WINDOWS IKILISI HIC CALISTIRILMIYORDU.
+        # `windows_fast_smoke.ps1` (pencere basligindan Dart masaustu
+        # kurulumuna gercekten ulasildigini dogrulayan tek olcum) repoda
+        # duruyordu ama ne bir workflow ne de bu kosucu onu cagiriyordu.
+        #
+        # NE OLCULUYOR: Release EXE aciliyor mu, surec ayakta kaliyor mu,
+        # pencere basligi native bootstrap degerinden (`Odak Kampi`) yerellesmis
+        # ada donuyor mu — yani yapilandirma hata ekraninda takili degil miyiz.
+        # NE OLCULMUYOR: ekranin dogru cizildigi. Olculdu (WP-602): GDI,
+        # Flutter'in DirectComposition yuzeyini yakalayamiyor; uretilen PNG
+        # kanit degildir ve betik bunu kendisi soyler.
+        #
+        # Ayni betik `windows-release.yml` icinde YAYINLANACAK ZIP'ten cikan
+        # EXE uzerinde kosar; buradaki kopya yerel Release derlemesini olcer.
+        Gate("windows-smoke", "Windows Release ikilisi gercekten aciliyor", 3,
+             [PWSH, "-NoProfile", "-NonInteractive", "-File",
+              "scripts/windows_fast_smoke.ps1", "-CloseAfter"],
+             precondition=_needs_windows_release_build),
         Gate("pgtap", "pgTAP yerel replay", 3,
              [PWSH, "-NoProfile", "-NonInteractive", "-File",
               "tooling/supabase/local.ps1", "-Action", "baseline"],

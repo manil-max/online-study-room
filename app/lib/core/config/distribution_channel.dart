@@ -36,6 +36,23 @@ import 'package:flutter/services.dart' show appFlavor;
 /// define'ı CI'da set etmek ve `msix_config.store: true` ile paketlemekle
 /// yükümlüdür; define unutulursa Windows varsayımı [windows] olur ve updater
 /// açık kalır. Bu yüzden Faz H'de build öncesi bir kapı testi şarttır.
+///
+/// 🔴 **WP-614 — o kapı yıllarca YAZILMADI ve tam da uyarıldığı gibi oldu.**
+/// `windows-release.yml` her koşumda `DISTRIBUTION_CHANNEL='windows'`
+/// yazıyordu; `--store` yalnız paketlemeyi değiştiriyordu. Yani Microsoft
+/// Store'dan kuran kullanıcı "yeni sürüm var, ZIP indir" diyaloğu görecekti:
+/// hem mağaza kuralına aykırı hem de çalışmayan bir yol (mağaza paketi kendini
+/// o ZIP'le güncelleyemez). Artık iki şey var ve ikisi de sabotajla ölçüldü:
+///
+/// * `app/test/core/config/distribution_define_wp614_test.dart` — **derleme
+///   öncesi** koşar (`ENFORCE_CURRENT_BUILD_MANIFEST=true`); define bilinen bir
+///   kanal mı, mağaza kanalıysa [allowsSideloadUpdates] gerçekten kapalı mı.
+/// * `app/test/features/updater/windows_store_channel_wp614_test.dart` — iş
+///   akışına yazılmış kanal dizesini bu dosyanın çözümleyicisinden geçirir;
+///   mağaza dalı `windows`a döndürülürse kırmızıya düşer.
+///
+/// Mağaza paketi artık AYRI derlenir: tek derlemeden iki politika çıkmaz,
+/// çünkü bu define derleme zamanında gömülür.
 enum DistributionChannel {
   /// Play Store — harici APK/updater yok.
   play,
