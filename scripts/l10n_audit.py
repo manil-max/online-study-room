@@ -285,6 +285,15 @@ LITERAL_EXEMPTIONS: dict[str, str] = {
         "WP-477: `toString()` hata ayıklama çıktısı ve `StateError` döngü "
         "koruması — kullanıcı yüzeyine taşınmaz."
     ),
+    "app/lib/core/config/build_configuration_error_app.dart": (
+        "WP-594: yapılandırma hata yüzeyi TR+EN metni **bilerek** gömülü "
+        "taşır. Bu ekran derlemenin bozuk olduğu durumda çalışır; katalog ve "
+        "delegate zincirinin sağlam olduğunu varsayamaz (`Localizations` "
+        "çözülemezse alt ağaç boş kutuya döner). Ayrıca kendi `MaterialApp`'i "
+        "olduğu için `resolvePreferredAppLocale` sözleşmesinin dışında "
+        "kalıyordu ve Türkçe Windows'ta ekran İngilizce çıkıyordu (ölçüldü). "
+        "Dil seçimi yapılmaz, iki dil birden basılır."
+    ),
 }
 
 # (3) Prose taraması muafiyetleri — çevrilmemesi **doğru** olan metinler.
