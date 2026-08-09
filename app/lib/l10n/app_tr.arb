@@ -2057,5 +2057,11 @@
   "profileCikisYapildiSunucuyaUlasilamadi": "Bu cihazdan çıkış yapıldı. Sunucuya ulaşılamadığı için diğer cihazlardaki oturumlar açık kalmış olabilir.",
   "@profileCikisYapildiSunucuyaUlasilamadi": {"description": "WP-620: çevrimdışı çıkış; kullanıcı gerçekten çıkmıştır, \"çıkış yapılamadı\" demek yanlıştı."},
   "notificationsAylikRaporKaydedilemedi": "Aylık rapor ayarı kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
-  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: aylık rapor anahtarı kaydedilemeyince; eskiden anahtar sessizce geri dönüyordu."}
+  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: aylık rapor anahtarı kaydedilemeyince; eskiden anahtar sessizce geri dönüyordu."},
+  "commonSenEtiketi": "{name} (sen)",
+  "@commonSenEtiketi": {"description": "WP-623: siralama satirinda kendi adinin yanindaki (sen) etiketi."},
+  "homeDersSayisi": "{count, plural, =1 {1 ders} other {{count} ders}}",
+  "@homeDersSayisi": {"description": "WP-623: bugunun ozetinde ders sayisi."},
+  "commonXpIlerlemesi": "{current} / {total} XP",
+  "@commonXpIlerlemesi": {"description": "WP-623: tac XP barinin ilerleme etiketi."}
 }

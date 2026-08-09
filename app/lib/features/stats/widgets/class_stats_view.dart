@@ -962,7 +962,9 @@ class _LeaderboardRow extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        isMe ? '$name (sen)' : name,
+                        isMe
+                            ? AppLocalizations.of(context).commonSenEtiketi(name)
+                            : name,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: isMe ? FontWeight.w700 : FontWeight.w500,

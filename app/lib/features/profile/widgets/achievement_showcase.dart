@@ -779,9 +779,14 @@ class _XpBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Semantics(
+          // WP-623: birim katalogdan (bkz. `commonXpMiktari` /
+          // `commonXpIlerlemesi`). Bu üç etiket ternary içinde durduğu için
+          // l10n kapısının eski bitişiklik deseni onları hiç görmüyordu.
           label: atCap
-              ? '${AppLocalizations.of(context).profileTamamland} · $xp XP'
-              : '$currentXp / $nextThreshold XP · ${(progress * 100).round()}%',
+              ? '${AppLocalizations.of(context).profileTamamland} · '
+                    '${AppLocalizations.of(context).commonXpMiktari(xp)}'
+              : '${AppLocalizations.of(context).commonXpIlerlemesi(currentXp, nextThreshold)}'
+                    ' · ${(progress * 100).round()}%',
           value: '${(progress * 100).round()}%',
           child: ExcludeSemantics(
             child: ClipRRect(
@@ -799,7 +804,8 @@ class _XpBar extends StatelessWidget {
         Text(
           atCap
               ? AppLocalizations.of(context).profileTamamland
-              : '$currentXp / $nextThreshold XP (${(progress * 100).round()}%)',
+              : '${AppLocalizations.of(context).commonXpIlerlemesi(currentXp, nextThreshold)}'
+                    ' (${(progress * 100).round()}%)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

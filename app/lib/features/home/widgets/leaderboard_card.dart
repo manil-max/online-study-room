@@ -342,7 +342,9 @@ class _Row extends StatelessWidget {
               if (!isCompact) ...[
                 Expanded(
                   child: Text(
-                    isMe ? '$name (sen)' : name,
+                    isMe
+                        ? AppLocalizations.of(context).commonSenEtiketi(name)
+                        : name,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: isMe ? FontWeight.w600 : null,

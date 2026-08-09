@@ -204,9 +204,10 @@ class _BadgeSummary extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Semantics(
+          // WP-623: "XP" birimi katalogdan (bkz. `commonXpMiktari`).
           label: atMax
-              ? '${profile.xp} XP · ${l10n.profileCrownMax}'
-              : '${bar.currentXp} / ${bar.nextThreshold} XP · '
+              ? '${l10n.commonXpMiktari(profile.xp)} · ${l10n.profileCrownMax}'
+              : '${l10n.commonXpIlerlemesi(bar.currentXp, bar.nextThreshold)} · '
                     '${(bar.progress * 100).round()}%',
           value: '${(bar.progress * 100).round()}%',
           child: ExcludeSemantics(
@@ -224,8 +225,8 @@ class _BadgeSummary extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           atMax
-              ? '${profile.xp} XP'
-              : '${bar.currentXp} / ${bar.nextThreshold} XP '
+              ? l10n.commonXpMiktari(profile.xp)
+              : '${l10n.commonXpIlerlemesi(bar.currentXp, bar.nextThreshold)} '
                     '(${(bar.progress * 100).round()}%)',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,

@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 
@@ -55,19 +56,29 @@ def arb_path(locale: str) -> Path:
 TURKISH_CHAR_RE = re.compile(r"[ÇĞİÖŞÜçğıöşü]")
 LINE_COMMENT_RE = re.compile(r"//.*?$", re.MULTILINE)
 BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-STRING_RE = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", re.DOTALL)
 
 # Kullanıcıya görünen widget yuvaları. Prose taraması **yalnız** burada çalışır:
 # tüm literal'lere bakmak teknik sabitler yüzünden kullanılamaz bir gürültü
 # üretiyor (rota adları, pref anahtarları, SQL, asset yolları…).
-UI_SLOT = (
-    r"(?:(?:Text|SelectableText|Tooltip)\(\s*"
+#
+# 🔴 WP-623: burası eskiden `UI_SLOT + "'(...)'"` biçiminde tek bir regex'ti,
+# yani literal'in yuvanın **hemen ardında** gelmesini şart koşuyordu. Gerçek
+# kod öyle yazılmıyor:
+#
+#     Text(isMe ? '$name (sen)' : name)
+#
+# Literal ternary'nin içinde, yuvadan sonra bir ifade var; regex hiç eşleşmedi
+# ve kapı "gömülü kullanıcı metni yok" diyerek YEŞİL verdi. İngilizce arayüzde
+# "Ali (sen)" ve "3 ders" yazıyordu (DENETIM-istatistik R7). Bu, kapının
+# ölçtüğünü sandığı şeyi ölçmediği bir vakaydı — üç bulguyu tek tek düzeltmek
+# dördüncüsünü engellemez, o yüzden **tarama** düzeltildi.
+#
+# Yuva artık bir "açılış" işaretidir; literal'i `slot_literals()` yürüyüşü
+# bulur (aşağıya bakın).
+UI_SLOT_RE = re.compile(
+    r"(?:Text|SelectableText|Tooltip)\(\s*"
     r"|(?:title|subtitle|label|labelText|hintText|helperText|errorText|tooltip"
-    r"|content|semanticsLabel|message|dialogTitle|confirmLabel)\s*:\s*)"
-)
-UI_LITERAL_RE = re.compile(
-    UI_SLOT + r"'((?:\\.|[^'\\])*)'|" + UI_SLOT + r'"((?:\\.|[^"\\])*)"',
-    re.DOTALL,
+    r"|content|semanticsLabel|message|dialogTitle|confirmLabel)\s*:\s*"
 )
 
 # "Cümle gibi duruyor": harfle başlıyor ve içinde boşluk var.
@@ -91,15 +102,22 @@ WORD_RE = re.compile(r"[A-Za-zÇĞİÖŞÜçğıöşü]{2,}")
 # bilinçli olarak dışarıda: bu projede yalnız adı `Exception` ile biten **alan**
 # tipleri (`NudgeException`, `GroupException` …) kullanıcı yüzeyine taşınır;
 # `FormatException` wire ayrıştırma hatasıdır ve arayüzde gösterilmez.
-DATA_SLOT = (
-    r"(?:throw\s+(?:const\s+)?(?!FormatException\b)\w*Exception(?:\.\w+)?\(\s*"
-    r"|return\s+|=>\s*)"
-)
-DATA_LITERAL_RE = re.compile(
-    DATA_SLOT + r"'((?:\\.|[^'\\])*)'|" + DATA_SLOT + r'"((?:\\.|[^"\\])*)"',
-    re.DOTALL,
+#
+# WP-623: bu yuva da aynı bitişiklik körlüğünü taşıyordu
+# (`return cond ? '…' : '…'`, `=> x ?? '…'`, bitişik parça birleştirme). Artık
+# UI yuvasıyla aynı yürüyüşü kullanır.
+DATA_SLOT_RE = re.compile(
+    r"throw\s+(?:const\s+)?(?!FormatException\b)\w*Exception(?:\.\w+)?\(\s*"
+    r"|return\s+|=>\s*"
 )
 DATA_LAYER_PREFIXES = ("app/lib/data/", "app/lib/core/")
+
+# `String toString()` gövdesi Dart'ın **geliştirici** temsilidir; hata ayıklama
+# günlüğüne ve `print`e gider, kullanıcı arayüzüne değil. Yürüyüş bu gövdeleri
+# atlar. Bu, dosya bazlı bir muafiyetten kasten daha dar: `nudge_repository.dart`
+# yalnız `toString()`i yüzünden muaf tutulsaydı dosyanın **tamamı** taramadan
+# çıkardı ve yarın oraya yazılacak gerçek kullanıcı metni de görünmezdi.
+TO_STRING_RE = re.compile(r"\bString\s+toString\(\s*\)\s*")
 # Teknik sabit kalıpları — çeviri gerektirmez.
 TECHNICAL_RE = re.compile(
     r"://"  # URL
@@ -163,9 +181,11 @@ DATA_LAYER_DEBT: dict[str, tuple[int, int, str]] = {
         25,
         _GROUP_DEBT,
     ),
+    # WP-623: prose 24 → 26. Yeni metin eklenmedi; kayıt onayı mesajı bitişik
+    # üç parçadan oluşuyor (`:269-271`) ve eski desen yalnız ilkini görüyordu.
     "app/lib/data/repositories/supabase/supabase_auth_repository.dart": (
         25,
-        24,
+        26,
         _AUTH_DEBT,
     ),
     "app/lib/data/repositories/in_memory/in_memory_auth_repository.dart": (
@@ -181,7 +201,10 @@ DATA_LAYER_DEBT: dict[str, tuple[int, int, str]] = {
     # WP-500: prose sayısı 10 → 11. Yeni bir metin eklenmedi; kapının kör
     # noktası kapanınca `:77` `'$userMessage\nDetay: $detail'` ilk kez göründü
     # ("Detay" gömülü Türkçe). Sayı borcun **gerçek** büyüklüğüne çekildi.
-    "app/lib/data/repositories/admin_repository.dart": (10, 11, _ADMIN_DEBT),
+    # WP-623: 11 → 12. Yine yeni metin yok; yuva yürüyüşü `throw`un ilk
+    # literal'inden sonra devam ettiği için `'Geri bildirim gönderilemedi.'`
+    # (`:92`, ternary'nin son dalı) ilk kez göründü.
+    "app/lib/data/repositories/admin_repository.dart": (10, 12, _ADMIN_DEBT),
     "app/lib/data/repositories/supabase/supabase_admin_moderation_repository.dart": (
         10,
         10,
@@ -346,12 +369,17 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
 # dosyaya yarın eklenecek gerçek Türkçe metni de görünmez yapardı.
 UI_PROSE_DEBT: dict[str, tuple[int, str]] = {
     "app/lib/features/desktop/desktop_home_shell.dart": (
-        1,
-        "Klavye kısayolu ipucu `(Ctrl+,)` — tuş adı platform sabiti, "
-        "çevrilmez. Kardeş dosya `desktop_navigation_pane.dart` aynı gerekçeyle "
+        2,
+        "Klavye kısayolu ipuçları `(Ctrl+,)` ve `(Ctrl+Shift+P)` — tuş adları "
+        "platform sabiti, çevrilmez; çevrilebilir kısım zaten katalogdan "
+        "geliyor. Kardeş dosya `desktop_navigation_pane.dart` aynı gerekçeyle "
         "zaten muaf; burada dosyanın geri kalanı taranmaya devam etsin diye "
-        "muafiyet değil sicil kullanıldı. Sayı 1'de kilitli: aynı dosyaya ikinci "
-        "bir gömülü metin eklenirse kapı düşer.",
+        "muafiyet değil sicil kullanıldı. "
+        "🔴 WP-623: sayı 1 → 2. İkinci bir ipucu EKLENMEDİ — gerekçe zaten "
+        "`(Ctrl+,)`yi anlatıyordu ama eski bitişiklik deseni ternary içindeki "
+        "o satırı (`:238`) hiç görmemiş, 1 sayısı yalnız `:257`yi sayıyormuş. "
+        "Sayı borcun gerçek büyüklüğüne çekildi. 2'de kilitli: üçüncü bir "
+        "gömülü metin eklenirse kapı düşer.",
     ),
 }
 
@@ -366,6 +394,199 @@ def source_keys(data: dict[str, object]) -> set[str]:
 
 def strip_comments(source: str) -> str:
     return LINE_COMMENT_RE.sub("", BLOCK_COMMENT_RE.sub("", source))
+
+
+# --------------------------------------------------------------------------
+# WP-623: gerçek bir Dart string tarayıcısı.
+#
+# Eski `STRING_RE` düz bir regex'ti ve aynı tırnağı taşıyan interpolasyonda
+# literal'i parçalara bölüyordu:
+#
+#     "$h:${m.toString().padLeft(2, '0')}"   ->   üç ayrı sahte "literal"
+#
+# `looks_like_prose` bunu fark edip `'${' in outside` dalıyla **hüküm vermeyi
+# bırakıyordu** (dosyanın kendi notu: "doğru çözüm gerçek bir Dart lexer'ı
+# olurdu, o da bu kapının kapsamı değil"). Yuva yürüyüşü literal sınırlarının
+# doğru olmasını şart koştuğu için o lexer artık burada. Ölçüldü: TR literal
+# taramasının sonucu **değişmedi** (0 ihlal, tüm sicil sayıları aynı), yani
+# tarayıcı bir davranış değişikliği değil, doğruluk düzeltmesi.
+
+
+def _scan_string(source: str, i: int) -> int | None:
+    """`i` bir string açılışına bakıyorsa kapanışın bir sonrasını döndürür."""
+    n = len(source)
+    raw = source[i] == "r"
+    if raw:
+        i += 1
+    quote = source[i]
+    quote_len = 3 if source[i : i + 3] == quote * 3 else 1
+    close = quote * quote_len
+    i += quote_len
+    while i < n:
+        char = source[i]
+        if char == "\\" and not raw:
+            i += 2
+            continue
+        # Tek tırnaklı Dart string'i satır atlayamaz. Bu kural aynı zamanda
+        # `strip_comments`in bozduğu satırlara karşı sigortadır: `'https://x'`
+        # yorum ayıklayıcı tarafından `'https:` hâline getirilirse tarayıcı
+        # dosyanın geri kalanını string sanıp yutmaz, açılışı reddeder.
+        if char == "\n" and quote_len == 1:
+            return None
+        if source[i : i + quote_len] == close:
+            return i + quote_len
+        if char == "$" and not raw and source[i + 1 : i + 2] == "{":
+            nested = _scan_interpolation(source, i + 1)
+            if nested is None:
+                return None
+            i = nested
+            continue
+        i += 1
+    return None
+
+
+def _scan_interpolation(source: str, i: int) -> int | None:
+    """`i` `{` üzerindeyken eşleşen `}`nin bir sonrasını döndürür."""
+    n = len(source)
+    depth = 0
+    while i < n:
+        char = source[i]
+        if char in "'\"" or (
+            char == "r" and source[i + 1 : i + 2] in ("'", '"')
+        ):
+            nested = _scan_string(source, i)
+            if nested is None:
+                return None
+            i = nested
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return None
+
+
+@lru_cache(maxsize=None)
+def dart_strings(source: str) -> tuple[tuple[int, int, str], ...]:
+    """Kaynaktaki string literal'leri: (başlangıç, bitiş, tırnaksız içerik)."""
+    found: list[tuple[int, int, str]] = []
+    n = len(source)
+    i = 0
+    while i < n:
+        char = source[i]
+        starts_string = char in "'\"" or (
+            char == "r"
+            and source[i + 1 : i + 2] in ("'", '"')
+            and (i == 0 or not (source[i - 1].isalnum() or source[i - 1] == "_"))
+        )
+        if starts_string:
+            end = _scan_string(source, i)
+            if end is not None:
+                quote_at = i + 1 if char == "r" else i
+                quote = source[quote_at]
+                quote_len = 3 if source[quote_at : quote_at + 3] == quote * 3 else 1
+                found.append(
+                    (i, end, source[quote_at + quote_len : end - quote_len])
+                )
+                i = end
+                continue
+        i += 1
+    return tuple(found)
+
+
+@lru_cache(maxsize=None)
+def mask_strings(source: str) -> str:
+    """String içerikleri `\\0` ile silinmiş kaynak — parantez derinliği için.
+
+    🔴 Maskeleme boşlukla YAPILMAZ. Boşlukla maskelenirse yuva desenindeki
+    `\\s*` literal'in **üzerinden atlar** ve yürüyüş literal'i hiç görmez
+    (ölçüldü: veri katmanı bulguları 183'ten 1'e düşüyordu). Satır sonları
+    korunur, böylece uzunluk ve satır numaraları kaynakla birebir kalır.
+    """
+    buffer = list(source)
+    for start, end, _ in dart_strings(source):
+        for index in range(start, end):
+            if buffer[index] != "\n":
+                buffer[index] = "\0"
+    return "".join(buffer)
+
+
+@lru_cache(maxsize=None)
+def to_string_bodies(source: str) -> tuple[tuple[int, int], ...]:
+    """`String toString()` gövdelerinin (başlangıç, bitiş) aralıkları."""
+    masked = mask_strings(source)
+    ranges: list[tuple[int, int]] = []
+    for match in TO_STRING_RE.finditer(masked):
+        i = match.end()
+        if masked[i : i + 2] == "=>":
+            end = masked.find(";", i)
+            ranges.append((match.start(), len(masked) if end < 0 else end))
+        elif masked[i : i + 1] == "{":
+            depth = 0
+            while i < len(masked):
+                if masked[i] == "{":
+                    depth += 1
+                elif masked[i] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            ranges.append((match.start(), i))
+    return tuple(ranges)
+
+
+OPEN_BRACKETS = "([{"
+CLOSE_BRACKETS = ")]}"
+
+
+def slot_literals(source: str, slot_re: re.Pattern[str]) -> list[tuple[int, str]]:
+    """Bir yuvanın **değer konumunda** duran literal'ler.
+
+    Yuvadan başlayarak argümanın kendisi yürünür ve parantez derinliği tutulur.
+    Bir literal yalnız **derinlik 0**'da sayılır; yani argümanın kendi değeri
+    (ternary dalları, `??` yedeği, bitişik parça birleştirme) sayılır, iç içe
+    bir çağrının argümanı sayılmaz. Yürüyüş derinlik 0'daki `,` / `;` ile ya da
+    kapsayan parantez kapanınca biter.
+
+    🔴 Derinlik kuralı gürültü kalkanıdır, gevşetme değil:
+    `Text(DateFormat('d MMMM').format(now))` içindeki `'d MMMM'` bir biçim
+    deseni, cümle değil — derinlik 1'de kaldığı için sessiz kalır. Kural
+    kalkarsa kapı biçim desenleri, sınıflandırıcı anahtarlar ve asset adlarıyla
+    dolar; bu depoda kapıyı kullanılamaz yapmak onu gevşetmenin ilk adımıdır.
+    """
+    masked = mask_strings(source)
+    literals = {start: (end, text) for start, end, text in dart_strings(source)}
+    skip = to_string_bodies(source)
+    hits: list[tuple[int, str]] = []
+    seen: set[int] = set()
+    for match in slot_re.finditer(masked):
+        if any(start <= match.start() < end for start, end in skip):
+            continue
+        i = match.end()
+        depth = 0
+        while i < len(masked):
+            if i in literals:
+                end, text = literals[i]
+                if depth == 0 and i not in seen:
+                    seen.add(i)
+                    hits.append((i, text))
+                i = end
+                continue
+            char = masked[i]
+            if char in OPEN_BRACKETS:
+                depth += 1
+            elif char in CLOSE_BRACKETS:
+                depth -= 1
+                if depth < 0:
+                    break
+            elif char in ",;" and depth == 0:
+                break
+            i += 1
+    hits.sort()
+    return hits
 
 
 def dart_sources() -> list[tuple[str, str]]:
@@ -387,10 +608,9 @@ def line_of(source: str, index: int) -> int:
 
 def turkish_literals(source: str) -> list[tuple[int, str]]:
     hits: list[tuple[int, str]] = []
-    for match in STRING_RE.finditer(source):
-        literal = match.group(0)[1:-1]
+    for start, _, literal in dart_strings(source):
         if TURKISH_CHAR_RE.search(literal):
-            hits.append((line_of(source, match.start()), literal))
+            hits.append((line_of(source, start), literal))
     return hits
 
 
@@ -406,14 +626,20 @@ def turkish_literal_violations(sources: list[tuple[str, str]]) -> list[str]:
 
 def data_layer_prose(source: str) -> list[tuple[int, str]]:
     """`throw XException('…')` / `return '…'` ile kullanıcıya dönen cümleler."""
-    hits: list[tuple[int, str]] = []
-    for match in DATA_LITERAL_RE.finditer(source):
-        literal = match.group(1)
-        if literal is None:
-            literal = match.group(2)
-        if literal is not None and looks_like_prose(literal):
-            hits.append((line_of(source, match.start()), literal))
-    return hits
+    return [
+        (line_of(source, position), literal)
+        for position, literal in slot_literals(source, DATA_SLOT_RE)
+        if looks_like_prose(literal)
+    ]
+
+
+def ui_prose(source: str) -> list[tuple[int, str]]:
+    """Kullanıcıya görünen widget yuvasının değer konumundaki cümleler."""
+    return [
+        (line_of(source, position), literal)
+        for position, literal in slot_literals(source, UI_SLOT_RE)
+        if looks_like_prose(literal)
+    ]
 
 
 def data_layer_violations(sources: list[tuple[str, str]]) -> list[str]:
@@ -482,12 +708,7 @@ def ui_prose_debt_drift(sources: list[tuple[str, str]]) -> tuple[list[str], int]
                 f"UI prose debt register points at a missing file: {relative}"
             )
             continue
-        actual = sum(
-            1
-            for match in UI_LITERAL_RE.finditer(source)
-            if (literal := match.group(1) or match.group(2)) is not None
-            and looks_like_prose(literal)
-        )
+        actual = len(ui_prose(source))
         total += actual
         if actual > expected:
             errors.append(
@@ -554,13 +775,8 @@ def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
             or relative in UI_PROSE_DEBT
         ):
             continue
-        for match in UI_LITERAL_RE.finditer(source):
-            literal = match.group(1)
-            if literal is None:
-                literal = match.group(2)
-            if literal is not None and looks_like_prose(literal):
-                line = line_of(source, match.start())
-                violations.append(f"{relative}:{line}: {literal!r}")
+        for line, literal in ui_prose(source):
+            violations.append(f"{relative}:{line}: {literal!r}")
     return violations
 
 
@@ -591,15 +807,7 @@ def stale_exemptions(sources: list[tuple[str, str]]) -> list[str]:
                 "yanıltır."
             )
             continue
-        suppressed = False
-        for match in UI_LITERAL_RE.finditer(source):
-            literal = match.group(1)
-            if literal is None:
-                literal = match.group(2)
-            if literal is not None and looks_like_prose(literal):
-                suppressed = True
-                break
-        if not suppressed:
+        if not ui_prose(source):
             errors.append(
                 f"stale UI_PROSE_EXEMPTIONS entry: {relative} artık hiçbir "
                 "bulgu üretmiyor, yani muafiyet bir şey korumuyor — ama "
@@ -674,17 +882,28 @@ def native_errors() -> tuple[list[str], str]:
 
 
 SELF_TEST_PROBE = DART_ROOT / "features" / "_l10n_gate_probe.dart"
+SELF_TEST_DATA_PROBE = DART_ROOT / "data" / "_l10n_gate_probe.dart"
 
 # 🔴 WP-500 kabul md. 2: "kasten eklenen kırık girdi kapıyı düşürüyor".
 # Bu tek seferlik elle denenmez — kapı kendini her koşumda sınar
 # (`backend_contract_audit.py --self-test` ile aynı desen).
 #
-# Üç prob, kapının **üç ayrı** kör noktasına karşılık gelir:
+# Altı prob, kapının **altı ayrı** kör noktasına karşılık gelir:
 #   1. `$` ile başlayan gömülü cümle — WP-500'ün asıl hatası;
 #   2. Türkçe'ye özgü karakter içermeyen düz gömülü cümle;
-#   3. interpolasyon **arasında** kalan gömülü sözcük.
-# Ayrıca bir de **geçmemesi gereken** satır var: yalnız ayıraç birleştiren
-# literal kapıyı kırmızıya düşürmemeli, yoksa gürültü kapıyı kullanılmaz yapar.
+#   3. interpolasyon **arasında** kalan gömülü sözcük;
+#   4. ternary'nin **ilk** dalındaki cümle — WP-623 (`Text(isMe ? '…' : x)`);
+#   5. ternary'nin **son** dalındaki cümle — aynı körlük, diğer taraf;
+#   6. `??` yedeğindeki cümle.
+# 4-6 eski desenin hiç göremediği biçimdir: literal yuvanın hemen ardında değil,
+# arada bir ifade var. Kapı YEŞİL diyordu, İngilizce arayüzde Türkçe metin
+# çıkıyordu.
+#
+# Ayrıca **geçmemesi gereken** iki satır var; kapıyı gürültüye boğmak onu
+# gevşetmenin ilk adımıdır:
+#   (a) yalnız ayıraç birleştiren literal;
+#   (b) iç içe bir çağrının argümanı olan biçim deseni (`DateFormat('d MMMM')`)
+#       — yürüyüşün derinlik kuralı bunu sessiz tutmalı.
 SELF_TEST_SOURCE = """// GECICI KAPI PROBU — l10n_audit.py --self-test tarafindan yazilir ve hemen
 // silinir. Repoda kalici olarak bulunmamalidir.
 import 'package:flutter/material.dart';
@@ -695,16 +914,53 @@ class L10nGateProbe extends StatelessWidget {
   final int count;
   final String label;
 
+  // 🔴 Ternary dallarinda `label` DEGIL `who` kullanilir. `cond ? label : '…'`
+  // yazilirsa `label :` parcasi yuva listesindeki `label:` adli argumana
+  // benziyor ve literal ESKI desenle de yakalaniyordu; prob o zaman
+  // genisletmeyi degil bir rastlantiyi sinamis olurdu.
+  String get who => label;
+
   @override
   Widget build(BuildContext context) => Column(
     children: [
       Text('$count gate_probe_leading'),
       const Text('gate probe plain sentence'),
       Text('$label gate_probe_between $count'),
+      Text(count > 0 ? 'gate probe ternary left' : who),
+      Text(count > 0 ? who : 'gate probe ternary right'),
+      Text(who ?? 'gate probe fallback branch'),
       // Bu satir kapiyi DUSURMEMELI: disarida yalniz ayirac var.
       Text('$label · $count'),
+      // Bu satir da DUSURMEMELI: bicim deseni, ic ice cagrinin argumani.
+      Text(DateFormat('d MMMM').format(DateTime.now())),
     ],
   );
+}
+"""
+
+# Veri katmani probu: ayni bitisiklik korlugu `return`/`throw` yuvasinda da
+# vardi. Ayrica `toString()` govdesi GELISTIRICI yuzeyidir — kapinin onu
+# yakalamamasi gerekir, yoksa her `toString()` yanlis pozitif uretir.
+SELF_TEST_DATA_SOURCE = """// GECICI KAPI PROBU — l10n_audit.py --self-test tarafindan yazilir ve hemen
+// silinir. Repoda kalici olarak bulunmamalidir.
+
+class GateProbeException implements Exception {
+  const GateProbeException(this.code);
+
+  final String code;
+
+  // Bu satir kapiyi DUSURMEMELI: toString() hata ayiklama temsilidir.
+  @override
+  String toString() => 'GateProbeException($code) gate probe debug only';
+}
+
+String gateProbeMessage(int count, String detail) {
+  if (count < 0) {
+    throw GateProbeException(
+      count == -1 ? 'gate probe throw ternary' : detail,
+    );
+  }
+  return count > 1 ? 'gate probe data ternary' : detail;
 }
 """
 
@@ -717,40 +973,71 @@ def self_test() -> int:
     # ile cokuyor ya da bilerek bozuk probu gercek kaynak sanip yanlis kirmizi
     # uretiyordu. Prob artik ayni giris noktasina bellekten verilir; paylasilan
     # agac hic degismez.
-    if SELF_TEST_PROBE.exists():
-        print(f"FAIL: gecici kapi probu repoda kalmis: {SELF_TEST_PROBE}")
-        return 1
+    for path in (SELF_TEST_PROBE, SELF_TEST_DATA_PROBE):
+        if path.exists():
+            print(f"FAIL: gecici kapi probu repoda kalmis: {path}")
+            return 1
     sources = dart_sources()
-    baseline = set(ui_prose_violations(sources))
-    probe = (
-        SELF_TEST_PROBE.relative_to(ROOT).as_posix(),
-        strip_comments(SELF_TEST_SOURCE),
-    )
-    probed = set(ui_prose_violations(sources + [probe]))
+    probes = [
+        (
+            SELF_TEST_PROBE.relative_to(ROOT).as_posix(),
+            strip_comments(SELF_TEST_SOURCE),
+        ),
+        (
+            SELF_TEST_DATA_PROBE.relative_to(ROOT).as_posix(),
+            strip_comments(SELF_TEST_DATA_SOURCE),
+        ),
+    ]
 
-    new = probed - baseline
+    def scan(all_sources: list[tuple[str, str]]) -> set[str]:
+        return set(ui_prose_violations(all_sources)) | set(
+            data_layer_violations(all_sources)
+        )
+
+    baseline = scan(sources)
+    new = scan(sources + probes) - baseline
+
+    # Yakalanması ŞART olanlar — her biri kapının bir kör noktası.
     expected = (
         "gate_probe_leading",
         "gate probe plain sentence",
         "gate_probe_between",
+        "gate probe ternary left",
+        "gate probe ternary right",
+        "gate probe fallback branch",
+        "gate probe throw ternary",
+        "gate probe data ternary",
     )
     caught = {token: any(token in item for item in new) for token in expected}
+
+    # Yanlış pozitif kontrolü — bunlar SESSİZ kalmalı. Kapıyı gürültüye
+    # boğmak, sonraki turda onu gevşetmenin gerekçesi olur.
+    silent = {
+        "ayıraç birleştiren literal": [item for item in new if "·" in item],
+        "iç içe çağrının biçim deseni": [
+            item for item in new if "d MMMM" in item
+        ],
+        "toString() hata ayıklama çıktısı": [
+            item for item in new if "gate probe debug only" in item
+        ],
+    }
 
     print("self-test — kapı probu:")
     for token, hit in caught.items():
         print(f"  {'yakalandı' if hit else 'KAÇIRILDI'}: {token}")
-    # Yanlış pozitif kontrolü: ayıraç-birleştiren literal sessiz kalmalı.
-    separator_noise = [item for item in new if "·" in item]
-    print(
-        f"  {'temiz' if not separator_noise else 'GURULTU'}: "
-        "ayıraç birleştiren literal"
-    )
-    if not all(caught.values()) or separator_noise:
+    for label, noise in silent.items():
+        print(f"  {'temiz' if not noise else 'GURULTU'}: {label}")
+
+    noisy = any(silent.values())
+    if not all(caught.values()) or noisy:
         print("FAIL: kapı ya probu kaçırdı ya da gürültü üretti.")
         for item in sorted(new):
             print(f"    - {item}")
         return 1
-    print(f"OK: kapı üç probu da reddetti, gürültü üretmedi ({len(new)} bulgu).")
+    print(
+        f"OK: kapı {len(expected)} probu da reddetti, gürültü üretmedi "
+        f"({len(new)} bulgu)."
+    )
     return 0
 
 

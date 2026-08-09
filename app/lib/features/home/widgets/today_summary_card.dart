@@ -87,7 +87,9 @@ class TodaySummaryCard extends ConsumerWidget {
                 Text(
                   breakdown.isEmpty
                       ? AppLocalizations.of(context).homeKayitYok
-                      : '${breakdown.length} ders',
+                      : AppLocalizations.of(
+                          context,
+                        ).homeDersSayisi(breakdown.length),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

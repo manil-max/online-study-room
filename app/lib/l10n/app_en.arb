@@ -6716,5 +6716,35 @@
   "profileCikisYapildiSunucuyaUlasilamadi": "You are signed out on this device. We could not reach the server, so sessions on your other devices may still be open.",
   "@profileCikisYapildiSunucuyaUlasilamadi": {"description": "WP-620: offline sign-out. The local session is already gone, so \"could not sign out\" was false; only the server notification failed."},
   "notificationsAylikRaporKaydedilemedi": "The monthly report setting could not be saved. Check your connection and try again.",
-  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: the monthly report switch reverted silently; now it also says why."}
+  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: the monthly report switch reverted silently; now it also says why."},
+  "commonSenEtiketi": "{name} (you)",
+  "@commonSenEtiketi": {
+    "description": "Shared user-facing text. Marks the signed-in user's own row in a leaderboard. Source: $name (sen)",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDersSayisi": "{count, plural, =1 {1 subject} other {{count} subjects}}",
+  "@homeDersSayisi": {
+    "description": "Home user-facing text. Number of subjects studied today, shown under the daily total. Source: ${breakdown.length} ders",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonXpIlerlemesi": "{current} / {total} XP",
+  "@commonXpIlerlemesi": {
+    "description": "Shared user-facing text. Crown XP progress toward the next tier. The unit is written \"XP\" in both TR and EN but the string stays in the catalog so a future locale can translate it, same rule as commonXpMiktari. Source: $currentXp / $nextThreshold XP",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }
