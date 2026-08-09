@@ -9857,10 +9857,15 @@ yazilmis bir dosyaydi. Sahibin emri dogru cikti.
 
 - **Grup uye siniri 8** — 13 testci tek gruba sigmaz. **Sahip karari**; sahip
   "bosver simdilik" dedi.
-- ~~**Surum hatti kilitli** — yerel head 0124, production pin 0123~~ →
-  **COZULDU (2026-08-09):** `0124` production'a uygulandi (run 31324086033),
-  production pin 0124. Yerel head artik 0125 (`WP-630`, henuz uygulanmadi);
-  monotonluk saglandigi icin surum hatti KILITLI DEGIL.
+- **Surum hatti** — `0124` production'a uygulandi (run 31324086033) ve
+  production pin 0124 oldu; o kilit acildi. 🔴 **Ama WP-630 `0125`i ekleyince
+  hat YENIDEN kilitlendi**: `release-preflight.ps1:60-73` hem
+  `yerel head == ExpectedMigrationHead` hem
+  `contract.<ortam>.migration_head == ExpectedMigrationHead` sart kosuyor;
+  yerel 0125 / production 0124 iken bu ikisini ayni anda saglayan hicbir deger
+  yok. Yani **yeni bir migration eklemek, uygulanana kadar surum turunu
+  durdurur** ve bu bilinclidir (yayinlanan ikili, sunucuda olmayan bir semaya
+  guvenemez). Cozum: `0125`i uygula ya da surum turundan once uygula.
 - **Kurucunun gruptan cikma yolu yok** — dogru cozum sahiplik devri = yeni RPC
   + migration + UI. Urun karari.
 - ~~**Bildirimden "Calismaya don" pomodoro dongusunu ilerletmiyor**~~ →
