@@ -50,6 +50,8 @@ Sahip "hesap açma dışında her şey hazır olsun" dedi. Durum:
 | **Yüksek çözünürlüklü logo** | ❌ **SAHİPTEN GEREKİYOR** | Aşağıya bak |
 | **Ekran görüntüleri** | ❌ **SAHİPTEN GEREKİYOR** | En az 1 tane, 1366×768 veya daha büyük |
 | Yaş derecelendirme (IARC) anketi | ⚠️ Sahip dolduracak | Cevap taslağı listeleme belgesinde |
+| **Destek e-postası** | ❌ **SAHİPTEN** | Depoda tek bir destek adresi yok |
+| **İnceleme test hesabı** | ❌ **SAHİPTEN** | Aşağıya bak — atlanırsa gönderim reddedilir |
 | Windows App Certification Kit (WACK) | ⚠️ **Koşulamadı** | Yönetici izni istiyor; sahip yokken UAC onaylanamaz |
 
 ### ❌ Logo: 256×256 yetmiyor (ölçüldü)
@@ -77,13 +79,32 @@ normal yolu ekranı yakalamak ama **bu makinede çalışmıyor**: GDI, Flutter'�
 DirectComposition yüzeyini göremiyor (WP-602'de iki yöntemle ölçüldü, ikisi de
 bomboş beyaz veriyor). Seçenekler:
 
-1. **Sahip kendi çeker** — uygulamayı açıp `Win+Shift+S` ya da `Win+PrtScn`.
-   En doğal yol; gerçek verisiyle daha iyi görünür.
-2. Golden test altyapısından üretmek — teknik olarak mümkün ama ekranlar test
-   verisiyle dolar, mağaza sayfası için sönük kalır.
+**Sahip kendi çeker** — uygulamayı açıp `Win+Shift+S` ya da `Win+PrtScn`.
+4-6 kare yeter: ana sayfa, sayaç, grup, istatistik, başarımlar, tema stüdyosu.
 
-**Öneri: sahip 4-6 ekran görüntüsü çeksin** (ana sayfa, sayaç, grup, istatistik,
-başarımlar, tema stüdyosu).
+#### Golden altyapısından üretme DENENDİ ve BIRAKILDI (dürüstçe)
+
+Testten render edip PNG yazan bir üreteç yazıldı ve üç kez denendi. Sonuç:
+
+- İlk kare: bütün yazılar **kutu** çıktı — test ortamında font ailesi yok.
+  Temaya `fontFamily: 'Inter'` bağlanınca yazılar düzeldi.
+- Ama **ikonlar kutu kalmaya devam etti** ve `boundary.toImage()` çağrısı
+  koşumu asıyor: her denemede "did not complete" ile 3-4 dakika sonra düştü.
+  Üretilen tek kare de yalnız tema seçme ekranıydı — bir çalışma uygulamasının
+  mağaza sayfası için en zayıf ilk izlenim.
+
+Üreteç **silindi**. Gerekçe: bu depoda kural, ölçtüğünü iddia ettiği şeyi
+ölçmeyen araç bırakmamak. Yarım çalışan bir üretecin bakımı, sahibin iki
+dakikada çekeceği gerçek kareden pahalı.
+
+### ❌ İnceleme test hesabı — atlanırsa doğrudan RET
+
+Uygulama girişsiz açılmıyor. Microsoft'un inceleme ekibi giremezse gönderim
+**reddedilir** ve bu en sık ret sebeplerinden biridir. Partner Center'da
+"Notes for certification" alanına çalışan bir **e-posta + şifre** girilmeli.
+
+Şifreyi ben oluşturmam ve yazmam. Sahip bir test hesabı açıp bilgileri o alana
+kendisi girer. (Aynı gereklilik Google Play kapalı testi için de geçerli.)
 
 ### ⚠️ WACK koşulamadı — neden ve ne zaman koşacak
 
