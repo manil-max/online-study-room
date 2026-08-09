@@ -129,6 +129,42 @@ class DesktopNavigationPane extends StatelessWidget {
   }
 }
 
+/// WinUI odak dikdörtgeni.
+///
+/// Odak göstergesi **hover ile aynı olamaz**: ölçümde odaklanmış sekme yalnız
+/// `onSurface` %6 zeminle işaretleniyordu, yani koyu temada hem görünmüyor hem
+/// de fareyle gezinmeden ayırt edilemiyordu (WP-569 cihaz ölçümü). Halka ön
+/// planda çizilir; yerleşimi kaydırmaz, seçili/hover zeminini de ezmez.
+class DesktopNavFocusRing extends StatelessWidget {
+  const DesktopNavFocusRing({
+    required this.focused,
+    required this.child,
+    super.key,
+  });
+
+  final bool focused;
+  final Widget child;
+
+  static const double thickness = 2;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DesktopNavigationPane.itemRadius),
+        border: Border.all(
+          color: focused
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          width: thickness,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _PaneHeader extends StatelessWidget {
   const _PaneHeader({required this.expanded});
 
@@ -217,7 +253,7 @@ class _NavItemTileState extends State<_NavItemTile> {
     Color background;
     if (selected) {
       background = scheme.secondaryContainer;
-    } else if (_hovered || _focused) {
+    } else if (_hovered) {
       background = scheme.onSurface.withValues(alpha: 0.06);
     } else {
       background = Colors.transparent;
@@ -317,7 +353,7 @@ class _NavItemTileState extends State<_NavItemTile> {
 
     final body = Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: tile,
+      child: DesktopNavFocusRing(focused: _focused, child: tile),
     );
 
     if (!widget.expanded) {
@@ -379,7 +415,7 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
     final Color bg;
     if (selected) {
       bg = scheme.secondaryContainer;
-    } else if (_hovered || _focused) {
+    } else if (_hovered) {
       bg = scheme.onSurface.withValues(alpha: 0.06);
     } else {
       bg = Colors.transparent;
@@ -441,7 +477,7 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
 
     final padded = Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
-      child: tile,
+      child: DesktopNavFocusRing(focused: _focused, child: tile),
     );
 
     if (!widget.expanded) {

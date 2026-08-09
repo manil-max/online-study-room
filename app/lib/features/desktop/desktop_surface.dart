@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
@@ -64,14 +65,17 @@ Future<T?> showDesktopPanel<T>({
   double height = DesktopSurface.panelHeight,
 }) {
   if (!isDesktopWindow) {
-    return Navigator.of(context).push<T>(
-      MaterialPageRoute(builder: builder),
-    );
+    return Navigator.of(context).push<T>(MaterialPageRoute(builder: builder));
   }
 
   final media = MediaQuery.sizeOf(context);
   final w = width.clamp(360.0, media.width - 48);
   final h = height.clamp(360.0, media.height - 48);
+
+  // Panel kendi `Navigator`ını taşır; o iç rota Esc'i yutuyordu ve Ayarlar
+  // paneli klavyeyle kapanmıyordu (WP-569 cihaz ölçümü). Esc önce panel içi
+  // geçmişi geri alır, geçmiş bitince paneli kapatır — Windows sözleşmesi.
+  final panelNavigator = GlobalKey<NavigatorState>();
 
   return showDialog<T>(
     context: context,
@@ -90,13 +94,29 @@ Future<T?> showDesktopPanel<T>({
         child: SizedBox(
           width: w,
           height: h,
-          child: Navigator(
-            onGenerateRoute: (settings) {
-              return MaterialPageRoute<T>(
-                settings: settings,
-                builder: builder,
-              );
+          child: CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.escape): () {
+                final navigator = panelNavigator.currentState;
+                if (navigator != null && navigator.canPop()) {
+                  navigator.pop();
+                } else {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
             },
+            child: Focus(
+              autofocus: true,
+              child: Navigator(
+                key: panelNavigator,
+                onGenerateRoute: (settings) {
+                  return MaterialPageRoute<T>(
+                    settings: settings,
+                    builder: builder,
+                  );
+                },
+              ),
+            ),
           ),
         ),
       );
