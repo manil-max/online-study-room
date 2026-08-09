@@ -14,7 +14,9 @@ class Profile {
     this.dailyGoalMinutes = kDefaultDailyGoalMinutes,
     this.isActive = true,
     this.animal,
-    this.monthlyReportOptIn = true,
+    // WP-630: aylik rapor icin ACIK riza gerekir; on isaretli onay kutusu
+    // gecerli riza degildir. Sunucu tarafi esi: `0125`.
+    this.monthlyReportOptIn = false,
     this.titleAchievementId,
   });
 
@@ -76,7 +78,10 @@ class Profile {
           (map['daily_goal_minutes'] as int?) ?? kDefaultDailyGoalMinutes,
       isActive: map['is_active'] as bool? ?? true,
       animal: map['animal'] as String?,
-      monthlyReportOptIn: map['monthly_report_opt_in'] as bool? ?? true,
+      // 🔴 WP-630: sutun okunamadiginda (eski satir, kisitli kolon secimi,
+      // cevrimdisi yedek profil) rizayi VAR saymak, kullanicinin hic vermedigi
+      // bir izni uydurmaktir. Bilinmiyorsa yok sayilir.
+      monthlyReportOptIn: map['monthly_report_opt_in'] as bool? ?? false,
       titleAchievementId: map['title_achievement_id'] as String?,
     );
   }

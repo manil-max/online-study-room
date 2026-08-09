@@ -47,9 +47,16 @@ class _ReportAuthRepository extends InMemoryAuthRepository {
 }
 
 void main() {
+  // 🔴 WP-630: baslangic degeri ARTIK ACIKCA kuruluyor. Onceden test sutunun
+  // varsayilanina (`true`) yaslaniyordu; varsayilan riza gerekcesiyle `false`a
+  // cevrilince bu dosya kirmizi dustu. Kirilan sey davranis degil, testin
+  // varsayilani SOZLESMEYE cevirmis olmasiydi -- bu depoda tekrarlayan hata.
+  // Olculen sey (hata varken uyari cikar ve deger geri doner; basarida cikmaz)
+  // baslangic degerinden bagimsizdir, o yuzden burada sabitleniyor.
   Future<_ReportAuthRepository> pump(
     WidgetTester tester, {
     Object? error,
+    bool startOptIn = true,
   }) async {
     tester.view.physicalSize = const Size(1080, 4800);
     tester.view.devicePixelRatio = 1.0;
@@ -67,6 +74,9 @@ void main() {
       password: 'guvenli123',
       displayName: 'Ali',
     );
+    await repo.updateMonthlyReportOptIn(startOptIn);
+    repo.calls = 0;
+    repo.lastValue = null;
     repo.error = error;
 
     await tester.pumpWidget(

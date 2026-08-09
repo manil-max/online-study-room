@@ -179,6 +179,11 @@ void main() {
       password: 'secret1',
       displayName: 'Ben',
     );
+    // 🔴 WP-630: baslangic degeri ACIKCA kuruluyor. Bu test eskiden sutunun
+    // varsayilanina yaslaniyordu; varsayilan `false`a cevrilince (on isaretli
+    // riza gecerli degildir) kirmizi dustu. Olculen sey "iyimser deger tapdan
+    // sonra KALIR" ve o iddia baslangic degerinden bagimsiz.
+    await authRepo.updateMonthlyReportOptIn(true);
     tester.view.physicalSize = const Size(1080, 12000);
     tester.view.devicePixelRatio = 3.0;
 
