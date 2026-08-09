@@ -9791,6 +9791,72 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
 - Ayrica guncelleme denetiminde baglanti zaman asimi yok (acilisi
   engellemiyor ama cevrimdisi asili kalabilen istek).
 
+---
+
+## 🔍 DENETIM TURU — 2026-08-09 (sahip emri: "md'lere guvenmeden denetle")
+
+Sahip **"agentlarla butun projeyi md'lere guvenmeden, notlara guvenmeden
+denetle"** dedi. Alti salt-okunur denetci + lider (veritabani) calisti; kanit
+yalniz **kod** sayildi, `progress.md`/`docs/**`/kod yorumlari **iddia**.
+
+| Alan | KANAMA | RISK | Rapor |
+|---|---|---|---|
+| Sayac motoru | 2 | 5 | `docs/denetim/DENETIM-sayac.md` |
+| Istatistik/oyunlastirma | 3 | 9 | `docs/denetim/DENETIM-istatistik.md` |
+| Gruplar/sosyal | 3 | 5 | `docs/denetim/DENETIM-gruplar.md` |
+| Kimlik/hesap | 2 | 4 | `docs/denetim/DENETIM-auth.md` |
+| Bildirim/arka plan | 2 | 4 | `docs/denetim/DENETIM-bildirim.md` |
+| Masaustu/surum | 3 | 5 | `docs/denetim/DENETIM-masaustu-surum.md` |
+| Veritabani (lider) | 0 | 0 | `docs/denetim/DENETIM-veritabani.md` |
+
+🔴 **Denetim uc yerde BELGENIN yalan soyledigini buldu** — biri ayni gun
+yazilmis bir dosyaydi. Sahibin emri dogru cikti.
+
+### Duzeltilenler
+
+- **WP-610** profil yazmalari ag hatasinda sessizce kayboluyordu (4 yol)
+- **WP-611** Windows'ta alarm hic kurulmuyordu, hatirlatici anahtari yutuluyordu
+- **WP-612** "gecen hafta" TR disinda 8 gundu; ana ekran 90 gunu "Toplam" diye
+  satiyordu; ana ekranda IKI ayri seri motoru farkli sayi gosterebiliyordu
+- **WP-613** durdurulan oturum sessizce silinebiliyordu (write-ahead outbox);
+  bildirim faz gecisini hic gormuyordu; odak ekrani iki duzeltmeyi kacirmisti
+- **WP-614** Store paketi magaza disi guncelleyici tasiyordu; uc kapi
+  olcmedigi halde yesil veriyordu
+- **WP-615** izin verilip donunce uyari seridi kaybolmuyordu *(WP-592'nin eksigi)*
+- **WP-616** Windows'ta sifre sifirlama calismiyordu ama "gonderildi" diyordu
+- **WP-617** sohbet/durtme/susturma ag hatasinda tamamen sessizdi; kamp
+  atesinden sikayet/engelleme yolu yoktu
+- **WP-618** iki belge gerceki yanlis anlatiyordu
+- **WP-619** ayni sessizlik sayac kartinda da vardi + **desen kapisi** eklendi
+- **WP-621** bozuk profil "gercek" diye onbellege yaziliyordu *(WP-609'un
+  acik yarisi — duzeltme bozuklugu SABITLIYORDU)*
+
+### 🔴 Bu turun uc kalici dersi
+
+1. **Yazili "baglayici sahip karari" da yanlis olabilir.** Seri hatasi uc dort
+   tur cozulemedi cunku kod `progress.md`deki karara SADIKTI ve karar sahibin
+   istediginin tersiydi. Kod ve kayit birlikte degistirilmeden kalici olmadi.
+2. **Ayni hata bes yerde birden vardi** (`on AuthException`). Tek tek duzeltmek
+   yetmedi; besincisi de aynen cikti. Cozum tekil test degil **desen kapisi**.
+3. **Paylasilan index iki kez is yedi.** Bir onarim indeksi bozuk birakti ve
+   iki dosya "silinmis" gorunuyordu; lider yakalayip onardi. Kural: `git add` +
+   `git commit` ikilisi degil, **`git commit -- <yollar>`**.
+
+### Acik kalanlar (kapsam disi birakildi, gerekcesiyle)
+
+- **Grup uye siniri 8** — 13 testci tek gruba sigmaz. **Sahip karari**; sahip
+  "bosver simdilik" dedi.
+- **Surum hatti kilitli** — yerel head 0124, production pin 0123; preflight
+  ikisini birden sart kosuyor, tag atilsa bile durur. `0124` production'a
+  uygulanmadan **hicbir surum cikmaz**. Sahip karari (ajanlara pinler yasaklandi).
+- **Kurucunun gruptan cikma yolu yok** — dogru cozum sahiplik devri = yeni RPC
+  + migration + UI. Urun karari.
+- **Bildirimden "Calismaya don" pomodoro dongusunu ilerletmiyor** —
+  `StudyTimerService.kt`; WP-613 sonrasi bu dugme ILK KEZ ulasilabilir oldu.
+  Native tarafi ayri WP.
+- **Cevrimdisi acilisin ilk saniyelerinde profil yazmalari sessizce dusuyor**
+  (DENETIM-auth RISK-6).
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
