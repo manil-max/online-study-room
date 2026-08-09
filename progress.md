@@ -9828,6 +9828,11 @@ yazilmis bir dosyaydi. Sahibin emri dogru cikti.
   atesinden sikayet/engelleme yolu yoktu
 - **WP-618** iki belge gerceki yanlis anlatiyordu
 - **WP-619** ayni sessizlik sayac kartinda da vardi + **desen kapisi** eklendi
+- **WP-620** hesap ayarlarinda uc yanlis iddia: silme durumu OKUNAMAYINCA
+  "hesabin silinecek" deniyordu (silmeyi hic istememis kullaniciya),
+  cevrimdisi cikista "cikilamadi" deniyordu (oysa kullanici CIKMISTI),
+  giris yapmis Windows kullanicisinda sifre sifirlama yine "gonderildi"
+  diyordu. Silme karti artik UC ayri hal (aktif / yok / okunamadi).
 - **WP-621** bozuk profil "gercek" diye onbellege yaziliyordu *(WP-609'un
   acik yarisi — duzeltme bozuklugu SABITLIYORDU)*
 
@@ -9838,7 +9843,13 @@ yazilmis bir dosyaydi. Sahibin emri dogru cikti.
    istediginin tersiydi. Kod ve kayit birlikte degistirilmeden kalici olmadi.
 2. **Ayni hata bes yerde birden vardi** (`on AuthException`). Tek tek duzeltmek
    yetmedi; besincisi de aynen cikti. Cozum tekil test degil **desen kapisi**.
-3. **Paylasilan index iki kez is yedi.** Bir onarim indeksi bozuk birakti ve
+3. 🔴 **Yanlis davranisi SOZLESMEYE ceviren test bu turda BES kez cikti**
+   (WP-574 poz, WP-576 olu enum, WP-593 taze kurulum, WP-612 donem sonu,
+   WP-620 okunamayan silme durumu). Desen: kusur duzeltilince eski test
+   kirmiziya duser ve "kapiyi bozdum" sanilir; oysa kapi zaten yanlisi
+   koruyordu. Her seferinde iddianin KORUDUGU sey ayakta tutulup yanlisa
+   baglanan kismi degistirildi.
+4. **Paylasilan index iki kez is yedi.** Bir onarim indeksi bozuk birakti ve
    iki dosya "silinmis" gorunuyordu; lider yakalayip onardi. Kural: `git add` +
    `git commit` ikilisi degil, **`git commit -- <yollar>`**.
 
