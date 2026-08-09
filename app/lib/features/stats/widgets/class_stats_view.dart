@@ -10,6 +10,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../core/widgets/crowned_avatar.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/providers/analytics_query_providers.dart';
@@ -338,14 +339,19 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               child: Center(child: CircularProgressIndicator()),
             ),
           ),
+          // 🔴 WP-589: bu dal BOŞ dalla (aşağıda) AYNI cümleyi kullanıyordu.
+          // Sunucuya ulaşılamayınca kullanıcıya "bu dönemde henüz çalışma
+          // yok" deniyordu — grubu hakkında YANLIŞ bilgi. Yasak zaten
+          // yazılıydı (`home/widgets/group_card_shell.dart`), uygulanmamıştı.
+          // Yenileme hedefli: `refreshAppData` bu family'yi okumaz, oraya
+          // bağlanan düğme ölü olurdu.
           error: (_, _) => Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            child: ErrorRetryView(
+              message: AppLocalizations.of(
+                context,
+              ).statsUyeKatkisiYuklenemedi,
+              onRetry: () => ref.invalidate(
+                analyticsGroupContributionProvider(analyticsPeriod),
               ),
             ),
           ),

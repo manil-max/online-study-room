@@ -2,6 +2,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/app_pull_to_refresh.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../../data/models/study_group.dart';
 import 'card_scaffold.dart';
 
@@ -14,7 +16,7 @@ const Key kGroupCardSkeletonKey = Key('groupCardSkeleton');
 /// Aksi hâlde çizilecek yer tutucuyu döndürür:
 ///
 /// - veri geldi ve grup **yok** → [GroupCardShell] (davet),
-/// - hata → tek satır hata metni,
+/// - hata → [ErrorRetryView] (cümle + tekrar dene),
 /// - henüz veri yok → başlık + iskelet.
 ///
 /// 🔴 Kapının varlık sebebi: `userGroupProvider.value` ilk yüklemede **her
@@ -36,12 +38,31 @@ Widget? groupCardGate(
       onJoinGroup: onJoinGroup,
     );
   }
+  // 🔴 WP-589: hata dalı eskiden yalnız bir CÜMLE idi — kardeşi
+  // [cardDataGate] WP-560'ta çıkışını almıştı, bu kapı almamıştı. Grup
+  // akışı patladığında kullanıcı dört kartta birden (sıralama, grup
+  // hedefi, grup trendi, şu an çalışanlar) çıkmaz sokakta kalıyordu.
+  //
+  // Yenileme yolu **kasıtlı olarak** [refreshAppData]: WP-550 onu tek
+  // yenileme kaynağı yaptı ve `userGroupsProvider`ı zaten yeniden okur.
+  // Buraya ikinci bir invalidate listesi yazılsaydı üçüncü bir "yenileme
+  // gerçeği" doğardı.
+  //
+  // `hasError` burada `hasValue` dalından SONRA sorulur, yani ölçülen şey
+  // `hasError && !hasValue`. Riverpod 3'te hata taşıyan durum `isLoading`
+  // de olabildiği için `when(error:)` sırası bu kapıda hiç kullanılmaz.
   return GroupCardStatus(
     title: title,
     child: groupAsync.hasError
-        ? groupCardMessage(
-            context,
-            AppLocalizations.of(context).homeGrupBilgisiYuklenemedi,
+        ? Consumer(
+            builder: (context, ref, _) => Center(
+              child: ErrorRetryView(
+                message: AppLocalizations.of(
+                  context,
+                ).homeGrupBilgisiYuklenemedi,
+                onRetry: () => refreshAppData(ref),
+              ),
+            ),
           )
         : const GroupCardSkeleton(key: kGroupCardSkeletonKey),
   );

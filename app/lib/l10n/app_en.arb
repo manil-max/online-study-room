@@ -4005,6 +4005,10 @@
   "@statsUyeYok": {
     "description": "Stats user-facing text. Source: Üye yok."
   },
+  "statsUyeKatkisiYuklenemedi": "Member contributions could not be loaded.",
+  "@statsUyeKatkisiYuklenemedi": {
+    "description": "Stats member-contribution card error state when the server aggregate fails (WP-589); kept distinct from the empty state. Source: Üye katkısı yüklenemedi."
+  },
   "statsIsimsiz": "Unnamed",
   "@statsIsimsiz": {
     "description": "Stats user-facing text. Source: İsimsiz"

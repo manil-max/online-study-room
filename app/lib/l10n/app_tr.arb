@@ -933,6 +933,7 @@
   "statsCalismaSaatleri": "Çalışma saatleri",
   "statsCok": "Çok",
   "statsUyeYok": "Üye yok.",
+  "statsUyeKatkisiYuklenemedi": "Üye katkısı yüklenemedi.",
   "statsIsimsiz": "İsimsiz",
   "statsIstatistik": "İstatistik",
   "statsIstatistikYuklenemediE": "İstatistik yüklenemedi: {e}",

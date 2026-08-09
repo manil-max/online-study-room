@@ -129,6 +129,22 @@ final activeGroupIdProvider = NotifierProvider<ActiveGroupNotifier, String?>(
 final userGroupProvider = Provider<AsyncValue<StudyGroup?>>((ref) {
   final groupsAsync = ref.watch(userGroupsProvider);
   final activeId = ref.watch(activeGroupIdProvider);
+  // 🔴 WP-589: `whenData` HATAYI DÜŞÜRÜYORDU. Riverpod 3'te hiç değer vermemiş
+  // bir `StreamProvider` hata aldığında durum `AsyncError` değil, hatayı taşıyan
+  // `AsyncLoading` olur; `whenData` o durumda gövdeyi atlayıp yine
+  // `AsyncLoading` döndürür ve hata bu türetmede KAYBOLUR.
+  //
+  // Kullanıcıdaki karşılığı ölçüldü: grup akışı ilk yüklemede patlayınca
+  // `groupCardGate` `hasError` göremiyor ve dört kart (sıralama, grup hedefi,
+  // grup trendi, şu an çalışanlar) SONSUZA KADAR İSKELET çiziyordu — ne hata
+  // cümlesi ne tekrar-dene görünüyordu. WP-560 aynı tuzağı sohbette bulmuştu
+  // (`class_chat_card`); bu ikinci örneği.
+  if (groupsAsync.hasError && !groupsAsync.hasValue) {
+    return AsyncValue<StudyGroup?>.error(
+      groupsAsync.error!,
+      groupsAsync.stackTrace ?? StackTrace.empty,
+    );
+  }
   return groupsAsync.whenData((groups) {
     if (groups.isEmpty) return null;
     if (activeId != null) {
