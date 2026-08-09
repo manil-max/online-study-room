@@ -124,6 +124,74 @@ object TimerStateStore {
         return runCatching { p.getInt(key, fallback) }.getOrDefault(fallback)
     }
 
+    /**
+     * Kullanıcının pomodoro ayarları — bu üç anahtarı **Dart yazar**
+     * (`StudyTimerNotifier` `timer_cycles` / `timer_work_min`), native taraf
+     * yalnız okur. Ayrı bir native kopya tutmak iki gerçek üretirdi.
+     */
+    const val KEY_TOTAL_CYCLES = "flutter.timer_cycles"
+    const val KEY_WORK_MINUTES = "flutter.timer_work_min"
+
+    /**
+     * WP-622: bildirimdeki **"Çalışmaya dön"** düğmesinin kararı — mola bitince
+     * hangi çalışma fazı başlayacak?
+     *
+     * 🔴 Kök neden. Eski `handleEndBreak`, döngü numarasını prefs'ten okuyup
+     * **aynen** geri yazıyordu. Ürünün kuralı ise `rest → work` geçişinde
+     * döngüyü artırmaktır (`study_providers.dart` → `nextPhaseTransition`,
+     * `nextCycle: cycle + 1`). Dart, native SSOT'tan gelen koşuyu sorgusuz
+     * benimsediği için (`_reconcileBackgroundTimer` → `fgCycle`) bildirimden
+     * bitirilen her mola bir döngüyü yutuyordu: 4 turluk pomodoro'yu her turda
+     * bildirimden sürdüren kullanıcı 2. turda sonsuza kadar takılı kalıyordu.
+     *
+     * 🔴 İkinci yüzü. Eski çağrı `targetSeconds` de geçmiyordu; [writeRunning]
+     * o anahtarı **siliyor**. Hedefi olmayan bir pomodoro koşusunu widget
+     * projeksiyonu (`timerChronometerProjection`) IDLE sayar — yani ana ekran
+     * widget'ı "Çalışmaya dön"e basıldıktan sonra sayacı DURMUŞ gösteriyordu.
+     *
+     * Karar burada **saf** tutulur ki cihazsız JVM testiyle ölçülebilsin;
+     * servis yalnız uygular. `rest` fazında değilsek `null` döner ve komut
+     * yok sayılır (eski erken `return` ile aynı anlam).
+     */
+    data class EndBreakPlan(
+        val mode: String,
+        val cycle: Int,
+        val targetSeconds: Int?,
+        val subjectId: String,
+        val liveRunId: String,
+        val liveRunToken: String,
+        val startOrigin: String,
+    )
+
+    fun endBreakPlan(p: SharedPreferences): EndBreakPlan? {
+        if (p.getString(KEY_PHASE, "") != "rest") return null
+        val mode = p.getString(KEY_MODE, "stopwatch") ?: "stopwatch"
+        val current = readIntCompat(p, KEY_CYCLE, 1).coerceAtLeast(1)
+        val totalCycles = readIntCompat(p, KEY_TOTAL_CYCLES, 0)
+        // Ürün değişmezi: `rest` yalnız SON döngüden önce doğar (son çalışma
+        // fazı molaya değil bitişe gider), yani `current < totalCycles`. Tavan
+        // bu değişmez bozuk bir prefs yüzünden ihlal edilse bile sayacın
+        // "5/4" gibi imkânsız bir tur göstermesini engeller.
+        val next = (current + 1).let {
+            if (totalCycles > 0) it.coerceAtMost(totalCycles) else it
+        }
+        return EndBreakPlan(
+            mode = mode,
+            cycle = next,
+            // Dart'taki `timerPhaseTargetSeconds` ile aynı kural: pomodoro'da
+            // çalışma fazının hedefi kullanıcının seçtiği çalışma dakikasıdır.
+            targetSeconds = if (mode == "pomodoro") {
+                (readIntCompat(p, KEY_WORK_MINUTES, 0) * 60).takeIf { it > 0 }
+            } else {
+                null
+            },
+            subjectId = p.getString(KEY_SUBJECT, "") ?: "",
+            liveRunId = p.getString(KEY_LIVE_RUN_ID, "").orEmpty(),
+            liveRunToken = p.getString(KEY_LIVE_RUN_TOKEN, "").orEmpty(),
+            startOrigin = p.getString(KEY_START_ORIGIN, "native_notification").orEmpty(),
+        )
+    }
+
     /** Çalışan sayaç durumunu atomik yazar (commit). */
     fun writeRunning(
         p: SharedPreferences,

@@ -163,16 +163,21 @@ class StudyTimerService : Service() {
         notifyStateChanged()
     }
 
-    /** Molayı bitirip mevcut timer modu/döngüsüyle yeni bir çalışma epoch'u
-     *  başlatır. Mola aralığı oturum değildir; bu nedenle kuyruk yazılmaz. */
+    /**
+     * Molayı bitirip pomodoro'nun **BİR SONRAKİ** çalışma döngüsünü başlatır
+     * (bildirimdeki "Çalışmaya dön" düğmesi). Mola aralığı oturum değildir; bu
+     * nedenle kuyruk yazılmaz.
+     *
+     * WP-622: hangi döngüyle/hedefle başlanacağı kararı burada DEĞİL,
+     * [TimerStateStore.endBreakPlan] içinde saf olarak verilir — cihazsız JVM
+     * testiyle ölçülebilsin diye. Eskiden karar burada gömülüydü ve döngüyü
+     * aynen yeniden yazıyordu.
+     */
     private fun handleEndBreak() {
         val p = prefs()
-        if (p.getString(TimerStateStore.KEY_PHASE, "") != "rest") return
-        val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
-        val startOrigin = p.getString(
-            TimerStateStore.KEY_START_ORIGIN,
-            "native_notification",
-        ).orEmpty()
+        val plan = TimerStateStore.endBreakPlan(p) ?: return
+        val liveRunToken = plan.liveRunToken
+        val startOrigin = plan.startOrigin
         if (liveRunToken.isNotBlank()) {
             TimerStateStore.appendPendingVerifiedCommand(
                 p, "resume", liveRunToken, startOrigin,
@@ -180,12 +185,12 @@ class StudyTimerService : Service() {
         }
         handleStart(
             startedAtMs = System.currentTimeMillis(),
-            mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
+            mode = plan.mode,
             phase = "work",
-            cycle = TimerStateStore.readIntCompat(p, TimerStateStore.KEY_CYCLE, 1)
-                .coerceAtLeast(1),
-            subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
-            liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
+            cycle = plan.cycle,
+            targetSeconds = plan.targetSeconds,
+            subjectId = plan.subjectId,
+            liveRunId = plan.liveRunId,
             liveRunToken = liveRunToken,
             startOrigin = startOrigin,
         )
