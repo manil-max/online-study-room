@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
+import '../../core/theme/focus_ring_tokens.dart';
 
 /// Sol navigasyon öğesi (WinUI NavigationViewItem karşılığı).
 class DesktopNavItem {
@@ -135,28 +136,38 @@ class DesktopNavigationPane extends StatelessWidget {
 /// `onSurface` %6 zeminle işaretleniyordu, yani koyu temada hem görünmüyor hem
 /// de fareyle gezinmeden ayırt edilemiyordu (WP-569 cihaz ölçümü). Halka ön
 /// planda çizilir; yerleşimi kaydırmaz, seçili/hover zeminini de ezmez.
+///
+/// 🔴 WP-594: renk artık `colorScheme.primary` DEĞİL. Primary'ye bağlıyken
+/// Tema Stüdyosu'nda panel zeminine yakın palet seçen kullanıcıda halka eriyip
+/// kayboluyordu — "uyarı rozeti tema çakışması"nın (WP-358) aynısı. Renk
+/// [focusRingColorOn] ile **zeminden** türetilir; bkz.
+/// `core/theme/focus_ring_tokens.dart`.
 class DesktopNavFocusRing extends StatelessWidget {
   const DesktopNavFocusRing({
     required this.focused,
     required this.child,
+    this.background,
     super.key,
   });
 
   final bool focused;
   final Widget child;
 
+  /// Halkanın üstünde durduğu zemin. Verilmezse panel zemini kullanılır.
+  final Color? background;
+
   static const double thickness = 2;
 
   @override
   Widget build(BuildContext context) {
+    final surface =
+        background ?? Theme.of(context).colorScheme.surfaceContainerLowest;
     return DecoratedBox(
       position: DecorationPosition.foreground,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DesktopNavigationPane.itemRadius),
         border: Border.all(
-          color: focused
-              ? Theme.of(context).colorScheme.primary
-              : Colors.transparent,
+          color: focused ? focusRingColorOn(surface) : Colors.transparent,
           width: thickness,
         ),
       ),
@@ -353,7 +364,15 @@ class _NavItemTileState extends State<_NavItemTile> {
 
     final body = Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: DesktopNavFocusRing(focused: _focused, child: tile),
+      child: DesktopNavFocusRing(
+        focused: _focused,
+        // Halka döşemenin üstünde durur; seçili döşemenin zemini panelinkinden
+        // farklıdır. Şeffaf zeminde (hover %6 dâhil) panel zemini geçerlidir.
+        background: selected
+            ? scheme.secondaryContainer
+            : scheme.surfaceContainerLowest,
+        child: tile,
+      ),
     );
 
     if (!widget.expanded) {
@@ -477,7 +496,13 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
 
     final padded = Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
-      child: DesktopNavFocusRing(focused: _focused, child: tile),
+      child: DesktopNavFocusRing(
+        focused: _focused,
+        background: selected
+            ? scheme.secondaryContainer
+            : scheme.surfaceContainerLowest,
+        child: tile,
+      ),
     );
 
     if (!widget.expanded) {

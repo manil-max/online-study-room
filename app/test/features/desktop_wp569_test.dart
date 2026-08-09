@@ -25,6 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/theme/warning_tokens.dart'
+    show contrastRatio, kMinSurfaceContrast;
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/subject.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
@@ -286,7 +288,14 @@ void main() {
       final scheme = Theme.of(
         tester.element(find.byType(DesktopNavigationPane)),
       ).colorScheme;
-      expect(rings.single.color, scheme.primary);
+      // WP-594: halka rengi artık `scheme.primary` DEĞİL — paletten türerse
+      // Tema Stüdyosu'nda zemine yakın palet seçilince eriyordu. Kimlik yerine
+      // asıl derdi ölç: odaklı öğe zeminden **ayrışmalı**.
+      expect(
+        contrastRatio(rings.single.color, scheme.surfaceContainerLowest),
+        greaterThanOrEqualTo(kMinSurfaceContrast),
+        reason: 'odak halkası panel zemininden ayrışmalı',
+      );
       expect(rings.single.width, DesktopNavFocusRing.thickness);
     });
 
