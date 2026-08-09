@@ -4,6 +4,35 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v64 / 1.0.64+64] - 2026-08-10
+
+> **Silinen çalışma artık gerçekten siliniyor.** Bir çalışma kaydını
+> sildiğinde ondan gelen XP, başarım ve taç da geri gidiyor — eskiden kayıt
+> gidiyor, kazanım kalıyordu. Aynı turda "en uzun seri" rekorunun ne anlama
+> geldiği düzeltildi.
+
+### Yenilikler
+- **Çalışma kaydını silmek kazanımı da geri alır.** XP, başarım kademeleri ve
+  taç, kalan gerçek çalışmana göre yeniden hesaplanır. Bu artık kendiliğinden
+  olur; bir şey yapman gerekmez.
+- **"En uzun seri" artık günlük hedefine bağlı.** Eskiden o gün bir saniye
+  kayıt olması seriyi sürdürmeye yetiyordu — yani rekor gerçek bir şey
+  ölçmüyordu. Artık hedefini tutturduğun ardışık günleri sayıyor. "Aktif gün"
+  ayrı bir kutucuk olarak duruyor.
+
+### Düzeltmeler
+- **Başarımlar ekranı gezerken kendi kendine yenilenmiyor.** Liste birkaç
+  saniyede bir başa dönüyordu; üstelik her yenilemede arka planda gereksiz bir
+  kayıt işlemi yapılıyordu.
+- **Rekorlardaki "en iyi" değeri gerçek çalışmanı gösteriyor.** Sildiğin bir
+  oturumun rekoru ekranda kalmaya devam ediyordu.
+- **"Aktif gün" sayacı** artık sıfır saniyelik günleri saymıyor; yan yana
+  duran iki kutucuk aynı sayıyı göstermiyor.
+- **Seri hesabı yaz saati uygulanan cihazlarda kayıyordu** — bazen çalışılmayan
+  bir gün seriyi birleştiriyor, bazen gerçek seri sessizce kırılıyordu.
+- **Windows sürümü yeniden üretiliyor.** v63'te Windows paketi çıkmamıştı ve
+  Windows'ta "güncellemeleri kontrol et" hata veriyordu.
+
 ## [v63 / 1.0.63+63] - 2026-08-09
 
 > **Sessizce kaybolan işler artık kaybolmuyor.** Bu turda bağımsız bir denetim

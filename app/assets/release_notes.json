@@ -3,6 +3,42 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.64",
+      "buildNumber": 64,
+      "channel": "stable",
+      "date": "2026-08-10",
+      "title": "v64: silinen calisma artik gercekten siliniyor",
+      "highlights": [
+        "Bir calisma kaydini sildiginde ondan gelen XP, basarim ve tac da geri gidiyor. Eskiden kayit gidiyor, kazanim kaliyordu. Artik kendiliginden olur.",
+        "'En uzun seri' artik gunluk hedefine bagli. Eskiden o gun bir saniye kayit olmasi seriyi surdurmeye yetiyordu, yani rekor gercek bir sey olcmuyordu."
+      ],
+      "fixes": [
+        "Basarimlar ekrani gezerken kendi kendine yenilenmiyor; liste birkac saniyede bir basa donuyordu.",
+        "Rekorlardaki 'en iyi' degeri gercek calismani gosteriyor; sildigin bir oturumun rekoru ekranda kaliyordu.",
+        "'Aktif gun' sayaci artik sifir saniyelik gunleri saymiyor.",
+        "Seri hesabi yaz saati uygulanan cihazlarda kayiyordu: bazen calisilmayan bir gun seriyi birlestiriyor, bazen gercek seri sessizce kiriliyordu.",
+        "Windows surumu yeniden uretiliyor; v63'te Windows paketi cikmamisti ve guncelleme kontrolu hata veriyordu."
+      ],
+      "notes": [
+        "'Aktif gun' ayri bir olcu olarak duruyor; seri ile ayni seyi saymiyor."
+      ],
+      "titleEn": "v64: deleting a session now really deletes it",
+      "highlightsEn": [
+        "Deleting a study session now also reverses the XP, achievements and crown it produced. Previously the record went and the rewards stayed. It happens automatically.",
+        "'Longest streak' is now tied to your daily goal. One second of recorded time used to keep a streak alive, so the record measured nothing real."
+      ],
+      "fixesEn": [
+        "The achievements screen no longer refreshes itself while you browse; the list jumped back every few seconds.",
+        "The 'best' value in records reflects your real work; a deleted session's record used to stay on screen.",
+        "The 'active days' counter no longer counts zero-second days.",
+        "Streak maths drifted on devices that observe daylight saving: sometimes a day you did not study joined a streak, sometimes a real streak broke silently.",
+        "The Windows build is produced again; v63 shipped without one and update checks failed on Windows."
+      ],
+      "notesEn": [
+        "'Active days' remains a separate measure; it no longer counts the same thing as the streak."
+      ]
+    },
+    {
       "versionName": "1.0.63",
       "buildNumber": 63,
       "channel": "stable",
