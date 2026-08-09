@@ -6,6 +6,7 @@ import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/stats/progression_visuals.dart';
 import '../../../core/widgets/crown_tiers_sheet.dart';
 import '../../../core/widgets/crowned_avatar.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/gamification_profile.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -91,9 +92,11 @@ class GamificationCard extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Text(
-              l10n.profileBasarilarYuklenemedi,
-              style: TextStyle(color: theme.colorScheme.error),
+            // 🔴 WP-591: metin zaten dogruydu, eksik olan CIKISTI.
+            error: (error, stackTrace) => ErrorRetryView(
+              dense: true,
+              message: l10n.profileBasarilarYuklenemedi,
+              onRetry: () => ref.invalidate(gamificationSummaryProvider),
             ),
           ),
         ),

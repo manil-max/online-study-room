@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/widgets/crowned_avatar.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/moderation_appeal.dart';
 import '../../data/models/moderation_sanction.dart';
@@ -35,9 +36,13 @@ class BlockedUsersScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, _) => Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(l10n.safetyActionFailed),
+            // 🔴 WP-591: bkz. muted_nudges_screen -- `safetyActionFailed`
+            // yukleme hatasini anlatmiyor ve cikis vermiyordu.
+            error: (_, _) => Center(
+              child: ErrorRetryView(
+                message: l10n.homeVerilerYuklenemedi,
+                onRetry: () => ref.invalidate(blockedProfilesProvider),
+              ),
             ),
             data: (profiles) {
               if (profiles.isEmpty) {
@@ -161,7 +166,13 @@ class MyRestrictionsSection extends ConsumerWidget {
         const SizedBox(height: 8),
         sanctions.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => Text(l10n.safetyActionFailed),
+          // 🔴 WP-591: kendi yaptirimlarini goremeyen kullanici itiraz da
+          // edemez; bu dalin cikissiz kalmasi en pahalisiydi.
+          error: (_, _) => ErrorRetryView(
+            dense: true,
+            message: l10n.homeVerilerYuklenemedi,
+            onRetry: () => ref.invalidate(mySanctionsProvider),
+          ),
           data: (items) {
             final visible = [
               for (final sanction in items)

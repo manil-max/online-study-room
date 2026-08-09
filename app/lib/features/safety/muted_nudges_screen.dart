@@ -4,6 +4,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/l10n/nudge_error_text.dart';
 import '../../core/widgets/crowned_avatar.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/nudge_mute.dart';
 import '../../data/providers/nudge_providers.dart';
@@ -26,10 +27,13 @@ class MutedNudgesScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.safetyMutedNudgesTitle)),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
+        // 🔴 WP-591: eski metin `safetyActionFailed` idi; o cumle bir EYLEMIN
+        // basarisiz oldugunu anlatir, oysa burada YUKLEME basarisiz. Kullaniciya
+        // yanlis sey soyleniyordu ve cikis da yoktu.
         error: (_, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(l10n.safetyActionFailed),
+          child: ErrorRetryView(
+            message: l10n.homeVerilerYuklenemedi,
+            onRetry: () => ref.invalidate(nudgeMutesProvider),
           ),
         ),
         data: (mutes) {

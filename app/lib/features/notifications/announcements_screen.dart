@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notifications/notification_preferences.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/announcement.dart';
 import '../../data/providers/auth_providers.dart';
@@ -32,7 +33,14 @@ class AnnouncementsScreen extends ConsumerWidget {
     } else {
       body = announcementsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _Message(text: l10n.authBeklenmeyenBirHataOlustu),
+        // 🔴 WP-591: eski metin "Beklenmeyen bir hata olustu." idi -- neyin
+        // yuklenemedigini soylemiyor ve cikis vermiyordu.
+        error: (_, _) => Center(
+          child: ErrorRetryView(
+            message: l10n.homeVerilerYuklenemedi,
+            onRetry: () => ref.invalidate(myAnnouncementsProvider),
+          ),
+        ),
         data: (announcements) {
           if (announcements.isEmpty) {
             return _Message(text: l10n.notificationsSimdilikDuyuruYok);
