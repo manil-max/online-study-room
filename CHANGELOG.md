@@ -4,6 +4,59 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v63 / 1.0.63+63] - 2026-08-09
+
+> **Sessizce kaybolan işler artık kaybolmuyor.** Bu turda bağımsız bir denetim
+> yapıldı ve ortaya çıkan yirmiden fazla kusurun ortak deseni şuydu: bir şey
+> başarısız oluyor ama kimse söylemiyor. En ağırı hesap silmeydi — sayacı bir
+> kez çalıştırmış neredeyse herkes hesabını silemiyordu.
+
+### Yenilikler
+- **Sınav geri sayımı büyüdü.** Artık en fazla üç tarih ekleyebilirsin, her
+  birine istersen ad verirsin (YKS, AYT, deneme…), sırayı sen belirlersin.
+  Birini öne çıkarırsan o büyük görünür, diğerleri altında durur. Düzenleme
+  kartın kendisinde: karta dokun, pencere açılsın.
+- **İnternet yokken uygulama hemen açılıyor.** Bağlantısızken açılışta
+  yaklaşık yirmi saniye dönen çember bekliyordu.
+- **Sayacı rutinin mi başlattı, sen mi?** Günlük artık bunu söylüyor.
+
+### Düzeltmeler
+- **Hesap silme gerçekten çalışıyor.** Sayacı bir kez çalıştırmış, bildirim
+  almış ya da bir grupta aktif olmuş hesaplarda silme isteği takılı kalıyordu.
+- **Ayarların kaydedilemezse artık söyleniyor.** Günlük hedef, ad, avatar,
+  kamp hayvanı ve ünvan, bağlantı koptuğunda hiçbir uyarı vermeden eski
+  haline dönüyordu. Aynısı sohbet mesajı, dürtme ve sessize alma için de
+  geçerliydi.
+- **Uygulamanın ilk saniyelerinde yapılan ayar değişiklikleri** ekranda
+  "kaydedildi" görünüp hiçbir yere yazılmıyordu.
+- **Durduğun oturumun kaydedilmeden kaybolabildiği durum kapatıldı.**
+- **Seri alevi** bazı durumlarda bugünün durumunu yanlış gösteriyordu; ayrıca
+  gece yarısı gün değişince kendini yenilemiyordu.
+- **"Geçen hafta" özeti** Türkiye dışındaki saat dilimlerinde sekiz gün
+  sayıyordu.
+- **Windows'ta hatırlatma alarmları hiç kurulmuyordu.**
+- **Windows'ta şifre sıfırlama** "gönderildi" diyordu ama göndermiyordu.
+- **Bildirimdeki "Çalışmaya dön" düğmesi** pomodoro turunu ilerletmiyordu.
+- **Sayaç bildirimi** mola/çalışma geçişinde eski süreyi göstermeye devam
+  edebiliyordu.
+- **Bildirim izni kapalıyken** sayaç arka planda görünmez çalışıyordu; artık
+  durumu söylüyor.
+- **İstatistik ekranında hiç grubu olmayan kullanıcı** boş bir ekranda
+  kalıyordu; artık gruba katılma yolu var.
+- **Renk okunabilirliği:** bazı temalarda okunması zor kalan yazı ve rozetler
+  düzeltildi.
+- **Kazara yeniden başlatma** — durdur ve başlat aynı yerdeki aynı düğme
+  olduğu için sayaç istemeden yeniden başlatılabiliyordu.
+
+### Altyapı
+- **Aylık çalışma raporu e-postası anahtarı** gönderim hiç başlamadığı halde
+  açık geliyordu. Artık kapalı geliyor ve ekran gönderimin başlamadığını
+  söylüyor.
+- **Windows sürümü Microsoft Store üzerinden dağıtılabilir hale getirildi.**
+- **Ürün politikaları yazıya döküldü:** kalıcı ücretsiz ve reklamsız · zorlama
+  yok (uygulama engelleme, mola cezası, kolektif ceza yok) · bir düzen
+  değişirse eskisi seçenek olarak kalır.
+
 ## [v62 / 1.0.62+62] - 2026-08-08
 
 > **Sayacı durdurmak artık anlık.** Sahip v60 kabulünde *"durduruluyor yazıyor
