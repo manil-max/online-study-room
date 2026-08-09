@@ -20,7 +20,33 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
   static const int _queueLimit = 100;
 
   @override
+  Future<int> reconcileStaleSanctions() async {
+    try {
+      final affected = await _client.rpc(
+        'admin_reconcile_moderation_sanctions',
+      );
+      return (affected as num?)?.toInt() ?? 0;
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
   Future<List<ModerationCase>> fetchQueue() async {
+    // WP-629: kuyruk açılışı uzlaştırmayı tetikler. Burası tek doğal tetik:
+    // fonksiyon `is_super_admin()` istiyor, yani cron/service-role ile
+    // koşturulamaz; bir yöneticinin oturumundan çağrılması ŞART.
+    //
+    // 🔴 Hata YUTULUR ve bu bilinçlidir: uzlaştırma bakım işidir, kuyruğun
+    // görünmesini engellememeli. Bu, deponun genel "sessiz başarısızlık yasak"
+    // kuralının istisnasıdır çünkü kullanıcının istediği iş (kuyruğu gör)
+    // başarısız olmuyor; yan iş bir sonraki açılışta yeniden denenir.
+    try {
+      await reconcileStaleSanctions();
+    } on ModerationException {
+      // yut: aşağıdaki asıl okuma kendi hatasını bildirir.
+    }
+
     final List<dynamic> groups;
     try {
       groups = await _client.rpc('admin_ugc_report_groups') as List;

@@ -16,6 +16,18 @@ abstract class AdminModerationRepository {
   /// Hedef başına toplanmış açık/kapalı vakalar, en yenisi başta.
   Future<List<ModerationCase>> fetchQueue();
 
+  /// WP-629: 15 dakikadan uzun süredir `pending` kalmış yaptırımları `failed`
+  /// olarak kapatır ve kaç satırın kapandığını döner.
+  ///
+  /// 🔴 Sunucu tarafı (`admin_reconcile_moderation_sanctions`, `0105:355`)
+  /// `0105`ten beri **yazılıydı ama hiçbir yerden çağrılmıyordu**. Sonuç sessiz
+  /// bir yarım durumdu: yaptırımın auth adımı geçip kapanış çağrısı düşünce
+  /// satır sonsuza kadar `pending` kalıyor, `pending` satır **aktif yaptırım
+  /// sayılmadığı** için kullanıcı aslında cezasız geziyor, admin ise cezayı
+  /// uyguladığını sanıyordu. Kimse hata görmüyordu — çünkü hata yoktu, iş
+  /// yarıda kalmıştı.
+  Future<int> reconcileStaleSanctions();
+
   /// Vakanın tüm raporlarının durumunu tek işlemde değiştirir.
   ///
   /// Etkilenen rapor sayısını döner. WP-441 (`0105`) ile

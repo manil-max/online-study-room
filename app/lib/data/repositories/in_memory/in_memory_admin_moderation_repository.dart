@@ -26,9 +26,70 @@ class InMemoryAdminModerationRepository implements AdminModerationRepository {
   /// Testler süre dolmasını simüle edebilsin diye enjekte edilebilir saat.
   DateTime Function() clock = DateTime.now;
 
+  /// WP-629: uzlaştırmanın kaç kez çağrıldığı. Test bunu okuyarak kuyruk
+  /// açılışının uzlaştırmayı GERÇEKTEN tetiklediğini ölçer.
+  int reconcileCallCount = 0;
+
+  /// `pending` satırın ne zaman açıldığı. Modelde `created_at` yok — sunucuda
+  /// var (`0105`), istemciye taşınmıyor — o yüzden burada tutuluyor.
+  final Map<String, DateTime> _openedAt = {};
+
+  /// Yarım kalmış yaptırımı test için kurar: sunucuda `pending` satır açıldı,
+  /// kapanış çağrısı hiç gelmedi.
+  ModerationSanction seedPendingSanction({
+    required String targetUserId,
+    required ModerationAction action,
+    required DateTime openedAt,
+  }) {
+    final sanction = ModerationSanction(
+      id: 'sanction-pending-${_sanctions.length + 1}',
+      targetUserId: targetUserId,
+      action: action,
+      reason: 'wp629 yarim kalmis yaptirim',
+      state: ModerationSanctionState.pending,
+    );
+    _sanctions.add(sanction);
+    _openedAt[sanction.id] = openedAt;
+    return sanction;
+  }
+
   @override
-  Future<List<ModerationCase>> fetchQueue() async =>
-      List<ModerationCase>.unmodifiable(_cases);
+  Future<int> reconcileStaleSanctions() async {
+    reconcileCallCount++;
+    final now = clock();
+    var closed = 0;
+    for (var i = 0; i < _sanctions.length; i++) {
+      final sanction = _sanctions[i];
+      if (sanction.state != ModerationSanctionState.pending) continue;
+      final openedAt = _openedAt[sanction.id];
+      if (openedAt == null ||
+          now.difference(openedAt) < const Duration(minutes: 15)) {
+        continue;
+      }
+      _sanctions[i] = ModerationSanction(
+        id: sanction.id,
+        targetUserId: sanction.targetUserId,
+        action: sanction.action,
+        reason: sanction.reason,
+        state: ModerationSanctionState.failed,
+        caseId: sanction.caseId,
+        appliedAt: sanction.appliedAt,
+        expiresAt: sanction.expiresAt,
+        revokedAt: sanction.revokedAt,
+        failureReason: 'reconciled_timeout',
+      );
+      closed++;
+    }
+    return closed;
+  }
+
+  @override
+  Future<List<ModerationCase>> fetchQueue() async {
+    // Sunucu deposuyla AYNI sözleşme: kuyruk açılışı uzlaştırmayı tetikler.
+    // Taklit depo bunu taklit etmezse, kablonun koptuğunu test göremez.
+    await reconcileStaleSanctions();
+    return List<ModerationCase>.unmodifiable(_cases);
+  }
 
   @override
   Future<int> setCaseStatus({
