@@ -1,6 +1,7 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/presence.dart';
@@ -13,7 +14,9 @@ import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/providers/subject_providers.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/home/dashboard_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// §2E — Her kart tüm en-boy oranlarında taşma/clipping olmadan çizilmeli.
 /// Kartları çok küçük, orta ve büyük bounded kutularda gerçek veriyle render eder
@@ -52,13 +55,28 @@ void main() {
     Subject(id: 'sub2', userId: 'u1', name: 'Fizik', color: 'chart-3'),
   ];
 
-  final overrides = [
-    userSessionsProvider.overrideWith((ref) => Stream.value(sessions)),
-    userSubjectsProvider.overrideWith((ref) => Stream.value(subjects)),
-    dailyGoalMinutesProvider.overrideWithValue(240),
-    // Grup kartları deterministik olarak "grup yok" (GroupCardShell) yoluna gitsin.
-    userGroupProvider.overrideWithValue(const AsyncData<StudyGroup?>(null)),
-  ];
+  // 🔴 WP-583: `sharedPreferencesProvider` bu listede YOKTU ve WP-575 prefs
+  // okuyan ilk pano kartini (`dday`) ekleyince bu dosyadaki DORT test birden
+  // kirmiziya dustu (`ProviderException: sharedPreferencesProvider main()
+  // icinde override edilmeli`). Uygulamada `main()` onu her zaman override
+  // eder; eksik olan uretim kodu degil, bu genel kosum harness'iydi.
+  // Kart basina override yazilmaz: bu dosya "HER kart her boyutta cizilir"
+  // iddiasidir, yani harness uygulamanin kurdugu ortami taklit etmelidir --
+  // aksi halde prefs okuyan bir sonraki kart yine ayni tuzaga duser.
+  late final List<Override> overrides;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    overrides = [
+      userSessionsProvider.overrideWith((ref) => Stream.value(sessions)),
+      userSubjectsProvider.overrideWith((ref) => Stream.value(subjects)),
+      dailyGoalMinutesProvider.overrideWithValue(240),
+      // Grup kartları deterministik olarak "grup yok" (GroupCardShell) yoluna gitsin.
+      userGroupProvider.overrideWithValue(const AsyncData<StudyGroup?>(null)),
+      sharedPreferencesProvider.overrideWithValue(prefs),
+    ];
+  });
 
   // (etiket, genişlik, yükseklik) — 1x1 minik hücreden geniş+uzun karta kadar.
   // 'kisa' = telefonda tam genişlik ama h=1 (cell≈48) hücresi: sabit başlıklı
