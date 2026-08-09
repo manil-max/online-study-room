@@ -100,8 +100,10 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # kapsamli (display_name / title_achievement_id), yani benim dokundugum
 # sutunda ateslenmiyor -- 0124'un dersi geregi VARSAYILMADI, bakildi.
 # tests/051 backfill ifadesini GERCEK satirla olcuyor.
-Assert-Equal $contract.staging.migration_head '0125' 'WP-630 staging hedefi 0125'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0125 apply icin staging kapisi TEK SEFERLIK acik'
+# APPLY BASARILI, KAPI GERI KILITLENDI (run 31325827247): post-check uc
+# sutunda da 0125. Head 0125'te KALIR (gercek durum), yalniz kapi kapanir.
+Assert-Equal $contract.staging.migration_head '0125' 'WP-630 staging hedefi 0125: apply basarili'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0125 staging apply bitti, yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -135,8 +137,16 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # ✅ APPLY BASARILI VE KAPI GERI KILITLENDI (2026-08-09, run 31324086033).
 # Post-check uc sutunda da 0124 verdi. Head 0124'te KALIR -- production'un
 # gercek durumu bu; yalniz kapi kapanir. Kapsam TEK apply idi ve harcandi.
-Assert-Equal $contract.production.migration_head '0124' 'production hedefi 0124: apply basarili'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply bitti, production yeniden kilitli'
+#
+# 🔴 0125 ICIN PRODUCTION KAPISI ACILDI (2026-08-09, WP-630).
+# Staging'e uygulandi ve post-check 0125 verdi. profiles'ta degismezlik
+# guard'i YOK, iki tetikleyici de sutun kapsamli -- 0124'u kiran sinif burada
+# olusamaz; VARSAYILMADI, bakildi. tests/051 backfill'i GERCEK satirla olcuyor.
+# CI bu commit'te TAM yesil: iki Android emulator kosumu, Windows golden ve
+# Windows entegrasyon dahil (run 31325823506). Bu gecenin onceki her CI turu
+# bir sonraki push tarafindan iptal edilmisti; bu kodun ilk TAM dogrulamasi.
+Assert-Equal $contract.production.migration_head '0125' 'WP-630 production hedefi 0125'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0125 apply icin production kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
