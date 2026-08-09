@@ -8,6 +8,7 @@ import '../../core/widgets/app_pull_to_refresh.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import '../classroom/widgets/group_discovery_screen.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
@@ -144,16 +145,36 @@ class _ClassTab extends ConsumerWidget {
           ),
         );
       }
+      // WP-596: bu dal "önce bir gruba katıl" diyordu ama KATILMANIN YOLUNU
+      // vermiyordu -- kullanıcı doğru talimatı okuyup çıkmaz sokakta kalıyordu.
+      // Aynı ekranın hata dalı (yukarıda) zaten bir çıkış sunuyor; boş dal
+      // unutulmuştu.
       return RefreshableBody(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.statsGrupIstatistikleriniGormekIcin,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.statsGrupIstatistikleriniGormekIcin,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  key: const Key('stats-group-empty-join'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const GroupDiscoveryScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: Text(l10n.commonBirGrubaKatil),
+                ),
+              ],
             ),
           ),
         ),
