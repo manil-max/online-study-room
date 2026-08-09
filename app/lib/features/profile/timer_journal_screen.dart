@@ -162,7 +162,7 @@ class _TimerJournalScreenState extends ConsumerState<TimerJournalScreen> {
                         if (entry.trigger != TimerJournalTriggers.unknown) ...[
                           const SizedBox(height: 2),
                           Text(
-                            'kaynak: ${entry.trigger}',
+                            l10n.diagTimerJournalTrigger(entry.trigger),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color:
                                   TimerJournalTriggers.isUserButton(

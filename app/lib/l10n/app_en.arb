@@ -2959,6 +2959,15 @@
       }
     }
   },
+  "diagTimerJournalTrigger": "source: {trigger}",
+  "@diagTimerJournalTrigger": {
+    "description": "Prefix for the trigger that produced a timer journal row (user button, device shortcut, notification button).",
+    "placeholders": {
+      "trigger": {
+        "type": "String"
+      }
+    }
+  },
   "diagTimerJournalPrivacy": "Identifiers are replaced with short one-way hashes; no message text, email or token is stored.",
   "@diagTimerJournalPrivacy": {
     "description": "Privacy note shown above the timer diagnostic log."
