@@ -136,7 +136,11 @@ jobs:
       # 🔴 WP-572: workflow'un KENDI baglantisini sinar. Cok satirli bir
       # `script:` blogu geri yazilirsa (ya da cagrilan `.sh` silinirse) burasi
       # kirmizi doner. Saniyeler surer; emulator isini beklemeye gerek yok.
+      # 🔴 Bu isin `defaults.run.working-directory` degeri `app`; kapiyi repo
+      # kokunden kosturmak icin acikca ezilir. Ilk kosumda tam bu yuzden
+      # dustu: `app/scripts/ci/...` diye aradi (kosum 31285409925).
       - name: CI script baglantisi (satir-satir tuzagi)
+        working-directory: ${{ github.workspace }}
         run: python3 scripts/ci/verify_ci_script_wiring.py
 
       - uses: subosito/flutter-action@v2
