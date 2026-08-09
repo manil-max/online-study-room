@@ -5769,6 +5769,18 @@ tekrar tutulmaz.
 
 - **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
   **WP-455'in açık kabulünü kapatır** (yalnız görsel kanonikleşme; ekonomi ayrı).
+- **🔴🔴 BU KARAR 2026-08-09'DA SAHİP TARAFINDAN DEĞİŞTİRİLDİ — bkz. WP-604.**
+  Aşağıdaki 2. madde `pendingToday` durumunu (dün tamamlandı, bugün henüz
+  tamamlanmadı) **canlı renkte** bırakıyordu ve kod da öyle yazılmıştı: alev
+  `completedToday` ile **birebir aynı** turuncuyu kullanıyor, yalnız glif dolu
+  yerine içi boş oluyordu — rozet boyutunda görünmeyen bir fark.
+  Sahibin yeni ve bağlayıcı kararı: **bugünün hedefi tamamlanmadıysa alev
+  SOLUK**; tamamlanınca canlı renge döner ve sayı artar (chess.com modeli).
+  🔴 **Bu satır silinmemeli.** Sahip bu hatayı üç dört kez bildirdi ve her
+  seferinde düzeltilmedi; sebebi tam olarak buydu — kod yazılı karara uyuyordu,
+  yazılı karar ise sahibin istediği şey değildi. Aşağıdaki metin **tarihsel**
+  olarak duruyor, uygulanacak karar WP-604'tür.
+
 - **🔴 Sahip kararı (bağlayıcı, V57-N04 + V57-N05):**
   1. Rozet **her zaman görünür**, seri 0 iken bile.
   2. Üç durum: (a) sıfırlanmış → **gri soluk alev + "0"**; (b) duraklatma →
@@ -9633,6 +9645,70 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   disarida kalmis. Kural yaziliydi, bu yol kapsanmamisti.
 - Olayda kanitlanan: baslatma bu telefondan, uygulama icinden geldi (uzak
   komut izi yok). Kanitlanamayan: parmak mi kisayol mu.
+
+---
+
+### WP-604: Seri alevi — UC ayri kok neden, hepsi ayri katmanda
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`8a9368d`)
+- 🔴 Sahip bunu **uc dort kez** bildirdi, her turda yama yapildi. Belirti:
+  "dun hedefimi tamamladim, seri 1 oldu, alev yaniyordu. Bugun tamamlamadim
+  ama alev HALA canli renkte." Istenen: bugunun hedefi tamamlanmadiysa alev
+  SOLUK; tamamlaninca canli renge doner ve sayi artar.
+- Tek hata degil, **uc** hata vardi:
+  1. **Gorunus:** `pendingToday` ile `completedToday` BIREBIR AYNI turuncuyu
+     kullaniyordu (0xFFEA580C); tek fark dolu/ici bos glifti. Ustelik bu
+     `progress.md`de SAHIP KARARI olarak yaziliydi (WP-481), yani her tur
+     yazili karara bakip "dogru"yu koruyordu. **Dongunun sebebi buydu.**
+  2. 🔴 **Zaman bir girdi degildi — asil kok neden.** Durum bir ZAMAN
+     fonksiyonu (ayni veriyle, gun degisince durum degisir) ama projeksiyon
+     yalniz VERI degisince hesaplaniyordu. Gece yarisi hicbir satir degismez
+     → kullanici dunku durumda TAKILI KALIR. Rengi duzeltmek bunu cozmezdi.
+     Ayni desenin dogrusu depoda vardi (`UserTaskDayRefreshLifecycle`), seri
+     ona baglanmamisti.
+  3. **Gun anahtari** cihazin yerel takviminden aliniyordu, Istanbul'dan
+     degil. WP-561 ve WP-571 ile ayni sinif hata; ucuncusu.
+- Sabotaj uc kez ayri ayri kanitlandi: her kok neden geri alininca yalniz
+  kendi testi kirmiziya dustu.
+- **Yan etki (durustce):** projeksiyon artik gun donusu zamanlayicisi kuruyor;
+  onu kuran test kapatmali (WP-455 matrisi buna gore duzeltildi).
+- **Kayit duzeltildi:** WP-481 karari "tarihsel" olarak isaretlendi. Yalniz
+  kodu degistirmek yetmezdi — bir sonraki tur yazili karara bakip geri alirdi.
+
+---
+
+### WP-600: Windows QA matrisi gerceki yanlis anlatiyordu + olu olcum araci
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`dbadf3b`)
+- Matris stable MSIX'i "yayinlanan ama kurulamayan asset" diye tarif
+  ediyordu; WP-590'dan beri oyle degil, dosya HIC yayinlanmiyor. Eski metni
+  izleyen testci olmayan dosyayi arayip W-05'i haksiz yere FAIL isaretlerdi.
+- `scripts/windows_performance_baseline.ps1` 182 satirlik CALISIR bir olcum
+  araci ama hicbir yerden cagrilmiyordu. Baglanirken uc gercek hata cikti:
+  `-ValidateOnly` dogrulamiyor COKUYORDU; belgeye yazilan `pwsh` bu makinede
+  yok; `.ps1` dosyalarinin HICBIRINDE UTF-8 BOM yoktu (PowerShell 5.1 Turkce
+  mesajlari okunamaz gosteriyordu).
+
+---
+
+### WP-602: Windows smoke kapisi BOS bir goruntuyu kanit diye kaydediyordu
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`31af75f`)
+- Betikteki "PrintWindow basarisizsa smoke da basarisiz sayilir" cumlesi DOGRU
+  ama ETKISIZ: cagri `True` donup BOS BEYAZ istemci alani uretiyor. Manifest o
+  dosyayi kanit diye kaydediyor, QA belgesi "goruntu dogrulandi" diyordu.
+- Olculdu (iki ayri yontemle, 3/8/15/25 saniyede): GDI Flutter'in
+  DirectComposition yuzeyini goremiyor. Kapinin gecerli sinyali zaten ekran
+  goruntusu degil PENCERE BASLIGI kontrolu (WP-465) ve o saglam.
+- 🔴 Ilk esigim renk SAYISI uzerineydi ve gercek bos ciktida 8 renk saydigi
+  icin hatayi KACIRIYORDU; kendi olcumum yakaladi. Olcut baskin renk ORANINA
+  cevrildi (bos 1.0000 / dolu 0.5142, esik 0.98).
+
+---
+
+### WP-601: WP-599'un yazdigi kaynak alani EKRANDA gorunmuyordu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Kod/test tamam (`9124333`)
+- `trigger` alani yazilmaya baslandi ama gunluk ekrani onu hic cizmiyordu;
+  gercek bir olayda cevap yine JSON disa aktarip elle okumakla bulunurdu.
+- `unknown` cizilmez: WP-599 oncesi satirlara "bilinmiyor" damgasi basmak
+  gurultu; asil yanlis onlari "kullanici" saymak olurdu, o hic yapilmiyor.
 
 ## Bekleyen Uygulanabilir WP'ler
 
