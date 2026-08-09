@@ -13,7 +13,6 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/providers/study_providers.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../admin/admin_screen.dart';
 import '../desktop/desktop_surface.dart';
 import '../home/dday_prefs.dart';
@@ -55,11 +54,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final shownId = campAnimalFor(userId: profile.id, animalId: currentId).id;
 
     final picked = await showCampAnimalPicker(context, currentId: shownId);
-    if (picked == null || picked == currentId) return;
+    if (picked == null || picked == currentId || !mounted) return;
 
-    await ref.read(authRepositoryProvider).updateAnimal(picked);
-    ref.invalidate(groupMembersProvider);
-    if (mounted) setState(() => _animalOverride = picked);
+    // 🔴 WP-610: burada hic `try` yoktu. Ag/sunucu hatasinda yazma
+    // dusuyor, istisna global yutucuya (`observability_service.dart`
+    // `onError`) gidiyor ve kullanici NE hata NE onay goruyordu. Ustelik
+    // hemen alttaki `setState` de calismadigi icin secim ekranda bile
+    // gorunmuyordu. Dogru desen ayni depoda zaten var:
+    // `social_profile_screen.dart` `_setTitle` -- `catch (_)` + mesaj.
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref.read(authRepositoryProvider).updateAnimal(picked);
+      ref.invalidate(groupMembersProvider);
+      if (!mounted) return;
+      setState(() => _animalOverride = picked);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileKampHayvaniGuncellendi)),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileKampHayvaniKaydedilemedi)),
+      );
+    }
   }
 
   /// WP-555: gunluk hedef uygulamada **tek** noktadan (sayac karti) degistirilebiliyordu
@@ -68,19 +85,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// paylasilan yerinden cagriliyor.
   Future<void> _editDailyGoal(int currentMinutes) async {
     final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
     final result = await showGoalEditorDialog(
       context,
       initialMinutes: currentMinutes,
     );
     if (result == null || !mounted) return;
+    // 🔴 WP-610: yakalama dali `on AuthException` idi; oysa
+    // `updateDailyGoal` bu turu HIC atmaz -- ag/sunucu hatasi
+    // `PostgrestException` / `ClientException` olarak gelir ve dalin
+    // yanindan gecip global yutucuya giderdi. Gunluk hedef seriyi ve
+    // ilerleme halkasini besledigi icin sessiz kayip istatistigi de yanlis
+    // gosteriyordu.
     try {
       await ref.read(authRepositoryProvider).updateDailyGoal(result);
       ref.invalidate(authStateProvider);
-    } on AuthException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileGunlukHedefGuncellendi)),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileGunlukHedefKaydedilemedi)),
+      );
     }
   }
 

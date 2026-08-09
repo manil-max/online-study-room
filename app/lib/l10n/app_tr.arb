@@ -2032,5 +2032,12 @@
   "clockAlarmMasaustundeCalmaz": "Alarmlar masaüstü sürümünde çalmaz: burada oluşturup düzenleyebilirsin ama saati geldiğinde ses ve bildirim yalnız telefondaki uygulamada verilir.",
   "clockZamanlayiciMasaustundeBildirimYok": "Masaüstü sürümünde zamanlayıcı yalnız uygulama açıkken sayar; süre bitince sistem bildirimi gösterilmez.",
   "notificationsHatirlaticiMasaustundeYok": "Masaüstü sürümünde kapalı — bu hatırlatma yalnız telefonda gönderilir.",
-  "notificationsIzinMasaustundeGecersiz": "Masaüstü sürümü işletim sistemi bildirimi göndermez; burada kontrol edilecek bir izin yok."
+  "notificationsIzinMasaustundeGecersiz": "Masaüstü sürümü işletim sistemi bildirimi göndermez; burada kontrol edilecek bir izin yok.",
+  "profileGunlukHedefGuncellendi": "Günlük hedefin güncellendi.",
+  "profileGunlukHedefKaydedilemedi": "Günlük hedef kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+  "profileKampHayvaniGuncellendi": "Kamp hayvanın güncellendi.",
+  "profileKampHayvaniKaydedilemedi": "Kamp hayvanı kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+  "profileGorunenAdGuncellendi": "Görünen adın güncellendi.",
+  "profileGorunenAdKaydedilemedi": "Görünen ad kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+  "profileProfilFotografiYuklenemedi": "Profil fotoğrafı yüklenemedi. Bağlantını kontrol edip tekrar dene."
 }

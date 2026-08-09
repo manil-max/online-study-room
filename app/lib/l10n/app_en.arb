@@ -6684,5 +6684,19 @@
   "notificationsIzinMasaustundeGecersiz": "The desktop build does not send operating-system notifications, so there is no permission to check here.",
   "@notificationsIzinMasaustundeGecersiz": {
     "description": "WP-611 note replacing the permission button on desktop, where pressing it threw before reaching the SnackBar and looked like a dead button."
-  }
+  },
+  "profileGunlukHedefGuncellendi": "Your daily goal was updated.",
+  "@profileGunlukHedefGuncellendi": {"description": "Confirmation shown after the daily goal is saved."},
+  "profileGunlukHedefKaydedilemedi": "The daily goal could not be saved. Check your connection and try again.",
+  "@profileGunlukHedefKaydedilemedi": {"description": "Error shown when saving the daily goal fails (network or server)."},
+  "profileKampHayvaniGuncellendi": "Your camp animal was updated.",
+  "@profileKampHayvaniGuncellendi": {"description": "Confirmation shown after the camp animal is saved."},
+  "profileKampHayvaniKaydedilemedi": "The camp animal could not be saved. Check your connection and try again.",
+  "@profileKampHayvaniKaydedilemedi": {"description": "Error shown when saving the camp animal fails (network or server)."},
+  "profileGorunenAdGuncellendi": "Your display name was updated.",
+  "@profileGorunenAdGuncellendi": {"description": "Confirmation shown after the display name is saved."},
+  "profileGorunenAdKaydedilemedi": "The display name could not be saved. Check your connection and try again.",
+  "@profileGorunenAdKaydedilemedi": {"description": "Error shown when saving the display name fails (network or server)."},
+  "profileProfilFotografiYuklenemedi": "The profile photo could not be uploaded. Check your connection and try again.",
+  "@profileProfilFotografiYuklenemedi": {"description": "Error shown when uploading the profile photo fails (network or server)."}
 }

@@ -271,33 +271,59 @@ Future<void> _editName(
   if (!context.mounted) return;
 
   final messenger = ScaffoldMessenger.of(context);
+  // 🔴 WP-610: yalniz `on AuthException` yakalaniyordu. Moderasyon reddi
+  // (`public_name_not_allowed`) gercekten o turden gelir, ama ag/sunucu
+  // hatasi `PostgrestException` / `ClientException` olarak gelir ve dalin
+  // yanindan gecerdi: diyalog kapanir, ad degismez, hicbir uyari cikmazdi.
+  // Genis `catch` bu yuzden ikinci dal olarak durur; ozel mesaj korunur.
   try {
     await ref.read(authRepositoryProvider).updateDisplayName(name);
     ref.invalidate(authStateProvider);
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.profileGorunenAdGuncellendi)),
+    );
   } on AuthException catch (error) {
     final message = error.message == 'public_name_not_allowed'
         ? l10n.moderationPublicNameRejected
-        : l10n.authBeklenmeyenBirHataOlustu;
+        : l10n.profileGorunenAdKaydedilemedi;
     messenger.showSnackBar(SnackBar(content: Text(message)));
+  } catch (_) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.profileGorunenAdKaydedilemedi)),
+    );
   }
 }
 
-Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
-  final messenger = ScaffoldMessenger.of(context);
-  final l10n = AppLocalizations.of(context);
-  final picker = ImagePicker();
-  final file = await picker.pickImage(
+/// Galeriden gorsel secme adimi -- test edilebilir dikis.
+///
+/// 🔴 WP-610: avatar yuklemesinin hata dali bugune kadar hic olculmemisti,
+/// cunku secim adimi dogrudan `ImagePicker`a bagliydi ve widget testinden
+/// surulemiyordu. Secim tek satirlik bir saglayiciya alindi: uretimde ayni
+/// `image_picker` cagrisi, testte sahte bir secici. Yukleme, geri bildirim ve
+/// ekran kablosu boylece gercekten olculur.
+final avatarImagePickerProvider = Provider<Future<XFile?> Function()>(
+  (ref) => () => ImagePicker().pickImage(
     source: ImageSource.gallery,
     maxWidth: 512,
     maxHeight: 512,
     imageQuality: 85,
-  );
+  ),
+);
+
+Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = AppLocalizations.of(context);
+  final file = await ref.read(avatarImagePickerProvider)();
   if (file == null) return;
 
   final bytes = await file.readAsBytes();
   final contentType =
       file.mimeType ??
       (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+  // 🔴 WP-610: hata dali `on AuthException` idi. Yukleme `Storage` uzerinden
+  // gider ve basarisizlik `StorageException` / `ClientException` olarak
+  // gelir -- yani o dal HIC calismiyordu: kullanici ne "guncellendi" ne de
+  // bir hata goruyor, eski fotograf yerinde kaliyordu.
   try {
     await ref
         .read(authRepositoryProvider)
@@ -306,9 +332,9 @@ Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
     messenger.showSnackBar(
       SnackBar(content: Text(l10n.profileProfilFotografiGuncellendi)),
     );
-  } on AuthException {
+  } catch (_) {
     messenger.showSnackBar(
-      SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+      SnackBar(content: Text(l10n.profileProfilFotografiYuklenemedi)),
     );
   }
 }
