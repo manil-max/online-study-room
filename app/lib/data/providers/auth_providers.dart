@@ -38,6 +38,17 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
       // WP-609: ağ yolu düşerse depo, metadata'dan eksik profil üretmek
       // yerine önbellekteki son gerçek profili döndürür.
       cachedProfile: () => ref.read(offlineCacheStoreProvider).readProfile(),
+      // 🔴 WP-621: önbelleğe YALNIZ sunucudan gerçekten okunan profil yazılır.
+      // Aşağıdaki `onRemoteProfile` akıştan geçen HER profil için çalışıyor ve
+      // çevrimdışı üretilen (günlük hedefi varsayılana düşmüş) yedeği de
+      // "son gerçek profil" diye diske yazıyordu; WP-609 sonra onu okuyordu,
+      // yani bozuk veri kalıcılaşıyordu.
+      onServerProfile: (profile) {
+        // `_offlineCacheOrNull`: önbellek açılışın YEDEĞİdir, yokluğu
+        // (prefs override edilmemiş test) açılışı düşürmemeli.
+        final write = _offlineCacheOrNull(ref)?.saveProfile(profile);
+        if (write != null) unawaited(write.catchError((_) {}));
+      },
     );
   }
   final repo = InMemoryAuthRepository();
@@ -215,20 +226,15 @@ final localSessionProfileProvider = Provider<LocalSessionProfileReader>((ref) {
 
 /// Oturum durumu: giriş yapan profil veya null.
 final authStateProvider = StreamProvider<Profile?>((ref) {
-  final cache = _offlineCacheOrNull(ref);
   return authStateWithOfflineFallback(
     source: ref.watch(authRepositoryProvider).authStateChanges(),
     localProfile: ref.watch(localSessionProfileProvider),
     onRemoteProfile: (profile) {
-      // Sunucudan gelen her profil bir sonraki çevrimdışı açılışın yedeğidir.
-      // Yazım açılışı bekletmez.
+      // 🔴 WP-621: buradaki önbellek yazımı KALDIRILDI. Bu geri çağırım
+      // akıştan geçen her profil için çalışıyor ve çevrimdışı üretilen eksik
+      // yedeği de "son gerçek profil" diye yazıyordu. Yazma artık depodaki
+      // `onServerProfile` ile yalnız gerçek sunucu satırında yapılıyor.
       ref.read(authOpenedOfflineProvider.notifier).clear();
-      final write = cache?.saveProfile(profile);
-      if (write != null) {
-        // Diske yazamamak acilisi bozmaz; bir sonraki cevrimdisi acilis
-        // metadata yedegine duser.
-        unawaited(write.catchError((_) {}));
-      }
     },
     onOfflineOpen: () => ref.read(authOpenedOfflineProvider.notifier).mark(),
   );

@@ -50,8 +50,10 @@ class SupabaseAuthRepository implements AuthRepository {
     this._client, {
     RecoveryRedirectResolver? recoveryRedirect,
     Profile? Function()? cachedProfile,
+    void Function(Profile profile)? onServerProfile,
   }) : _recoveryRedirect = recoveryRedirect ?? (() async => null),
-       _cachedProfile = cachedProfile ?? (() => null);
+       _cachedProfile = cachedProfile ?? (() => null),
+       _onServerProfile = onServerProfile ?? ((_) {});
 
   final supa.SupabaseClient _client;
 
@@ -60,6 +62,21 @@ class SupabaseAuthRepository implements AuthRepository {
   /// Depo `OfflineCacheStore`u doğrudan tanımaz (katman sınırı); yalnız bir
   /// okuyucu alır. Sağlayıcı bunu `offlineCacheStoreProvider`a bağlar.
   final Profile? Function() _cachedProfile;
+
+  /// 🔴 WP-621: **yalnız sunucudan gerçekten okunan** profil için çağrılır.
+  ///
+  /// WP-609 ağ düşünce önbellekteki profili döndürmeyi sağladı ama yazma
+  /// tarafını açık bıraktı: `auth_providers` akıştan geçen **her** profili
+  /// "bir sonraki çevrimdışı açılışın yedeği" diye önbelleğe yazıyordu —
+  /// çevrimdışı üretilen, günlük hedefi VARSAYILANA düşmüş yedek profil dahil.
+  ///
+  /// Sonuç kalıcı bir bozulmaydı: ilk açılışı çevrimdışı olan kullanıcının
+  /// eksik profili "son gerçek profil" olarak diske yazılıyor, WP-609 de onu
+  /// okuyordu. Yani düzeltmenin kendisi bozuk veriyi sabitliyordu.
+  ///
+  /// Kaynak ayrımı **burada** yapılır çünkü satırın sunucudan geldiğini yalnız
+  /// depo bilir; sağlayıcı katmanı iki profili birbirinden ayıramaz.
+  final void Function(Profile profile) _onServerProfile;
 
   /// Auth bağlantılarının döneceği derin bağlantı (Android) veya null.
   final RecoveryRedirectResolver _recoveryRedirect;
@@ -202,7 +219,12 @@ class SupabaseAuthRepository implements AuthRepository {
           .select()
           .eq('id', user.id)
           .maybeSingle();
-      if (row != null) return Profile.fromMap(row);
+      if (row != null) {
+        final profile = Profile.fromMap(row);
+        // Yalnız BU yol gerçek sunucu satırıdır; yedek yollar çağırmaz.
+        _onServerProfile(profile);
+        return profile;
+      }
     } catch (_) {
       // Çevrimdışı veya geçici sunucu hatası: oturum geçerli ama profil satırı
       // çekilemedi. Kullanıcıyı dışarı atma (oturum kalıcılığı).
