@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import {
+  authBanDurationFor,
+  isLadderAction,
+  legacyIdempotencyKey,
+  legacyLadderActionFor,
+  PERMANENT_BAN_DURATION,
+  requiresAuthBan,
+  shouldClearAuthBanOnRevoke,
+} from "../_shared/admin_sanction_policy.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,17 +66,29 @@ serve(async (req) => {
       status: 200,
     })
 
-    // WP-441: Eski `mute_24h` çağrısı auth ban kuruyordu; kullanıcı okuyamıyor,
-    // giriş bile yapamıyordu. Artık yalnız-yazma kısıtı olarak yaptırım
-    // hattına düşer. Eski çağrı idempotency anahtarı göndermediği için dakika
-    // kovasından türetiyoruz: aynı dakikadaki yeniden denemeler tek yaptırım.
+    // WP-441 + WP-625: TÜM eski eylem adları yaptırım hattına çevrilir.
+    //
+    // WP-441 bunu yalnız `mute_24h` için yapmıştı (o dal auth ban kuruyordu,
+    // susturulan kullanıcı giriş bile yapamıyordu). WP-625'te aynı hastalığın
+    // daha kötüsü çıktı: `suspend_user` süresi sorulmayan, kaydı olmayan
+    // ≈100 yıllık bir ban kuruyordu. Basamağa çevrilen çağrı artık
+    // `moderation_sanctions`'a satır yazar → Moderasyon sekmesinde görünür,
+    // geri alınabilir, süresi dolunca kendiliğinden açılır.
+    //
+    // Eski çağrılar idempotency anahtarı göndermiyor; dakika kovasından
+    // türetiyoruz: aynı dakikadaki yeniden denemeler tek yaptırım açar.
     let derivedIdempotencyKey = idempotencyKey
-    if (action === 'mute_24h') {
-      action = 'moderation_sanction'
+    let derivedSanctionAction = sanctionAction
+    const legacyLadderAction = typeof action === 'string'
+      ? legacyLadderActionFor(action)
+      : null
+    if (legacyLadderAction) {
+      derivedSanctionAction = sanctionAction ?? legacyLadderAction
       derivedIdempotencyKey = idempotencyKey
-        ?? `legacy-mute-${targetUserId}-${Math.floor(Date.now() / 60000)}`
+        ?? legacyIdempotencyKey(action, targetUserId, Date.now())
+      action = 'moderation_sanction'
     }
-    const effectiveSanctionAction = sanctionAction ?? 'mute_24h'
+    const effectiveSanctionAction = derivedSanctionAction
 
     // WP-441 yaptırım hattı: aç → auth işini yap → kapat. Denetim satırını
     // RPC yazar, bu yüzden aşağıdaki eski audit bloğuna hiç girilmez.
@@ -84,16 +105,36 @@ serve(async (req) => {
         if (revokeError) throw revokeError
         // Kısıt auth tarafında da kalkar; yoksa süre dolmadan geri alınan
         // askı kullanıcıyı dışarıda bırakmaya devam ederdi.
+        //
+        // 🔴 WP-625: ama YALNIZ auth ban kurmuş bir basamak geri alınırsa.
+        // Önceden koşul sadece "geri alınan satırın hedefi var mı" idi: eski
+        // bir UYARIYI geri almak, o kullanıcının ilgisiz kalıcı yasağını da
+        // kaldırıyordu. Soft-delete edilmiş hesap da bu yoldan geri açılıyordu.
         if (revoked?.target_user_id) {
-          const { error: authError } = await supabaseAdmin.auth.admin
-            .updateUserById(revoked.target_user_id, { ban_duration: 'none' })
-          if (authError) throw authError
+          const { data: revokeTarget, error: revokeTargetError } =
+            await supabaseAdmin.auth.admin.getUserById(revoked.target_user_id)
+          if (revokeTargetError) throw revokeTargetError
+          const clearBan = shouldClearAuthBanOnRevoke({
+            revokedAction: revoked.action,
+            softDeleted: revokeTarget?.user?.user_metadata?.deleted === true,
+          })
+          if (clearBan) {
+            const { error: authError } = await supabaseAdmin.auth.admin
+              .updateUserById(revoked.target_user_id, { ban_duration: 'none' })
+            if (authError) throw authError
+          }
         }
         return jsonResponse(revoked)
       }
 
       if (!targetUserId || !reason?.trim() || !derivedIdempotencyKey) {
         throw new Error('targetUserId, reason and idempotencyKey are required')
+      }
+      // WP-625: bilinmeyen basamak KAYIT AÇMADAN reddedilir. Önce açıp sonra
+      // düşmek, hedefte `failed` bir satır ve tek-aktif-kısıt indeksinde
+      // gereksiz gürültü bırakıyordu.
+      if (!effectiveSanctionAction || !isLadderAction(effectiveSanctionAction)) {
+        throw new Error('Bilinmeyen yaptırım: ' + effectiveSanctionAction)
       }
 
       const { data: opened, error: beginError } = await supabaseClient
@@ -108,13 +149,10 @@ serve(async (req) => {
       // Tekrar gönderim: kayıt zaten kapanmış, auth işi ikinci kez koşmaz.
       if (opened.state !== 'pending') return jsonResponse(opened)
 
-      const banDurations: Record<string, string> = {
-        suspend_24h: '24h',
-        suspend_7d: '168h',
-        suspend_14d: '336h',
-        suspend_30d: '720h',
-        ban_permanent: '876000h',
-      }
+      // Süre tablosu `_shared/admin_sanction_policy.ts`te tek yerde durur;
+      // "hangi basamak auth'a dokunur" sorusunun cevabı geri alma yolunda da
+      // aynı tablodan okunur.
+      const banDuration = authBanDurationFor(effectiveSanctionAction)
 
       let failure: string | null = null
       try {
@@ -132,12 +170,10 @@ serve(async (req) => {
           const { error: renameError } = await supabaseAdmin
             .from('profiles').update({ display_name: 'İsimsiz kullanıcı' }).eq('id', targetUserId)
           if (renameError) throw renameError
-        } else if (banDurations[effectiveSanctionAction]) {
+        } else if (banDuration) {
           const { error: banError } = await supabaseAdmin.auth.admin
-            .updateUserById(targetUserId, { ban_duration: banDurations[effectiveSanctionAction] })
+            .updateUserById(targetUserId, { ban_duration: banDuration })
           if (banError) throw banError
-        } else if (!['no_action', 'warn', 'mute_24h'].includes(effectiveSanctionAction)) {
-          throw new Error('Bilinmeyen yaptırım: ' + effectiveSanctionAction)
         }
         // `warn` ve `mute_24h` auth tarafına dokunmaz: uyarı bildirimi ve
         // yazma kısıtı kapanış RPC'sinde yazılır, kullanıcı okumaya devam eder.
@@ -204,11 +240,6 @@ serve(async (req) => {
         break
       }
 
-      case 'warn_user': {
-        result = { success: true }
-        break
-      }
-
       case 'reset_user_name': {
         const { data: profile, error: profileReadError } = await supabaseAdmin
           .from('profiles')
@@ -252,30 +283,41 @@ serve(async (req) => {
         break
       }
 
-      case 'suspend_24h':
-      case 'suspend_7d':
-      case 'suspend_14d':
-      case 'suspend_30d':
-      case 'suspend_user':
-      case 'suspend_permanent': {
-        const durations: Record<string, string> = {
-          suspend_24h: '24h',
-          suspend_7d: '168h',
-          suspend_14d: '336h',
-          suspend_30d: '720h',
-          suspend_user: '876000h',
-          suspend_permanent: '876000h',
-        }
-        const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-          ban_duration: durations[action],
-        })
-        if (error) throw error
-        result = { success: true }
-        break
-      }
-      
+      // 🔴 WP-625: eski `warn_user` / `suspend_*` dalları SİLİNDİ. İkisi de
+      // yukarıdaki takma ad tablosuyla yaptırım hattına düşer; burada kopya
+      // bırakmak, kaydı olmayan 100 yıllık ban'ın geri gelmesi için açık
+      // kapıydı (`warn_user` da hiçbir şey yapmadan "başarılı" diyordu).
+
       case 'unsuspend_user':
       case 'revoke_sanction': {
+        // WP-625: askı artık `moderation_sanctions` satırıyla birlikte kurulur.
+        // Yalnız auth ban'ını kaldırmak kaydı `applied` bırakırdı: kullanıcı
+        // içeri girer, ama tek-aktif-kısıt indeksi yüzünden ona bir daha
+        // yaptırım uygulanamaz ve Moderasyon sekmesi hâlâ "askıda" gösterirdi.
+        // Bu yüzden önce kayıt geri alınır (denetim satırını RPC yazar), sonra
+        // auth ban'ı kalkar.
+        //
+        // Okuma bilerek çağıranın KENDİ client'ıyla: `0105` bu tabloda
+        // `authenticated`a select veriyor ve politika süper admini geçiriyor
+        // (`moderation_sanctions_select_own`). service_role'e düşmek, kapıyı
+        // migration'ın söylemediği bir varsayıma bağlardı.
+        const { data: openSanctions, error: openSanctionsError } =
+          await supabaseClient
+            .from('moderation_sanctions')
+            .select('id, action')
+            .eq('target_user_id', targetUserId)
+            .in('state', ['pending', 'applied'])
+        if (openSanctionsError) throw openSanctionsError
+        for (const row of openSanctions ?? []) {
+          // Susturma/uyarı hesabı kapatmaz; "Askıyı Kaldır" onları silmez.
+          if (!requiresAuthBan(row.action)) continue
+          const { error: revokeError } = await supabaseClient
+            .rpc('admin_revoke_moderation_sanction', {
+              p_sanction_id: row.id,
+              p_reason: reason.trim(),
+            })
+          if (revokeError) throw revokeError
+        }
         const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
           ban_duration: 'none'
         })
@@ -288,7 +330,7 @@ serve(async (req) => {
         // Kullanıcıyı hem banla hem de silindi olarak işaretle
         const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
           user_metadata: { deleted: true },
-          ban_duration: '876000h'
+          ban_duration: PERMANENT_BAN_DURATION
         })
         if (error) throw error
         

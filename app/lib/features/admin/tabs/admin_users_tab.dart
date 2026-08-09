@@ -2,9 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/models/admin_user_dto.dart';
+import 'package:online_study_room/data/models/moderation_sanction.dart';
+import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
+import 'package:online_study_room/data/repositories/admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+
+/// Kullanıcılar sekmesinden uygulanabilen askı basamakları.
+///
+/// 🔴 WP-625: burada **süresiz** bir seçenek yoktur. Eski "Askıya Al" düğmesi
+/// tek dokunuşta ≈100 yıllık, `moderation_sanctions`'a hiç yazılmayan bir ban
+/// kuruyordu: Moderasyon sekmesinde görünmüyor, geri alınamıyor, kendiliğinden
+/// dolmuyordu. Artık yönetici basamağı **seçer**, sunucu kaydı yazar. Kalıcı
+/// yasak listede duruyor ama adı kalıcı olduğunu söylüyor.
+const List<ModerationAction> kAdminSuspensionLadder = [
+  ModerationAction.suspend24h,
+  ModerationAction.suspend7d,
+  ModerationAction.suspend14d,
+  ModerationAction.suspend30d,
+  ModerationAction.banPermanent,
+];
 
 class AdminUsersTab extends ConsumerWidget {
   const AdminUsersTab({super.key});
@@ -46,6 +64,17 @@ class _UserCard extends ConsumerWidget {
 
   final AdminUserDto user;
 
+  /// Gerekçe sorar. `null` = iptal edildi; boş dize = onaylandı ama gerekçe yok.
+  ///
+  /// Denetleyiciyi diyalogun kendisi tutar: çağıran tarafta `dispose` etmek
+  /// kapanış animasyonu sürerken çerçeveyi düşürüyordu.
+  Future<String?> _askReason(BuildContext context, String promptTitle) {
+    return showDialog<String>(
+      context: context,
+      builder: (_) => _ReasonDialog(title: promptTitle),
+    );
+  }
+
   Future<void> _performAction(
     BuildContext context,
     WidgetRef ref,
@@ -53,35 +82,9 @@ class _UserCard extends ConsumerWidget {
     String promptTitle,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final reasonController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(promptTitle),
-          content: TextField(
-            controller: reasonController,
-            decoration: InputDecoration(
-              labelText: l10n.adminGerekceZorunlu,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.adminIptal),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.adminOnayla),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-    final reason = reasonController.text.trim();
+    final raw = await _askReason(context, promptTitle);
+    if (raw == null) return;
+    final reason = raw.trim();
     if (reason.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +116,94 @@ class _UserCard extends ConsumerWidget {
       }
     }
   }
+
+  /// WP-625: askı basamağını yönetici seçer.
+  ///
+  /// Eski akış tek düğmeyle süresiz ban kuruyordu. Basamak seçimi bu yüzden
+  /// zorunlu: süre kullanıcıya söylenebilir olmalı ve kayda düşmeli.
+  Future<void> _openSuspensionMenu(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final selected = await showModalBottomSheet<ModerationAction>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              dense: true,
+              title: Text(
+                l10n.adminKullaniciyiAskiyaAl,
+                style: Theme.of(sheetContext).textTheme.titleSmall,
+              ),
+            ),
+            for (final action in kAdminSuspensionLadder)
+              ListTile(
+                key: Key('admin-suspend-${action.wire}'),
+                title: Text(_ladderLabel(l10n, action)),
+                onTap: () => Navigator.of(sheetContext).pop(action),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !context.mounted) return;
+    await _applySanction(context, ref, selected);
+  }
+
+  /// Yaptırımı **moderasyon hattından** uygular.
+  ///
+  /// Eski yol (`performUserAction('suspend_user')`) yalnız auth ban kuruyordu;
+  /// `moderation_sanctions`'a satır yazılmadığı için askı ne görünüyor ne geri
+  /// alınabiliyordu. Idempotency anahtarını istemci üretir: "istek gitti mi"
+  /// belirsizliği yalnız burada bilinir, tekrar ikinci yaptırım açmaz.
+  Future<void> _applySanction(
+    BuildContext context,
+    WidgetRef ref,
+    ModerationAction action,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final raw = await _askReason(context, _ladderLabel(l10n, action));
+    if (raw == null) return;
+    final reason = raw.trim();
+    if (reason.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.adminGerekceBelirtilmelidir)),
+      );
+      return;
+    }
+
+    final request = ModerationSanctionRequest(
+      targetUserId: user.id,
+      action: action,
+      reason: reason,
+      idempotencyKey:
+          'admin-users-${user.id}-${DateTime.now().microsecondsSinceEpoch}',
+    );
+    try {
+      await ref.read(adminModerationRepositoryProvider).applySanction(request);
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    ref.invalidate(adminUsersProvider);
+    ref.invalidate(moderationSanctionsProvider(user.id));
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.adminModerationSanctionApplied)),
+    );
+  }
+
+  static String _ladderLabel(AppLocalizations l10n, ModerationAction action) =>
+      switch (action) {
+        ModerationAction.suspend24h => l10n.adminModerationSanctionSuspend24h,
+        ModerationAction.suspend7d => l10n.adminModerationSanctionSuspend7d,
+        ModerationAction.suspend14d => l10n.adminModerationSanctionSuspend14d,
+        ModerationAction.suspend30d => l10n.adminModerationSanctionSuspend30d,
+        ModerationAction.banPermanent => l10n.adminModerationSanctionBan,
+        // Kullanıcılar sekmesi yalnız hesabı kapatan basamakları sunar; diğer
+        // basamaklar vaka bağlamıyla Moderasyon sekmesinden uygulanır.
+        _ => l10n.adminAskiyaAl,
+      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -188,6 +279,7 @@ class _UserCard extends ConsumerWidget {
                   ),
                   if (isSuspended)
                     OutlinedButton.icon(
+                      key: const Key('admin-user-unsuspend'),
                       onPressed: () => _performAction(
                         context,
                         ref,
@@ -199,12 +291,8 @@ class _UserCard extends ConsumerWidget {
                     )
                   else
                     OutlinedButton.icon(
-                      onPressed: () => _performAction(
-                        context,
-                        ref,
-                        'suspend_user',
-                        l10n.adminKullaniciyiAskiyaAl,
-                      ),
+                      key: const Key('admin-user-suspend-menu'),
+                      onPressed: () => _openSuspensionMenu(context, ref),
                       icon: const Icon(Icons.pause_circle_outline, size: 18),
                       label: Text(l10n.adminAskiyaAl),
                     ),
@@ -231,6 +319,56 @@ class _UserCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Gerekçe soran diyalog.
+///
+/// `null` döner = iptal; boş dize döner = onaylandı ama gerekçe yazılmadı.
+/// Çağıran bu ikisini ayırır: iptalde sessiz kalınır, boş gerekçede uyarılır.
+class _ReasonDialog extends StatefulWidget {
+  const _ReasonDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_ReasonDialog> createState() => _ReasonDialogState();
+}
+
+class _ReasonDialogState extends State<_ReasonDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        key: const Key('admin-user-reason-field'),
+        controller: _controller,
+        decoration: InputDecoration(
+          labelText: l10n.adminGerekceZorunlu,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.adminIptal),
+        ),
+        FilledButton(
+          key: const Key('admin-user-reason-confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(l10n.adminOnayla),
+        ),
+      ],
     );
   }
 }

@@ -112,6 +112,24 @@ jobs:
             --use-api \
             --no-verify-jwt
 
+      # 🔴 WP-625: Admin panelinin SUNUCU tarafi hicbir is akisinda deploy
+      # edilmiyordu; ayrintili gerekce production ikizinde. Staging'de de
+      # deploy edilmezse panel burada da hata dondurur ve production'a cikan
+      # surumun neye benzedigi yine olculemez.
+      #
+      # 🔴 `--no-verify-jwt` YOK ve olmamali: iki fonksiyon da cagiranin KENDI
+      # token'iyla `is_super_admin()` kapisindan gecer.
+      - name: Deploy staging admin panel functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy admin-user-actions \
+            --project-ref "$STAGING_SUPABASE_PROJECT_REF" \
+            --use-api
+          supabase functions deploy admin-operations \
+            --project-ref "$STAGING_SUPABASE_PROJECT_REF" \
+            --use-api
+
       - name: Configure private purge runtime
         shell: bash
         run: |

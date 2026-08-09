@@ -114,6 +114,28 @@ jobs:
             --use-api \
             --no-verify-jwt
 
+      # 🔴 WP-625: Admin panelinin SUNUCU tarafi hicbir is akisinda deploy
+      # edilmiyordu. Uygulama iki fonksiyonu da gercekten cagiriyor
+      # (`supabase_admin_repository.dart` kullanici/grup eylemleri,
+      # `supabase_admin_moderation_repository.dart` yaptirim/geri alma), yani
+      # canlida ya hic yoktular ya da ne zaman elle atildigi bilinmeyen bir
+      # surumdeydiler. `ci.yml` altisini da `deno check`ten geciriyor: deploy
+      # edilmeyen kodu tip denetiminden gecirmek olculen sey degil.
+      #
+      # 🔴 `--no-verify-jwt` YOK ve olmamali: purge cron secret'i ile konusur,
+      # bu ikisi cagiranin KENDI token'iyla `is_super_admin()` kapisindan
+      # gecer. JWT dogrulamasini kapatmak o kapinin onundeki ilk kilidi acar.
+      - name: Deploy production admin panel functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy admin-user-actions \
+            --project-ref "$PRODUCTION_SUPABASE_PROJECT_REF" \
+            --use-api
+          supabase functions deploy admin-operations \
+            --project-ref "$PRODUCTION_SUPABASE_PROJECT_REF" \
+            --use-api
+
       - name: Configure private purge runtime
         shell: bash
         run: |
