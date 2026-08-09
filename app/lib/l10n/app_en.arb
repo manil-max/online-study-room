@@ -6511,5 +6511,46 @@
   "clockIzinDurumuOkunamadi": "Alarm permission status could not be checked.",
   "@clockIzinDurumuOkunamadi": {
     "description": "Shown when the exact-alarm permission probe fails."
+  },
+  "homeSinavGeriSayimi": "Exam countdown",
+  "@homeSinavGeriSayimi": {
+    "description": "WP-575 dashboard card title: countdown to the exam date."
+  },
+  "homeSinavGeriSayimiAciklama": "Days left until the exam date you picked.",
+  "@homeSinavGeriSayimiAciklama": {
+    "description": "WP-575 dashboard card description shown in the card picker."
+  },
+  "homeSinavTarihiSecilmedi": "No exam date set",
+  "@homeSinavTarihiSecilmedi": {
+    "description": "WP-575 empty state: no exam date has been chosen yet."
+  },
+  "homeSinavTarihiniAyarlardanSec": "Pick your exam date under Settings → Study preferences.",
+  "@homeSinavTarihiniAyarlardanSec": {
+    "description": "WP-575 empty state hint pointing at the settings row that sets the date."
+  },
+  "homeSinavaKalanGun": "{count, plural, =1 {1 day left} other {{count} days left}}",
+  "@homeSinavaKalanGun": {
+    "description": "WP-575 countdown headline: whole days left until the exam.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSinavBugun": "The exam is today",
+  "@homeSinavBugun": {
+    "description": "WP-575 countdown headline when the exam date is today (never \"0 days left\")."
+  },
+  "homeSinavGecti": "The exam has passed",
+  "@homeSinavGecti": {
+    "description": "WP-575 countdown headline for a past exam date; a negative day count is never shown."
+  },
+  "profileSinavTarihi": "Exam date",
+  "@profileSinavTarihi": {
+    "description": "WP-575 settings row title under study preferences."
+  },
+  "profileSinavTarihiniTemizle": "Clear exam date",
+  "@profileSinavTarihiniTemizle": {
+    "description": "WP-575 tooltip for the button that removes the saved exam date."
   }
 }

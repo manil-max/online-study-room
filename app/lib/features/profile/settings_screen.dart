@@ -4,6 +4,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/animals/camp_animal.dart';
 import '../../core/l10n/app_locale.dart';
+import '../../core/stats/istanbul_calendar.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/utils/duration_format.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -15,6 +16,7 @@ import '../../data/providers/study_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../admin/admin_screen.dart';
 import '../desktop/desktop_surface.dart';
+import '../home/dday_prefs.dart';
 import '../notifications/announcements_screen.dart';
 import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
@@ -82,6 +84,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  /// WP-575: sınav tarihi **tek** noktadan (Ayarlar) ayarlanır; pano kartı
+  /// yalnız okur.
+  Future<void> _pickExamDate() async {
+    final today = istanbulDay(ref.read(ddayClockProvider)());
+    final initial = ref.read(examDateProvider) ?? today;
+    // `showDatePicker`, `initialDate` aralığın dışına düşerse assert ile çöker.
+    // Kayıtlı sınav tarihi geçmişte kaldığında (geri sayım bittiğinde) bu
+    // kolayca olur, o yüzden sınırlar seçili tarihi kapsayacak şekilde açılır.
+    var first = DateTime(today.year - 1, 1, 1);
+    var last = DateTime(today.year + 10, 12, 31);
+    if (initial.isBefore(first)) first = initial;
+    if (initial.isAfter(last)) last = initial;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+    );
+    if (picked == null) return;
+    await ref.read(examDateProvider.notifier).set(picked);
+  }
+
   Future<void> _resetTours() async {
     await ref.read(tourControllerProvider.notifier).resetAll();
     await ref.read(onboardingCompletedProvider.notifier).reset();
@@ -102,6 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
+    final examDate = ref.watch(examDateProvider);
     final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
     // WP-421: zincirin ikinci halkasi.
     final unreadReplies =
@@ -287,6 +313,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onTap: profile == null
                           ? null
                           : () => _editDailyGoal(goalMinutes),
+                    ),
+                  ),
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-exam-date'),
+                      leading: const Icon(Icons.event_outlined),
+                      title: Text(l10n.profileSinavTarihi),
+                      subtitle: Text(
+                        examDate == null
+                            ? l10n.homeSinavTarihiSecilmedi
+                            : MaterialLocalizations.of(
+                                context,
+                              ).formatFullDate(examDate),
+                      ),
+                      // Seçilen tarih **geri alınabilir** olmalı: iptal edilen
+                      // bir tarih seçici ile "temizle" ayırt edilemez, bu yüzden
+                      // silme ayrı bir eylemdir.
+                      trailing: examDate == null
+                          ? const Icon(Icons.chevron_right)
+                          : IconButton(
+                              key: const Key('settings-exam-date-clear'),
+                              tooltip: l10n.profileSinavTarihiniTemizle,
+                              icon: const Icon(Icons.close),
+                              onPressed: () =>
+                                  ref.read(examDateProvider.notifier).clear(),
+                            ),
+                      onTap: _pickExamDate,
                     ),
                   ),
                   _SettingsCard(

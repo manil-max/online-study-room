@@ -1997,5 +1997,14 @@
   "clockAlarmlarYuklenemedi": "Alarmlar yüklenemedi.",
   "clockZamanlayicilarYuklenemedi": "Zamanlayıcılar yüklenemedi.",
   "clockHazirSurelerYuklenemedi": "Hazır süreler yüklenemedi.",
-  "clockIzinDurumuOkunamadi": "Alarm izni durumu okunamadı."
+  "clockIzinDurumuOkunamadi": "Alarm izni durumu okunamadı.",
+  "homeSinavGeriSayimi": "Sınav geri sayımı",
+  "homeSinavGeriSayimiAciklama": "Seçtiğin sınav tarihine kalan gün.",
+  "homeSinavTarihiSecilmedi": "Sınav tarihi seçilmedi",
+  "homeSinavTarihiniAyarlardanSec": "Ayarlar → Çalışma tercihleri bölümünden sınav tarihini seç.",
+  "homeSinavaKalanGun": "{count, plural, =1 {1 gün kaldı} other {{count} gün kaldı}}",
+  "homeSinavBugun": "Sınav bugün",
+  "homeSinavGecti": "Sınav geçti",
+  "profileSinavTarihi": "Sınav tarihi",
+  "profileSinavTarihiniTemizle": "Sınav tarihini temizle"
 }

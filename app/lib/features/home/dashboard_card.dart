@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../classroom/widgets/study_timer_card.dart';
 import 'widgets/active_members_card.dart';
+import 'widgets/dday_card.dart';
 import 'widgets/goal_card.dart';
 import 'widgets/group_goal_card.dart';
 import 'widgets/group_trend_card.dart';
@@ -40,6 +41,9 @@ enum DashboardCardType {
   activeMembers,
   /// WP-188: günlük/haftalık görev listesi.
   tasks,
+
+  /// WP-575: seçilen sınav tarihine kalan gün (cihaz içi, yeni veri yok).
+  dday,
 }
 
 extension DashboardCardInfo on DashboardCardType {
@@ -73,6 +77,9 @@ extension DashboardCardInfo on DashboardCardType {
       context,
     ).homeSuAnCalisanlar,
     DashboardCardType.tasks => AppLocalizations.of(context).taskListTitle,
+    DashboardCardType.dday => AppLocalizations.of(
+      context,
+    ).homeSinavGeriSayimi,
   };
 
   String description(BuildContext context) => switch (this) {
@@ -115,6 +122,9 @@ extension DashboardCardInfo on DashboardCardType {
       context,
     ).homeSuAnCalisanlar,
     DashboardCardType.tasks => AppLocalizations.of(context).taskListSubtitle,
+    DashboardCardType.dday => AppLocalizations.of(
+      context,
+    ).homeSinavGeriSayimiAciklama,
   };
 
   /// Ekleme menüsünde gruplama başlığı.
@@ -127,7 +137,8 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.today ||
     DashboardCardType.monthly ||
     DashboardCardType.weekdayWeekend ||
-    DashboardCardType.records => AppLocalizations.of(context).homeOzetler,
+    DashboardCardType.records ||
+    DashboardCardType.dday => AppLocalizations.of(context).homeOzetler,
     DashboardCardType.weekly ||
     DashboardCardType.line ||
     DashboardCardType.scatter => AppLocalizations.of(context).homeGrafikler,
@@ -158,6 +169,7 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.groupTrend => Icons.insights_outlined,
     DashboardCardType.activeMembers => Icons.groups_2_outlined,
     DashboardCardType.tasks => Icons.checklist_outlined,
+    DashboardCardType.dday => Icons.event_outlined,
   };
 }
 
@@ -493,6 +505,7 @@ Widget dashboardCardFor(
     DashboardCardType.groupTrend => GroupTrendCard(size: size),
     DashboardCardType.activeMembers => ActiveMembersCard(size: size),
     DashboardCardType.tasks => TasksCard(size: size),
+    DashboardCardType.dday => DDayCard(size: size),
   };
 
   // Sınırlı yükseklik ver (Row'da sınırsız kısıtı engeller). Kullanıcı serbest
