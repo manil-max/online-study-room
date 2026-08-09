@@ -9,6 +9,7 @@ import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
@@ -73,7 +74,6 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final sel = ref.watch(statsPeriodProvider);
     final period = sel.period;
     final (from, to) = sel.range(now: now);
-    final periodSessions = inRange(sessions, from, to).toList();
     final analyticsPeriod = analyticsPeriodFromSelection(sel);
     final longTotalsAsync = ref.watch(
       analyticsUserDayTotalsProvider(analyticsPeriod),
@@ -85,10 +85,50 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // Ömür: özetten (period == all Toplam kartı için).
     final lifetime = summary?.lifetimeSeconds;
 
+    // Gün→saniye haritası: rekor/heatmap tüm sıcak pencere; trend alt seçici.
+    final dailyTotalsMap = dailyTotals(sessions);
+
+    // 🔴 WP-561: "Tümü" (`from == DateTime(2000)`) ve "Yıl" dönemlerinde payda
+    // takvim gününden geliyordu (≈9718 gün) ama pay yalnız 90 günlük **sıcak
+    // pencereden** (`kUserSessionsHotWindowDays`) hesaplanıyor. 300 saat çalışmış
+    // kullanıcıda "Toplam: 300 sa" ile "Günlük Ortalama: 37 sn" yan yana
+    // çıkıyordu. Payda artık verinin gerçekten bulunduğu ufka kırpılır.
+    final avgWindow = averageWindow(
+      periodFrom: from,
+      hotWindowStart: sessionHotWindowStart(now: now),
+      dayTotals: dailyTotalsMap,
+    );
+
+    // 🔴 WP-573: dönem sıcak pencerenin gerisine uzanıyorsa detay kartları
+    // (ders kırılımı, saat dağılımı, oturum dağılımı, haftalık ritim, hafta
+    // içi/sonu, Toplam) artık **sunucudan** beslenir. Önceden hepsi
+    // `widget.sessions`ten çiziliyordu; o liste 90 günlük sıcak penceredir
+    // (`supabase_study_repository.dart` `_fetchHotWindowSessions`), yani 400
+    // günlük geçmişi olan kullanıcı "Tümü"de yalnız son 90 günün toplamını
+    // görüyordu. Sunucu yolu (`analyticsUserSessionsInRangeProvider`) tam bu
+    // iş için yazılmıştı ama `lib/` içinde **tek bir çağıranı yoktu**: bitmiş
+    // backend, bağlanmamış UI — yani özellik yoktu.
+    final beyondHot = avgWindow.hotLimited;
+    // Dönem zaten sıcak pencerenin içindeyse sunucuya hiç gidilmez.
+    final longSessionsAsync = beyondHot
+        ? ref.watch(analyticsUserSessionsInRangeProvider(analyticsPeriod))
+        : null;
+    final serverSessions = longSessionsAsync?.value;
+    final periodSessions =
+        serverSessions ?? inRange(sessions, from, to).toList();
+    // 🔴 Sunucu yolu gelmediyse (yükleniyor / hata) **sessizce** 90 güne
+    // düşülmez: başlık kapsamı söyler ([scopeSuffix]), hata dalı ayrıca
+    // tekrar-dene sunar ([scopeFailed]). Etiket artık "dönem ufku aşıyor mu"
+    // değil "kartlar gerçekten 90 günle mi sınırlı" sorusunu yanıtlar.
+    final hotLimited = beyondHot && serverSessions == null;
+    final scopeFailed = longSessionsAsync?.hasError ?? false;
+
     // Döneme göre hafta içi/sonu (ortalama aşağıda, veri ufkuna kırpılarak).
     final split = weekdayWeekendSplit(periodSessions);
 
-    if (sessions.isEmpty) {
+    // Sıcak pencere boş olsa da sunucu dönem verisi getirmiş olabilir; o durumda
+    // "henüz kaydın yok" demek yeni bir sessiz yalandır.
+    if (sessions.isEmpty && periodSessions.isEmpty) {
       // 🔴 WP-541: `Center` + `Column` = kaydırıcı yok. Sekme çubuğu + dönem
       // şeridi yüksekliği yedikten sonra büyük yazı ölçüsünde bu blok
       // viewport'a sığmıyor ve taşıyordu (320x640, textScale 2.0 → "A RenderFlex
@@ -136,23 +176,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
       );
     }
 
-    // Gün→saniye haritası: rekor/heatmap tüm sıcak pencere; trend alt seçici.
-    final dailyTotalsMap = dailyTotals(sessions);
     final periodTotalSec = totalSeconds(periodSessions);
-
-    // 🔴 WP-561: "Tümü" (`from == DateTime(2000)`) ve "Yıl" dönemlerinde payda
-    // takvim gününden geliyordu (≈9718 gün) ama pay yalnız 90 günlük **sıcak
-    // pencereden** (`kUserSessionsHotWindowDays`) hesaplanıyor. 300 saat çalışmış
-    // kullanıcıda "Toplam: 300 sa" ile "Günlük Ortalama: 37 sn" yan yana
-    // çıkıyordu. Payda artık verinin gerçekten bulunduğu ufka kırpılır.
-    final avgWindow = averageWindow(
-      periodFrom: from,
-      hotWindowStart: sessionHotWindowStart(now: now),
-      dayTotals: dailyTotalsMap,
-    );
-    // Dönem ufkun gerisine uzanıyorsa kartlar 90 günle **sınırlıdır**; sessiz
-    // çelişki yerine başlıkta söylenir.
-    final hotLimited = avgWindow.hotLimited;
     final avgPeriod = dailyAverageSeconds(periodSessions, avgWindow.from, to);
     final periodLabel = statsPeriodLabel(l10n, period);
     final scopeSuffix = hotLimited
@@ -170,6 +194,18 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        // 🔴 WP-573: uzun dönem verisi düştüyse kullanıcı çıkışsız kalmaz.
+        // WP-560 dersi: çıkışı olmayan hata dalı açılmaz.
+        if (scopeFailed)
+          Card(
+            child: ErrorRetryView(
+              dense: true,
+              message: l10n.homeVerilerYuklenemedi,
+              onRetry: () => ref.invalidate(
+                analyticsUserSessionsInRangeProvider(analyticsPeriod),
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         Row(
           children: [
