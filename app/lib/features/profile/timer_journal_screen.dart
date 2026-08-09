@@ -149,6 +149,36 @@ class _TimerJournalScreenState extends ConsumerState<TimerJournalScreen> {
                           '${entry.reason} → ${entry.outcome}',
                           style: theme.textTheme.bodyMedium,
                         ),
+                        // 🔴 WP-601: `trigger` WP-599'da yazılmaya başlandı ama
+                        // bu ekran onu HİÇ göstermiyordu. Alan tam da "sayacı
+                        // parmak mı bir rutin mi başlattı" sorusunu cevaplamak
+                        // için eklendi; ekranda görünmezse gerçek bir olayda
+                        // yine dışa aktarma + elle JSON okumak gerekirdi.
+                        //
+                        // `unknown` ÇİZİLMEZ: WP-599 öncesi satırlar bu alanı
+                        // taşımıyor ve onlara "bilinmiyor" damgası basmak
+                        // gürültüdür — asıl yanlış olan ise onları "kullanıcı"
+                        // saymak olurdu, o da hiç yapılmıyor.
+                        if (entry.trigger != TimerJournalTriggers.unknown) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'kaynak: ${entry.trigger}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color:
+                                  TimerJournalTriggers.isUserButton(
+                                    entry.trigger,
+                                  )
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.tertiary,
+                              fontWeight:
+                                  TimerJournalTriggers.isUserButton(
+                                    entry.trigger,
+                                  )
+                                  ? FontWeight.normal
+                                  : FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
