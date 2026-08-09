@@ -19,7 +19,7 @@ set local search_path = public, extensions;
 \set alpha '10000000-0000-0000-0000-000000000001'
 \set beta  '10000000-0000-0000-0000-000000000002'
 
-select plan(11);
+select plan(12);
 
 -- ===========================================================================
 -- KURULUM: alpha 2 saat GERCEK calismis, ustune 11 saatlik SAHTE oturum.
@@ -46,13 +46,20 @@ select :'alpha', 'study_hour_xp', 1, 50,
        :'alpha' || '|study_hour_xp|h_' || g
 from generate_series(1, 13) g;
 
--- Sahte gecenin actigi kademe: `day_hero` tier 1 (esik 3 saat/gun).
+-- `day_hero` kademeleri (`0065`): tier 1 esigi 2 saat/gun, tier 2 esigi 4.
+--
+-- 🔴 IKISI BIRDEN bilerek kuruluyor. Sahte 11 saatlik gece ikisini de acmisti.
+-- Silindikten sonra alpha'nin en yogun gunu 2 saat kalir:
+--   tier 1 (>=2) HALA HAK EDILMIS  -> KALMALI
+--   tier 2 (>=4) ARTIK HAK EDILMEZ -> DUSMELI
+-- Ayni basarim uzerinde iki yonu birden olcmek, "hepsini sil" ve "hicbirine
+-- dokunma" cozumlerinin IKISINI birden eler.
 insert into public.xp_ledger (user_id, achievement_id, tier, xp_amount, event_key)
-values (:'alpha', 'day_hero', 1,
-        (select (t->>'xp')::integer from public.achievements_dict d
-          cross join lateral jsonb_array_elements(d.tiers) t
-         where d.id = 'day_hero' and (t->>'tier')::integer = 1),
-        :'alpha' || '|day_hero|tier_1');
+select :'alpha', 'day_hero', (t->>'tier')::integer, (t->>'xp')::integer,
+       :'alpha' || '|day_hero|tier_' || (t->>'tier')
+  from public.achievements_dict d
+  cross join lateral jsonb_array_elements(d.tiers) t
+ where d.id = 'day_hero' and (t->>'tier')::integer in (1, 2);
 
 -- 🔴 KAPSAM DISI kazanim: `alpha_wolf` baska bir yoldan verilir ve
 -- `_session_derived_progress` onu NULL doner. Uzlastirma buna DOKUNMAMALI.
@@ -87,18 +94,28 @@ select ok(
 delete from public.study_sessions
  where id = '55000000-0000-0000-0000-0000000000ff';
 
+-- Alpha'nin GERCEK calismasi: fikstur bugun 1 saat (`base_seed.psql:49`) +
+-- yukaridaki 2 saat = 3 saat. Yani h_1..h_3 hak edilmis, h_4..h_13 degil.
 select is(
   (select count(*)::int from public.xp_ledger
     where user_id = :'alpha' and achievement_id = 'study_hour_xp'),
-  2,
-  'hak edilmeyen saat XP satirlari DUSTU (13 -> 2, gercek calisma kadar)'
+  3,
+  'hak edilmeyen saat XP satirlari DUSTU (13 -> 3, gercek calisma kadar)'
 );
 
 select is(
   (select count(*)::int from public.xp_ledger
-    where user_id = :'alpha' and event_key = :'alpha' || '|day_hero|tier_1'),
+    where user_id = :'alpha' and event_key = :'alpha' || '|day_hero|tier_2'),
   0,
-  'sahte gecenin actigi basarim kademesi GERI ALINDI'
+  'sahte gecenin actigi kademe (tier 2, esik 4 saat) GERI ALINDI'
+);
+
+-- 🔴 Ters iddia, AYNI basarim uzerinde: hala hak edilen kademe KALIR.
+select is(
+  (select count(*)::int from public.xp_ledger
+    where user_id = :'alpha' and event_key = :'alpha' || '|day_hero|tier_1'),
+  1,
+  'hala hak edilen kademe (tier 1, esik 2 saat) KORUNUR'
 );
 
 -- 🔴 Ters iddia 1: kapsam disi kazanim DURUYOR.
