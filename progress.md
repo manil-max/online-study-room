@@ -231,17 +231,19 @@ görünmez olmaması için iki uçlu sözleşme testi eklendi.
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v58` stable yayında** · release run `30716184775` · production şeması `0119` |
-| Aktif plan | 🔴 **PLAN 5 / Faz F5 — v58 saha geri bildirimi (WP-489…WP-502).** Deploy/release kapıları kilitli |
-| Cihaz kabulü | 🔴 **v58'in cihaz kabulü hiç yapılmadı.** Sahip ("kod bittiyse yayına çıkar") fiziksel kabulü yayın sonrasına bıraktı; 2026-08-06'da gelen 11 belirti bu borcun karşılığıdır |
+| Sürüm | **`v62` stable yayında** · release run `31273913308` (altı iş de yeşil) · production şeması `0123` |
+| Google Play | 🟡 **Kapalı test incelemede** (2026-08-08 gönderildi). 13 test kullanıcısı eklendi. 🔴 Sahip borcu: onay gelince katılım (opt-in) linki testçilere ELLE gönderilecek — Google mail atmıyor. Beyanlar tamam: FGS (video), tam ekran intent, tam alarm (`USE_EXACT_ALARM` kaldırıldı, WP-544), foto/video, reklam kimliği |
+| Aktif plan | **Faz F5 devam** + gece turu WP-560…WP-577. Windows yayın hattı ayrı iki lane'de |
+| Cihaz kabulü | v60 sahip tarafından **kabul edildi**. 🔴 v62'nin fiziksel kabulü henüz yapılmadı |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v57: analyze + 1514 Flutter + 34 golden + Windows kritik akış + Deno + coverage ratchet; temiz replay 663/663 pgTAP yeşil |
 | l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
-| Migration | Repo/local **`0121`** · staging **`0121`** (run `31194597563`, 2026-08-07) · production **`0121`** (run `31195025233`, 2026-08-07) · sıradaki boş numara **`0122`**. Apply sonrası iki ortamın `deploy_enabled` bayrağı yeniden **kilitlendi**. |
+| Migration | Repo/local **`0124`** · staging **`0124`** (run `31277610025`, 2026-08-08) · production **`0123`** · sıradaki boş numara **`0125`**. Staging `deploy_enabled` 2026-08-09'da yeniden **kilitlendi** (WP-577); production zaten kilitli. |
+| 🔴 Açık kusur | **`0124` production'a uygulanmadı ve hata CANLI:** sayacı bir kez çalıştırmış, push kaydı olan, grubunda rapor açılmış ya da hakkında yaptırım uygulanmış kullanıcı **hesabını hiç silemiyor**. Play hesap silmeyi zorunlu tutuyor, `docs/legal/ACCOUNT-DELETION.*` koşulsuz söz veriyor. Sahip apply'a izin verdi; production kapısını açan commit otomatik güvenlik sınıflandırıcısına takıldı ve **zorlanmadı**. Devam için sahip taraflı bir izin kuralı gerekiyor. |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
-| Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
-| Remote kapıları | staging + production deploy/release dört bayrak v58 sonrası **kapalı** |
-| Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
+| Beta | **Atlanıyor** (sahip kararı 2026-08-08): mağazaya çıkana kadar beta turu yok, stable test alanı |
+| Remote kapıları | staging + production deploy/release dört bayrak da **kapalı** (2026-08-09 itibarıyla doğrulandı) |
+| Play Console | 🟢 Doğrulama alındı (2026-07-28) · form dolduruldu · kapalı test **incelemede** (yukarıdaki satıra bak) |
 | Microsoft Partner Center | 🟢 **Doğrulama alındı** (2026-07-28). Ana odak Play; Microsoft PLAN 2 · Faz H'de kalır |
 
 ---
@@ -9252,6 +9254,86 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   Kirpma satiri kaldirilinca 5 testin 3'u kirmizi.
 - **Kalan:** ayni desen `app/test` icinde 21 dosyada daha var; hepsi tuzakli
   degil, yalniz iddiasi "bugun"e dayananlar. Tarama ayri WP.
+
+---
+
+### WP-566: Gece yarisi tuzagi taramasi (test suite geneli)
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`91e02e2`)
+- 21 dosya tarandi, **2'si tuzakli** cikti ve ikisi de SAHTE YESILDI:
+  `large_text_reachability_wp541_test` (gunun YARISINDA bos karta bakiyordu) ve
+  `card_scroll_gesture_wp508_test` (WP-508'in tek konusu olan kaydiriciyi hic
+  kurmayan bir sahneyi olcuyordu — kirmizi degil, sessizce anlamsiz).
+- 19 dosya tuzaksiz: ya sabit/enjekte saat kullaniyor ya da olctugu sey goreli
+  sure/tazelik. Karar basina gerekce raporda.
+- Sozlesme testi fixture'i baglar: uretilen `StudySession.day`, enjekte `now`un
+  `istanbulDay`i ile 24 saat boyunca 15 dk adimla kiyaslanir — yani tuzak gece
+  yarisi beklemeden olculur.
+
+---
+
+### WP-567: Play izin sozlesmesi kara listeden BEYAZ LISTEye
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`72ac8f7`)
+- Eski kapi yalniz BILINEN kotu izinleri ariyordu; bir eklenti guncellemesi
+  beklenmedik bir izin getirse kapi sessizce yesil kalir ve bunu ancak Play
+  reddinde ogrenirdik. Uygulama su an incelemede — bedeli yuksek.
+- Birlestirilmis `playRelease` manifesti olculdu: **17 `uses-permission`**,
+  **0 `uses-feature`**, **tek `foregroundServiceType` (`dataSync|specialUse`)**.
+  Kara listenin besi de gercekten dusmus (WP-537/544 calisiyor).
+- Her beyaz liste girdisinin yaninda gerekce + Play beyan karsiligi var.
+  `uses-feature` bilerek BOS kume: her girdi Play'de cihaz filtrelemesi kurar.
+- 🔴 Not: `passkeys_android`in getirdigi uc izin (USE_BIOMETRIC, USE_CREDENTIALS,
+  CREDENTIAL_MANAGER_SET_ORIGIN) arkasinda OZELLIK YOK — `app/lib` icinde tek
+  passkey cagrisi yok, paket `supabase_flutter` transitifi. Beyan tetiklemiyor,
+  o yuzden dusurulmedi; `tools:node="remove"` ile atilmasi ayri WP.
+- Bes sabotajin besi kirmizi (sahte izin, eksik beyaz liste girdisi, sahte FGS
+  turu, sahte `uses-feature`, olcum katmaninin hic kosmamasi).
+
+---
+
+### WP-571: "Bugun ozeti" TR disindaki her kullanicida YANLIS gunu gosteriyordu
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`3d7fbbe`)
+- `today_summary_card.dart:37` Istanbul gun ANAHTARINI cihazin HAM yerel aniyla
+  kiyasliyordu. Pencere = offset farki: UTC cihazda Istanbul 00:00-03:00,
+  **New York'ta her gun 7 saat**, UTC+4 ve dogusunda henuz var olmayan gun.
+- Turkiye'de yerel tarih = Istanbul tarihi oldugu icin gelistirici makinesinde
+  ASLA gorunmuyordu. CI (TZ=UTC) bunu bir suredir kirmizi veriyordu ve
+  "test flake'i" sanilmisti — kanit: kosum 31281652153.
+- Secim tek saf yardimciya alindi (`sessionsOnDay`); urunun geri kalani zaten
+  dogruydu, bu kart TEK istisnaydi.
+- Test kosum makinesinden bagimsiz: anlar `DateTime.utc(...)` ile kurulur, eski
+  kod Turkiye'de bile kirmizi duser.
+
+---
+
+### WP-572: Android sayac smoke testi CI'da HIC KOSMAMIS
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Kod/test tamam (`1554aae`)
+- Kok neden nihayet olculdu: `android-emulator-runner` `script:` alanini tek bir
+  kabuk betigi olarak KOSMUYOR, her SATIRI ayri `/usr/bin/sh -c` ile calistiriyor.
+  Degisken atamalari ve `set -u` sonraki satira gecmiyor. Log:
+  `mkdir: cannot create directory ''` — `GITHUB_WORKSPACE` tanimliydi, `LOG_DIR`
+  baska bir kabukta kalmisti.
+- 🔴 Bedeli: sayaci GERCEK bir Android surecinde calistiran TEK kapi yazildigindan
+  beri hic kosmadi. v58'de acilista coken geri sayim/pomodoro hatasini (Dart
+  `setInt` -> native `getInt`) yakalamasi gereken is buydu. Iki onceki tur ayni
+  sinifti (`set -o pipefail` bashism'i) — semptom iki kez yamandi, kok neden ilk
+  kez simdi kapandi.
+- Mantik `scripts/ci/android_emulator_smoke.sh`e tasindi; workflow tek satir.
+  Yeni kapi `scripts/ci/verify_ci_script_wiring.py` ayni tuzagin geri dogmasini
+  engeller. Uc sabotajin ucu kirmizi (cok satirli blok, silinen `.sh`, silinen is).
+- **Beklenti:** smoke ilk kez GERCEKTEN kosacak; ilk turlarda kirmizi gelebilir.
+  Bu kayip degil kazanctir — cikan her kirmizi ayri WP olur, kapi susturulmaz.
+
+---
+
+### WP-577: Staging deploy kapisi acik unutulmustu
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [x] Tamam
+- WP-549'un staging apply'i bitmisti (Database Gates run `31277610025` basarili,
+  post-check her iki tarafta 0124, purge saglik satiri configured / 0 / 0) ama
+  kontratin KENDI yazili taahhudu olan re-lock commit'i hic atilmamisti; staging
+  `deploy_enabled` acik duruyordu.
+- Bayrak `false`a cevrildi, `guard.tests.ps1` iddiasi da. Head 0124'te kalir —
+  gercek durum odur, yalniz kapi kapanir.
+- Kapilar: `--only guard,migration-head` -> 2/2 GECTI.
 
 ## Bekleyen Uygulanabilir WP'ler
 

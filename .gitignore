@@ -70,4 +70,7 @@ test.zip
 flutter_run_*.log
 
 # Kapi betikleri (scripts/*.py) calisirken uretilir; artefakt commitlenmez.
-scripts/__pycache__/
+# WP-572: alt dizinler de kapsanmali; `scripts/ci/__pycache__/` ilk gun
+# calisma agacinda kirli satir olarak belirdi.
+__pycache__/
+*.pyc
