@@ -41,7 +41,7 @@ Color resolveFocusRingColor(Color background) {
   final useLight = lightContrast >= darkContrast;
   assert(
     (useLight ? lightContrast : darkContrast) >= kMinSurfaceContrast,
-    'odak halkası zeminde kayboluyor: $background',
+    'odak halkasi zeminde kayboluyor (gelistirici notu): $background',
   );
   return useLight ? _lightEnd : _darkEnd;
 }
