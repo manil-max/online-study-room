@@ -301,9 +301,10 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
     "app/lib/core/time_engine/world_clock_math.dart": (
         "IANA şehir adları (New York, São Paulo) — özel isim, çevrilmez."
     ),
-    "app/lib/data/providers/alarm_providers.dart": (
-        "Varsayılan dünya saati şehir adı — özel isim, çevrilmez."
-    ),
+    # WP-582: `alarm_providers.dart` muafiyeti SILINDI. WP-576 ölü dünya
+    # saati sağlayıcısını kaldırınca koruduğu literaller de gitti; muafiyet
+    # dosyanın tamamını taramadan çıkarmaya devam ediyordu. Aşağıdaki
+    # `stale_exemptions` kontrolü bu çürümeyi bir daha sessiz bırakmaz.
     "app/lib/features/desktop/desktop_navigation_pane.dart": (
         "Klavye kısayolu ipucu (`Ctrl+1…5`): tuş adları platform sabiti, "
         "çevrilebilir kısım zaten `AppLocalizations` üzerinden geliyor."
@@ -554,6 +555,50 @@ def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
     return violations
 
 
+def stale_exemptions(sources: list[tuple[str, str]]) -> list[str]:
+    """Hâlâ bir şey koruyan muafiyetler mi, yoksa çürümüş kayıtlar mı?
+
+    🔴 WP-582 — sebep ölçüldü. WP-576 ölü dünya saati sağlayıcısını silince
+    `UI_PROSE_EXEMPTIONS` içindeki "Varsayılan dünya saati şehir adı" muafiyeti
+    bayatladı: koruduğu literal artık yok, ama muafiyet duruyor ve
+    `alarm_providers.dart`ın **tamamını** taramadan çıkarıyordu. Yarın o dosyaya
+    yazılacak gerçek bir Türkçe cümle sessizce geçerdi.
+
+    Bu, dosyanın kendi uyarısının gerçekleşmesiydi: "blanket muafiyet dosyanın
+    tamamını taramadan çıkarır ve yarın eklenen gerçek metni de gizler."
+
+    Kural: bir muafiyet ancak GERÇEKTEN bir bulgu bastırıyorsa meşrudur. Dosya
+    yoksa ya da muaf tutulmasaydı hiçbir bulgu üretmeyecekse, kayıt ölüdür ve
+    silinmelidir. Muafiyeti daraltmak değil, gereksizini kaldırmak.
+    """
+    errors: list[str] = []
+    by_path = dict(sources)
+    for relative in sorted(UI_PROSE_EXEMPTIONS):
+        source = by_path.get(relative)
+        if source is None:
+            errors.append(
+                f"stale UI_PROSE_EXEMPTIONS entry: {relative} artık yok. "
+                "Var olmayan dosya için muafiyet tutmak, listeyi okuyanı "
+                "yanıltır."
+            )
+            continue
+        suppressed = False
+        for match in UI_LITERAL_RE.finditer(source):
+            literal = match.group(1)
+            if literal is None:
+                literal = match.group(2)
+            if literal is not None and looks_like_prose(literal):
+                suppressed = True
+                break
+        if not suppressed:
+            errors.append(
+                f"stale UI_PROSE_EXEMPTIONS entry: {relative} artık hiçbir "
+                "bulgu üretmiyor, yani muafiyet bir şey korumuyor — ama "
+                "dosyanın TAMAMINI taramadan çıkarmaya devam ediyor. Kaydı sil."
+            )
+    return errors
+
+
 def catalog_errors() -> tuple[list[str], int]:
     """Release kataloglarında anahtar + placeholder eşliği."""
     errors: list[str] = []
@@ -713,6 +758,7 @@ def main() -> int:
         errors.append(f"hardcoded UI prose: {violation}")
     for violation in data_layer_violations(sources):
         errors.append(f"hardcoded data-layer message: {violation}")
+    errors.extend(stale_exemptions(sources))
 
     drift_errors, debt_total = debt_drift(sources)
     errors.extend(drift_errors)
