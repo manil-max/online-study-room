@@ -479,12 +479,6 @@ PLAY_ALLOWED_PERMISSIONS: dict[str, str] = {
         "src/main:22 — OEM'in sayac servisini oldurmesine karsi muafiyet ekrani (ExactAlarmHelper.kt:151,174); Play hassas kullanim gerekcesi ister.",
     "android.permission.ACCESS_NETWORK_STATE":
         "`firebase_messaging` eklenti sizintisi — FCM baglanti durumu; normal izin, Play beyani yok.",
-    "android.permission.USE_BIOMETRIC":
-        "`passkeys_android` sizintisi (supabase_flutter -> passkeys transitif); normal izin, calisma zamani diyalogu ve Play beyani yok.",
-    "android.permission.USE_CREDENTIALS":
-        "`passkeys_android` sizintisi; API 23'te kaldirilmis eski hesap izni, sistemde etkisiz, Play beyani yok.",
-    "android.permission.CREDENTIAL_MANAGER_SET_ORIGIN":
-        "`passkeys_android` sizintisi; yalniz ayricalikli uygulamalara verilir, normal uygulamada etkisiz, Play beyani yok.",
     "com.google.android.c2dm.permission.RECEIVE":
         "`com.google.firebase:firebase-messaging:25.1.0` — FCM mesaj alimi; imza korumali, Play beyani yok.",
     "com.manilmax.online_study_room.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION":
@@ -562,6 +556,15 @@ def internal_play_manifest(require_merged: bool = False) -> int:
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
+        # WP-579: `passkeys_android` sizintisi. Arkalarinda OZELLIK YOK (app/lib
+        # ve app/android/app/src icinde passkey/WebAuthn/CredentialManager
+        # cagrisi 0). Bir calisma uygulamasinin karsiligi olmayan "biyometrik" ve
+        # "kimlik bilgileri" izni istemesi incelemede ilk sorulan seylerdendir.
+        # Gercekten passkey girisi eklenirse buradan cikarilir ve beyaz listeye
+        # gerekcesiyle yazilir.
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_CREDENTIALS",
+        "android.permission.CREDENTIAL_MANAGER_SET_ORIGIN",
     ]
 
     if not play_manifest.exists():

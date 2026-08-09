@@ -68,6 +68,41 @@
         android:name="android.permission.USE_EXACT_ALARM"
         tools:node="remove" />
 
+    <!--
+      WP-579: `passkeys_android` UC izin sizdiriyor ve ucunun de arkasinda
+      OZELLIK YOK.
+
+      Paket dogrudan bagimlilik degil: `supabase_flutter -> passkeys`
+      transitifi (`pubspec.lock` icinde ucu de `dependency: transitive`).
+      Olculdu, tahmin degil:
+        app/lib icinde passkey/WebAuthn/CredentialManager/OAuth cagrisi  -> 0
+        app/android/app/src icinde (kt/xml) ayni arama                   -> 0
+      Yani uygulama bu akisi HIC cagirmiyor; izinler yalniz manifest
+      birlestirmesiyle geliyor.
+
+      Play magaza sayfasi izin listesini kullaniciya gosterir. Bir calisma
+      uygulamasinin karsiligi olan tek bir ekran bile yokken "biyometrik" ve
+      "kimlik bilgileri" izni istemesi incelemede sorulacak ilk seylerden
+      biridir ve kullanicida guvensizlik uretir. WP-537 (medya izinleri) ve
+      WP-544 (USE_EXACT_ALARM) ayni gerekceyle ayni yolu izledi.
+
+      Ileride gercekten passkey ile giris eklenirse: bu blok kaldirilir ve
+      izinler beyaz listeye (test_all.py `PLAY_ALLOWED_PERMISSIONS`) gerekcesiyle
+      geri yazilir. Beyaz liste kapisi zaten ikisini birden zorunlu kilar.
+
+      GitHub kanallari (stable/beta) ETKILENMEZ: bu dosya yalniz play flavor'ina
+      uygulanir.
+    -->
+    <uses-permission
+        android:name="android.permission.USE_BIOMETRIC"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_CREDENTIALS"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN"
+        tools:node="remove" />
+
     <application>
         <meta-data
             android:name="com.manilmax.online_study_room.DISTRIBUTION_CHANNEL"
