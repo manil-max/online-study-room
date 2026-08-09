@@ -320,7 +320,7 @@ void main() {
         d.add(const Duration(days: 1)): 0, // sıfırlanmış/silinmiş gün
         d.add(const Duration(days: 2)): 3600,
       };
-      expect(longestStudyStreak(const [], totals: totals), 1);
+      expect(longestStudyStreak(const [], totals: totals, goalSeconds: 1), 1);
       expect(activeDayCount(totals), 2);
     });
 
@@ -329,6 +329,7 @@ void main() {
         longestStudyStreak(
           const [],
           totals: {DateTime(2026, 8, 1): 0, DateTime(2026, 8, 2): 0},
+          goalSeconds: 1,
         ),
         0,
       );
@@ -342,6 +343,7 @@ void main() {
           totals: {
             for (var i = 0; i < 4; i++) d.add(Duration(days: i)): 60,
           },
+          goalSeconds: 1,
         ),
         4,
       );

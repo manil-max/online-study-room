@@ -381,7 +381,7 @@ void main() {
   });
 
   test('longestStudyStreak en uzun üst üste çalışılan gün serisi', () {
-    expect(longestStudyStreak(const []), 0);
+    expect(longestStudyStreak(const [], goalSeconds: 1), 0);
     // 18,19,20 (3 ardışık), boşluk, 23,24 (2 ardışık) → en uzun 3.
     final s = [
       _s('u1', _ist(2026, 6, 18, 9), 600),
@@ -390,7 +390,7 @@ void main() {
       _s('u1', _ist(2026, 6, 23, 9), 600),
       _s('u1', _ist(2026, 6, 24, 9), 600),
     ];
-    expect(longestStudyStreak(s), 3);
+    expect(longestStudyStreak(s, goalSeconds: 1), 3);
   });
 
   group('tüm-zamanlar metrikleri (gün→saniye haritası, §WP-10)', () {

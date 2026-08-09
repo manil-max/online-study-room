@@ -400,7 +400,11 @@ int _calendarDayIndex(DateTime day) =>
 int longestStudyStreak(
   Iterable<StudySession> sessions, {
   Map<DateTime, int>? totals,
-  int goalSeconds = 1,
+  // 🔴 WP-639: varsayilan YOK ve olmayacak. Once `= 1` ile geliyordu, yani
+  // hedefi gecirmeyi unutan cagiran sessizce ESKI YANLIS davranisa ("bir
+  // saniye yeter") duserdi. Bu depoda sessiz yanlis varsayilan tekrarlayan
+  // bir kusur sinifi; derleyici sormali, kullanici degil.
+  required int goalSeconds,
 }) {
   if (goalSeconds <= 0) return 0;
   // Önce takvim gününe indirgenir (aynı günü gösteren iki anahtar TOPLANIR),
