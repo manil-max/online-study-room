@@ -209,6 +209,57 @@ void main() {
       );
     });
 
+    test('WP-608: MOD değiştirmek onay penceresini KAPATIR', () async {
+      // 🔴 Bu testi CI yazdırdı. Android emülatör smoke'u üç modu arka arkaya
+      // deniyor (countdown → pomodoro → kronometre); ikinci turda başlatma
+      // onaya takılıp `timer_active_started_at_ms` hiç yazılmıyordu ve iş
+      // kırmızıya düştü. Yerel kapı bunu göremezdi.
+      //
+      // Ürün kuralı: mod değiştirmek KAZARA olmaz. Kullanıcı başka bir
+      // kontrole dokunup karar vermiştir; orada ikinci onay istemek onu kendi
+      // niyetini iki kez doğrulamaya zorlar.
+      final clock = _FakeClock(DateTime.utc(2026, 8, 8, 19, 40, 24));
+      final container = await _container(clock);
+      final notifier = container.read(studyTimerProvider.notifier);
+
+      notifier.start();
+      await notifier.stop();
+      clock.advance(const Duration(seconds: 2));
+
+      notifier.setMode(TimerMode.pomodoro);
+      notifier.start();
+
+      expect(
+        container.read(studyTimerProvider).isRunning,
+        isTrue,
+        reason:
+            'Ayarı değiştirip başlatan kullanıcı onaya takılıyor: emülatör '
+            'smoke bu yüzden kırmızıya düştü.',
+      );
+      expect(
+        container.read(accidentalRestartNoticeProvider),
+        isFalse,
+        reason: 'Gereksiz açıklama gösterilmemeli.',
+      );
+    });
+
+    test('WP-608: ayar DEĞİŞMEDİYSE koruma aynen durur', () async {
+      // Karşı iddia. Bu olmadan "pencereyi her başlatmada temizle" sabotajı
+      // sessizce geçerdi ve WP-598'in düzelttiği 11 saatlik hata geri gelirdi.
+      final clock = _FakeClock(DateTime.utc(2026, 8, 8, 19, 40, 24));
+      final container = await _container(clock);
+      final notifier = container.read(studyTimerProvider.notifier);
+
+      notifier.start();
+      await notifier.stop();
+      clock.advance(const Duration(seconds: 2));
+
+      notifier.start();
+
+      expect(container.read(studyTimerProvider).isRunning, isFalse);
+      expect(container.read(accidentalRestartNoticeProvider), isTrue);
+    });
+
     test('OLUMSUZ: 5 dk sonra tek dokunuş başlatır, açıklama ÇIKMAZ', () async {
       final clock = _FakeClock(DateTime.utc(2026, 8, 8, 19, 40, 24));
       final container = await _container(clock);

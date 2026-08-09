@@ -2000,8 +2000,27 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   /// Modu değiştirir (yalnız dururken). Faz/döngü sıfırlanır, seçim kalıcılaşır.
+  /// 🔴 WP-608: sayaç AYARI bilerek değiştirildiyse "az önce durdurdum"
+  /// penceresi kapanır.
+  ///
+  /// WP-598'in koruduğu şey, durdurduktan saniyeler sonra **aynı yere** inen
+  /// ikinci parmaktır. Mod değiştirmek, geri sayım süresini ya da pomodoro
+  /// ayarını değiştirmek ise kazara olmaz: kullanıcı başka bir kontrole
+  /// dokunup bir karar vermiştir. Orada ikinci bir onay istemek, kullanıcıyı
+  /// kendi niyetini iki kez doğrulamaya zorlar.
+  ///
+  /// 🔴 Bunu CI yakaladı, yerel kapı göremezdi: Android emülatör smoke'u üç
+  /// modu arka arkaya deniyor (countdown → pomodoro → kronometre) ve ikinci
+  /// turda başlatma onaya takılıp `timer_active_started_at_ms` hiç
+  /// yazılmıyordu. O kapı WP-572'de ilk kez gerçekten koşmaya başlamıştı.
+  void _clearRestartWindow() {
+    _lastRunEndedAt = null;
+    _restartConfirmationArmed = false;
+  }
+
   void setMode(TimerMode mode) {
     if (state.isRunning) return;
+    _clearRestartWindow();
     state = state.copyWith(mode: mode, phase: TimerPhase.work, cycle: 1);
     ref.read(sharedPreferencesProvider).setString(_kMode, mode.name);
   }
@@ -2009,6 +2028,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Geri sayım süresini ayarlar (dakika; yalnız dururken).
   void setCountdownMinutes(int minutes) {
     if (state.isRunning) return;
+    _clearRestartWindow();
     final m = minutes.clamp(kMinTimerMinutes, kMaxTimerMinutes);
     state = state.copyWith(countdownMinutes: m);
     ref.read(sharedPreferencesProvider).setInt(_kCountdown, m);
@@ -2017,6 +2037,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Pomodoro ayarlarını değiştirir (dakika + döngü; yalnız dururken).
   void setPomodoro({int? workMinutes, int? breakMinutes, int? cycles}) {
     if (state.isRunning) return;
+    _clearRestartWindow();
     final w = (workMinutes ?? state.workMinutes).clamp(
       kMinTimerMinutes,
       kMaxTimerMinutes,
