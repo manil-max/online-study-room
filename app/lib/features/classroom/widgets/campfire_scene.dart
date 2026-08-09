@@ -192,12 +192,24 @@ class _Camper {
   int liveTodayExtra(DateTime now) =>
       liveSecondsToday(startedAt: startedAt, now: now);
 
-  /// Çalışan her fazda kızartır; çalışmayan yalnız gerçek gece fazında uyur.
-  CritterPose poseAt({required bool isNight}) => studying
-      ? CritterPose.roasting
-      : isNight
-      ? CritterPose.sleepy
-      : CritterPose.idle;
+  /// Çalışan her fazda kızartır; molada olan gündüz gerinir, çevrimdışı olan
+  /// boşta oturur; gece çalışmayan herkes uyur.
+  ///
+  /// 🔴 WP-574: burada yalnız `studying` ve gece sorulurdu. Sonuç: **molada
+  /// olan üye gündüz çevrimdışı biriyle birebir aynı** çiziliyordu
+  /// (`PresenceStatus.onBreak` presence katmanında üretiliyor ama sahneye hiç
+  /// ulaşmıyordu). Sahnenin tek işi "şu an kim ne yapıyor"u göstermek; üç
+  /// durumun ikisini aynı çizmek sahnenin yalan söylemesiydi.
+  ///
+  /// Gece dalı üç durumu **bilerek** ayırmaz: karanlıkta çalışmayan herkes uyur
+  /// (mevcut davranış korundu, regresyon yok).
+  CritterPose poseAt({required bool isNight}) {
+    if (studying) return CritterPose.roasting;
+    if (isNight) return CritterPose.sleepy;
+    return status == PresenceStatus.onBreak
+        ? CritterPose.resting
+        : CritterPose.idle;
+  }
 
   bool get roasting => studying;
 }

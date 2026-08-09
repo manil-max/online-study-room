@@ -134,12 +134,13 @@ void main() {
           )
           .map((paint) => (paint.painter! as CritterPainter).pose)
           .toList();
-      expect(critterPoses, contains(CritterPose.roasting));
-      expect(
-        critterPoses.where((pose) => pose == CritterPose.idle),
-        hasLength(2),
-      );
-      expect(critterPoses, isNot(contains(CritterPose.working)));
+      // 🔴 WP-574: burada "2 idle" bekleniyordu — yani molada olan üye (u2) ile
+      // çevrimdışı üye (u3) sahnede birebir aynı çiziliyordu ve bu test onu
+      // doğru sanıyordu. Gündüz üç durum üç FARKLI poz üretir.
+      expect(critterPoses, contains(CritterPose.roasting)); // u1 çalışıyor
+      expect(critterPoses, contains(CritterPose.resting)); // u2 molada
+      expect(critterPoses, contains(CritterPose.idle)); // u3 çevrimdışı
+      expect(critterPoses.toSet(), hasLength(3));
       expect(critterPoses, isNot(contains(CritterPose.sleepy)));
 
       // Çalışan üyenin SecondTicker timer'ını temizlemek için ağacı kaldır.
@@ -426,7 +427,9 @@ void main() {
 
     expect(forest.daylight, closeTo(0.5, 0.0001));
     expect(forest.warmth, closeTo(1, 0.0001));
-    expect(pose.pose, CritterPose.idle);
+    // WP-574: bu fixture'daki üye `onBreak` — şafakta gece bittiği için
+    // uyanık, ama artık çevrimdışı üyeyle aynı değil: molanın kendi pozu var.
+    expect(pose.pose, CritterPose.resting);
 
     await tester.pumpWidget(const SizedBox());
   });
