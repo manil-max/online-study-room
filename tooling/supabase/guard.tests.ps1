@@ -86,10 +86,13 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # bir apply icin acildi (sahip izni oturum icinde, bu kapsam gosterilerek).
 # KANIT: CI yerel replay (gercek Postgres + pgTAP) commit 5d64464'te YESIL,
 # run 31277161339. Onceki iki tur KIRMIZIYDI ve ikisi de gercek kusurdu.
-# Post-check 0124 verince ayri bir commit ile bayrak $false'a ve asagidaki iki
-# satir geri cevrilir.
+# RE-LOCK YAPILDI (2026-08-09, WP-577): apply bitti ve KANITLANDI -- Database
+# Gates run 31277610025 basarili, post-check her iki tarafta da 0124 verdi,
+# purge saglik satiri configured / 0 kuyruk / 0 takili. Kontratin kendi yazili
+# taahhudu "post-check 0124 verince ayri bir commit ile bayrak $false'a" idi;
+# bayrak acik unutulmustu. Head 0124'te kalir (gercek durum), yalniz kapi kapanir.
 Assert-Equal $contract.staging.migration_head '0124' 'WP-549 turu staging hedefi 0124'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0124 apply icin staging tek seferlik acik'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0124 apply bitti, staging yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
