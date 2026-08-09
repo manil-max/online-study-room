@@ -97,7 +97,12 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     );
     final alphaWins =
         ref.watch(groupAlphaScoresProvider).value ?? const <String, int>{};
-    final memberColors = memberChartColors(members.map((member) => member.id));
+    // WP-627: grafik renkleri artık zeminin fonksiyonu. Kart yüzeyi geçilir;
+    // sabit açıklık açık temada üyelerin yarısını görünmez yapıyordu.
+    final memberColors = memberChartColors(
+      members.map((member) => member.id),
+      surface: theme.colorScheme.surface,
+    );
     // WP-495B: sunucu roster satırında kimliği zaten boşaltıyor (0095/0115);
     // istemci kümesi ikinci kat. Bkz. docs/qa/V58-ASYNC-EMPTY-AUDIT.md §6.
     final blocked = ref.watch(blockedUserIdsProvider).value ?? const <String>{};

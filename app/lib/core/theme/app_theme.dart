@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import 'container_roles.dart';
 import 'theme_presets.dart';
 import 'theme_tokens.dart';
 
+export 'container_roles.dart';
 export 'theme_presets.dart';
 export 'theme_tokens.dart';
 
@@ -186,7 +188,7 @@ class AppTheme {
         surface2: scheme.surfaceContainerHigh,
       );
       return _buildFromTokens(
-        colors: colors,
+        rawColors: colors,
         shapes: family.shapes,
         atmosphere: family.atmosphere.copyWith(glowColor: scheme.primary),
         motion: family.motion,
@@ -212,7 +214,7 @@ class AppTheme {
       surface2: scheme.surfaceContainerHigh,
     );
     return _buildFromTokens(
-      colors: colors,
+      rawColors: colors,
       shapes: family.shapes,
       atmosphere: family.atmosphere.copyWith(
         glowColor: family.colors.primary,
@@ -244,7 +246,7 @@ class AppTheme {
       );
     }
     return _buildFromTokens(
-      colors: colors,
+      rawColors: colors,
       shapes: preset.shapes,
       atmosphere: preset.atmosphere,
       motion: preset.motion,
@@ -263,7 +265,7 @@ class AppTheme {
       onAccent: palette.onAccent,
     );
     return _buildFromTokens(
-      colors: colors,
+      rawColors: colors,
       shapes: base.shapes,
       atmosphere: base.atmosphere.copyWith(
         glowColor: palette.primary,
@@ -285,7 +287,7 @@ class AppTheme {
       onAccent: palette.onAccent,
     );
     return _buildFromTokens(
-      colors: colors,
+      rawColors: colors,
       shapes: nordic.shapes,
       atmosphere: nordic.atmosphere.copyWith(glowColor: palette.primary),
       motion: nordic.motion,
@@ -303,7 +305,7 @@ class AppTheme {
     required AppFeel feel,
     required Brightness brightness,
   }) => _buildFromTokens(
-    colors: colors,
+    rawColors: colors,
     shapes: shapes,
     atmosphere: atmosphere,
     motion: feel.motion,
@@ -313,7 +315,7 @@ class AppTheme {
   );
 
   static ThemeData _buildFromTokens({
-    required AppColors colors,
+    required AppColors rawColors,
     required AppShapes shapes,
     required AppAtmosphere atmosphere,
     required AppMotion motion,
@@ -327,17 +329,74 @@ class AppTheme {
     // `ThemeData`'ya verir. Tazelenmezse koyu modda başlık/gövde/etiket açık
     // varyantın **koyu** metin rengiyle çizilir: kullanıcı metni açık seçmiş
     // olsa bile yazılar zemine gömülür ("bazı yazılar okunmuyor").
+    // 🔴 WP-627: metin renkleri de yüzeye karşı **garanti altına alınır** ve bu
+    // tek noktada yapılır. Aksi hâlde tipografi, `ColorScheme` ve
+    // `context.appColors` aynı rengin üç ayrı kopyasını taşır ve biri
+    // düzeltilince diğer ikisi eski hâlde kalır. Ölçüldü: `soft_cream`
+    // ikincil metni kendi yüzeyinde 4.00 idi — okunur değil, "soluk".
+    final colors = rawColors.copyWith(
+      textPrimary: ensureContrast(
+        background: rawColors.surface1,
+        preferred: rawColors.textPrimary,
+      ),
+      textSecondary: ensureContrast(
+        background: rawColors.surface1,
+        preferred: rawColors.textSecondary,
+      ),
+    );
     final typography = rawTypography.recolored(colors.textPrimary);
+
+    // 🔴 WP-627: "container" rolleri **türetilir**, boş bırakılmaz. Boş
+    // bırakıldığında Flutter fallback'i onları tam doygun ana renge düşürüyordu
+    // (`primaryContainer == primary`); bir zemin rolüne tam doygun renk konunca
+    // üstündeki yazı okunmaz, üstüne çizilen seçim çubuğu da zemine gömülür.
+    // Kural `container_roles.dart`'ta **tek** yerde durur; her tema için elle
+    // renk yazılmaz. Bkz. theme_contrast_gate_wp627_test.dart.
+    ContainerRole containerOf(Color role) => resolveContainerRole(
+      role: role,
+      // Container zemini üç yüzeyin de üstünde durabiliyor: scaffold (sol
+      // panel seçili döşemesi), kart (hayvan seçici), yükseltilmiş yüzey.
+      surfaces: [colors.scaffold, colors.surface1, colors.surface2],
+      brightness: brightness,
+    );
+
+    // Üçüncül rol eskiden `accent`'in kopyasıydı; `SeriesPalette` 8 "farklı"
+    // seri rengi vaat ederken gerçekte 4 üretiyordu. Ton kaydırma paleti
+    // değiştirmez, Material'ın zaten ayrı beklediği rolü ayırır.
+    final accentHsl = HSLColor.fromColor(colors.accent);
+    final tertiary = accentHsl
+        .withHue((accentHsl.hue + kTertiaryHueShift) % 360)
+        .toColor();
+
+    final primaryRole = containerOf(colors.primary);
+    final secondaryRole = containerOf(colors.accent);
+    final tertiaryRole = containerOf(tertiary);
+    final errorRole = containerOf(colors.error);
+
     final scheme = ColorScheme(
       brightness: brightness,
       primary: colors.primary,
-      onPrimary: colors.onPrimary,
+      onPrimary: ensureContrast(
+        background: colors.primary,
+        preferred: colors.onPrimary,
+      ),
+      primaryContainer: primaryRole.container,
+      onPrimaryContainer: primaryRole.onContainer,
       secondary: colors.accent,
-      onSecondary: colors.onAccent,
-      tertiary: colors.accent,
-      onTertiary: colors.onAccent,
+      onSecondary: ensureContrast(
+        background: colors.accent,
+        preferred: colors.onAccent,
+      ),
+      secondaryContainer: secondaryRole.container,
+      onSecondaryContainer: secondaryRole.onContainer,
+      tertiary: tertiary,
+      onTertiary: ensureContrast(background: tertiary, preferred: colors.onAccent),
+      tertiaryContainer: tertiaryRole.container,
+      onTertiaryContainer: tertiaryRole.onContainer,
       error: colors.error,
-      onError: colors.onError,
+      onError: ensureContrast(background: colors.error, preferred: colors.onError),
+      errorContainer: errorRole.container,
+      onErrorContainer: errorRole.onContainer,
       surface: colors.surface1,
       onSurface: colors.textPrimary,
       onSurfaceVariant: colors.textSecondary,

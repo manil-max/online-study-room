@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/animals/camp_animal.dart';
+import '../../../core/theme/container_roles.dart';
 
 /// Kamp ateşi hayvanını seçtiren alt sayfa (§2G). Seçilen hayvanın kimliğini
 /// döndürür (iptal → null). Kaydetme işini çağıran yapar.
@@ -80,17 +81,35 @@ class _AnimalTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // 🔴 WP-627: seçili döşemenin zemini ile yazısı **aynı rolü**
+    // paylaşmalı. Eskiden zemin `primaryContainer` (fallback yüzünden tam
+    // doygun `primary`) idi, yazı ise temadan gelen genel etiket rengi:
+    // ikisinin birbiriyle ilgisi yoktu ve ölçüldüğünde 15 temann 9'unda
+    // kontrast 4.5 altına, en kötüde 2.24'e düşüyordu.
+    //
+    // Saydamlık da kaldırıldı: zemin artık zaten düşük doygunluklu bir
+    // katman: alfa ile ikinci kez seyreltmek rengi ölçülemez hale getirip
+    // kapının ölçtüğü çiftle ekranda çizilen çifti ayırırdı.
+    final background = selected
+        ? scheme.primaryContainer
+        : Color.alphaBlend(
+            scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+            scheme.surface,
+          );
+    final foreground = selected
+        ? scheme.onPrimaryContainer
+        : scheme.onSurface;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: selected
-              ? scheme.primaryContainer.withValues(alpha: 0.6)
-              : scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          color: background,
           border: Border.all(
-            color: selected ? scheme.primary : scheme.outlineVariant,
+            color: selected
+                ? accentOn(background, preferred: scheme.primary)
+                : scheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -103,7 +122,9 @@ class _AnimalTile extends StatelessWidget {
               animal.label(AppLocalizations.of(context)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: foreground),
             ),
           ],
         ),

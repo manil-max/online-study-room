@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/navigation/profile_tab_badge.dart';
+import '../../core/theme/container_roles.dart';
 import '../../core/theme/focus_ring_tokens.dart';
 
 /// Sol navigasyon öğesi (WinUI NavigationViewItem karşılığı).
@@ -325,7 +326,11 @@ class _NavItemTileState extends State<_NavItemTile> {
                   child: Container(
                     width: DesktopNavigationPane.indicatorWidth,
                     decoration: BoxDecoration(
-                      color: scheme.primary,
+                      // 🔴 WP-627: çubuk paletten **ham** alınamaz. Zemini
+                      // seçili döşemedir (`secondaryContainer`), panel değil;
+                      // ölçüldü: ham `primary` 15 temanın 13'ünde 3.0 altında,
+                      // ikisinde 1.01 — yani çubuk hiç görünmüyordu.
+                      color: accentOn(background, preferred: scheme.primary),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -514,7 +519,13 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
                         ),
                       ),
                       if (selected)
-                        Icon(Icons.check, size: 16, color: scheme.primary),
+                        // WP-627: onay ikonu da seçili döşemenin zemininde
+                        // durur; ham `primary` orada eriyordu.
+                        Icon(
+                          Icons.check,
+                          size: 16,
+                          color: accentOn(bg, preferred: scheme.primary),
+                        ),
                     ],
                   ),
                 )

@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
+import '../../core/theme/container_roles.dart';
 
 /// Windows masaüstü yoğunluğu — Fluent 2 / WinUI köşe + boşluk tokenları.
 ///
@@ -262,7 +263,13 @@ class DesktopSectionList extends StatelessWidget {
                           child: Container(
                             width: 3,
                             decoration: BoxDecoration(
-                              color: scheme.primary,
+                              // 🔴 WP-627: sol paneldeki çubukla aynı hata —
+                              // vurgu, üstünde durduğu `secondaryContainer`
+                              // zeminine göre çözülür, paletten ham alınmaz.
+                              color: accentOn(
+                                scheme.secondaryContainer,
+                                preferred: scheme.primary,
+                              ),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
