@@ -21,7 +21,14 @@ void main() {
       prefs = await SharedPreferences.getInstance();
     });
 
+    // 🔴 WP-593: bu test eskiden "kayit yokken GOSTERILIR" diyordu ve
+    // yepyeni kurulumda kullanicinin gordugu ilk ekranin degisiklik gunlugu
+    // olmasini SOZLESMEYE cevirmisti. Taze kurulum artik ayri bir durum
+    // (`first_run_polish_wp593_test.dart`); buradaki iddia "GUNCELLEME
+    // yolunda gosterilir"e daraltildi, yani onceki bir build gorulmus olmali.
     test('shouldShowWhatsNew returns true if build is newer', () async {
+      await prefs.setInt('release_notes_last_seen_build', 9);
+
       final service = ReleaseNotesService(
         preferences: prefs,
         packageInfoLoader: () async => PackageInfo(
@@ -32,7 +39,7 @@ void main() {
         ),
       );
 
-      // Initially should show (last seen is 0)
+      // 9 -> 10 guncellemesi: gosterilir.
       expect(await service.shouldShowWhatsNew(), isTrue);
 
       // Mark as seen
