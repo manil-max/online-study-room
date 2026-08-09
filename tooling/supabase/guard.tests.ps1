@@ -125,8 +125,8 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # kademeler de ekrandan kayboldu. Artik siliniyor degil DUSURULUYOR, silinmis
 # satirlar defterden yeniden turetiliyor ve donmus "en iyi" degeri gercege
 # cekiliyor. tests/054, 052'nin goremedigi boslugu kapatir.
-Assert-Equal $contract.staging.migration_head '0128' 'WP-635 staging hedefi 0128 (onarim)'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0128 apply icin staging kapisi TEK SEFERLIK acik'
+Assert-Equal $contract.staging.migration_head '0128' 'WP-635 staging hedefi 0128: apply basarili'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0128 staging apply bitti, yeniden kilitli'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -186,8 +186,14 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # profil sayisidir, yanlis bulunan degil; defteri zaten oturumlariyla uyusan
 # kullanicida uzlastirma etkisizdir. Gocun kendi dogrulamasi gecti.
 # 🔴 Ayni kosumda yerel replay "0 kullanici" derken uzak apply 8 dedi.
-Assert-Equal $contract.production.migration_head '0127' 'production hedefi 0127: apply basarili'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0127 apply bitti, production yeniden kilitli'
+#
+# 🔴 0128 ICIN PRODUCTION KAPISI ACILDI (2026-08-10, WP-635) -- bu gece
+# uretime gonderdigim bir REGRESYONU onarir. Kilit satiri her basarim icin
+# TEKtir ve en yuksek kademeyi tasir; 0126 onu "dusen kademe" ile eslestirip
+# SILIYORDU, hak edilmis kademeler de ekrandan kayboldu. Sahibin kendi
+# hesabinda OLCULDU: defterde t1..t4 var, ekranda sifir kademe.
+Assert-Equal $contract.production.migration_head '0128' 'WP-635 production hedefi 0128 (onarim)'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0128 apply icin production kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
