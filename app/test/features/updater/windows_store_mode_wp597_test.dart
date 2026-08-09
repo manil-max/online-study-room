@@ -191,6 +191,47 @@ void main() {
     });
   });
 
+  test('paket, uygulamanın DESTEKLEDİĞİ her dili ilan eder', () {
+    // 🔴 WP-606: `msix_config.languages` yalnız `tr-tr` idi, oysa uygulama
+    // TR + EN destekliyor. Microsoft Store bu alanı dil listesi olarak
+    // kullanır; İngilizce kullanıcı uygulamayı "yalnız Türkçe" görürdü.
+    //
+    // İddia iki ucu BAĞLAR: dil listesi `AppLocalizations.supportedLocales`
+    // ile karşılaştırılır. İleride üçüncü bir dil açılırsa (l10n_dormant
+    // altında hazır katalog var) paket sessizce geride kalamaz.
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final declared = RegExp(r'^  languages: (.+)$', multiLine: true)
+        .firstMatch(pubspec)
+        ?.group(1);
+    expect(declared, isNotNull, reason: 'msix_config.languages satırı yok.');
+
+    final packageLanguages = declared!
+        .split(',')
+        .map((value) => value.trim().split('-').first.toLowerCase())
+        .toSet();
+
+    final supported = RegExp(r"Locale\('(\w+)'\)")
+        .allMatches(
+          File('lib/l10n/app_localizations.dart')
+              .readAsStringSync()
+              .split('supportedLocales')
+              .last
+              .split(']')
+              .first,
+        )
+        .map((match) => match.group(1)!)
+        .toSet();
+
+    expect(supported, isNotEmpty, reason: 'supportedLocales okunamadı.');
+    expect(
+      packageLanguages,
+      containsAll(supported),
+      reason:
+          'Paket, uygulamanın desteklediği bir dili ilan etmiyor: Store o dili '
+          'konuşan kullanıcıya uygulamayı eksik gösterir.',
+    );
+  });
+
   test('sahibe ne yapacağını anlatan belge var ve iş akışı ona işaret eder', () {
     expect(
       File('../docs/WINDOWS-STORE-YOLU.md').existsSync(),

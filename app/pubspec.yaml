@@ -170,7 +170,12 @@ msix_config:
   msix_version: 1.0.0.8
   logo_path: windows/runner/resources/app_icon.ico
   capabilities: internetClient
-  languages: tr-tr
+  # 🔴 WP-606: uygulama TR **ve** EN destekliyor (AppLocalizations
+  # .supportedLocales) ama paket kendini yalniz Turkce ilan ediyordu.
+  # Microsoft Store bu alani dil listesi olarak kullanir: Ingilizce
+  # kullanici uygulamayi "yalniz Turkce" gorur. Sozlesme testi bu satiri
+  # supportedLocales ile karsilastirir (windows_store_mode_wp597_test).
+  languages: tr-tr, en-us
   install_certificate: false
   store: false
   windows_build_args: --dart-define-from-file=env.json
