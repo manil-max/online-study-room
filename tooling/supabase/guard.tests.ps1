@@ -122,8 +122,12 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # hem sarmalli olanin gectigini olcuyor -- eski test bunu olcemezdi, taze
 # replay'de tablo bos; (3) 27'den sonrasi tamamen DDL, veriye bagli degil.
 # Database Gates run 31323807502 YESIL, 050'in 29 iddiasi kostu.
-Assert-Equal $contract.production.migration_head '0124' 'WP-549 ikinci deneme: production hedefi 0124'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0124 apply icin production kapisi TEK SEFERLIK acik'
+#
+# ✅ APPLY BASARILI VE KAPI GERI KILITLENDI (2026-08-09, run 31324086033).
+# Post-check uc sutunda da 0124 verdi. Head 0124'te KALIR -- production'un
+# gercek durumu bu; yalniz kapi kapanir. Kapsam TEK apply idi ve harcandi.
+Assert-Equal $contract.production.migration_head '0124' 'production hedefi 0124: apply basarili'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
