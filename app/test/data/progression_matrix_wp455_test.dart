@@ -588,7 +588,6 @@ void main() {
         final container = ProviderContainer(
           overrides: [goalStreakRepositoryProvider.overrideWithValue(repo)],
         );
-        addTearDown(container.dispose);
 
         final projection = await _readProjection(container, _alpha);
         expect(projection.state, entry.key);
@@ -613,6 +612,13 @@ void main() {
             ThemeData(useMaterial3: true).colorScheme,
           ).icon,
         );
+
+        // WP-604: `goalStreakProjectionProvider` artik gun donusu icin bir
+        // zamanlayici kuruyor (gece yarisi geldiginde durumu yeniden hesaplar).
+        // Zamanlayici gercek bir kaynaktir; `addTearDown` widget agaci
+        // dogrulamasindan SONRA kostugu icin burada ELLE kapatilir.
+        await tester.pumpWidget(const SizedBox());
+        container.dispose();
       });
     }
 

@@ -140,13 +140,33 @@ GoalStreakFlameVisual goalStreakFlameVisual(
         background: const Color(0xFFEA580C).withValues(alpha: 0.14),
       );
     case GoalStreakState.pendingToday:
-      // WP-481 sahip kararı: seri **yaşıyor** ve risk yok, o yüzden alev
-      // canlı renkte. Ayrım içi boş çizim: bugünün hedefi henüz tamamlanmadı.
-      // (Eskiden gri idi ve "sıfırlanmış" durumla karışıyordu.)
+      // 🔴 WP-604 — SAHİP KARARI DEĞİŞTİ (2026-08-09, doğrudan emir).
+      //
+      // Buradaki eski kod `completedToday` ile **birebir aynı** canlı turuncuyu
+      // (0xFFEA580C) kullanıyordu; tek fark dolu/içi boş glifti ve rozet
+      // boyutunda o fark görünmüyor. Sahip tam bunu bildirdi: "dün hedefimi
+      // tamamladım, bugün tamamlamadım ama alev hâlâ canlı renkli."
+      //
+      // İstenen (chess.com modeli, sahibin kendi tarifi): bugünün hedefi
+      // tamamlanmadıysa alev **soluk**; bugünkü tamamlanınca **canlı renge
+      // döner ve sayı artar**.
+      //
+      // Bu WP-481'de yazılı "seri yaşıyor, o yüzden canlı renkte" kararını
+      // **geçersiz kılar**. O kayıt `progress.md`de de düzeltildi — yalnız kodu
+      // değiştirmek yetmez, bir sonraki tur yazılı karara bakıp geri alır.
+      // Bu hatanın üç dört kez tekrarlanmasının sebebi buydu.
+      //
+      // Soluk = aynı turuncunun düşük doygunluklu hâli, gri DEĞİL: gri
+      // "sıfırlanmış" durumun rengi ve ikisi karışmamalı. Ayrım hâlâ üç
+      // kanalda: renk yoğunluğu + içi boş glif + sayı.
       return GoalStreakFlameVisual(
         icon: Icons.local_fire_department_outlined,
-        foreground: const Color(0xFFEA580C),
-        background: const Color(0xFFEA580C).withValues(alpha: 0.10),
+        foreground: Color.lerp(
+          const Color(0xFFEA580C),
+          scheme.surface,
+          0.55,
+        )!,
+        background: const Color(0xFFEA580C).withValues(alpha: 0.06),
       );
     case GoalStreakState.atRisk:
       // WP-481 sahip kararı: duraklatma işareti **pause**. Kırmızı DEĞİL —

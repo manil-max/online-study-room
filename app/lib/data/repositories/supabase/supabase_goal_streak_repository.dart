@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/stats/goal_streak_projection.dart';
+import '../../../core/stats/istanbul_calendar.dart';
 import '../../models/goal_streak.dart';
 import '../goal_streak_repository.dart';
 
@@ -112,8 +114,26 @@ class SupabaseGoalStreakRepository implements GoalStreakRepository {
         sourceVersion: goalStreakProjectionSourceVersion,
       );
 
-  static DateTime _day(DateTime value) =>
-      DateTime.utc(value.year, value.month, value.day);
+  /// 🔴 WP-604: gün anahtarı **İstanbul** takviminden gelir, cihazın yerel
+  /// tarihinden değil.
+  ///
+  /// Eskiden `DateTime.utc(value.year, value.month, value.day)` yazıyordu; bu,
+  /// cihazın yerel takvim gününü alıp UTC etiketiyle sarmak demektir. Ürünün
+  /// geri kalanı (oturum günü, hedef günü, sunucudaki `p_as_of_day`) İstanbul
+  /// gün anahtarını kullanıyor. Cihazın tarihi İstanbul'unkinden farklı olduğu
+  /// her an — yurt dışı, yanlış saat dilimi, gece yarısı çevresi — sunucuya
+  /// YANLIŞ gün soruluyor ve seri durumu bir gün kayıyor.
+  ///
+  /// Aynı sınıf hata bu depoda iki kez üretime çıktı (WP-561 "bugün ne kadar
+  /// çalıştım", WP-571 "Bugün özeti"). Üçüncüsü buydu.
+  ///
+  /// Testin ölçebilmesi için görünür: bu dönüşüm bozulursa seri bir gün kayar
+  /// ve belirti "alev yanlış durumda takılı kaldı" olarak görünür — yani
+  /// gözle ayırt edilmesi zor, testle ayırt edilmesi kolay bir hata.
+  @visibleForTesting
+  static DateTime dayKeyFor(DateTime value) => istanbulDay(value);
+
+  static DateTime _day(DateTime value) => dayKeyFor(value);
 
   static String _wireDay(DateTime value) =>
       '${value.year.toString().padLeft(4, '0')}-'
