@@ -9735,6 +9735,62 @@ Detay: $detail'` | 🔴 gerçek hata | veri katmanı borcu 10→11 kilitlendi, W
   **ayri WP**; anahtar tazeleme tavansiz (SDK ici); guncelleme denetiminde
   baglanti zaman asimi yok.
 
+---
+
+### WP-605/606/607: Microsoft Store gonderimi -- hesap disinda her sey
+- **Program/Faz:** Faz F5 · Buyuk · **Durum:** [x] Hazir (`a60e493`, `50dfd41`,
+  `50ed6ee`, `a7c397f`) · **Sahipten 4 madde bekliyor**
+- Hat UCTAN UCA DENENDI, iddia edilmedi: gercek Windows release derlemesi
+  alindi, `msix:create --store` yer degistirme kimligiyle kosturuldu, uretilen
+  paket acilip AppxManifest okundu. Dogrulandi: kimlik/yayinci/surum dogru
+  gecmis, 4. alan 0, paket IMZASIZ (Store icin dogru), min Win10 17763,
+  yetenekler yalniz internetClient + runFullTrust.
+- 🔴 **WP-606:** paket kendini yalniz `tr-tr` ilan ediyordu, uygulama EN de
+  destekliyor. Store bunu dil listesi olarak kullanir; Ingilizce kullanici
+  uygulamayi dil filtresinde elerdi. Sozlesme testi artik dil listesini
+  `AppLocalizations.supportedLocales` ile BAGLIYOR.
+- Magaza metinleri TR+EN hazir (`docs/store/MICROSOFT-STORE-LISTING.md`),
+  gizlilik politikasi yayinda (surum 2026-08-08).
+- 🔴 **WP-607 -- denendi ve BIRAKILDI:** ekran goruntusu ureteci (testten
+  render). Yazilar once KUTU cikti (font yok), tema baglaninca duzeldi; ama
+  ikonlar kutu kaldi ve `toImage()` kosumu asiyor (uc denemede de "did not
+  complete"). Ureteç SILINDI -- olctugunu iddia ettigi seyi olcmeyen arac
+  birakilmaz. Sonuc belgeye yazildi ki bir sonraki tur bastan denemesin.
+- **Sahipten:** (1) inceleme test hesabi -- girissiz acilmiyor, Microsoft
+  ekibi giremezse RET; (2) >=1240x1240 logo (kaynak 256x256, SplashScreen
+  2480x1200'e buyutuluyor -- olculdu); (3) 4-6 ekran goruntusu; (4) destek
+  e-postasi. WACK kosulamadi (yonetici izni).
+
+---
+
+### WP-608: WP-598 korkulugu mesru akisi kilitliyordu — **CI yakaladi**
+- **Program/Faz:** Faz F5 · Orta · **Durum:** [x] Kod/test tamam (`989638f`)
+- 🔴 Yerel kapi 19/19 yesildi; **CI kirmiziydi**. Bu depoda yazili ders aynen
+  gerceklesti: "CI kapisi yesil sanilmaz, dogrulanir."
+- Android emulator smoke'u uc modu arka arkaya deniyor (countdown -> pomodoro
+  -> kronometre). WP-598'in 10 sn'lik penceresi ikinci turda devreye girip
+  baslatmayi onaya takiyor, `timer_active_started_at_ms` hic yazilmiyordu.
+  Iki API seviyesinde de kirmizi.
+- Duzeltme: mod / geri sayim suresi / pomodoro ayari degistirmek pencereyi
+  KAPATIR. Bunlar kazara olmaz; kullanici baska bir kontrole dokunup karar
+  vermistir. WP-598'in asil korudugu sey (ayni dugmeye ikinci dokunus) duruyor.
+- Karsi iddia testte: ayar DEGISMEDIYSE koruma calisir -- yoksa "pencereyi her
+  baslatmada temizle" sabotaji gecer ve 11 saatlik hata geri gelirdi.
+- 🔴 Not: emulator kapisi WP-572'de ILK KEZ gercekten kosmaya basladi. Ilk isi
+  ayni gun eklenen gercek bir gerilemeyi yakalamak oldu.
+
+---
+
+### WP-609: Cevrimdisi acilista bosa donen 20 sn'lik istek — **ACIK**
+- **Program/Faz:** Faz F5 · Kucuk · **Durum:** [ ] Bekliyor
+- WP-603'un acikca birakti gi madde. Profil cekimi hala oturum yayinindan
+  ONCE yapiliyor; kullaniciyi artik BEKLETMIYOR ama internet yokken her
+  aciliste arka planda ~20 sn'lik bos bir tur donuyor
+  (`supabase_auth_repository.dart:158-179`, `_profileFor` icindeki
+  `profiles` sorgusu).
+- Ayrica guncelleme denetiminde baglanti zaman asimi yok (acilisi
+  engellemiyor ama cevrimdisi asili kalabilen istek).
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
