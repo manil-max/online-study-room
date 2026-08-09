@@ -227,7 +227,15 @@ void main() {
         isTrue,
         reason: 'sekme noktası yalnız duyurudan besleniyor',
       );
-      expect(source.contains('unreadProfileSignals > 0'), isTrue);
+      // WP-594: noktanın çizim kararı `profile_tab_badge.dart`a taşındı —
+      // masaüstü sol paneli de aynı kaynağı kullanabilsin diye. Sekme hâlâ
+      // `settingsBadgeCountProvider`ı okuyor (yukarıdaki iddia), karar ise
+      // tek yerde.
+      expect(
+        _read('lib/core/navigation/profile_tab_badge.dart')
+            .contains('unreadProfileSignals > 0'),
+        isTrue,
+      );
     });
   });
 }

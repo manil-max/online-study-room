@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/profile_tab_badge.dart';
 import '../profile/settings_screen.dart';
 import 'desktop_navigation_pane.dart';
 import 'desktop_proportional_scale.dart';
@@ -19,6 +20,7 @@ class DesktopHomeShell extends StatelessWidget {
     required this.screens,
     required this.onDestinationSelected,
     required this.onRefresh,
+    this.profileBadge = ProfileTabBadge.none,
     super.key,
   });
 
@@ -27,7 +29,15 @@ class DesktopHomeShell extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final VoidCallback onRefresh;
 
-  static List<DesktopNavItem> destinations(BuildContext context) => [
+  /// 🔴 WP-594: mobil alt çubukla **aynı** rozet. Öncesinde masaüstü kolu
+  /// hiçbir rozet almıyordu; Windows kullanıcısı bekleyen ödülünü, okunmamış
+  /// duyurusunu ve eksik birincil grup uyarısını hiç görmüyordu.
+  final ProfileTabBadge profileBadge;
+
+  static List<DesktopNavItem> destinations(
+    BuildContext context, {
+    ProfileTabBadge profileBadge = ProfileTabBadge.none,
+  }) => [
     DesktopNavItem(
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
@@ -52,6 +62,7 @@ class DesktopHomeShell extends StatelessWidget {
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
       label: AppLocalizations.of(context).profileProfil,
+      badge: profileBadge,
     ),
   ];
 
@@ -119,7 +130,10 @@ class DesktopHomeShell extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DesktopNavigationPane(
-                        items: destinations(context),
+                        items: destinations(
+                          context,
+                          profileBadge: profileBadge,
+                        ),
                         selectedIndex: selectedIndex,
                         onSelected: onDestinationSelected,
                         footer: _PaneFooter(

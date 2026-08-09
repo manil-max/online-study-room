@@ -157,8 +157,11 @@ void main() {
     });
 
     test('üst iki yüzey noktayı gerçekten çiziyor', () {
+      // WP-594: rozet kararı `home_shell.dart`tan `profile_tab_badge.dart`a
+      // taşındı — masaüstü kolu da aynı kaynağı kullansın diye. Sözleşme aynı,
+      // yalnız dosyası değişti.
       expect(
-        _read('lib/core/navigation/home_shell.dart')
+        _read('lib/core/navigation/profile_tab_badge.dart')
             .contains('unreadProfileSignals > 0'),
         isTrue,
         reason: 'Profil sekmesinde okunmamış noktası çizilmiyor',
@@ -174,8 +177,9 @@ void main() {
     test('kayıp uyarısı duyuru noktasının önünde gelir', () {
       // WP-352 kararı: aynı sekmede iki sinyal yarışmaz. Eksik birincil grup
       // bir kayıptır, duyuru yalnız yeni içerik — kayıp önceliklidir.
+      // WP-594: karar `profile_tab_badge.dart`ta, iki kol da onu okuyor.
       expect(
-        _read('lib/core/navigation/home_shell.dart')
+        _read('lib/core/navigation/profile_tab_badge.dart')
             .contains('!missingPrimaryGroup && unreadProfileSignals > 0'),
         isTrue,
       );

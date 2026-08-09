@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
+import '../../core/navigation/profile_tab_badge.dart';
 import '../../core/theme/focus_ring_tokens.dart';
 
 /// Sol navigasyon öğesi (WinUI NavigationViewItem karşılığı).
@@ -10,11 +11,18 @@ class DesktopNavItem {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.badge,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+
+  /// WP-594: mobil alt çubukla **aynı** rozet nesnesi. Verilmezse rozet
+  /// çizilmez — masaüstünde eskiden durum buydu ve Windows kullanıcısı
+  /// bekleyen ödülünü, okunmamış duyurusunu, eksik birincil grup uyarısını
+  /// hiç görmüyordu.
+  final ProfileTabBadge? badge;
 }
 
 /// WinUI NavigationView + macOS sidebar sentezi.
@@ -255,6 +263,19 @@ class _NavItemTileState extends State<_NavItemTile> {
   bool _hovered = false;
   bool _focused = false;
 
+  /// WP-594: rozet mantığı burada **tekrarlanmaz** — mobil alt çubukla aynı
+  /// [ProfileTabBadge] nesnesi çizdirir. Uyarı noktasının rengi sol panelin
+  /// kendi zemininden türer, alt çubuğunkinden değil.
+  Widget _badged(Widget icon, ColorScheme scheme) {
+    final badge = widget.item.badge;
+    if (badge == null || !badge.isVisible) return icon;
+    return badge.wrap(
+      icon,
+      surface: scheme.surfaceContainerLowest,
+      announcementColor: scheme.primary,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -318,12 +339,15 @@ class _NavItemTileState extends State<_NavItemTile> {
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(
-                            selected
-                                ? widget.item.selectedIcon
-                                : widget.item.icon,
-                            size: 20,
-                            color: iconColor,
+                          _badged(
+                            Icon(
+                              selected
+                                  ? widget.item.selectedIcon
+                                  : widget.item.icon,
+                              size: 20,
+                              color: iconColor,
+                            ),
+                            scheme,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -347,12 +371,17 @@ class _NavItemTileState extends State<_NavItemTile> {
                         ],
                       )
                     : Center(
-                        child: Icon(
-                          selected
-                              ? widget.item.selectedIcon
-                              : widget.item.icon,
-                          size: 22,
-                          color: iconColor,
+                        // Daraltılmış şeritte etiket yok; rozet burada da
+                        // çizilmezse sinyal masaüstünde tamamen kaybolur.
+                        child: _badged(
+                          Icon(
+                            selected
+                                ? widget.item.selectedIcon
+                                : widget.item.icon,
+                            size: 22,
+                            color: iconColor,
+                          ),
+                          scheme,
                         ),
                       ),
               ),

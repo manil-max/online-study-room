@@ -20,11 +20,12 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
 import '../desktop/desktop_window.dart';
-import '../theme/warning_tokens.dart';
 import '../widgets/app_pull_to_refresh.dart';
 import 'nav_index.dart';
+import 'profile_tab_badge.dart';
 
 export 'nav_index.dart';
+export 'profile_tab_badge.dart';
 
 /// Uygulamanın ana kabuğu: alt menüde 4 sekme (Ana Sayfa / Sınıflar / İstatistik
 /// / Profil). Ekranlar IndexedStack ile tutulur, böylece sekme değişince durum korunur.
@@ -40,35 +41,25 @@ class HomeShell extends ConsumerWidget {
     ProfileScreen(),
   ];
 
-  /// Bekleyen ödül sayısı varsa sayı rozeti korunur; yoksa sayısız nokta
-  /// gösterilir. İki sinyal aynı sekmede yarışmaz.
-  ///
   /// WP-378: noktayı besleyen ikinci kaynak okunmamış duyurulardır. Öncesinde
   /// duyuru işareti yalnız **Ayarlar'ın içindeki** satırda duruyordu; kullanıcı
   /// oraya girmeden yeni duyuruyu fark etmiyordu.
-  static Widget _profileTabIcon({
-    required IconData icon,
-    required int pendingRewardCount,
-    required bool missingPrimaryGroup,
-    required int unreadProfileSignals,
-    required Color warningColor,
+  ///
+  /// 🔴 WP-594: rozet kararı buradan [ProfileTabBadge]'e taşındı. Öncesi bu
+  /// metot yalnız **mobil** koldan çağrılıyordu; masaüstü kolu hiçbir rozet
+  /// geçmiyordu ve Windows kullanıcısı bekleyen ödülünü, okunmamış duyurusunu
+  /// ve eksik birincil grup uyarısını hiç görmüyordu. Artık iki kol da aynı
+  /// nesneyi alır — kopya mantık tutulmaz (bkz. WP-550 aynı ders).
+  static Widget _profileTabIcon(
+    IconData icon, {
+    required ProfileTabBadge badge,
+    required Color surface,
     required Color announcementColor,
   }) {
-    if (pendingRewardCount > 0) {
-      return Badge.count(count: pendingRewardCount, child: Icon(icon));
-    }
-    // Eksik birincil grup bir **kayıptır** (uyarı rengi); okunmamış duyuru
-    // yeni içeriktir. Kayıp önceliklidir, ikisi aynı anda çizilmez.
-    if (!missingPrimaryGroup && unreadProfileSignals > 0) {
-      return Badge(backgroundColor: announcementColor, child: Icon(icon));
-    }
-    // WP-358: nokta varsayılan olarak `colorScheme.error`den besleniyordu ve
-    // kırmızı ağırlıklı temada sekme zeminine gömülüyordu (V49-2). Renk artık
-    // zeminden türetiliyor; bekleyen ödül sayısı rozeti kendi rengini korur.
-    return Badge(
-      isLabelVisible: missingPrimaryGroup,
-      backgroundColor: warningColor,
-      child: Icon(icon),
+    return badge.wrap(
+      Icon(icon),
+      surface: surface,
+      announcementColor: announcementColor,
     );
   }
 
@@ -93,13 +84,16 @@ class HomeShell extends ConsumerWidget {
     // gorunur. Sekme noktasi yalnizca duyuruyu degil okunmamis yonetici
     // yanitini da tasir; ikisi de `settingsBadgeCountProvider`in ayaklaridir.
     final unreadProfileSignals = ref.watch(settingsBadgeCountProvider);
+    // 🔴 WP-594: rozet TEK yerde çözülür ve iki kola da aynı nesne gider.
+    // Masaüstü kolu eskiden hiçbirini almıyordu.
+    final profileBadge = ProfileTabBadge(
+      pendingRewardCount: pendingRewardCount,
+      missingPrimaryGroup: missingPrimaryGroup,
+      unreadProfileSignals: unreadProfileSignals,
+    );
     // Duyuru bir uyarı değil, yeni içerik — rengi uyarı token'ından değil
     // temanın birincil renginden gelir (WP-378).
     final announcementDotColor = Theme.of(context).colorScheme.primary;
-    // WP-358: uyarı noktası tema paletinden değil, sekme zemininden türetilir.
-    final warningDotColor = warningColorsOn(
-      Theme.of(context).colorScheme.surface,
-    ).container;
     final selfId = ref.watch(authStateProvider).value?.id;
     // Sekme çubuğundaki taç `crowned_avatar.dart` ile aynı hatayı taşıyordu:
     // provider yeniden yüklenince `asData` boşalıyor, taç bir kare sönüyordu.
@@ -133,6 +127,13 @@ class HomeShell extends ConsumerWidget {
             selectedIndex: index,
             screens: _screens,
             onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
+            // 🔴 WP-594: mobil kolun bastığı rozetin aynısı. Buradan
+            // çıkarılırsa Windows kullanıcısı bekleyen ödülünü ve okunmamış
+            // duyurusunu bir daha göremez.
+            profileBadge: profileBadge,
+            // 🔴 WP-594: mobil kolun bastığı rozetin aynısı. Buradan
+            // çıkarılırsa Windows kullanıcısı bekleyen ödülünü ve okunmamış
+            // duyurusunu bir daha göremez.
             // 🔴 WP-550: burada eskiden **ikinci bir** provider listesi vardı ve
             // eksikti (`userStudySummary`, `groupPresence`, duyurular yoktu).
             // Masaüstü ve mobil artık aynı tek kaynağı çağırır; ikinci listeyi
@@ -194,19 +195,15 @@ class HomeShell extends ConsumerWidget {
             ),
             NavigationDestination(
               icon: _profileTabIcon(
-                icon: Icons.person_outline,
-                pendingRewardCount: pendingRewardCount,
-                missingPrimaryGroup: missingPrimaryGroup,
-                unreadProfileSignals: unreadProfileSignals,
-                warningColor: warningDotColor,
+                Icons.person_outline,
+                badge: profileBadge,
+                surface: Theme.of(context).colorScheme.surface,
                 announcementColor: announcementDotColor,
               ),
               selectedIcon: _profileTabIcon(
-                icon: Icons.person,
-                pendingRewardCount: pendingRewardCount,
-                missingPrimaryGroup: missingPrimaryGroup,
-                unreadProfileSignals: unreadProfileSignals,
-                warningColor: warningDotColor,
+                Icons.person,
+                badge: profileBadge,
+                surface: Theme.of(context).colorScheme.surface,
                 announcementColor: announcementDotColor,
               ),
               label: AppLocalizations.of(context).profileProfil,
