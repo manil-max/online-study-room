@@ -21,6 +21,10 @@ class _NotificationPermissionsScreenState
   bool _savingMonthlyReport = false;
 
   Future<void> _setMonthlyReportOptIn(bool value, bool previousValue) async {
+    // Snackbar'ı `await`ten önce yakala: mesaj kullanıcı sekme değiştirse de
+    // düşsün, `context` üzerinden asenkron arama yapılmasın.
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _monthlyReportOptInOverride = value;
       _savingMonthlyReport = true;
@@ -29,7 +33,20 @@ class _NotificationPermissionsScreenState
       await ref.read(authRepositoryProvider).updateMonthlyReportOptIn(value);
       ref.invalidate(authStateProvider);
     } catch (_) {
-      if (mounted) setState(() => _monthlyReportOptInOverride = previousValue);
+      // 🔴 WP-620: anahtar geri alınıyordu ama kullanıcıya **hiçbir şey**
+      // söylenmiyordu. Ekranda görünen tek şey düğmenin kendiliğinden eski
+      // yerine dönmesiydi; kullanıcı bunu "dokunuşum kaydolmadı" değil
+      // "arayüz takıldı" diye okuyor ve tekrar tekrar deniyordu. Yarım doğru
+      // (geri alma) tam doğruya çevrildi: geri al **ve** söyle.
+      if (!mounted) return;
+      setState(() => _monthlyReportOptInOverride = previousValue);
+      messenger.showSnackBar(
+        SnackBar(
+          key: const Key('monthly-report-save-failed'),
+          content: Text(l10n.notificationsAylikRaporKaydedilemedi),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _savingMonthlyReport = false);
     }

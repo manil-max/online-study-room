@@ -8,6 +8,7 @@ import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/account_deletion_status.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../auth/password_reset_platform.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -130,6 +131,19 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   /// bağlanınca buraya kod yolu eklenebilir.
   Future<void> _sendPasswordReset() async {
     final l10n = AppLocalizations.of(context);
+
+    // 🔴 WP-620: gönderimden **önce**. WP-616 giriş ekranındaki aynı düğmeyi
+    // kapattı ama oturum **içindeki** "Şifremi unuttum" kolu açık kaldı:
+    // Windows'ta e-posta gidiyor, ekran "gönderildi" diyor, kullanıcı gelen
+    // bağlantıyı bu bilgisayarda açamıyor (bkz. [passwordResetLinkOpensHere]
+    // dokümantasyonu — scheme kayıtlı değil, kod yolu free tier'da kapalı,
+    // PKCE doğrulayıcısı başlatan cihazda kalıyor). Karar WP-616'nındır;
+    // burada yalnız **kullanılır**, yeniden üretilmez.
+    if (!passwordResetLinkOpensHere()) {
+      await _showDesktopResetUnavailable(l10n);
+      return;
+    }
+
     final email = ref.read(authRepositoryProvider).currentUserEmail;
     if (email == null || email.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -167,6 +181,32 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     }
   }
 
+  /// Masaüstünde sıfırlamanın neden çalışmadığını ve **çalışan yolu** anlatır.
+  /// Metin WP-616 kataloğundan gelir; burada ikinci bir sürüm yazılmaz.
+  Future<void> _showDesktopResetUnavailable(AppLocalizations l10n) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const Key('account-reset-desktop-unavailable'),
+        icon: const Icon(Icons.phonelink_erase_outlined),
+        title: Text(l10n.authSifirlamaMasaustundeCalismiyorBaslik),
+        content: SingleChildScrollView(
+          child: Text(
+            l10n.authSifirlamaMasaustundeCalismiyorGovde,
+            key: const Key('account-reset-desktop-body'),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.authAnladim),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _signOut() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -195,27 +235,41 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       },
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    // Snackbar'ı ekrandan **önce** yakala: `popUntil` bu ekranı ağaçtan
+    // düşürünce `context` ölür ve mesaj hiç görünmez.
+    final messenger = ScaffoldMessenger.of(context);
 
     setState(() => _isLoading = true);
+    // 🔴 WP-620: burası eskiden hatayı "çıkış yapılamadı" diye gösteriyor ve
+    // kullanıcıyı ekranda tutuyordu. Oysa gotrue **önce** yerel oturumu siler,
+    // **sonra** sunucuya haber verir; ağ o ikinci adımda düşerse kullanıcı
+    // çoktan çıkmıştır. Ekranda kalmak "hâlâ içerideyim" yanılgısı veriyor,
+    // kullanıcı tekrar tekrar basıyor ve hiçbiri "başarılı" olmuyordu.
+    //
+    // Doğrusu: çıkışı **olmuş say** (yereldeki oturum gitti), ama sessizce
+    // "her şey yolunda" da deme — kapatılamayan şey diğer cihazlardaki
+    // oturumdur ve kullanıcı bunu bilmeli.
+    var serverNotified = true;
     try {
       await ref.read(authRepositoryProvider).signOut();
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).profileCikisYapilirkenBirHata,
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-        setState(() => _isLoading = false);
-      }
+    } catch (_) {
+      serverNotified = false;
     }
+
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (!serverNotified) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.profileCikisYapildiSunucuyaUlasilamadi),
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   /// WP-114: silme isteği — şifre yeniden doğrulama + 14 gün grace (sunucu).
@@ -290,25 +344,51 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     };
   }
 
+  /// İptal yolundaki hatayı kullanıcı cümlesine çevirir.
+  ///
+  /// 🔴 WP-620: burada tek bir "Beklenmeyen bir hata oluştu." vardı. Oysa
+  /// sunucunun **en olası** cevabı bu değil: `cancel_account_deletion`
+  /// (`supabase/migrations/0037_account_deletion_core.sql`) bekleyen istek
+  /// yoksa `no_active_request`, 14 günlük pencere dolmuşsa `too_late`
+  /// fırlatır. İkisi de kullanıcıya bambaşka şey söyler ve ikisi de
+  /// "beklenmeyen" değildir.
+  ///
+  /// Depo katmanı bu iki neden için henüz [AuthErrorCode] taşımıyor ve o
+  /// katman bu WP'nin dışında; bu yüzden önce kod, kod yoksa sunucu etiketi
+  /// okunur. Depo bir gün kod eklerse bu dal kendiliğinden ona geçer.
+  String _cancelDeletionErrorFor(AppLocalizations l10n, Object error) {
+    if (error is! AuthException) return l10n.authBeklenmeyenBirHataOlustu;
+    final code = error.code ?? '';
+    final message = error.message.toLowerCase();
+    bool says(String marker) => code == marker || message.contains(marker);
+
+    // Yalnız sunucunun **makine** etiketine bakılır; Türkçe mesaj metnine
+    // `contains` uygulamak bu deponun tekrar eden kırılganlığıdır (WP-319).
+    if (says('no_active_request')) return l10n.accountSilmeBekleyenIstekYok;
+    if (says('too_late')) return l10n.accountSilmeIptalPenceresiKapandi;
+    return switch (error.code) {
+      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
+      AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
+      _ => l10n.authBeklenmeyenBirHataOlustu,
+    };
+  }
+
   Future<void> _cancelAccountDeletion() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).cancelAccountDeletion();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).accountSilmeIptalEdildi),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.accountSilmeIptalEdildi)));
         _refreshDeletionStatus();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
-            ),
+            content: Text(_cancelDeletionErrorFor(l10n, e)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -316,6 +396,67 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Üçüncü hâl: silme durumu **okunamadı**.
+  ///
+  /// 🔴 WP-620: eskiden bu hâl "aktif" sayılıyordu
+  /// (`final active = failed || snap.data?.active == true;`). Sonucu iki
+  /// yönlü zarardı: (a) silmeyi hiç istememiş kullanıcı, ağ kötüyken Hesabım'a
+  /// girdiğinde kırmızı "Silme planlandı — iptal et" kartını görüp paniğe
+  /// kapılıyor, dokununca da sunucudan `no_active_request` yiyordu;
+  /// (b) gerçekten silmek isteyen kullanıcı ise "Hesabı sil" düğmesine hiç
+  /// ulaşamıyordu. Bilinmeyen bir durumu iki hâlden birine yuvarlamak yerine
+  /// **bilinmediğini söylüyoruz** ve her iki kapıyı da açık bırakıyoruz.
+  Widget _deletionStatusUnknownCard(ThemeData theme, AppLocalizations l10n) {
+    return Card(
+      key: const Key('accountDeletionStatusUnknown'),
+      elevation: 0,
+      // Kırmızı **değil**: kırmızı "hesabın gidiyor" demektir, oysa burada
+      // bilinen tek şey durumun bilinmediğidir.
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: Icon(
+              Icons.help_outline,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            title: Text(l10n.accountSilmeDurumuOkunamadiBaslik),
+            subtitle: Text(l10n.accountSilmeDurumuOkunamadi),
+            trailing: IconButton(
+              key: const Key('accountDeletionStatusRetry'),
+              icon: const Icon(Icons.refresh),
+              tooltip: l10n.authTekrarDene,
+              onPressed: _refreshDeletionStatus,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 8,
+              children: [
+                TextButton(
+                  key: const Key('accountDeletionCancelPending'),
+                  onPressed: _cancelAccountDeletion,
+                  child: Text(l10n.accountBekleyenSilmeyiIptalEt),
+                ),
+                TextButton(
+                  key: const Key('accountDeletionRequestAnyway'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                  onPressed: _requestAccountDeletion,
+                  child: Text(l10n.accountHesabiSil),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -420,20 +561,14 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   future: _deletionStatus,
                   builder: (context, snap) {
                     final l10n = AppLocalizations.of(context);
-                    // 🔴 WP-539: `snap.hasError` hiç kontrol edilmiyordu. Durum
-                    // sorgusu düştüğünde `snap.data` null kalıyor, `active`
-                    // false oluyor ve kart sessizce "Hesabı sil"e dönüyordu —
-                    // yani **bekleyen silme isteğinin tek iptal kapısı
-                    // kayboluyordu**. Kullanıcı 14 günlük geri alma penceresi
-                    // içinde iptal edemez hâle geliyordu.
-                    //
-                    // Hata hâlinde fail-safe taraf iptaldir: `cancel` RPC'si
-                    // bekleyen istek yoksa zararsızdır, oysa kapıyı gizlemek
-                    // geri dönüşü olmayan silmeye yol açar. Kullanıcı sorguyu
-                    // yenileyip gerçek duruma da dönebilsin diye kartta
-                    // "tekrar dene" var.
-                    final failed = snap.hasError;
-                    final active = failed || snap.data?.active == true;
+                    // WP-539 `snap.hasError`ı görünür kıldı ama üç durumu
+                    // ikiye sıkıştırdı: okunamayan durum "aktif" sayılıyordu.
+                    // WP-620 üçüncü hâli ayırdı — ayrıntı ve ölçüm
+                    // [_deletionStatusUnknownCard] belgesinde.
+                    if (snap.hasError) {
+                      return _deletionStatusUnknownCard(theme, l10n);
+                    }
+                    final active = snap.data?.active == true;
                     return Card(
                       elevation: 0,
                       color: theme.colorScheme.errorContainer.withValues(
@@ -451,22 +586,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                         subtitle: Text(
-                          failed
-                              ? l10n.accountSilmeDurumuOkunamadi
-                              : active
+                          active
                               ? l10n.accountSilmeSonTarih(
                                   '${snap.data?.purgeAfter?.toLocal()}',
                                 )
                               : l10n.accountSilmeGeriAlmaPenceresi,
                         ),
-                        trailing: failed
-                            ? IconButton(
-                                key: const Key('accountDeletionStatusRetry'),
-                                icon: const Icon(Icons.refresh),
-                                tooltip: l10n.authTekrarDene,
-                                onPressed: _refreshDeletionStatus,
-                              )
-                            : null,
                         onTap: active
                             ? _cancelAccountDeletion
                             : _requestAccountDeletion,

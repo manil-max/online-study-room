@@ -39,6 +39,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.dispose();
   }
 
+  /// Cikis: sonuc **beklenir** ve hata **yakalanir**.
+  ///
+  /// 🔴 WP-620: burasi `() => ref.read(authRepositoryProvider).signOut()` idi —
+  /// ne `await`leniyor ne yakalaniyordu. Cevrimdisiyken gotrue yerel oturumu
+  /// silip sunucuya gidiyor, ikinci adim patliyor ve hata **islenmemis** async
+  /// hata olarak zone'a dusuyordu: kullanici cikmis oluyor ama ekranda hicbir
+  /// sey yazmiyor, testte de "unhandled exception" olarak birikiyordu.
+  ///
+  /// Kural (Hesabim ekranindaki ikiziyle ayni): cikisi olmus say, ama
+  /// kapatilamayan seyi — diger cihazlardaki oturumu — kullaniciya soyle.
+  Future<void> _signOut() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    var serverNotified = true;
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+    } catch (_) {
+      serverNotified = false;
+    }
+    if (!serverNotified) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.profileCikisYapildiSunucuyaUlasilamadi),
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(navReselectProvider, (previous, next) {
@@ -218,7 +247,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   SizedBox(height: 16),
                   FilledButton.tonalIcon(
-                    onPressed: () => ref.read(authRepositoryProvider).signOut(),
+                    key: const Key('profile-sign-out'),
+                    onPressed: _signOut,
                     icon: Icon(Icons.logout),
                     label: Text(AppLocalizations.of(context).profileCikisYap),
                   ),

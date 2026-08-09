@@ -1701,7 +1701,7 @@
   "accountSilmePlanlandiIptalEt": "Silme planlandı — iptal et",
   "accountSilmeSonTarih": "Son tarih: {deadline}",
   "accountSilmeGeriAlmaPenceresi": "14 gün geri alma; ardından kalıcı silme",
-  "accountSilmeDurumuOkunamadi": "Silme durumu okunamadı. Bekleyen bir isteğin varsa buradan iptal edebilirsin.",
+  "accountSilmeDurumuOkunamadi": "Sunucuya ulaşılamadığı için hesabının silinmek üzere olup olmadığını gösteremiyoruz. Yenile'ye dokun; ya da aşağıdan silme iste veya bekleyen bir isteği iptal et.",
   "updaterMagazaUzerindenYonetilir": "Güncelleme mağaza üzerinden yönetilir.",
   "classroomGrupFotografiniDegistir": "Grup fotoğrafını değiştir",
   "classroomGrupFotografiSemantik": "{name} grup fotoğrafı",
@@ -2045,5 +2045,17 @@
   "authSifirlamaMasaustundeCalismiyorGovde": "Sıfırlama bağlantısı yalnız telefondaki Android uygulamasında açılıyor; masaüstü sürümünde açılmıyor. Bu yüzden sana işe yaramayacak bir e-posta göndermiyoruz.\n\nÇalışan yol: telefonundaki Odak Kampı uygulamasını aç, giriş ekranında \"Şifremi unuttum\"a dokun, e-postadaki bağlantıyı telefonunda aç ve yeni şifreni belirle. Sonra buradan yeni şifrenle giriş yap.\n\nAndroid telefonun yoksa şifreni şu an sıfırlayamazsın. Şifreni hâlâ biliyorsan giriş yapıp Hesabım > Şifre değiştir'den değiştirebilirsin.",
   "@authSifirlamaMasaustundeCalismiyorGovde": {"description": "WP-616: masaüstünde şifre sıfırlamanın çalışmadığını söyleyen ve çalışan yolu (telefondaki uygulama) gösteren metin."},
   "authAnladim": "Anladım",
-  "@authAnladim": {"description": "WP-616: bilgilendirme diyaloğunu kapatan düğme."}
+  "@authAnladim": {"description": "WP-616: bilgilendirme diyaloğunu kapatan düğme."},
+  "accountSilmeDurumuOkunamadiBaslik": "Silme durumu okunamadı",
+  "@accountSilmeDurumuOkunamadiBaslik": {"description": "WP-620: silme durumu okunamadığında kartın başlığı; \"Silme planlandı\" başlığının yerini alır."},
+  "accountBekleyenSilmeyiIptalEt": "Bekleyen silmeyi iptal et",
+  "@accountBekleyenSilmeyiIptalEt": {"description": "WP-620: durum okunamadığında iptal kapısını açık tutan düğme."},
+  "accountSilmeBekleyenIstekYok": "Bekleyen bir silme isteğin yok. Hesabın silinmek üzere değil.",
+  "@accountSilmeBekleyenIstekYok": {"description": "WP-620: sunucunun no_active_request cevabı; eskiden \"Beklenmeyen bir hata\" deniyordu."},
+  "accountSilmeIptalPenceresiKapandi": "İptal penceresi kapandı; silme artık geri alınamıyor.",
+  "@accountSilmeIptalPenceresiKapandi": {"description": "WP-620: sunucunun too_late cevabı."},
+  "profileCikisYapildiSunucuyaUlasilamadi": "Bu cihazdan çıkış yapıldı. Sunucuya ulaşılamadığı için diğer cihazlardaki oturumlar açık kalmış olabilir.",
+  "@profileCikisYapildiSunucuyaUlasilamadi": {"description": "WP-620: çevrimdışı çıkış; kullanıcı gerçekten çıkmıştır, \"çıkış yapılamadı\" demek yanlıştı."},
+  "notificationsAylikRaporKaydedilemedi": "Aylık rapor ayarı kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: aylık rapor anahtarı kaydedilemeyince; eskiden anahtar sessizce geri dönüyordu."}
 }

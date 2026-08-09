@@ -5867,9 +5867,9 @@
   "@accountSilmeGeriAlmaPenceresi": {
     "description": "Account settings: tile subtitle explaining the cooling-off window."
   },
-  "accountSilmeDurumuOkunamadi": "Could not read the deletion status. If you have a pending request you can cancel it here.",
+  "accountSilmeDurumuOkunamadi": "We could not reach the server, so we cannot tell you whether your account is scheduled for deletion. Tap refresh, or use the buttons below to request deletion or cancel a pending one.",
   "@accountSilmeDurumuOkunamadi": {
-    "description": "WP-539: the deletion status query failed; the cancel gate stays reachable instead of disappearing. Source: Silme durumu okunamadı. Bekleyen bir isteğin varsa buradan iptal edebilirsin."
+    "description": "WP-620: body of the third deletion-status state. WP-539 showed this line under a red \"Deletion scheduled\" title, which told users their account was going away when the app simply could not read the status."
   },
   "updaterMagazaUzerindenYonetilir": "Updates are managed by the store.",
   "@updaterMagazaUzerindenYonetilir": {
@@ -6704,5 +6704,17 @@
   "authSifirlamaMasaustundeCalismiyorGovde": "The reset link only opens in the Android app on your phone; it does not open on the desktop build. That is why we are not sending you an email that would not work.\n\nWhat works: open Odak Kampi on your Android phone, tap \"Forgot my password\" on the sign-in screen, open the emailed link on the phone and set a new password. Then sign in here with the new password.\n\nIf you do not have an Android phone you cannot reset your password right now. If you still know it, sign in and change it from Account > Change password.",
   "@authSifirlamaMasaustundeCalismiyorGovde": {"description": "WP-616: text saying desktop password reset does not work and showing the path that does (the phone app)."},
   "authAnladim": "Got it",
-  "@authAnladim": {"description": "WP-616: button that dismisses the informational dialog."}
+  "@authAnladim": {"description": "WP-616: button that dismisses the informational dialog."},
+  "accountSilmeDurumuOkunamadiBaslik": "Deletion status could not be read",
+  "@accountSilmeDurumuOkunamadiBaslik": {"description": "WP-620: title of the deletion card when the status query fails; replaces the \"Deletion scheduled\" title that alarmed users who never asked to delete anything."},
+  "accountBekleyenSilmeyiIptalEt": "Cancel pending deletion",
+  "@accountBekleyenSilmeyiIptalEt": {"description": "WP-620: button that keeps the cancel gate reachable while the status is unknown."},
+  "accountSilmeBekleyenIstekYok": "You have no pending deletion request. Your account is not scheduled for deletion.",
+  "@accountSilmeBekleyenIstekYok": {"description": "WP-620: the server's no_active_request answer, previously shown as \"unexpected error\"."},
+  "accountSilmeIptalPenceresiKapandi": "The cancellation window has closed; the deletion can no longer be undone.",
+  "@accountSilmeIptalPenceresiKapandi": {"description": "WP-620: the server's too_late answer."},
+  "profileCikisYapildiSunucuyaUlasilamadi": "You are signed out on this device. We could not reach the server, so sessions on your other devices may still be open.",
+  "@profileCikisYapildiSunucuyaUlasilamadi": {"description": "WP-620: offline sign-out. The local session is already gone, so \"could not sign out\" was false; only the server notification failed."},
+  "notificationsAylikRaporKaydedilemedi": "The monthly report setting could not be saved. Check your connection and try again.",
+  "@notificationsAylikRaporKaydedilemedi": {"description": "WP-620: the monthly report switch reverted silently; now it also says why."}
 }
