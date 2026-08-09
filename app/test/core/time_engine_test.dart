@@ -3,31 +3,6 @@ import 'package:online_study_room/core/time_engine/time_engine.dart';
 import 'package:online_study_room/data/models/alarm_rule.dart';
 
 void main() {
-  group('EpochStopwatchState', () {
-    test('elapsed ignores wall gaps via epoch', () {
-      final clock = FakeEpochClock(1_000_000);
-      var s = EpochStopwatchState.idle.start(clock.nowMs());
-      clock.advance(const Duration(seconds: 5));
-      expect(s.elapsedMs(clock.nowMs()), 5000);
-      s = s.pause(clock.nowMs());
-      clock.advance(const Duration(hours: 1)); // pause sırasında süre artmaz
-      expect(s.elapsedMs(clock.nowMs()), 5000);
-      s = s.start(clock.nowMs());
-      clock.advance(const Duration(seconds: 2));
-      expect(s.elapsedMs(clock.nowMs()), 7000);
-    });
-
-    test('lap records totals', () {
-      final clock = FakeEpochClock(0);
-      var s = EpochStopwatchState.idle.start(0);
-      clock.setMs(1000);
-      s = s.lap(clock.nowMs());
-      clock.setMs(3000);
-      s = s.lap(clock.nowMs());
-      expect(s.laps, [1000, 3000]);
-    });
-  });
-
   group('EpochCountdownState', () {
     test('remaining from endsAtMs', () {
       var c = EpochCountdownState.initial(60_000).start(0);
@@ -106,22 +81,6 @@ void main() {
     });
   });
 
-  group('LapAnalysis', () {
-    test('fastest and slowest highlight', () {
-      // totals: 10s, 25s, 35s → splits 10, 15, 10
-      final a = LapAnalysis.fromTotals([10000, 25000, 35000]);
-      expect(a.splitsMs, [10000, 15000, 10000]);
-      expect(a.fastestIndex, 0); // first 10s (tie with last — first wins)
-      expect(a.slowestIndex, 1);
-    });
-
-    test('single lap no slowest', () {
-      final a = LapAnalysis.fromTotals([5000]);
-      expect(a.fastestIndex, 0);
-      expect(a.slowestIndex, -1);
-    });
-  });
-
   group('BurnInOffset', () {
     test('max displacement over 60 periods exceeds 10px', () {
       final maxD = BurnInOffset.maxDisplacementOver(
@@ -138,13 +97,6 @@ void main() {
       expect(isDaytimeHour(17), isTrue);
       expect(isDaytimeHour(18), isFalse);
       expect(isDaytimeHour(5), isFalse);
-    });
-  });
-
-  group('formatStopwatch', () {
-    test('mm:ss.cc', () {
-      final s = formatStopwatch(const Duration(minutes: 1, seconds: 2, milliseconds: 340));
-      expect(s, '01:02.34');
     });
   });
 }

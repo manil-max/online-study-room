@@ -23,6 +23,21 @@
 // risk diriltme anında ortaya çıkar — bayat `clock_stopwatch_study_credited_ms`
 // yeni bir kronometreyi sessizce eksik kredilendirir. Bu yüzden kronometre
 // geri gelirse `_v2` adlı anahtarlarla gelmelidir; kapı zaten o an kırmızıya
+//
+// **WP-586 genişlemesi — aynı yüzeyin ikinci yarısı.** WP-576'dan sonra zaman
+// motorunda iki kalıntı kaldı: `epoch_stopwatch.dart` (`EpochStopwatchState` +
+// `EpochStopwatchEngine`, dosyanın tamamı) ve `lap_analysis.dart` içindeki
+// `LapAnalysis` + `formatStopwatch`. Dördünün de `lib/` içinde tek bir çağrı
+// yeri yoktu; onları yalnız kendi testleri canlı tutuyordu — WP-558'de
+// yakalanan desenin aynısı. Aynı dosyadaki `formatCountdown` ise CANLI
+// (`features/clock/timers_screen.dart`), o yüzden dosya duruyor.
+//
+// Kapı burada iki ölçü daha kazanır: (1) emekli sembol/dosya geri doğamaz,
+// (2) [_watchedApiFiles] altındaki her üst düzey public bildirimin `lib/`
+// içinde gerçek bir tüketicisi vardır — **barrel export etmek tüketici
+// sayılmaz**, ölü yüzey tam olarak oradan besleniyordu. Liste TAM tutulur:
+// yeni bir public sembol önce buraya yazılmak zorunda, yani tüketici
+// zorunluluğunu sessizce atlayamaz.
 // düşüp bu satırı okutur.
 
 import 'dart:io';
@@ -57,11 +72,78 @@ const List<String> _retiredPrefsKeys = <String>[
   'dashboard_grid_density',
 ];
 
+/// WP-586: `lib/` içinde bir daha bildirilmemesi gereken emekli semboller.
+const List<String> _retiredSymbols = <String>[
+  'EpochStopwatchState',
+  'EpochStopwatchEngine',
+  'LapAnalysis',
+  'formatStopwatch',
+];
+
+/// WP-586: tamamı ölü olduğu için silinen dosyalar.
+const List<String> _retiredFiles = <String>[
+  'lib/core/time_engine/epoch_stopwatch.dart',
+];
+
+/// WP-586: her üst düzey public bildiriminin `lib/` içinde gerçek bir
+/// tüketicisi olması beklenen dosya → o dosyadaki bildirimlerin **tam** listesi.
+///
+/// Liste tam olduğu için kapı iki yönden de sıkı: bildirim regexi bozulursa
+/// eşleşme tutmaz, yeni bir public sembol de listeye yazılmadan geçemez.
+const Map<String, List<String>> _watchedApiFiles = <String, List<String>>{
+  'lib/core/time_engine/lap_analysis.dart': <String>['formatCountdown'],
+};
+
+/// WP-586: zaman motoru barrel'ı — tüketici sayılmayan tek dosya.
+const String _timeEngineBarrel = 'lib/core/time_engine/time_engine.dart';
+
+/// Barrel'da beklenen **en az** export sayısı (taban: regex bozulursa kapı boş
+/// yere yeşil kalmasın).
+const int _timeEngineMinExports = 9;
+
 /// Üst düzey `final xProvider = ...` bildirimi (girintili olanlar yerel değişken).
 final RegExp _providerDecl = RegExp(r'^final\s+(\w+Provider)\s*=', multiLine: true);
 
 /// Üst düzey herhangi bir `final` — isim kuralını atlatan bildirimi yakalar.
 final RegExp _topLevelFinal = RegExp(r'^final\s', multiLine: true);
+
+/// WP-586: üst düzey (girintisiz) public tip bildirimi.
+final RegExp _publicTypeDecl = RegExp(
+  r'^(?:abstract\s+|sealed\s+|base\s+|interface\s+|final\s+)*'
+  r'(?:class|enum|mixin|extension|typedef)\s+([A-Za-z]\w*)',
+  multiLine: true,
+);
+
+/// WP-586: üst düzey public `final`/`const` bildirimi.
+final RegExp _publicTopLevelVar = RegExp(
+  r'^(?:final|const)\s+(?:[\w<>,\s\?\.]+\s+)?([A-Za-z]\w*)\s*=',
+  multiLine: true,
+);
+
+/// WP-586: üst düzey public fonksiyon (`String formatCountdown(...)`).
+final RegExp _publicTopLevelFn = RegExp(
+  r'^[A-Za-z_][\w<>,\s\?\.]*\s+([A-Za-z]\w*)\s*\(',
+  multiLine: true,
+);
+
+/// WP-586: kaynagin yalniz **kod** satirlari — bastan `//` ile baslayan
+/// (doc dahil) satirlar atilir.
+///
+/// Neden gerekli: bir sembolu neden sildigimizi anlatan yorum, sembolun adini
+/// yazmak zorunda; duz metin taramasi o aciklamayi "geri dogdu" sanar. Satir
+/// ICI yorum bilerek kirpilmaz — string icindeki `//` kesilip gercek bir
+/// kullanim gizlenmesin. Yani kapi bu yonde fazladan siki kalir, gevsek degil.
+///
+/// Kanaryasi: ayni suzgecten gecen govde uzerinde
+/// `izlenen api dosyalarindaki her public sembol tuketiliyor` testi POZITIF
+/// bir eslesme bekler; suzgec her seyi silseydi o test kirmizi duserdi.
+String _codeOnly(String source) => source
+    .split('\n')
+    .where((line) => !line.trimLeft().startsWith('//'))
+    .join('\n');
+
+/// WP-586: barrel export satırı.
+final RegExp _exportDecl = RegExp(r"^export\s+'([^']+)';", multiLine: true);
 
 void main() {
   final libDir = Directory('lib');
@@ -86,6 +168,18 @@ void main() {
           .toList();
     }
     return result;
+  }
+
+  /// WP-586: [path] içindeki üst düzey **public** bildirim adları.
+  Set<String> publicDeclsOf(String path) {
+    final file = File(path);
+    expect(file.existsSync(), isTrue, reason: '$path bulunamadi');
+    final source = file.readAsStringSync();
+    return <String>{
+      for (final m in _publicTypeDecl.allMatches(source)) m.group(1)!,
+      for (final m in _publicTopLevelVar.allMatches(source)) m.group(1)!,
+      for (final m in _publicTopLevelFn.allMatches(source)) m.group(1)!,
+    };
   }
 
   test('tarama gercekten calisiyor (kapi bos yere yesil kalmasin)', () {
@@ -181,6 +275,108 @@ void main() {
           'Emekli anahtar geri geldi: $hits. Diriltiyorsan yeni bir surum adi '
           'kullan (`_v2`); bayat clock_stopwatch_study_credited_ms yeni '
           'kronometreyi sessizce eksik kredilendirir.',
+    );
+  });
+
+  test('WP-586: emekli zaman motoru sembolleri lib/ icinde geri dogmadi', () {
+    final hits = <String>[];
+    for (final file in dartFiles()) {
+      final source = _codeOnly(file.readAsStringSync());
+      for (final name in _retiredSymbols) {
+        if (RegExp('\\b$name\\b').hasMatch(source)) {
+          hits.add('${rel(file)} -> $name');
+        }
+      }
+    }
+
+    expect(
+      hits,
+      isEmpty,
+      reason:
+          'WP-586 bu sembolleri sildi (tur kronometresi WP-264te ekransiz '
+          'kalmisti): $hits. Gercekten diriltiyorsan once TUKETICISINI yaz; '
+          'bu listeden cikarmak tek basina kanit degildir.',
+    );
+  });
+
+  test('WP-586: silinen olu dosyalar ve barrel exportlari tutarli', () {
+    for (final path in _retiredFiles) {
+      expect(
+        File(path).existsSync(),
+        isFalse,
+        reason:
+            '$path WP-586da silindi (icindeki iki sinifin da cagri yeri yoktu). '
+            'Geri dogduysa once tuketicisini goster.',
+      );
+    }
+
+    final barrel = File(_timeEngineBarrel);
+    expect(barrel.existsSync(), isTrue, reason: '$_timeEngineBarrel bulunamadi');
+
+    final exports = _exportDecl
+        .allMatches(barrel.readAsStringSync())
+        .map((m) => m.group(1)!)
+        .toList();
+    expect(
+      exports.length,
+      greaterThanOrEqualTo(_timeEngineMinExports),
+      reason:
+          'barrel icinde en az $_timeEngineMinExports export bekleniyordu, '
+          '${exports.length} bulundu — export regexi mi bozuldu, yoksa bir '
+          'dosya sessizce mi dustu?',
+    );
+
+    final dangling = <String>[
+      for (final target in exports)
+        if (!File('lib/core/time_engine/$target').existsSync()) target,
+    ];
+    expect(
+      dangling,
+      isEmpty,
+      reason: 'barrel var olmayan dosyayi export ediyor: $dangling',
+    );
+  });
+
+  test('WP-586: izlenen api dosyalarinin bildirim listesi guncel', () {
+    for (final entry in _watchedApiFiles.entries) {
+      expect(
+        publicDeclsOf(entry.key),
+        entry.value.toSet(),
+        reason:
+            '${entry.key} icindeki ust duzey public bildirimler _watchedApiFiles '
+            'listesiyle uyusmuyor. Yeni sembol eklediysen listeye yaz (ve '
+            'tuketici kapisina gir); sildiysen listeden cikar.',
+      );
+    }
+  });
+
+  test('WP-586: izlenen api dosyalarindaki her public sembol tuketiliyor', () {
+    final sources = <String, String>{
+      for (final file in dartFiles())
+        rel(file): _codeOnly(file.readAsStringSync()),
+    };
+
+    final orphans = <String>[];
+    for (final entry in _watchedApiFiles.entries) {
+      for (final name in publicDeclsOf(entry.key)) {
+        final pattern = RegExp('\\b$name\\b');
+        final hasConsumer = sources.entries.any(
+          (e) =>
+              e.key != entry.key &&
+              e.key != _timeEngineBarrel &&
+              pattern.hasMatch(e.value),
+        );
+        if (!hasConsumer) orphans.add('$name  (${entry.key})');
+      }
+    }
+
+    expect(
+      orphans,
+      isEmpty,
+      reason:
+          'Bu sembolu lib/ icinde kullanan tek bir dosya yok — barrel export '
+          'etmek tuketici SAYILMAZ; WP-586 tam olarak boyle bir yuzeyi '
+          'temizledi. Ya cagri yerini ekle ya sembolu sil.',
     );
   });
 }
