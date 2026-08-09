@@ -192,8 +192,10 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # TEKtir ve en yuksek kademeyi tasir; 0126 onu "dusen kademe" ile eslestirip
 # SILIYORDU, hak edilmis kademeler de ekrandan kayboldu. Sahibin kendi
 # hesabinda OLCULDU: defterde t1..t4 var, ekranda sifir kademe.
-Assert-Equal $contract.production.migration_head '0128' 'WP-635 production hedefi 0128 (onarim)'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0128 apply icin production kapisi TEK SEFERLIK acik'
+# ONARIM UYGULANDI (run 31336723743): "3 kilit satiri geri kondu",
+# "8 kullanici yeniden uzlastirildi", post-check uc sutunda da 0128.
+Assert-Equal $contract.production.migration_head '0128' 'production hedefi 0128: onarim uygulandi'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0128 apply bitti, production yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
