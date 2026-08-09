@@ -166,6 +166,11 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
         padding: getSafeVerticalPadding(context, horizontal: 20, vertical: 16),
         children: [
           gamificationAsync.when(
+            // WP-638: yeniden yükleme sırasında gövde bir spinner'a çökerse
+            // ListView içeriği kaybolur ve kaydırma yeri başa döner ("ekran
+            // gidip geliyor"). Elde eski veri varsa onu göstermeye devam et;
+            // spinner yalnız gerçekten hiç veri yokken çıkar.
+            skipLoadingOnReload: true,
             loading: () => Padding(
               padding: EdgeInsets.all(32),
               child: Center(child: CircularProgressIndicator()),
@@ -180,6 +185,9 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
             ),
             data: (gamification) {
               return achievementsAsync.when(
+                // WP-638: aynı gerekçe — rozet listesi tazelenirken katalog
+                // yok olup yeniden gelmesin.
+                skipLoadingOnReload: true,
                 loading: () => Column(
                   children: [
                     CrownedAvatar(

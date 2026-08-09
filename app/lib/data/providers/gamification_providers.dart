@@ -39,6 +39,21 @@ final userAchievementsProvider =
       return repo.watchUserAchievements(userId);
     });
 
+/// WP-638: **oturum icerigi ozeti** — ayni icerik yeniden yayinlaninca
+/// bagimlilar yeniden kurulmasin diye. `userSessionsProvider` bir realtime
+/// akistir: cache->remote cift emit, realtime yeniden abonelik ve offline hub
+/// push ayni satirlari yeni bir `List` olarak tekrar tekrar yayinlar. Record
+/// `==` yapisal oldugu icin ozet degismedigi surece Riverpod "degismedi" der.
+final _sessionCompletionSignalProvider =
+    Provider.autoDispose<({int count, int seconds})?>((ref) {
+  final sessions = ref.watch(userSessionsProvider).value;
+  if (sessions == null) return null;
+  return (
+    count: sessions.length,
+    seconds: sessions.fold<int>(0, (a, s) => a + s.durationSeconds),
+  );
+});
+
 /// WP-56 + WP-105: başarı ilerlemesi **server-authoritative**.
 ///
 /// - İstemci XP/tier hesaplayıp yazmaz.
@@ -48,14 +63,25 @@ final userAchievementsProvider =
 ///   listesi değişince debounce ile tetikler (profil ekranı gerekmez).
 /// - Profil vitrini hâlâ bu provider'ı izleyebilir (confetti / anlık yenileme).
 ///
-/// [userSessionsProvider] yalnız **okunur**.
+/// - **WP-638:** oturum sayisi/toplam suresi degismedikce YENIDEN KOSMAZ;
+///   katalogda gezerken ekran kendini yenilemez.
+///
+/// [userSessionsProvider] yalniz **okunur**.
 final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
   ref,
 ) async {
-  final user = ref.watch(authStateProvider).value;
-  if (user == null) return;
+  final userId = ref.watch(authStateProvider.select((auth) => auth.value?.id));
+  if (userId == null) return;
 
-  await ref.watch(userSessionsProvider.future);
+  // 🔴 WP-638 (sahip: "basarimlar ekranindayken belli saniyede bir sayfayi
+  // yineliyor"): burada eskiden `await ref.watch(userSessionsProvider.future)`
+  // vardi. Akisin her yeniden yayini — icerik ayni olsa bile — bu
+  // FutureProvider'i yeniden kurup `process_achievement_event` RPC'sini
+  // (**yazma**) tekrar tetikliyordu; katalogda gezerken ekran gidip geliyordu.
+  // Artik yalniz oturum sayisi/toplam suresi degisince kosar; yani gercekten
+  // bir oturum tamamlandiginda. Odul akisi bu yolla korunur.
+  final signal = ref.watch(_sessionCompletionSignalProvider);
+  if (signal == null) return; // oturumlar henuz yuklenmedi
   await runAchievementSessionCompletedSync(ref);
 });
 
