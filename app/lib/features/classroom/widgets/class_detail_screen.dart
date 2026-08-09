@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/l10n/group_error_text.dart';
@@ -175,6 +176,14 @@ class ClassDetailScreen extends ConsumerWidget {
                           }
                         },
                       ),
+                      IconButton(
+                        key: const Key('invite-share-action'),
+                        tooltip: AppLocalizations.of(
+                          context,
+                        ).classroomDavetiPaylas,
+                        icon: const Icon(Icons.share_outlined, size: 20),
+                        onPressed: () => _shareInvite(context),
+                      ),
                       if (isAdmin)
                         IconButton(
                           tooltip: AppLocalizations.of(
@@ -314,6 +323,32 @@ class ClassDetailScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// 🔴 WP-588: davet kodunun tek çıkışı **kopyala**ydı ve pano bağlamı
+  /// taşımaz — karşı tarafa düşen şey, hangi gruba ait olduğu ve ne yapılacağı
+  /// belli olmayan çıplak bir harf dizisidir. Uygulamanın çekirdeği birlikte
+  /// çalışmak; kapalı testte 13 kişi birbirini yalnız bu kodla bulacak.
+  ///
+  /// Paylaşılan metin bu yüzden grup adını **ve** kodu birlikte taşır
+  /// (`classroomDavetiPaylasMetni`): kodsuz paylaşım alıcı için işlenemez.
+  Future<void> _shareInvite(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: l10n.classroomDavetiPaylasMetni(group.name, group.inviteCode),
+        ),
+      );
+    } catch (_) {
+      // Paylaşım sayfası açılamayan platformda (masaüstü mailto fallback'i
+      // dahil) eylem sessizce ölmesin — sessiz hiçbir şey bu ekranın WP-540'ta
+      // kapatılan kusuruydu.
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+      );
+    }
   }
 
   Future<void> _renameDialog(BuildContext context, WidgetRef ref) async {

@@ -167,6 +167,8 @@
   "classroomDavetKoduKopyalandi": "Davet kodu kopyalandı",
   "classroomDavetKoduDavetKodu": "Davet kodu:",
   "classroomDavetKodunuGir": "Davet kodunu gir.",
+  "classroomDavetiPaylas": "Daveti paylaş",
+  "classroomDavetiPaylasMetni": "\"{name}\" grubuna katıl. Odak Kampı uygulamasında \"Koda katıl\"a dokun ve bu davet kodunu gir: {code}",
   "classroomDers": "Ders",
   "classroomDersleriDuzenle": "Dersleri düzenle",
   "classroomDurdur": "Durdur",
@@ -1047,6 +1049,7 @@
   "groupDiscoveryJoined": "Katıldın",
   "groupDiscoveryFull": "Dolu",
   "groupDiscoveryEmpty": "Açık grup bulunamadı",
+  "groupDiscoveryEmptyHint": "Listelenecek açık grup yok. Kendi grubunu kurabilir ya da elindeki davet koduyla katılabilirsin.",
   "groupDiscoveryRetry": "Tekrar dene",
   "classroomGruptanCikilamadi": "Gruptan çıkılamadı.",
   "@classroomGruptanCikilamadi": {

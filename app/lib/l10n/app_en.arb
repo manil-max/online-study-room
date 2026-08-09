@@ -774,6 +774,22 @@
   "@classroomDavetKodunuGir": {
     "description": "Classroom user-facing text. Source: Davet kodunu gir."
   },
+  "classroomDavetiPaylas": "Share invitation",
+  "@classroomDavetiPaylas": {
+    "description": "WP-588: tooltip of the share action next to a group invitation code"
+  },
+  "classroomDavetiPaylasMetni": "Join \"{name}\". In the Focus Camp app, tap \"Join with code\" and enter this invitation code: {code}",
+  "@classroomDavetiPaylasMetni": {
+    "description": "WP-588: shared invitation text. Must carry BOTH the group name and the invite code - a share without the code cannot be acted on.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "classroomDers": "Subject",
   "@classroomDers": {
     "description": "Classroom user-facing text. Source: Ders"
@@ -4505,6 +4521,10 @@
   "groupDiscoveryEmpty": "No public groups found",
   "@groupDiscoveryEmpty": {
     "description": "Empty state for public group discovery"
+  },
+  "groupDiscoveryEmptyHint": "There are no public groups to list. You can create your own group or join with an invitation code.",
+  "@groupDiscoveryEmptyHint": {
+    "description": "WP-588: guidance under the empty public group discovery state, above the create/join exits"
   },
   "groupDiscoveryRetry": "Try again",
   "@groupDiscoveryRetry": {

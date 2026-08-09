@@ -11,6 +11,7 @@ import '../../../core/time_engine/world_clock_math.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
+import 'class_switcher.dart';
 import 'group_avatar.dart';
 
 /// WP-555: arama kutusunda her tusa bir RPC gidiyordu ("matematik" = 9 istek).
@@ -264,7 +265,7 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
         ),
       );
     }
-    if (_groups.isEmpty) return Center(child: Text(l10n.groupDiscoveryEmpty));
+    if (_groups.isEmpty) return _buildEmpty(l10n);
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -300,6 +301,95 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
         },
       ),
     );
+  }
+
+  /// 🔴 WP-588: burada duz `Center(child: Text(l10n.groupDiscoveryEmpty))`
+  /// vardi ve `RefreshIndicator` yalniz DOLU listeye kuruluyordu. Bos liste bu
+  /// yuzden **cikmaz sokakti**: kaydirilabilir govde olmadigi icin asagi-cekme
+  /// hicbir sey yapmiyordu (jest bir `Scrollable` olmadan hic dogmaz) ve
+  /// ekranda gidilecek tek yer geri dugmesiydi. Kapali testin ILK gununde
+  /// listenin bos olmasi beklenen durumdur, istisna degil.
+  ///
+  /// Desen icat edilmedi: grupsuz kullanici ekrani (`classroom_screen.dart`
+  /// `_NoGroupView`) ayni sorunu WP-541'de boyle cozdu — sigdiginda ortalanir,
+  /// sigmadiginda kayar. `AlwaysScrollableScrollPhysics` ayrica sart: icerik
+  /// viewport'a sigdiginda kaydirici hareketsiz kalir ve asagi-cekme yine
+  /// olu kalirdi.
+  Widget _buildEmpty(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    // Govde zaten `SafeArea` icinde (`build`); ikinci bir alt inset payi
+    // burada cift bosluk olurdu.
+    const padding = EdgeInsets.all(24);
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.hasBoundedHeight
+                  ? (constraints.maxHeight - padding.vertical).clamp(
+                      0.0,
+                      double.infinity,
+                    )
+                  : 0.0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.travel_explore,
+                  size: 72,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.groupDiscoveryEmpty,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.groupDiscoveryEmptyHint,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  key: const Key('discovery-empty-create-group'),
+                  onPressed: () => _exitToGroup(createGroupFlow),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.classroomGrupOlustur),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  key: const Key('discovery-empty-join-code'),
+                  onPressed: () => _exitToGroup(joinGroupFlow),
+                  icon: const Icon(Icons.login),
+                  label: Text(l10n.classroomKodaKatil),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Kurma/koda-katilma basariliysa bu ekranda kalmanin anlami yok: kullanici
+  /// artik bir gruba ait ve yeni kurulan grup varsayilan olarak **Ozel**, yani
+  /// bu listede hicbir zaman gorunmeyecek. Vazgecilirse ekran oldugu gibi kalir.
+  Future<void> _exitToGroup(
+    Future<bool> Function(BuildContext, WidgetRef) flow,
+  ) async {
+    final navigator = Navigator.of(context);
+    if (!await flow(context, ref)) return;
+    // Ekran her zaman `push` ile aciliyor (`classroom_screen.dart:220`,
+    // `class_switcher.dart:104`); kok rota oldugu tek yer testtir.
+    if (mounted && navigator.canPop()) navigator.pop();
   }
 }
 
