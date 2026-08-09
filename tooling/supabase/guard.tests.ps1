@@ -107,10 +107,23 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # migration'in KENDI backfill UPDATE'ini reddediyor. Staging'de gecmisti --
 # muhtemelen orada eslesen satir yoktu, yani UPDATE sifir satira dokundu ve
 # koruma hic tetiklenmedi. DOGRULANMADI.
-# Kapi ayni gun geri kilitlendi; kapsam harcandi ve YENILENMEDI. 0124
-# duzeltilmeden tekrar denenmemeli.
-Assert-Equal $contract.production.migration_head '0123' 'production hedefi 0123: 0124 apply BASARISIZ oldu'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0124 apply basarisiz, kapi yeniden kilitli'
+# Kapi ayni gun geri kilitlendi; kapsam harcandi ve YENILENMEDI.
+#
+# 🔴 IKINCI DENEME ICIN YENIDEN ACILDI (2026-08-09, commit 15779c9).
+# Kok neden anlasildi ve duzeltildi: backfill, kendi cozumunu getiren guard'dan
+# ONCE kosuyordu; degismezlik artik YALNIZ o tek ifade suresince askiya
+# aliniyor. Siralamayi degistirmek yetmezdi -- yeni guard yalniz
+# "actor_id dolu -> NULL, hash AYNI" gecisine izin verir, backfill tersini yapar.
+#
+# Uc bagimsiz kanit: (1) 1-26. ifadeler basarisiz denemede GERCEK production
+# verisinde zaten kostu, yani veri-bagimli kisim (ugc_reports validate
+# constraint dahil) production verisinde kanitlandi; (2) 27. ifade duzeltildi ve
+# tests/050 artik eski satiri ELDE kurup hem ciplak UPDATE'in HALA reddedildigini
+# hem sarmalli olanin gectigini olcuyor -- eski test bunu olcemezdi, taze
+# replay'de tablo bos; (3) 27'den sonrasi tamamen DDL, veriye bagli degil.
+# Database Gates run 31323807502 YESIL, 050'in 29 iddiasi kostu.
+Assert-Equal $contract.production.migration_head '0124' 'WP-549 ikinci deneme: production hedefi 0124'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0124 apply icin production kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
