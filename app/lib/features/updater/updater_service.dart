@@ -10,7 +10,10 @@ import '../../core/config/distribution_channel.dart';
 ///
 /// - **Play (`DISTRIBUTION_CHANNEL=play`):** kapalı (WP-110) — ağ isteği yok.
 /// - **Android GitHub sideload:** sabit isimli APK + SHA-256.
-/// - **Windows (WP-28):** sabit isimli MSIX + SHA-256.
+/// - **Windows (WP-578):** sabit isimli **taşınabilir ZIP** + SHA-256. MSIX
+///   üretilmeye devam ediyor ama imzasız olduğu için kullanıcıda hiç kurulmuyor
+///   (`0x800B010A` — SmartScreen uyarısı değil, sert blok), bu yüzden uygulama
+///   içi güncelleme onu bilerek indirmez.
 /// - iOS/web: yok.
 ///
 /// Etiket: `v<buildNumber>` / `beta-v<buildNumber>`.
@@ -75,7 +78,7 @@ class UpdaterService {
         sendTimeout: const Duration(seconds: 10),
       );
 
-      final assetName = isWindows ? _windowsMsixName : _apkName;
+      final assetName = isWindows ? _windowsZipName : _apkName;
 
       final Map<String, dynamic>? data;
       if (_isBeta) {
@@ -113,7 +116,7 @@ class UpdaterService {
           downloadUrl: packageUrl,
           sha256Url: _findAssetUrl(assets, '$assetName.sha256'),
           packageKind: isWindows
-              ? UpdatePackageKind.msix
+              ? UpdatePackageKind.windowsZip
               : UpdatePackageKind.apk,
         ),
       );
@@ -140,10 +143,14 @@ class UpdaterService {
   static String get _apkName =>
       _isBeta ? 'app-beta-release.apk' : 'app-release.apk';
 
-  /// CI `windows-release.yml` ile hizalı MSIX adı.
-  static String get _windowsMsixName => _isBeta
-      ? 'odak-kampi-windows-beta.msix'
-      : 'odak-kampi-windows-stable.msix';
+  /// CI `windows-release.yml` ile hizalı **taşınabilir ZIP** adı (WP-578).
+  ///
+  /// İş akışı `prefix=odak-kampi-windows-$channel` üretip `$prefix.zip` yazar;
+  /// buradaki iki dize onunla harfi harfine aynı olmak zorundadır. Sözleşme
+  /// `test/features/updater/windows_packaging_wp568_test.dart` ile kilitli.
+  static String get _windowsZipName => _isBeta
+      ? 'odak-kampi-windows-beta.zip'
+      : 'odak-kampi-windows-stable.zip';
 
   /// Beta kanalı için: prerelease + `beta` etiket + asset'i olan en yüksek build.
   static Map<String, dynamic>? _pickLatestBeta(
@@ -211,7 +218,11 @@ class UpdateCheckResult {
 }
 
 /// İndirilecek paket türü (kurulum yolu platforma göre değişir).
-enum UpdatePackageKind { apk, msix }
+///
+/// WP-578: Windows kolu MSIX değil **taşınabilir ZIP** indirir. ZIP kurulmaz,
+/// açılır: çalışan uygulama kendi dosyalarının üzerine yazamayacağı için son
+/// adımı kullanıcı yapar.
+enum UpdatePackageKind { apk, windowsZip }
 
 /// Bulunan yeni sürümün bilgileri.
 class UpdateInfo {
@@ -232,7 +243,7 @@ class UpdateInfo {
   /// Beklenen SHA-256 dosyasının linki; `null` ise doğrulama atlanır.
   final String? sha256Url;
 
-  /// Android APK veya Windows MSIX.
+  /// Android APK veya Windows taşınabilir ZIP.
   final UpdatePackageKind packageKind;
 
   UpdateInfo copyWith({

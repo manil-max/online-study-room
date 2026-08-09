@@ -9,9 +9,15 @@ import 'package:flutter_test/flutter_test.dart';
 /// bağlanmamıştı; üç ucu (uygulama kodu, Windows iş akışı, Release iş akışı)
 /// birbirinden habersiz metin olarak yaşıyordu:
 ///
-/// - `updater_service.dart` sabit bir MSIX adı arıyor,
+/// - `updater_service.dart` sabit bir artefakt adı arıyor,
 /// - `windows-release.yml` o adı üretiyor,
 /// - `release.yml` onu GitHub Release'e ekliyor.
+///
+/// **WP-578 güncellemesi:** zincirin ucundaki artefakt MSIX değil **taşınabilir
+/// ZIP**'tir. MSIX imzasız üretildiği için kullanıcıda hiç kurulmuyordu
+/// (`0x800B010A`), bu yüzden uygulama içi güncelleme artık ZIP indiriyor. Kapı
+/// aynı soruyu koruyor, yalnız doğru artefaktı gösteriyor; MSIX'in CI/Release
+/// tarafındaki adı ise ikincil artefakt olarak korunmaya devam ediyor.
 ///
 /// Aradan biri yeniden adlandırılsa hiçbir test kırmızıya düşmezdi; sonuç
 /// kullanıcıda "güncelleme yok" ya da "indirdi ama kuramadı" olarak görünürdü.
@@ -24,8 +30,8 @@ void main() {
   final pubspec = _read('pubspec.yaml');
 
   group('WP-568 artefakt adı zinciri', () {
-    test('uygulamanın aradığı MSIX adları tam olarak beta + stable', () {
-      final names = RegExp(r"'odak-kampi-windows-(\w+)\.msix'")
+    test('uygulamanın aradığı ZIP adları tam olarak beta + stable', () {
+      final names = RegExp(r"'odak-kampi-windows-(\w+)\.zip'")
           .allMatches(updaterSource)
           .map((m) => m.group(1))
           .toSet();
@@ -198,6 +204,44 @@ void main() {
             'İmza gerçeği platform manifestine yazılmazsa yayın sonrası '
             'hangi paketin güvenilir imzalandığı hatırlamaya kalır.',
       );
+    });
+  });
+
+  group('WP-578 taşınabilir ZIP birincil yol', () {
+    test('uygulama artık hiçbir MSIX asset adı aramaz', () {
+      expect(
+        updaterSource,
+        isNot(contains('.msix')),
+        reason:
+            'İmzasız MSIX kullanıcıda 0x800B010A ile REDDEDİLİYOR. Uygulama '
+            'onu indirirse kullanıcı ~40 MB iner ve kurulum hiç başlamaz; '
+            'WP-578 kararı bu yüzden ZIP-öncelikli.',
+      );
+    });
+
+    test('paket türü enum\'u ZIP kolunu taşır, MSIX kolunu değil', () {
+      expect(updaterSource, contains('enum UpdatePackageKind { apk, windowsZip }'));
+      expect(
+        updaterSource,
+        isNot(contains('UpdatePackageKind.msix')),
+        reason: 'MSIX koluna geri dönülürse kurulamayan paket yeniden akar.',
+      );
+    });
+
+    test('ZIP artefaktının yanında SHA-256 dosyası üretilir', () {
+      expect(
+        windowsWorkflow,
+        contains(r'@($msixOut, $zipOut)'),
+        reason:
+            'Bütünlük dosyası döngüsünden ZIP çıkarılırsa uygulama '
+            '`<ad>.zip.sha256` bulamaz; WP-578 Windows kolunda doğrulama '
+            'atlanamaz (fail-closed), yani güncelleme tamamen durur.',
+      );
+    });
+
+    test('Release iş akışı ZIP ve sha256 asset\'lerini yayınlar', () {
+      expect(releaseWorkflow, contains('release-assets/windows/*.zip'));
+      expect(releaseWorkflow, contains('release-assets/windows/*.sha256'));
     });
   });
 

@@ -22,15 +22,19 @@ void main() {
       expect(info.packageKind, UpdatePackageKind.apk);
     });
 
-    test('msix copyWith preserves kind', () {
+    // WP-578: Windows kolu MSIX degil tasinabilir ZIP indirir.
+    test('windowsZip copyWith preserves kind', () {
       const info = UpdateInfo(
         versionCode: 2,
         versionName: 't',
         releaseNotes: '',
-        downloadUrl: 'https://example.com/a.msix',
-        packageKind: UpdatePackageKind.msix,
+        downloadUrl: 'https://example.com/a.zip',
+        packageKind: UpdatePackageKind.windowsZip,
       );
-      expect(info.copyWith(versionName: 'x').packageKind, UpdatePackageKind.msix);
+      expect(
+        info.copyWith(versionName: 'x').packageKind,
+        UpdatePackageKind.windowsZip,
+      );
     });
   });
 }

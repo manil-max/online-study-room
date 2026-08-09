@@ -56,11 +56,31 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
   );
 }
 
-/// Yeni sürümü tanıtan ve indirip kurmayı yöneten pencere.
+/// Yeni sürümü tanıtan ve indirmeyi yöneten pencere.
+///
+/// Android'de indirilen APK doğrudan kurulum ekranına verilir. **Windows'ta bu
+/// mümkün değildir** (WP-578): çalışan uygulamanın kendi `.exe`/`.dll`
+/// dosyaları kilitlidir, güncelleme onların üzerine yazamaz. Bu yüzden Windows
+/// kolu taşınabilir ZIP indirir, SHA-256 ile doğrular ve **son adımı
+/// kullanıcıya açıkça söyler**; "kuruyormuş gibi" yapıp sessizce ölmez.
 class UpdaterDialog extends StatefulWidget {
-  const UpdaterDialog({super.key, required this.info});
+  const UpdaterDialog({
+    super.key,
+    required this.info,
+    this.dioOverride,
+    this.saveDirectoryOverride,
+  });
 
   final UpdateInfo info;
+
+  /// Test tohumu: bütünlük kapısı gerçek davranışla sınanabilsin diye ağ
+  /// katmanı dışarıdan verilebilir.
+  @visibleForTesting
+  final Dio? dioOverride;
+
+  /// Test tohumu: birim testte platform eklentisi (path_provider) yoktur.
+  @visibleForTesting
+  final Directory? saveDirectoryOverride;
 
   @override
   State<UpdaterDialog> createState() => _UpdaterDialogState();
@@ -70,13 +90,31 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
   bool _downloading = false;
   double _progress = 0; // 0..1
   String? _error;
+
+  /// Doğrulanmış Windows arşivinin yolu; doluysa pencere yönerge moduna geçer.
+  String? _readyFilePath;
   CancelToken? _cancelToken;
+
+  bool get _isWindowsZip =>
+      widget.info.packageKind == UpdatePackageKind.windowsZip;
 
   @override
   void dispose() {
     // Pencere kapanırsa süren indirmeyi bırak (kaynak sızıntısını önler).
     _cancelToken?.cancel();
     super.dispose();
+  }
+
+  /// Windows arşivi kullanıcının **elle açacağı** bir dosyadır; geçici klasör
+  /// onun bulabileceği bir yer değil. İndirilenler klasörü yoksa geçiciye
+  /// düşülür ve yol yine ekranda gösterilir.
+  Future<Directory> _saveDirectory() async {
+    final override = widget.saveDirectoryOverride;
+    if (override != null) return override;
+    if (_isWindowsZip) {
+      return await getDownloadsDirectory() ?? await getTemporaryDirectory();
+    }
+    return getTemporaryDirectory();
   }
 
   Future<void> _downloadAndInstall() async {
@@ -99,22 +137,24 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       _downloading = true;
       _progress = 0;
       _error = null;
+      _readyFilePath = null;
       _cancelToken = cancelToken;
     });
 
     try {
       // Takılı bağlantıda sonsuza kadar beklememek için zaman aşımları.
-      final dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 20),
-          receiveTimeout: const Duration(minutes: 3),
-        ),
-      );
-      final dir = await getTemporaryDirectory();
-      final ext = widget.info.packageKind == UpdatePackageKind.msix
-          ? 'msix'
-          : 'apk';
-      final savePath = '${dir.path}/update_${widget.info.versionCode}.$ext';
+      final dio =
+          widget.dioOverride ??
+          Dio(
+            BaseOptions(
+              connectTimeout: const Duration(seconds: 20),
+              receiveTimeout: const Duration(minutes: 3),
+            ),
+          );
+      final dir = await _saveDirectory();
+      final savePath = _isWindowsZip
+          ? '${dir.path}/odak-kampi-windows-${widget.info.versionCode}.zip'
+          : '${dir.path}/update_${widget.info.versionCode}.apk';
       final packageFile = File(savePath);
 
       await dio.download(
@@ -130,6 +170,22 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
 
       // Bütünlük doğrulaması: release SHA-256 yayınlamışsa dosya ile karşılaştır.
       final sha256Url = widget.info.sha256Url;
+
+      // 🔴 WP-578: Windows'ta doğrulama ATLANAMAZ. CI her artefaktın yanında
+      // `<ad>.sha256` üretir; yoksa release eksiktir. Doğrulanmamış bir arşivi
+      // "hazır" diye sunmak bu WP'nin tam tersi olurdu. Android tarafı eski
+      // release'lerle uyum için sha256 yoksa atlamaya devam eder.
+      if (_isWindowsZip && sha256Url == null) {
+        await _discard(packageFile);
+        if (mounted) {
+          setState(() {
+            _downloading = false;
+            _error = l10n.updaterDosyaDogrulanamadi;
+          });
+        }
+        return;
+      }
+
       if (sha256Url != null) {
         final expected = _parseSha256(
           (await dio.get<String>(sha256Url, cancelToken: cancelToken)).data,
@@ -138,18 +194,32 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
             .convert(await packageFile.readAsBytes())
             .toString();
         if (expected == null || expected != actual) {
-          if (await packageFile.exists()) await packageFile.delete();
+          await _discard(packageFile);
           if (mounted) {
             setState(() {
               _downloading = false;
-              _error = l10n.updaterKurulumIptalEdildi;
+              // Eskiden burada "Kurulum iptal edildi." yazıyordu: bozuk indirme
+              // ile kullanıcının vazgeçmesi aynı cümleye düşüyordu.
+              _error = l10n.updaterDosyaDogrulanamadi;
             });
           }
           return;
         }
       }
 
-      // APK → Android kurulum; MSIX → Windows paket kurulum UI (sideload).
+      // Windows: kurulum başlatmıyoruz (çalışan uygulamanın üzerine yazılamaz).
+      // Doğrulanmış arşivin yerini ve üç adımı gösteriyoruz.
+      if (_isWindowsZip) {
+        if (mounted) {
+          setState(() {
+            _downloading = false;
+            _readyFilePath = savePath;
+          });
+        }
+        return;
+      }
+
+      // APK → Android kurulum ekranı.
       final result = await OpenFilex.open(savePath);
       if (result.type != ResultType.done && mounted) {
         setState(() {
@@ -170,6 +240,23 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
     }
   }
 
+  /// Doğrulamayı geçemeyen dosya diskte bırakılmaz.
+  static Future<void> _discard(File file) async {
+    if (await file.exists()) await file.delete();
+  }
+
+  /// İndirilen arşivin bulunduğu klasörü dosya yöneticisinde açar. Açılamazsa
+  /// kullanıcı yolsuz kalmasın diye tam yol hata satırında gösterilir.
+  Future<void> _revealDownload() async {
+    final path = _readyFilePath;
+    if (path == null) return;
+    final l10n = AppLocalizations.of(context);
+    final result = await OpenFilex.open(File(path).parent.path);
+    if (result.type != ResultType.done && mounted) {
+      setState(() => _error = l10n.updaterKlasorAcilamadiPath(path));
+    }
+  }
+
   /// `sha256sum` çıktısından (`hex  dosya.apk`) 64 karakterlik hex özeti çıkarır.
   static String? _parseSha256(String? content) {
     if (content == null) return null;
@@ -177,11 +264,49 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
     return m?.group(1)?.toLowerCase();
   }
 
+  List<Widget> _actions(AppLocalizations l10n, String? readyPath) {
+    if (_downloading) {
+      return [
+        TextButton(
+          onPressed: () => _cancelToken?.cancel(),
+          child: Text(l10n.updaterIptal),
+        ),
+      ];
+    }
+    if (readyPath != null) {
+      return [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.updaterTamam),
+        ),
+        FilledButton.icon(
+          onPressed: _revealDownload,
+          icon: const Icon(Icons.folder_open),
+          label: Text(l10n.updaterKlasoruAc),
+        ),
+      ];
+    }
+    return [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(l10n.updaterSonra),
+      ),
+      FilledButton.icon(
+        onPressed: _downloadAndInstall,
+        icon: const Icon(Icons.download),
+        label: Text(
+          _error == null ? l10n.updaterGuncelle : l10n.updaterTekrarDene,
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final info = widget.info;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final readyPath = _readyFilePath;
 
     return AlertDialog(
       title: Row(
@@ -200,7 +325,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (info.releaseNotes.isNotEmpty) ...[
+            if (readyPath == null && info.releaseNotes.isNotEmpty) ...[
               Text(
                 l10n.updaterYeniliklerYenilikler,
                 style: theme.textTheme.titleSmall,
@@ -209,6 +334,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
               Text(info.releaseNotes),
               const SizedBox(height: 16),
             ],
+            if (readyPath != null) WindowsUpdateReadyView(filePath: readyPath),
             if (_downloading) ...[
               LinearProgressIndicator(value: _progress == 0 ? null : _progress),
               const SizedBox(height: 8),
@@ -225,28 +351,57 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           ],
         ),
       ),
-      actions: _downloading
-          ? [
-              TextButton(
-                onPressed: () => _cancelToken?.cancel(),
-                child: Text(l10n.updaterIptal),
+      actions: _actions(l10n, readyPath),
+    );
+  }
+}
+
+/// Doğrulanmış Windows arşivi indirildikten sonra gösterilen yönerge (WP-578).
+///
+/// Bu metin bu iş paketinin asıl teslimatıdır: Windows'ta güncelleme otomatik
+/// tamamlanamıyor ve kullanıcı bunu **tahmin etmek zorunda kalmadan**
+/// öğrenmeli. Dosya yolu seçilebilir bırakıldı; kopyalanabilmesi gerekiyor.
+class WindowsUpdateReadyView extends StatelessWidget {
+  const WindowsUpdateReadyView({super.key, required this.filePath});
+
+  final String filePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.verified, size: 20, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.updaterIndirmeDogrulandi,
+                style: theme.textTheme.titleSmall,
               ),
-            ]
-          : [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.updaterSonra),
-              ),
-              FilledButton.icon(
-                onPressed: _downloadAndInstall,
-                icon: const Icon(Icons.download),
-                label: Text(
-                  _error == null
-                      ? l10n.updaterGuncelle
-                      : l10n.updaterTekrarDene,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.updaterWindowsAcikkenYazilamaz),
+        const SizedBox(height: 8),
+        Text(l10n.updaterWindowsAdimKapat),
+        const SizedBox(height: 4),
+        Text(l10n.updaterWindowsAdimCikar),
+        const SizedBox(height: 4),
+        Text(l10n.updaterWindowsAdimCalistir),
+        const SizedBox(height: 12),
+        SelectableText(
+          l10n.updaterIndirilenDosyaPath(filePath),
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }

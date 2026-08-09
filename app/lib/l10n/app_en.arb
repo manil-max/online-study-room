@@ -6552,5 +6552,51 @@
   "profileSinavTarihiniTemizle": "Clear exam date",
   "@profileSinavTarihiniTemizle": {
     "description": "WP-575 tooltip for the button that removes the saved exam date."
+  },
+  "updaterIndirmeDogrulandi": "Download complete and verified.",
+  "@updaterIndirmeDogrulandi": {
+    "description": "WP-578 Windows updater: shown after the portable ZIP passed SHA-256 verification."
+  },
+  "updaterWindowsAcikkenYazilamaz": "The app cannot overwrite its own files while it is running. You finish the update with these three steps:",
+  "@updaterWindowsAcikkenYazilamaz": {
+    "description": "WP-578 Windows updater: explains why the update cannot install itself."
+  },
+  "updaterWindowsAdimKapat": "1. Close Odak Kampı completely.",
+  "@updaterWindowsAdimKapat": {
+    "description": "WP-578 Windows updater manual step 1."
+  },
+  "updaterWindowsAdimCikar": "2. Extract the downloaded ZIP into an empty folder.",
+  "@updaterWindowsAdimCikar": {
+    "description": "WP-578 Windows updater manual step 2."
+  },
+  "updaterWindowsAdimCalistir": "3. Run online_study_room.exe from that folder.",
+  "@updaterWindowsAdimCalistir": {
+    "description": "WP-578 Windows updater manual step 3."
+  },
+  "updaterIndirilenDosyaPath": "Downloaded file: {path}",
+  "@updaterIndirilenDosyaPath": {
+    "description": "WP-578 Windows updater: absolute path of the verified archive.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "updaterKlasoruAc": "Open folder",
+  "@updaterKlasoruAc": {
+    "description": "WP-578 Windows updater action that reveals the downloaded archive in the file manager."
+  },
+  "updaterDosyaDogrulanamadi": "The downloaded file could not be verified (SHA-256 mismatch). It was deleted; please try again.",
+  "@updaterDosyaDogrulanamadi": {
+    "description": "WP-578 updater integrity failure. Kept separate from the install-cancelled message so a corrupt download is not reported as a user cancellation."
+  },
+  "updaterKlasorAcilamadiPath": "Could not open the folder. Open the file manually: {path}",
+  "@updaterKlasorAcilamadiPath": {
+    "description": "WP-578 Windows updater: file manager could not be launched; the absolute path is shown instead.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
   }
 }

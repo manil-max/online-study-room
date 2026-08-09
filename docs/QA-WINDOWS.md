@@ -77,14 +77,19 @@ Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yaln
 
 ## 1. Artefakt kimliği
 
+🔴 **WP-578: birincil dağıtım yolu taşınabilir ZIP'tir.** MSIX üretilmeye devam
+eder ama imzasız olduğu için **kurulamaz** (`0x800B010A`); uygulama içi
+güncelleme onu hiç indirmez. Gerekçe ve karar: `docs/WINDOWS-RELEASE-GATE.md`.
+
 | Alan | Değer |
 |---|---|
 | ProductName | Odak Kampı |
-| Package identity | `OdakKampi.App` (pubspec `msix_config`) |
-| Stable MSIX asset | `odak-kampi-windows-stable.msix` |
-| Beta MSIX asset | `odak-kampi-windows-beta.msix` |
-| Portable ZIP | `odak-kampi-windows-{channel}.zip` |
-| SHA-256 | `*.msix.sha256` / `*.zip.sha256` |
+| **Stable ZIP asset (birincil)** | `odak-kampi-windows-stable.zip` |
+| **Beta ZIP asset (birincil)** | `odak-kampi-windows-beta.zip` |
+| Package identity | `OdakKampi.App` / `OdakKampi.App.Beta` (WP-568) |
+| Stable MSIX asset (ikincil, kurulamaz) | `odak-kampi-windows-stable.msix` |
+| Beta MSIX asset (ikincil, kurulamaz) | `odak-kampi-windows-beta.msix` |
+| SHA-256 | `*.zip.sha256` / `*.msix.sha256` |
 | Etiket | `vN` / `beta-vN` (`N` = build number) |
 
 ## 2. Kurulum / güncelleme / kaldırma
@@ -94,12 +99,12 @@ Temiz hedefte iki-sürümlü MSIX koşumu için ayrıntılı ve redacted kanıt 
 
 | ID | Senaryo | Sonuç | Kanıt |
 |---|---|---|---|
-| W-01 | Temiz Windows 11, standart kullanıcı, MSIX kur | PASS/FAIL | |
+| W-01 | **Temiz Windows 11: ZIP'i boş klasöre çıkar → `online_study_room.exe`** | PASS/FAIL | |
 | W-02 | İlk açılış (login veya demo) | PASS/FAIL | |
-| W-03 | Aynı identity ile daha yüksek build update | Veri kaybı 0 | |
-| W-04 | Uninstall | Kalıntı/shortcut | |
-| W-05 | Self-signed SmartScreen uyarısı (beklenen QA) | Not | |
-| W-06 | Portable ZIP çalıştır (tüm Release klasörü) | PASS/FAIL | |
+| W-03 | **Yeni ZIP'i ayrı klasöre çıkar → aç → oturum/veri duruyor mu** | Veri kaybı 0 | |
+| W-04 | Klasörü sil (ZIP'te uninstall yok) → kalıntı/kısayol kontrolü | Not | |
+| W-05 | **İmzasız MSIX kurulumu `0x800B010A` ile REDDEDİLİR** — bu bir SmartScreen uyarısı değil, sert bloktur. ZIP'in ilk açılışındaki "bilinmeyen yayımcı" uyarısı ise geçilebilir. | Not | |
+| W-06 | MSIX kolu *(imza kararı gelmeden kabul kriteri değil)* | Bloklu | |
 
 ## 3. Platform matrisi
 
@@ -117,9 +122,11 @@ Temiz hedefte iki-sürümlü MSIX koşumu için ayrıntılı ve redacted kanıt 
 
 | ID | Senaryo | Beklenen |
 |---|---|---|
-| W-20 | Stable build, GitHub’da daha yeni stable MSIX | Diyalog + indirme + `OpenFilex` MSIX |
+| W-20 | Stable build, GitHub'da daha yeni stable **ZIP** | Diyalog → indirme → SHA-256 doğrulama → "İndirme tamamlandı ve doğrulandı." + 3 adımlık yönerge + "Klasörü aç" |
 | W-21 | Aynı/düşük build | Diyalog yok |
-| W-22 | SHA-256 uyuşmazlığı | Kurulum yok, hata metni |
+| W-22 | SHA-256 uyuşmazlığı | Yönerge ekranı **yok**, dosya silinir, "İndirilen dosya doğrulanamadı (SHA-256 uyuşmuyor)…" |
+| W-23 | Release'de `.zip.sha256` yok | Fail-closed: aynı doğrulama hatası; doğrulanmamış arşiv "hazır" gösterilmez |
+| W-24 | "Klasörü aç" düğmesi | Explorer indirme klasöründe açılır; açılamazsa tam dosya yolu hata satırında görünür |
 
 ## 5. Güvenlik
 

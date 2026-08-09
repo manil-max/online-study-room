@@ -2006,5 +2006,14 @@
   "homeSinavBugun": "Sınav bugün",
   "homeSinavGecti": "Sınav geçti",
   "profileSinavTarihi": "Sınav tarihi",
-  "profileSinavTarihiniTemizle": "Sınav tarihini temizle"
+  "profileSinavTarihiniTemizle": "Sınav tarihini temizle",
+  "updaterIndirmeDogrulandi": "İndirme tamamlandı ve doğrulandı.",
+  "updaterWindowsAcikkenYazilamaz": "Uygulama çalışırken kendi dosyalarının üzerine yazamaz. Güncellemeyi şu üç adımla sen tamamlıyorsun:",
+  "updaterWindowsAdimKapat": "1. Odak Kampı'nı tamamen kapat.",
+  "updaterWindowsAdimCikar": "2. İndirilen ZIP dosyasını boş bir klasöre çıkar.",
+  "updaterWindowsAdimCalistir": "3. O klasördeki online_study_room.exe dosyasını çalıştır.",
+  "updaterIndirilenDosyaPath": "İndirilen dosya: {path}",
+  "updaterKlasoruAc": "Klasörü aç",
+  "updaterDosyaDogrulanamadi": "İndirilen dosya doğrulanamadı (SHA-256 uyuşmuyor). Dosya silindi; tekrar dene.",
+  "updaterKlasorAcilamadiPath": "Klasör açılamadı. Dosyayı elle aç: {path}"
 }
