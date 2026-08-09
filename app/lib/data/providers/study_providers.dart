@@ -679,6 +679,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     required String reason,
     required String outcome,
     String origin = TimerJournalOrigins.unknown,
+    String trigger = TimerJournalTriggers.unknown,
     String? runId,
     int? runRevision,
     int? stateVersion,
@@ -703,6 +704,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
               reason: reason,
               outcome: outcome,
               origin: origin,
+              trigger: trigger,
               accountId: ref.read(authStateProvider).value?.id,
               runId: runId,
               deviceId: prefs.getString(globalTimerDeviceIdKey),
@@ -836,7 +838,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         .commands
         .listen((action) {
           if (action == TimerNotificationAction.stop) {
-            unawaited(stop());
+            // WP-599: uygulama AYAKTAYKEN kalici bildirimin Durdur'u. Ekrandaki
+            // dugmeyle ayni satiri yaziyordu; artik kendi damgasini birakir.
+            unawaited(stop(trigger: TimerJournalTriggers.notificationButton));
           }
         });
     // WP-371: snapshot turu **yalnız uygulama görünürken** atar. Sayaç
@@ -1913,10 +1917,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       // basıldı. Kaza korkuluğu burada REDDEDİLMEZ: ekranda gösterilecek bir
       // açıklama yok, reddetmek sessiz yutma olurdu (düzeltmenin kendisi bir
       // sessiz yutma üretemez).
-      start(guardAccidentalRestart: false);
+      start(
+        guardAccidentalRestart: false,
+        trigger: TimerJournalTriggers.externalCommandQueue,
+      );
     } else if (pending.command == 'stop' && state.isRunning) {
       // App-kapalı basılan Durdur'da gerçek durdurma anını (pending.at) kullan.
-      await stop(at: pending.at);
+      await stop(
+        at: pending.at,
+        trigger: TimerJournalTriggers.externalCommandQueue,
+      );
     }
   }
 
@@ -2033,10 +2043,24 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// yüzeylere kopyalanması gerekmez. Yalnız **geri bildirim kanalı olmayan**
   /// çağrı yerleri kapatır: bildirim/widget kuyruğundan gelen Başlat uygulama
   /// kapalıyken uygulanır, orada reddetmek sessiz yutma olurdu.
-  void start({bool guardAccidentalRestart = true}) {
+  ///
+  /// WP-599: [trigger] bu başlatmanın **kaynağıdır** ve günlüğe aynen düşer.
+  /// Varsayılanı `user_button`, çünkü ekrandaki düğmeler `start`'ı tear-off
+  /// olarak (`onPressed: notifier.start`) geçiyor ve argüman veremiyor.
+  ///
+  /// 🔴 Varsayılanın bedeli: kaynağını bildirmeyen YENİ bir çağıran sessizce
+  /// "parmak" damgası alır — düzeltmeye çalıştığımız yalanın ta kendisi. O
+  /// yüzden kural yoruma bırakılmadı: `test/core/
+  /// timer_start_source_contract_wp599_test.dart` lib/ içindeki tüm çağrı
+  /// yerlerini tarar ve parmak yüzeyleri dışında `trigger:` yazmayanı kırmızıya
+  /// düşürür.
+  void start({
+    bool guardAccidentalRestart = true,
+    String trigger = TimerJournalTriggers.userButton,
+  }) {
     if (state.isRunning) return;
     if (guardAccidentalRestart &&
-        !_acceptStartAfterStop(ref.read(studyTimerClockProvider)())) {
+        !_acceptStartAfterStop(ref.read(studyTimerClockProvider)(), trigger)) {
       return;
     }
     final now = DateTime.now();
@@ -2064,11 +2088,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // Uygulama içi başlatma burada `app` origin'iyle iz bırakır; kaynağı
     // olmayan bir `mirror_adopted` ya da `external_command` satırı, kullanıcının
     // hatırlamadığı başlatmanın gerçek failini gösterir.
+    //
+    // 🔴 WP-599: o kural yalnız UZAK/AYNA başlatmaları kapsıyordu. Cihaz
+    // entegrasyonu (Samsung Routines / ana ekran kısayolu) `start()`'ı doğrudan
+    // çağırdığı için buradan parmakla BİREBİR aynı satır çıkıyordu. Sahibin
+    // "sayacı gerçekten kardeşim mi başlattı" sorusu bu yüzden cevapsız kaldı
+    // (`docs/analiz/WP-595-sayac-xp-teshis.md`). Kaynak artık [trigger] ile
+    // satıra yazılır; `reason` da ondan türetilir ki ikisi birbirini
+    // yalanlayamasın.
     _journalTransition(
       event: TimerJournalEvents.startRequested,
-      reason: TimerJournalReasons.userAction,
+      reason: TimerJournalTriggers.reasonFor(trigger),
       outcome: TimerJournalOutcomes.applied,
       origin: TimerJournalOrigins.app,
+      trigger: trigger,
     );
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
     // fg_mode'u Dart tarafında da hemen running yaz.
@@ -2107,7 +2140,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Asimetri kapanıyor: `stop()` WP-246'dan beri ikinci girişe karşı korunuyor
   /// (`_stopInFlight`), `start()` korunmuyordu — gecenin 11 saatlik sahte
   /// oturumu tam olarak bu boşluktan geçti.
-  bool _acceptStartAfterStop(DateTime now) {
+  bool _acceptStartAfterStop(DateTime now, String trigger) {
     if (!startNeedsRestartConfirmation(
       lastStoppedAt: _lastRunEndedAt,
       now: now,
@@ -2127,9 +2160,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // "kaç kez kazara başlatılmaya çalışıldı" sorusunun cevabı budur.
     _journalTransition(
       event: TimerJournalEvents.startRequested,
-      reason: TimerJournalReasons.userAction,
+      reason: TimerJournalTriggers.reasonFor(trigger),
       outcome: TimerJournalOutcomes.deferred,
       origin: TimerJournalOrigins.app,
+      trigger: trigger,
     );
     return false;
   }
@@ -2259,21 +2293,30 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// kapalıyken basıldıysa o an buradan gelir; yoksa (uygulama içi Durdur) şimdi.
   /// Böylece app-kapalı durdurmada, uygulamanın açıldığı ana kadar geçen süre
   /// yanlışlıkla oturuma eklenmez.
-  Future<void> stop({DateTime? at}) async {
+  ///
+  /// WP-599: [trigger] durdurmanın **kaynağıdır**. "Durdurduğumu sanıyordum"
+  /// vakasının simetriği: bir rutin ya da bildirim düğmesi sayacı durdurduysa
+  /// bunu da bilmek gerekir. Eski kod nedeni `at == null` olup olmamasından
+  /// türetiyordu; oysa `pending.at`'i bugün hiçbir üretici yazmıyor (bkz.
+  /// [_consumePendingExternalCommand] yorumu), yani app-kapalı durdurma da
+  /// `user_action` görünüyordu.
+  Future<void> stop({
+    DateTime? at,
+    String trigger = TimerJournalTriggers.userButton,
+  }) async {
     // WP-246 (D2): devam eden bir durdurma varken ikinci giriş, aynı aralığı
     // tekrar kaydedip toplamı şişiriyordu → reddet.
     if (_stopInFlight) return;
     _journalTransition(
       event: TimerJournalEvents.stopRequested,
-      reason: at == null
-          ? TimerJournalReasons.userAction
-          : TimerJournalReasons.externalCommandQueue,
+      reason: TimerJournalTriggers.reasonFor(trigger),
       outcome: state.isRunning
           ? TimerJournalOutcomes.applied
           : TimerJournalOutcomes.deferred,
       origin: state.isGlobalTimerMirror
           ? TimerJournalOrigins.mirror
           : TimerJournalOrigins.app,
+      trigger: trigger,
       runId: state.globalTimerRunId,
       runRevision: state.globalTimerRunRevision,
       elapsedSeconds: _visibleElapsedSeconds,
@@ -2321,9 +2364,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           event: TimerJournalEvents.stopRequested,
           // `stale` = elimizdeki duvar saati okuması artık güvenilir değil;
           // süre bağımsız kaynaktan kurtarıldı.
-          reason: TimerJournalReasons.userAction,
+          reason: TimerJournalTriggers.reasonFor(trigger),
           outcome: TimerJournalOutcomes.stale,
           origin: TimerJournalOrigins.app,
+          trigger: trigger,
           runId: state.globalTimerRunId,
           runRevision: state.globalTimerRunRevision,
           elapsedSeconds: recoveredSeconds,

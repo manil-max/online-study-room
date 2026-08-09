@@ -36,6 +36,7 @@ class TimerJournalEntry {
     required this.reason,
     required this.outcome,
     this.origin = TimerJournalSlug.unknown,
+    this.trigger = TimerJournalTriggers.unknown,
     this.accountRef = TimerJournalRef.absent,
     this.runRef = TimerJournalRef.absent,
     this.deviceRef = TimerJournalRef.absent,
@@ -62,6 +63,28 @@ class TimerJournalEntry {
   /// `mirror` / `unknown`).
   final String origin;
 
+  /// WP-599: geçişi **tetikleyen yüzey** — "bunu gerçekten parmak mı yaptı".
+  ///
+  /// [origin] bu soruyu cevaplayamaz: bir Samsung Routine ya da ana ekran
+  /// kısayolu sayacı başlattığında komutu yayınlayan yine uygulamadır, yani
+  /// `origin=app` çıkar ve satır parmakla başlatmadan **ayırt edilemez**.
+  /// Sahibin "sayacı gerçekten kardeşim mi başlattı" sorusu
+  /// (`docs/analiz/WP-595-sayac-xp-teshis.md`) tam olarak bu yüzden
+  /// cevapsız kaldı.
+  ///
+  /// Neden yeni **alan**, neden yeni bir `origin` değeri değil: `origin`
+  /// sunucuyla paylaşılan kapalı bir sözlüktür — `0082_global_timer_v2.sql`
+  /// `origin not in ('app','widget','notification','recovery')` görürse
+  /// `invalid_global_timer_origin` fırlatır. Oraya yeni bir değer sokmak
+  /// sunucu değişikliği ister; tanı alanı yüzünden komut zarfını riske atmak
+  /// yanlış takas olurdu. [trigger] **yalnız cihazda kalan** günlük alanıdır.
+  ///
+  /// Geriye dönük okunabilirlik: WP-599 öncesi satırlarda bu alan yoktur →
+  /// [TimerJournalTriggers.unknown] okunur. Okuyucu "bilinmiyor" görür,
+  /// "kullanıcı" **görmez**; eski satırların hepsini parmağa yazmak, kapatmaya
+  /// çalıştığımız açığı geçmişe doğru kalıcılaştırmak olurdu.
+  final String trigger;
+
   final String accountRef;
   final String runRef;
   final String deviceRef;
@@ -84,6 +107,7 @@ class TimerJournalEntry {
     'reason': reason,
     'outcome': outcome,
     'origin': origin,
+    'trigger': trigger,
     'account_ref': accountRef,
     'run_ref': runRef,
     'device_ref': deviceRef,
@@ -114,6 +138,7 @@ class TimerJournalEntry {
       reason: TimerJournalSlug.normalize(raw['reason']),
       outcome: TimerJournalSlug.normalize(raw['outcome']),
       origin: TimerJournalSlug.normalize(raw['origin']),
+      trigger: TimerJournalSlug.normalize(raw['trigger']),
       accountRef: ref('account_ref'),
       runRef: ref('run_ref'),
       deviceRef: ref('device_ref'),
@@ -221,6 +246,10 @@ abstract final class TimerJournalEvents {
 /// Geçiş nedenleri (girdi) — "hangi olay bu geçişi doğurdu".
 abstract final class TimerJournalReasons {
   static const userAction = 'user_action';
+
+  /// WP-599: cihaz entegrasyonu (Samsung Routines / ana ekran kısayolu).
+  /// Ekranda parmak YOK; `user_action` yazmak yalan olur.
+  static const deviceIntegration = 'device_integration';
   static const notificationAction = 'notification_action';
   static const widgetAction = 'widget_action';
   static const externalCommandQueue = 'external_command_queue';
@@ -261,6 +290,70 @@ abstract final class TimerJournalOrigins {
   static const recovery = 'recovery';
   static const mirror = 'mirror';
   static const unknown = TimerJournalSlug.unknown;
+}
+
+/// WP-599: **tetikleyici yüzey** sözlüğü — "bu başlatmayı kim yaptı".
+///
+/// [TimerJournalOrigins] "komut hangi kanaldan yayınlandı" sorusunu yanıtlar ve
+/// sunucuyla paylaşılır. Bu sözlük ise **çağrı yerini** adlandırır ve cihazdan
+/// çıkmaz. İkisi dik: bir Samsung Routine başlatması `origin=app` +
+/// `trigger=device_start_timer_warm` yazar.
+abstract final class TimerJournalTriggers {
+  /// WP-599 öncesi satırlar + kaynağını bildirmeyen çağrı yerleri.
+  /// 🔴 "kullanıcı" ile eş anlamlı DEĞİLDİR.
+  static const unknown = TimerJournalSlug.unknown;
+
+  /// Ekrandaki Başlat/Durdur düğmesi — parmak.
+  static const userButton = 'user_button';
+
+  /// Uygulama kapalıyken bildirimden/widget'tan basılan düğmenin kuyruğu
+  /// (`TimerExternalCommandStore`). Parmak vardır ama **uygulama içinde** değil.
+  static const externalCommandQueue = 'external_command_queue';
+
+  /// Uygulama AYAKTAYKEN kalıcı bildirimin Durdur düğmesi
+  /// (`TimerNotificationAction.stop` akışı). Ekrandaki düğmeyle aynı
+  /// satırı yazıyordu; "ekrandan mı bildirimden mi durdurdum" sorusu
+  /// cevapsızdı.
+  static const notificationButton = 'notification_button';
+
+  /// Cihaz entegrasyonu tetikleyicilerinin ortak öneki.
+  static const devicePrefix = 'device_';
+
+  /// Cihaz entegrasyonu (App Shortcuts / Samsung Modes & Routines) aksiyonu.
+  ///
+  /// [action] intent adının kısa hâli (`start_timer`, `take_break`, …),
+  /// [coldStart] uygulamanın o anda kapalı olup olmadığı: `cold` =
+  /// `getInitialAction()` (süreç bu intentle doğdu), `warm` = `onIntentAction`
+  /// (uygulama zaten açıktı). İkisini ayırmak şart, çünkü "uygulamayı hiç
+  /// açmadım" diyen kullanıcının anlatısını yalnız `cold` doğrular.
+  static String deviceIntegration({
+    required String action,
+    required bool coldStart,
+  }) => TimerJournalSlug.normalize(
+    '$devicePrefix${action}_${coldStart ? 'cold' : 'warm'}',
+  );
+
+  /// Bu tetikleyici ekrandaki bir parmağa mı ait — iki yönlü iddianın ölçütü.
+  static bool isUserButton(String trigger) => trigger == userButton;
+
+  /// Tetikleyicinin kanonik [TimerJournalReasons] karşılığı.
+  ///
+  /// `reason` ile `trigger`ın ayrı ayrı verilmesi, ikisinin birbirini
+  /// yalanladığı satırlar üretirdi (bugünkü hata tam olarak bu: cihaz
+  /// entegrasyonu `user_action` yazıyordu). Tek kaynak burasıdır.
+  static String reasonFor(String trigger) {
+    if (trigger == userButton) return TimerJournalReasons.userAction;
+    if (trigger == externalCommandQueue) {
+      return TimerJournalReasons.externalCommandQueue;
+    }
+    if (trigger == notificationButton) {
+      return TimerJournalReasons.notificationAction;
+    }
+    if (trigger.startsWith(devicePrefix)) {
+      return TimerJournalReasons.deviceIntegration;
+    }
+    return TimerJournalSlug.unknown;
+  }
 }
 
 /// [SharedPreferences] üstünde dönen, TTL'li, PII'siz sayaç uçuş kaydı.
@@ -315,9 +408,7 @@ class TimerDiagnosticJournal {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return const [];
-      return [
-        for (final item in decoded) ?TimerJournalEntry.tryParse(item),
-      ];
+      return [for (final item in decoded) ?TimerJournalEntry.tryParse(item)];
     } catch (_) {
       // Bozuk kayıt tanı aracıdır, ürün verisi değil: sessizce sıfırlanır.
       return const [];
@@ -335,6 +426,7 @@ class TimerDiagnosticJournal {
     required String reason,
     required String outcome,
     String origin = TimerJournalOrigins.unknown,
+    String trigger = TimerJournalTriggers.unknown,
     Object? accountId,
     Object? runId,
     Object? deviceId,
@@ -351,6 +443,7 @@ class TimerDiagnosticJournal {
       reason: TimerJournalSlug.normalize(reason),
       outcome: TimerJournalSlug.normalize(outcome),
       origin: TimerJournalSlug.normalize(origin),
+      trigger: TimerJournalSlug.normalize(trigger),
       accountRef: ref(accountId),
       runRef: ref(runId),
       deviceRef: ref(deviceId),
