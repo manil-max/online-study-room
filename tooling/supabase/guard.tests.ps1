@@ -111,8 +111,11 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # study_sessions'a AFTER DELETE tetikleyicisi 0124/WP-549 sinifidir; kapi
 # `_account_still_exists` ile susturuldu ve tests/052 hesap silmenin hala
 # calistigini ayrica olcuyor (12 iddia, gercek Postgres, run 8c7eb16).
-Assert-Equal $contract.staging.migration_head '0126' 'WP-634 staging hedefi 0126'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0126 apply icin staging kapisi TEK SEFERLIK acik'
+# 0126 staging'e uygulandi (run 31333036931, post-check iki tarafta da 0126).
+# O kapsam HARCANDI; asagidaki kapi 0127 (gecmis temizligi) icin YENI bir
+# kapsamdir -- eski bayrak sessizce yeniden kullanilmadi.
+Assert-Equal $contract.staging.migration_head '0127' 'WP-634 staging hedefi 0127 (backfill)'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0127 apply icin staging kapisi TEK SEFERLIK acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
