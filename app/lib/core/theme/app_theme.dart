@@ -5,7 +5,10 @@ import 'container_roles.dart';
 import 'theme_presets.dart';
 import 'theme_tokens.dart';
 
-export 'container_roles.dart';
+// 🔴 `container_roles.dart` bilerek yeniden dışa aktarılmaz: kontrast kapısı
+// onu doğrudan içeri alsın ki `app_theme.dart` bozulduğunda bile derlensin ve
+// kırmızıya düşebilsin. Yeniden dışa aktarılırsa kapı, ölçtüğü dosyanın import
+// grafiğine bağımlı hâle gelir.
 export 'theme_presets.dart';
 export 'theme_tokens.dart';
 
