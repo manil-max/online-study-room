@@ -294,15 +294,32 @@ void main() {
       final copies = workflowLinesWith('Copy-Item');
       expect(copies, isNotEmpty, reason: 'MSIX kopyalama satırı kayboldu.');
       for (final line in copies) {
-        expect(
-          line,
-          contains(r"if ($env:MSIX_PUBLISHED -eq 'true')"),
-          reason:
-              'Kopyalama koşulsuz kalırsa kurulamayan MSIX yeniden '
-              'release-assets/windows içine girer ve GitHub Release\'e '
-              'eklenir; kullanıcı ~40 MB indirip 0x800B010A ile karşılaşır.\n'
-              'Satır: $line',
-        );
+        // 🔴 WP-597 güncellemesi: artık iki ayrı hedef var. Eskiden bu döngü
+        // HER `Copy-Item` satırında `MSIX_PUBLISHED` koşulunu arıyordu; Store
+        // paketi ayrı bir klasöre kopyalanınca o iddia yanlış kırmızı verdi.
+        // Ölçüm HEDEFE çevrildi — böylece iddia hem korundu hem GÜÇLENDİ:
+        // dağıtım klasörüne giden her kopya koşullu olmak zorunda, koşulsuz
+        // kopyanın gidebileceği tek yer Release'e yüklenmeyen Store klasörü.
+        if (line.contains(r'Join-Path $out')) {
+          expect(
+            line,
+            contains(r"if ($env:MSIX_PUBLISHED -eq 'true')"),
+            reason:
+                'Kopyalama koşulsuz kalırsa kurulamayan MSIX yeniden '
+                'release-assets/windows içine girer ve GitHub Release\'e '
+                'eklenir; kullanıcı ~40 MB indirip 0x800B010A ile karşılaşır.\n'
+                'Satır: $line',
+          );
+        } else {
+          expect(
+            line,
+            contains(r'Join-Path $storeOut'),
+            reason:
+                'MSIX ne dağıtım klasörüne koşullu ne de Store klasörüne '
+                'kopyalanıyor; üçüncü bir hedef kapının okunmasını '
+                'imkânsızlaştırır.\nSatır: $line',
+          );
+        }
       }
     });
 
@@ -370,7 +387,12 @@ void main() {
     });
 
     test('WINDOWS_ALLOW_TEST_SIGNING=true eski davranışı korur', () {
-      final gate = signingGate();
+      // 🔴 WP-597 güncellemesi: kapıda artık İKİ alıkoyma yolu var — Store
+      // paketi (imzasız, kasıtlı) ve test sertifikası (kırık). Bu testin
+      // konusu ikincisi; o yüzden ölçüm test-sertifikası koluna DARALTILDI.
+      // Daraltılmasaydı iddia yanlış kırmızı verirdi; daraltma iddiayı
+      // zayıflatmaz, çünkü Store kolunu WP-597 kendi kapısında ölçüyor.
+      final gate = _testSignatureBranch(signingGate());
       final flagBranch = gate.indexOf(
         r"if ('${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -eq 'true') {",
       );
@@ -394,7 +416,9 @@ void main() {
     });
 
     test('beta kanalı kapıdan etkilenmez', () {
-      final gate = signingGate();
+      // WP-597: Store kolu da stable'a kilitli (`$channel -eq 'stable'`,
+      // WP-597 kapısında ölçülüyor); burada test-sertifikası kolu ölçülür.
+      final gate = _testSignatureBranch(signingGate());
       final stableOnly = gate.indexOf(
         r"if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable') {",
       );
@@ -442,6 +466,25 @@ void main() {
       expect(windowsWorkflow, contains('if-no-files-found: error'));
     });
   });
+}
+
+/// İmza kapısının **test sertifikası** kolu.
+///
+/// WP-597'de kapıya ikinci bir alıkoyma yolu eklendi (Store paketi imzasızdır
+/// ve bu kasıtlıdır). Bu dosyanın WP-590 iddiaları test sertifikası kolunu
+/// ölçüyor; iki kolu tek metinde ölçmek "alıkoyma yalnız `else` kolunda"
+/// gibi iddiaları anlamsızlaştırırdı.
+String _testSignatureBranch(String gate) {
+  const marker = r"elseif (-not $trusted -and '${{ inputs.channel }}' -eq";
+  final from = gate.indexOf(marker);
+  if (from < 0) {
+    fail(
+      'İmza kapısında test sertifikası kolu bulunamadı. Kapı yeniden '
+      'yazıldıysa bu dosyadaki WP-590 iddiaları da gözden geçirilmeli.',
+    );
+  }
+  // `elseif` -> `if` : içerideki iddialar koşul metnini `if (...)` olarak arar.
+  return gate.substring(from).replaceFirst('elseif', 'if');
 }
 
 String _read(String path) {

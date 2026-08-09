@@ -108,9 +108,39 @@ jobs:
             # Yayınlanmış stable kimliği kalıcıdır (docs/WINDOWS-RELEASE-GATE.md).
             $identity = 'OdakKampi.App'
           }
+          # 🔴 WP-597 — MICROSOFT STORE YOLU.
+          # Store'a gönderilen MSIX'i sertifikasyondan sonra MICROSOFT kendi
+          # sertifikasıyla yeniden imzalar; yani Store yolunda kod imzalama
+          # sertifikası SATIN ALMAYA GEREK YOK (sertifika yalnız Store DIŞI
+          # dağıtım/sideload için gerekir). Store geliştirici kaydı da artık
+          # ücretsiz. Ayrıntı: docs/WINDOWS-STORE-YOLU.md
+          #
+          # Üç değer de Partner Center'daki uygulamadan gelir ve HEPSİ birden
+          # verilmelidir. Yarım yapılandırma sessizce Partner Center'ın
+          # reddedeceği bir paket üretirdi; o yüzden fail-closed.
+          $storeIdentity = '${{ vars.MSIX_STORE_IDENTITY_NAME }}'
+          $storePublisher = '${{ vars.MSIX_STORE_PUBLISHER }}'
+          $storeDisplay = '${{ vars.MSIX_STORE_PUBLISHER_DISPLAY_NAME }}'
+          $storeParts = @($storeIdentity, $storePublisher, $storeDisplay)
+          $storeSet = @($storeParts | Where-Object { $_ }).Count
+          if ($storeSet -gt 0 -and $storeSet -lt 3) {
+            throw "Store yapılandırması YARIM: MSIX_STORE_IDENTITY_NAME / MSIX_STORE_PUBLISHER / MSIX_STORE_PUBLISHER_DISPLAY_NAME değişkenlerinin ÜÇÜ birden dolu olmalı ($storeSet/3 dolu)."
+          }
+          # Store paketleri kanaldan bağımsız değildir: beta kanalı Store'a
+          # gönderilmiyor (sahip kararı: beta atlanır), o yüzden yalnız stable.
+          $storeMode = ($storeSet -eq 3) -and ($channel -eq 'stable')
+          if ($storeMode) {
+            if ($storePublisher -notmatch '^CN=') { throw "MSIX_STORE_PUBLISHER Partner Center'daki Publisher ID olmalı ve 'CN=' ile başlamalı: $storePublisher" }
+            Write-Host "Store modu AÇIK: kimlik=$storeIdentity yayıncı=$storePublisher"
+          }
+
           "version=$version" >> $env:GITHUB_OUTPUT
           "identity=$identity" >> $env:GITHUB_OUTPUT
           "prefix=odak-kampi-windows-$channel" >> $env:GITHUB_OUTPUT
+          "store_mode=$($storeMode.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "store_identity=$storeIdentity" >> $env:GITHUB_OUTPUT
+          "store_publisher=$storePublisher" >> $env:GITHUB_OUTPUT
+          "store_display=$storeDisplay" >> $env:GITHUB_OUTPUT
           Write-Host "MSIX kimlik=$identity sürüm=$version"
 
       - name: MSIX üret ve paketi doğrula
@@ -128,7 +158,16 @@ jobs:
           # --display-name pubspec'i ezer); pubspec'e dokunmuyoruz ve
           # dokunmadığımızı hash ile kanıtlıyoruz.
           $pubspecBefore = (Get-FileHash pubspec.yaml -Algorithm SHA256).Hash
-          dart run msix:create --build-windows false --version '${{ steps.msix.outputs.version }}' --identity-name '${{ steps.msix.outputs.identity }}' --display-name $display
+          # 🔴 WP-597: Store modunda kimlik ve yayıncı Partner Center'dan gelir;
+          # `--store` paketi imzalamaz (Store'a yüklenen paket İMZASIZ olmalı,
+          # imzayı Microsoft sertifikasyondan sonra kendisi atar).
+          $storeMode = '${{ steps.msix.outputs.store_mode }}' -eq 'true'
+          $expectedIdentity = if ($storeMode) { '${{ steps.msix.outputs.store_identity }}' } else { '${{ steps.msix.outputs.identity }}' }
+          if ($storeMode) {
+            dart run msix:create --build-windows false --store --version '${{ steps.msix.outputs.version }}' --identity-name $expectedIdentity --publisher '${{ steps.msix.outputs.store_publisher }}' --publisher-display-name '${{ steps.msix.outputs.store_display }}' --display-name $display
+          } else {
+            dart run msix:create --build-windows false --version '${{ steps.msix.outputs.version }}' --identity-name $expectedIdentity --display-name $display
+          }
           if ($LASTEXITCODE -ne 0) { throw "msix:create başarısız (exit $LASTEXITCODE)." }
           if ((Get-FileHash pubspec.yaml -Algorithm SHA256).Hash -ne $pubspecBefore) { throw 'pubspec.yaml MSIX adımında değişti.' }
 
@@ -148,8 +187,9 @@ jobs:
           } finally { $archive.Dispose() }
 
           $packageIdentity = $appxManifest.Package.Identity
-          if ($packageIdentity.Name -ne '${{ steps.msix.outputs.identity }}') { throw "Paket kimliği beklenenden farklı: $($packageIdentity.Name)" }
+          if ($packageIdentity.Name -ne $expectedIdentity) { throw "Paket kimliği beklenenden farklı: $($packageIdentity.Name)" }
           if ($packageIdentity.Version -ne '${{ steps.msix.outputs.version }}') { throw "Paket sürümü beklenenden farklı: $($packageIdentity.Version)" }
+          if ($storeMode -and $packageIdentity.Publisher -ne '${{ steps.msix.outputs.store_publisher }}') { throw "Store paketinin yayıncısı Partner Center Publisher ID'siyle eşleşmiyor: $($packageIdentity.Publisher)" }
 
           # 🔴 İMZA GERÇEĞİ. `msix_config`e sertifika verilmediğinde paket,
           # pub.dev'de herkese açık dağıtılan test sertifikasıyla (parola 1234)
@@ -167,7 +207,18 @@ jobs:
           $trusted = $packageIdentity.Publisher -ne $testPublisher
           $publishMsix = $true
           $withheldReason = ''
-          if (-not $trusted -and '${{ inputs.channel }}' -eq 'stable') {
+          # 🔴 WP-597: Store paketi İMZASIZDIR ve bu kasıtlıdır — imzayı
+          # Microsoft sertifikasyondan sonra atar. Böyle bir paketi herkese açık
+          # indirme olarak yayınlamak WP-590'ın düzelttiği hatanın AYNISINI
+          # tekrarlardı: kullanıcı indirir, kuramaz. Store paketi yalnız Partner
+          # Center'a yüklenmek üzere AYRI bir artefakta gider; GitHub Release
+          # varlıklarına ASLA girmez.
+          if ($storeMode) {
+            $publishMsix = $false
+            $withheldReason = 'Store paketi imzasızdır (imzayı Microsoft atar); kullanıcı onu doğrudan kuramaz. GitHub Release yerine `windows-store-package` artefaktına konuldu; Partner Center''a oradan yüklenir.'
+            Write-Host "::notice title=Store paketi ayrıldı::$withheldReason"
+          }
+          elseif (-not $trusted -and '${{ inputs.channel }}' -eq 'stable') {
             if ('${{ vars.WINDOWS_ALLOW_TEST_SIGNING }}' -eq 'true') {
               Write-Host '::warning title=Windows imzası güvenilmez::Stable MSIX herkese açık test sertifikasıyla imzalı; WINDOWS_ALLOW_TEST_SIGNING=true verildiği için BİLEREK yayınlanıyor. Kullanıcı bu paketi 0x800B010A ile kuramaz.'
             } else {
@@ -207,15 +258,33 @@ jobs:
           $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path $zipItems.FullName -DestinationPath $zipOut -Force
           $published = @($zipOut)
           if ($env:MSIX_PUBLISHED -eq 'true') { $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut; $published += $msixOut }
+          # 🔴 WP-597: Store paketi AYRI klasöre gider. `$out` klasörünün tamamı
+          # GitHub Release'e yükleniyor; imzasız Store paketini oraya koymak
+          # kullanıcıya kuramayacağı bir dosya sunmak olurdu.
+          if ('${{ steps.msix.outputs.store_mode }}' -eq 'true') {
+            $storeOut = 'build/windows-store'; New-Item -ItemType Directory -Force -Path $storeOut | Out-Null
+            Copy-Item $msix.FullName (Join-Path $storeOut "$prefix-store.msix")
+          }
           $items = @($published | ForEach-Object {
             $name = Split-Path $_ -Leaf; $hash = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
             Set-Content "$_.sha256" -Value "$hash  $name" -NoNewline
             @{ name = $name; sha256 = $hash }
           })
-          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true'); msixPublished = ($env:MSIX_PUBLISHED -eq 'true'); msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
+          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; identityName = '${{ steps.msix.outputs.identity }}'; packageVersion = '${{ steps.msix.outputs.version }}'; signing = @{ publisher = '${{ steps.package.outputs.publisher }}'; trusted = ('${{ steps.package.outputs.trusted }}' -eq 'true'); msixPublished = ($env:MSIX_PUBLISHED -eq 'true'); msixWithheldReason = [string]$env:MSIX_WITHHELD_REASON; storeMode = ('${{ steps.msix.outputs.store_mode }}' -eq 'true') }; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows-release
           path: app/build/windows-dist/*
+          if-no-files-found: error
+
+      # 🔴 WP-597: Store paketi AYRI artefakt. Bu artefakt GitHub Release'e
+      # girmez; sahibi indirip Partner Center'a yükler (docs/WINDOWS-STORE-YOLU.md).
+      # Store modu kapalıyken klasör hiç oluşmaz, bu yüzden `if-no-files-found`
+      # `ignore` — aksi halde Store'suz her koşum kırmızıya düşerdi.
+      - uses: actions/upload-artifact@v4
+        if: steps.msix.outputs.store_mode == 'true'
+        with:
+          name: windows-store-package
+          path: app/build/windows-store/*
           if-no-files-found: error
