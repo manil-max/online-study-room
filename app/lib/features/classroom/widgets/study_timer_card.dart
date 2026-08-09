@@ -16,7 +16,6 @@ import '../../../data/models/subject.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
-import '../../../data/repositories/auth_repository.dart';
 import '../../home/dashboard_card.dart';
 import '../../profile/session_history_screen.dart';
 import '../../profile/subjects_screen.dart';
@@ -102,10 +101,22 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final genericError = AppLocalizations.of(
       context,
     ).authBeklenmeyenBirHataOlustu;
+    // 🔴 WP-619: yakalama dalı `on AuthException` idi ve `updateDailyGoal` bu
+    // türü HİÇ atmaz — ağ/sunucu hatası `PostgrestException` /
+    // `ClientException` / `SocketException` olarak gelir, dalın yanından geçip
+    // global yutucuya giderdi. Kullanıcı hedefini değiştiriyor, hiçbir şey
+    // olmuyor, eski hedef sessizce duruyordu.
+    //
+    // WP-610 aynı hatayı Ayarlar ve Profil'de kapattı ama burayı kapatamadı
+    // (o turda bu dosya başka bir ajandaydı) ve **kullanıcı hedefini en çok
+    // buradan değiştiriyor** — sayaç kartı ana yüzey.
+    //
+    // Günlük hedef seriyi (streak) ve ilerleme halkasını besliyor: sessizce
+    // eski hedefte kalan kullanıcı hedefi tutup tutmadığını da yanlış görür.
     try {
       await ref.read(authRepositoryProvider).updateDailyGoal(result);
       ref.invalidate(authStateProvider);
-    } on AuthException {
+    } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
