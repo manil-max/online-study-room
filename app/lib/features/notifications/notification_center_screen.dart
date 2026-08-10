@@ -457,7 +457,23 @@ class _TypesCard extends ConsumerWidget {
     // atıyor ve tercih satırına HİÇ gelinmiyordu: anahtar geri kapanıyor,
     // ekranda hata yok. Tercihi sessizce yazmak da yanlış olurdu (bildirim
     // yine gelmezdi); satır devre dışı bırakılıp nedeni alt yazıya yazılır.
-    final smartSupported = ref
+    //
+    // 🔴 WP-685: aynı kapı DÜRTME ve GÜNCELLEME satırlarına da uygulanır —
+    // WP-611 onları atlamıştı. İkisi de masaüstünde teslim EDİLEMEZ:
+    //   • dürtme  → `AppNotificationCoordinator.showNudge` ilk satırında
+    //     `if (!_isAndroid) return;` ile döner; uzak yol (FCM) da android-only.
+    //   • güncelleme → `updatesEnabled` tercihinin lib/ içindeki TEK tüketicisi
+    //     push cihaz kaydıdır (`push_notification_providers.dart`), Windows'ta
+    //     readiness `unsupported` olduğu için cihaz hiç kaydedilmez. Uygulama
+    //     içi güncelleme kontrolü bu tercihi okumaz, yani hiçbir şey ölmüyor.
+    // Her ikisinin varsayılanı AÇIK olduğu için kusur hatırlatıcılardan daha
+    // görünürdü: kullanıcı hiçbir şey yapmadan "açık" yazan bir vaat görüyordu.
+    // Bu yüzden `value` da masaüstünde kapalı gösterilir — tercih YAZILMAZ,
+    // yalnız bu cihazdaki gerçek etki gösterilir.
+    //
+    // DUYURULAR bilerek dışarda: o tercih masaüstünde de gerçek iş yapar
+    // (`notification_providers.dart` uygulama içi duyuru listesini kapatır).
+    final deliverySupported = ref
         .watch(reminderNotificationServiceProvider)
         .isSupported;
     return _SectionCard(
@@ -466,18 +482,25 @@ class _TypesCard extends ConsumerWidget {
       subtitle: l10n.notificationsHangiBildirimleriAlmakIstedigini,
       children: [
         SwitchListTile(
+          key: const Key('notification_nudge_switch'),
           secondary: const Icon(Icons.waving_hand_outlined),
           title: Text(l10n.notificationsDurtmeBildirimleri),
-          subtitle: Text(l10n.notificationsSinifArkadaslarinSeniDurttugunde),
-          value: prefs.nudgeNotificationsEnabled,
-          onChanged: (value) async {
-            if (value) {
-              await ref
-                  .read(nudgeNotificationServiceProvider)
-                  .requestPermissionIfNeeded();
-            }
-            await notifier.setNudgeNotificationsEnabled(value);
-          },
+          subtitle: Text(
+            deliverySupported
+                ? l10n.notificationsSinifArkadaslarinSeniDurttugunde
+                : l10n.notificationsHatirlaticiMasaustundeYok,
+          ),
+          value: deliverySupported && prefs.nudgeNotificationsEnabled,
+          onChanged: !deliverySupported
+              ? null
+              : (value) async {
+                  if (value) {
+                    await ref
+                        .read(nudgeNotificationServiceProvider)
+                        .requestPermissionIfNeeded();
+                  }
+                  await notifier.setNudgeNotificationsEnabled(value);
+                },
         ),
         const Divider(height: 1),
         SwitchListTile(
@@ -485,12 +508,12 @@ class _TypesCard extends ConsumerWidget {
           secondary: const Icon(Icons.local_fire_department_outlined),
           title: Text(l10n.smartStreakReminder),
           subtitle: Text(
-            smartSupported
+            deliverySupported
                 ? l10n.smartStreakReminderBody
                 : l10n.notificationsHatirlaticiMasaustundeYok,
           ),
           value: prefs.smartStreakReminderEnabled,
-          onChanged: !smartSupported
+          onChanged: !deliverySupported
               ? null
               : (value) async {
                   if (value) {
@@ -507,12 +530,12 @@ class _TypesCard extends ConsumerWidget {
           secondary: const Icon(Icons.calendar_view_week_outlined),
           title: Text(l10n.smartWeeklySummary),
           subtitle: Text(
-            smartSupported
+            deliverySupported
                 ? l10n.smartWeeklySummaryBody
                 : l10n.notificationsHatirlaticiMasaustundeYok,
           ),
           value: prefs.smartWeeklySummaryEnabled,
-          onChanged: !smartSupported
+          onChanged: !deliverySupported
               ? null
               : (value) async {
                   if (value) {
@@ -533,11 +556,16 @@ class _TypesCard extends ConsumerWidget {
         ),
         const Divider(height: 1),
         SwitchListTile(
+          key: const Key('notification_updates_switch'),
           secondary: const Icon(Icons.new_releases_outlined),
           title: Text(l10n.notificationsGuncellemeBildirimleri),
-          subtitle: Text(l10n.notificationsYeniSurumCikincaHaber),
-          value: prefs.updatesEnabled,
-          onChanged: notifier.setUpdatesEnabled,
+          subtitle: Text(
+            deliverySupported
+                ? l10n.notificationsYeniSurumCikincaHaber
+                : l10n.notificationsHatirlaticiMasaustundeYok,
+          ),
+          value: deliverySupported && prefs.updatesEnabled,
+          onChanged: !deliverySupported ? null : notifier.setUpdatesEnabled,
         ),
       ],
     );
