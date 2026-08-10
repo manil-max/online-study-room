@@ -10010,6 +10010,129 @@ alininca yesil.
    `migration-head` kapisi "pinler burada yazilidir" diyordu ve listesi eksikti.
    Bir kapinin sayisal iddiasi varsa (uc/bes/yedi yer), o sayi test edilmeli.
 
+## 2026-08-10 sabahi — v64 geri bildirimi + hunter turu (WP-640…WP-647)
+
+Sahip iki emir verdi: (1) v64 Windows'u simdi kosma, isleri bitir v65'te tek
+seferde cik; (2) **alt ajanlar dokumandaki notu okuyup "tamam" deyip geciyor,
+hatayi sonradan ben buluyorum — bunu duzelt.** Bu turun yarisi o ikinci emrin
+karsiligidir.
+
+### WP-640: Windows paketini iki surumdur KAPININ KENDISI dusuruyordu
+`windows-release.yml` ZIP smoke adimi betigi `& betik.ps1` ile ayni pwsh
+oturumunda kosturup `$LASTEXITCODE` okuyordu. O degisken yalniz **native
+surecler** icin yazilir; basarili kosumda `$null` kaliyor, `$null -ne 0` DOGRU
+oluyor ve adim her seferinde firliyordu. Run 31338934743: iki denemede de
+`WINDOWS_FAST_SMOKE PASS`, pencere 1024x720, baslik `Focus Camp` — ZIP
+**gercekten aciliyordu**; uyari satiri `... exit ` (bos kod). v63 ve v64
+Windows paketi bu yuzden yayinlanamadi. Kirilan uygulama degil kapiydi.
+Duzeltme: betik `pwsh -File` ile ayri surec, basari yolunda acik `exit 0`,
+cikis kodu okunamazsa **fail-closed**. Sozlesme testi artik yalniz KOSAN
+satirlari olcuyor (yorum metnini degil).
+
+### WP-641: `hunter` rolu — "belgeyi okuyup tamam demek" yasaklandi
+`.agents/skills/hunter/SKILL.md`. Ozeti: **bu repoda hicbir `.md` ve hicbir
+kod yorumu KANIT DEGILDIR**; kanit = kod `dosya:satir`, komut ciktisi, ya da
+kirmiziya dusurdugun test. "Sorun bulamadim" sonuc degildir (`OLCEMEDIM`).
+Her bulgu duzeltmeden **once** kirmizi dusen bir testle gelir. Ajan kendisine
+verilen hipotezi **curutmeye** calisir. Teslim nesir degil sabit sablon; son
+satir "yalanladigim belge".
+
+Dort lane salindi; dordu de belge degil olcum getirdi ve ucu kendi hipotezini
+kismen curuttu. Bu tur "ajan raporu" degil, **kirmizi test** uretti.
+
+### WP-642: D-Day kaleminin tiklanmamasi (sahip maddesi 2)
+Kalem `CardScaffold`in **header**'inda, tek dokunma hedefi ise **govdede**ydi;
+header govdenin disinda ayri bir cocuk oldugu icin simge sus gibi duruyordu.
+Duzeltme `cardHeaderAction` (onPressed **zorunlu**) — basliga tiklanamayan
+aksiyon koymanin yolu kalmadi. Lane kendi duzeltmesinin yol actigi iki tuzagi
+da olcumle yakaladi: `MaterialTapTargetSize.padded` kucuk kartta 7.47/10.94 px
+tasma uretti (`shrinkWrap` ile kapandi), `visualDensity: compact` dokunma
+hedefini sessizce 24x16'ya dusurdu (kaldirildi). Envanter: weekly/line
+basliklarindaki gun filtreleri olculdu, **dordu de calisiyor**.
+
+### WP-643: ritim karti her boyutta dikey jesti yutuyordu (sahip maddesi 3)
+Yatay kaydirici cocuguna **sinirsiz genislik** verir; `WeekHourHeatmap` hucre
+boyutunu `constraints.maxWidth`ten turetip sinirsizda `320.0` sabit yedegine
+dusuyordu. Yani izgara kartin gercek genisligini hic kullanmiyordu — sahibin
+"karti ne kadar buyutursem buyuteyim gene var" dedigi tam bu. Kaydiricilar
+kaldirildi, tasan boy `FittedBox(scaleDown)` ile kuculuyor.
+**Envanter kapisi:** 18 kart x 3 genislik x 3 hucre = 171 olcum; cizelgedeki
+her sifirdan buyuk satir bir **borc**, onay degil.
+
+### WP-644+645: sayacin native koprusu kullanicinin AYARINI hic bilmiyordu
+Iki kusur, tek kok neden.
+1. Dart `?? 25` / `?? 4` varsayilanlarini yalniz **bellekte** uretiyor, diske
+   ancak kullanici ayari elle degistirince yaziyordu. Pomodoro ayar sayfasini
+   hic acmamis kullanicida `timer_work_min` YOKTU → native hedefi `null`
+   uretiyor → `writeRunning` hedefi siliyor → widget projeksiyonu kosan
+   pomodoroyu IDLE sayiyor. Kullanici bildirimden "Calismaya don"e basiyor,
+   sayac gercekten akiyor, **ana ekran widget'i DURMUS gosteriyor**.
+2. `ACTION_TOGGLE` `mode = "stopwatch"` SABIT yaziyordu; bildirim Baslat'i da
+   `?: "stopwatch"`. `flutter.timer_mode` Kotlin kodunda **hic gecmiyordu**.
+   Pomodoro secili kullanici widget'tan Baslat'a basinca sayac sonsuza kadar
+   yukari sayiyor, mola gelmiyor ve Dart native SSOT'u benimsedigi icin
+   kullanicinin **secimi diske de siliniyordu**.
+Duzeltme: Dart eksik anahtarlari acilista yazar; saf `nativeStartPlan()` iki
+Baslat yolunu da kullanicinin seciminden besler; `handleStart`in
+`targetSeconds = null` varsayilani kaldirildi (soruyu derleyici sorsun).
+🔴 **Bozuk davranisi kilitleyen test duzeltildi:** `ayar_okunamazsa_hedef_UYDURULMAZ`
+hedefin null kalmasini DOGRU davranis diye sabitliyordu. Gerekcesi dogru,
+ikilemi yanlisti — ucuncu secenek urunun gercek varsayilanidir.
+
+### WP-646: sayac karti ortak kaydirma kuralinin TAMAMEN disindaydi
+`study_timer_card.dart` ciplak `SingleChildScrollView` kuruyordu: ne `physics`
+(→ icerik sigsa bile jesti yutar) ne `primary: false` (→ dis sayfanin
+denetleyicisini calar). Envanterin en kotu karti: 840x416 tablet hucresinde
+bile 132 px. Yeni kapi kart listesini **elle tutmaz**, kayit defterinin
+(`dashboardCardFor`) import'larindan turetir — yarin eklenen kart kendiliginden
+kapsama girer. Tarayicinin kendi testi de var.
+
+### WP-647: tekrarlamaya CEVRILEN gorev Bugun listesinden dusuyordu
+`add` anchor'i kuruyordu, `update` kurmuyordu. Tek seferlikten tekrarliya
+gecen gorevin anchor'i `null` kalip **olusturulma gunune** dusuyordu: 5 gun
+once acilan gorev "her 3 gunde bir" yapilinca Bugun'den kayboluyor, ustelik
+kutuya dokununca hata mesaji veriyordu. Kural tek yere kondu; acik anchor
+ezilmez.
+
+### Bu turun dersleri
+1. 🔴 **Kapinin kirmizisi de yalan olabilir.** Bu depo "yesil kapi kanit
+   degildir" dersini biliyordu; WP-640 tersini ekledi — iki surumluk Windows
+   paketi, urun saglamken kapinin kendi hatasi yuzunden yayinlanamadi.
+2. **Test bozuk davranisi kilitleyebilir.** WP-645'te bir kapi, kusuru "dogru
+   davranis" diye sabitlemisti. Kirmizi test kadar **yesil** test de sorgulanir.
+3. **Iki cagiran ayni kurali paylasmiyorsa kural yoktur** (WP-647 `add`/`update`,
+   WP-646 kart/kart). Duzeltme kurali tek yere koymakla tamamlanir.
+4. **Ajan olcerse hipotezi curutur.** Dort lane de kendine verilen supheyi
+   kismen reddetti; ikisi gercek kok nedeni bambaska yerde buldu.
+
+## Bekleyen — hunter turundan cikan, henuz kapanmamis kartlar
+
+### WP-648 — Dead surface: dogrulanmis uc kopuk zincir
+- **Durum:** [ ] Bekliyor · **Kanit:** grep ciktisiyla olculdu, lider dogruladi.
+- `NudgeRepository.markRead` → `lib/` icinde **sifir** cagri yeri (yalniz 3
+  tanim + 1 yorum). Her durtme sunucuda omur boyu `read_at = null`; akista
+  `limit` ve `read_at is null` filtresi de yok, yani kullanici omur boyu aldigi
+  tum durtme satirlarini her acilista cekiyor.
+- `presenceSyncStatusProvider` → dosyada **tek gecis** (kendi tanimi). Kod
+  yorumu "UI ve destek tanilari icin gorunur yapar" diyor; hicbir UI okumuyor.
+- `setStreakFreezes` / `freezeAwareStreak` → `features/` ve `core/` icinde
+  sifir gecis. Hak hic tuketilmiyor: `streak_freezes` her hesapta omur boyu 1
+  kaliyor ve `currentStreakWithFreezes` her kacirilan gunu **tekrar tekrar**
+  affediyor.
+- **Sinir:** ucu de urun karari ister (yuzey mi acilacak, kod mu silinecek).
+
+### WP-649 — Kart yogunlugu (sahip onizlemesi gerekir)
+Envanterde sifirdan buyuk kalan kartlar: `records` (328x265'te 211 px),
+`leaderboard` (satir yuksekligi tahmini tutmuyor: varsayilan 36, gercek ~53),
+`heatmap` (hucre sabit 13 px), ve kucuk hucrelerde `timer`. Hicbiri jest
+hatasi degil — **icerik gercekten tasiyor**. "Kac satir gorunsun" karari
+sahibindir; `docs/AJAN-KULLANIM.md` gorsel is kurali geregi once onizleme.
+
+### WP-650 — 160x160 hucrede RenderFlex kirpma
+`timer` (10 px), `hours` (8 px), `weekdayWeekend` (8 px) — kaydirma degil
+duz kirpma. Envanter testinde `_knownRenderFlex` kumesinde kayitli; liste
+buyurse kapi kirmizi doner.
+
 ## 2026-08-10 gecesi — v63 + v64 ve XP geri alma zinciri (WP-632…WP-639)
 
 ### WP-632: Sinav geri sayimi — uc kayit, isim, sira, one cikarma
