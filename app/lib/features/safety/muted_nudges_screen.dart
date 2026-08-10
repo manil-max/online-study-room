@@ -9,6 +9,7 @@ import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/nudge_mute.dart';
 import '../../data/providers/nudge_providers.dart';
 import '../../data/repositories/nudge_repository.dart';
+import 'blocked_users_screen.dart' show SafetyDesktopBand;
 
 /// WP-444: Ayarlar → Dürtmesi susturulanlar.
 ///
@@ -25,50 +26,54 @@ class MutedNudgesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.safetyMutedNudgesTitle)),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        // 🔴 WP-591: eski metin `safetyActionFailed` idi; o cumle bir EYLEMIN
-        // basarisiz oldugunu anlatir, oysa burada YUKLEME basarisiz. Kullaniciya
-        // yanlis sey soyleniyordu ve cikis da yoktu.
-        error: (_, _) => Center(
-          child: ErrorRetryView(
-            message: l10n.homeVerilerYuklenemedi,
-            onRetry: () => ref.invalidate(nudgeMutesProvider),
-          ),
-        ),
-        data: (mutes) {
-          return ListView(
-            padding: getSafeVerticalPadding(
-              context,
-              horizontal: 12,
-              vertical: 12,
+      // WP-683: kardeş ekranla (`blocked_users_screen.dart`) AYNI bant, AYNI
+      // türetme — ölçülen sayılar ve gerekçe orada.
+      body: SafetyDesktopBand(
+        child: async.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          // 🔴 WP-591: eski metin `safetyActionFailed` idi; o cumle bir EYLEMIN
+          // basarisiz oldugunu anlatir, oysa burada YUKLEME basarisiz. Kullaniciya
+          // yanlis sey soyleniyordu ve cikis da yoktu.
+          error: (_, _) => Center(
+            child: ErrorRetryView(
+              message: l10n.homeVerilerYuklenemedi,
+              onRetry: () => ref.invalidate(nudgeMutesProvider),
             ),
-            children: [
-              // Kapsam açıklaması: kullanıcı susturmayı engellemeyle karıştırmasın.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
-                child: Text(
-                  l10n.safetyMutedNudgesExplainer,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+          ),
+          data: (mutes) {
+            return ListView(
+              padding: getSafeVerticalPadding(
+                context,
+                horizontal: 12,
+                vertical: 12,
               ),
-              if (mutes.isEmpty)
+              children: [
+                // Kapsam açıklaması: kullanıcı susturmayı engellemeyle karıştırmasın.
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                   child: Text(
-                    l10n.safetyMutedNudgesEmpty,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    l10n.safetyMutedNudgesExplainer,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                )
-              else
-                for (final mute in mutes) ...[
-                  _MutedNudgeTile(mute: mute),
-                  const SizedBox(height: 6),
-                ],
-            ],
-          );
-        },
+                ),
+                if (mutes.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      l10n.safetyMutedNudgesEmpty,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  )
+                else
+                  for (final mute in mutes) ...[
+                    _MutedNudgeTile(mute: mute),
+                    const SizedBox(height: 6),
+                  ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }

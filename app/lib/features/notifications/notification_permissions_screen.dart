@@ -66,12 +66,12 @@ class _NotificationPermissionsScreenState
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.profileBildirimMerkezi),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.notifications_outlined)),
-              Tab(icon: Icon(Icons.security_outlined)),
-            ],
-          ),
+          // 🔴 WP-683: iki sekme ikonu bir `Flex` içinde yan yana duran iki
+          // etikettir; aralarındaki mesafe SPEC KURAL 2.2'nin ölçtüğü
+          // mesafenin ta kendisidir. Tavansız hâlde 2560 px'lik pencerede
+          // ikonlar ~1200 px arayla duruyordu. Aynı çözüm Saat ekranında da
+          // kullanıldı (`ClockCommandStrip`).
+          bottom: const _TabStrip(),
         ),
         body: TabBarView(
           children: [
@@ -114,12 +114,39 @@ class _NotificationPermissionsScreenState
                 ),
               ),
             ),
-            const ClockWidgetsScreen(embedded: true),
+            // İkinci sekmenin gövdesi başka bir özelliğin dosyasıdır
+            // (`clock/clock_widgets_screen.dart`) ve WP-683'ün SAHİP yolları
+            // dışındadır; bu yüzden o dosya değiştirilmedi, yalnız BURADAN
+            // aynı banda alındı. Sonuç kullanıcı için aynı: satır 632 px'te
+            // durur.
+            const NotificationDesktopBand(
+              child: ClockWidgetsScreen(embedded: true),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Sekme şeridi: masaüstünde [kNotificationBlockMaxWidth] ile tavanlanır,
+/// mobilde bugünkü `TabBar`ın **birebir kendisidir** (SPEC §7).
+class _TabStrip extends StatelessWidget implements PreferredSizeWidget {
+  const _TabStrip();
+
+  static const TabBar _bar = TabBar(
+    tabs: [
+      Tab(icon: Icon(Icons.notifications_outlined)),
+      Tab(icon: Icon(Icons.security_outlined)),
+    ],
+  );
+
+  @override
+  Size get preferredSize => _bar.preferredSize;
+
+  @override
+  Widget build(BuildContext context) =>
+      const NotificationDesktopBand(child: _bar);
 }
 
 /// WP-626: "henüz yok" rozeti. Renk tema paletinden bağımsız değil ama

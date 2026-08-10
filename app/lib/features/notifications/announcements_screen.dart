@@ -9,6 +9,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/notification_providers.dart';
 import '../profile/feedback_tickets_screen.dart';
 import '../../l10n/app_localizations.dart';
+import 'notification_center_screen.dart' show NotificationDesktopBand;
 
 /// Duyurular — WP-304'te Bildirim Merkezi'nden çıkarılıp Ayarlar'a taşındı.
 ///
@@ -68,9 +69,16 @@ class AnnouncementsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.notificationsDuyurular)),
-      body: DefaultTextStyle.merge(
-        style: theme.textTheme.bodyMedium ?? const TextStyle(),
-        child: body,
+      // 🔴 WP-683 ÖLÇÜMÜ: duyuru mesajı **prose**dur ve WP-683'e kadar hiçbir
+      // tavanı yoktu. Aynı sonda, aynı harness: en geniş kart 1008'de 976 px,
+      // 1920'de 1888 px, 2560'ta **2528 px**; paragrafın boyanan genişliği
+      // 2560'ta **2208 px** — satır başına ~294 karakter, WCAG 2.1 SC 1.4.8'in
+      // 80 karakter tavanının 3.7 katı. Düzen değişti, metin değişmedi.
+      body: NotificationDesktopBand(
+        child: DefaultTextStyle.merge(
+          style: theme.textTheme.bodyMedium ?? const TextStyle(),
+          child: body,
+        ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
 import '../../core/notifications/reminder_notification_service.dart';
@@ -9,6 +11,54 @@ import '../../data/providers/notification_providers.dart';
 import '../../data/providers/push_notification_providers.dart';
 import '../../data/models/push_notification.dart';
 import '../../l10n/app_localizations.dart';
+
+/// WP-683 — masaüstünde bir bildirim bloğunun genişlik tavanı.
+///
+/// 🔴 Türetildi, seçilmedi. SPEC KURAL 2.2 bir etiket–değer satırının **sert
+/// tavanını 600 px** koyar (80 karakter × 7.5 px; WCAG 2.1 SC 1.4.8). Bu
+/// ekrandaki satırlar `Card` içindeki `ListTile`/`SwitchListTile`lerdir; yatay
+/// iç dolgu 2 × 16 = 32 px, yani 600 px'lik bir satırın sığdığı en geniş kart
+/// **632 px**'tir. 632, 4'ün katıdır (WinUI ölçek platosu kuralı, SPEC §1.2).
+/// Kardeş masaüstü ekranları aynı sayıyı aynı türetmeyle kullanıyor
+/// (`kClockBlockMaxWidth`, `kGroupBlockMaxWidth`); ikinci bir dil icat edilmedi.
+///
+/// 🔴 ÖLÇÜLEN KUSUR (WP-683 öncesi, `desktop_wp683_screens_test.dart`):
+///
+/// | ekran | 1008 | 1200 | 1920 | 2560 | panel (920) |
+/// |---|---:|---:|---:|---:|---:|
+/// | bildirim merkezi — en geniş kart | 976 | 1168 | **1888** | **2528** | 888 |
+/// | bildirim izinleri — etiket→değer | 812 | 1004 | **1724** | **2364** | 724 |
+///
+/// "Aylık çalışma raporu (E-posta)" etiketinden "Yakında" rozetine 2364 px:
+/// SPEC KURAL 2.2'nin tarif ettiği göz sıçraması mesafesinin dört katı.
+const double kNotificationBlockMaxWidth =
+    DesktopBreakpoints.maxLabelValueWidth + 32;
+
+/// Masaüstünde içeriği [kNotificationBlockMaxWidth] ile tavanlar ve yatayda
+/// ortalar; **mobilde çocuğu olduğu gibi geçirir** (SPEC §7: mobil dal
+/// değişmez, ağaca tek bir düğüm bile eklenmez).
+///
+/// 🔴 Tavan `MediaQuery`den DEĞİL kaptan kurulur. Ayarlar masaüstünde
+/// `showDesktopPanel` ile açılır ve bu ekranlar 920 px'lik bir `SizedBox`
+/// içinde çizilir; `MediaQuery.sizeOf` orada hâlâ **tüm pencereyi** verir.
+/// Pencereden karar veren bir tavan panelde yanlış davranırdı.
+class NotificationDesktopBand extends StatelessWidget {
+  const NotificationDesktopBand({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isDesktopWindow) return child;
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kNotificationBlockMaxWidth),
+        child: child,
+      ),
+    );
+  }
+}
 
 String _formatMinutes(int minutes) {
   final h = (minutes ~/ 60).toString().padLeft(2, '0');
@@ -40,24 +90,26 @@ class NotificationCenterScreen extends ConsumerWidget {
     final prefs = ref.watch(notificationPreferencesProvider);
     final l10n = AppLocalizations.of(context);
 
-    final body = ListView(
-      padding: getSafePadding(
-        context,
-        const EdgeInsets.fromLTRB(16, 12, 16, 28),
+    final body = NotificationDesktopBand(
+      child: ListView(
+        padding: getSafePadding(
+          context,
+          const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        ),
+        children: [
+          // WP-304: önce gündelik ayarlar, tanı/test kartı en altta. Eskiden
+          // "yerel test / uzak test" düğmeleri listenin başındaydı; kullanıcı
+          // ayar aramaya gelip önce hata ayıklama araçlarıyla karşılaşıyordu.
+          const _PermissionCard(),
+          const SizedBox(height: 10),
+          _TypesCard(prefs: prefs),
+          const SizedBox(height: 10),
+          _QuietHoursCard(prefs: prefs),
+          if (footer != null) ...[const SizedBox(height: 10), footer!],
+          const SizedBox(height: 10),
+          const _PushHealthCard(),
+        ],
       ),
-      children: [
-        // WP-304: önce gündelik ayarlar, tanı/test kartı en altta. Eskiden
-        // "yerel test / uzak test" düğmeleri listenin başındaydı; kullanıcı
-        // ayar aramaya gelip önce hata ayıklama araçlarıyla karşılaşıyordu.
-        const _PermissionCard(),
-        const SizedBox(height: 10),
-        _TypesCard(prefs: prefs),
-        const SizedBox(height: 10),
-        _QuietHoursCard(prefs: prefs),
-        if (footer != null) ...[const SizedBox(height: 10), footer!],
-        const SizedBox(height: 10),
-        const _PushHealthCard(),
-      ],
     );
     if (embedded) return body;
     return Scaffold(

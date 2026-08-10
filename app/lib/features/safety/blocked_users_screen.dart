@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -10,6 +12,52 @@ import '../../data/models/moderation_sanction.dart';
 import '../../data/models/profile.dart';
 import '../../data/providers/moderation_providers.dart';
 import '../../data/repositories/moderation_repository.dart';
+
+/// WP-683 — güvenlik listelerinin (engellenenler · dürtmesi susturulanlar)
+/// masaüstü genişlik tavanı.
+///
+/// 🔴 Türetildi, seçilmedi. Bu iki ekran SPEC §3 **A1 "yoğun liste"**dir ve
+/// her satırı bir etiket–değer satırıdır: solda kişinin adı, sağda "Engeli
+/// kaldır" / "Susturmayı kaldır" eylemi. SPEC KURAL 2.2 o mesafeyi **600
+/// px**'te sert tavanlar (80 karakter × 7.5 px, WCAG 2.1 SC 1.4.8). Satır bir
+/// `Card > ListTile` içindedir, yatay iç dolgu 2 × 16 = 32 px → kart tavanı
+/// **632 px**. 632, 4'ün katıdır (WinUI, SPEC §1.2).
+///
+/// 🔴 ÖLÇÜLEN KUSUR (WP-683 öncesi, `desktop_wp683_screens_test.dart`,
+/// etiketin SOL kenarı → değerin SAĞ kenarı):
+///
+/// | ekran | 1008 | 1200 | 1920 | 2560 | panel (920) |
+/// |---|---:|---:|---:|---:|---:|
+/// | engellenenler ("Engellenen Bora" → "Engeli kaldır") | 864 | 1056 | **1776** | **2416** | 776 |
+/// | susturulanlar ("Susturulan Deniz" → "Susturmayı kaldır") | 864 | 1056 | **1776** | **2416** | 776 |
+///
+/// Panel bandında bile (776 px) tavan aşılıyordu: kusur yalnız "pencereyle
+/// büyüme" değil, **tavansızlık**tı.
+const double kSafetyBlockMaxWidth = DesktopBreakpoints.maxLabelValueWidth + 32;
+
+/// Masaüstünde içeriği [kSafetyBlockMaxWidth] ile tavanlar ve yatayda ortalar;
+/// **mobilde çocuğu olduğu gibi geçirir** (SPEC §7).
+///
+/// 🔴 Tavan `MediaQuery`den DEĞİL kaptan kurulur: bu ekranlar Ayarlar'dan
+/// `showDesktopPanel` ile açıldığında 920 px'lik bir `SizedBox` içinde çizilir
+/// ama `MediaQuery.sizeOf` orada hâlâ tüm pencereyi verir.
+class SafetyDesktopBand extends StatelessWidget {
+  const SafetyDesktopBand({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isDesktopWindow) return child;
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kSafetyBlockMaxWidth),
+        child: child,
+      ),
+    );
+  }
+}
 
 /// WP-129: Ayarlar → Engellenen kullanıcılar (unblock UI).
 class BlockedUsersScreen extends ConsumerWidget {
@@ -24,49 +72,55 @@ class BlockedUsersScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.safetyBlockedUsersTitle)),
       // WP-442: Hesabındaki kısıtlar ve itiraz yolu burada; kullanıcı
       // cezasının nedenini ve süresini görmeden itiraz edemez.
-      body: ListView(
-        padding: getSafeVerticalPadding(context, horizontal: 12, vertical: 12),
-        children: [
-          const MyRestrictionsSection(),
-          const Divider(height: 32),
-          Text(
-            l10n.safetyBlockedUsersTitle,
-            style: Theme.of(context).textTheme.titleMedium,
+      body: SafetyDesktopBand(
+        child: ListView(
+          padding: getSafeVerticalPadding(
+            context,
+            horizontal: 12,
+            vertical: 12,
           ),
-          const SizedBox(height: 8),
-          async.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            // 🔴 WP-591: bkz. muted_nudges_screen -- `safetyActionFailed`
-            // yukleme hatasini anlatmiyor ve cikis vermiyordu.
-            error: (_, _) => Center(
-              child: ErrorRetryView(
-                message: l10n.homeVerilerYuklenemedi,
-                onRetry: () => ref.invalidate(blockedProfilesProvider),
-              ),
+          children: [
+            const MyRestrictionsSection(),
+            const Divider(height: 32),
+            Text(
+              l10n.safetyBlockedUsersTitle,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            data: (profiles) {
-              if (profiles.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    l10n.safetyNoBlockedUsers,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  for (final p in profiles)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: _BlockedUserTile(profile: p),
+            const SizedBox(height: 8),
+            async.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              // 🔴 WP-591: bkz. muted_nudges_screen -- `safetyActionFailed`
+              // yukleme hatasini anlatmiyor ve cikis vermiyordu.
+              error: (_, _) => Center(
+                child: ErrorRetryView(
+                  message: l10n.homeVerilerYuklenemedi,
+                  onRetry: () => ref.invalidate(blockedProfilesProvider),
+                ),
+              ),
+              data: (profiles) {
+                if (profiles.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      l10n.safetyNoBlockedUsers,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                ],
-              );
-            },
-          ),
-        ],
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final p in profiles)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _BlockedUserTile(profile: p),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -142,7 +196,6 @@ class _BlockedUserTileState extends ConsumerState<_BlockedUserTile> {
     );
   }
 }
-
 
 /// WP-442: Kullanıcının kendi hakkındaki yaptırımları ve itiraz yolu.
 ///
@@ -236,15 +289,12 @@ class _RestrictionTile extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             if (appeal != null)
-              Text(
-                switch (appeal!.status) {
-                  ModerationAppealStatus.open => l10n.safetyAppealPending,
-                  ModerationAppealStatus.upheld => l10n.safetyAppealUpheld,
-                  ModerationAppealStatus.overturned =>
-                    l10n.safetyAppealOverturned,
-                },
-                style: theme.textTheme.bodySmall,
-              )
+              Text(switch (appeal!.status) {
+                ModerationAppealStatus.open => l10n.safetyAppealPending,
+                ModerationAppealStatus.upheld => l10n.safetyAppealUpheld,
+                ModerationAppealStatus.overturned =>
+                  l10n.safetyAppealOverturned,
+              }, style: theme.textTheme.bodySmall)
             else
               Align(
                 alignment: AlignmentDirectional.centerEnd,

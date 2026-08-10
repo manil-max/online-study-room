@@ -51,7 +51,8 @@ int statsTileColumns(double windowWidth) =>
 /// SPEC §3 A2 tablosu — grafik kartının sütun sayısı: `large` (1200) ve
 /// üstünde 2, altında 1.
 int statsChartColumns(double windowWidth) =>
-    DesktopBreakpoints.windowClass(windowWidth) == DesktopNavigationMode.large ||
+    DesktopBreakpoints.windowClass(windowWidth) ==
+            DesktopNavigationMode.large ||
         DesktopBreakpoints.windowClass(windowWidth) ==
             DesktopNavigationMode.xlarge
     ? 2
@@ -117,7 +118,7 @@ class StatsSectionColumns extends StatelessWidget {
     if (sections.isEmpty) return const SizedBox.shrink();
     final windowWidth = MediaQuery.sizeOf(context).width;
     final columns = statsChartColumns(windowWidth).clamp(1, sections.length);
-    if (columns <= 1) return _stack(sections);
+    if (columns <= 1) return _singleColumn(sections);
 
     final buckets = List.generate(columns, (_) => <Widget>[]);
     for (var i = 0; i < sections.length; i++) {
@@ -147,6 +148,45 @@ class StatsSectionColumns extends StatelessWidget {
       ),
     );
   }
+
+  /// TEK sutunlu bant (`compact` 640–1007 ve `expanded` 1008–1199).
+  ///
+  /// 🔴 WP-683 GEDIK 1 — OLCULDU. Bu dal WP-683'e kadar `_stack(sections)`i
+  /// CIPLAK donduruyordu: ne `Align`, ne `ConstrainedBox`, hicbir tavan. Ayni
+  /// harness, `DesktopContent(1440)` kabuğu, `devicePixelRatio = 1`:
+  ///
+  /// | pencere | sutun | en genis kart |
+  /// |---:|---:|---:|
+  /// | 1008 | 1 | **960 px** ← ihlal (tavan 720) |
+  /// | 1200 | 2 | 564 px |
+  /// | 1920 | 2 | 684 px |
+  /// | 2560 | 2 | 684 px |
+  ///
+  /// Kusur iki kapinin arasindan gecti: WP-673 ve WP-680 yalniz **1920 ve
+  /// 2560** ciziyor, ikisi de `columns == 2` bandi. 1008–1199 arasini hicbir
+  /// iddia olcmuyordu. Sahibin 3 numarali sikayeti ("dev kart, icinde tek bir
+  /// sayi") bu bantta aynen duruyordu.
+  ///
+  /// Tavan cok sutunlu daldakiyle AYNI sayidir ([kStatsChartMaxWidth], SPEC
+  /// §2.3 "Grafik karti"), yeni bir dil icat edilmedi. Sola hizalanir: SPEC
+  /// §3 A2 artan yeri ortalamaz, `Align`in `topStart`i A2'nin davranisidir.
+  Widget _singleColumn(List<Widget> items) => LayoutBuilder(
+    builder: (context, constraints) {
+      final band = constraints.maxWidth;
+      final width = band < kStatsChartMaxWidth ? band : kStatsChartMaxWidth;
+      return Align(
+        alignment: AlignmentDirectional.topStart,
+        child: SizedBox(
+          // Anahtar tavani UYGULAYAN kutunun uzerindedir. `Align`a konulsaydi
+          // olculen sey kabin genisligi olurdu (kap her zaman bandi doldurur)
+          // ve kapi tavan yokken de yesil yanardi.
+          key: const ValueKey('${kStatsSectionColumnKeyPrefix}0'),
+          width: width,
+          child: _stack(items),
+        ),
+      );
+    },
+  );
 
   Widget _stack(List<Widget> items) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

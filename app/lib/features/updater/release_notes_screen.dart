@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/config/distribution_channel.dart';
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
 
@@ -30,6 +32,26 @@ Future<void> maybeShowWhatsNewDialog(BuildContext context) async {
 
 /// İlk açılışta gösterilen sürüm sayısı; gerisi "daha fazla" ile açılır.
 const int kReleaseNotesInitialCount = 5;
+
+/// WP-683 — sürüm notları okuma sütununun genişlik tavanı (SPEC §3 **A3**).
+///
+/// 🔴 Türetildi, seçilmedi. Sürüm notu baştan sona okunan bir metindir: her
+/// satır "• ..." ile başlayan bir cümledir. SPEC §2.3 düz metni **600 px**'te
+/// tavanlar (80 karakter × 7.5 px, WCAG 2.1 SC 1.4.8) ve
+/// `DesktopSurface.readingWidth = 760`'ın prose için yanlış olduğunu yazar.
+/// Madde metni `Card`ın `EdgeInsets.all(16)` dolgusu içinde durur → kart
+/// tavanı 600 + 32 = **632 px**. 632, 4'ün katıdır.
+///
+/// 🔴 ÖLÇÜLEN KUSUR (WP-683 öncesi, `desktop_wp683_screens_test.dart`):
+/// en geniş kart 1008'de 976 px, 1200'de 1131, 1920'de **1888**, 2560'ta
+/// **2528 px**; içeriğin boyanan yatay aralığı 2560'ta **2491 px**.
+/// Ekran `about_screen.dart:222`'den push edilir; masaüstünde Ayarlar paneli
+/// içinde 888 px, mobilde ekran genişliğinde çizilir.
+///
+/// [WhatsNewDialog] **kapsam dışıdır**: o zaten `AlertDialog` genişliğiyle
+/// sınırlıdır, pencereyle büyümez.
+const double kReleaseNotesReadingMaxWidth =
+    DesktopBreakpoints.maxProseWidth + 32;
 
 class ReleaseNotesScreen extends StatefulWidget {
   const ReleaseNotesScreen({super.key, this.service, this.channel});
@@ -77,7 +99,7 @@ class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
               ? notes.take(kReleaseNotesInitialCount).toList(growable: false)
               : notes;
 
-          return ListView.separated(
+          final list = ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: shown.length + (hasMore ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -93,6 +115,17 @@ class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
               }
               return ReleaseNoteCard(note: shown[index].forLocale(locale));
             },
+          );
+          // Mobilde liste olduğu gibi döner: ağaca tek bir düğüm eklenmez.
+          if (!isDesktopWindow) return list;
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: kReleaseNotesReadingMaxWidth,
+              ),
+              child: list,
+            ),
           );
         },
       ),

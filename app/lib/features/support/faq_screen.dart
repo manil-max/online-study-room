@@ -4,12 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/l10n/app_locale.dart';
 import '../../data/models/faq_entry.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/support_providers.dart';
 import '../../data/repositories/in_memory/in_memory_support_repository.dart';
 import '../../l10n/app_localizations.dart';
+
+/// WP-683 — SSS okuma sütununun genişlik tavanı (SPEC §3 **A3**, §2.3).
+///
+/// 🔴 Türetildi, seçilmedi. SSS bir **prose** ekranıdır: cevaplar paragraftır.
+/// SPEC §2.3 düz metni **600 px**'te tavanlar (80 karakter × 7.5 px, WCAG 2.1
+/// SC 1.4.8) ve `DesktopSurface.readingWidth = 760`'ın prose için **yanlış**
+/// olduğunu açıkça yazar (760 / 7.5 = 101 karakter). Cevap metni
+/// `ExpansionTile`ın `childrenPadding`i (2 × 16 = 32) içinde durduğu için
+/// kartın tavanı 600 + 32 = **632 px**'tir. 632, 4'ün katıdır.
+///
+/// 🔴 ÖLÇÜLEN KUSUR (WP-683 öncesi, `desktop_wp683_screens_test.dart`):
+/// en geniş kart 1008'de 976 px, 1200'de 1168, 1920'de **1888**, 2560'ta
+/// **2528 px**; açık bir cevabın boyanan metni 2560'ta 1386 px.
+/// Bu ekranın iki çağrı yeri var ve **yalnız biri** panelin içinde:
+/// `settings_screen.dart:515` (920 px panel) ve `auth_screen.dart:446`
+/// (oturum açmadan, **tam pencere**). İkincisinde satır gerçekten pencereyle
+/// birlikte büyüyordu.
+///
+/// SSS metni sunucudan gelir ve çevrimdışı yedeği vardır; WP-683 **yalnız
+/// düzeni** değiştirdi, tek bir cümleye dokunmadı (SPEC §7).
+const double kFaqReadingMaxWidth = DesktopBreakpoints.maxProseWidth + 32;
 
 class FaqScreen extends ConsumerStatefulWidget {
   const FaqScreen({super.key});
@@ -39,71 +62,83 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           kFallbackFaq.where((entry) => entry.locale == locale).toList(),
     );
 
+    final body = Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            onChanged: (value) => setState(() => _query = value.trim()),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              labelText: l10n.faqSearch,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        if (fallback)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.faqOfflineFallback,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        Expanded(
+          child: entries.isLoading && serverEntries == null
+              ? const Center(child: CircularProgressIndicator())
+              : visible.isEmpty
+              ? Center(child: Text(l10n.faqNoResults))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  itemCount: visible.length,
+                  itemBuilder: (context, index) {
+                    final entry = visible[index];
+                    return Card(
+                      child: ExpansionTile(
+                        title: Text(entry.question),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          16,
+                        ),
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(entry.answer),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: OutlinedButton.icon(
+            onPressed: () => isSignedIn ? _askQuestion() : _showLoginRequired(),
+            icon: const Icon(Icons.question_answer_outlined),
+            label: Text(l10n.faqAskQuestion),
+          ),
+        ),
+      ],
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.faqTitle)),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              onChanged: (value) => setState(() => _query = value.trim()),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                labelText: l10n.faqSearch,
-                border: const OutlineInputBorder(),
+      // Mobilde `body` olduğu gibi geçer: ağaca tek bir düğüm eklenmez.
+      body: !isDesktopWindow
+          ? body
+          : Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: kFaqReadingMaxWidth,
+                ),
+                child: body,
               ),
             ),
-          ),
-          if (fallback)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                l10n.faqOfflineFallback,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          Expanded(
-            child: entries.isLoading && serverEntries == null
-                ? const Center(child: CircularProgressIndicator())
-                : visible.isEmpty
-                ? Center(child: Text(l10n.faqNoResults))
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                    itemCount: visible.length,
-                    itemBuilder: (context, index) {
-                      final entry = visible[index];
-                      return Card(
-                        child: ExpansionTile(
-                          title: Text(entry.question),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            0,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(entry.answer),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          SafeArea(
-            top: false,
-            minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: OutlinedButton.icon(
-              onPressed: () =>
-                  isSignedIn ? _askQuestion() : _showLoginRequired(),
-              icon: const Icon(Icons.question_answer_outlined),
-              label: Text(l10n.faqAskQuestion),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
