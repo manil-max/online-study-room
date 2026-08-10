@@ -417,4 +417,93 @@ revoke all on function public.backfill_goal_completions()
   from public, anon, authenticated;
 grant execute on function public.backfill_goal_completions() to service_role;
 
+-- ---------------------------------------------------------------------
+-- ONARIM: 0129'un apply aninda YANLIS dusurdugu grup gunlerini geri koy
+-- ---------------------------------------------------------------------
+-- 🔴 Bu bir tahmin degil, olculmus bir yan etkidir. `0129` apply sirasinda
+-- `_repair_orphan_goal_completions()` cagiriyor (0129:349) ve o fonksiyonun
+-- grup dali toplami YALNIZ bugunku uyelerden (`gm.left_at is null`) aliyordu.
+-- Yani bir grup gununde katki veren herkes gruptan ayrilmissa toplam SIFIR
+-- gorunuyor ve olay dusuruluyordu -- gun gercekten hak edilmis olsa bile.
+-- 0129 bu sabah staging ve production'a uygulandi (kosum 31380186208 /
+-- 31380542690), dolayisiyla bu satirlar canlida dusmus olabilir.
+--
+-- OLCUTUN DARLIGI, silmenin olcutunun AYNASIDIR:
+--   (a) o gun icin su anda olay YOK
+--   (b) ESKI yuklemle (yalniz bugunku uyeler) toplam SIFIR -- silme tam bu
+--       kosulda oluyordu, baska hicbir kosulda degil
+--   (c) DUZELTILMIS yuklemle gun hedefi gercekten tutuyor
+-- Uc kosul birden saglanmadan hicbir satir yazilmaz.
+--
+-- 🔴 DURUST SINIR: (c) grubun BUGUNKU `daily_goal_minutes` degerini kullanir,
+-- cunku gecmisteki hedef degeri hicbir yerde saklanmiyor. Grup hedefini o
+-- gunden sonra DUSURDUYSE, hak edilmemis bir gun geri konabilir. Alternatif
+-- (hic geri koymamak) hak edilmis gunleri silinmis birakirdi; iki yanlistan
+-- kucugu secildi ve burada yazili. Ayni asimetri silme tarafinda da vardi.
+--
+-- Neden `backfill_goal_completions()` cagrilmiyor: o fonksiyon TUM gecmisi
+-- bugunku hedefle yeniden yargilar ve hedefini dusurmus her grup/kullanici
+-- icin hak edilmemis gunler UYDURUR. Onarim daralmis olmali.
+do $wp661$
+declare
+  v_restored integer := 0;
+begin
+  with candidate as (
+    select
+      g.id as group_id,
+      g.time_zone,
+      g.daily_goal_minutes,
+      (s.start_time at time zone g.time_zone)::date as goal_day,
+      max(s.end_time) as last_end
+    from public.groups g
+    join public.group_members gm
+      on gm.group_id = g.id
+    join public.study_sessions s
+      on s.user_id = gm.user_id
+     and s.duration_seconds > 0
+     and (gm.left_at is null or s.start_time < gm.left_at)
+    where g.daily_goal_minutes > 0
+    group by g.id, g.time_zone, g.daily_goal_minutes,
+             (s.start_time at time zone g.time_zone)::date
+  ),
+  restorable as (
+    select c.*
+    from candidate c
+    where not exists (
+        select 1
+        from public.goal_progress_events e
+        where e.scope_type = 'group'
+          and e.scope_id = c.group_id
+          and e.event_kind = 'goal_completed'
+          and e.goal_day = c.goal_day
+      )
+      and coalesce((
+        select sum(public._goal_day_seconds(gm2.user_id, c.goal_day, c.time_zone))
+        from public.group_members gm2
+        where gm2.group_id = c.group_id
+          and gm2.left_at is null
+      ), 0) = 0
+      and public._group_goal_day_seconds(c.group_id, c.goal_day, c.time_zone)
+          >= c.daily_goal_minutes::bigint * 60
+      and c.goal_day <= (now() at time zone c.time_zone)::date
+  )
+  insert into public.goal_progress_events (
+    event_key, scope_type, scope_id, time_zone, event_kind, goal_day, occurred_at
+  )
+  select
+    'group:' || r.group_id::text || ':goal_completed:' || r.goal_day::text,
+    'group',
+    r.group_id,
+    r.time_zone,
+    'goal_completed',
+    r.goal_day,
+    coalesce(r.last_end, now())
+  from restorable r
+  on conflict (scope_type, scope_id, event_kind, goal_day) do nothing;
+
+  get diagnostics v_restored = row_count;
+  raise notice 'WP-661 onarim: % grup gunu geri kondu (0129 apply yan etkisi)',
+    v_restored;
+end $wp661$;
+
 notify pgrst, 'reload schema';
