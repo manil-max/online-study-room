@@ -284,9 +284,14 @@ void main() {
             tester.widget<SwitchListTile>(find.byKey(weeklyKey)).onChanged,
             isNull,
           );
+          // 🔴 WP-685: 2 -> 4. Sayi bir esik degil ENVANTER: masaustunde
+          // kapatilan HER satirin gerekcesi yazili olmali. WP-611 iki
+          // hatirlaticiyi kapatmisti; WP-685 durtme ve guncelleme
+          // anahtarlarinin da masaustunde teslim edilemedigini olctu ve
+          // ayni gerekceye bagladi. Testin niyeti degismedi, kapsami buyudu.
           expect(
             find.text(l10n.notificationsHatirlaticiMasaustundeYok),
-            findsNWidgets(2),
+            findsNWidgets(4),
           );
 
           // "Bozuk düğme" yerine gerekçe: izin düğmesi yok, açıklama var.
