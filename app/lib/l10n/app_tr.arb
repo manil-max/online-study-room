@@ -2099,5 +2099,9 @@
   "profileStatsGrupKapsamNotu": "Ortak grup üyeliğiniz boyunca kaydedilen günlerden sayılır.",
   "@profileStatsGrupKapsamNotu": {"description": "WP-660: baskasinin profilinde kapsam notu."},
   "profileAchievementTierProgress": "{tier}/{max} kademe",
-  "@profileAchievementTierProgress": {"description": "WP-660: baskasinin profilinde ham metrik okunamadigi icin kademe temelli ilerleme."}
+  "@profileAchievementTierProgress": {"description": "WP-660: baskasinin profilinde ham metrik okunamadigi icin kademe temelli ilerleme."},
+  "profileAchievementTierKept": "Kademe {tier} kazanıldı · kalıcı",
+  "@profileAchievementTierKept": {"description": "WP-663: `current` sinifi metrikte kazanilmis kademenin geri alinmadigini soyleyen satir."},
+  "profileAchievementCurrentStreakTowardNext": "Şu anki seri {current} · Kademe {tier} için {target} gerek",
+  "@profileAchievementCurrentStreakTowardNext": {"description": "WP-663: dusen (current) seri degerinin hangi kademeye sayildigini adiyla yazan satir."}
 }

@@ -1816,6 +1816,54 @@ class _CatalogTile extends StatelessWidget {
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+                      ] else if (unlocked &&
+                          kCurrentAchievementMetrics.contains(def.id)) ...[
+                        // 🔴 WP-663. `fire_streak` tek `'current'` sınıfı
+                        // metriktir (`kCurrentAchievementMetrics`; sunucuda
+                        // `0050:45` `('fire_streak','streak_days','current')`
+                        // ve `greatest` yalnız `'cumulative'` dalında —
+                        // `0050:296-302`). Yani bu değer **düşer**: iki gün ara
+                        // veren kullanıcıda 0 olur. Kazanılmış kademe ise durur
+                        // ve durmalıdır ("zorlama yok",
+                        // `docs/URUN-POLITIKALARI.md §3` — tatil için rozet
+                        // geri almak yasak).
+                        //
+                        // Çelişen şey rozet değil GÖSTERİMDİ: yanan kademe
+                        // şeridi + "1" rozetinin altında çıplak
+                        // `0/30 · sonraki kademe` yazıyordu, hiçbir yerde
+                        // kademe 1'in kalıcı olduğu geçmiyordu. Çubuk da
+                        // yanıltıcı: biriken bir değer ima eder (WP-234'ün
+                        // `isPersonalBestAchievement` için verdiği gerekçenin
+                        // aynısı). Bu yüzden burada çubuk yok, iki ayrı satır
+                        // var: (1) kazanılan kademe kalıcı, (2) anlık değer
+                        // HANGİ kademeye sayılıyor.
+                        SizedBox(height: 6),
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).profileAchievementTierKept(tier),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: tierColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          progress == null
+                              ? AppLocalizations.of(
+                                  context,
+                                ).profileAchievementProgressUnavailable
+                              : AppLocalizations.of(
+                                  context,
+                                ).profileAchievementCurrentStreakTowardNext(
+                                  progress,
+                                  nextTier,
+                                  need,
+                                ),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ] else if (isPersonalBestAchievement(def.id)) ...[
                         // WP-234: birikmeyen (kişisel rekor) metrik — ilerleme
                         // çubuğu yanıltıcı olur, yalnız en iyi değer gösterilir.

@@ -6865,5 +6865,29 @@
         "type": "int"
       }
     }
+  },
+  "profileAchievementTierKept": "Tier {tier} earned · permanent",
+  "@profileAchievementTierKept": {
+    "description": "WP-663: states that an already earned tier of a non-accumulating (current) metric is never taken back.",
+    "placeholders": {
+      "tier": {
+        "type": "int"
+      }
+    }
+  },
+  "profileAchievementCurrentStreakTowardNext": "Current streak {current} · Tier {tier} needs {target}",
+  "@profileAchievementCurrentStreakTowardNext": {
+    "description": "WP-663: names the tier a droppable (current) streak value is counting toward, instead of a bare N/M line.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
   }
 }
