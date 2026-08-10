@@ -6,13 +6,14 @@ import '../../core/config/build_identity_card.dart';
 import '../../core/config/distribution_channel.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
-import '../desktop/desktop_surface.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/release_notes_service.dart';
 import '../updater/updater_dialog.dart';
 import '../updater/updater_service.dart';
 import 'developer_mode.dart';
 import 'legal_center_screen.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 import 'timer_journal_screen.dart';
 
 /// Ayarlar → Hakkında ve güncellemeler.
@@ -157,9 +158,17 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const EdgeInsets.fromLTRB(16, 12, 16, 24),
         ),
         children: [
-          DesktopReadingBody(
-            maxWidth: DesktopSurface.readingWidth,
-            padding: EdgeInsets.zero,
+          // 🔴 WP-679 — masaustunde sutun ORTALIYDI; artik SPEC §3 A3 + WP-674
+          // deseni: 760 px tavan, BASA yasli.
+          //
+          // SPEC §5 karar tablosu bu ekrani A3 "prose 600" diye isaretliyor.
+          // Uygulanan sayi **760** ve gerekcesi olculdu: bu ekranda duz metin
+          // yok — icerigi surum kimlik karti + iki ayar satiri (`ListTile`).
+          // SPEC §2.3'un kendi tablosu "form / ayar satiri = 760" diyor; 600
+          // yalniz prose icindir. Gercek prose bu ekranin ALTINDAKI yasal
+          // belgede (`legal_center_screen.dart` `_LegalDocumentScreen`) ve
+          // orada 600'e indirildi.
+          ProfileDesktopBody.form(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

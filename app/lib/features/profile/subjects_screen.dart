@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/theme/subject_colors.dart';
 import '../../data/models/subject.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/subject_providers.dart';
+// WP-679: ortak masaustu olculeri Ayarlar'da durur.
+import 'settings_screen.dart';
 
 /// Derslerim: kullanıcının derslerini (ad + renk) ekleme/düzenleme/silme.
 /// Bkz. project.md §3.7. Dersler kişiye özeldir; ders seçimi zorunlu değildir.
@@ -26,6 +30,12 @@ class SubjectsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).profileDerslerim),
       ),
+      // WP-679: masaustunde eylem, icerigin (1440 px izgara) yaninda durur.
+      floatingActionButtonLocation: isDesktopWindow
+          ? const ProfileContentEndFabLocation(
+              DesktopBreakpoints.maxContentWidth,
+            )
+          : null,
       floatingActionButton: hasUser
           ? FloatingActionButton.extended(
               onPressed: () => _addSubject(context, ref),
@@ -35,43 +45,66 @@ class SubjectsScreen extends ConsumerWidget {
           : null,
       body: subjectsAsync.when(
         loading: () => Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.profileBeklenmeyenBirHataOlustu,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () => ref.invalidate(userSubjectsProvider),
-                  child: Text(l10n.classroomYenile),
-                ),
-              ],
+        error: (_, _) => ProfileDesktopCentered(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.profileBeklenmeyenBirHataOlustu,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () => ref.invalidate(userSubjectsProvider),
+                    child: Text(l10n.classroomYenile),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         data: (subjects) {
           if (subjects.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  '${l10n.profileHenuzDersinYok}\n${l10n.profileDersOpsiyonel}',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+            return ProfileDesktopCentered(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    '${l10n.profileHenuzDersinYok}\n${l10n.profileDersOpsiyonel}',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
             );
           }
+          // 🔴 WP-679 — bu ekran sayac kartindan TAM PENCERE rotasiyla acilir
+          // (`classroom/widgets/study_timer_card.dart:819`), yani masaustunde
+          // gercekten butun ekrani alir. Olcum (`WP679 | DERSLER`): satirlar
+          // 1920 px pencerede **1868 px**, 2560 px'te **2508 px** genisligindeydi
+          // ve icindeki tek metin bir ders adi (~100 px). Sahibin "dev kutu,
+          // icinde tek satir" sikayetinin birebir kaynagi.
+          //
+          // Dersler birbirinden bagimsiz, esit yukseklikte bloklardir → SPEC
+          // §3 **A2**: kabin genisligine gore 1/2/3 sutuna akar, her sutun
+          // 760'ta tavanlanir. Satir icerigi, duzenle/sil menusu ve FAB
+          // degismedi (SPEC §7).
           return ListView(
+            // Kenar boslugu BILEREK degismedi: `ListTile` kendi 16 px'ini
+            // tasiyor; buraya yatay bosluk eklemek mobil satirlari 16 px saga
+            // kaydirirdi (SPEC §7 mobil regresyonu).
             padding: const EdgeInsets.only(top: 8, bottom: 88),
-            children: [for (final s in subjects) _SubjectTile(subject: s)],
+            children: [
+              ProfileFlowColumns(
+                spacing: 0,
+                sections: [for (final s in subjects) _SubjectTile(subject: s)],
+              ),
+            ],
           );
         },
       ),

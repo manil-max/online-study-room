@@ -6,7 +6,10 @@ import '../../core/desktop/desktop_window.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/custom_theme.dart';
 import '../../core/theme/theme_settings.dart';
+import '../../core/desktop/desktop_layout.dart';
 import '../desktop/desktop_surface.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 import 'theme_builder/theme_builder_screen.dart';
 
 /// Görünüm: kendi temaların (3 yuva) + hazır temalar + açık/koyu/sistem.
@@ -102,8 +105,19 @@ class AppearanceScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.profileGorunumVeAtmosfer)),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          // 🔴 WP-679 — sutun sayisi PENCEREDEN hesaplaniyordu ama izgara
+          // 880 px'lik bir kutuya cizilıyordu: 1920 px pencerede
+          // `desktopGridColumns(1920)` = 4 donuyor ve dort kart 880 px'e
+          // sikisiyordu (kart basina ~207 px, en-boy 2.15 → 96 px yukseklik).
+          // Karar artik KABIN genisliginden verilir; 880 sihirli sayisi da
+          // SPEC §2.3'un form sutunu tavanina (760) indi.
+          final band = isDesktopWindow
+              ? (constraints.maxWidth < DesktopBreakpoints.maxFormWidth
+                    ? constraints.maxWidth
+                    : DesktopBreakpoints.maxFormWidth)
+              : constraints.maxWidth;
           final cols = desktopGridColumns(
-            constraints.maxWidth,
+            band,
             compact: 2,
             medium: 3,
             expanded: 4,
@@ -116,9 +130,7 @@ class AppearanceScreen extends ConsumerWidget {
               24,
             ),
             children: [
-              DesktopReadingBody(
-                maxWidth: desktop ? 880 : double.infinity,
-                padding: EdgeInsets.zero,
+              ProfileDesktopBody.form(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -267,9 +279,7 @@ class _CustomThemeTile extends StatelessWidget {
         onTap: onTap,
         leading: _ThemeSwatch(colors: theme.darkColors),
         title: Text(theme.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: theme.isReadOnly
-            ? Text(l10n.profileTemaSaltOkunur)
-            : null,
+        subtitle: theme.isReadOnly ? Text(l10n.profileTemaSaltOkunur) : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

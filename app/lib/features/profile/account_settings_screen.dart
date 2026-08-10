@@ -9,6 +9,8 @@ import '../../data/models/account_deletion_status.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../auth/password_reset_platform.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -478,126 +480,151 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               ),
               children: [
-                Text(
-                  AppLocalizations.of(context).profileHesapBilgileri,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Card(
-                  elevation: 0,
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.4,
-                  ),
+                // 🔴 WP-679 — bu ekranin hicbir genislik siniri YOKTU. Olcum
+                // (2026-08-10, `WP679 | HESABIM`): kart 1920 px pencerede
+                // **1888 px**, 2560 px'te **2528 px** cizildi; icindeki en
+                // uzun metin bir e-posta adresi. SPEC §2.3 form/ayar sutunu
+                // tavani 760. Hesap silme, sifre/e-posta degistirme ve guvenli
+                // cikis akislarinin HICBIRI degismedi — yalniz kap daraldi.
+                ProfileDesktopBody.form(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ListTile(
-                        leading: Icon(Icons.email_outlined),
-                        title: Text(
-                          AppLocalizations.of(context).profileEpostaAdresi,
-                        ),
-                        subtitle: Text(
-                          email ??
-                              AppLocalizations.of(context).profileBilinmiyor,
-                        ),
-                        trailing: TextButton(
-                          onPressed: _changeEmail,
-                          child: Text(
-                            AppLocalizations.of(context).profileDegistir,
-                          ),
+                      Text(
+                        AppLocalizations.of(context).profileHesapBilgileri,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Divider(height: 1),
-                      ListTile(
-                        leading: Icon(Icons.lock_outline),
-                        title: Text(AppLocalizations.of(context).profileSifre),
-                        subtitle: Text('••••••••'),
-                        trailing: TextButton(
-                          onPressed: _changePassword,
-                          child: Text(
-                            AppLocalizations.of(context).profileDegistir,
-                          ),
+                      SizedBox(height: 16),
+                      Card(
+                        elevation: 0,
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.4),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.email_outlined),
+                              title: Text(
+                                AppLocalizations.of(
+                                  context,
+                                ).profileEpostaAdresi,
+                              ),
+                              subtitle: Text(
+                                email ??
+                                    AppLocalizations.of(
+                                      context,
+                                    ).profileBilinmiyor,
+                              ),
+                              trailing: TextButton(
+                                onPressed: _changeEmail,
+                                child: Text(
+                                  AppLocalizations.of(context).profileDegistir,
+                                ),
+                              ),
+                            ),
+                            Divider(height: 1),
+                            ListTile(
+                              leading: Icon(Icons.lock_outline),
+                              title: Text(
+                                AppLocalizations.of(context).profileSifre,
+                              ),
+                              subtitle: Text('••••••••'),
+                              trailing: TextButton(
+                                onPressed: _changePassword,
+                                child: Text(
+                                  AppLocalizations.of(context).profileDegistir,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context).profileGuvenlik,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Card(
+                        elevation: 0,
+                        color: theme.colorScheme.errorContainer.withValues(
+                          alpha: 0.4,
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.logout,
+                            color: theme.colorScheme.error,
+                          ),
+                          title: Text(
+                            AppLocalizations.of(context).profileGuvenliCikis,
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                          subtitle: Text(
+                            AppLocalizations.of(
+                              context,
+                            ).profileCihazdakiOturumuSonlandir,
+                            style: TextStyle(
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
+                          ),
+                          onTap: _signOut,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      // WP-114: hesap silme
+                      FutureBuilder(
+                        future: _deletionStatus,
+                        builder: (context, snap) {
+                          final l10n = AppLocalizations.of(context);
+                          // WP-539 `snap.hasError`ı görünür kıldı ama üç durumu
+                          // ikiye sıkıştırdı: okunamayan durum "aktif" sayılıyordu.
+                          // WP-620 üçüncü hâli ayırdı — ayrıntı ve ölçüm
+                          // [_deletionStatusUnknownCard] belgesinde.
+                          if (snap.hasError) {
+                            return _deletionStatusUnknownCard(theme, l10n);
+                          }
+                          final active = snap.data?.active == true;
+                          return Card(
+                            elevation: 0,
+                            color: theme.colorScheme.errorContainer.withValues(
+                              alpha: 0.25,
+                            ),
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.delete_forever,
+                                color: theme.colorScheme.error,
+                              ),
+                              title: Text(
+                                active
+                                    ? l10n.accountSilmePlanlandiIptalEt
+                                    : l10n.accountHesabiSil,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                              subtitle: Text(
+                                active
+                                    ? l10n.accountSilmeSonTarih(
+                                        '${snap.data?.purgeAfter?.toLocal()}',
+                                      )
+                                    : l10n.accountSilmeGeriAlmaPenceresi,
+                              ),
+                              onTap: active
+                                  ? _cancelAccountDeletion
+                                  : _requestAccountDeletion,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
-                ),
-                SizedBox(height: 32),
-                Text(
-                  AppLocalizations.of(context).profileGuvenlik,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Card(
-                  elevation: 0,
-                  color: theme.colorScheme.errorContainer.withValues(
-                    alpha: 0.4,
-                  ),
-                  child: ListTile(
-                    leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                    title: Text(
-                      AppLocalizations.of(context).profileGuvenliCikis,
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                    subtitle: Text(
-                      AppLocalizations.of(
-                        context,
-                      ).profileCihazdakiOturumuSonlandir,
-                      style: TextStyle(
-                        color: theme.colorScheme.error.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    onTap: _signOut,
-                  ),
-                ),
-                SizedBox(height: 12),
-                // WP-114: hesap silme
-                FutureBuilder(
-                  future: _deletionStatus,
-                  builder: (context, snap) {
-                    final l10n = AppLocalizations.of(context);
-                    // WP-539 `snap.hasError`ı görünür kıldı ama üç durumu
-                    // ikiye sıkıştırdı: okunamayan durum "aktif" sayılıyordu.
-                    // WP-620 üçüncü hâli ayırdı — ayrıntı ve ölçüm
-                    // [_deletionStatusUnknownCard] belgesinde.
-                    if (snap.hasError) {
-                      return _deletionStatusUnknownCard(theme, l10n);
-                    }
-                    final active = snap.data?.active == true;
-                    return Card(
-                      elevation: 0,
-                      color: theme.colorScheme.errorContainer.withValues(
-                        alpha: 0.25,
-                      ),
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.delete_forever,
-                          color: theme.colorScheme.error,
-                        ),
-                        title: Text(
-                          active
-                              ? l10n.accountSilmePlanlandiIptalEt
-                              : l10n.accountHesabiSil,
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
-                        subtitle: Text(
-                          active
-                              ? l10n.accountSilmeSonTarih(
-                                  '${snap.data?.purgeAfter?.toLocal()}',
-                                )
-                              : l10n.accountSilmeGeriAlmaPenceresi,
-                        ),
-                        onTap: active
-                            ? _cancelAccountDeletion
-                            : _requestAccountDeletion,
-                      ),
-                    );
-                  },
                 ),
               ],
             ),

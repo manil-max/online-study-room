@@ -12,6 +12,8 @@ import '../../data/providers/admin_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../l10n/app_localizations.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 
 class FeedbackTicketsScreen extends StatelessWidget {
   const FeedbackTicketsScreen({super.key});
@@ -69,11 +71,15 @@ class MyFeedbackTicketsView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n.authBeklenmeyenBirHataOlustu, textAlign: TextAlign.center),
+            Text(
+              l10n.authBeklenmeyenBirHataOlustu,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               key: const Key('feedback-tickets-retry'),
-              onPressed: () => ref.invalidate(myFeedbackTicketSummariesProvider),
+              onPressed: () =>
+                  ref.invalidate(myFeedbackTicketSummariesProvider),
               icon: const Icon(Icons.refresh),
               label: Text(l10n.updaterTekrarDene),
             ),
@@ -94,8 +100,11 @@ class MyFeedbackTicketsView extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) =>
-                _TicketSummaryTile(summary: items[index]),
+            // WP-679: SPEC §2.3 form sutunu tavani. Sarmalayici `itemBuilder`
+            // icinde ki `ListView.separated` tembel kalsin.
+            itemBuilder: (context, index) => ProfileDesktopBody.form(
+              child: _TicketSummaryTile(summary: items[index]),
+            ),
           ),
         );
       },
@@ -594,7 +603,8 @@ class _FeedbackTicketConversationDialogState
                           // acilmamissa `user?.id` de NULL'dir -- cipla
                           // karsilastirmada `null == null` dogru cikar ve
                           // baskasinin mesaji "benim" gibi hizalanirdi.
-                          own: message.senderId != null &&
+                          own:
+                              message.senderId != null &&
                               message.senderId == user?.id,
                           senderLabel: _senderLabel(l10n, message, isAdmin),
                           body: message.message,

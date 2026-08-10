@@ -12,6 +12,8 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/data_export_providers.dart';
 import '../../data/providers/gamification_providers.dart';
 import '../../data/providers/study_providers.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 import '../../data/providers/subject_providers.dart';
 import '../../data/repositories/data_export_repository.dart';
 import '../../data/repositories/in_memory/in_memory_data_export_repository.dart';
@@ -107,47 +109,59 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l10n.exportMyDataSubtitle),
-          const SizedBox(height: 16),
-          Text(
-            l10n.exportRangeLabel,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          for (final r in DataExportRange.values)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                _range == r
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              title: Text(switch (r) {
-                DataExportRange.hot90 => l10n.exportRangeHot,
-                DataExportRange.year => l10n.exportRangeYear,
-                DataExportRange.all => l10n.exportRangeAll,
-              }),
-              onTap: _busy ? null : () => setState(() => _range = r),
-              minVerticalPadding: 12,
-            ),
-          const SizedBox(height: 24),
-          Semantics(
-            button: true,
-            label: l10n.exportMyData,
-            child: FilledButton.icon(
-              onPressed: _busy ? null : _export,
-              icon: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.ios_share),
-              label: Text(_busy ? l10n.exportInProgress : l10n.exportMyData),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
+          // 🔴 WP-679 — sinir YOKTU. Olcum (`WP679 | DISA-AKTAR`): icerik
+          // 1920 px'te 1101 px, 2560 px'te 1421 px. Uc secenekli bir radyo
+          // listesi + tek dugme; SPEC §2.3 form sutunu 760.
+          ProfileDesktopBody.form(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.exportMyDataSubtitle),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.exportRangeLabel,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                for (final r in DataExportRange.values)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      _range == r
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(switch (r) {
+                      DataExportRange.hot90 => l10n.exportRangeHot,
+                      DataExportRange.year => l10n.exportRangeYear,
+                      DataExportRange.all => l10n.exportRangeAll,
+                    }),
+                    onTap: _busy ? null : () => setState(() => _range = r),
+                    minVerticalPadding: 12,
+                  ),
+                const SizedBox(height: 24),
+                Semantics(
+                  button: true,
+                  label: l10n.exportMyData,
+                  child: FilledButton.icon(
+                    onPressed: _busy ? null : _export,
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.ios_share),
+                    label: Text(
+                      _busy ? l10n.exportInProgress : l10n.exportMyData,
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -9,6 +9,8 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../l10n/app_localizations.dart';
 import 'feedback_tickets_screen.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 
 /// Ayarlar -> Geri bildirim.
 ///
@@ -213,153 +215,168 @@ class _FeedbackComposeViewState extends ConsumerState<FeedbackComposeView> {
     // böylece `_submit` içindeki `read` gerçek profili görür.
     final profile = ref.watch(authStateProvider).value;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Kaydirilabilir govde: klavye acildiginda Scaffold burayi kisaltir ve
-        // odaklanan alan gorunur kalir.
-        Expanded(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              children: [
-                SegmentedButton<FeedbackTicketKind>(
-                  segments: [
-                    ButtonSegment(
-                      value: FeedbackTicketKind.feedback,
-                      icon: const Icon(Icons.lightbulb_outline),
-                      label: Text(l10n.profileOneri),
-                    ),
-                    ButtonSegment(
-                      value: FeedbackTicketKind.bug,
-                      icon: const Icon(Icons.bug_report_outlined),
-                      label: Text(l10n.profileHata),
-                    ),
-                  ],
-                  selected: {_kind},
-                  onSelectionChanged: _isSubmitting
-                      ? null
-                      : (values) => setState(() => _kind = values.single),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  key: const Key('feedback-subject-field'),
-                  controller: _subjectController,
-                  enabled: !_isSubmitting,
-                  maxLength: kMaxFeedbackSubjectLength,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.profileKonu,
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    try {
-                      normalizeFeedbackSubject(value ?? '');
-                      return null;
-                    } on AdminException {
-                      return l10n.profileBeklenmeyenBirHataOlustu;
-                    }
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  key: const Key('feedback-message-field'),
-                  controller: _messageController,
-                  enabled: !_isSubmitting,
-                  minLines: 4,
-                  maxLines: 7,
-                  maxLength: kMaxFeedbackMessageLength,
-                  decoration: InputDecoration(
-                    labelText: l10n.profileMesaj,
-                    alignLabelWithHint: true,
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty
-                      ? l10n.profileMesajGerekli
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                if (_attachmentBytes != null)
-                  Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      Container(
-                        height: 120,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Theme.of(context).dividerColor,
-                          ),
-                          image: DecorationImage(
-                            image: MemoryImage(_attachmentBytes!),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+    // 🔴 WP-679 — bu formun genislik siniri YOKTU. Olcum (`WP679 |
+    // GERI-BILDIRIM`): "Iptal" -> "Gonder" satiri 1920 px pencerede **1028 px**,
+    // 2560 px'te **1348 px** cizildi; SPEC KURAL 2.2'nin sert tavani 600.
+    // Ustelik `Iptal` ve `Gonder` iki `Expanded` oldugu icin pencere buyudukce
+    // yalniz o iki dugme siserek birbirinden uzaklasiyordu.
+    //
+    // Sarmalayici EN DISTA: `Column` + `Expanded` deseni (WP-420, depoda
+    // kayitli `Scaffold.bottomSheet` tuzagi) aynen korunur — yalnizca kap
+    // daralir, agacin sekli degismez.
+    return ProfileDesktopBody.form(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Kaydirilabilir govde: klavye acildiginda Scaffold burayi kisaltir ve
+          // odaklanan alan gorunur kalir.
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                children: [
+                  SegmentedButton<FeedbackTicketKind>(
+                    segments: [
+                      ButtonSegment(
+                        value: FeedbackTicketKind.feedback,
+                        icon: const Icon(Icons.lightbulb_outline),
+                        label: Text(l10n.profileOneri),
                       ),
-                      IconButton(
-                        tooltip: l10n.coreKapat,
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(48, 48),
-                        ),
-                        icon: Icon(
-                          Icons.cancel,
-                          color: Theme.of(context).colorScheme.onInverseSurface,
-                        ),
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => setState(() {
-                                _attachmentBytes = null;
-                                _attachmentExt = null;
-                              }),
+                      ButtonSegment(
+                        value: FeedbackTicketKind.bug,
+                        icon: const Icon(Icons.bug_report_outlined),
+                        label: Text(l10n.profileHata),
                       ),
                     ],
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: _isSubmitting ? null : _pickImage,
-                    icon: const Icon(Icons.attach_file),
-                    label: Text(l10n.profileEkranGoruntusuEkleOpsiyonel),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        // Sabit alt serit -- iki dugme **yan yana**.
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('feedback-cancel'),
-                    onPressed: _isSubmitting
+                    selected: {_kind},
+                    onSelectionChanged: _isSubmitting
                         ? null
-                        : () => Navigator.of(context).maybePop(),
-                    child: Text(l10n.profileIptal),
+                        : (values) => setState(() => _kind = values.single),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    key: const Key('feedback-submit'),
-                    onPressed: _isSubmitting || profile == null ? null : _submit,
-                    child: _isSubmitting
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.profileGonder),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    key: const Key('feedback-subject-field'),
+                    controller: _subjectController,
+                    enabled: !_isSubmitting,
+                    maxLength: kMaxFeedbackSubjectLength,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: l10n.profileKonu,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      try {
+                        normalizeFeedbackSubject(value ?? '');
+                        return null;
+                      } on AdminException {
+                        return l10n.profileBeklenmeyenBirHataOlustu;
+                      }
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('feedback-message-field'),
+                    controller: _messageController,
+                    enabled: !_isSubmitting,
+                    minLines: 4,
+                    maxLines: 7,
+                    maxLength: kMaxFeedbackMessageLength,
+                    decoration: InputDecoration(
+                      labelText: l10n.profileMesaj,
+                      alignLabelWithHint: true,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (val) => val == null || val.trim().isEmpty
+                        ? l10n.profileMesajGerekli
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  if (_attachmentBytes != null)
+                    Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
+                            image: DecorationImage(
+                              image: MemoryImage(_attachmentBytes!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: l10n.coreKapat,
+                          style: IconButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                          ),
+                          icon: Icon(
+                            Icons.cancel,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onInverseSurface,
+                          ),
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => setState(() {
+                                  _attachmentBytes = null;
+                                  _attachmentExt = null;
+                                }),
+                        ),
+                      ],
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: _isSubmitting ? null : _pickImage,
+                      icon: const Icon(Icons.attach_file),
+                      label: Text(l10n.profileEkranGoruntusuEkleOpsiyonel),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+          // Sabit alt serit -- iki dugme **yan yana**.
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: const Key('feedback-cancel'),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).maybePop(),
+                      child: Text(l10n.profileIptal),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      key: const Key('feedback-submit'),
+                      onPressed: _isSubmitting || profile == null
+                          ? null
+                          : _submit,
+                      child: _isSubmitting
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.profileGonder),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -7,6 +7,8 @@ import '../../core/prefs/app_prefs.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import 'legal_documents.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 
 /// WP-111: Gizlilik, koşullar, topluluk kuralları ve telemetri tercihi.
 class LegalCenterScreen extends ConsumerStatefulWidget {
@@ -49,16 +51,16 @@ class _LegalCenterScreenState extends ConsumerState<LegalCenterScreen> {
   Future<void> _copyPublicUrl(String? url) async {
     final l10n = AppLocalizations.of(context);
     if (url == null || url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.legalPublicUrlNotConfigured)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.legalPublicUrlNotConfigured)));
       return;
     }
     await Clipboard.setData(ClipboardData(text: url));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.legalPublicUrlCopied)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.legalPublicUrlCopied)));
   }
 
   @override
@@ -76,87 +78,103 @@ class _LegalCenterScreenState extends ConsumerState<LegalCenterScreen> {
           const EdgeInsets.fromLTRB(16, 12, 16, 24),
         ),
         children: [
-          Text(
-            l10n.legalPolicyVersion(LegalDocuments.policyVersion),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 12),
-          Card(
+          // 🔴 WP-679 — bu ekranin hicbir genislik siniri YOKTU. Olcum
+          // (2026-08-10, `WP679 | YASAL`): 1920 px pencerede kartlar 1888 px,
+          // 2560 px'te 2528 px cizildi — SPEC §2.3'un 760 px'lik form tavaninin
+          // uc katindan fazlasi. Icerik ayar satirlarindan (`ListTile`) olustugu
+          // icin tavan **760** (prose degil, form).
+          ProfileDesktopBody.form(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
-                  title: Text(l10n.legalPrivacyPolicy),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openDocument(
-                    l10n.legalPrivacyPolicy,
-                    LegalDocuments.privacy(turkish: _turkish),
+                Text(
+                  l10n.legalPolicyVersion(LegalDocuments.policyVersion),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.privacy_tip_outlined),
+                        title: Text(l10n.legalPrivacyPolicy),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openDocument(
+                          l10n.legalPrivacyPolicy,
+                          LegalDocuments.privacy(turkish: _turkish),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.gavel_outlined),
+                        title: Text(l10n.legalTermsOfUse),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openDocument(
+                          l10n.legalTermsOfUse,
+                          LegalDocuments.terms(turkish: _turkish),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.groups_outlined),
+                        title: Text(l10n.legalCommunityGuidelines),
+                        subtitle: Text(
+                          l10n.legalCommunityVersion(
+                            LegalDocuments.communityVersion,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openDocument(
+                          l10n.legalCommunityGuidelines,
+                          LegalDocuments.community(turkish: _turkish),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.gavel_outlined),
-                  title: Text(l10n.legalTermsOfUse),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openDocument(
-                    l10n.legalTermsOfUse,
-                    LegalDocuments.terms(turkish: _turkish),
+                const SizedBox(height: 12),
+                Card(
+                  child: SwitchListTile(
+                    secondary: const Icon(Icons.bug_report_outlined),
+                    title: Text(l10n.legalTelemetryTitle),
+                    subtitle: Text(l10n.legalTelemetrySubtitle),
+                    value: telemetryOn,
+                    onChanged: _savingTelemetry
+                        ? null
+                        : (v) => _setTelemetry(v),
                   ),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.groups_outlined),
-                  title: Text(l10n.legalCommunityGuidelines),
-                  subtitle: Text(
-                    l10n.legalCommunityVersion(LegalDocuments.communityVersion),
+                const SizedBox(height: 12),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.link),
+                    title: Text(l10n.legalCopyPublicPrivacyUrl),
+                    subtitle: Text(
+                      LegalDocuments.hasPublicLegalSite
+                          ? (LegalDocuments.publicUrl(
+                                  _turkish
+                                      ? 'legal/privacy-tr.html'
+                                      : 'legal/privacy-en.html',
+                                ) ??
+                                '')
+                          : l10n.legalPublicUrlNotConfigured,
+                    ),
+                    onTap: () => _copyPublicUrl(
+                      LegalDocuments.publicUrl(
+                        _turkish
+                            ? 'legal/privacy-tr.html'
+                            : 'legal/privacy-en.html',
+                      ),
+                    ),
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openDocument(
-                    l10n.legalCommunityGuidelines,
-                    LegalDocuments.community(turkish: _turkish),
-                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.legalDeletionNote,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: SwitchListTile(
-              secondary: const Icon(Icons.bug_report_outlined),
-              title: Text(l10n.legalTelemetryTitle),
-              subtitle: Text(l10n.legalTelemetrySubtitle),
-              value: telemetryOn,
-              onChanged: _savingTelemetry
-                  ? null
-                  : (v) => _setTelemetry(v),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.link),
-              title: Text(l10n.legalCopyPublicPrivacyUrl),
-              subtitle: Text(
-                LegalDocuments.hasPublicLegalSite
-                    ? (LegalDocuments.publicUrl(
-                          _turkish
-                              ? 'legal/privacy-tr.html'
-                              : 'legal/privacy-en.html',
-                        ) ??
-                        '')
-                    : l10n.legalPublicUrlNotConfigured,
-              ),
-              onTap: () => _copyPublicUrl(
-                LegalDocuments.publicUrl(
-                  _turkish ? 'legal/privacy-tr.html' : 'legal/privacy-en.html',
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.legalDeletionNote,
-            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
@@ -179,9 +197,16 @@ class _LegalDocumentScreen extends StatelessWidget {
           context,
           const EdgeInsets.fromLTRB(16, 12, 16, 24),
         ),
-        child: SelectableText(
-          body,
-          style: Theme.of(context).textTheme.bodyMedium,
+        // 🔴 WP-679 — depodaki EN AGIR olcu ihlali buydu ve hicbir kapi
+        // gormemisti: gizlilik/kosullar/topluluk metni tavansiz bir
+        // `SelectableText`ti. 1920 px pencerede satir 1888 px = **251
+        // karakter**; WCAG 2.1 SC 1.4.8 tavani 80 karakter. Bu ekran SPEC §3
+        // A3'un "duz metin" tanimina birebir uyan tek yer, o yuzden 600 px.
+        child: ProfileDesktopBody.prose(
+          child: SelectableText(
+            body,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ),
       ),
     );

@@ -6,8 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/observability/timer_diagnostic_journal.dart';
 import '../../l10n/app_localizations.dart';
+// WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
+import 'settings_screen.dart';
 
 /// WP-490 önkoşulu: sayaç uçuş kaydını **cihazdan çıkarılabilir** yapar.
 ///
@@ -68,11 +72,18 @@ class _TimerJournalScreenState extends ConsumerState<TimerJournalScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     // En yeni üstte: teşhis sırasında bakılan şey son geçiştir.
-    final entries = ref.watch(timerDiagnosticJournalProvider).entries().reversed
+    final entries = ref
+        .watch(timerDiagnosticJournalProvider)
+        .entries()
+        .reversed
         .toList(growable: false);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.diagTimerJournalTitle)),
+      // WP-679: masaustunde eylem, 760 px'lik icerik sutununun yaninda durur.
+      floatingActionButtonLocation: isDesktopWindow
+          ? const ProfileContentEndFabLocation(DesktopBreakpoints.maxFormWidth)
+          : null,
       floatingActionButton: entries.isEmpty
           ? null
           : FloatingActionButton.extended(
@@ -81,7 +92,10 @@ class _TimerJournalScreenState extends ConsumerState<TimerJournalScreen> {
               label: Text(l10n.diagTimerJournalShare),
             ),
       body: entries.isEmpty
-          ? Center(
+          // WP-679: bos durum da masaustu yuzeyine baglidir (SPEC §6);
+          // gunluk cogu zaman bostur ve o hal hicbir yuzey cizmiyordu.
+          ? ProfileDesktopCentered(
+              child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -92,99 +106,107 @@ class _TimerJournalScreenState extends ConsumerState<TimerJournalScreen> {
                   ),
                 ),
               ),
+              ),
             )
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               itemCount: entries.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.diagTimerJournalCount(entries.length),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.diagTimerJournalPrivacy,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                final entry = entries[index - 1];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                entry.event,
-                                style: theme.textTheme.titleSmall,
-                              ),
-                            ),
-                            Text(
-                              entry.at.toIso8601String(),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // Teşhisin cevabı tam olarak bu iki alanda: hangi girdi
-                        // geçişi doğurdu ve istek uygulandı mı.
-                        Text(
-                          '${entry.reason} → ${entry.outcome}',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        // 🔴 WP-601: `trigger` WP-599'da yazılmaya başlandı ama
-                        // bu ekran onu HİÇ göstermiyordu. Alan tam da "sayacı
-                        // parmak mı bir rutin mi başlattı" sorusunu cevaplamak
-                        // için eklendi; ekranda görünmezse gerçek bir olayda
-                        // yine dışa aktarma + elle JSON okumak gerekirdi.
-                        //
-                        // `unknown` ÇİZİLMEZ: WP-599 öncesi satırlar bu alanı
-                        // taşımıyor ve onlara "bilinmiyor" damgası basmak
-                        // gürültüdür — asıl yanlış olan ise onları "kullanıcı"
-                        // saymak olurdu, o da hiç yapılmıyor.
-                        if (entry.trigger != TimerJournalTriggers.unknown) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            l10n.diagTimerJournalTrigger(entry.trigger),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color:
-                                  TimerJournalTriggers.isUserButton(
-                                    entry.trigger,
-                                  )
-                                  ? theme.colorScheme.onSurfaceVariant
-                                  : theme.colorScheme.tertiary,
-                              fontWeight:
-                                  TimerJournalTriggers.isUserButton(
-                                    entry.trigger,
-                                  )
-                                  ? FontWeight.normal
-                                  : FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
+              // 🔴 WP-679 — sinir YOKTU: olcum (`WP679 | SAYAC-GUNLUGU`) 1920
+              // px'te 1193 px, 2560 px'te 1513 px. Sarmalayici `itemBuilder`in
+              // ICINDE, cunku `ListView.builder`in tembelligi korunmali
+              // (gunluk TTL'li ama yuzlerce satir olabilir).
+              itemBuilder: (context, index) => ProfileDesktopBody.form(
+                child: _entryAt(context, theme, l10n, entries, index),
+              ),
             ),
     );
+  }
+
+  Widget _entryAt(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    List<TimerJournalEntry> entries,
+    int index,
+  ) {
+    {
+      if (index == 0) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.diagTimerJournalCount(entries.length),
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.diagTimerJournalPrivacy,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      final entry = entries[index - 1];
+      return Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(entry.event, style: theme.textTheme.titleSmall),
+                  ),
+                  Text(
+                    entry.at.toIso8601String(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Teşhisin cevabı tam olarak bu iki alanda: hangi girdi
+              // geçişi doğurdu ve istek uygulandı mı.
+              Text(
+                '${entry.reason} → ${entry.outcome}',
+                style: theme.textTheme.bodyMedium,
+              ),
+              // 🔴 WP-601: `trigger` WP-599'da yazılmaya başlandı ama
+              // bu ekran onu HİÇ göstermiyordu. Alan tam da "sayacı
+              // parmak mı bir rutin mi başlattı" sorusunu cevaplamak
+              // için eklendi; ekranda görünmezse gerçek bir olayda
+              // yine dışa aktarma + elle JSON okumak gerekirdi.
+              //
+              // `unknown` ÇİZİLMEZ: WP-599 öncesi satırlar bu alanı
+              // taşımıyor ve onlara "bilinmiyor" damgası basmak
+              // gürültüdür — asıl yanlış olan ise onları "kullanıcı"
+              // saymak olurdu, o da hiç yapılmıyor.
+              if (entry.trigger != TimerJournalTriggers.unknown) ...[
+                const SizedBox(height: 2),
+                Text(
+                  l10n.diagTimerJournalTrigger(entry.trigger),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: TimerJournalTriggers.isUserButton(entry.trigger)
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.tertiary,
+                    fontWeight: TimerJournalTriggers.isUserButton(entry.trigger)
+                        ? FontWeight.normal
+                        : FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
