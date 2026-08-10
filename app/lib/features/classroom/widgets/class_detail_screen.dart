@@ -9,6 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
+import '../../../core/desktop/desktop_window.dart';
 import '../../../core/l10n/group_error_text.dart';
 import '../../../core/l10n/nudge_error_text.dart';
 import '../../../core/stats/achievement_ledger_engine.dart';
@@ -28,6 +30,7 @@ import '../../../data/providers/nudge_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
+import '../../desktop/desktop_page_scaffold.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import '../../safety/peer_safety_actions.dart';
 import '../../safety/report_sheet.dart';
@@ -74,254 +77,263 @@ class ClassDetailScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // --- Başlık / ad ---
-          Row(
-            children: [
-              _GroupAvatarEditor(group: group, isAdmin: isAdmin),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(group.name, style: theme.textTheme.headlineSmall),
-              ),
-              IconButton(
-                key: const ValueKey('report-group-name-action'),
-                tooltip: AppLocalizations.of(context).safetyReport,
-                icon: const Icon(Icons.flag_outlined),
-                // WP-439 / 0104: grup adı ayrı hedef türüdür ve sunucuda
-                // grubun kendisinden ayrı bir vaka açar. İpucu makine
-                // etiketidir, kullanıcıya gösterilmez: çevrilmez.
-                onPressed: () => showReportSheet(
-                  context,
-                  ref,
-                  target: ReportTarget.groupName(
-                    groupId: group.id,
-                    hint: 'group_name:${group.name}',
-                  ),
-                ),
-              ),
-              if (isAdmin)
-                // 🔴 WP-498 yan bulgusu (kart kapsamında değil, aynı dosyada
-                // ölçüldü): bu rozetin genişliği yazı ölçeğiyle sınırsız
-                // büyüyordu. 320 dp ekranda ölçek 1.6'da satır **8.8 px
-                // taşıyordu** (sarı-siyah şerit). Eski kodda da vardı; komşu
-                // test bunu göremezdi çünkü `MediaQuery(size:)` gerçek
-                // pencereyi daraltmıyor, iddia 800 dp'de sınanıyordu.
-                //
-                // Üst sınır bilerek **ölçekle büyümüyor**: taşmanın nedeni tam
-                // olarak ölçekle büyüyen bir sabitti. Sığmayan metin kırpılır.
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 96),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context).classroomYonetici,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // --- Bilgiler ---
-          Text(
-            AppLocalizations.of(context).classroomBilgiler,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Column(
+      body: _desktopFormColumn(
+        ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // --- Başlık / ad ---
+            Row(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.vpn_key_outlined),
-                  title: Text(AppLocalizations.of(context).classroomDavetKodu),
-                  subtitle: SelectableText(
-                    group.inviteCode,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: AppLocalizations.of(context).classroomKopyala,
-                        icon: const Icon(Icons.copy, size: 20),
-                        onPressed: () async {
-                          await Clipboard.setData(
-                            ClipboardData(text: group.inviteCode),
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  ).classroomDavetKoduKopyalandi,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      IconButton(
-                        key: const Key('invite-share-action'),
-                        tooltip: AppLocalizations.of(
-                          context,
-                        ).classroomDavetiPaylas,
-                        icon: const Icon(Icons.share_outlined, size: 20),
-                        onPressed: () => _shareInvite(context),
-                      ),
-                      if (isAdmin)
-                        IconButton(
-                          tooltip: AppLocalizations.of(
-                            context,
-                          ).classroomKoduYenile,
-                          icon: const Icon(Icons.refresh, size: 20),
-                          onPressed: () => _regenerateCode(context, ref, repo),
-                        ),
-                    ],
-                  ),
+                _GroupAvatarEditor(group: group, isAdmin: isAdmin),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(group.name, style: theme.textTheme.headlineSmall),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.flag_outlined),
-                  title: Text(
-                    AppLocalizations.of(context).classroomGunlukGrupHedefi,
-                  ),
-                  subtitle: Text(
-                    '${formatHuman(group.dailyGoalMinutes * 60)} · '
-                    '${AppLocalizations.of(context).classroomBugunkuToplam}',
-                  ),
-                  trailing: isAdmin
-                      ? IconButton(
-                          tooltip: AppLocalizations.of(
-                            context,
-                          ).classroomHedefiDegistir,
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: () => _editGoalDialog(context, ref),
-                        )
-                      : null,
-                  onTap: isAdmin ? () => _editGoalDialog(context, ref) : null,
-                ),
-                ListTile(
-                  leading: Icon(
-                    group.visibility == GroupVisibility.public
-                        ? Icons.public
-                        : Icons.lock_outline,
-                  ),
-                  title: Text(
-                    AppLocalizations.of(context).groupDiscoveryPrivacyTitle,
-                  ),
-                  subtitle: Text(
-                    group.visibility == GroupVisibility.public
-                        ? AppLocalizations.of(
-                            context,
-                          ).groupDiscoveryPublicDescription
-                        : AppLocalizations.of(
-                            context,
-                          ).groupDiscoveryPrivateDescription,
-                  ),
-                  trailing: isAdmin
-                      ? IconButton(
-                          tooltip: AppLocalizations.of(
-                            context,
-                          ).groupDiscoveryChangePrivacy,
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: () => _editAccessDialog(context, ref),
-                        )
-                      : null,
-                  onTap: isAdmin ? () => _editAccessDialog(context, ref) : null,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.public_outlined),
-                  title: Text(AppLocalizations.of(context).groupTimeZone),
-                  subtitle: _TimeZoneSubtitle(timeZone: group.timeZone),
-                  trailing: isAdmin
-                      ? IconButton(
-                          tooltip: AppLocalizations.of(
-                            context,
-                          ).groupTimeZoneChoose,
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: () => _editTimeZoneDialog(context, ref),
-                        )
-                      : null,
-                  onTap: () => showGroupTimeZoneInfoDialog(
+                IconButton(
+                  key: const ValueKey('report-group-name-action'),
+                  tooltip: AppLocalizations.of(context).safetyReport,
+                  icon: const Icon(Icons.flag_outlined),
+                  // WP-439 / 0104: grup adı ayrı hedef türüdür ve sunucuda
+                  // grubun kendisinden ayrı bir vaka açar. İpucu makine
+                  // etiketidir, kullanıcıya gösterilmez: çevrilmez.
+                  onPressed: () => showReportSheet(
                     context,
-                    groupTimeZone: group.timeZone,
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.event_outlined),
-                  title: Text(
-                    AppLocalizations.of(context).classroomOlusturulma,
-                  ),
-                  subtitle: Text(
-                    DateFormat.yMd(
-                      AppLocalizations.of(context).localeName,
-                    ).format(group.createdAt),
+                    ref,
+                    target: ReportTarget.groupName(
+                      groupId: group.id,
+                      hint: 'group_name:${group.name}',
+                    ),
                   ),
                 ),
                 if (isAdmin)
-                  ListTile(
-                    leading: const Icon(Icons.block_outlined),
-                    title: Text(
-                      AppLocalizations.of(context).safetyBlockedUsersTitle,
+                  // 🔴 WP-498 yan bulgusu (kart kapsamında değil, aynı dosyada
+                  // ölçüldü): bu rozetin genişliği yazı ölçeğiyle sınırsız
+                  // büyüyordu. 320 dp ekranda ölçek 1.6'da satır **8.8 px
+                  // taşıyordu** (sarı-siyah şerit). Eski kodda da vardı; komşu
+                  // test bunu göremezdi çünkü `MediaQuery(size:)` gerçek
+                  // pencereyi daraltmıyor, iddia 800 dp'de sınanıyordu.
+                  //
+                  // Üst sınır bilerek **ölçekle büyümüyor**: taşmanın nedeni tam
+                  // olarak ölçekle büyüyen bir sabitti. Sığmayan metin kırpılır.
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 96),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).classroomYonetici,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
                     ),
-                    onTap: () => _showBannedMembers(context, repo),
                   ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // --- Üyeler ---
-          Text(
-            AppLocalizations.of(context).classroomUyeler,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
-          const SizedBox(height: 16),
-
-          // --- Ayarlar / tehlikeli işlemler ---
-          Text(
-            AppLocalizations.of(context).classroomAyarlar,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (!isAdmin && userId != null)
-            _LeaveGroupTile(group: group, userId: userId),
-          if (isAdmin)
+            // --- Bilgiler ---
+            Text(
+              AppLocalizations.of(context).classroomBilgiler,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
             Card(
-              child: ListTile(
-                leading: Icon(
-                  Icons.delete_outline,
-                  color: theme.colorScheme.error,
-                ),
-                title: Text(
-                  AppLocalizations.of(context).classroomGrubuSil,
-                  style: TextStyle(color: theme.colorScheme.error),
-                ),
-                subtitle: Text(
-                  AppLocalizations.of(context).classroomTumUyelerIcinKalici,
-                ),
-                onTap: () => _deleteGroup(context, ref, repo),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.vpn_key_outlined),
+                    title: Text(
+                      AppLocalizations.of(context).classroomDavetKodu,
+                    ),
+                    subtitle: SelectableText(
+                      group.inviteCode,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).classroomKopyala,
+                          icon: const Icon(Icons.copy, size: 20),
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: group.inviteCode),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    ).classroomDavetKoduKopyalandi,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        IconButton(
+                          key: const Key('invite-share-action'),
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).classroomDavetiPaylas,
+                          icon: const Icon(Icons.share_outlined, size: 20),
+                          onPressed: () => _shareInvite(context),
+                        ),
+                        if (isAdmin)
+                          IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomKoduYenile,
+                            icon: const Icon(Icons.refresh, size: 20),
+                            onPressed: () =>
+                                _regenerateCode(context, ref, repo),
+                          ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined),
+                    title: Text(
+                      AppLocalizations.of(context).classroomGunlukGrupHedefi,
+                    ),
+                    subtitle: Text(
+                      '${formatHuman(group.dailyGoalMinutes * 60)} · '
+                      '${AppLocalizations.of(context).classroomBugunkuToplam}',
+                    ),
+                    trailing: isAdmin
+                        ? IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).classroomHedefiDegistir,
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () => _editGoalDialog(context, ref),
+                          )
+                        : null,
+                    onTap: isAdmin ? () => _editGoalDialog(context, ref) : null,
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      group.visibility == GroupVisibility.public
+                          ? Icons.public
+                          : Icons.lock_outline,
+                    ),
+                    title: Text(
+                      AppLocalizations.of(context).groupDiscoveryPrivacyTitle,
+                    ),
+                    subtitle: Text(
+                      group.visibility == GroupVisibility.public
+                          ? AppLocalizations.of(
+                              context,
+                            ).groupDiscoveryPublicDescription
+                          : AppLocalizations.of(
+                              context,
+                            ).groupDiscoveryPrivateDescription,
+                    ),
+                    trailing: isAdmin
+                        ? IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).groupDiscoveryChangePrivacy,
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () => _editAccessDialog(context, ref),
+                          )
+                        : null,
+                    onTap: isAdmin
+                        ? () => _editAccessDialog(context, ref)
+                        : null,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.public_outlined),
+                    title: Text(AppLocalizations.of(context).groupTimeZone),
+                    subtitle: _TimeZoneSubtitle(timeZone: group.timeZone),
+                    trailing: isAdmin
+                        ? IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).groupTimeZoneChoose,
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () => _editTimeZoneDialog(context, ref),
+                          )
+                        : null,
+                    onTap: () => showGroupTimeZoneInfoDialog(
+                      context,
+                      groupTimeZone: group.timeZone,
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.event_outlined),
+                    title: Text(
+                      AppLocalizations.of(context).classroomOlusturulma,
+                    ),
+                    subtitle: Text(
+                      DateFormat.yMd(
+                        AppLocalizations.of(context).localeName,
+                      ).format(group.createdAt),
+                    ),
+                  ),
+                  if (isAdmin)
+                    ListTile(
+                      leading: const Icon(Icons.block_outlined),
+                      title: Text(
+                        AppLocalizations.of(context).safetyBlockedUsersTitle,
+                      ),
+                      onTap: () => _showBannedMembers(context, repo),
+                    ),
+                ],
               ),
             ),
-        ],
+            const SizedBox(height: 16),
+
+            // --- Üyeler ---
+            Text(
+              AppLocalizations.of(context).classroomUyeler,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
+            const SizedBox(height: 16),
+
+            // --- Ayarlar / tehlikeli işlemler ---
+            Text(
+              AppLocalizations.of(context).classroomAyarlar,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            if (!isAdmin && userId != null)
+              _LeaveGroupTile(group: group, userId: userId),
+            if (isAdmin)
+              Card(
+                child: ListTile(
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.error,
+                  ),
+                  title: Text(
+                    AppLocalizations.of(context).classroomGrubuSil,
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context).classroomTumUyelerIcinKalici,
+                  ),
+                  onTap: () => _deleteGroup(context, ref, repo),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -400,9 +412,8 @@ class ClassDetailScreen extends ConsumerWidget {
       submitLabel: l10n.classroomKaydet,
       busyLabel: l10n.classroomKaydediliyor,
       // Eskiden 0 dakika seçilince diyalog kapanıp **hiçbir şey olmuyordu**.
-      validate: (l10n) => hours * 60 + minutes < 1
-          ? l10n.classroomHedefEnAzBirDakika
-          : null,
+      validate: (l10n) =>
+          hours * 60 + minutes < 1 ? l10n.classroomHedefEnAzBirDakika : null,
       content: (ctx, setState, enabled) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -440,7 +451,9 @@ class ClassDetailScreen extends ConsumerWidget {
       run: () async {
         final picked = hours * 60 + minutes;
         if (picked == group.dailyGoalMinutes) return false;
-        await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
+        await ref
+            .read(groupRepositoryProvider)
+            .updateGroupGoal(group.id, picked);
         return true;
       },
     );
@@ -571,8 +584,7 @@ class ClassDetailScreen extends ConsumerWidget {
       submitKey: const Key('regenerate-code-submit'),
       submitLabel: l10n.classroomYenile,
       busyLabel: l10n.classroomIsleniyor,
-      content: (ctx, setState, enabled) =>
-          Text(l10n.classroomYeniBirDavetKodu),
+      content: (ctx, setState, enabled) => Text(l10n.classroomYeniBirDavetKodu),
       run: () => repo.regenerateInviteCode(group.id),
     );
     if (done == null) return;
@@ -656,7 +668,8 @@ class ClassDetailScreen extends ConsumerWidget {
                         key: ValueKey('unban-${member.id}'),
                         onUnban: () => repo.unbanMember(group.id, member.id),
                         onDone: () => setDialogState(
-                          () => membersFuture = repo.listBannedMembers(group.id),
+                          () =>
+                              membersFuture = repo.listBannedMembers(group.id),
                         ),
                       ),
                     );
@@ -676,6 +689,22 @@ class ClassDetailScreen extends ConsumerWidget {
     );
   }
 }
+
+/// 🔴 WP-675 — masaüstünde bilgi/ayar sütunu SPEC §2.3'ün form genişliğinde
+/// (760 px) durur ve ortalanır.
+///
+/// Ölçülen kusur: bu ekranın her satırı bir `ListTile` — başlık solda,
+/// `trailing` düğmesi pencerenin sağ kenarında. 2560 px'lik pencerede aradaki
+/// göz sıçraması ~2300 px'e çıkıyordu; SPEC KURAL 2.2'nin sert tavanı 600 px.
+///
+/// Mobil dal ellenmez: bayrak `false` iken ağaç birebir eskisi.
+Widget _desktopFormColumn(Widget child) => isDesktopWindow
+    ? DesktopContent(
+        maxWidth: DesktopBreakpoints.maxFormWidth,
+        padding: EdgeInsets.zero,
+        child: child,
+      )
+    : child;
 
 class _TimeZoneSubtitle extends StatelessWidget {
   const _TimeZoneSubtitle({required this.timeZone});
@@ -1107,7 +1136,9 @@ class _MembersCard extends ConsumerWidget {
       run: () => repo.banMember(group.id, member.id),
     );
     if (done == null) return;
-    messenger.showSnackBar(SnackBar(content: Text(l10n.classroomUyeYasaklandi)));
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.classroomUyeYasaklandi)),
+    );
   }
 }
 
@@ -1254,7 +1285,10 @@ class _MemberModerationMenu extends StatelessWidget {
       itemBuilder: (context) => [
         PopupMenuItem<VoidCallback>(
           value: onRemove,
-          child: _menuRow(Icons.person_remove_outlined, l10n.classroomUyeyiCikar),
+          child: _menuRow(
+            Icons.person_remove_outlined,
+            l10n.classroomUyeyiCikar,
+          ),
         ),
         PopupMenuItem<VoidCallback>(
           value: onBan,

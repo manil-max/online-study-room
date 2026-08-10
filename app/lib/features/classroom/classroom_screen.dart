@@ -2,6 +2,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
@@ -9,6 +11,7 @@ import '../../core/widgets/app_pull_to_refresh.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/group_providers.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
@@ -258,6 +261,22 @@ class _GroupView extends ConsumerWidget {
     final showTimer = ref.watch(classroomShowTimerProvider);
 
     // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → hedef → sıralama → trend.
+    //
+    // 🔴 WP-675: masaüstü kolu AYRI bir ağaç. Mobil dal aşağıda birebir korunur
+    // (SPEC §7: "mobil branch değişmez"); masaüstü kolu SPEC §3 A4 + A2'yi
+    // uygular. Aynı ağacı `isDesktopWindow` bayraklarıyla delik deşik etmek
+    // yerine iki kol ayrıldı: mobil regresyon iddiası böylece tek bir "bu dal hiç
+    // çalışmadı" kontrolüne iner.
+    if (isDesktopWindow) {
+      return _DesktopGroupView(
+        group: group,
+        controller: controller,
+        campfireKey: campfireKey,
+        switcherKey: switcherKey,
+        showTimer: showTimer,
+      );
+    }
+
     return ListView(
       controller: controller,
       // Kartlar üzerindeki jestler de dikey kaydırmaya gitsin.
@@ -277,6 +296,156 @@ class _GroupView extends ConsumerWidget {
         // Alt menü için nefes payı
         const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+/// Masaüstünde tek bir grup bloğunun (kartının) genişlik tavanı.
+///
+/// 🔴 Uydurma değil, türetildi. SPEC KURAL 2.2 bir etiket–değer satırının
+/// **sert tavanını 600 px** koyar (80 karakter × 7.5 px; WCAG 2.1 SC 1.4.8).
+/// Bu üç kartın iç dolgusu 16 + 16 = 32 px (`group_goal_card.dart`,
+/// `leaderboard_card.dart`), yani 600 px'lik bir satırın sığdığı en geniş kart
+/// 632 px'tir. 632, 4'ün katıdır (WinUI ölçek platosu kuralı, SPEC §1.2).
+///
+/// Ölçülen kusur (WP-671 kapısı, 2560×1440): kart **2352 px**, içindeki en
+/// geniş metin **178 px** → 2174 px ölü alan.
+const double kGroupBlockMaxWidth = 632;
+
+/// Izgara oluğu. SPEC §4: 640 px üstü pencerelerde **24 epx** (Fluent 2 Layout).
+const double kGroupGridGutter = 24;
+
+/// 🔴 WP-675 — gruplar / kamp ateşi sekmesinin masaüstü düzeni.
+///
+/// Sahip v64 Windows sürümünü reddetti: *"dikey mobil uygulama için tasarlanan
+/// arayüzler yatay pc ekranında çok kötü duruyor."* Bu ekranda ölçüldü
+/// (WP-671 kapısı): 1920'de 12 ihlal / içerik 1706 px, 2560'ta 12 ihlal /
+/// içerik 2346 px ve en geniş etiket–değer satırı **2328 px**
+/// ("Grup günlük trendi" → "0sn", arası 1989 px boşluk).
+///
+/// Düzen `docs/design/DESKTOP-UI-SPEC.md`'den:
+///   * **kamp ateşi = A4 (görsel sahne)** — içerik bandının tamamını kaplar,
+///     daraltılmaz. Sahip sahneyi zaten beğeniyor; kart tavanları buraya
+///     UYGULANMAZ.
+///   * **sahnenin altındaki bloklar = A2 (pano)** — akıcı ızgara
+///     ([_GroupBlockGrid]), blok genişliği [kGroupBlockMaxWidth] ile tavanlanır.
+///   * bant = [DesktopBreakpoints.maxContentWidth] (1440), SPEC §2.3.
+///
+/// **İşlev değişmedi** (SPEC §7): aynı bloklar, aynı sırada, aynı sağlayıcılar
+/// — grup değiştir / sohbet / ayarlar kısayolları, kamp ateşi varlık göstergesi
+/// ve dürtme dahil hiçbir şey kaldırılmadı; yalnız `build()` ağacının şekli
+/// değişti.
+class _DesktopGroupView extends StatelessWidget {
+  const _DesktopGroupView({
+    required this.group,
+    required this.controller,
+    required this.campfireKey,
+    required this.switcherKey,
+    required this.showTimer,
+  });
+
+  final StudyGroup group;
+  final ScrollController controller;
+  final Key campfireKey;
+  final Key switcherKey;
+  final bool showTimer;
+
+  @override
+  Widget build(BuildContext context) {
+    final density = DesktopDensity.of(context);
+    return ListView(
+      controller: controller,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      // Kenar boşluğu artık `DesktopContent`in İÇİNDE: bant ortalanır, dolgu
+      // bandın içinde kalır. Dolgu dışarıda kalsaydı 2560 px'lik pencerede
+      // 24 px'lik kenar boşluğunun hiçbir anlamı olmazdı.
+      padding: EdgeInsets.zero,
+      children: [
+        // SPEC §6 "BAĞLA, ATMA": `DesktopContent` yazılmıştı ama `lib/` içinde
+        // tek bir çağrı yeri yoktu. Bant sınırı artık buradan geliyor.
+        DesktopContent(
+          maxWidth: DesktopBreakpoints.maxContentWidth,
+          padding: density.pagePadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showTimer) ...[
+                // Sayaç kartı da bir A2 bloğudur: 1392 px'lik banda yayılırsa
+                // aynı "dev kutu, tek sayı" kusuru geri gelir.
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: kGroupBlockMaxWidth,
+                    ),
+                    child: const StudyTimerCard(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              _CompactGroupHeader(group: group, switcherKey: switcherKey),
+              const SizedBox(height: 8),
+              // A4 — sahne bandın tamamını alır (SPEC §3 A4: "genişledikçe
+              // bozulmaz"). Sahne geometrisi ellenmez.
+              CampfireScene(key: campfireKey),
+              const SizedBox(height: 16),
+              const _GroupBlockGrid(),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Sahnenin altındaki A2 panosu: hedef + sıralama + trend.
+///
+/// Sütun sayısı SPEC §1.2 merdiveninden, ama **gerçekte kalan banda** göre
+/// (pencere genişliğine göre değil): pencere 1920 olsa da sol şerit ve kenar
+/// boşluğu düştükten sonra karar verilecek genişlik 1392 px'tir.
+class _GroupBlockGrid extends StatelessWidget {
+  const _GroupBlockGrid();
+
+  /// SPEC §1.2: `large` (1200+) iki pane, `xlarge` üç. Bloklar tek sayılık
+  /// döşeme değil dolu kartlar olduğu için tavan 3 sütundur.
+  static int columnsFor(double band) {
+    if (band >= DesktopBreakpoints.large) return 3;
+    if (band >= DesktopBreakpoints.expanded) return 2;
+    return 1;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final band = constraints.maxWidth;
+        final columns = columnsFor(band);
+        final even = (band - kGroupGridGutter * (columns - 1)) / columns;
+        final width = even < kGroupBlockMaxWidth ? even : kGroupBlockMaxWidth;
+        // 🔴 `Row` DEĞİL `Wrap`. İki sebep, ikisi de ölçülmüş:
+        //   1. `Row` yatay bir `RenderFlex` yaratır ve KOMŞU kartların kendi
+        //      içlerinde bir satıra bağlı olmayan metinleri o Flex'in altında
+        //      **aynı görsel satır** sayılır — WP-671 sondası etiket–değer
+        //      çiftlerini tam olarak böyle bulur. Kartlar yan yana dizilirken
+        //      bir kartın etiketiyle ötekinin değeri 1392 px'lik sahte bir
+        //      satır üretirdi. `RenderWrap` bir `RenderFlex` DEĞİLDİR; bu sahte
+        //      eşleşme yapısal olarak olamaz.
+        //   2. Sütuna sığmayan blok alt sıraya akar; sabit sütun sayısı
+        //      taşırmaz (`personal_stats_view` 2×2 hatası tekrarlanmaz).
+        return Wrap(
+          spacing: kGroupGridGutter,
+          runSpacing: kGroupGridGutter,
+          children: [
+            for (final block in const <Widget>[
+              GroupGoalCard(),
+              LeaderboardCard(),
+              GroupTrendCard(),
+            ])
+              SizedBox(width: width, child: block),
+          ],
+        );
+      },
     );
   }
 }
