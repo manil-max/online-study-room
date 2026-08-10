@@ -6,6 +6,7 @@ import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
+import 'entry_desktop_layout.dart';
 
 /// WP-287: E-postadaki 6 haneli kod ile şifre sıfırlama.
 ///
@@ -83,8 +84,12 @@ class _ResetWithCodeScreenState extends ConsumerState<ResetWithCodeScreen> {
       body: Center(
         child: SingleChildScrollView(
           padding: getSafePadding(context, const EdgeInsets.all(24)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
+          // WP-680 / SPEC §2.3: 380 px'lik mobil tavan yerine masaustu form
+          // sutunu (**760 px**, [DesktopBreakpoints.maxFormWidth]). Uc alanli
+          // bir form 1920 px pencerede pencerenin %20'sinde durmaz. Mobilde
+          // etkisiz: 390 px'te kullanilabilir genislik 342 px, iki tavan da
+          // devreye girmez.
+          child: EntryFormColumn(
             child: Form(
               key: _formKey,
               child: Column(

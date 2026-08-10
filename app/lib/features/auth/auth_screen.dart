@@ -6,6 +6,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../support/faq_screen.dart';
+import 'entry_desktop_layout.dart';
 import 'password_reset_platform.dart';
 import 'reset_with_code_screen.dart';
 
@@ -260,6 +261,225 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // 🔴 WP-680 / SPEC §3 A3 uyarisi + §7 — ekran IKI bagimsiz blok tasir.
+    //
+    // OLCUM (bu WP'nin testi, `devicePixelRatio = 1`): 1920 px pencerede form
+    // sutunu **380 px** boyaniyordu, yani pencerenin %20'si; 2560 px'te yine
+    // 380 px. Kalan her sey bos zemindi ve kullanicinin ILK gordugu ekran
+    // buydu. Kusur "form dar" degil, **ikinci blogun yok sayilmasi**: kimlik
+    // bloku (ikon + uygulama adi + mod alt basligi) formun tepesine
+    // yigilmisti, oysa masaustunde kendi panosuna sigar.
+    //
+    // Asagida blok **tasinir**, uretilmez: [brand] ve [fields] listelerinin
+    // icerigi WP-680 oncesiyle BIREBIR aynidir, mobil dal ikisini eskisi gibi
+    // tek sutunda arka arkaya dizer (SPEC §7: islev degismez, mobil dal
+    // degismez).
+    final brand = <Widget>[
+      Icon(
+        Icons.groups,
+        size: 64,
+        color: theme.colorScheme.primary,
+      ),
+      const SizedBox(height: 16),
+      Text(
+        l10n.commonOdakKampi,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.headlineSmall,
+      ),
+      const SizedBox(height: 4),
+      Text(
+        _isRegister
+            ? l10n.authYeniHesapOlustur
+            : l10n.authHesabnaGirisYap,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ];
+
+    final fields = <Widget>[
+      if (_isRegister) ...[
+        TextFormField(
+          controller: _nameController,
+          textInputAction: TextInputAction.next,
+          // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
+          maxLength: kDisplayNameMaxLength,
+          decoration: InputDecoration(
+            labelText: l10n.authGorunenAd,
+            prefixIcon: const Icon(Icons.person_outline),
+          ),
+          validator: (v) => (v == null || v.trim().isEmpty)
+              ? l10n.authGorunenAdGirin
+              : null,
+        ),
+        const SizedBox(height: 12),
+      ],
+      TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+        decoration: InputDecoration(
+          labelText: l10n.authEposta,
+          prefixIcon: const Icon(Icons.mail_outline),
+        ),
+        validator: (v) => (v == null || !v.contains('@'))
+            ? l10n.authGecerliBirEpostaGirin
+            : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _passwordController,
+        obscureText: true,
+        textInputAction: TextInputAction.done,
+        onFieldSubmitted: (_) => _submit(),
+        decoration: InputDecoration(
+          labelText: l10n.authSifre,
+          prefixIcon: const Icon(Icons.lock_outline),
+        ),
+        validator: (v) => (v == null || v.length < 6)
+            ? l10n.authSifreEnAz6
+            : null,
+      ),
+      if (_error != null) ...[
+        const SizedBox(height: 12),
+        Text(
+          _error!,
+          style: TextStyle(color: theme.colorScheme.error),
+        ),
+      ],
+      if (_info != null) ...[
+        const SizedBox(height: 12),
+        Text(
+          _info!,
+          style: TextStyle(color: theme.colorScheme.primary),
+        ),
+      ],
+      // 🔴 WP-587: kayıt doğrulama postası gelmediğinde
+      // kullanıcının çıkışı YOKTU. Ne yapacağını söyleyen
+      // satır ve yeniden gönderme düğmesi yalnız bu durumda
+      // çizilir.
+      if (_emailNotConfirmed) ...[
+        const SizedBox(height: 12),
+        Text(
+          l10n.authDogrulamaPostasiGelenKutusuSpam,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        TextButton.icon(
+          key: const Key('auth-resend-verification'),
+          onPressed: _loading ? null : _resendVerificationEmail,
+          icon: const Icon(Icons.forward_to_inbox_outlined),
+          label: Text(l10n.authDogrulamaPostasiniYenidenGonder),
+        ),
+      ],
+      const SizedBox(height: 20),
+      FilledButton(
+        onPressed: _loading ? null : _submit,
+        child: _loading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(
+                _isRegister ? l10n.authKaytOl : l10n.authGirisYap,
+              ),
+      ),
+      const SizedBox(height: 8),
+      if (!_isRegister) ...[
+        TextButton.icon(
+          onPressed: _loading ? null : _sendPasswordReset,
+          icon: const Icon(Icons.mark_email_read_outlined),
+          label: Text(l10n.authSifremiUnuttum),
+        ),
+        // 🔴 WP-539: `kResetWithCodeEnabled` false olduğu sürece
+        // bu düğme **hiç çizilmez** (bayrağın gerekçesi dosyanın
+        // başında). Ekranın kendisi silinmedi; SMTP bağlanınca
+        // `--dart-define=RESET_WITH_CODE_ENABLED=true` ile geri
+        // açılır. Kullanıcının çalışan yolu üstteki "Şifremi
+        // unuttum" — e-postadaki **bağlantı**.
+        if (kResetWithCodeEnabled)
+          TextButton.icon(
+            key: const Key('auth-reset-with-code'),
+            onPressed: _loading
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ResetWithCodeScreen(
+                        initialEmail: _emailController.text
+                            .trim(),
+                      ),
+                    ),
+                  ),
+            icon: const Icon(Icons.password_outlined),
+            label: Text(l10n.authKoduGir),
+          ),
+      ],
+      TextButton(
+        onPressed: _loading
+            ? null
+            : () => setState(() {
+                _isRegister = !_isRegister;
+                _error = null;
+                _info = null;
+                _emailNotConfirmed = false;
+              }),
+        child: Text(
+          _isRegister
+              ? l10n.authZatenHesabinVarMi
+              : l10n.authHesabinYokMuKayit,
+        ),
+      ),
+      // WP-422: SSS bağlantısı kayıt geçişinin **altında, en
+      // sonda** durur. Eskiden üç yardımcı bağlantının başındaydı
+      // ve yalnız giriş modunda çıkıyordu; kayıt olmaya çalışan
+      // kullanıcı yardıma hiç ulaşamıyordu. Oturum açmadan SSS
+      // erişimi v55 kazanımıdır, iki modda da korunur.
+      TextButton.icon(
+        key: const Key('auth-faq-link'),
+        onPressed: _loading
+            ? null
+            : () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const FaqScreen(),
+                ),
+              ),
+        icon: const Icon(Icons.help_outline),
+        label: Text(l10n.faqLoginLink),
+      ),
+    ];
+
+    if (entryUsesDesktopSplit(context)) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: EntryDesktopSplit(
+                hero: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: brand,
+                ),
+                // Form yalniz ALANLARI sarar; kimlik blogunda dogrulanacak
+                // hicbir alan yok, dolayisiyla `_formKey.currentState.validate`
+                // ayni kumeyi dogrular.
+                form: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: fields,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -273,178 +493,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.groups,
-                      size: 64,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.commonOdakKampi,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isRegister
-                          ? l10n.authYeniHesapOlustur
-                          : l10n.authHesabnaGirisYap,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    ...brand,
                     const SizedBox(height: 24),
-                    if (_isRegister) ...[
-                      TextFormField(
-                        controller: _nameController,
-                        textInputAction: TextInputAction.next,
-                        // WP-517: sunucu karşılığı `0122_name_length_limits.sql`.
-                        maxLength: kDisplayNameMaxLength,
-                        decoration: InputDecoration(
-                          labelText: l10n.authGorunenAd,
-                          prefixIcon: const Icon(Icons.person_outline),
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? l10n.authGorunenAdGirin
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: l10n.authEposta,
-                        prefixIcon: const Icon(Icons.mail_outline),
-                      ),
-                      validator: (v) => (v == null || !v.contains('@'))
-                          ? l10n.authGecerliBirEpostaGirin
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: l10n.authSifre,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                      ),
-                      validator: (v) => (v == null || v.length < 6)
-                          ? l10n.authSifreEnAz6
-                          : null,
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
-                    ],
-                    if (_info != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _info!,
-                        style: TextStyle(color: theme.colorScheme.primary),
-                      ),
-                    ],
-                    // 🔴 WP-587: kayıt doğrulama postası gelmediğinde
-                    // kullanıcının çıkışı YOKTU. Ne yapacağını söyleyen
-                    // satır ve yeniden gönderme düğmesi yalnız bu durumda
-                    // çizilir.
-                    if (_emailNotConfirmed) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        l10n.authDogrulamaPostasiGelenKutusuSpam,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      TextButton.icon(
-                        key: const Key('auth-resend-verification'),
-                        onPressed: _loading ? null : _resendVerificationEmail,
-                        icon: const Icon(Icons.forward_to_inbox_outlined),
-                        label: Text(l10n.authDogrulamaPostasiniYenidenGonder),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: _loading ? null : _submit,
-                      child: _loading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              _isRegister ? l10n.authKaytOl : l10n.authGirisYap,
-                            ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (!_isRegister) ...[
-                      TextButton.icon(
-                        onPressed: _loading ? null : _sendPasswordReset,
-                        icon: const Icon(Icons.mark_email_read_outlined),
-                        label: Text(l10n.authSifremiUnuttum),
-                      ),
-                      // 🔴 WP-539: `kResetWithCodeEnabled` false olduğu sürece
-                      // bu düğme **hiç çizilmez** (bayrağın gerekçesi dosyanın
-                      // başında). Ekranın kendisi silinmedi; SMTP bağlanınca
-                      // `--dart-define=RESET_WITH_CODE_ENABLED=true` ile geri
-                      // açılır. Kullanıcının çalışan yolu üstteki "Şifremi
-                      // unuttum" — e-postadaki **bağlantı**.
-                      if (kResetWithCodeEnabled)
-                        TextButton.icon(
-                          key: const Key('auth-reset-with-code'),
-                          onPressed: _loading
-                              ? null
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ResetWithCodeScreen(
-                                      initialEmail: _emailController.text
-                                          .trim(),
-                                    ),
-                                  ),
-                                ),
-                          icon: const Icon(Icons.password_outlined),
-                          label: Text(l10n.authKoduGir),
-                        ),
-                    ],
-                    TextButton(
-                      onPressed: _loading
-                          ? null
-                          : () => setState(() {
-                              _isRegister = !_isRegister;
-                              _error = null;
-                              _info = null;
-                              _emailNotConfirmed = false;
-                            }),
-                      child: Text(
-                        _isRegister
-                            ? l10n.authZatenHesabinVarMi
-                            : l10n.authHesabinYokMuKayit,
-                      ),
-                    ),
-                    // WP-422: SSS bağlantısı kayıt geçişinin **altında, en
-                    // sonda** durur. Eskiden üç yardımcı bağlantının başındaydı
-                    // ve yalnız giriş modunda çıkıyordu; kayıt olmaya çalışan
-                    // kullanıcı yardıma hiç ulaşamıyordu. Oturum açmadan SSS
-                    // erişimi v55 kazanımıdır, iki modda da korunur.
-                    TextButton.icon(
-                      key: const Key('auth-faq-link'),
-                      onPressed: _loading
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const FaqScreen(),
-                              ),
-                            ),
-                      icon: const Icon(Icons.help_outline),
-                      label: Text(l10n.faqLoginLink),
-                    ),
+                    ...fields,
                   ],
                 ),
               ),

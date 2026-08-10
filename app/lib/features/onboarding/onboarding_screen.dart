@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/notifications/reminder_notification_service.dart';
+import '../auth/entry_desktop_layout.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import '../classroom/widgets/class_switcher.dart';
 import 'onboarding_prefs.dart';
+
+/// Masaustu olcum tutamaklari (WP-680): kaynakta `maxWidth: 600` yazmasi kanit
+/// degildir, test CIZILEN kutuyu bu anahtarlardan okur.
+const String kOnboardingProseKey = 'onboarding-step-prose';
 
 /// WP-151: 4 adımlı atlanabilir onboarding (hoş geldin → bildirim → grup → hazır).
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -79,88 +87,110 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
+    // 🔴 WP-680 / SPEC §2.3 — "Atla" dugmesi pencerenin KOSESINE cakiliydi.
+    // `Align(centerEnd)` onu her zaman pencerenin en sagina iter; 2560 px
+    // pencerede icerigin sol kenari ile "Atla"nin sag kenari arasi **1565 px**
+    // olculdu (WP-671 kapisi, OLCUM 1), izgara tavani 1440 px. Govdenin
+    // tamami [DesktopContent] bandina alinir; hicbir eleman kaldirilmaz,
+    // yalniz bant icine girer (SPEC §6 "BAGLA, ATMA" + §7).
+    final body = Column(
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Semantics(
+            button: true,
+            label: l10n.onboardingSkip,
+            child: TextButton(
+              onPressed: _busy ? null : _finish,
+              style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+              child: Text(l10n.onboardingSkip),
+            ),
+          ),
+        ),
+        Expanded(
+          child: PageView(
+            controller: _controller,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (i) => setState(() => _page = i),
+            children: [
+              _Step(
+                icon: Icons.local_fire_department_outlined,
+                title: l10n.onboardingWelcomeTitle,
+                body: l10n.onboardingWelcomeBody,
+              ),
+              _Step(
+                icon: Icons.notifications_active_outlined,
+                title: l10n.onboardingNotifyTitle,
+                body: l10n.onboardingNotifyBody,
+              ),
+              _Step(
+                icon: Icons.groups_outlined,
+                title: l10n.onboardingGroupTitle,
+                body: l10n.onboardingGroupBody,
+              ),
+              _Step(
+                icon: Icons.timer_outlined,
+                title: l10n.onboardingReadyTitle,
+                body: l10n.onboardingReadyBody,
+              ),
+            ],
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < _pageCount; i++)
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: i == _page
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outlineVariant,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // 🔴 WP-680 / SPEC §2.3 — birincil dugme PENCEREYI kat ediyordu.
+        // Sebep `FilledButton.styleFrom(minimumSize: Size.fromHeight(48))`:
+        // `Size.fromHeight` genisligi `double.infinity` yapar, yani dugme
+        // kabi ne kadar genisse o kadar genisler. OLCUM (WP-680 testi,
+        // dpr=1): 1920 px pencerede **1872 px**, 2560 px'te **2512 px**.
+        // Tavan: form sutunu 760 px. Mobilde etkisiz (342 px < 760).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: isDesktopWindow
+              ? EntryFormColumn(child: _actions(context, l10n))
+              : _actions(context, l10n),
+        ),
+      ],
+    );
+
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Semantics(
-                button: true,
-                label: l10n.onboardingSkip,
-                child: TextButton(
-                  onPressed: _busy ? null : _finish,
-                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                  child: Text(l10n.onboardingSkip),
-                ),
-              ),
-            ),
-            Expanded(
-              child: PageView(
-                controller: _controller,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (i) => setState(() => _page = i),
-                children: [
-                  _Step(
-                    icon: Icons.local_fire_department_outlined,
-                    title: l10n.onboardingWelcomeTitle,
-                    body: l10n.onboardingWelcomeBody,
-                  ),
-                  _Step(
-                    icon: Icons.notifications_active_outlined,
-                    title: l10n.onboardingNotifyTitle,
-                    body: l10n.onboardingNotifyBody,
-                  ),
-                  _Step(
-                    icon: Icons.groups_outlined,
-                    title: l10n.onboardingGroupTitle,
-                    body: l10n.onboardingGroupBody,
-                  ),
-                  _Step(
-                    icon: Icons.timer_outlined,
-                    title: l10n.onboardingReadyTitle,
-                    body: l10n.onboardingReadyBody,
-                  ),
-                ],
-              ),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 0; i < _pageCount; i++)
-                    Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i == _page
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: _actions(context, l10n),
-            ),
-          ],
-        ),
+        child: isDesktopWindow
+            ? DesktopContent(
+                maxWidth: DesktopBreakpoints.maxContentWidth,
+                padding: EdgeInsets.zero,
+                child: body,
+              )
+            : body,
       ),
     );
   }
@@ -280,30 +310,51 @@ class _Step extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 🔴 WP-680 / SPEC §2.3 + §3 A3 — tanitim govdesi prose'dur, tavani 600 px
+    // (80 karakter, WCAG 2.1 SC 1.4.8; SPEC §2.1 turetimi). OLCUM (WP-680
+    // testi, dpr=1): 1920 px pencerede govde metni **1872 px** = 250 karakter,
+    // 2560 px'te **2512 px** = 335 karakter -- tavanin uc-dort kati.
+    //
+    // Bu ekran SPEC §3 A3'tur, A2 ya da bolunmus duzen DEGIL: bir tanitim
+    // adimi ikon + baslik + govdeden olusan **tek** nesnedir; A3'un "birden
+    // cok bagimsiz blok tasiyan ekranlar A3 degildir" uyarisi burada
+    // tetiklenmez. `AuthScreen` iki blok tasidigi icin bolunur, burasi
+    // bolunmez.
+    final prose = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 72, color: theme.colorScheme.primary),
+        const SizedBox(height: 24),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          body,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 72, color: theme.colorScheme.primary),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+      child: isDesktopWindow
+          ? Center(
+              child: ConstrainedBox(
+                key: const ValueKey(kOnboardingProseKey),
+                constraints: const BoxConstraints(
+                  maxWidth: DesktopBreakpoints.maxProseWidth,
+                ),
+                child: prose,
+              ),
+            )
+          : prose,
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
+import '../../../core/desktop/desktop_window.dart';
 import '../../../core/stats/stats_period.dart';
 import '../../../core/navigation/nav_index.dart';
 import '../../../core/stats/study_stats.dart';
@@ -25,6 +27,7 @@ import 'daily_line_chart.dart';
 import 'leaderboard_rank_chart.dart';
 import 'member_chart_colors.dart';
 import 'stat_heat_table.dart';
+import 'stats_desktop_layout.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
 
@@ -211,330 +214,455 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       }
     }
 
-    return ListView(
-      controller: _scrollController,
-      padding: getSafeVerticalPadding(context),
+    // ======================= WP-680 — MASAUSTU (SPEC §3 A2) ==================
+    //
+    // 🔴 OLCUM (bu WP'nin testi, `devicePixelRatio = 1`, SPEC §2.3 1440 px
+    // bandinin ICINDE): duzeltme oncesi grup sekmesi 1920 px ve 2560 px
+    // pencerede AYNI seyi ciziyordu — **tek sutun, en genis kart 1408 px**.
+    // Yani 1440'lik bant zaten uygulaniyordu ama bant ICINDE hicbir sutun
+    // karari yoktu: iki sayi yan yana, geri kalan her sey alt alta 1408 px'lik
+    // seritler halinde. Ayni kusurun kisisel sekmedeki hali WP-673'te olculdu
+    // (1888 px); bu sekme o turda BILEREK disarida birakilmisti (dosya CRLF,
+    // digerleri LF).
+    //
+    // Cozum kisisel sekmeyle AYNI araclardir ([StatsTileGrid] /
+    // [StatsSectionColumns], `stats_desktop_layout.dart`): sutun sayisi
+    // pencere sinifindan, kart genisligi icerik tavanindan gelir. Hicbir
+    // metrik, grafik ya da satir kaldirilmadi — yalniz yerleri degisti
+    // (SPEC §7). Mobil dal asagida BIREBIR eski hâlinde durur.
+    final header =
+    // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
+    Row(
       children: [
-        // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
-        Row(
-          children: [
-            GroupAvatar(
-              name: groupName,
-              avatarPath: groupAvatarPath,
-              avatarUpdatedAt: groupAvatarUpdatedAt,
-              radius: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                groupName,
-                style: theme.textTheme.titleMedium,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Builder(
-              builder: (iconContext) => TextButton.icon(
-                onPressed: () =>
-                    showClassSwitcher(iconContext, ref, switchOnly: true),
-                icon: const Icon(Icons.swap_horiz, size: 18),
-                label: Text(AppLocalizations.of(context).statsDegistir),
-              ),
-            ),
-          ],
+        GroupAvatar(
+          name: groupName,
+          avatarPath: groupAvatarPath,
+          avatarUpdatedAt: groupAvatarUpdatedAt,
+          radius: 20,
         ),
-        const SizedBox(height: 8),
-        Text(
-          statsPeriodLabel(AppLocalizations.of(context), period),
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            groupName,
+            style: theme.textTheme.titleMedium,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(height: 12),
-        // WP-191: sıralama EN ÜSTE — gauge/donut'tan önce.
-        Text(
-          AppLocalizations.of(context).statsSiralama,
-          style: theme.textTheme.titleMedium,
+        Builder(
+          builder: (iconContext) => TextButton.icon(
+            onPressed: () =>
+                showClassSwitcher(iconContext, ref, switchOnly: true),
+            icon: const Icon(Icons.swap_horiz, size: 18),
+            label: Text(AppLocalizations.of(context).statsDegistir),
+          ),
         ),
-        const SizedBox(height: 4),
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
+      ],
+    );
+
+    final periodHeading =
+    Text(
+      statsPeriodLabel(AppLocalizations.of(context), period),
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+
+    final leaderboard = <Widget>[
+    if (rows.isEmpty)
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      )
+    else
+      for (var i = 0; i < rows.length; i++)
+        _LeaderboardRow(
+          rank: i + 1,
+          name: blocked.contains(rows[i].member.id)
+              ? AppLocalizations.of(context).safetyBlockedUserFallbackName
+              : rows[i].member.displayName,
+          avatarUrl: blocked.contains(rows[i].member.id)
+              ? null
+              : rows[i].member.avatarUrl,
+          seconds: rows[i].seconds,
+          maxSeconds: maxSeconds,
+          alphaWins: alphaWins[rows[i].member.id] ?? 0,
+          isMe: rows[i].member.id == currentUserId,
+          profile:
+              rows[i].member.isActive &&
+                  !blocked.contains(rows[i].member.id)
+              ? rows[i].member
+              : null,
+        ),
+    ];
+
+    final gaugeRow =
+    // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur
+    // (katılım / hedefe kalan / bugünün lideri). Önceden ortalanmış tek kart
+    // iki yanda boş alan bırakıyordu.
+    IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 150,
+            child: _GroupGaugeCard(
+              progress: goalSeconds <= 0
+                  ? 0
+                  : todayGroupTotal / goalSeconds,
+              todaySeconds: todayGroupTotal,
+              goalSeconds: goalSeconds,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _GroupTodaySummaryCard(
+              participants: todayTotals.values.where((v) => v > 0).length,
+              totalMembers: members.length,
+              remainingSeconds: (goalSeconds - todayGroupTotal).clamp(
+                0,
+                1 << 30,
+              ),
+              goalReached:
+                  goalSeconds > 0 && todayGroupTotal >= goalSeconds,
+              topName: topTodayName,
+              topSeconds: topTodaySeconds,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // SPEC §2.3 "Tek sayilik istatistik dosemesi": tavan 320 px. Mobilde
+    // asagida yine `Row(Expanded, Expanded)` ile ikiye bolunur.
+    final summaryTiles = <Widget>[
+      _SummaryCard(
+        label: AppLocalizations.of(context).statsGrupToplami,
+        seconds: classTotal,
+      ),
+      _SummaryCard(
+        label: AppLocalizations.of(context).statsKisiBasiOrt,
+        seconds: classAvg,
+      ),
+    ];
+
+    final donutCard =
+    contribAsync.when(
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      // 🔴 WP-589: bu dal BOŞ dalla (aşağıda) AYNI cümleyi kullanıyordu.
+      // Sunucuya ulaşılamayınca kullanıcıya "bu dönemde henüz çalışma
+      // yok" deniyordu — grubu hakkında YANLIŞ bilgi. Yasak zaten
+      // yazılıydı (`home/widgets/group_card_shell.dart`), uygulanmamıştı.
+      // Yenileme hedefli: `refreshAppData` bu family'yi okumaz, oraya
+      // bağlanan düğme ölü olurdu.
+      error: (_, _) => Card(
+        child: ErrorRetryView(
+          message: AppLocalizations.of(
+            context,
+          ).statsUyeKatkisiYuklenemedi,
+          onRetry: () => ref.invalidate(
+            analyticsGroupContributionProvider(analyticsPeriod),
+          ),
+        ),
+      ),
+      data: (rows) {
+        if (rows.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: theme.textTheme.bodySmall,
               ),
             ),
-          )
-        else
+          );
+        }
+        final nameOf = {for (final m in members) m.id: m.displayName};
+        final slices = [
           for (var i = 0; i < rows.length; i++)
-            _LeaderboardRow(
-              rank: i + 1,
-              name: blocked.contains(rows[i].member.id)
-                  ? AppLocalizations.of(context).safetyBlockedUserFallbackName
-                  : rows[i].member.displayName,
-              avatarUrl: blocked.contains(rows[i].member.id)
-                  ? null
-                  : rows[i].member.avatarUrl,
+            SubjectDonutSlice(
+              label: (nameOf[rows[i].userId] ?? '').isEmpty
+                  ? AppLocalizations.of(context).statsIsimsiz
+                  : nameOf[rows[i].userId]!,
+              color: memberColors[rows[i].userId] ?? Colors.grey,
               seconds: rows[i].seconds,
-              maxSeconds: maxSeconds,
-              alphaWins: alphaWins[rows[i].member.id] ?? 0,
-              isMe: rows[i].member.id == currentUserId,
-              profile:
-                  rows[i].member.isActive &&
-                      !blocked.contains(rows[i].member.id)
-                  ? rows[i].member
-                  : null,
             ),
-        const SizedBox(height: 16),
-        // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur
-        // (katılım / hedefe kalan / bugünün lideri). Önceden ortalanmış tek kart
-        // iki yanda boş alan bırakıyordu.
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: 150,
-                child: _GroupGaugeCard(
-                  progress: goalSeconds <= 0
-                      ? 0
-                      : todayGroupTotal / goalSeconds,
-                  todaySeconds: todayGroupTotal,
-                  goalSeconds: goalSeconds,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _GroupTodaySummaryCard(
-                  participants: todayTotals.values.where((v) => v > 0).length,
-                  totalMembers: members.length,
-                  remainingSeconds: (goalSeconds - todayGroupTotal).clamp(
-                    0,
-                    1 << 30,
-                  ),
-                  goalReached:
-                      goalSeconds > 0 && todayGroupTotal >= goalSeconds,
-                  topName: topTodayName,
-                  topSeconds: topTodaySeconds,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _SummaryCard(
-                label: AppLocalizations.of(context).statsGrupToplami,
-                seconds: classTotal,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _SummaryCard(
-                label: AppLocalizations.of(context).statsKisiBasiOrt,
-                seconds: classAvg,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // G2: üye katkı donut
-        Text(
-          AppLocalizations.of(context).analyticsCardMemberDonut,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        contribAsync.when(
-          loading: () => const Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          ),
-          // 🔴 WP-589: bu dal BOŞ dalla (aşağıda) AYNI cümleyi kullanıyordu.
-          // Sunucuya ulaşılamayınca kullanıcıya "bu dönemde henüz çalışma
-          // yok" deniyordu — grubu hakkında YANLIŞ bilgi. Yasak zaten
-          // yazılıydı (`home/widgets/group_card_shell.dart`), uygulanmamıştı.
-          // Yenileme hedefli: `refreshAppData` bu family'yi okumaz, oraya
-          // bağlanan düğme ölü olurdu.
-          error: (_, _) => Card(
-            child: ErrorRetryView(
-              message: AppLocalizations.of(
-                context,
-              ).statsUyeKatkisiYuklenemedi,
-              onRetry: () => ref.invalidate(
-                analyticsGroupContributionProvider(analyticsPeriod),
-              ),
-            ),
-          ),
-          data: (rows) {
-            if (rows.isEmpty) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
-              );
-            }
-            final nameOf = {for (final m in members) m.id: m.displayName};
-            final slices = [
-              for (var i = 0; i < rows.length; i++)
-                SubjectDonutSlice(
-                  label: (nameOf[rows[i].userId] ?? '').isEmpty
-                      ? AppLocalizations.of(context).statsIsimsiz
-                      : nameOf[rows[i].userId]!,
-                  color: memberColors[rows[i].userId] ?? Colors.grey,
-                  seconds: rows[i].seconds,
-                ),
-            ];
-            final contribTotal = slices.fold<int>(0, (s, e) => s + e.seconds);
-            // WP-203: isim+renk legend — basılı tutmaya gerek yok.
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SubjectDonut(slices: slices, size: 132),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final s in slices)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 5,
-                                    backgroundColor: s.color,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      s.label,
-                                      style: theme.textTheme.bodyMedium,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Text(
-                                    contribTotal == 0
-                                        ? '—'
-                                        : '%${(s.seconds * 100 / contribTotal).round()}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        // G4: liderlik zaman serisi (aggregate area)
-        Text(
-          AppLocalizations.of(context).analyticsCardLeaderboardHistory,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
+        ];
+        final contribTotal = slices.fold<int>(0, (s, e) => s + e.seconds);
+        // WP-203: isim+renk legend — basılı tutmaya gerek yok.
+        return Card(
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: LeaderboardRankChart(
-              members: members,
-              memberColors: memberColors,
-              stats: stats,
-              days: trendDays,
-              currentUserId: currentUserId,
-              emptyLabel: AppLocalizations.of(
-                context,
-              ).statsBuDonemdeHenuzCalisma,
-              namelessLabel: AppLocalizations.of(context).statsIsimsiz,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Grup eğilimi — master dönemle hizalı çizgi penceresi.
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    '${AppLocalizations.of(context).statsGrupEgilimiSon30} · '
-                    '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())} · '
-                    '${statsPeriodLabel(AppLocalizations.of(context), period)}',
-                    style: theme.textTheme.titleSmall,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 160,
-                  child: DailyLineChart(
-                    days: lastNDays(const [], trendDays, totals: groupDay),
+                SubjectDonut(slices: slices, size: 132),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final s in slices)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 5,
+                                backgroundColor: s.color,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  s.label,
+                                  style: theme.textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                contribTotal == 0
+                                    ? '—'
+                                    : '%${(s.seconds * 100 / contribTotal).round()}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+        );
+      },
+    );
+
+    final historyCard =
+    Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: LeaderboardRankChart(
+          members: members,
+          memberColors: memberColors,
+          stats: stats,
+          days: trendDays,
+          currentUserId: currentUserId,
+          emptyLabel: AppLocalizations.of(
+            context,
+          ).statsBuDonemdeHenuzCalisma,
+          namelessLabel: AppLocalizations.of(context).statsIsimsiz,
         ),
-        const SizedBox(height: 16),
-        _AllTimeCard(
-          total: allTimeTotal,
-          activeDays: activeDays,
-          peak: peak,
-          recordStreak: recordStreak,
-          consistentName: consistentName,
-          consistentStreak: consistentStreak,
+      ),
+    );
+
+    final trendCard =
+    // Grup eğilimi — master dönemle hizalı çizgi penceresi.
+    Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                '${AppLocalizations.of(context).statsGrupEgilimiSon30} · '
+                '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())} · '
+                '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 160,
+              child: DailyLineChart(
+                days: lastNDays(const [], trendDays, totals: groupDay),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          AppLocalizations.of(context).statsKarsilastirmaTablosu,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: heatRows.isEmpty
-                ? Text(
-                    AppLocalizations.of(context).statsUyeYok,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  )
-                : StatHeatTable(
-                    columns: [
-                      AppLocalizations.of(context).statsBugun,
-                      AppLocalizations.of(context).statsHafta,
-                      AppLocalizations.of(context).statsAy,
-                    ],
-                    rows: heatRows,
-                  ),
+      ),
+    );
+
+    final allTimeCard =
+    _AllTimeCard(
+      total: allTimeTotal,
+      activeDays: activeDays,
+      peak: peak,
+      recordStreak: recordStreak,
+      consistentName: consistentName,
+      consistentStreak: consistentStreak,
+    );
+
+    final comparisonCard =
+    Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: heatRows.isEmpty
+            ? Text(
+                AppLocalizations.of(context).statsUyeYok,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              )
+            : StatHeatTable(
+                columns: [
+                  AppLocalizations.of(context).statsBugun,
+                  AppLocalizations.of(context).statsHafta,
+                  AppLocalizations.of(context).statsAy,
+                ],
+                rows: heatRows,
+              ),
+      ),
+    );
+
+    final rankingTitle = AppLocalizations.of(context).statsSiralama;
+    final donutTitle = AppLocalizations.of(context).analyticsCardMemberDonut;
+    final historyTitle = AppLocalizations.of(
+      context,
+    ).analyticsCardLeaderboardHistory;
+    final comparisonTitle = AppLocalizations.of(
+      context,
+    ).statsKarsilastirmaTablosu;
+
+    if (isDesktopWindow) {
+      // SPEC §4: masaustu sayfa kenar boslugu 24 (≥1440 bandi) — kisisel
+      // sekmeyle ayni.
+      return ListView(
+        controller: _scrollController,
+        padding: getSafeVerticalPadding(context, horizontal: 24),
+        children: [
+          // SPEC KURAL 2.2: grup adi (etiket) ile "Degistir" dugmesi (deger)
+          // arasindaki mesafe sert tavan 600 px. Tavansiz hâlde dugme bandin
+          // en sagina, adin ~1300 px otesine itiliyordu.
+          _LabelValueBand(
+            bandKey: const ValueKey(kGroupStatsHeaderKey),
+            child: header,
           ),
+          const SizedBox(height: 8),
+          periodHeading,
+          const SizedBox(height: 12),
+          StatsTileGrid(tiles: summaryTiles),
+          const SizedBox(height: kStatsGridGutter),
+          StatsSectionColumns(
+            sections: [
+              StatsSection(
+                title: rankingTitle,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: leaderboard,
+                ),
+              ),
+              StatsSection(child: gaugeRow),
+              StatsSection(title: donutTitle, child: donutCard),
+              StatsSection(title: historyTitle, child: historyCard),
+              StatsSection(child: trendCard),
+              StatsSection(child: allTimeCard),
+              StatsSection(title: comparisonTitle, child: comparisonCard),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      controller: _scrollController,
+      padding: getSafeVerticalPadding(context),
+      children: [
+        header,
+        const SizedBox(height: 8),
+        periodHeading,
+        const SizedBox(height: 12),
+        // WP-191: sıralama EN ÜSTE — gauge/donut'tan önce.
+        Text(rankingTitle, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 4),
+        ...leaderboard,
+        const SizedBox(height: 16),
+        gaugeRow,
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: summaryTiles[0]),
+            const SizedBox(width: 8),
+            Expanded(child: summaryTiles[1]),
+          ],
         ),
+        const SizedBox(height: 16),
+        Text(donutTitle, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        donutCard,
+        const SizedBox(height: 16),
+        Text(historyTitle, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        historyCard,
+        const SizedBox(height: 16),
+        trendCard,
+        const SizedBox(height: 16),
+        allTimeCard,
+        const SizedBox(height: 16),
+        Text(comparisonTitle, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        comparisonCard,
       ],
     );
   }
+}
+
+/// [_LabelValueBand] test tutamaklari (WP-680).
+///
+/// [kLabelValueBandKey] HER banda takilir; [kGroupStatsHeaderKey] yalniz grup
+/// basligina. Ayni `ValueKey`in cok kez kullanilmasi guvenlidir cunku anahtar
+/// `Align`in ICINDEKI kutuya takilir: iki band birbirinin KARDESI degildir,
+/// dolayisiyla "Duplicate keys" hatasi olusmaz.
+const String kLabelValueBandKey = 'label-value-band';
+const String kGroupStatsHeaderKey = 'group-stats-header';
+
+/// SPEC KURAL 2.2 — etiket–deger satiri sert tavani **600 px** (80 karakter,
+/// WCAG 2.1 SC 1.4.8). `Expanded` / `Spacer` ile sinirsiz yayilma yasaktir:
+/// etiketin solu ile degerin sagi arasindaki mesafe buyudukce goz satir basina
+/// donerken satiri kaybeder (SPEC §2.2, saccade gerekcesi).
+///
+/// Mobilde ETKISIZ: 390 px pencerede kullanilabilir genislik 358 px, yani
+/// tavan hicbir kutuyu kucultmez (WP-680 testinde olculdu).
+class _LabelValueBand extends StatelessWidget {
+  const _LabelValueBand({required this.child, this.bandKey});
+
+  final Widget child;
+
+  /// 🔴 Anahtar `Align`a DEGIL, tavani uygulayan kutuya takilir: `Align` kabini
+  /// doldurur (1408 px), olculmesi gereken ise ic kutudur. Widget anahtari
+  /// olarak verilseydi test 1408 px olcup yesil kalirdi.
+  ///
+  /// Ayrica bu band kardes olarak COK kez cizilir (siralama satirlari); sabit
+  /// bir anahtar verilseydi `Column` "Duplicate keys" ile coker. Bu yuzden
+  /// anahtar opsiyoneldir ve yalniz TEK ornekte (baslik) kullanilir.
+  final Key? bandKey;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.topStart,
+    child: ConstrainedBox(
+      key: bandKey ?? const ValueKey(kLabelValueBandKey),
+      constraints: const BoxConstraints(
+        maxWidth: DesktopBreakpoints.maxLabelValueWidth,
+      ),
+      child: child,
+    ),
+  );
 }
 
 /// WP-191: gauge kartı — boyutu gaugenin gerçek yüksekliğine sar + alt özet.
@@ -856,33 +984,37 @@ class _AllTimeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: iconColor ?? theme.colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+    // SPEC KURAL 2.2: `Spacer()` degeri kabin en sagina atar. 1408 px'lik bir
+    // kartta "En yogun gun" etiketi ile tarihi arasinda ~1300 px kaliyordu.
+    return _LabelValueBand(
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: iconColor ?? theme.colorScheme.onSurfaceVariant,
           ),
-        ),
-        const Spacer(),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(width: 8),
+          Text(
+            label,
             style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-        ),
-      ],
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1028,11 +1160,18 @@ class _LeaderboardRow extends StatelessWidget {
         ],
       ),
     );
-    if (profile == null) return row;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () => openMemberProfile(context, profile!),
-      child: row,
+    // SPEC KURAL 2.2: isim (etiket) solda, sure (deger) sagda —
+    // `spaceBetween` ikisini kabin iki ucuna iter. 1408 px'lik tek sutunda
+    // aradaki mesafe 1300 px'i asiyordu. Band ayrica tiklama hedefini de
+    // 600 px'te kapatir; oncesinde satirin gorunmez tiklama alani bandin
+    // tamamiydi.
+    if (profile == null) return _LabelValueBand(child: row);
+    return _LabelValueBand(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => openMemberProfile(context, profile!),
+        child: row,
+      ),
     );
   }
 }
