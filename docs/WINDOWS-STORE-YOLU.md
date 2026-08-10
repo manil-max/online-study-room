@@ -183,3 +183,143 @@ yüklenir. Bunu `windows_store_mode_wp597_test.dart` sözleşmeye bağlıyor.
 - [Şirket kaydında da kayıt ücreti kaldırıldı — Microsoft Learn](https://learn.microsoft.com/en-us/windows/apps/publish/whats-new-company-developer)
 - [Kod imzalama seçenekleri: Store paketlerini Microsoft imzalar — Microsoft Learn](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)
 - [MSIX paket gereksinimleri — Microsoft Learn](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/app-package-requirements)
+
+---
+
+# Gönderim otomatiği (WP-669 · 2026-08-10)
+
+Yukarıdaki **Gönderim** başlığındaki elle akış **yedek yol olarak duruyor**;
+normal yol artık `.github/workflows/msstore-upload.yml`. Sahibin artefakt indirip
+Partner Center'a sürüklemesi gerekmiyor.
+
+## Hangi API — ve neden ötekisi değil
+
+Microsoft'un iki ayrı gönderim API'si var ve **ikisi aynı şeyi yapmıyor**:
+
+| API | Taban adres | Paket türü |
+|---|---|---|
+| [Store submission API for MSI or EXE app](https://learn.microsoft.com/en-us/windows/apps/publish/store-submission-api) | `https://api.store.microsoft.com` | belge paket türünü `[exe, msi]` diye sınırlıyor — **MSIX yok** |
+| [Microsoft Store submission API](https://learn.microsoft.com/en-us/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services) | `https://manage.devcenter.microsoft.com/v1.0/my/` | **MSIX/appx** — kullandığımız |
+
+Yeni olan API bizim işimizi görmüyor: MSI/EXE tarafında paket Store'a
+**yüklenmez**, kendi sunucunda barındırdığın bir URL olarak verilir. Bizim
+hattımızın ürettiği imzasız MSIX oraya hiç girmez. Bu yüzden hat
+`manage.devcenter.microsoft.com` üzerinden çalışıyor:
+
+- kimlik doğrulama: Azure AD (Microsoft Entra) `client_credentials`,
+  `https://login.microsoftonline.com/<tenant>/oauth2/token`,
+  `resource=https://manage.devcenter.microsoft.com`,
+- jeton **60 dakika** geçerli,
+- paket akışı: gönderim oluştur → gövdeyi güncelle → ZIP'i SAS adresine yükle →
+  `commit` → durumu yokla.
+
+## Ne otomatikleşti, ne otomatikleşmedi
+
+🔴 **İlk gönderimi sahip elle yapar.** Kullanılan API bunu yapamıyor; belgenin
+kendi şartı: *"Before you can create a submission for a given app using this
+API, you must first create one submission for the app in Partner Center,
+including answering the age ratings questionnaire."* Yani listeleme metni, yaş
+derecelendirmesi anketi, fiyat ve ekran görüntüleri **bir kez** elle girilir.
+
+Ondan sonrası otomatiktir: **paket güncellemesi**. Hat her sürümde yeni MSIX'i
+yükler, eskisini silinmek üzere işaretler ve "Bu sürümdeki yenilikler" metnini
+`app/assets/release_notes.json`den yazar (tek kaynak — Play tarafındaki kuralın
+aynısı; alan sınırı
+[1500 karakter](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info)).
+
+## İki kip — `verify` kasıtlı olarak önce
+
+```
+# 1) Ölç: kimlik, yayıncı, mağazada yayında olan sürüm, listeleme dilleri
+Actions → Microsoft Store Upload → Run workflow → mode: verify
+
+# 2) Gönder: windows-store-package artefaktını üreten koşumun ID'siyle
+Actions → Microsoft Store Upload → Run workflow → mode: upload, run_id: <koşum ID>
+```
+
+Etiket değil **koşum ID** isteniyor, çünkü Store paketi imzasızdır ve GitHub
+Release varlıklarına **hiç girmez** (yukarıdaki 🔴 başlık). Paket yalnız
+`windows-store-package` artefaktında bulunur.
+
+Betiğin durduğu yerler (hepsi fail-closed, hepsi `--self-test` ile ölçülüyor):
+
+| Durum | Ne olur |
+|---|---|
+| Üç secret'tan biri bile eksik | İş **başlamadan** durur; yarım yapılandırma da durdurur |
+| Paketin kimliği/yayıncısı mağazadakiyle uyuşmuyor | Durur — gönderim reddedilmeden önce |
+| Paket sürümü ilerlemiyor (aynı ya da geri) | Durur |
+| Paket sürümünün 4. alanı 0 değil (**beta paketi**) | Durur — beta mağazaya gönderilmez |
+| Partner Center'da yarım kalmış bir gönderim var | Durur; üstüne yazmaz (`--allow-delete-pending` ile bilerek silinir) |
+| Uygulamanın hiç yayınlanmış gönderimi yok | Durur ve "önce elle bir gönderim yap" der |
+| Artefaktta 1'den farklı sayıda `.msix` | Durur; hangisinin gideceğini tahmin etmez |
+
+Build numarası **elle girilmez**, paketin `AppxManifest.xml`indeki sürümden
+türetilir (`1.0.<patch>.0` → `<patch>`). Yanlış sürümün notlarını yayınlamanın
+yolu elle girilen sayıydı.
+
+## 🔴 Sahibin yapacağı tek şey: üç değeri üretmek
+
+Bu bir kerelik. Partner Center'da, sırayla:
+
+1. ⚙ (sağ üst) → **Account settings** → **Tenants** →
+   **Associate Microsoft Entra ID with your Partner Center account**.
+   Microsoft Entra dizinin yoksa aynı ekrandan **ücretsiz** yeni bir tane
+   oluşturulabiliyor.
+2. **Account settings** → **User management** → **Microsoft Entra applications**
+   sekmesi → **Add Microsoft Entra application** → **Create Microsoft Entra
+   application**.
+3. Görünen ad: `Focus Camp CI`. **Reply URL**: sahip olduğun herhangi bir adres
+   (ör. deponun adresi) — 256 karakteri aşmasın. → **Next**.
+4. **Roles applicable to developer programs** → **Manager** → **Create**.
+5. Listede uygulamanın adına tıkla → **Tenant ID** ve **Client ID** oradadır.
+6. **Add new key** → çıkan ekrandaki **Key** değerini kopyala.
+   🔴 Bu değer **bir daha gösterilmez**; sayfadan çıkmadan al.
+7. Üç değeri bana ver. GitHub'a şu adlarla girilecekler:
+   `MS_STORE_TENANT_ID` · `MS_STORE_CLIENT_ID` · `MS_STORE_CLIENT_SECRET`.
+
+Not: 1. ve 2. adım için Partner Center'da **Manager** rolüyle ve o Entra
+dizininde **global administrator** yetkisiyle giriş yapmış olman gerekiyor.
+Anahtarın bir son kullanma tarihi var ve uygulama sayfasında yazıyor; süresi
+dolduğunda hat yeşile dönmez, açık bir hatayla durur.
+
+Kaynaklar:
+[tenant ilişkilendirme](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/associate-azure-ad-with-partner-center)
+·
+[uygulama ve anahtar](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/manage-azure-ad-applications-in-partner-center)
+
+## Ölçüldü / ölçülemedi (WP-669)
+
+**Ölçüldü** (kimlik bilgisi gerektirmeyen her şey):
+
+- `python tooling/msstore/store_publish.py self-test` → `self-test: gecti`.
+  Kapsadıkları: MSIX kimliğinin paketin **içinden** okunması, dört alanlı sürüm
+  şeması, kimlik/yayıncı eşleşmesi, sürüm ilerlemesi, beta paketinin
+  reddedilmesi, paket planı (eski → `PendingDelete`, yeni → `PendingUpload`),
+  1500 karakter sınırı, yanıt-only alanların PUT gövdesine sızmaması, üç
+  secret'ın fail-closed okunması (yarım yapılandırma dahil).
+- Kapılar **sabote edilerek** sınandı: sürüm karşılaştırması, paket planı, beta
+  kapısı ve iş akışının secret kontrolü tek tek bozuldu, dördü de kırmızı düştü,
+  dördü de geri alındı (dosya hash'i sabotaj öncesine birebir döndü).
+- `.github/workflows/msstore-upload.yml` YAML olarak ayrıştırıldı; WP-666/668
+  "gömülü girdi" kapısına göre ihlal sayısı **0**.
+
+**Ölçülemedi** (kimlik bilgisi henüz yok):
+
+- Gerçek API çağrılarının **hiçbiri** koşturulmadı: jeton alma, `GET
+  applications`, gönderim oluşturma, SAS'a yükleme, `commit`, durum yoklama.
+  Bunların hepsi ilk gerçek koşumda sınanacak.
+- Azure Blob'a yükleme başlığı (`x-ms-blob-type: BlockBlob`, tek `Put Blob`
+  çağrısı) belgeye göre yazıldı ama **çalıştırılmadı**.
+- `PUT` gövdesinden çıkarılan yanıt-only alan listesi (`id`, `status`,
+  `statusDetails`, `fileUploadUrl`) belgeden türetildi; API'nin fazladan bir
+  alanı reddedip reddetmediği ölçülmedi.
+- Store'un gerçekten MSIX'i kabul edip sertifikasyondan geçireceği — bu zaten
+  yukarıdaki "Ölçülmemiş olan" başlığında yazıyordu, hâlâ geçerli.
+
+## ⚠️ Yukarıdaki bir adım artık yanlış
+
+Bu belgenin **"Sahibin yapması gerekenler"** bölümünde 4. adım uygulama adını
+`Odak Kampı` diye rezerve etmeyi söylüyor. Gerçekte mağazada rezerve edilen ad
+**`Focus Camp`** oldu ve hat `MSIX_STORE_DISPLAY_NAME` değişkeninden bu adı
+kullanıyor (WP-664). Rezervasyon zaten yapıldığı için o adım geçmişte kaldı;
+tarihsel kayıt olarak duruyor.

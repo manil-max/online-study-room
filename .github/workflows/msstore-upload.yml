@@ -1,0 +1,133 @@
+name: Microsoft Store Upload
+
+# 🔴 Bu iş akışı sahibi Partner Center'dan ÇIKARMAK için var. Play tarafı
+# WP-668'de otomatiğe bağlandı; burası onun Microsoft eşidir.
+#
+# İki kip vardır ve `verify` KASITLI olarak ilk sıradadır: paket kimliği,
+# yayıncı ve mağazada YAYINDA OLAN sürüm TAHMİN EDİLMEZ, Partner Center'dan
+# okunur. Yanlış kimlikli ya da geri giden bir sürümü göndermek, ancak
+# sertifikasyon reddettikten sonra fark edilirdi.
+#
+# NE OTOMATİKLEŞİYOR: yalnız PAKET GÜNCELLEMESİ. İlk gönderimi (listeleme
+# metni, yaş derecelendirmesi anketi, fiyat, ekran görüntüleri) sahip Partner
+# Center'da ELLE yapar; kullanılan API ilk gönderimi yapamaz.
+# Ayrıntı: docs/WINDOWS-STORE-YOLU.md
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'verify = kimliği ve yayındaki sürümü ölç · upload = paketi gönder'
+        required: true
+        type: choice
+        options: [verify, upload]
+        default: verify
+      run_id:
+        # 🔴 Store MSIX'i GitHub Release'e KOYULMAZ (imzasızdır, kullanıcı
+        # kuramaz — docs/WINDOWS-STORE-YOLU.md). `windows-release.yml` onu
+        # `windows-store-package` ARTEFAKTINA koyar, o yüzden buraya etiket
+        # değil o koşumun kimliği verilir.
+        description: 'windows-store-package artefaktını üreten koşumun ID''si'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: msstore-upload
+  cancel-in-progress: false
+
+jobs:
+  msstore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet requests
+
+      # 🔴 Betiğin doğrulama mantığı API'ye DOKUNMADAN önce sınanır. Bu kapı
+      # kimlik bilgisi gerektirmez; sürüm ilerlemesi, paket planı, not sınırı
+      # ve fail-closed kimlik okuması burada ölçülür.
+      - name: Betiğin kendi kapısı
+        run: python tooling/msstore/store_publish.py self-test
+
+      # Fail-closed: üç secret'ın ÜÇÜ birden gerekir. Yarım yapılandırma
+      # (ikisi dolu) da işi durdurur — betik de aynı kuralı uygular, burada
+      # koşumun EN BAŞINDA durması için tekrarlanıyor.
+      - name: Kimlik bilgisi fail-closed
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for name in MS_STORE_TENANT_ID MS_STORE_CLIENT_ID MS_STORE_CLIENT_SECRET; do
+            value="${!name-}"
+            if [ -z "${value}" ]; then missing="${missing} ${name}"; fi
+          done
+          if [ -n "${missing}" ]; then
+            echo "::error title=Microsoft Store kimliği yok::Eksik secret:${missing}"
+            echo "Partner Center → Account settings → User management → Microsoft Entra applications"
+            exit 1
+          fi
+          echo "üç kimlik değeri de dolu"
+
+      # Paketi ARTEFAKTTAN indir. Etiketten değil: Store paketi hiçbir
+      # GitHub Release varlığında yoktur ve orada olmaması KASITLIDIR.
+      - name: Store paketini koşum artefaktından indir
+        if: inputs.mode == 'upload'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RUN_ID}" ]; then
+            echo "::error title=Koşum ID verilmedi::upload için run_id zorunlu (windows-store-package artefaktını üreten koşum)."
+            exit 1
+          fi
+          case "${RUN_ID}" in
+            [0-9]*) ;;
+            *) echo "::error::Geçersiz koşum ID: '${RUN_ID}'"; exit 1 ;;
+          esac
+          gh run download "${RUN_ID}" -n windows-store-package -D dist
+          # Tam olarak BİR paket bekleniyor; ikisi çıkarsa hangisinin
+          # gideceğini tahmin etmek yerine iş durur.
+          count=$(find dist -name '*.msix' -type f | wc -l)
+          if [ "${count}" != "1" ]; then
+            echo "::error title=Paket sayısı beklenmedik::${count} adet .msix bulundu, 1 bekleniyordu."
+            find dist -type f
+            exit 1
+          fi
+          msix=$(find dist -name '*.msix' -type f)
+          echo "MSIX=${msix}" >> "$GITHUB_ENV"
+          ls -l "${msix}"
+
+      # 🔴 Artefaktın gerçekten Store paketi olduğu PAKETİN İÇİNDEN okunur.
+      # `windows-release.yml` imzasız Store paketini ayrı artefakta koyuyor
+      # ama artefakt adına güvenmek, yanlış koşumun ID'si girildiğinde sessizce
+      # sideload paketini göndermek demekti.
+      - name: Paketin kimliğini paketten oku
+        if: inputs.mode == 'upload'
+        run: python tooling/msstore/store_publish.py inspect --msix "${MSIX}"
+
+      # Yazan hiçbir şey yok: kimlik, yayıncı, yayındaki sürüm ve listeleme
+      # dilleri Partner Center'dan LİSTELENİR.
+      - name: Kimliği ve yayındaki sürümü ölç
+        if: inputs.mode == 'verify'
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+        run: python tooling/msstore/store_publish.py verify
+
+      - name: Partner Center'a gönder
+        if: inputs.mode == 'upload'
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+        run: python tooling/msstore/store_publish.py upload --msix "${MSIX}"
