@@ -29,11 +29,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/core/device_integrations/samsung_modes_service.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/data/models/chat_message.dart';
 import 'package:online_study_room/data/models/nudge.dart';
 import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
+import 'package:online_study_room/data/providers/chat_providers.dart';
+import 'package:online_study_room/data/providers/moderation_providers.dart';
 import 'package:online_study_room/data/providers/nudge_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
@@ -41,10 +45,14 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_nudge_re
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 import 'package:online_study_room/features/classroom/classroom_screen.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
+import 'package:online_study_room/features/classroom/widgets/class_chat_card.dart';
+import 'package:online_study_room/features/classroom/widgets/class_chat_screen.dart';
+import 'package:online_study_room/features/classroom/widgets/class_detail_screen.dart';
 import 'package:online_study_room/features/desktop/desktop_page_scaffold.dart';
 import 'package:online_study_room/features/home/widgets/group_goal_card.dart';
 import 'package:online_study_room/features/home/widgets/group_trend_card.dart';
 import 'package:online_study_room/features/home/widgets/leaderboard_card.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:online_study_room/main.dart';
 
@@ -399,6 +407,123 @@ void main() {
           reason: '"$tooltip" kisayolu masaustu duzeninde kayboldu.',
         );
       }
+    }),
+  );
+  // ============ ITILEN EKRANLAR: sohbet + grup ayarlari =====================
+  //
+  // Bu ikisi WP-671 kapisinin ISINDE DEGIL (kapi yalnizca sekmeleri gezer),
+  // ama sahibin gordugu ekranlar. Kanca burada duruyor ki "kapida yok, o yuzden
+  // olculmedi" bosluguna dusmesinler.
+
+  Widget host(Widget child) => MaterialApp(
+    locale: const Locale('tr'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: child,
+  );
+
+  Future<void> pumpDetail(WidgetTester tester, Size window) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = window;
+    addTearDown(tester.view.reset);
+    final groups = InMemoryGroupRepository();
+    final me = Profile(
+      id: 'me-1',
+      displayName: 'Ben',
+      createdAt: DateTime(2026, 1, 1),
+    );
+    final group = await groups.createGroup(name: 'Odak Kampi', creator: me);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupRepositoryProvider.overrideWithValue(groups),
+          authStateProvider.overrideWith((ref) => Stream.value(me)),
+          groupPresenceProvider.overrideWith(
+            (ref) => Stream.value(const <Presence>[]),
+          ),
+        ],
+        child: host(ClassDetailScreen(group: group)),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pumpChat(WidgetTester tester, Size window) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = window;
+    addTearDown(tester.view.reset);
+    final me = Profile(
+      id: 'me-1',
+      displayName: 'Ben',
+      createdAt: DateTime(2026, 1, 1),
+    );
+    final group = StudyGroup(
+      id: 'g1',
+      name: 'Odak Kampi',
+      inviteCode: 'KAMP42',
+      createdBy: me.id,
+      createdAt: DateTime(2026, 1, 1),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith((ref) => Stream.value(me)),
+          blockedUserIdsProvider.overrideWith((ref) async => const <String>{}),
+          classMessagesProvider(
+            group.id,
+          ).overrideWith((ref) => Stream.value(const <ChatMessage>[])),
+        ],
+        child: host(ClassChatScreen(group: group)),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    '2560 px: grup ayarlari sutunu form genisliginde durur',
+    (tester) async => onPlatform(TargetPlatform.windows, () async {
+      await pumpDetail(tester, const Size(2560, 1440));
+      // Her satir bir `ListTile`: baslik solda, `trailing` dugmesi sagda. Sutun
+      // sinirlanmazsa aradaki goz sicramasi pencere kadar buyur.
+      expect(
+        widthOf(find.byType(ListView)),
+        lessThanOrEqualTo(DesktopBreakpoints.maxFormWidth),
+      );
+    }),
+  );
+
+  testWidgets(
+    '390 px mobil: grup ayarlari tam genislikte kalir',
+    (tester) async => onPlatform(TargetPlatform.android, () async {
+      await pumpDetail(tester, const Size(390, 844));
+      expect(
+        widthOf(find.byType(ListView)),
+        moreOrLessEquals(390, epsilon: 0.5),
+      );
+    }),
+  );
+
+  testWidgets(
+    '2560 px: sohbet sutunu form genisliginde durur',
+    (tester) async => onPlatform(TargetPlatform.windows, () async {
+      await pumpChat(tester, const Size(2560, 1440));
+      // Balonlar zaten 320'de tavanli; kusur biri sola biri saga yaslandiginda
+      // aralarinda kalan ~1700 px'lik bosluktu.
+      expect(
+        widthOf(find.byType(ClassChatCard)),
+        lessThanOrEqualTo(DesktopBreakpoints.maxFormWidth),
+      );
+    }),
+  );
+
+  testWidgets(
+    '390 px mobil: sohbet tam genislikte kalir',
+    (tester) async => onPlatform(TargetPlatform.android, () async {
+      await pumpChat(tester, const Size(390, 844));
+      expect(
+        widthOf(find.byType(ClassChatCard)),
+        moreOrLessEquals(390, epsilon: 0.5),
+      );
     }),
   );
 }
