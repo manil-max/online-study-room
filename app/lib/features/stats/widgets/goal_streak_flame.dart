@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/theme/container_roles.dart';
 import '../../../data/models/goal_streak.dart';
 import '../../../data/providers/goal_streak_providers.dart';
 
@@ -124,70 +125,124 @@ class GoalStreakFlameVisual {
   final Color background;
 }
 
-/// Durum → görsel. Üç ayrı glif; renk tek ayırt edici değildir (kart kabulü).
-/// Dördüncü durumun (`expired`/`empty`) ayrımını sayı taşır — bkz.
-/// [GoalStreakFlame] başlığı.
+/// 🔴 WP-657 — RENKLER ARTIK SABİT DEĞİL, **ZEMİNİN FONKSİYONU**.
+///
+/// Sahip (2026-08-10): *"hâlâ günlük ve grup serisindeki işaret soluk ama tam
+/// belli olmuyor; gri renk daha güzel olur."*
+///
+/// Ölçüm (`goal_streak_flame_theme_wp657_test.dart`, 15 hazır tema × 4 durum,
+/// rozet gerçek `Card` yüzeyinin üstünde pump edilerek):
+///
+/// | durum          | ikon/dolgu kontrastı (eski) | WCAG eşiği |
+/// |----------------|-----------------------------|------------|
+/// | `pendingToday` | **1.63 – 1.86** (15/15 tema) | 3.0        |
+/// | `atRisk`       | 2.02 – 2.96 (11/15 tema)    | 3.0        |
+/// | `completedToday` sayı | 3.47 – 4.45 (11/15)  | 4.5        |
+///
+/// Yani "soluk" bir tercih değil, **okunamama** idi ve sahibin hiç fark
+/// edemediği duraklatma (pause) işareti de aynı sebeple görünmüyordu.
+///
+/// Kök neden bu depoda üç kez daha görüldü (WP-358 uyarı rozeti, WP-594 odak
+/// halkası, WP-627 container rolleri): renk sabit yazıldı, sonra
+/// `Color.lerp(renk, scheme.surface, 0.55)` ile "soluklaştırıldı". Zemine doğru
+/// lerp etmek **tanım gereği** kontrastı düşürür; ne kadar soluklaştırılırsa o
+/// kadar okunmaz olur.
+///
+/// Çözüm yeni bir mekanizma değil, var olanın kullanılmasıdır:
+/// [resolveContainerRole] tohum rengin **tonunu** korur, dolguyu uygulamanın
+/// tüm yüzeylerinden ≥ `kMinContainerSeparation` ayırır ve üstündeki
+/// ikon/sayıyı dolguya karşı ≥ `kMinTextContrast` tutturur. Dört durumun tek
+/// farkı **tohum + glif**tir.
+///
+/// Ayrım hâlâ yalnız renge dayanmaz (renk körü kullanıcı): dört ayrı glif
+/// çifti + `expired`/`empty`'nin her zaman **0** taşıyan sayısı + `Semantics`
+/// cümlesi.
+///
+/// ⚠️ Bu, WP-604'ün "soluk = aynı turuncunun düşük doygunluklu hâli, gri
+/// DEĞİL" kaydını **geçersiz kılar**; sahip 2026-08-10'da doğrudan gri istedi
+/// (`AGENTS.md §0.1`). Kod yorumunu değiştirmek yetmez — bir sonraki tur yazılı
+/// karara bakıp geri alır; bu satır o yüzden burada duruyor.
 GoalStreakFlameVisual goalStreakFlameVisual(
   GoalStreakState state,
   ColorScheme scheme,
 ) {
-  switch (state) {
-    case GoalStreakState.completedToday:
-      // Canlı alev.
-      return GoalStreakFlameVisual(
-        icon: Icons.local_fire_department,
-        foreground: const Color(0xFFEA580C),
-        background: const Color(0xFFEA580C).withValues(alpha: 0.14),
-      );
-    case GoalStreakState.pendingToday:
-      // 🔴 WP-604 — SAHİP KARARI DEĞİŞTİ (2026-08-09, doğrudan emir).
-      //
-      // Buradaki eski kod `completedToday` ile **birebir aynı** canlı turuncuyu
-      // (0xFFEA580C) kullanıyordu; tek fark dolu/içi boş glifti ve rozet
-      // boyutunda o fark görünmüyor. Sahip tam bunu bildirdi: "dün hedefimi
-      // tamamladım, bugün tamamlamadım ama alev hâlâ canlı renkli."
-      //
-      // İstenen (chess.com modeli, sahibin kendi tarifi): bugünün hedefi
-      // tamamlanmadıysa alev **soluk**; bugünkü tamamlanınca **canlı renge
-      // döner ve sayı artar**.
-      //
-      // Bu WP-481'de yazılı "seri yaşıyor, o yüzden canlı renkte" kararını
-      // **geçersiz kılar**. O kayıt `progress.md`de de düzeltildi — yalnız kodu
-      // değiştirmek yetmez, bir sonraki tur yazılı karara bakıp geri alır.
-      // Bu hatanın üç dört kez tekrarlanmasının sebebi buydu.
-      //
-      // Soluk = aynı turuncunun düşük doygunluklu hâli, gri DEĞİL: gri
-      // "sıfırlanmış" durumun rengi ve ikisi karışmamalı. Ayrım hâlâ üç
-      // kanalda: renk yoğunluğu + içi boş glif + sayı.
-      return GoalStreakFlameVisual(
-        icon: Icons.local_fire_department_outlined,
-        foreground: Color.lerp(
-          const Color(0xFFEA580C),
-          scheme.surface,
-          0.55,
-        )!,
-        background: const Color(0xFFEA580C).withValues(alpha: 0.06),
-      );
-    case GoalStreakState.atRisk:
-      // WP-481 sahip kararı: duraklatma işareti **pause**. Kırmızı DEĞİL —
-      // seri hâlâ ayakta ve kırmızı rozet kırmızı temada kaybolabiliyor
-      // (v49 sahip notu).
-      return GoalStreakFlameVisual(
-        icon: Icons.pause_circle_outline,
-        foreground: const Color(0xFFB45309),
-        background: const Color(0xFFF59E0B).withValues(alpha: 0.18),
-      );
-    case GoalStreakState.expired:
-    case GoalStreakState.empty:
-      // WP-481 sahip kararı: sıfırlanmış seride **gri soluk alev + "0"**.
-      // Rozet gizlenmez; gece ikonu "seri yok" demiyordu.
-      return GoalStreakFlameVisual(
-        icon: Icons.local_fire_department,
-        foreground: scheme.onSurfaceVariant,
-        background: scheme.surfaceContainerHigh,
-      );
-  }
+  final (icon, seed) = _goalStreakSeed(state);
+  final role = _resolveChip(seed, scheme);
+  return GoalStreakFlameVisual(
+    icon: icon,
+    foreground: role.onContainer,
+    background: role.container,
+  );
 }
+
+/// Canlı alevin tohumu — sahibin 3. durumu ("renkli ateş vesaire").
+const Color kGoalStreakLiveSeed = Color(0xFFEA580C);
+
+/// Duraklatma tohumu. `warning_tokens.dart` ile **aynı** kehribar ailesi:
+/// kırmızı seçilmedi, çünkü seri hâlâ ayakta ve kırmızı rozet kırmızı temada
+/// kayboluyor (v49 sahip notu).
+const Color kGoalStreakPauseSeed = Color(0xFFF59E0B);
+
+/// Nötr (gri) tohum — sahibin V64 emri.
+///
+/// Doygunluğu 0 değil ~0.09: tamamen akromatik bir gri koyu temalarda ölü
+/// görünüyor. Yine de her tema için **aynı** tohumdur, yani paletten bağımsız.
+const Color kGoalStreakNeutralSeed = Color(0xFF9CA3AF);
+
+(IconData, Color) _goalStreakSeed(GoalStreakState state) => switch (state) {
+  // 3. durum: bugünün hedefi tutturuldu → canlı, renkli ateş.
+  GoalStreakState.completedToday => (
+    Icons.local_fire_department,
+    kGoalStreakLiveSeed,
+  ),
+  // Dün tutturuldu, bugün henüz değil → nötr gri, içi boş alev.
+  GoalStreakState.pendingToday => (
+    Icons.local_fire_department_outlined,
+    kGoalStreakNeutralSeed,
+  ),
+  // 2. durum: dün kaçırıldı, önceki gün tutturuldu → seri DURAKLAMADA.
+  GoalStreakState.atRisk => (Icons.pause_circle_outline, kGoalStreakPauseSeed),
+  // 1. durum: sıfırlanmış → gri alev + "0". Rozet gizlenmez.
+  GoalStreakState.expired || GoalStreakState.empty => (
+    Icons.local_fire_department,
+    kGoalStreakNeutralSeed,
+  ),
+};
+
+/// Tohum + yüzeyler → rozet dolgusu ve üstü.
+///
+/// Küçük bir bellek tutulur: [resolveContainerRole] eşiği tutturana kadar
+/// döngüye girer ve rozet her karede (dört yüzeyde birden) yeniden çizilir.
+/// Anahtar temanın kendisidir, o yüzden tema değişince yeni değer üretilir.
+ContainerRole _resolveChip(Color seed, ColorScheme scheme) {
+  final key = Object.hash(
+    seed.toARGB32(),
+    scheme.surface.toARGB32(),
+    scheme.surfaceContainerLowest.toARGB32(),
+    scheme.surfaceContainerHigh.toARGB32(),
+    scheme.brightness,
+  );
+  final cached = _chipCache[key];
+  if (cached != null) return cached;
+
+  final role = resolveContainerRole(
+    role: seed,
+    // Rozet dört ayrı kartta çiziliyor (`goal_card`, `group_goal_card`,
+    // `leaderboard_card`, `study_timer_card`); hangisinin üstünde durursa
+    // dursun ayrışsın diye üç yüzeyin hepsi geçiliyor.
+    surfaces: [
+      scheme.surface,
+      scheme.surfaceContainerLowest,
+      scheme.surfaceContainerHigh,
+    ],
+    brightness: scheme.brightness,
+  );
+  if (_chipCache.length >= 64) _chipCache.clear();
+  _chipCache[key] = role;
+  return role;
+}
+
+final Map<int, ContainerRole> _chipCache = <int, ContainerRole>{};
 
 /// Durumun okunabilir cümlesi.
 ///

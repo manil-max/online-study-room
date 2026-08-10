@@ -39,12 +39,6 @@ import 'package:online_study_room/features/stats/widgets/goal_streak_flame.dart'
 
 const _scheme = ColorScheme.light();
 
-/// İki rengin gözle ayırt edilebilir kadar farklı olup olmadığı.
-/// Sadece `!=` demek yeterli değildi: bir tık farklı bir turuncu da testi
-/// geçerdi ama kullanıcı yine "hâlâ canlı" derdi.
-double _luminanceGap(Color a, Color b) =>
-    (a.computeLuminance() - b.computeLuminance()).abs();
-
 void main() {
   group('WP-604 (1) — "bugün tamamlanmadı" GÖRÜNÜR biçimde soluk', () {
     test('pendingToday rengi completedToday ile AYNI DEĞİL', () {
@@ -64,18 +58,31 @@ void main() {
             'Sahibin bildirdiği hata tam olarak buydu: bugün tamamlanmamışken '
             'alev canlı renkte kalıyor.',
       );
+      // 🔴 WP-657 SAHİP KARARI (2026-08-10): ayrım artık "aynı turuncunun daha
+      // açığı" değil, **ton**. Sahip doğrudan gri istedi: "gri renk daha güzel
+      // olur". Eski iki iddia (luminance farkı > 0.12 + soluk DAHA AÇIK olacak)
+      // o eski kararı sabitliyordu ve yeni emirle çelişiyor; yerlerine daha
+      // sert olan doygunluk iddiası geçti — "bir tık farklı turuncu" da,
+      // "biraz daha açık turuncu" da artık geçemez.
       expect(
-        _luminanceGap(pending.foreground, done.foreground),
-        greaterThan(0.12),
-        reason:
-            'Fark ölçülebilir olmalı; bir tık farklı turuncu kullanıcı için '
-            '"hâlâ canlı" demektir.',
+        HSLColor.fromColor(pending.foreground).saturation,
+        lessThanOrEqualTo(0.12),
+        reason: 'Bekleyen durum GRİ olmalı (sahip emri).',
       );
-      // Soluk olmalı, yani DAHA AÇIK/donuk — koyulaşmak "daha acil" okunur.
       expect(
-        pending.foreground.computeLuminance(),
-        greaterThan(done.foreground.computeLuminance()),
-        reason: 'Bekleyen durum canlıdan daha soluk olmalı, daha baskın değil.',
+        HSLColor.fromColor(done.foreground).saturation,
+        greaterThan(0.35),
+        reason: 'Canlı alev renkli kalmalı; üç durum tek griye çökmemeli.',
+      );
+      // Ölçüldü: gri ile turuncu AYNI parlaklıkta olabilir (bu şemada fark
+      // 0.003). Yani luminance farkı artık ayrım kanalı değildir; ayrımı ton +
+      // glif taşır. Renk körü kullanıcı için kalan kanal glif ve sayıdır ve
+      // ikisi de burada ölçülüyor.
+      expect(pending.icon, isNot(done.icon));
+      expect(
+        pending.background,
+        isNot(done.background),
+        reason: 'Rozet dolgusu da iki durumda ayrı olmalı.',
       );
     });
 
@@ -86,10 +93,23 @@ void main() {
       );
       final none = goalStreakFlameVisual(GoalStreakState.empty, _scheme);
 
-      // Bu iddia olmadan "pendingToday'i de gri yap" düzeltmesi geçerdi ve
-      // kullanıcı serisi yaşarken "seri bitti" sanırdı (WP-481'in düzelttiği
-      // eski hata). Üç durum üç ayrı görünüm.
-      expect(pending.foreground, isNot(none.foreground));
+      // 🔴 WP-657: sahip ikisinin de GRİ olmasını istedi, yani ayrımı renk
+      // taşıyamaz. Ama korunması gereken şey duruyor: kullanıcı serisi
+      // yaşarken "seri bitti" sanmamalı. Ayrım artık GLİF taşıyor — içi boş
+      // alev (seri yaşıyor, bugün henüz yok) ile dolu alev (seri yok).
+      //
+      // Bu iddia yumuşatma değil yer değiştirmedir: eskiden renk ölçülüyordu,
+      // şimdi ekranda gerçekten ayırt edici olan kanal ölçülüyor. `expired`
+      // ve `empty` her zaman "0" taşır (`projectGoalStreak`), `pendingToday`
+      // en az 1 — üçüncü kanal da yerinde.
+      expect(
+        pending.icon,
+        isNot(none.icon),
+        reason:
+            'İki durum aynı glife düşerse kullanıcı serisinin bittiğini sanır.',
+      );
+      expect(pending.icon, Icons.local_fire_department_outlined);
+      expect(none.icon, Icons.local_fire_department);
     });
 
     test('dört durumun (ikon, renk) çifti dört AYRI değer taşır', () {
