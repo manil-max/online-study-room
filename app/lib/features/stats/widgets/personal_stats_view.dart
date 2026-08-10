@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/desktop/desktop_window.dart';
 import '../../../core/stats/session_window.dart';
 import '../../../core/navigation/nav_index.dart';
 import '../../../core/stats/stats_period.dart';
@@ -25,6 +26,7 @@ import 'draggable_date_range_picker.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'session_scatter_chart.dart';
+import 'stats_desktop_layout.dart';
 import 'study_heatmap.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
@@ -189,89 +191,54 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         ? ' · ${l10n.statsStreakGun(kUserSessionsHotWindowDays.toString())}'
         : '';
 
-    return ListView(
-      controller: _scrollController,
-      padding: getSafeVerticalPadding(context),
-      children: [
-        // Üst dönem + seçili dönem özeti
-        Text(
-          statsPeriodLabel(AppLocalizations.of(context), period),
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        // 🔴 WP-573: uzun dönem verisi düştüyse kullanıcı çıkışsız kalmaz.
-        // WP-560 dersi: çıkışı olmayan hata dalı açılmaz.
-        if (scopeFailed)
-          Card(
-            child: ErrorRetryView(
-              dense: true,
-              message: l10n.homeVerilerYuklenemedi,
-              onRetry: () => ref.invalidate(
-                analyticsUserSessionsInRangeProvider(analyticsPeriod),
-              ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsToplam,
-                seconds: period == StatsPeriod.all && lifetime != null
-                    ? lifetime
-                    : periodTotalSec,
-                icon: Icons.timelapse,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsGunlukOrtalama,
-                seconds: avgPeriod.round(),
-                icon: Icons.trending_up,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsHaftaIci,
-                seconds: split.weekday,
-                icon: Icons.work_outline,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsHaftaSonu,
-                seconds: split.weekend,
-                icon: Icons.weekend_outlined,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          AppLocalizations.of(context).statsGunlukDagilim,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
+    // ---- Dört özet döşemesi ------------------------------------------------
+    // 🔴 WP-673 / SPEC §3 A2: bu dört kart ÖNCEDEN elle 2×2 diziliyordu (iki
+    // `Row(Expanded, Expanded)`), yani sütun sayısı sabit 2'ydi ve genişliğe
+    // hiç bakmıyordu. 1920 px pencerede her kart ~800 px oluyor, içinde tek bir
+    // "2s" yazıyordu — sahibin 3 numaralı şikâyeti birebir buydu.
+    // Masaüstünde artık [StatsTileGrid] akıtır ve döşeme 320 px'te tavanlanır;
+    // mobil dal aşağıda BİREBİR eski 2×2 hâlinde durur (SPEC §7).
+    final statTiles = <Widget>[
+      _StatCard(
+        label: l10n.statsToplam,
+        seconds: period == StatsPeriod.all && lifetime != null
+            ? lifetime
+            : periodTotalSec,
+        icon: Icons.timelapse,
+      ),
+      _StatCard(
+        label: l10n.statsGunlukOrtalama,
+        seconds: avgPeriod.round(),
+        icon: Icons.trending_up,
+      ),
+      _StatCard(
+        label: l10n.statsHaftaIci,
+        seconds: split.weekday,
+        icon: Icons.work_outline,
+      ),
+      _StatCard(
+        label: l10n.statsHaftaSonu,
+        seconds: split.weekend,
+        icon: Icons.weekend_outlined,
+      ),
+    ];
+
+    // ---- Bağımsız bölümler -------------------------------------------------
+    // Sıra ve içerik WP-673 öncesiyle aynıdır; yalnız her başlık+kart çifti bir
+    // [StatsSection]'a sarıldı ki masaüstünde iki sütuna akıtılabilsin. Hiçbir
+    // metrik, grafik ya da katlanır blok kaldırılmadı (SPEC §7).
+    final sections = <Widget>[
+      StatsSection(
+        title: l10n.statsGunlukDagilim,
         // Yerel 7/14/30 kalır; master period değişince otomatik senkron.
-        _TrendCard(sessions: sessions, totals: dailyTotalsMap),
-        const SizedBox(height: 16),
-        _WeekComparisonCard(sessions: sessions, now: now),
-        const SizedBox(height: 16),
-        Text(
-          '${AppLocalizations.of(context).homeCalismaTakvimi} · '
-          '${AppLocalizations.of(context).statsStreakGun(kUserSessionsHotWindowDays.toString())}',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
+        child: _TrendCard(sessions: sessions, totals: dailyTotalsMap),
+      ),
+      StatsSection(child: _WeekComparisonCard(sessions: sessions, now: now)),
+      StatsSection(
+        title:
+            '${l10n.homeCalismaTakvimi} · '
+            '${l10n.statsStreakGun(kUserSessionsHotWindowDays.toString())}',
+        child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: StudyHeatmap(
@@ -281,26 +248,20 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '${l10n.statsCalismaSaatleri} · $periodLabel$scopeSuffix',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
+      ),
+      StatsSection(
+        title: '${l10n.statsCalismaSaatleri} · $periodLabel$scopeSuffix',
+        child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: HourActivityChart(hourly: hourlyTotals(periodSessions)),
           ),
         ),
-        const SizedBox(height: 16),
-        // P2 area trend (dönem serisi)
-        Text(
-          '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
+      ),
+      // P2 area trend (dönem serisi)
+      StatsSection(
+        title: '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
+        child: Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: SizedBox(
@@ -345,14 +306,11 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '${l10n.statsOturumDagilimi} · $periodLabel$scopeSuffix',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
+      ),
+      StatsSection(
+        title: '${l10n.statsOturumDagilimi} · $periodLabel$scopeSuffix',
         // P10 scatter — varsayılan katlı (WP ürün kararı)
-        _CollapsibleSection(
+        child: _CollapsibleSection(
           title: l10n.statsOturumDagilimi,
           initiallyExpanded: false,
           child: periodSessions.isEmpty
@@ -365,30 +323,24 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                 )
               : SessionScatterChart(sessions: periodSessions),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '${l10n.statsHaftalikRitim} · $periodLabel$scopeSuffix',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
+      ),
+      StatsSection(
+        title: '${l10n.statsHaftalikRitim} · $periodLabel$scopeSuffix',
+        child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: WeekHourHeatmap(grid: weekdayHourTotals(periodSessions)),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '${l10n.statsDersBazindaDagilimSon} · $periodLabel$scopeSuffix',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        _SubjectBreakdownCard(sessions: periodSessions),
-        const SizedBox(height: 16),
-        // P12 radar — basit türetilmiş skorlar
-        Text(l10n.analyticsCardInsight, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Card(
+      ),
+      StatsSection(
+        title: '${l10n.statsDersBazindaDagilimSon} · $periodLabel$scopeSuffix',
+        child: _SubjectBreakdownCard(sessions: periodSessions),
+      ),
+      // P12 radar — basit türetilmiş skorlar
+      StatsSection(
+        title: l10n.analyticsCardInsight,
+        child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -402,11 +354,11 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        // P11 detaylı geçmiş (RPC / uzun aralık)
-        Text(l10n.statsSeciliTarihAraligi, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        longTotalsAsync.when(
+      ),
+      // P11 detaylı geçmiş (RPC / uzun aralık)
+      StatsSection(
+        title: l10n.statsSeciliTarihAraligi,
+        child: longTotalsAsync.when(
           loading: () => const Card(
             child: Padding(
               padding: EdgeInsets.all(24),
@@ -461,13 +413,73 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             );
           },
         ),
-        const SizedBox(height: 16),
-        Text(
-          AppLocalizations.of(context).statsSeciliTarihAraligi,
-          style: theme.textTheme.titleMedium,
+      ),
+      StatsSection(
+        title: l10n.statsSeciliTarihAraligi,
+        child: _RangeCard(sessions: sessions, totals: dailyTotalsMap),
+      ),
+    ];
+
+    // Üst dönem + seçili dönem özeti
+    final periodHeading = Text(
+      statsPeriodLabel(l10n, period),
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+    // 🔴 WP-573: uzun dönem verisi düştüyse kullanıcı çıkışsız kalmaz.
+    // WP-560 dersi: çıkışı olmayan hata dalı açılmaz.
+    final scopeFailedCard = Card(
+      child: ErrorRetryView(
+        dense: true,
+        message: l10n.homeVerilerYuklenemedi,
+        onRetry: () =>
+            ref.invalidate(analyticsUserSessionsInRangeProvider(analyticsPeriod)),
+      ),
+    );
+
+    if (isDesktopWindow) {
+      // SPEC §4: masaüstü sayfa kenar boşluğu 24 (≥1440 bandı).
+      return ListView(
+        controller: _scrollController,
+        padding: getSafeVerticalPadding(context, horizontal: 24),
+        children: [
+          periodHeading,
+          if (scopeFailed) scopeFailedCard,
+          const SizedBox(height: 8),
+          StatsTileGrid(tiles: statTiles),
+          const SizedBox(height: kStatsGridGutter),
+          StatsSectionColumns(sections: sections),
+        ],
+      );
+    }
+
+    return ListView(
+      controller: _scrollController,
+      padding: getSafeVerticalPadding(context),
+      children: [
+        periodHeading,
+        if (scopeFailed) scopeFailedCard,
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: statTiles[0]),
+            const SizedBox(width: 8),
+            Expanded(child: statTiles[1]),
+          ],
         ),
         const SizedBox(height: 8),
-        _RangeCard(sessions: sessions, totals: dailyTotalsMap),
+        Row(
+          children: [
+            Expanded(child: statTiles[2]),
+            const SizedBox(width: 8),
+            Expanded(child: statTiles[3]),
+          ],
+        ),
+        for (final section in sections) ...[
+          const SizedBox(height: 16),
+          section,
+        ],
       ],
     );
   }
@@ -838,10 +850,19 @@ class _WeekComparisonCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  AppLocalizations.of(context).statsBuHaftaVsGecen,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                // 🔴 WP-673 BULGUSU: bu satir 390x844 telefonda **23 px
+                // tasiyordu** ("A RenderFlex overflowed by 23 pixels on the
+                // right"). Ikon + fark + "Bu hafta vs gecen" uc uye, `Card`in
+                // 318 px'lik icine sigmiyor. Kusur WP-673 oncesinden beri
+                // vardi; hicbir test bu karti telefon genisliginde cizmiyordu.
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context).statsBuHaftaVsGecen,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -906,10 +927,22 @@ class _StatCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                 ],
-                Text(
-                  label,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                // 🔴 WP-673 BULGUSU (duzeltme degil, KUSUR): bu `Text`
+                // sarmalayicisizdi ve 390x844 telefonda `_StatCard` satiri
+                // **73 px tasiyordu** ("A RenderFlex overflowed by 73 pixels on
+                // the right", `Row` bu satir). "Gunluk ortalama" etiketi
+                // 175 px'lik yarim sutuna sigmiyor. Kusur WP-673 oncesinden
+                // beri vardi; hicbir test 390 px'te bu karti cizmedigi icin
+                // sessizdi. `Expanded` + ellipsis hem telefonu hem 320 px'lik
+                // masaustu dosemesini emniyete alir; metin KAYBOLMAZ, kirpilir.
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],

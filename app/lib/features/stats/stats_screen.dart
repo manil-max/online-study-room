@@ -2,6 +2,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/tab_action_bar.dart';
 import '../../core/widgets/app_pull_to_refresh.dart';
 
@@ -9,6 +11,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../classroom/widgets/group_discovery_screen.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
@@ -25,34 +28,72 @@ class StatsScreen extends ConsumerStatefulWidget {
 class _StatsScreenState extends ConsumerState<StatsScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // 🔴 WP-673 / SPEC §3 A2: masaüstünde sekme şeridi gövdenin İÇİNE, içerik
+    // bandının altına iner ve sola yaslı akıcı hâle gelir.
+    //
+    // ÖLÇÜM (WP-671 kapısı, `desktop_stretch_contract_test.dart`, ekran
+    // pikseli): şerit `AppBar.bottom`da tam pencere genişliğindeydi, iki sekme
+    // etiketi pencerenin iki yarısının ortasına dağılıyordu —
+    //   1920 px pencere → "Kişisel" → "Grup" satırı **950 px**
+    //   2560 px pencere → **1270 px** ve tüm içerik aralığı **1744 px**
+    // yani SPEC KURAL 2.2'nin 600 px sert tavanı ve §2.3'ün 1440 px ızgara
+    // tavanı birlikte aşılıyordu. Kusur şeridin kendisinde değil, şeridin
+    // **kabında**: `AppBar` pencereyi doldurur, [DesktopContent] doldurmaz.
+    final desktop = isDesktopWindow;
+    final tabs = <Widget>[
+      Tab(text: l10n.statsKisisel),
+      Tab(text: l10n.statsGrup),
+    ];
+    const body = AppPullToRefresh(
+      child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+    );
+
     final page = DefaultTabController(
       length: 2,
       child: Scaffold(
         // WP-460: "İstatistik" başlığı alt menüde zaten yazılı; sekmenin
         // gerçek üst öğesi kişisel/grup TabBar'ıdır.
-        appBar: buildTabActionBar(
-          bottom: TabBar(
-            tabs: [
-              Tab(text: AppLocalizations.of(context).statsKisisel),
-              Tab(text: AppLocalizations.of(context).statsGrup),
-            ],
-          ),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const StatsPeriodBar(),
-            // 🔴 WP-550: sarmalayıcı dönem şeridinin **altında** durur, böylece
-            // spinner şeridi örtmez. `AppPullToRefresh` yalnız dikey eksen
-            // bildirimlerini dinlediği için sekmeler arası yatay kaydırma
-            // yenilemeyi tetiklemez.
-            const Expanded(
-              child: AppPullToRefresh(
-                child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+        appBar: desktop
+            ? null
+            : buildTabActionBar(bottom: TabBar(tabs: tabs)),
+        body: desktop
+            ? SafeArea(
+                bottom: false,
+                // SPEC §2.3 "Izgara / pano toplamı": 1440 px. Artan yer sola ve
+                // sağa eşit boşluk olur — [DesktopContent] tam olarak budur ve
+                // SPEC §6 "BAĞLA, ATMA" tablosunda ekranlara bağlanması istenen
+                // yüzeydir (bugüne dek `lib/` içinde tek çağrı yeri yoktu).
+                child: DesktopContent(
+                  maxWidth: DesktopBreakpoints.maxContentWidth,
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Sola yaslı, akıcı sekmeler: iki etiket yan yana durur,
+                      // pencerenin iki ucuna dağılmaz.
+                      TabBar(
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        tabs: tabs,
+                      ),
+                      const StatsPeriodBar(),
+                      const Expanded(child: body),
+                    ],
+                  ),
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const StatsPeriodBar(),
+                  // 🔴 WP-550: sarmalayıcı dönem şeridinin **altında** durur,
+                  // böylece spinner şeridi örtmez. `AppPullToRefresh` yalnız
+                  // dikey eksen bildirimlerini dinlediği için sekmeler arası
+                  // yatay kaydırma yenilemeyi tetiklemez.
+                  const Expanded(child: body),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
 
