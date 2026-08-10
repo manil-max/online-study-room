@@ -495,5 +495,11 @@ String _read(String path) {
       '(çalışma dizini: ${Directory.current.path})',
     );
   }
-  return file.readAsStringSync();
+  // 🔴 WP-667: satir sonlari NORMALLESTIRILIR. Windows kosucusunda git
+  // depoyu CRLF cikarir; satir sonu tasiyan bir capa orada HIC eslesmez.
+  // Bu dosyanin bugunku capalari satir sonu tasimadigi icin patlamiyor --
+  // yani kapi SANSLA yesil. Kardes sozlesme testi ayni sebeple CI'da
+  // kirmiziya dustu ve butun Windows paketlemesini durdurdu (kosum
+  // 31408383023). Ayni sinif hata depoda WP-633 olarak zaten kayitliydi.
+  return file.readAsStringSync().replaceAll('\r\n', '\n');
 }

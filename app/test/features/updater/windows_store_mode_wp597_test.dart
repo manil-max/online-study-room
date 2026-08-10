@@ -26,9 +26,14 @@ import 'package:flutter_test/flutter_test.dart';
 /// tek koruma bu sözleşmedir. Ölçmediğimiz şey: paketin Partner Center
 /// sertifikasyonundan gerçekten geçtiği. Bu ancak gerçek gönderimde görülür.
 void main() {
+  // 🔴 WP-667: satir sonlari NORMALLESTIRILIR. Windows kosucusunda git depoyu
+  // CRLF cikarir; `\n` ile yazilmis bir capa orada HIC eslesmez. WP-665'in
+  // kapisi yerelde 16/16 yesil kosup CI'da tam bu yuzden kirmiziya dustu
+  // (kosum 31408383023) ve butun Windows paketlemesini durdurdu. Ayni sinif
+  // hata depoda WP-633 olarak zaten kayitliydi -- kaydi okumak yetmemis.
   final workflow = File(
     '../.github/workflows/windows-release.yml',
-  ).readAsStringSync();
+  ).readAsStringSync().replaceAll('\r\n', '\n');
 
   /// İmza kapısının karar gövdesi. Bölge dışına bakan iddia, kapıyı değil
   /// dosyanın rastgele bir yerindeki metni ölçer.

@@ -10252,6 +10252,35 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+### WP-667: WP-665'in kapisi SATIR SONUNA bagliydi
+Magaza paketi kosumu (31408383023) `flutter test` adiminda dustu: 2837 gecti,
+**2 dustu** ve dusen sey uygulama degil BENIM YENI KAPIMDI. WP-665'in testi
+`workflow.indexOf('
+on:
+')` diyor; Windows kosucusunda git depoyu **CRLF**
+cikardigi icin capa orada HIC eslesmiyor. Yerelde 16/16 yesildi.
+
+Sonuc sadece kirmizi bir test degil: paketleme adimlarinin TAMAMI atlandi,
+yani mağaza paketi hic uretilmedi. Bir sozlesme kapisinin kendi hatasi butun
+Windows hattini durdurdu -- WP-640'in ayni sinifi.
+
+🔴 Bu hata depoda **WP-633 olarak zaten kayitliydi** ("kapi satir sonuna
+bagliydi, Android'de yesil Windows'ta kirmizi"). Karti okumak yetmemis;
+duzeltme o zaman TEK okuyucuya yazilmis, kural haline gelmemisti.
+
+Duzeltme iki okuyucuda: `windows_store_mode_wp597` ve `windows_packaging_wp568`
+artik `replaceAll('
+', '
+')` ile okuyor. Ikincisi bugun patlamiyordu
+cunku capalari satir sonu tasimiyor -- yani SANSLA yesildi; sans kayda gecti.
+
+Kanit tahminle degil taklitle: calisma kopyasindaki iki workflow gecici olarak
+CRLF'e cevrilip testler oyle kosturuldu (64/64 yesil), sonra geri alindi.
+
+🔴 Ayrica: `gh run watch --exit-status` bu KIRMIZI kosum icin **exit 0** dondu.
+Arka plan gorevi "tamamlandi (exit 0)" diye bildirdi, kosum ise `failure`di.
+Bir daha kosum sonucu `gh run view --json conclusion` ile okunacak.
+
 ### WP-666: elle yazilan kanit metni PowerShell KODUNA gomuluyordu
 v65 yayin turu preflight'ta 14 saniyede `ParserError` ile dustu (kosum
 31390722795). Sebep uygulama degil, benim yazdigim kanit metnindeki KESME
