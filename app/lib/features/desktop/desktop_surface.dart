@@ -54,8 +54,38 @@ class DesktopSurface {
   /// Okuma genişliği (liste sayfaları ortalanır).
   static const double readingWidth = 760;
 
-  /// Kart seçici / picker.
+  /// Kart seçici / picker — **taban** genişlik (pencere < 1200).
+  ///
+  /// 🔴 WP-686 ÖLÇÜMÜ (2026-08-11): bu sayı da panel gibi bir *tavandı*.
+  /// `WP686PICKER` dökümü — kart seçici 1008 / 1200 / 1920 / 2560 px
+  /// pencerelerin **dördünde de** 720 px çizildi, döşemeleri 220 px kaldı.
+  /// Panelle aynı sınıf kusur: pencereyle hiç büyümüyordu.
   static const double pickerWidth = 720;
+
+  /// `large` ve üstü (≥ 1200) kart seçici genişliği — **mutlak tavan**.
+  ///
+  /// İç hedef, çağıran ekrandan **ölçülerek** türetildi
+  /// (`features/home/widgets/card_picker.dart`):
+  ///
+  /// - Izgara `desktopGridColumns(..., medium: 3, expanded: 3)` ile **3
+  ///   sütunda sabittir**; genişlik ne olursa olsun dördüncü sütun açılmaz.
+  /// - Döşeme genişliği orada `(bant − 40 − 2 × 10) / 3` diye hesaplanır
+  ///   (40 = liste yatay boşluğu, 10 = döşemeler arası boşluk).
+  /// - Döşeme tavanı SPEC §2.3 "tek sayılık istatistik döşemesi" = **320**;
+  ///   içerik aynı sınıf (ikon + başlık + iki satır açıklama).
+  ///
+  /// 3 × 320 + 2 × 10 + 40 = **1020** (4'ün katı, 255 × 4). Bu genişlikte
+  /// döşeme tam 320 px olur. Ötesinde **hiçbir yeni içerik görünmez** —
+  /// yalnız aynı üç döşeme şişer, yani sahibin 3 numaralı şikâyeti
+  /// ("her biri 800 px genişliğinde, içinde tek bir sayı") üretilir.
+  ///
+  /// Neden eşik 1200, 1008 değil: `showDesktopPicker` genişliği
+  /// `pencere − 48`e kırpar. 1008 px'lik pencerede tavan 960'tır, yani 1020
+  /// oraya **sığmaz** ve kırpılan sayı döşeme aritmetiğini ızgara dışına
+  /// düşürürdü. 1200 − 48 = 1152 ≥ 1020: 1020'nin gerçekten çizildiği ilk
+  /// pencere sınıfı `large`'dır (SPEC §1.2) — panel merdiveniyle de aynı adım.
+  static const double pickerWidthLarge = 1020;
+
   static const double pickerHeight = 560;
 }
 
@@ -144,8 +174,7 @@ Future<T?> showDesktopPanel<T>({
   }
 
   final media = MediaQuery.sizeOf(context);
-  final target =
-      width ?? desktopPanelWidthFor(media.width, base: baseWidth);
+  final target = width ?? desktopPanelWidthFor(media.width, base: baseWidth);
   final w = target.clamp(360.0, media.width - 48);
   final h = height.clamp(360.0, media.height - 48);
 
@@ -222,11 +251,40 @@ Future<T?> showDesktopStudio<T>({
   );
 }
 
+/// [showDesktopPicker] gövdesinin anahtarı — genişliği verilen kutu.
+///
+/// 🔴 Panelde olduğu gibi: `find.byType(Dialog)` bu yüzeyi ölçmez, KABINI
+/// ölçer (2560 px pencerede 2560 döner). Ölçülecek kutu budur.
+const Key kDesktopPickerBodyKey = Key('desktop-picker-body');
+
+/// Kart seçici genişliğini pencereye bağlar — panel merdiveninin kısası.
+///
+/// | pencere sınıfı | picker |
+/// |---|---:|
+/// | < 1200 | **720** (bugünkü bant, değişmez) |
+/// | ≥ 1200 | **1020** ([DesktopSurface.pickerWidthLarge], içerikten türetilmiş tavan) |
+///
+/// Panelin üç basamağı (920 / 1088 / 1472) burada **kullanılmaz**: o sayılar
+/// bir ayar/form sütununun ölçüsünden gelir, seçicinin içeriğinden değil.
+/// `xlarge`'da ayrı bir basamak yoktur çünkü 1020 zaten içerik tavanıdır —
+/// ızgara 3 sütunda sabit (gerekçe: [DesktopSurface.pickerWidthLarge]).
+double desktopPickerWidthFor(
+  double windowWidth, {
+  double base = DesktopSurface.pickerWidth,
+}) {
+  final ladder = windowWidth >= DesktopBreakpoints.large
+      ? DesktopSurface.pickerWidthLarge
+      : DesktopSurface.pickerWidth;
+  return ladder < base ? base : ladder;
+}
+
 /// Masaüstü: dialog picker; mobil: bottom sheet içeriği [builder] ile.
+///
+/// [width] verilmezse genişlik [desktopPickerWidthFor] ile pencereye bağlanır.
 Future<T?> showDesktopPicker<T>({
   required BuildContext context,
   required WidgetBuilder builder,
-  double width = DesktopSurface.pickerWidth,
+  double? width,
   double height = DesktopSurface.pickerHeight,
 }) {
   if (!isDesktopWindow) {
@@ -239,7 +297,8 @@ Future<T?> showDesktopPicker<T>({
   }
 
   final media = MediaQuery.sizeOf(context);
-  final w = width.clamp(360.0, media.width - 48);
+  final target = width ?? desktopPickerWidthFor(media.width);
+  final w = target.clamp(360.0, media.width - 48);
   final h = height.clamp(320.0, media.height - 48);
 
   return showDialog<T>(
@@ -254,7 +313,12 @@ Future<T?> showDesktopPicker<T>({
           side: BorderSide(color: scheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
-        child: SizedBox(width: w, height: h, child: builder(dialogContext)),
+        child: SizedBox(
+          key: kDesktopPickerBodyKey,
+          width: w,
+          height: h,
+          child: builder(dialogContext),
+        ),
       );
     },
   );

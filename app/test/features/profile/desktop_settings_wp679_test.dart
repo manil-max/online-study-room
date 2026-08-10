@@ -212,6 +212,21 @@ void main() {
     return out;
   }
 
+  /// Master listedeki bir kategoriyi secer (WP-686 master-detay dali).
+  Future<void> selectCategory(WidgetTester tester, String title) async {
+    final row = find.descendant(
+      of: find.byKey(kSettingsMasterListKey),
+      matching: find.text(title),
+    );
+    expect(
+      row,
+      findsOneWidget,
+      reason: 'Kategori master listede yok: "$title"',
+    );
+    await tester.tap(row);
+    await settle(tester);
+  }
+
   ({double width, String widest}) bodySpan(WidgetTester tester, Finder root) {
     Rect? union;
     var widest = '';
@@ -294,14 +309,28 @@ void main() {
           );
 
           // ÖNCE: tek sutun, 772 px icerik (@1920 ve @2560 AYNI).
+          //
+          // 🔴 WP-686 bu bandi DEGISTIRDI: panel artik 1472 px acilir ve
+          // ayarlar SPEC §5'in soyledigi **master-detay**a gecer (280 kategori
+          // + 16 + detay). Olculen sutunlar artik ayarlar BOLUMLERI degil,
+          // secili kategorinin KARTLARIDIR (detay 1144 px -> SPEC §3 A2 akisi,
+          // 2 x 560). Iddia gevsemedi — hem kategori sutunu hem cok sutunlu
+          // detay aranir; tek sutunluk mobil kaydirma yine KIRMIZI duser.
+          expect(
+            tester.getRect(find.byKey(kSettingsMasterListKey)).width,
+            kSettingsMasterWidth,
+            reason:
+                'SPEC §3 A1: 1440 px\'lik panel bandinda kategori sutunu 280 '
+                'px olmali.',
+          );
           final columns = flowColumns(tester);
           expect(
             columns.length,
             greaterThanOrEqualTo(2),
             reason:
-                'SPEC §3 A2: 888 px\'lik panel bandinda ayarlar bolumleri iki '
-                'sutuna akmali. Cizilen sutun sayisi ${columns.length} — ekran '
-                'hala tek sutunluk mobil kaydirma.',
+                'SPEC §3 A2: detay pane\'inin kartlari cok sutuna akmali. '
+                'Cizilen sutun sayisi ${columns.length} — ekran hala tek '
+                'sutunluk mobil kaydirma.',
           );
           expect(
             columns[1].left,
@@ -340,18 +369,36 @@ void main() {
               reason: 'Ayarlar bolumu kayboldu: "$title"',
             );
           }
-          expect(find.byKey(const Key('settings-daily-goal')), findsOneWidget);
-          expect(find.byKey(const Key('settings-exam-date')), findsOneWidget);
-          expect(find.byKey(const Key('settings-feedback')), findsOneWidget);
-          expect(find.byKey(const Key('settings-faq')), findsOneWidget);
-          expect(
-            find.byKey(const Key('settings-about-updates')),
-            findsOneWidget,
-          );
-          expect(
-            find.byKey(const Key('settings-muted-nudges')),
-            findsOneWidget,
-          );
+          // 🔴 WP-686: master-detay ayni anda TEK kategori cizer, yani
+          // "anahtar agacta mi" artik YANLIS olcum. Dogrusu: her kategori
+          // secilebiliyor mu ve satiri o zaman geliyor mu. Yedi kategorinin
+          // hepsi tek tek gezilir — eski dort anahtardan DAHA GENIS bir kapi.
+          for (final entry in <String, List<Key>>{
+            tr.settingsSectionStudyPreferences: const [
+              Key('settings-daily-goal'),
+              Key('settings-exam-date'),
+            ],
+            tr.settingsSectionPrivacySecurity: const [
+              Key('settings-muted-nudges'),
+            ],
+            tr.settingsSectionAboutLegal: const [
+              Key('settings-about-updates'),
+              Key('settings-feedback'),
+            ],
+            tr.settingsSectionHelp: const [Key('settings-faq')],
+          }.entries) {
+            await selectCategory(tester, entry.key);
+            for (final key in entry.value) {
+              expect(
+                find.byKey(key),
+                findsOneWidget,
+                reason:
+                    'Ayar satiri "${entry.key}" kategorisinde bulunamadi: '
+                    '$key. Master-detay bir satiri ULASILAMAZ yaptiysa islev '
+                    'kaybi vardir.',
+              );
+            }
+          }
         }),
       );
     }
@@ -430,6 +477,11 @@ void main() {
 
   /// SPEC §3 **A2**: bu ikisi bagimsiz bloklar tasir, tek bir form sutunu
   /// degildir. Govde tavani izgara toplami (1440), SUTUN tavani 760.
+  ///
+  /// 🔴 WP-686 notu: AYARLAR tam pencere yolunda artik **A1 + A2**dir
+  /// (kap 1056 px'i astigi icin master-detay acilir, detay kartlari da A2
+  /// akisina duser). Bu grubun olctugu sey degismedi: govde 1440'i asmasin,
+  /// cizilen sutunlar 760'i asmasin, ust uste binmesin.
   final flowScreens = <String, Widget Function()>{
     'AYARLAR': () => const SettingsScreen(),
     'DERSLER': () => const SubjectsScreen(),

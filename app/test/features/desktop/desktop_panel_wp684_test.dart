@@ -167,6 +167,21 @@ void main() {
     Offset.zero & box.size,
   );
 
+  /// Master listedeki bir kategoriyi secer (WP-686 master-detay dali).
+  Future<void> selectCategory(WidgetTester tester, String title) async {
+    final row = find.descendant(
+      of: find.byKey(kSettingsMasterListKey),
+      matching: find.text(title),
+    );
+    expect(
+      row,
+      findsOneWidget,
+      reason: 'Kategori master listede yok: "$title"',
+    );
+    await tester.tap(row);
+    await settle(tester);
+  }
+
   List<Rect> flowColumns(WidgetTester tester) {
     final out = <Rect>[];
     for (var i = 0; i < 4; i++) {
@@ -226,14 +241,39 @@ void main() {
           final ink = probe.contentInkBounds();
           expect(ink, isNotNull, reason: 'Panelde hic metin boyanmamis.');
           if (window >= DesktopBreakpoints.large) {
+            // 🔴 WP-686: bu bantta ayarlar artik master-detay cizer
+            // (SPEC §5). "Icerik buyudu" kaniti bu yuzden glif araligi DEGIL,
+            // cizilen master-detay SATIRIDIR: satir sonlari `ListTile`
+            // metinleri oldugu icin ink detay sutununun sag kenarina kadar
+            // uzanmaz (@1200 olculen ink 810 px), ama satirin kendisi kabin
+            // tamamini kullanir.
+            final master = tester.getRect(find.byKey(kSettingsMasterListKey));
+            final detail = tester.getRect(find.byKey(kSettingsDetailPaneKey));
+            final row = detail.right - master.left;
             expect(
-              ink!.width,
+              row,
               greaterThan(kFrozenContentWidthBefore),
               reason:
-                  'Panel kutusu buyudu ama ICERIK hala '
-                  '${ink.width.toStringAsFixed(0)} px — duzeltmeden onceki '
-                  'donmus ${kFrozenContentWidthBefore.toInt()} px degerinin '
-                  'ustune cikmadi. Genisleyen sey yalniz bos kap.',
+                  'Panel kutusu buyudu ama ICERIK satiri hala '
+                  '${row.toStringAsFixed(0)} px — duzeltmeden onceki donmus '
+                  '${kFrozenContentWidthBefore.toInt()} px degerinin ustune '
+                  'cikmadi. Genisleyen sey yalniz bos kap.',
+            );
+            expect(
+              row,
+              expected - DesktopSurface.panelChrome,
+              reason:
+                  'Master-detay satiri panel bandini doldurmuyor: satir '
+                  '${row.toStringAsFixed(0)} px, bant '
+                  '${(expected - DesktopSurface.panelChrome).toInt()} px.',
+            );
+          } else {
+            expect(
+              ink!.width,
+              closeTo(kFrozenContentWidthBefore, 1),
+              reason:
+                  '1200 px altinda WP-679 duzeni BIREBIR korunmali; olculen '
+                  '${ink.width.toStringAsFixed(0)} px.',
             );
           }
           // Panel bir `Dialog`tir: pencereyi KAPLAMAZ.
@@ -267,8 +307,31 @@ void main() {
               reason: 'Panel genisleyince ayar bolumu kayboldu: "$title"',
             );
           }
-          expect(find.byKey(const Key('settings-daily-goal')), findsOneWidget);
-          expect(find.byKey(const Key('settings-faq')), findsOneWidget);
+          // 🔴 WP-686: >= 1200'de ayarlar master-detaydir, yani ayni anda
+          // TEK kategori cizilir. "Anahtar agacta mi" artik YANLIS olcumdur;
+          // dogru olcum "kategorisi secilince geliyor mu".
+          if (window >= DesktopBreakpoints.large) {
+            await selectCategory(tester, tr.settingsSectionStudyPreferences);
+            expect(
+              find.byKey(const Key('settings-daily-goal')),
+              findsOneWidget,
+              reason:
+                  'Gunluk hedef satiri "Calisma tercihleri" kategorisinde '
+                  'bulunamadi — master-detay bir satiri ULASILAMAZ yapti.',
+            );
+            await selectCategory(tester, tr.settingsSectionHelp);
+            expect(
+              find.byKey(const Key('settings-faq')),
+              findsOneWidget,
+              reason: 'SSS satiri "Yardim" kategorisinde bulunamadi.',
+            );
+          } else {
+            expect(
+              find.byKey(const Key('settings-daily-goal')),
+              findsOneWidget,
+            );
+            expect(find.byKey(const Key('settings-faq')), findsOneWidget);
+          }
 
           // ISLEV KAYBI YOK: panel Esc ile kapanir (WP-569 sozlesmesi).
           await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -296,18 +359,46 @@ void main() {
       }),
     );
 
+    // 🔴 WP-686 bu iddiayi DEGISTIRDI. Eskiden "kap 1440 -> 3 akan sutun"
+    // deniyordu; SPEC §5 ayarlari **A1 / master-detay** sayar ve WP-686 onu
+    // uyguladi. Korunan sey AYNI: 1472 px'lik panelin 1440 px'lik bandi
+    // GERCEKTEN kullanilmali. Olcut, akan sutun sayisindan cizilen
+    // master-detay satirina tasindi — gevsemedi: sabit 1056 px'lik bir satir
+    // (SPEC §5'in lafzi) bu iddiayi 384 px farkla KIRMIZI dusurur.
     testWidgets(
-      'xlarge pencerede ayarlar 3 sutun, her sutun <= 760 px',
+      'xlarge pencerede master-detay satiri 1440 px bandi doldurur',
       (tester) async => onWindows(() async {
         await pumpApp(tester, const Size(1920, 1000));
         await openSettingsPanel(tester);
+
+        final master = tester.getRect(find.byKey(kSettingsMasterListKey));
+        final detail = tester.getRect(find.byKey(kSettingsDetailPaneKey));
+        expect(
+          master.width,
+          kSettingsMasterWidth,
+          reason: 'SPEC §3 A1: kategori sutunu 280 px.',
+        );
+        expect(
+          detail.left - master.right,
+          kSettingsPaneSpacing,
+          reason: 'SPEC §3 A1: pane araligi 16 px.',
+        );
+        expect(
+          detail.right - master.left,
+          DesktopSurface.panelWidthXLarge - DesktopSurface.panelChrome,
+          reason:
+              'Panel 1472 px -> kap 1440 px. Master-detay satiri '
+              '${(detail.right - master.left).toStringAsFixed(0)} px — kabin '
+              'kalani bos kaliyor (sahibin "iki yan bos" sikayeti).',
+        );
+
+        // Detay kartlari SPEC §3 A2 akisina duser; hicbir sutun 760'i asmaz.
         final columns = flowColumns(tester);
         expect(
           columns.length,
-          3,
+          2,
           reason:
-              'Panel 1472 px -> kap 1440 px -> `profileFlowColumns` 3 sutun '
-              'demeli (SPEC §2.3: 1440 = 3 x 480). Olculen '
+              'Detay 1144 px -> `profileFlowColumns` 2 sutun demeli. Olculen '
               '${columns.length} sutun.',
         );
         for (var i = 1; i < columns.length; i++) {

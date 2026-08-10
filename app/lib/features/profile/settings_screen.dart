@@ -49,6 +49,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Seçim anında (realtime beklemeden) tile'ı güncellemek için optimistik id.
   String? _animalOverride;
 
+  /// WP-686 — masaustu master-detay dalinda secili ayar bolumu.
+  ///
+  /// `null` = ilk bolum. Yalniz kap >= [kSettingsMasterDetailBand] iken
+  /// anlamlidir; akan sutun dalinda yedi bolumun hepsi zaten cizilir.
+  String? _selectedSectionId;
+
   Future<void> _pickAnimal() async {
     final profile = ref.read(authStateProvider).value;
     if (profile == null) return;
@@ -190,343 +196,447 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             animalId: _animalOverride ?? profile.animal,
           );
 
-    final list = ListView(
-      padding: getSafePadding(
-        context,
-        const EdgeInsets.fromLTRB(16, 12, 16, 24),
+    // 🔴 WP-679 — burasi `DesktopReadingBody(maxWidth: 760)` idi: masaustunde
+    // TEK sutun, ortalanmis. Olcum (2026-08-10, `WP679 | AYARLAR-PANEL`):
+    // icerik 1920 px pencerede de 2560 px pencerede de **772 px** cizildi ve
+    // dikeyde 680 px'lik panele altI bolum sigmadigi icin ekran uzun bir
+    // mobil kaydirmaya donuyordu. Ayni bolumler artik kabin genisligine gore
+    // 1/2/3 sutuna akar (SPEC §3 A2) — bkz. [ProfileFlowColumns].
+    //
+    // 🔴 WP-686: ayni yedi bolum artik IKI duzen dalinda birden cizilir
+    // (akan sutunlar ve master-detay), o yuzden once VERI olarak toplanir.
+    // Iki dal da bu listeyi okur — bir bolumu birinde ekleyip otekinde
+    // unutmak mumkun degil.
+    final categories = <_SettingsCategory>[
+      _SettingsCategory(
+        id: 'appearance',
+        icon: Icons.palette_outlined,
+        title: l10n.settingsSectionAppearance,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.color_lens_outlined),
+              title: Text(l10n.profileGorunumVeAtmosferTemalari),
+              subtitle: Text(l10n.profileGorunumVeAtmosfer),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => AppearanceScreen())),
+            ),
+          ),
+          _SettingsCard(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: DropdownButtonFormField<AppLanguage>(
+                key: ValueKey(language),
+                initialValue: language,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.profileUygulamaDili,
+                  helperText: l10n.profileDilDegisikligiAnindaUygulanir,
+                  prefixIcon: const Icon(Icons.language_outlined),
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: AppLanguage.system,
+                    child: Text(l10n.profileDilSistemVarsayilani),
+                  ),
+                  DropdownMenuItem(
+                    value: AppLanguage.turkish,
+                    child: Text(l10n.profileDilTurkce),
+                  ),
+                  DropdownMenuItem(
+                    value: AppLanguage.english,
+                    child: Text(l10n.profileDilIngilizce),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(appLanguageProvider.notifier).setLanguage(value);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
       ),
+      _SettingsCategory(
+        id: 'notifications',
+        icon: Icons.notifications_outlined,
+        title: l10n.settingsSectionNotifications,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: Text(l10n.profileBildirimMerkezi),
+              subtitle: Text(l10n.profileDurtmeHatirlaticiDuyuruVe),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const NotificationPermissionsScreen(),
+                ),
+              ),
+            ),
+          ),
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.campaign_outlined),
+              title: Text(l10n.notificationsDuyurular),
+              subtitle: Text(l10n.notificationsUygulamaVeGrubunaOzel),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (unreadAnnouncements > 0) ...[
+                    UnreadAnnouncementDot(
+                      key: const Key('announcements-unread-dot'),
+                      count: unreadAnnouncements,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
+              ),
+            ),
+          ),
+        ],
+      ),
+      _SettingsCategory(
+        id: 'account',
+        icon: Icons.manage_accounts_outlined,
+        title: l10n.settingsSectionAccount,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.manage_accounts),
+              title: Text(l10n.profileHesabimiYonet),
+              subtitle: Text(l10n.profileEpostaSifreVeGuvenli),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => AccountSettingsScreen()),
+              ),
+            ),
+          ),
+          // WP-514: sayaç tanılama kaydı buradan **Hakkında**'daki gizli
+          // geliştirici bölümüne taşındı. Normal kullanıcı için Hesap
+          // bölümünde anlamı yoktu; kayıt hâlâ her cihazda tutuluyor ve
+          // sürüm satırına yedi kez dokununca okunabiliyor.
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.download_outlined),
+              title: Text(l10n.exportMyData),
+              subtitle: Text(l10n.exportMyDataSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DataExportScreen()),
+              ),
+            ),
+          ),
+          if (isAdmin)
+            _SettingsCard(
+              child: ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: Text(l10n.profileYonetim),
+                subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => AdminScreen())),
+              ),
+            ),
+        ],
+      ),
+      _SettingsCategory(
+        id: 'study',
+        icon: Icons.school_outlined,
+        title: l10n.settingsSectionStudyPreferences,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-daily-goal'),
+              leading: const Icon(Icons.flag_outlined),
+              title: Text(l10n.profileGunlukHedef),
+              // Deger `activeAppLocale` global'i yerine ekranin kendi
+              // dilinden turetilir; ayni satir iki dilde de dogru okur.
+              subtitle: Text(
+                formatHumanForLocale(goalMinutes * 60, l10n.localeName),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: profile == null ? null : () => _editDailyGoal(goalMinutes),
+            ),
+          ),
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-exam-date'),
+              leading: const Icon(Icons.event_outlined),
+              title: Text(l10n.profileSinavTarihi),
+              subtitle: Text(
+                examDate == null
+                    ? l10n.homeSinavTarihiSecilmedi
+                    : MaterialLocalizations.of(
+                        context,
+                      ).formatFullDate(examDate),
+              ),
+              // Seçilen tarih **geri alınabilir** olmalı: iptal edilen
+              // bir tarih seçici ile "temizle" ayırt edilemez, bu yüzden
+              // silme ayrı bir eylemdir.
+              trailing: examDate == null
+                  ? const Icon(Icons.chevron_right)
+                  : IconButton(
+                      key: const Key('settings-exam-date-clear'),
+                      tooltip: l10n.profileSinavTarihiniTemizle,
+                      icon: const Icon(Icons.close),
+                      onPressed: _clearExamDate,
+                    ),
+              onTap: _pickExamDate,
+            ),
+          ),
+          _SettingsCard(
+            child: ListTile(
+              leading: Text(
+                animal?.emoji ?? '🦊',
+                style: const TextStyle(fontSize: 26),
+              ),
+              title: Text(l10n.profileKampHayvanin),
+              subtitle: Text(
+                animal == null
+                    ? l10n.profileSeniTemsilEdenHayvani
+                    : l10n.profileDegistir,
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: profile == null ? null : _pickAnimal,
+            ),
+          ),
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('reset-introduction-tours'),
+              leading: const Icon(Icons.restart_alt_outlined),
+              title: Text(l10n.profileTanitimTurlariniSifirla),
+              subtitle: Text(l10n.profileTanitimTurlariAciklama),
+              onTap: profile == null ? null : _resetTours,
+            ),
+          ),
+        ],
+      ),
+      _SettingsCategory(
+        id: 'privacy',
+        icon: Icons.shield_outlined,
+        title: l10n.settingsSectionPrivacySecurity,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.block),
+              title: Text(l10n.safetyBlockedUsersTitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
+              ),
+            ),
+          ),
+          // WP-459: D/WP-444 Faz 2'nin susturma ekrani ayarlarin
+          // Guvenlik bolumune baglanir; ekran D'de, giris B'de.
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-muted-nudges'),
+              leading: const Icon(Icons.notifications_off_outlined),
+              title: Text(l10n.safetyMutedNudgesTitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MutedNudgesScreen()),
+              ),
+            ),
+          ),
+        ],
+      ),
+      _SettingsCategory(
+        id: 'about',
+        icon: Icons.info_outline,
+        title: l10n.settingsSectionAboutLegal,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-about-updates'),
+              leading: const Icon(Icons.info_outline),
+              title: Text(l10n.profileSurumVeGuncellemeler),
+              subtitle: Text(l10n.aboutSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AboutScreen())),
+            ),
+          ),
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-feedback'),
+              leading: const Icon(Icons.feedback_outlined),
+              // WP-420: "Geri bildirim gönder" değil **"Geri bildirim"**
+              // — ekran artık hem gönderme hem geçmiş sekmesini taşıyor.
+              title: Text(l10n.feedbackTitle),
+              subtitle: Text(l10n.profileHataVeyaOneriniBize),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (unreadReplies > 0) ...[
+                    UnreadMessageBadge(
+                      key: const Key('feedback-row-reply-badge'),
+                      count: unreadReplies,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+              onTap: profile == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+                    ),
+            ),
+          ),
+        ],
+      ),
+      // WP-514: SSS iki kat derindeydi (Ayarlar → Hakkında → SSS) ve
+      // sahip bulamıyordu. Kendi "Yardım" bölümüyle Ayarlar'ın **en
+      // altında** duruyor — yardım aranan yer listenin sonudur.
+      _SettingsCategory(
+        id: 'help',
+        icon: Icons.help_outline,
+        title: l10n.settingsSectionHelp,
+        cards: [
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-faq'),
+              leading: const Icon(Icons.help_outline),
+              title: Text(l10n.faqTitle),
+              subtitle: Text(l10n.faqSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const FaqScreen())),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    // Yatay kenar boslugu iki dalda da AYNI (16 + 16). Master-detay esigi bu
+    // boslugun ICINDEKI kaba gore olculur — panelin dis genisligine gore degil.
+    final padding = getSafePadding(
+      context,
+      const EdgeInsets.fromLTRB(16, 12, 16, 24),
+    );
+
+    // SPEC §3 A2 — WP-679'un akan sutun duzeni. Mobil dal ve 1056 px'in
+    // altindaki her kap bunu BIREBIR kullanir; tek satiri degismedi.
+    Widget flow() => ListView(
+      padding: padding,
       children: [
-        // 🔴 WP-679 — burasi `DesktopReadingBody(maxWidth: 760)` idi: masaustunde
-        // TEK sutun, ortalanmis. Olcum (2026-08-10, `WP679 | AYARLAR-PANEL`):
-        // icerik 1920 px pencerede de 2560 px pencerede de **772 px** cizildi ve
-        // dikeyde 680 px'lik panele altI bolum sigmadigi icin ekran uzun bir
-        // mobil kaydirmaya donuyordu. Ayni bolumler artik kabin genisligine gore
-        // 1/2/3 sutuna akar (SPEC §3 A2) — bkz. [ProfileFlowColumns].
         ProfileFlowColumns(
           sections: [
-            _SettingsSection(
-              title: l10n.settingsSectionAppearance,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.color_lens_outlined),
-                    title: Text(l10n.profileGorunumVeAtmosferTemalari),
-                    subtitle: Text(l10n.profileGorunumVeAtmosfer),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => AppearanceScreen()),
-                    ),
-                  ),
-                ),
-                _SettingsCard(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: DropdownButtonFormField<AppLanguage>(
-                      key: ValueKey(language),
-                      initialValue: language,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: l10n.profileUygulamaDili,
-                        helperText: l10n.profileDilDegisikligiAnindaUygulanir,
-                        prefixIcon: const Icon(Icons.language_outlined),
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: AppLanguage.system,
-                          child: Text(l10n.profileDilSistemVarsayilani),
-                        ),
-                        DropdownMenuItem(
-                          value: AppLanguage.turkish,
-                          child: Text(l10n.profileDilTurkce),
-                        ),
-                        DropdownMenuItem(
-                          value: AppLanguage.english,
-                          child: Text(l10n.profileDilIngilizce),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          ref
-                              .read(appLanguageProvider.notifier)
-                              .setLanguage(value);
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            _SettingsSection(
-              title: l10n.settingsSectionNotifications,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.notifications_outlined),
-                    title: Text(l10n.profileBildirimMerkezi),
-                    subtitle: Text(l10n.profileDurtmeHatirlaticiDuyuruVe),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationPermissionsScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.campaign_outlined),
-                    title: Text(l10n.notificationsDuyurular),
-                    subtitle: Text(l10n.notificationsUygulamaVeGrubunaOzel),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (unreadAnnouncements > 0) ...[
-                          UnreadAnnouncementDot(
-                            key: const Key('announcements-unread-dot'),
-                            count: unreadAnnouncements,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AnnouncementsScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            _SettingsSection(
-              title: l10n.settingsSectionAccount,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.manage_accounts),
-                    title: Text(l10n.profileHesabimiYonet),
-                    subtitle: Text(l10n.profileEpostaSifreVeGuvenli),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AccountSettingsScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-                // WP-514: sayaç tanılama kaydı buradan **Hakkında**'daki gizli
-                // geliştirici bölümüne taşındı. Normal kullanıcı için Hesap
-                // bölümünde anlamı yoktu; kayıt hâlâ her cihazda tutuluyor ve
-                // sürüm satırına yedi kez dokununca okunabiliyor.
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.download_outlined),
-                    title: Text(l10n.exportMyData),
-                    subtitle: Text(l10n.exportMyDataSubtitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const DataExportScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-                if (isAdmin)
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.admin_panel_settings_outlined),
-                      title: Text(l10n.profileYonetim),
-                      subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(
-                        context,
-                      ).push(MaterialPageRoute(builder: (_) => AdminScreen())),
-                    ),
-                  ),
-              ],
-            ),
-            _SettingsSection(
-              title: l10n.settingsSectionStudyPreferences,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-daily-goal'),
-                    leading: const Icon(Icons.flag_outlined),
-                    title: Text(l10n.profileGunlukHedef),
-                    // Deger `activeAppLocale` global'i yerine ekranin kendi
-                    // dilinden turetilir; ayni satir iki dilde de dogru okur.
-                    subtitle: Text(
-                      formatHumanForLocale(goalMinutes * 60, l10n.localeName),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: profile == null
-                        ? null
-                        : () => _editDailyGoal(goalMinutes),
-                  ),
-                ),
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-exam-date'),
-                    leading: const Icon(Icons.event_outlined),
-                    title: Text(l10n.profileSinavTarihi),
-                    subtitle: Text(
-                      examDate == null
-                          ? l10n.homeSinavTarihiSecilmedi
-                          : MaterialLocalizations.of(
-                              context,
-                            ).formatFullDate(examDate),
-                    ),
-                    // Seçilen tarih **geri alınabilir** olmalı: iptal edilen
-                    // bir tarih seçici ile "temizle" ayırt edilemez, bu yüzden
-                    // silme ayrı bir eylemdir.
-                    trailing: examDate == null
-                        ? const Icon(Icons.chevron_right)
-                        : IconButton(
-                            key: const Key('settings-exam-date-clear'),
-                            tooltip: l10n.profileSinavTarihiniTemizle,
-                            icon: const Icon(Icons.close),
-                            onPressed: _clearExamDate,
-                          ),
-                    onTap: _pickExamDate,
-                  ),
-                ),
-                _SettingsCard(
-                  child: ListTile(
-                    leading: Text(
-                      animal?.emoji ?? '🦊',
-                      style: const TextStyle(fontSize: 26),
-                    ),
-                    title: Text(l10n.profileKampHayvanin),
-                    subtitle: Text(
-                      animal == null
-                          ? l10n.profileSeniTemsilEdenHayvani
-                          : l10n.profileDegistir,
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: profile == null ? null : _pickAnimal,
-                  ),
-                ),
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('reset-introduction-tours'),
-                    leading: const Icon(Icons.restart_alt_outlined),
-                    title: Text(l10n.profileTanitimTurlariniSifirla),
-                    subtitle: Text(l10n.profileTanitimTurlariAciklama),
-                    onTap: profile == null ? null : _resetTours,
-                  ),
-                ),
-              ],
-            ),
-            _SettingsSection(
-              title: l10n.settingsSectionPrivacySecurity,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    leading: const Icon(Icons.block),
-                    title: Text(l10n.safetyBlockedUsersTitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const BlockedUsersScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-                // WP-459: D/WP-444 Faz 2'nin susturma ekrani ayarlarin
-                // Guvenlik bolumune baglanir; ekran D'de, giris B'de.
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-muted-nudges'),
-                    leading: const Icon(Icons.notifications_off_outlined),
-                    title: Text(l10n.safetyMutedNudgesTitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const MutedNudgesScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            _SettingsSection(
-              title: l10n.settingsSectionAboutLegal,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-about-updates'),
-                    leading: const Icon(Icons.info_outline),
-                    title: Text(l10n.profileSurumVeGuncellemeler),
-                    subtitle: Text(l10n.aboutSubtitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AboutScreen()),
-                    ),
-                  ),
-                ),
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-feedback'),
-                    leading: const Icon(Icons.feedback_outlined),
-                    // WP-420: "Geri bildirim gönder" değil **"Geri bildirim"**
-                    // — ekran artık hem gönderme hem geçmiş sekmesini taşıyor.
-                    title: Text(l10n.feedbackTitle),
-                    subtitle: Text(l10n.profileHataVeyaOneriniBize),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (unreadReplies > 0) ...[
-                          UnreadMessageBadge(
-                            key: const Key('feedback-row-reply-badge'),
-                            count: unreadReplies,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                    onTap: profile == null
-                        ? null
-                        : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const FeedbackScreen(),
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-            // WP-514: SSS iki kat derindeydi (Ayarlar → Hakkında → SSS) ve
-            // sahip bulamıyordu. Kendi "Yardım" bölümüyle Ayarlar'ın **en
-            // altında** duruyor — yardım aranan yer listenin sonudur.
-            _SettingsSection(
-              title: l10n.settingsSectionHelp,
-              children: [
-                _SettingsCard(
-                  child: ListTile(
-                    key: const Key('settings-faq'),
-                    leading: const Icon(Icons.help_outline),
-                    title: Text(l10n.faqTitle),
-                    subtitle: Text(l10n.faqSubtitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const FaqScreen()),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            for (final category in categories)
+              _SettingsSection(title: category.title, children: category.cards),
           ],
         ),
       ],
     );
 
-    if (widget.embedded) return list;
+    // SPEC §3 A1 / §5 — 280 kategori + 16 + 760 detay.
+    Widget masterDetail() {
+      final selected = categories.firstWhere(
+        (category) => category.id == _selectedSectionId,
+        orElse: () => categories.first,
+      );
+      return Padding(
+        padding: padding,
+        child: ProfileDesktopBody(
+          // [kSettingsMasterDetailBand] (1056) bir **esik**tir, tavan degil:
+          // satirin sigabilecegi en dar kap. Tavan SPEC §2.3'un izgara
+          // toplamidir (1440); arada kalan yeri detay sutunu alir.
+          maxWidth: DesktopBreakpoints.maxContentWidth,
+          child: DesktopMasterDetail(
+            masterWidth: kSettingsMasterWidth,
+            spacing: kSettingsPaneSpacing,
+            // Iki-pane karari YUKARIDA, KABIN genisligine gore verildi.
+            // Widget kendi esigini burada tekrar olcerse `Padding`ten sonra
+            // kalan bandi gorur; 1088 px'lik panelde kalan 1056 px, widget'in
+            // 1200'luk varsayilan esiginin ALTINDA kalir ve ikinci pane
+            // yazilir ama HIC cizilmezdi.
+            breakpoint: 0,
+            master: DesktopSectionList(
+              key: kSettingsMasterListKey,
+              items: [
+                for (final category in categories)
+                  DesktopSectionItem(
+                    id: category.id,
+                    icon: category.icon,
+                    label: category.title,
+                  ),
+              ],
+              selectedId: selected.id,
+              onSelected: (id) => setState(() => _selectedSectionId = id),
+            ),
+            detail: ListView(
+              key: kSettingsDetailPaneKey,
+              padding: EdgeInsets.zero,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                  child: Text(
+                    selected.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                // 🔴 SPEC §5 SAPMASI, GEREKCESI OLCUM. Tablo ayarlari
+                // `xlarge`da "large ile ayni" sayar, yani 280 + 16 + 760 =
+                // 1056 px'lik sabit bir satir. Olculdu (2026-08-11,
+                // `WP686PANEL`): 1920 ve 2560 px pencerede panel 1472, kap
+                // 1440 px acilir; 1056'lik sabit satir panelin **384 px**'ini
+                // (kabin %27'si) bos birakiyordu — sahibin 2 numarali
+                // sikayetinin ("tek sutun ortada, iki yan bos") panel icindeki
+                // hali. SPEC §3 A1 tablosu tavani SATIRA degil SUTUNA koyar
+                // ("detay sutunu: kalan, maks. 760"), o yuzden detay kartlari
+                // SPEC §3 A2 akisina verilir: `large` bandinda detay 760 px
+                // olur ve akis TEK sutun dondurur (bugunku dizilim birebir),
+                // `xlarge` bandinda 1144 px olur ve iki 560 px'lik sutuna
+                // akar — ikisi de 760 tavanin altinda.
+                ProfileFlowColumns(
+                  // `_SettingsSection` kartlari 10 px arayla yigar; akis da
+                  // ayni sayiyi kullanir, aksi halde detay dali kartlari
+                  // bitisik cizerdi.
+                  spacing: 10,
+                  sections: selected.cards,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final body = isDesktopWindow
+        ? LayoutBuilder(
+            builder: (context, constraints) {
+              // 🔴 Olculen sey KAP genisligidir, PENCERE degil.
+              // `showDesktopPanel` ayarlari 920 / 1088 / 1472 px'lik bir
+              // `Dialog` icinde acar ve panelin icindeki `MediaQuery` hala
+              // TUM pencereyi verir. SPEC §1.2'nin 1200 px'lik PENCERE
+              // esigine bakan bir dal 1200 px'lik pencerede tetiklenirdi ama
+              // o pencerede kaba yalniz 1056 px duser — tam olarak
+              // master-detay satirinin boyu. Esik bu yuzden KABA baglidir.
+              if (!constraints.maxWidth.isFinite) return flow();
+              final band = constraints.maxWidth - padding.horizontal;
+              return band < kSettingsMasterDetailBand ? flow() : masterDetail();
+            },
+          )
+        : flow();
+
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileAyarlar)),
-      body: list,
+      body: body,
     );
   }
 }
@@ -539,6 +649,24 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Card(clipBehavior: Clip.antiAlias, child: child);
+}
+
+/// WP-686 — bir ayar bolumu, iki duzen dalinin ORTAK verisi.
+///
+/// [icon] yalniz master-detay dalinda (kategori listesinde) cizilir; akan
+/// sutun dalinda bolumler bugunku gibi yalniz basliklariyla gorunur.
+class _SettingsCategory {
+  const _SettingsCategory({
+    required this.id,
+    required this.icon,
+    required this.title,
+    required this.cards,
+  });
+
+  final String id;
+  final IconData icon;
+  final String title;
+  final List<Widget> cards;
 }
 
 class _SettingsSection extends StatelessWidget {
@@ -583,6 +711,39 @@ class _SettingsSection extends StatelessWidget {
 
 /// SPEC §4: masaustu izgara olugu 24 px (WinUI: >640 px pencerede 24 epx).
 const double kProfileGridGutter = 24;
+
+// ===========================================================================
+// WP-686 — AYARLAR MASTER-DETAY (SPEC §3 A1 + §5)
+// ===========================================================================
+
+/// SPEC §3 A1 tablosu: master sutunu **280** px.
+const double kSettingsMasterWidth = 280;
+
+/// SPEC §3 A1 tablosu: iki pane arasi bosluk **16** px.
+const double kSettingsPaneSpacing = 16;
+
+/// Master-detaya gecis bandi — **KAP** genisligi, pencere genisligi degil.
+///
+/// 280 + 16 + 760 = **1056**. Ayni sayi `desktop_surface.dart` icindeki
+/// `DesktopSurface.panelWidthLarge` (1088) turetiminin de girdisidir:
+/// 1056 + 32 (panel kenar boslugu) = 1088. Yani `large` panel tam olarak bu
+/// satir sigsin diye acildi (WP-684).
+///
+/// 🔴 Neden pencere degil KAP: WP-679 olctu — ayarlar masaustunde
+/// pencereyi HIC almaz, `showDesktopPanel`in verdigi banda oturur. WP-684 o
+/// bandi pencereye bagladi; esik yine de bandin kendisine bakar, cunku ayni
+/// ekran `Ctrl+,` yolunda AppBar'li bir kabukta, tam pencere yolunda ise 32
+/// px'lik kenar boslugundan sonra kalan yerde cizilir.
+const double kSettingsMasterDetailBand =
+    kSettingsMasterWidth +
+    kSettingsPaneSpacing +
+    DesktopBreakpoints.maxFormWidth;
+
+/// Kategori (master) sutununun anahtari — testler CIZILEN kutuyu olcer.
+const Key kSettingsMasterListKey = Key('settings-master-list');
+
+/// Detay pane'inin anahtari.
+const Key kSettingsDetailPaneKey = Key('settings-detail-pane');
 
 /// Iki sutuna gecis bandi — **kap** genisligi, pencere genisligi degil.
 ///
@@ -728,8 +889,7 @@ class ProfileContentEndFabLocation extends FloatingActionButtonLocation {
   @override
   Offset getOffset(ScaffoldPrelayoutGeometry geometry) {
     final base = FloatingActionButtonLocation.endFloat.getOffset(geometry);
-    final limit =
-        contentWidth - geometry.floatingActionButtonSize.width;
+    final limit = contentWidth - geometry.floatingActionButtonSize.width;
     return Offset(base.dx < limit ? base.dx : limit, base.dy);
   }
 
