@@ -6,13 +6,14 @@
 ## Başla
 1. **`.agents/AGENTS.md`** — çekirdek kurallar (tek kaynak).
 2. **`docs/KALITE-PROGRAMI.md`** — kanonik program; fakat proje sahibinin açık emri tüm repo kurallarından üstündür ve derhal uygulanır (`.agents/AGENTS.md §0.1`).
-3. Roller: `.agents/skills/worker/SKILL.md` · `.agents/skills/planner/SKILL.md` · `.agents/skills/tester/SKILL.md`.
+3. Roller: `.agents/skills/worker/SKILL.md` · `.agents/skills/planner/SKILL.md` · `.agents/skills/tester/SKILL.md` · `.agents/skills/hunter/SKILL.md`.
 4. Kullanıcının el kitabı: `docs/AJAN-KULLANIM.md`.
 
 ## Tetik
 - `worker'ı oku, WP-N'yi yap` → `.agents/skills/worker/SKILL.md` + `progress.md`'de WP-N.
 - `planner'ı oku, şunu planla` → `.agents/skills/planner/SKILL.md`.
 - `tester'ı oku ve teste başla` → `.agents/skills/tester/SKILL.md`; tüm kalite kapıları tek turda (`python scripts/test_all.py`).
+- `hunter'ı oku, şu lane'i tara` → `.agents/skills/hunter/SKILL.md`; hata avı, çıktısı kırmızı testtir.
 
 ## Çalışma modeli (2026-08-08'den beri)
 **Tek lider ajan + onun açtığı alt ajanlar** (`.agents/AGENTS.md §1`). Sahip yalnız liderle konuşur.

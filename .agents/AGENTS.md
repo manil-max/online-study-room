@@ -1,7 +1,7 @@
 # AGENTS.md — Proje Kuralları (Kalite Programı)
 
 > Bu dosya **tüm ajanların her zaman** uyması gereken çekirdek kurallardır.
-> Rol rehberleri: planlama → `skills/planner/SKILL.md` · uygulama → `skills/worker/SKILL.md` · test → `skills/tester/SKILL.md`.
+> Rol rehberleri: planlama → `skills/planner/SKILL.md` · uygulama → `skills/worker/SKILL.md` · test → `skills/tester/SKILL.md` · hata avı → `skills/hunter/SKILL.md`.
 > **Kanonik program:** `docs/KALITE-PROGRAMI.md` (vizyon + teknik + kalite kapıları). Aksi açıkça belirtilmedikçe proje içi çelişkide KALITE-PROGRAMI kazanır.
 
 ---

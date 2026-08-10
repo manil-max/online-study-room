@@ -7,6 +7,7 @@
 - **İş yapma:** "worker'ı oku, WP-N'yi yap" → `.agents/skills/worker/SKILL.md`, sonra `progress.md`'de WP-N kartı.
 - **Planlama:** "planner'ı oku, şunu planla" → `.agents/skills/planner/SKILL.md`.
 - **Test:** "tester'ı oku ve teste başla" → `.agents/skills/tester/SKILL.md` (motor: `python scripts/test_all.py`).
+- **Hata avı:** "hunter'ı oku, şu lane'i tara" → `.agents/skills/hunter/SKILL.md`. Belgeye değil ölçüme dayanır; çıktısı rapor değil **kırmızı test**tir.
 
 ## Çalışma modeli (2026-08-08'den beri)
 **Tek lider ajan + onun açtığı alt ajanlar** (`.agents/AGENTS.md §1`). Sahip yalnız liderle konuşur; alt ajan lidere rapor verir.
@@ -34,6 +35,7 @@
 | `.agents/skills/worker/SKILL.md` | Uygulayıcı akışı |
 | `.agents/skills/planner/SKILL.md` | Planlayıcı akışı |
 | `.agents/skills/tester/SKILL.md` | Test akışı (tüm kalite kapıları) |
+| `.agents/skills/hunter/SKILL.md` | Hata avcısı akışı (belge kanıt değildir) |
 | `progress.md` | WP kartları + durum (**tek yazar: lider**) |
 | `docs/KALITE-PROGRAMI.md` | Kanonik program/plan |
 | `docs/AJAN-KULLANIM.md` | Kullanıcının el kitabı |
