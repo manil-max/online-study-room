@@ -137,8 +137,8 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 🔴 pgTAP YERELDE KOSMADI: Docker motoru bu hostta kalkmiyor. tests/055 ve
 # 056 yazildi ama kosturulmadi; bu OLCEMEDIM'dir, yesil degildir. Ilk gercek
 # replay CI database-gates icindedir.
-Assert-Equal $contract.staging.migration_head '0130' 'staging hedefi 0130: 0129+0130 apply'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0129+0130 staging apply bitti (run 31380186208), yeniden kilitli'
+Assert-Equal $contract.staging.migration_head '0132' 'staging hedefi 0132: 0131+0132 apply'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0131+0132 staging kapisi ACIK'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -211,8 +211,8 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
-Assert-Equal $contract.production.migration_head '0130' 'production hedefi 0130: 0129+0130 apply'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0129+0130 production apply bitti (run 31380542690), yeniden kilitli'
+Assert-Equal $contract.production.migration_head '0132' 'production hedefi 0132: 0131+0132 apply'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0131+0132 production kapisi ACIK'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
