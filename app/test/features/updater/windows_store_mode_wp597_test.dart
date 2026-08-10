@@ -133,6 +133,76 @@ void main() {
     });
   });
 
+  group('WP-665 — mağaza paketi sürüm KESMEDEN üretilebilir', () {
+    /// Tetikleyici bölgesi. Bölge dışına bakan iddia, `on:` bloğunu değil
+    /// dosyanın rastgele bir yerindeki metni ölçerdi.
+    String triggers() {
+      final from = workflow.indexOf('\non:\n');
+      final to = workflow.indexOf('\npermissions:');
+      expect(from, isNonNegative, reason: '`on:` bloğu bulunamadı.');
+      expect(to, greaterThan(from), reason: '`permissions:` bulunamadı.');
+      return workflow.substring(from, to);
+    }
+
+    /// Bir tetikleyicinin ilan ettiği girdi ADLARI.
+    Set<String> inputsOf(String trigger) {
+      final block = triggers();
+      final start = block.indexOf(trigger);
+      expect(start, isNonNegative, reason: '$trigger yok.');
+      final rest = block.substring(start + trigger.length);
+      final next = RegExp(r'\n  \w').firstMatch(rest);
+      final scope = next == null ? rest : rest.substring(0, next.start);
+      return RegExp(r'^      (\w+): \{', multiLine: true)
+          .allMatches(scope)
+          .map((m) => m.group(1)!)
+          .toSet();
+    }
+
+    test('iş akışı elle de tetiklenebilir', () {
+      // 🔴 Ölçülen sonuç: WP-664 uygulamanın koduna hiç dokunmadı, ama mağaza
+      // paketi v65 etiketinden alınamıyordu — çünkü paketi üretmenin tek yolu
+      // sürüm hattıydı ve etiket düzeltmeyi taşımıyordu. Paketleme hatası her
+      // seferinde bir sürüm numarası yakıyordu.
+      expect(
+        triggers(),
+        contains('workflow_dispatch:'),
+        reason:
+            'Windows paketi yalnız sürüm koşumundan üretilebiliyor; paketleme '
+            'düzeltmesi için sürüm kesmek gerekiyor.',
+      );
+      expect(
+        triggers(),
+        contains('workflow_call:'),
+        reason: 'Sürüm hattı bu işi çağıramaz hâle geldi.',
+      );
+    });
+
+    test('iki tetikleyici AYNI girdileri ister', () {
+      // Girdiler ayrışırsa elle koşum sürüm hattından FARKLI bir paket üretir
+      // ve fark ancak Partner Center reddedince görülür.
+      final call = inputsOf('workflow_call:');
+      expect(call, isNotEmpty, reason: 'workflow_call girdileri okunamadı.');
+      expect(
+        inputsOf('workflow_dispatch:'),
+        call,
+        reason: 'Elle koşum sürüm hattından farklı girdi kümesi kullanıyor.',
+      );
+    });
+
+    test('elle koşum GitHub Release YAYINLAYAMAZ', () {
+      // Tetikleyiciyi eklemek güvenli, çünkü bu dosyada yayın adımı yok:
+      // üretilen her şey artefakt olarak kalır. Bu iddia düşerse tetikleyici
+      // sürüm kapılarını atlatan bir yola dönüşmüş demektir.
+      expect(
+        workflow.contains('action-gh-release'),
+        isFalse,
+        reason:
+            'Windows iş akışı kendi başına GitHub Release yayınlıyor; elle '
+            'tetiklenebilir olması artık sürüm kapılarını atlatır.',
+      );
+    });
+  });
+
   group('WP-664 — Store paketi REZERVE EDİLMİŞ adla üretilir', () {
     /// Paketleme adımının, ada karar veren ve adı doğrulayan bölgesi.
     String packageStep() {

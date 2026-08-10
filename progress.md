@@ -10252,6 +10252,26 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+### WP-665: magaza paketi ancak SURUM KESILEREK alinabiliyordu
+WP-664 uygulamanin koduna hic dokunmadi -- yalniz paketleme adimini duzeltti.
+Buna ragmen magaza paketi v65 etiketinden ALINAMIYORDU: `windows-release.yml`
+yalniz `workflow_call` ile kosuyor, yani Windows paketini uretmenin tek yolu
+yeni bir surum kesmek. Yani her paketleme hatasi bir surum numarasi yakiyor.
+
+`workflow_dispatch` eklendi; iki tetikleyici AYNI girdi kumesini ilan ediyor ve
+bunu sozlesme testi karsilastiriyor (ayrisirlarsa elle kosum surum hattindan
+FARKLI bir paket uretir, fark da ancak Partner Center reddedince gorulur).
+
+Tetikleyiciyi eklemek kapi atlatmiyor cunku bu dosyada GitHub Release yayinlayan
+adim YOK; uretilen her sey artefakt olarak kalir. Bu da iddiaya baglandi.
+
+🔴 Yazdigim YORUM iki kapiyi birden kirmiziya dusurdu: yayin eyleminin adini
+"burada yoktur" demek icin yazmistim, oysa hem bu dosyanin sozlesme testi hem
+`tooling/supabase/guard.tests.ps1` dosyayi HAM metin arar. Eylemi ANAN yorum
+eylemin kendisi gibi sayildi. Kapi calisti ve beni yakaladi; deponun uc kez
+kayda gecmis "yorum tuzagi" sinifinin dorduncu ornegi.
+Kanit: sozlesme 16/16, deploy guard 86/86.
+
 ### WP-664: Store paketi REZERVE EDILMEMIS adla uretilecekti
 Sahip Partner Center'da uygulamayi acti ve uc kimlik degerini getirdi
 (`MuhlisAnlZKAN.FocusCamp` / `CN=AA270E61-...` / `Muhlis Anil OZKAN`). Uc deger

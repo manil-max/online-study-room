@@ -8,6 +8,27 @@ on:
       version_name: { required: true, type: string }
       build_number: { required: true, type: string }
       migration_head: { required: true, type: string }
+  # 🔴 WP-665: bu iş yalnız `workflow_call` ile koşuyordu, yani Windows
+  # paketini almanın TEK yolu yeni bir sürüm kesmekti. Paketlemeyi ilgilendiren
+  # bir düzeltme uygulamanın koduna hiç dokunmasa bile sürüm numarası yakmak
+  # gerekiyordu — WP-664 tam olarak buydu: mağaza paketi v65 etiketinden
+  # alınamıyordu çünkü etiket düzeltmeyi taşımıyordu.
+  #
+  # Elle koşum yayın YAPMAZ ve bu kasıtlıdır: bu dosyada GitHub Release
+  # yayınlayan bir adım yoktur, üretilen her şey artefakt olarak kalır.
+  # Release'i yalnız `release.yml` bağlar. Yani buradaki tetikleyici sürüm
+  # kapılarını atlatmıyor; atlatabileceği bir yayın adımı yok.
+  #
+  # 🔴 O eylemin ADI buraya yazılamaz: hem bu dosyanın sözleşme testi hem
+  # `tooling/supabase/guard.tests.ps1` dosyayı HAM metin olarak arar, yani
+  # eylemi anan bir YORUM bile iki kapıyı birden kırmızıya düşürür.
+  workflow_dispatch:
+    inputs:
+      git_sha: { required: true, type: string }
+      channel: { required: true, type: string }
+      version_name: { required: true, type: string }
+      build_number: { required: true, type: string }
+      migration_head: { required: true, type: string }
 
 permissions:
   contents: read
