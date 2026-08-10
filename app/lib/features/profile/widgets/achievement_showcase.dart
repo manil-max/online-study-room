@@ -1781,7 +1781,42 @@ class _CatalogTile extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         )
-                      else if (isPersonalBestAchievement(def.id)) ...[
+                      else if (!isSelf) ...[
+                        // 🔴 WP-660 (sahip: "gruptakilerin profiline girince
+                        // görevlerindeki ilerlemeleri görelim"). Ham metrik
+                        // (`achievement_metric_progress`) RLS'te self-only
+                        // (`0050:84`), yani başkasının değeri istemciye HİÇ
+                        // gelmez ve buraya `metricValue = null` düşer. Eskiden
+                        // sonuç boş bir çubuk + "İlerleme henüz hazır değil"
+                        // idi: kademe 3/6 kazanmış bir üyeye "ilerleme yok"
+                        // demek, elde olan veriyi yok saymaktır. Kademe
+                        // `user_achievements`ten gelir ve o tablo
+                        // `can_see_user_sessions` kapısından geçer (`0024:99`)
+                        // — yani bu satır gizliliği aşmaz, var olanı çizer.
+                        SizedBox(height: 6),
+                        LinearProgressIndicator(
+                          value: def.maxTier <= 0
+                              ? 0
+                              : (unlocked ? tier : 0) / def.maxTier,
+                          color: tierColor,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).profileAchievementTierProgress(
+                            unlocked ? tier : 0,
+                            def.maxTier,
+                          ),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: unlocked
+                                ? tierColor
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ] else if (isPersonalBestAchievement(def.id)) ...[
                         // WP-234: birikmeyen (kişisel rekor) metrik — ilerleme
                         // çubuğu yanıltıcı olur, yalnız en iyi değer gösterilir.
                         SizedBox(height: 6),

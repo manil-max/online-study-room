@@ -2085,5 +2085,19 @@
   "homeDersSayisi": "{count, plural, =1 {1 ders} other {{count} ders}}",
   "@homeDersSayisi": {"description": "WP-623: bugunun ozetinde ders sayisi."},
   "commonXpIlerlemesi": "{current} / {total} XP",
-  "@commonXpIlerlemesi": {"description": "WP-623: tac XP barinin ilerleme etiketi."}
+  "@commonXpIlerlemesi": {"description": "WP-623: tac XP barinin ilerleme etiketi."},
+  "profileStatsBaslik": "İstatistikler",
+  "@profileStatsBaslik": {"description": "WP-660: profil ekranindaki istatistik panelinin basligi."},
+  "profileStatsGunlukSeri": "Günlük seri",
+  "@profileStatsGunlukSeri": {"description": "WP-660: gunluk hedef serisi dosemesinin etiketi."},
+  "profileStatsGunlukSeriTanimi": "Günlük hedefi tutturulan ardışık gün",
+  "@profileStatsGunlukSeriTanimi": {"description": "WP-660: seri dosemesinin tanim satiri; aktif gun tanimindan FARKLI kalmali (WP-636/637 karisikligi)."},
+  "profileStatsAktifGunTanimi": "En az bir çalışma kaydı olan gün",
+  "@profileStatsAktifGunTanimi": {"description": "WP-660: aktif gun dosemesinin tanim satiri."},
+  "profileStatsSeriYalnizKendinde": "Günlük seri yalnız kendi profilinde görünür.",
+  "@profileStatsSeriYalnizKendinde": {"description": "WP-660: baskasinin profilinde seri projeksiyonu okunamadigi icin cikan not."},
+  "profileStatsGrupKapsamNotu": "Ortak grup üyeliğiniz boyunca kaydedilen günlerden sayılır.",
+  "@profileStatsGrupKapsamNotu": {"description": "WP-660: baskasinin profilinde kapsam notu."},
+  "profileAchievementTierProgress": "{tier}/{max} kademe",
+  "@profileAchievementTierProgress": {"description": "WP-660: baskasinin profilinde ham metrik okunamadigi icin kademe temelli ilerleme."}
 }

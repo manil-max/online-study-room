@@ -21,6 +21,7 @@ import '../safety/block_user_action.dart';
 import '../safety/report_sheet.dart';
 import 'widgets/achievement_showcase.dart';
 import 'widgets/primary_group_entry.dart';
+import 'widgets/profile_stats_panel.dart';
 
 /// Sosyal profil vitrini (Başarım 3.0 R2 / WP-57).
 ///
@@ -218,6 +219,13 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                       ),
                       SizedBox(height: 16),
                       if (isSelf) const PrimaryGroupMissingBanner(),
+                      // WP-660: gunluk seri / aktif gun / rekorlar. Panel
+                      // kendi verisini okur; ekran yalnizca yerini verir.
+                      ProfileStatsPanel(
+                        userId: widget.profile.id,
+                        isSelf: isSelf,
+                      ),
+                      SizedBox(height: 16),
                       AchievementShowcase(
                         gamification: gamification,
                         userAchievements: achs,

@@ -6829,5 +6829,41 @@
         "type": "int"
       }
     }
+  },
+  "profileStatsBaslik": "Stats",
+  "@profileStatsBaslik": {
+    "description": "WP-660: heading of the stats panel on the profile screen."
+  },
+  "profileStatsGunlukSeri": "Daily streak",
+  "@profileStatsGunlukSeri": {
+    "description": "WP-660: label of the daily goal streak tile on the profile screen."
+  },
+  "profileStatsGunlukSeriTanimi": "Consecutive days the daily goal was met",
+  "@profileStatsGunlukSeriTanimi": {
+    "description": "WP-660: definition line under the daily streak tile. It must stay different from the active-day definition; the two measures were confused before (WP-636/637)."
+  },
+  "profileStatsAktifGunTanimi": "Days with at least one study record",
+  "@profileStatsAktifGunTanimi": {
+    "description": "WP-660: definition line under the active-day tile. Deliberately different from the streak definition."
+  },
+  "profileStatsSeriYalnizKendinde": "The daily streak is only shown on your own profile.",
+  "@profileStatsSeriYalnizKendinde": {
+    "description": "WP-660: shown on another member profile where the streak projection is not readable."
+  },
+  "profileStatsGrupKapsamNotu": "Counted from the days recorded while you shared a group.",
+  "@profileStatsGrupKapsamNotu": {
+    "description": "WP-660: scope note on another member profile; the numbers only cover the shared group membership window."
+  },
+  "profileAchievementTierProgress": "{tier}/{max} tiers",
+  "@profileAchievementTierProgress": {
+    "description": "WP-660: tier based progress shown on another member profile, where the raw metric value is not readable.",
+    "placeholders": {
+      "tier": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
   }
 }
