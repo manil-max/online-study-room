@@ -168,8 +168,22 @@ const double kMaxLabelValueSpanPx = 600;
 /// ki daha sikI tavanlar duzeltme sirasinda ayri ayri baglanabilsin.
 const double kMaxCardWidthPx = 760;
 
-/// Bir kartin "dev kutu, tek satir" olcusu: kart genisligi eksi icindeki en
-/// genis metnin genisligi.
+/// Bir kartin "dev kutu, tek satir" olcusu: kart genisligi eksi icindeki
+/// GERCEK icerik kutusunun genisligi.
+///
+/// 🔴 **WP-684 KUSUR 2 — olcut degisti, ESIK degismedi.** Eskiden cikarilan
+/// sey "en genis tek METIN parcasi" idi. Bu, icerigi metin OLMAYAN kartlari
+/// (grafik, isi haritasi, karsilastirma tablosu) yapisal olarak
+/// cezalandiriyordu: istatistik/grup @1920'de karsilastirma tablosu karti
+/// 684 px genisligindeydi ve hucreleri kartin 13..670 px araligini
+/// dolduruyordu, ama en genis METNI 62 px oldugu icin "olu alan 622 px" diye
+/// kirmizi dusuyordu (olculdu 2026-08-10, HEAD `72ee426`). Artik cikarilan
+/// sey `PaintedCard.contentInk`: boyanan glif **ve** cizim kutularinin
+/// birlesimi (bkz. `desktop_stretch_probe.dart` `contentInkOf`).
+/// Esik 480 px **aynen** kaldi — gevsetilmedi, dogru sey olculuyor.
+/// Olcut tek yonlu daralttI: `contentInk` her zaman en genis metni KAPSAR,
+/// yani hicbir kart bu degisiklikle kirmiziya donemez, yalniz yanlis
+/// kirmiziIar duser.
 ///
 /// **Bu esik SPEC'te YOK; onu WP-671 sectI.** 480 px = 2 x 240 px kenar. SPEC §4
 /// masaustu sayfa kenar boslugunu en genis bantta **24 px** diyor; 240 px onun
@@ -588,8 +602,22 @@ void main() {
             final widest = cards.first;
             notes.add(
               'en genis kart: ${widest.rect.width.toStringAsFixed(0)} px, '
-              'icindeki en genis metin ${widest.widestText.toStringAsFixed(0)} px '
-              '("${widest.label}")',
+              'icerik kutusu ${widest.contentInk?.width.toStringAsFixed(0)} px '
+              '(icindeki en genis metin '
+              '${widest.widestText.toStringAsFixed(0)} px "${widest.label}")',
+            );
+            // WP-684 ONCE/SONRA: eski (yalniz metin) olcutun ayni kartta ne
+            // dedigi. Kirmizi dusurmez; olcut degisiminin etkisi gorunsun.
+            final worstOld = cards
+                .map((c) => c.textOnlyDeadWidth)
+                .reduce((a, b) => a > b ? a : b);
+            final worstNew = cards
+                .map((c) => c.deadWidth)
+                .reduce((a, b) => a > b ? a : b);
+            notes.add(
+              'olu alan (en kotu kart): yeni olcut '
+              '${worstNew.toStringAsFixed(0)} px / eski yalniz-metin olcutu '
+              '${worstOld.toStringAsFixed(0)} px',
             );
           }
           final fatCards = cards
@@ -619,9 +647,11 @@ void main() {
               'OLCUM 3b (olu alan tavani ${kMaxCardDeadWidthPx.toInt()} px — '
               'esigi WP-671 sectI, SPEC'
               "'te yok): kart ${card.rect.width.toStringAsFixed(0)} px, "
-              'icerigi ${card.widestText.toStringAsFixed(0)} px, '
+              'GERCEK icerik kutusu (glif + cizim) '
+              '${card.contentInk?.width.toStringAsFixed(0)} px, '
               'olu alan ${card.deadWidth.toStringAsFixed(0)} px '
-              '("${card.label}").',
+              '(en genis metin ${card.widestText.toStringAsFixed(0)} px '
+              '"${card.label}").',
             );
           }
 

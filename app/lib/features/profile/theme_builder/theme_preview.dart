@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
 import '../../../core/theme/theme_tokens.dart';
 import 'feel_overlay.dart';
 
@@ -56,24 +57,41 @@ class ThemePreviewCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.profileCanliOnizleme,
-                            style: text.labelMedium?.copyWith(
-                              color: colors.textSecondary,
-                            ),
-                          ),
+                    // 🔴 WP-684 — SPEC KURAL 2.2. Bu satır `Expanded` ile
+                    // SINIRSIZDI: "Canlı önizleme" solda, mod etiketi ("Koyu")
+                    // kabın en sağında. Panel sabit 920 px iken görünmüyordu
+                    // (önizleme 388 px); panel pencereyle büyüyünce ölçüldü —
+                    // 1472 px'lik bantta önizleme 664 px, satır **634 px**,
+                    // yani SPEC'in 600 px'lik SERT tavanının (80 karakter,
+                    // WCAG 2.1 SC 1.4.8) üstü. Kural: satır kabı doldurmaz,
+                    // 496 px'te (Bringhurst 66ch hedefi) bırakılır ve sola
+                    // yaslanır. Mobilde kart zaten 496'dan dar — dal etkisiz.
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: DesktopBreakpoints.labelValueTargetWidth,
                         ),
-                        if (label != null)
-                          Text(
-                            label!,
-                            style: text.labelSmall?.copyWith(
-                              color: colors.textSecondary,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.profileCanliOnizleme,
+                                style: text.labelMedium?.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
                             ),
-                          ),
-                      ],
+                            if (label != null)
+                              Text(
+                                label!,
+                                style: text.labelSmall?.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(l10n.profileOnizlemeBaslikOrnegi, style: text.titleLarge),

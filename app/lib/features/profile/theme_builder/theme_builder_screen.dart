@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
 import '../../../core/desktop/desktop_window.dart';
 import '../../../core/theme/custom_theme.dart';
 import '../../../core/theme/theme_settings.dart';
@@ -11,6 +12,14 @@ import 'theme_builder_steps.dart';
 import 'theme_builder_widgets.dart';
 import 'theme_draft.dart';
 import 'theme_preview.dart';
+
+/// Yan yana düzendeki kenar boşluğu / oluk (WinUI: >640 px pencerede 24, panel
+/// içi bölme aralığı 16 — mevcut değer korunur, WP-684 yalnız isimlendirdi).
+const double kThemeBuilderPaneGutter = 16;
+
+/// Düzenleyici bölmesinin anahtarı — SPEC §2.3 form sütunu tavanını taşıyan
+/// kutu. Testler genişliği buradan okur.
+const String kThemeBuilderEditorPaneKey = 'theme-builder-editor-pane';
 
 /// WP-290: "Kendi Temanı Oluştur" sihirbazı.
 ///
@@ -213,8 +222,24 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
         body: LayoutBuilder(
           builder: (context, constraints) {
             final sideBySide = desktop && constraints.maxWidth >= 720;
+            // Yan yana düzenin iç ölçüsü: 2×16 yatay kenar boşluğu + 16 oluk.
+            final inner = constraints.maxWidth - kThemeBuilderPaneGutter * 3;
+            // 🔴 WP-684 ÖLÇÜMÜ (2026-08-10): düzenleyici bölmesi eskiden
+            // `Expanded(flex: 5)` idi, yani kabın 5/9'u — **tavansız**.
+            // Bugüne kadar görünmedi çünkü kap sabit 920 px'lik paneldi
+            // (5/9 × 872 = 484 px). Panel artık pencereyle büyüyor
+            // (`desktopPanelWidthFor`) ve 1472 px'lik bantta aynı oran
+            // **791 px** veriyordu: SPEC §2.3'ün 760 px'lik form sütununun
+            // üstü. Aynı bantta ölçülen en geniş etiket–değer satırı da
+            // **603 px** çıkıyordu — SPEC KURAL 2.2'nin 600 px'lik SERT
+            // tavanının (WCAG 2.1 SC 1.4.8, 80 karakter) üstü. Yani panelin
+            // büyümesi bu ekranda ölçülebilir bir kusur açıyordu; bölme
+            // form sütununda durdurulur.
+            final editorWidth = inner * 5 / 9 > DesktopBreakpoints.maxFormWidth
+                ? DesktopBreakpoints.maxFormWidth
+                : inner * 5 / 9;
             final columns = desktopGridColumns(
-              sideBySide ? constraints.maxWidth * 0.55 : constraints.maxWidth,
+              sideBySide ? editorWidth : constraints.maxWidth,
               compact: 1,
               medium: 2,
               expanded: 2,
@@ -280,14 +305,28 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
               );
             }
             return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                kThemeBuilderPaneGutter,
+                12,
+                kThemeBuilderPaneGutter,
+                8,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(flex: 5, child: ListView(children: [content])),
-                  const SizedBox(width: 16),
+                  SizedBox(
+                    // 🔴 Anahtar `SizedBox`ta, içindeki `ListView`da değil:
+                    // ölçülecek şey tavanı taşıyan kutudur. Kabı dolduran bir
+                    // sarmalayıcıyı ölçmek tavanı değil kabı ölçerdi.
+                    key: const Key(kThemeBuilderEditorPaneKey),
+                    width: editorWidth,
+                    child: ListView(children: [content]),
+                  ),
+                  const SizedBox(width: kThemeBuilderPaneGutter),
+                  // Önizleme kalan yeri alır. Tavanı YOK: SPEC §3 A4 —
+                  // sabit en-boy oranlı görsel sahne genişledikçe bozulmaz,
+                  // iyileşir. Panelin kendi tavanı (1472) zaten üst sınırdır.
                   Expanded(
-                    flex: 4,
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: preview,

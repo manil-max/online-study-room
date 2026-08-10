@@ -76,16 +76,34 @@ class LabelValueRow {
 
 /// Ekranda boyanan bir kart yuzeyi.
 class PaintedCard {
-  const PaintedCard(this.rect, this.widestText, this.label);
+  const PaintedCard(this.rect, this.widestText, this.label, this.contentInk);
 
   final Rect rect;
 
-  /// Kartin icindeki EN GENIS metnin boyanan genisligi.
+  /// Kartin icindeki EN GENIS metnin boyanan genisligi. Yalniz RAPOR icin.
   final double widestText;
   final String label;
 
+  /// Kartin GERCEK icerik kutusu: boyanan butun isaretlerin (glif **ve**
+  /// cizim) birlesimi. Bos kartta null.
+  ///
+  /// 🔴 WP-684 KUSUR 2 — [deadWidth] eskiden `rect.width - widestText` idi,
+  /// yani olcut olarak **en genis tek METIN parcasini** aliyordu. Bu, icerigi
+  /// metin OLMAYAN kartlari (grafik, tablo, isi haritasi) yapisal olarak
+  /// cezalandiriyordu: olculdu (2026-08-10, HEAD `72ee426`, istatistik/grup
+  /// @1920) karsilastirma tablosu karti 684 px genisligindeydi, hucreleri
+  /// [144..317] [321..493] [497..670] px araliklarini dolduruyordu — yani
+  /// kartin neredeyse tamami doluydu — ama en genis METNI 62 px oldugu icin
+  /// "olu alan 622 px" diye kirmizi dusuyordu. Kapinin kendi yorumu bu esigi
+  /// zaten *"WP-671 sectI, SPEC'te yok"* diye isaretliyordu.
+  final Rect? contentInk;
+
   /// Kart ne kadar genis, icerigi ne kadar dar: "dev kutu, tek satir" olcusu.
-  double get deadWidth => rect.width - widestText;
+  double get deadWidth => rect.width - (contentInk?.width ?? 0);
+
+  /// Eski (WP-671) olcut. Kirmizi dusurmez; ONCE/SONRA karsilastirmasi icin
+  /// dokume yazilir.
+  double get textOnlyDeadWidth => rect.width - widestText;
 }
 
 /// ============================ GORUNURLUK ===================================
@@ -329,7 +347,92 @@ class DesktopStretchProbe {
     return rows;
   }
 
-  /// OLCUM 3 — cizilen kart yuzeyleri ve icerdikleri en genis metin.
+  /// En ince cizgi kalinligi: bundan ince bir kutu **isaret degil, cetveldir**.
+  ///
+  /// `Divider` bir `RenderDecoratedBox`tur ve kabinin tamamini kaplar (yuksekligi
+  /// `thickness`, varsayilan 1 px). Sayilsaydi, icinde bir ayrac bulunan HER
+  /// kart otomatik olarak "dolu" gorunur ve olcut sessizce olurdu.
+  /// 4 px, SPEC §4'un "butun olculer 4'un kati" (WinUI) tabanidir.
+  static const double kMinMarkExtent = 4;
+
+  /// [node] ekrana bir sey CIZER mi (kap degil, isaret)?
+  static bool _isMark(RenderObject node) =>
+      node is RenderCustomPaint ||
+      node is RenderImage ||
+      node is RenderDecoratedBox;
+
+  /// [node] altinda baska bir isaret ya da metin var mi?
+  ///
+  /// Bu, "cizim" ile "kap" arasindaki ayrimin TEK olcutudur: bir cizim
+  /// YAPRAKTIR. Icinde metin ya da baska cizim tasiyan bir `RenderDecoratedBox`
+  /// bir arka plan/kap'tir, cizilen icerik degildir — icerigi zaten cocuklari
+  /// temsil eder.
+  static bool _hasMarkOrTextDescendant(RenderObject node) {
+    var found = false;
+    void visit(RenderObject current) {
+      if (found) return;
+      current.visitChildren((child) {
+        if (found) return;
+        if (!_parentPaints(current, child)) return;
+        if (child is RenderParagraph || _isMark(child)) {
+          found = true;
+          return;
+        }
+        visit(child);
+      });
+    }
+
+    visit(node);
+    return found;
+  }
+
+  /// Bir kartin GERCEK icerik kutusu: boyanan glif kutulari **ve** YAPRAK
+  /// cizim kutularinin birlesimi.
+  ///
+  /// Iki sey bilerek DISARIDA:
+  ///
+  ///  · **Kartin kendi yuzeyi.** Her `Card` icin kart genisliginde bir
+  ///    `RenderPhysicalShape` (Material govdesi) ve bir `RenderCustomPaint`
+  ///    (Material'in kenarlik boyayicisi) cizilir — olculdu, istisnasiz.
+  ///    Sayilsalardi olu alan HER kartta ~0 cikar, yani olcut kendini
+  ///    kapatirdi (sahte yesil). Ikisi de icerigin ATASIDIR, yani yaprak
+  ///    degildir; [_hasMarkOrTextDescendant] onlari eler. Kart genisligine
+  ///    bakan bir kural yerine bunu kullanmak gerekliydi: `Card` varsayilan
+  ///    olarak 4 px kenar payi tasir, yani yuzey kartin kendisinden 8 px
+  ///    dardir ve genislik karsilastirmasi onu KACIRIR (olculdu: kart 1400,
+  ///    yuzey 1392 — ilk denemede tam olarak bu sahte yesili uretti).
+  ///
+  ///  · **Kil payi cizgiler.** [kMinMarkExtent]'ten ince kutular icerik
+  ///    degildir. `Divider` kabin tamamini kaplayan bir `RenderDecoratedBox`
+  ///    cizer ve YAPRAKTIR; sayilsaydi icinde ayrac bulunan her kart "dolu"
+  ///    gorunurdu.
+  static Rect? contentInkOf(RenderBox card) {
+    Rect? union;
+    void add(Rect r) {
+      union = union == null ? r : union!.expandToInclude(r);
+    }
+
+    void visit(RenderObject node) {
+      if (node is RenderParagraph) {
+        final r = ink(node);
+        if (r != null) add(r);
+      } else if (node is RenderBox && node.hasSize && _isMark(node)) {
+        final r = globalRect(node);
+        final isHairline =
+            r.height < kMinMarkExtent || r.width < kMinMarkExtent;
+        if (!isHairline && !_hasMarkOrTextDescendant(node)) add(r);
+      }
+      node.visitChildren((child) {
+        if (!_parentPaints(node, child)) return;
+        visit(child);
+      });
+    }
+
+    visit(card);
+    return union;
+  }
+
+  /// OLCUM 3 — cizilen kart yuzeyleri ve icerdikleri icerik kutusu.
   List<PaintedCard> paintedCards() {
     final out = <PaintedCard>[];
     for (final element
@@ -348,7 +451,7 @@ class DesktopStretchProbe {
         widest = rect.width;
         label = p.text.toPlainText();
       });
-      out.add(PaintedCard(rect, widest, label));
+      out.add(PaintedCard(rect, widest, label, contentInkOf(ro)));
     }
     out.sort((a, b) => b.rect.width.compareTo(a.rect.width));
     return out;
