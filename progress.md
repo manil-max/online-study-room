@@ -10105,6 +10105,63 @@ ezilmez.
 4. **Ajan olcerse hipotezi curutur.** Dort lane de kendine verilen supheyi
    kismen reddetti; ikisi gercek kok nedeni bambaska yerde buldu.
 
+### WP-651: kamp atesi onizlemesine SAHNE SAATI kolu
+Sahip "gece gundüzde erken gece oluyor" dedi ve saatleri kaydirmami istedi.
+Kaydirmadan once olctum ve **hipotez dogrulanmadi**: 10 Agustos'ta sahne
+20:01'e kadar tam gunduz, 29 dakikada yumusakca kararip 20:30'da geceye
+geciyor (Istanbul'da gercek gunbatimi 20:07, sivil karanlik ~20:38). Mevsime
+gore de kayiyor: 21 Haziran 21:04, 21 Aralik 18:18. Istenen "hafif hafif
+kararma" ZATEN vardi (isik 20:05'te 0.95 -> 20:25'te 0.08).
+Kodda gun/gece hesabi yapan yalniz iki yer var; ikincisi
+(`world_clock_math.isDaytimeHour`, sabit 06:00-17:59) **hicbir ekrana bagli
+degil**. Yani bir sayi "duzeltmek" dogru calisan tek yuzeyi bozardi.
+Teslim: sayi degil **olcum araci** — onizlemeye saat kolu + okuma satiri.
+Sahip saati surer, gecenin kendisine gore hangi dakikada bastigini soyler.
+
+### WP-652: geri sayim karti artik tek bir olay turunu adlandirmiyor
+17 metin (TR+EN) genellestirildi: kart basligi "Geri sayim", bos ad "Tarih",
+"Tarih ekle", ayarlardaki satir "Geri sayim tarihi". Anahtar ADLARI degismedi
+(`homeSinav*`) — koda ve testlere bagli, yeniden adlandirmak gereksiz churn.
+🔴 Ilk yazimda bos ad da "Geri sayim" idi ve **iki mevcut test kirmizi dustu**;
+haklıydilar: kullanici "Geri sayim" basligi altinda "Geri sayim" satiri
+gorurdu. Yeni kapi urun kararini kilitler (hicbir metinde "sinav"/"exam") ve
+ipucu metninin gercekten yazilan adi soyledigini sabitler.
+
+### WP-653: durtme bellegi iki ucta birden SINIRSIZ buyuyordu
+`markRead` lib/ icinde **hicbir yerden cagrilmiyor**, yani her durtme sunucuda
+omur boyu okunmamis kaliyor. Bedeli iki yerde odeniyordu: (a) sorguda ne limit
+ne siralama vardi — kullanici omur boyu aldigi TUM satirlari her acilista ve
+her realtime degisiminde cekiyordu (istemcideki `take(50)` yuku odedikten
+SONRA kirpiyor); (b) `notified_nudge_ids` hic budanmiyordu.
+🔴 Testin ILK YAZIMI etkisizdi (tek oturumda `addedThisSession` zaten
+koruyordu) — sabotajla yakalandi, gercek senaryoya (uygulama kapanip aciliyor)
+cevrildi. Ayrica koddaki bir korumanin bugun **ULASILAMAZ** oldugu olculdu ve
+yoruma oyle yazildi; "koruyor" diye iddia edilmedi.
+
+### WP-654: calisma kaydi silinince GUNLUK SERI de geri gidiyor (0129)
+Sahip: "6 saat sure ekleyip sildim, gunluk seri geri alinmadi."
+Kok neden koddan dogrulandi: `study_sessions` uzerindeki dort projeksiyon
+tetikleyicisinden ucu `delete` dinliyor, `0120:249` dinlemiyor —
+`after insert or update`. Govdesi de yalniz `_record_goal_completion` cagirir,
+yani yol **monoton eklemeli**. `0126` DELETE'i dinler ama `goal_progress_events`
+adi orada bir kez bile gecmez; seri yalniz o tablodan turer (`0112:204`).
+`0129` yazma yolunun simetrigini kurar (silme + guncelleme), silinmekte olan
+hesabi atlar ve dar olcutlu geriye donuk onarim tasir.
+🔴 **Replay bekliyor:** Docker bu hostta kalkmiyor, pgTAP kosulamadi.
+`local_migration_head` 0129'a alindi; staging/production head'leri 0128'de
+duruyor — apply GO'su AYRI karar.
+
+### Bu turun ek dersleri
+5. **Kapinin KIRMIZISI da yalan olabilir** (WP-640): urun saglamken kapi
+   kendi hatasiyla iki surumluk Windows paketini yayindan dusurdu.
+6. **Test bozuk davranisi kilitleyebilir** (WP-645): bir kapi kusuru "dogru
+   davranis" diye sabitlemisti. Yesil test de sorgulanir.
+7. **Iki cagiran ayni kurali paylasmiyorsa kural yoktur** (WP-647 add/update,
+   WP-646 kart/kart, WP-654 insert/delete). Duzeltme kurali TEK YERE koymakla
+   tamamlanir.
+8. **Sahibin hipotezi de olculur** (WP-651): olcum onu curuttu ve dogru
+   calisan bir yuzeyi bozmaktan dondu.
+
 ## Bekleyen — hunter turundan cikan, henuz kapanmamis kartlar
 
 ### WP-648 — Dead surface: dogrulanmis uc kopuk zincir
@@ -10127,6 +10184,16 @@ Envanterde sifirdan buyuk kalan kartlar: `records` (328x265'te 211 px),
 `heatmap` (hucre sabit 13 px), ve kucuk hucrelerde `timer`. Hicbiri jest
 hatasi degil — **icerik gercekten tasiyor**. "Kac satir gorunsun" karari
 sahibindir; `docs/AJAN-KULLANIM.md` gorsel is kurali geregi once onizleme.
+
+### WP-655 — Liderlik kartinin satir yuksekligi TAHMINI tutmuyor
+- **Durum:** [ ] Bekliyor · **Bagimli:** seri rozeti isi (rozet kart BASLIGINDA).
+- `leaderboard_card.dart:69` `rowHeight = 36.0` ve `headerHeight` tahminleri
+  gercek olculerle uyusmuyor (hunter Lane B olcumu: gercek satir ~53, baslik
+  ~91). Kart bu yuzden hep bir satir fazla paketliyor ve kaydirici garanti
+  oluyor. Saglam duzeltme `itemExtent` ile satir boyunu **dayatmak**, ama bu
+  kac kisinin gorunecegini degistirir → onizleme ister.
+- 🔴 **Simdi yapilmadi cunku** kartin basligi `GoalStreakBadge` iceriyor ve
+  rozet ayri bir kartta degisiyor; sabitleri o is bitmeden hesaplamak bosa is.
 
 ### WP-650 — 160x160 hucrede RenderFlex kirpma
 `timer` (10 px), `hours` (8 px), `weekdayWeekend` (8 px) — kaydirma degil
