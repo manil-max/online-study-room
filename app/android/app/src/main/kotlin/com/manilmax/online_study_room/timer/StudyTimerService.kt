@@ -57,11 +57,19 @@ class StudyTimerService : Service() {
                 ACTION_START -> {
                     val startedAtMs =
                         intent.getLongExtra(EXTRA_STARTED_AT_MS, System.currentTimeMillis())
-                    val mode = intent.getStringExtra(EXTRA_MODE) ?: "stopwatch"
+                    // 🔴 WP-645: EXTRA_MODE yoksa "stopwatch" DEGIL, kullanicinin
+                    // sectigi mod. Bildirimin Baslat PendingIntent'i (actionPending)
+                    // moda hic deginmiyor; eski `?: "stopwatch"` o yolu sessizce
+                    // kronometreye ceviriyordu.
+                    val startPlan = TimerStateStore.nativeStartPlan(prefs())
+                    val mode = intent.getStringExtra(EXTRA_MODE) ?: startPlan.mode
                     val phase = intent.getStringExtra(EXTRA_PHASE) ?: "work"
                     val cycle = intent.getIntExtra(EXTRA_CYCLE, 1).coerceAtLeast(1)
+                    // Intent hedefi tasimiyorsa (bildirimin Baslat'i tasimaz) ve
+                    // baslatilan mod kullanicinin sectigi modsa, hedef plandan gelir.
                     val targetSeconds = intent.getIntExtra(EXTRA_TARGET_SECONDS, 0)
                         .takeIf { it > 0 }
+                        ?: startPlan.targetSeconds.takeIf { mode == startPlan.mode }
                     val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
                     val liveRunId = intent.getStringExtra(EXTRA_LIVE_RUN_ID).orEmpty()
                     val liveRunToken = intent.getStringExtra(EXTRA_LIVE_RUN_TOKEN).orEmpty()
@@ -90,11 +98,17 @@ class StudyTimerService : Service() {
                             commandOrigin = "native_widget",
                         )
                     } else {
+                        // 🔴 WP-645: burasi `mode = "stopwatch"` SABIT yaziyordu.
+                        // Pomodoro/geri sayim secmis kullanicinin widget Baslat'i
+                        // acik uclu bir kronometre baslatiyor, sonra Dart bu modu
+                        // benimseyip kullanicinin SECIMINI diske de yaziyordu.
+                        val plan = TimerStateStore.nativeStartPlan(prefs())
                         handleStart(
                             startedAtMs = System.currentTimeMillis(),
-                            mode = "stopwatch",
+                            mode = plan.mode,
                             phase = "work",
                             cycle = 1,
+                            targetSeconds = plan.targetSeconds,
                             subjectId = "",
                             startOrigin = "native_widget",
                         )
@@ -120,7 +134,10 @@ class StudyTimerService : Service() {
         mode: String,
         phase: String,
         cycle: Int,
-        targetSeconds: Int? = null,
+        // WP-645: varsayilani KALDIRILDI. `= null`, hedefi gecirmeyi unutan
+        // her cagirani sessizce hedefsiz kosuya dusuruyordu; bu soruyu
+        // derleyici sormali, kullanici degil.
+        targetSeconds: Int?,
         subjectId: String,
         liveRunId: String = "",
         liveRunToken: String = "",

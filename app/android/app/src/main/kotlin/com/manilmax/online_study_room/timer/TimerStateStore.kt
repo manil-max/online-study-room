@@ -133,6 +133,27 @@ object TimerStateStore {
     const val KEY_WORK_MINUTES = "flutter.timer_work_min"
 
     /**
+     * WP-645: kullanicinin SECTIGI sayac modu ve geri sayim suresi.
+     *
+     * Bu iki anahtar `TimerStateStore` icinde hic yoktu; native taraf
+     * kullanicinin ne sectigini **bilmiyordu**. `KEY_MODE` ise secim
+     * degil, KOSAN kosunun modudur; kosu yokken bir sey soylemez.
+     */
+    const val KEY_USER_MODE = "flutter.timer_mode"
+    const val KEY_COUNTDOWN_MINUTES = "flutter.timer_countdown_min"
+
+    /**
+     * Urunun gercek varsayilanlari (`StudyTimerNotifier` ile ayni sayilar).
+     *
+     * WP-644 Dart tarafina bu varsayilanlari **diske yazdirdi**, yani yeni
+     * kurulumlarda anahtarlar hep var. Buradaki degerler yalniz o yazimdan
+     * once kurulmus cihazlar icin geriye donuk emniyettir; `0` fallback
+     * kullanmak sessizce YANLIS davranis uretiyordu (asagi bak).
+     */
+    const val DEFAULT_WORK_MINUTES = 25
+    const val DEFAULT_COUNTDOWN_MINUTES = 25
+
+    /**
      * WP-622: bildirimdeki **"Çalışmaya dön"** düğmesinin kararı — mola bitince
      * hangi çalışma fazı başlayacak?
      *
@@ -180,8 +201,15 @@ object TimerStateStore {
             cycle = next,
             // Dart'taki `timerPhaseTargetSeconds` ile aynı kural: pomodoro'da
             // çalışma fazının hedefi kullanıcının seçtiği çalışma dakikasıdır.
+            // 🔴 WP-644/645 — fallback `0` DEGIL urun varsayilani.
+            // Eski `0` fallback'i, pomodoro ayar sayfasini hic acmamis
+            // kullanicida (anahtar diskte yok) hedefi `null` uretiyordu;
+            // `writeRunning` hedef anahtarini siliyor, widget projeksiyonu
+            // hedefsiz pomodoro kosusunu IDLE sayiyordu. Yani sayac gercekten
+            // akarken ana ekran widget'i "durmus" gosteriyordu.
             targetSeconds = if (mode == "pomodoro") {
-                (readIntCompat(p, KEY_WORK_MINUTES, 0) * 60).takeIf { it > 0 }
+                (readIntCompat(p, KEY_WORK_MINUTES, DEFAULT_WORK_MINUTES) * 60)
+                    .takeIf { it > 0 }
             } else {
                 null
             },
@@ -190,6 +218,34 @@ object TimerStateStore {
             liveRunToken = p.getString(KEY_LIVE_RUN_TOKEN, "").orEmpty(),
             startOrigin = p.getString(KEY_START_ORIGIN, "native_notification").orEmpty(),
         )
+    }
+
+    /**
+     * WP-645: widget/bildirim **Baslat**'inin kullanacagi plan.
+     *
+     * 🔴 Kok neden. `ACTION_TOGGLE` (ana ekran widget'i) `mode = "stopwatch"`
+     * degerini SABIT yaziyordu; bildirimdeki Baslat ise moda hic deginmiyor,
+     * servis de `?: "stopwatch"` ile ayni yere dusuyordu. Kullanicinin sectigi
+     * mod (`flutter.timer_mode`) Kotlin kodunda **hic okunmuyordu**.
+     *
+     * Sonucu kullanici soyle yasiyor: uygulamada Pomodoro 25/5 secili, widget'tan
+     * Baslat'a basiyor, sayac sonsuza kadar YUKARI sayiyor, 25. dakikada mola
+     * gelmiyor. Dart native SSOT'u sorgusuz benimsedigi icin uygulamayi actiginda
+     * mod secici de **Kronometre**'ye donmus oluyor: secim sessizce silinmis.
+     *
+     * Karar burada **saf** tutulur ki cihazsiz JVM testiyle olculebilsin.
+     */
+    data class StartPlan(val mode: String, val targetSeconds: Int?)
+
+    fun nativeStartPlan(p: SharedPreferences): StartPlan {
+        val mode = p.getString(KEY_USER_MODE, "stopwatch") ?: "stopwatch"
+        val minutes = when (mode) {
+            "countdown" -> readIntCompat(p, KEY_COUNTDOWN_MINUTES, DEFAULT_COUNTDOWN_MINUTES)
+            "pomodoro" -> readIntCompat(p, KEY_WORK_MINUTES, DEFAULT_WORK_MINUTES)
+            // Kronometre acik uclu sayar; hedefi yoktur.
+            else -> 0
+        }
+        return StartPlan(mode, (minutes * 60).takeIf { it > 0 })
     }
 
     /** Çalışan sayaç durumunu atomik yazar (commit). */

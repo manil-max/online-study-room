@@ -128,16 +128,111 @@ class EndBreakCycleWp622Test {
     }
 
     @Test
-    fun ayar_okunamazsa_hedef_UYDURULMAZ() {
-        // Ters iddia: hedef yoksa 0 sn'lik sahte bir hedef yazmak, koşuyu
-        // doğduğu anda "bitmiş" gösterirdi.
+    fun ayari_hic_acmamis_kullanicida_hedef_URUN_VARSAYILANINA_duser() {
+        // 🔴 WP-645 — BU TEST ESKIDEN BOZUK DAVRANISI KILITLIYORDU.
+        //
+        // Eski hali `assertNull(...targetSeconds)` ve
+        // `assertFalse(prefs.contains(KEY_TARGET_SECONDS))` diyordu; gerekcesi
+        // "hedef yoksa 0 sn'lik SAHTE hedef uydurma" idi. Gerekce dogru, ikilem
+        // yanlisti: ucuncu bir secenek var ve dogrusu o — urunun GERCEK
+        // varsayilani (25 dk, `StudyTimerNotifier` `?? 25`).
+        //
+        // Bu anahtar diskte olmayabiliyordu cunku Dart onu YALNIZ kullanici
+        // pomodoro ayarini elle degistirince yaziyordu (WP-644 bunu duzeltti).
+        // Yani pomodoro ayar sayfasini hic acmamis kullanici, bildirimden
+        // "Calismaya don"e bastiginda ana ekran widget'inda sayaci DURMUS
+        // goruyordu — sayac gercekten akarken. Kapi yesildi, urun kirikti.
         val prefs = restingPomodoro(cycle = 2)
         prefs.edit().remove(TimerStateStore.KEY_WORK_MINUTES).commit()
 
-        assertNull(TimerStateStore.endBreakPlan(prefs)?.targetSeconds)
+        assertEquals(
+            25 * 60,
+            TimerStateStore.endBreakPlan(prefs)?.targetSeconds,
+        )
 
         tapReturnToWork(prefs, nowMs = 1_700_000_000_000L)
-        assertFalse(prefs.contains(TimerStateStore.KEY_TARGET_SECONDS))
+        assertEquals(
+            25 * 60L,
+            prefs.getLong(TimerStateStore.KEY_TARGET_SECONDS, -1L),
+        )
+    }
+
+    // ---------------------------------------------------------------
+    // WP-645 — widget/bildirim "Baslat"i kullanicinin SECTIGI modu baslatir
+    // ---------------------------------------------------------------
+
+    /** Kosmayan bir cihaz: yalniz kullanici tercihleri diskte. */
+    private fun idleWithUserChoice(
+        mode: String,
+        workMinutes: Long? = null,
+        countdownMinutes: Long? = null,
+    ): Wp622StrictPrefs {
+        val prefs = Wp622StrictPrefs()
+        val editor = prefs.edit().putString(TimerStateStore.KEY_USER_MODE, mode)
+        if (workMinutes != null) {
+            editor.putLong(TimerStateStore.KEY_WORK_MINUTES, workMinutes)
+        }
+        if (countdownMinutes != null) {
+            editor.putLong(TimerStateStore.KEY_COUNTDOWN_MINUTES, countdownMinutes)
+        }
+        editor.commit()
+        return prefs
+    }
+
+    @Test
+    fun widget_baslat_POMODORO_secimini_baslatir() {
+        // 🔴 Kok neden: `ACTION_TOGGLE` `mode = "stopwatch"` SABIT yaziyordu
+        // ve kullanicinin `flutter.timer_mode` secimi Kotlin kodunda HIC
+        // okunmuyordu. Kullanici Pomodoro secili widget'tan Baslat'a basinca
+        // sayac sonsuza kadar YUKARI sayiyor, mola hic gelmiyordu.
+        val prefs = idleWithUserChoice("pomodoro", workMinutes = 50L)
+
+        val plan = TimerStateStore.nativeStartPlan(prefs)
+
+        assertEquals("pomodoro", plan.mode)
+        assertEquals(50 * 60, plan.targetSeconds)
+    }
+
+    @Test
+    fun widget_baslat_GERI_SAYIM_secimini_baslatir() {
+        val prefs = idleWithUserChoice("countdown", countdownMinutes = 45L)
+
+        val plan = TimerStateStore.nativeStartPlan(prefs)
+
+        assertEquals("countdown", plan.mode)
+        assertEquals(45 * 60, plan.targetSeconds)
+    }
+
+    @Test
+    fun ayari_hic_acmamis_kullanicida_da_secilen_mod_hedefli_baslar() {
+        // Sure anahtari diskte yok (WP-644 oncesi kurulum): mod korunur ve
+        // hedef urun varsayilanina duser — hedefsiz pomodoro dogmaz.
+        val prefs = idleWithUserChoice("pomodoro")
+
+        val plan = TimerStateStore.nativeStartPlan(prefs)
+
+        assertEquals("pomodoro", plan.mode)
+        assertEquals(25 * 60, plan.targetSeconds)
+    }
+
+    @Test
+    fun ters_iddia_KRONOMETRE_secili_kullanicida_hedef_UYDURULMAZ() {
+        // Sabotaj kapisi: testler "her mod hedeflidir" demiyor. Kronometre
+        // acik uclu sayar; ona hedef yazmak kosuyu dogdugu anda bitirirdi.
+        val prefs = idleWithUserChoice("stopwatch", workMinutes = 25L)
+
+        val plan = TimerStateStore.nativeStartPlan(prefs)
+
+        assertEquals("stopwatch", plan.mode)
+        assertNull(plan.targetSeconds)
+    }
+
+    @Test
+    fun secim_hic_yoksa_kronometreye_duser() {
+        val plan = TimerStateStore.nativeStartPlan(Wp622StrictPrefs())
+
+        assertEquals("stopwatch", plan.mode)
+        assertNull(plan.targetSeconds)
     }
 
     @Test

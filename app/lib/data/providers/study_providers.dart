@@ -992,6 +992,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
                 : TimerVerification.statisticsOnly)
           : TimerVerification.verified,
     );
+    // 🔴 WP-644 — VARSAYILANLAR DA DİSKE YAZILIR.
+    //
+    // Yukarıdaki okumalar `?? 25` / `?? 4` gibi varsayılanları **yalnız
+    // bellekte** üretiyordu; diske ancak kullanıcı ayarı elle değiştirince
+    // (`setPomodoro`, `setCountdownMinutes`, `setMode`) yazılıyordu. Yani
+    // pomodoro ayar sayfasını hiç açmamış kullanıcıda `timer_work_min`
+    // anahtarı diskte **hiç yoktu**.
+    //
+    // Bedeli native tarafta ödeniyordu: `TimerStateStore.endBreakPlan`
+    // `readIntCompat(KEY_WORK_MINUTES, 0)` okuyup hedefi `null` üretiyor,
+    // `writeRunning` hedef anahtarını siliyor, widget projeksiyonu hedefsiz
+    // bir pomodoro koşusunu IDLE sayıyordu. Sonuç: varsayılan ayarla çalışan
+    // kullanıcı bildirimden "Çalışmaya dön"e bastığında ana ekran widget'ı
+    // sayacı **DURMUŞ** gösteriyordu — sayacın kendisi gerçekten akıyorken.
+    // Aynı boşluk `timer_cycles` yokluğunda "imkânsız tur" tavanını da
+    // etkisiz bırakıyordu.
+    //
+    // Kural: Dart bu ayarların tek gerçeğidir; o hâlde gerçeği **yazmak**
+    // zorundadır. Yalnız eksik anahtarlar yazılır; kullanıcı seçimi ezilmez.
+    _persistTimerSettingDefaults(mode, initial);
     // WP-542: soğuk açılışta benimsenen koşu için monotonik zemini HEMEN kur.
     // Bu satır olmadan, uygulama açıldıktan sonra saat geriye giderse elde
     // hiçbir bağımsız süre ölçüsü kalmaz ve oturum yine kaybolur.
@@ -2092,6 +2112,35 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.setInt(_kWork, w);
     prefs.setInt(_kBreak, b);
     prefs.setInt(_kCycles, c);
+  }
+
+  /// Sayac ayarlarinin **eksik** anahtarlarini diske yazar (WP-644).
+  ///
+  /// Native taraf (`TimerStateStore`) bu anahtarlarin tek okuyucusudur ve
+  /// yokluklarinda sessizce `0`'a duser. Dart varsayilani yalniz bellekte
+  /// uretip diske yazmayinca iki gercek doguyordu: Dart 25 dakika sayarken
+  /// native hedefi `null` biliyor, widget de kosan sayaci DURMUS ciziyordu.
+  ///
+  /// Var olan deger **ezilmez** — bu bir tasima degil, bosluk doldurmadir.
+  void _persistTimerSettingDefaults(TimerMode mode, StudyTimerState initial) {
+    final prefs = ref.read(sharedPreferencesProvider);
+    // Kullanicinin SECTIGI mod yazilir; kosan bir ayna/aktif kosunun gecici
+    // modu (`initial.mode`) degil. Ikisi ayni olmayabilir.
+    if (!prefs.containsKey(_kMode)) {
+      unawaited(prefs.setString(_kMode, mode.name));
+    }
+    if (!prefs.containsKey(_kCountdown)) {
+      unawaited(prefs.setInt(_kCountdown, initial.countdownMinutes));
+    }
+    if (!prefs.containsKey(_kWork)) {
+      unawaited(prefs.setInt(_kWork, initial.workMinutes));
+    }
+    if (!prefs.containsKey(_kBreak)) {
+      unawaited(prefs.setInt(_kBreak, initial.breakMinutes));
+    }
+    if (!prefs.containsKey(_kCycles)) {
+      unawaited(prefs.setInt(_kCycles, initial.cycles));
+    }
   }
 
   /// Çalışmaya başla (mevcut moda göre ilk fazı kurar).
