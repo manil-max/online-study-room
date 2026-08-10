@@ -10,6 +10,14 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// completes and after claim — no periodic polling. All data access and
 /// authorization remain in the reward provider. Dismissing the banner never clears
 /// the navigation badge.
+///
+/// 🔴 WP-682 — KONUM SOZLESMESI: bu widget artik kabugun USTUNE binen bir
+/// katman DEGIL, kabugun akisinda **yer ayiran** bir serittir
+/// (`home_shell.dart` onu `Column` + `Expanded` ile tasir). Bu yuzden burada
+/// dikey bir `SafeArea` yoktur: ust guvenli alani ekranlarin kendisi, alt
+/// guvenli alani mobilde `NavigationBar` karsilar. Hicbir sey gorunmuyorken
+/// widget **sifir yukseklik** kaplar (bosluklar cocugun icinde, disinda
+/// degil) — aksi halde kabugun dibinde kalici bir olu bant olusurdu.
 class RewardToast extends StatefulWidget {
   const RewardToast({
     super.key,
@@ -93,8 +101,21 @@ class _RewardToastState extends State<RewardToast> {
     final showCrown = _celebratingRank != null;
     final duration = reduceMotion ? Duration.zero : _debounceDuration;
 
+    // Bosluk cocugun ETRAFINDA degil ICINDE: boslugu disariya alirsak "hicbir
+    // sey yok" hali bile 16 px yer kaplar (WP-682). Anahtar `Padding`in
+    // uzerinde durmali, yoksa `AnimatedSwitcher` iki `Padding`i ayni widget
+    // sanar ve banner <-> kutlama gecisi hic oynamaz.
+    Widget framed(Key key, Widget child) => Padding(
+      key: key,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: child,
+    );
+
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      // Dikey guvenli alan burada TUKETILMEZ (yukaridaki konum sozlesmesi);
+      // yatay olan yatay centikli cihazlarda hala gerekli.
+      top: false,
+      bottom: false,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -102,20 +123,24 @@ class _RewardToastState extends State<RewardToast> {
           child: AnimatedSwitcher(
             duration: duration,
             child: showCrown
-                ? _CrownCelebration(
-                    key: ValueKey(_celebratingRank),
-                    rank: _celebratingRank!,
-                    reduceMotion: reduceMotion,
+                ? framed(
+                    ValueKey('crown-$_celebratingRank'),
+                    _CrownCelebration(
+                      rank: _celebratingRank!,
+                      reduceMotion: reduceMotion,
+                    ),
                   )
                 : showReward
-                ? _RewardBanner(
-                    key: ValueKey(_signature),
-                    pendingCount: _visibleCount,
-                    pendingXp: _visibleXp,
-                    onOpenProfile: widget.onOpenProfile,
-                    onDismiss: () {
-                      setState(() => _dismissedSignature = _signature);
-                    },
+                ? framed(
+                    ValueKey('reward-$_signature'),
+                    _RewardBanner(
+                      pendingCount: _visibleCount,
+                      pendingXp: _visibleXp,
+                      onOpenProfile: widget.onOpenProfile,
+                      onDismiss: () {
+                        setState(() => _dismissedSignature = _signature);
+                      },
+                    ),
                   )
                 : const SizedBox.shrink(key: ValueKey('reward-toast-empty')),
           ),
@@ -127,7 +152,6 @@ class _RewardToastState extends State<RewardToast> {
 
 class _RewardBanner extends StatelessWidget {
   const _RewardBanner({
-    super.key,
     required this.pendingCount,
     required this.pendingXp,
     required this.onOpenProfile,
@@ -186,11 +210,7 @@ class _RewardBanner extends StatelessWidget {
 }
 
 class _CrownCelebration extends StatelessWidget {
-  const _CrownCelebration({
-    super.key,
-    required this.rank,
-    required this.reduceMotion,
-  });
+  const _CrownCelebration({required this.rank, required this.reduceMotion});
 
   final String rank;
   final bool reduceMotion;

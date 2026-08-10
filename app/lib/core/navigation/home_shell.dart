@@ -119,37 +119,67 @@ class HomeShell extends ConsumerWidget {
     // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).
     ref.watch(reminderSyncListenerProvider);
 
+    // 🔴 WP-682 — ODUL BANNERI ARTIK KABUGUN USTUNE BINMIYOR.
+    //
+    // Onceki hali: `Stack(fit: expand, children: [kabuk, rewardToast])`. Banner
+    // `Alignment.topCenter`da durdugu icin ust seridin uzerine oturuyordu.
+    // OLCULDU (gercek kabuk, widget testi):
+    //   masaustu 1920 → banner (680, 8)–(1240, 48); "Timer" serit ogesi
+    //     (552.7, 22)–(751.3, 72); olu kesisim (680, 22)–(751.3, 48).
+    //     (715.7, 35) noktasina yapilan `tester.tap` HIC ulasmiyordu.
+    //   mobil 393   → banner (12, 8)–(381, 56); ayni oge (134.3, 14)–(258.7, 64)
+    //     TAMAMEN altta kaliyordu; merkez dokunusu bile yutuluyordu.
+    // Kutlamadan farki: kutlama 1800 ms sonra kendi kalkar, banner **kullanici
+    // kapatana kadar** durur — yani serit ogesi SURESIZ erisilemezdi.
+    //
+    // Cozum neden `IgnorePointer` DEGIL: bannerin kendi Topla/Kapat dugmeleri
+    // var, onlari oldururdu (WP-681 bu yuzden bannerı disarida birakti).
+    // Cozum neden `Scaffold.bottomSheet` DEGIL: o da govdenin USTUNU orter,
+    // yer ayirmaz (depoda kayitli tuzak). Dogrusu `Column` + `Expanded`:
+    // banner kendi seridini ALIR, kimsenin uzerine binmez. Gorunur degilken
+    // sifir yukseklik kaplar (bkz. `reward_toast.dart` konum sozlesmesi).
     if (isDesktopWindow) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          DesktopHomeShell(
-            selectedIndex: index,
-            screens: _screens,
-            onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
-            // 🔴 WP-594: mobil kolun bastığı rozetin aynısı. Buradan
-            // çıkarılırsa Windows kullanıcısı bekleyen ödülünü ve okunmamış
-            // duyurusunu bir daha göremez.
-            profileBadge: profileBadge,
-            // 🔴 WP-594: mobil kolun bastığı rozetin aynısı. Buradan
-            // çıkarılırsa Windows kullanıcısı bekleyen ödülünü ve okunmamış
-            // duyurusunu bir daha göremez.
-            // 🔴 WP-550: burada eskiden **ikinci bir** provider listesi vardı ve
-            // eksikti (`userStudySummary`, `groupPresence`, duyurular yoktu).
-            // Masaüstü ve mobil artık aynı tek kaynağı çağırır; ikinci listeyi
-            // geri getirme, iki ayrı yenileme gerçeği bu hatanın kök nedeniydi.
-            onRefresh: () => refreshAppData(ref),
-          ),
-          rewardToast,
-        ],
+      return ColoredBox(
+        // Kabuk artik pencerenin tamamini kaplamiyor; bannerin cevresindeki
+        // bant da kabukla ayni zemini kullanir.
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            Expanded(
+              child: DesktopHomeShell(
+                selectedIndex: index,
+                screens: _screens,
+                onDestinationSelected: ref
+                    .read(navIndexProvider.notifier)
+                    .setIndex,
+                // 🔴 WP-594: mobil kolun bastığı rozetin aynısı. Buradan
+                // çıkarılırsa Windows kullanıcısı bekleyen ödülünü ve okunmamış
+                // duyurusunu bir daha göremez.
+                profileBadge: profileBadge,
+                // 🔴 WP-550: burada eskiden **ikinci bir** provider listesi
+                // vardı ve eksikti (`userStudySummary`, `groupPresence`,
+                // duyurular yoktu). Masaüstü ve mobil artık aynı tek kaynağı
+                // çağırır; ikinci listeyi geri getirme, iki ayrı yenileme
+                // gerçeği bu hatanın kök nedeniydi.
+                onRefresh: () => refreshAppData(ref),
+              ),
+            ),
+            // Serit KABUGUN ALTINDA, ustunde degil (WP-682).
+            rewardToast,
+          ],
+        ),
       );
     }
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
+      // 🔴 WP-682: mobil kol da ayni yapiyi kullanir — banner ekranin ust
+      // seridini (Araclar ikon seridi, ekran baslıklari) ortmez, kendi yerini
+      // icerik ile `NavigationBar` arasindan alir.
+      body: Column(
         children: [
-          IndexedStack(index: index, children: _screens),
+          Expanded(
+            child: IndexedStack(index: index, children: _screens),
+          ),
           rewardToast,
         ],
       ),
