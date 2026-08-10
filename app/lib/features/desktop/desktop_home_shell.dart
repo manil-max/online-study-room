@@ -7,13 +7,12 @@ import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/profile_tab_badge.dart';
 import '../profile/settings_screen.dart';
 import 'desktop_navigation_pane.dart';
-import 'desktop_proportional_scale.dart';
 import 'desktop_surface.dart';
 
 /// Windows ana kabuğu — özel sol NavigationView pane (mobil NavigationBar değil).
 ///
-/// [DesktopProportionalScale] ile tek oranlı esnek ölçek; sekmeler tembel
-/// yüklenir (IndexedStack 5 ekranı aynı anda tutmaz → RAM/CPU).
+/// Kabuk 1:1 mantiksal piksel calisir (WP-672): zoom YOK, kirilim noktalari
+/// var. Sekmeler tembel yuklenir (IndexedStack 5 ekrani ayni anda tutmaz).
 class DesktopHomeShell extends StatelessWidget {
   const DesktopHomeShell({
     required this.selectedIndex,
@@ -116,46 +115,55 @@ class DesktopHomeShell extends StatelessWidget {
         autofocus: true,
         child: Scaffold(
           backgroundColor: scheme.surfaceContainerLowest,
-          body: DesktopProportionalScale(
-            child: Builder(
-              builder: (context) {
-                // Ölçek içi MediaQuery = tasarım boyutu → pane her zaman expanded.
-                final mode = DesktopBreakpoints.navigationMode(
-                  MediaQuery.sizeOf(context).width,
-                );
-                final expanded = mode == DesktopNavigationMode.expanded;
-                return ColoredBox(
-                  color: scheme.surface,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DesktopNavigationPane(
-                        items: destinations(
-                          context,
-                          profileBadge: profileBadge,
-                        ),
-                        selectedIndex: selectedIndex,
-                        onSelected: onDestinationSelected,
-                        footer: _PaneFooter(
-                          expanded: expanded,
-                          onSettings: () => openSettings(context),
-                          onRefresh: onRefresh,
+          // 🔴 WP-672 / SPEC §0 KARAR 0 — `DesktopProportionalScale`
+          // sarmalayicisi BURADAN KALDIRILDI.
+          //
+          // OLCUM (Windows platformu, devicePixelRatio 1, `getTopLeft` /
+          // `getBottomRight` farkiyla BOYANAN piksel):
+          //   pencere 1600 px → sol pane 256 px boyaniyordu (kaynakta 176)
+          //   pencere 2000 px → sol pane 264 px, serit satiri 63 px (kaynakta 40)
+          //   pencere 2560 px → sol pane 264 px, serit satiri 63 px
+          // ve uygulamanin GORDUGU genislik 1100–1650 bandinda hep 1100'du.
+          // Yani hicbir kirilim noktasi tetiklenmiyor, arayuz yalnizca
+          // buyutuluyordu. Sahibin "mobilin penceresi gibi olmus" cumlesi budur.
+          //
+          // Compact Focus ETKILENMEZ: `main.dart` `desktopChrome` seviyesinde,
+          // yani bu kabugun USTUNDE `CompactFocusView` ile takas eder.
+          body: Builder(
+            builder: (context) {
+              // Artik GERCEK pencere genisligi. Serit kirilima gore daralir.
+              final mode = DesktopBreakpoints.navigationMode(
+                MediaQuery.sizeOf(context).width,
+              );
+              final expanded = mode == DesktopNavigationMode.expanded;
+              return ColoredBox(
+                color: scheme.surface,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DesktopNavigationPane(
+                      items: destinations(context, profileBadge: profileBadge),
+                      selectedIndex: selectedIndex,
+                      onSelected: onDestinationSelected,
+                      footer: _PaneFooter(
+                        expanded: expanded,
+                        onSettings: () => openSettings(context),
+                        onRefresh: onRefresh,
+                      ),
+                    ),
+                    Expanded(
+                      child: ColoredBox(
+                        color: scheme.surface,
+                        child: _DesktopLazyTabHost(
+                          selectedIndex: selectedIndex,
+                          screens: screens,
                         ),
                       ),
-                      Expanded(
-                        child: ColoredBox(
-                          color: scheme.surface,
-                          child: _DesktopLazyTabHost(
-                            selectedIndex: selectedIndex,
-                            screens: screens,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),

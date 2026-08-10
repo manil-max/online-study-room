@@ -58,6 +58,7 @@ class DesktopPageScaffold extends StatelessWidget {
     required this.icon,
     required this.child,
     this.actions = const [],
+    this.maxWidth = DesktopBreakpoints.maxContentWidth,
     super.key,
   });
 
@@ -67,59 +68,117 @@ class DesktopPageScaffold extends StatelessWidget {
   final Widget child;
   final List<Widget> actions;
 
+  /// İçerik sütununun üst sınırı; şerit zemini tam genişlikte kalır.
+  ///
+  /// 🔴 WP-672: bu parametre ÖNCEDEN YOKTU. Başlık ve gövde pencere ne kadar
+  /// genişse o kadar yayılıyordu — 2400 px pencerede başlık solda, eylem
+  /// düğmeleri ~2300 px ötede sağda kalıyordu. (Sınır yalnız [DesktopContent]
+  /// içinde vardı ve `DesktopPageScaffold` onu hiç kullanmıyordu.)
+  /// Etiket–değer satırları için [DesktopBreakpoints.maxLabelValueWidth],
+  /// prose için [DesktopBreakpoints.maxProseWidth] geçirin (SPEC §2.3).
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+    body: _DesktopPageChrome(
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      actions: actions,
+      maxWidth: maxWidth,
+      child: child,
+    ),
+  );
+}
+
+/// Başlık şeridi + ayırıcı + sınırlı gövde. [DesktopPageScaffold] ve
+/// [DesktopPageBody] bunu paylaşır; şerit iki yerde tekrarlanmaz.
+class _DesktopPageChrome extends StatelessWidget {
+  const _DesktopPageChrome({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.actions,
+    required this.maxWidth,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<Widget> actions;
+  final double maxWidth;
+  final Widget child;
+
+  /// Şerit zemini tam genişlik; içerik ortalanmış ve [maxWidth] ile sınırlı.
+  Widget _limited(Widget inner) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: inner,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final density = DesktopDensity.of(context);
     final scheme = theme.colorScheme;
-    return Scaffold(
-      backgroundColor: scheme.surfaceContainerLowest,
-      body: Column(
-        children: [
-          Material(
-            color: scheme.surface,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 760;
-                final identity = Row(
-                  children: [
-                    Icon(icon, size: 20, color: scheme.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+    return Column(
+      children: [
+        Material(
+          color: scheme.surface,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Karar sınırlanmış BANDA göre verilir: 2400 px pencerede başlık
+              // zaten 1440'a kırpılıyor, "geniş pencere" demek yetmez.
+              final bandWidth = constraints.maxWidth < maxWidth
+                  ? constraints.maxWidth
+                  : maxWidth;
+              // SPEC §2.3: 760 = form sütunu tavanı. Altında başlık dikey
+              // (mobil) yığına düşer.
+              final compact = bandWidth < DesktopBreakpoints.maxFormWidth;
+              final identity = Row(
+                children: [
+                  Icon(icon, size: 20, color: scheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        if (subtitle.trim().isNotEmpty) ...[
+                          const SizedBox(height: 2),
                           Text(
-                            title,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.2,
+                            subtitle,
+                            maxLines: compact ? 2 : 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
-                          if (subtitle.trim().isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              subtitle,
-                              maxLines: compact ? 2 : 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
                         ],
-                      ),
+                      ],
                     ),
-                  ],
-                );
-                return Semantics(
-                  container: true,
-                  label: AppLocalizations.of(
-                    context,
-                  ).desktopTitleKomutCubugu(title),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 52),
-                    child: Padding(
+                  ),
+                ],
+              );
+              return Semantics(
+                container: true,
+                label: AppLocalizations.of(
+                  context,
+                ).desktopTitleKomutCubugu(title),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
+                  child: _limited(
+                    Padding(
                       padding: EdgeInsets.fromLTRB(
                         density.pagePadding.left,
                         12,
@@ -152,14 +211,14 @@ class DesktopPageScaffold extends StatelessWidget {
                             ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-          Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
-          Expanded(child: child),
-        ],
-      ),
+        ),
+        Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
+        Expanded(child: _limited(SizedBox.expand(child: child))),
+      ],
     );
   }
 }
@@ -170,7 +229,8 @@ class DesktopMasterDetail extends StatelessWidget {
     required this.master,
     required this.detail,
     this.masterWidth = 280,
-    this.breakpoint = DesktopBreakpoints.expanded,
+    // SPEC §3 A1: iki pane'e gecis `large` (1200), `expanded` (1008) degil.
+    this.breakpoint = DesktopBreakpoints.large,
     this.spacing = 16,
     super.key,
   });
@@ -379,13 +439,18 @@ class DesktopContextPanel extends StatelessWidget {
 class DesktopContent extends StatelessWidget {
   const DesktopContent({
     required this.child,
+    required this.maxWidth,
     this.padding = const EdgeInsets.all(24),
-    this.maxWidth = DesktopBreakpoints.maxContentWidth,
     super.key,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+
+  /// 🔴 SPEC §6: tek bir 1440 varsayilani KALDIRILDI. Icerik turune gore
+  /// [DesktopBreakpoints.maxProseWidth] (600) / [DesktopBreakpoints.maxFormWidth]
+  /// (760) / [DesktopBreakpoints.maxContentWidth] (1440) acikca verilir.
+  /// Varsayilan varken her cagri yeri sessizce pano tavanini aliyordu.
   final double maxWidth;
 
   @override
@@ -432,7 +497,8 @@ class DesktopResponsiveColumns extends StatelessWidget {
     required this.primary,
     required this.secondary,
     this.secondaryWidth = 360,
-    this.breakpoint = 1080,
+    // SPEC §6: 1080 merdivende olmayan sihirli sayiydi → `large` (1200).
+    this.breakpoint = DesktopBreakpoints.large,
     this.spacing = 20,
     super.key,
   });
@@ -468,4 +534,43 @@ class DesktopResponsiveColumns extends StatelessWidget {
       },
     );
   }
+}
+
+/// 🔴 SPEC §6 — `DesktopPageScaffold`un **gövde-only** varyantı.
+///
+/// [DesktopPageScaffold] kendi [Scaffold]'unu kurar; `StatsScreen` gibi zaten
+/// `Scaffold` + `AppBar` + `TabBar` taşıyan ekranlara olduğu gibi takılamaz
+/// (iç içe iki Scaffold = çift zemin, çift SafeArea, yanlış `bottomInset`).
+/// Bu varyant aynı Fluent başlık şeridini ve aynı genişlik sınırını verir ama
+/// **Scaffold kurmaz** — mevcut gövdenin içine doğrudan konur.
+///
+/// İkisi de aynı `_DesktopPageChrome`'u çizer; şerit iki yerde
+/// tekrarlanmaz.
+class DesktopPageBody extends StatelessWidget {
+  const DesktopPageBody({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.child,
+    this.actions = const [],
+    this.maxWidth = DesktopBreakpoints.maxContentWidth,
+    super.key,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget child;
+  final List<Widget> actions;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) => _DesktopPageChrome(
+    title: title,
+    subtitle: subtitle,
+    icon: icon,
+    actions: actions,
+    maxWidth: maxWidth,
+    child: child,
+  );
 }

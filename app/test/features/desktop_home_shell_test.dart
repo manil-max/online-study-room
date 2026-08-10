@@ -33,14 +33,20 @@ void main() {
     );
   }
 
-  testWidgets('oransal ölçek widget’ı kabukta var + etiketli pane', (
+  // 🔴 WP-672 / SPEC §0 — bu iddia TERSİNE ÇEVRİLDİ. Eskiden ölçek
+  // sarmalayıcısının VARLIĞI sözleşmeydi; ölçtüğümüzde o sarmalayıcının
+  // 2000 px pencerede sol şeridi 176 → 264 px'e şişirdiği, gövdeye 1333 px'lik
+  // SAHTE bir MediaQuery verdiği ve 1100–1650 bandında hiçbir kırılım
+  // noktasının tetiklenmediği çıktı. Sahibin "mobilin penceresi gibi olmuş"
+  // şikâyeti buydu. Sarmalayıcı kaldırıldı; artık YOKLUĞU sözleşmedir.
+  testWidgets('oransal ölçek sarmalayıcısı kabukta YOK + etiketli pane', (
     tester,
   ) async {
     await setWindowSize(tester, const Size(1200, 800));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DesktopProportionalScale), findsOneWidget);
+    expect(find.byType(DesktopProportionalScale), findsNothing);
     expect(
       find.byKey(const ValueKey('desktop-navigation-pane')),
       findsOneWidget,
@@ -56,32 +62,29 @@ void main() {
     expect(pane.constraints?.maxWidth, DesktopNavigationPane.expandedWidth);
   });
 
-  testWidgets('küçük pencerede layout aynı (oransal; reflow yok)', (
-    tester,
-  ) async {
+  // 🔴 WP-672: eski başlık "layout aynı (oransal; reflow yok)" idi ve
+  // "reflow yok" tam olarak kusurun tarifiydi. Artık kırılım noktası beklenir.
+  testWidgets('küçük pencerede şerit daralır (reflow VAR)', (tester) async {
     await setWindowSize(tester, const Size(700, 540));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     await tester.pumpAndSettle();
 
-    // Windows’ta ölçek açık: tasarım 1100 → expanded etiketler (offstage olabilir).
-    // Diğer platformlarda kompakt pane olabilir; en azından shell ayakta.
     expect(find.byType(DesktopHomeShell), findsOneWidget);
     expect(
       find.byKey(const ValueKey('desktop-navigation-pane')),
       findsOneWidget,
     );
+    // İşlev kaybı yok: eylemler dar pencerede de duruyor (ikon + tooltip).
     expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
 
-    // Ölçek aktifse (Windows) Ana Sayfa metni tuvalde var.
-    if (find.text('Ana Sayfa', skipOffstage: false).evaluate().isNotEmpty) {
-      final pane = tester.widget<AnimatedContainer>(
-        find.byKey(
-          const ValueKey('desktop-navigation-pane'),
-          skipOffstage: false,
-        ),
-      );
-      expect(pane.constraints?.maxWidth, DesktopNavigationPane.expandedWidth);
-    }
+    // 700 < 1008 → daraltılmış ikon şeridi. Metin küçültülmez, şerit daralır.
+    final pane = tester.widget<AnimatedContainer>(
+      find.byKey(
+        const ValueKey('desktop-navigation-pane'),
+        skipOffstage: false,
+      ),
+    );
+    expect(pane.constraints?.maxWidth, DesktopNavigationPane.compactWidth);
   });
 
   testWidgets('Ctrl+1…5 hedef sekmeyi seçer', (tester) async {

@@ -14,8 +14,11 @@ bool get _isDesktop => defaultTargetPlatform == TargetPlatform.windows;
 
 bool get isDesktopWindow => _isDesktop;
 
-const _defaultSize = Size(1100, 720);
-const _defaultMinimumSize = Size(560, 540);
+// 🔴 WP-672: bu iki değer artık `desktop_layout.dart`'tan gelir — ölçüm ve
+// gerekçe orada. Burada ikinci bir kopya tutmak, minimum boyutun iki dosyada
+// farklı (560×540 vs 720×540) olmasına yol açmıştı.
+const _defaultSize = kDesktopDefaultWindowSize;
+const _defaultMinimumSize = kDesktopMinimumWindowSize;
 const _compactSize = Size(360, 220);
 const _compactMinimumSize = Size(320, 180);
 
@@ -74,7 +77,12 @@ class _DesktopWindowController extends ChangeNotifier with WindowListener {
   bool _isCompact = false;
   bool _isPinned = false;
   bool _normalWasMaximized = false;
-  Rect _normalBounds = const Rect.fromLTWH(100, 100, 1100, 720);
+  Rect _normalBounds = Rect.fromLTWH(
+    100,
+    100,
+    kDesktopDefaultWindowSize.width,
+    kDesktopDefaultWindowSize.height,
+  );
   Timer? _saveTimer;
 
   bool get isCompact => _isCompact;
