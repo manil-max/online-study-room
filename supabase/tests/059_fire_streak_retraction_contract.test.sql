@@ -100,9 +100,19 @@ select :'alpha', 'fire_streak', 1, (t->>'xp')::integer,
   cross join lateral jsonb_array_elements(d.tiers) t
  where d.id = 'fire_streak' and (t->>'tier')::integer = 1;
 
+-- 🔴 UPSERT sart. Bu satiri oturum yazimindaki basarim projeksiyonu ZATEN
+-- olusturmus olabilir; duz insert `user_achievements_user_id_achievement_id_key`
+-- ihlaliyle duser. Olculdu: CI local replay run 31387144433, 059:105
+--   duplicate key ... Key (user_id, achievement_id)=(...,fire_streak) already exists
+-- Bu dosya bu hostta hic kosturulamadigi icin (Docker kalkmiyor) hata ancak
+-- gercek Postgres'te goruldu -- kapinin ilk kosumu.
 insert into public.user_achievements (
   user_id, achievement_id, tier, progress, unlocked_at
-) values (:'alpha', 'fire_streak', 1, 7, now());
+) values (:'alpha', 'fire_streak', 1, 7, now())
+on conflict (user_id, achievement_id) do update
+  set tier = excluded.tier,
+      progress = excluded.progress,
+      unlocked_at = excluded.unlocked_at;
 
 -- ===========================================================================
 -- 3) SERIYI KIR -- iki gunun kaydi silinir
