@@ -125,8 +125,20 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # kademeler de ekrandan kayboldu. Artik siliniyor degil DUSURULUYOR, silinmis
 # satirlar defterden yeniden turetiliyor ve donmus "en iyi" degeri gercege
 # cekiliyor. tests/054, 052'nin goremedigi boslugu kapatir.
-Assert-Equal $contract.staging.migration_head '0128' 'WP-635 staging hedefi 0128: apply basarili'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0128 staging apply bitti, yeniden kilitli'
+# 🔴 0129 + 0130 ICIN ACILDI (2026-08-10, WP-654 + WP-656). Sahip ikisinin
+# de ayni oturumda uygulanmasini istedi; staging yine ONCE uygulanir ve
+# post-check'i okunur, yalniz aradaki bekleme birakilir.
+#   0129: study_sessions uzerindeki dort projeksiyon tetikleyicisinden ucu
+#         delete dinliyor, 0120:249 dinlemiyordu -- gunluk seri silmeyle geri
+#         gitmiyordu. Simetrik geri alma + dar olcutlu geriye donuk onarim.
+#   0130: SSS dokuz cumlede urunu yanlis anlatiyordu; en agiri 'tekrar giris
+#         yaparsan silme istegi iptal olur' idi (iptalin auth akisinda hic
+#         cagri yeri yok -- o cumleye guvenen kullanici hesabini kaybeder).
+# 🔴 pgTAP YERELDE KOSMADI: Docker motoru bu hostta kalkmiyor. tests/055 ve
+# 056 yazildi ama kosturulmadi; bu OLCEMEDIM'dir, yesil degildir. Ilk gercek
+# replay CI database-gates icindedir.
+Assert-Equal $contract.staging.migration_head '0130' 'staging hedefi 0130: 0129+0130 apply'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0129+0130 staging kapisi ACIK'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -194,8 +206,13 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # hesabinda OLCULDU: defterde t1..t4 var, ekranda sifir kademe.
 # ONARIM UYGULANDI (run 31336723743): "3 kilit satiri geri kondu",
 # "8 kullanici yeniden uzlastirildi", post-check uc sutunda da 0128.
-Assert-Equal $contract.production.migration_head '0128' 'production hedefi 0128: onarim uygulandi'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0128 apply bitti, production yeniden kilitli'
+# 🔴 0129 + 0130 ICIN PRODUCTION KAPISI DA ACILDI (2026-08-10). Sahip acikca
+# 'staging ile production'a ayni anda uygula, zaman kaybetmeyelim' dedi ve
+# staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
+# yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
+# kendisine soylendikten SONRA kararini yineledi.
+Assert-Equal $contract.production.migration_head '0130' 'production hedefi 0130: 0129+0130 apply'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0129+0130 production kapisi ACIK'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
