@@ -27,6 +27,26 @@ import 'clock_style.dart';
 import 'focus_timer_screen.dart';
 import 'timer_mode_controls.dart';
 
+/// Material'in asgari dokunma hedefi. **Alt sınır, hedef değil.**
+///
+/// 🔴 WP-662: bu sabit, WP-659'da konan `clamp(32, 48)`in yerine geçti. O clamp
+/// dar hücrede düğmeyi 36.7 px'e indiriyordu; ölçülen bir erişilebilirlik
+/// kusurudur, "biraz küçük" değil. Sığmayan aksiyon **küçültülmez**, taşma
+/// menüsüne alınır.
+const double kMinTouchTarget = 48.0;
+
+/// Bu yüksekliğin altındaki hücrede yalnız kartın **çekirdeği** çizilir:
+/// geçen süre + birincil eylem (Başlat/Durdur).
+///
+/// Ölçüldü (`timer_card_density_wp662_test.dart`): çekirdek düzen 160 px'lik
+/// hücreye ~0 px kaydırma payıyla oturur; ikincil satırlar eklendiğinde aynı
+/// hücrede 433 px kart-içi kaydırma çıkıyordu.
+const double kTimerCoreMaxHeight = 240.0;
+
+/// Bu yüksekliğin altında ikincil satırlar (mod seçici, günlük hedef çubuğu,
+/// ders seçici hapı, manuel süre ekle) gizlenir; üstünde tam kart çizilir.
+const double kTimerFullMinHeight = 400.0;
+
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
 /// [size] dar alana (küçük kart) uyum için: küçükken saat/yazılar küçülür.
@@ -248,14 +268,45 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           // tam ekran düğmesinin sağı **kesiliyor**, kaydırıcı bile yok, yani
           // kullanıcı o pikselleri hiçbir şekilde göremiyor.
           //
-          // Düğme kaldırmak / menüye taşımak ürün kararıdır ve sahibe sorulur;
-          // burada yapılan tek şey düzeni sıkıştırmak: kutu kalan yere göre
-          // ölçülür, geniş kartta 48 px'te kalır (hiçbir şey değişmez).
-          // Rozete ayrılan pay `Flexible`+`FittedBox` zaten küçültüyor, ama
-          // 0 px'e düşmesin diye asgari bir yer bırakılır.
+          // 🔴 WP-662 — o düzeltme kırpmayı bitirdi ama yerine bir
+          // ERİŞİLEBİLİRLİK kusuru koydu: `clamp(32, 48)` 160×160 hücrede
+          // düğmeyi **36.7 px**'e indiriyordu. 48 px altı bir dokunma hedefi
+          // "biraz küçük" değil, Material'in asgari hedefinin altıdır: parmak
+          // ucu 48 px'lik alanı bulacak şekilde tasarlanmıştır, 36.7 px'te
+          // yanlış düğmeye basmak kural olur.
+          //
+          // Yeni kural: **düğme küçülmez, sayısı azalır.** Şeride kaç tane
+          // 48 px'lik yuva sığdığı ölçülür; sığmayan aksiyonlar taşma menüsüne
+          // (`showAnchoredMenu`) girer. Menü düğmesi de bir yuva harcar, yani
+          // 2 yuvada 1 aksiyon + menü görünür.
           const badgeReserve = 24.0;
           final stripWidth = constraints.maxWidth - 18;
-          final actionSize = ((stripWidth - badgeReserve) / 3).clamp(32.0, 48.0);
+          final slots = ((stripWidth - badgeReserve) / kMinTouchTarget)
+              .floor()
+              .clamp(1, 3);
+
+          // 🔴 WP-662 — KÜÇÜK HÜCREDE İÇERİK GİZLENİR, KAYDIRILMAZ.
+          //
+          // WP-646 jesti doğru yere yolladı ama kalan borcu kendi notunda
+          // yazdı: "küçük hücrelerde içerik GERÇEKTEN taştığı için orada hâlâ
+          // kaydırma kalır". Ölçüldü (`card_scroll_inventory_test.dart`):
+          // 160×160 hücrede sayaç kartı **433 px** kart-içi kaydırma payı
+          // üretiyordu (yazı ölçeği 1.6'da 686 px) — yani kullanıcının gördüğü
+          // şey kartın dörtte biri.
+          //
+          // Sahip kararı: küçük hücrede kartın **çekirdeği** kalır — geçen süre
+          // + birincil eylem (Başlat/Durdur). Ders seçici hapı, günlük hedef
+          // çubuğu, mod seçici ve "manuel süre ekle" ikincil satırlardır; onlar
+          // için kart büyütülür ya da tam ekran odak açılır.
+          //
+          // İki eşik de hücrenin GERÇEK yüksekliğinden okunur, genişlik
+          // tahmininden değil: eski `small = maxWidth < 280` kuralı 328×160
+          // hücreyi "geniş" sayıp aynı yoğunluğu çiziyordu, sonuç 358 px taşma.
+          final availableHeight = constraints.maxHeight;
+          final heightBounded = availableHeight.isFinite;
+          final core = heightBounded && availableHeight < kTimerCoreMaxHeight;
+          final showSecondary =
+              !heightBounded || availableHeight >= kTimerFullMinHeight;
 
           // WP-496: kart artık `Stack` değil **akış**.
           //
@@ -333,7 +384,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 4, 0),
+                  padding: EdgeInsets.fromLTRB(14, core ? 2 : 6, 4, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -358,66 +409,36 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                         ),
                       ),
                       // Saat görünümü + tam ekran odak modu (§3.12).
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _stripAction(
-                            size: actionSize,
-                            tooltip: AppLocalizations.of(
-                              context,
-                            ).classroomGecmisOturumlar,
-                            icon: Icons.history,
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const SessionHistoryScreen(),
-                              ),
-                            ),
-                          ),
-                          Builder(
-                            builder: (iconContext) => _stripAction(
-                              size: actionSize,
-                              tooltip: AppLocalizations.of(
-                                context,
-                              ).classroomSaatGorunumu,
-                              icon: Icons.tune,
-                              onPressed: () =>
-                                  showClockStyleMenu(iconContext, ref),
-                            ),
-                          ),
-                          _stripAction(
-                            size: actionSize,
-                            tooltip: AppLocalizations.of(
-                              context,
-                            ).classroomTamEkranOdak,
-                            icon: Icons.fullscreen,
-                            onPressed: () => openFocusTimer(context),
-                          ),
-                        ],
-                      ),
+                      _StripActions(slots: slots, ref: ref),
                     ],
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                  padding: EdgeInsets.fromLTRB(16, 4, 16, core ? 4 : 20),
                   child: Column(
                     children: [
-                      Text(
-                        AppLocalizations.of(context).classroomBugun,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      // "Bugün" toplamı ÇEKİRDEK değil: çekirdek, geçen süre +
+                      // birincil eylemdir. 160 px'lik hücrede bu iki satır
+                      // (etiket + headlineMedium) tek başına ~60 px yiyor.
+                      if (!core) ...[
+                        Text(
+                          AppLocalizations.of(context).classroomBugun,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Dar kartta taşmasın diye ölçekle.
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          formatHumanSeconds(todayTotal),
-                          maxLines: 1,
-                          style: theme.textTheme.headlineMedium,
+                        const SizedBox(height: 4),
+                        // Dar kartta taşmasın diye ölçekle.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            formatHumanSeconds(todayTotal),
+                            maxLines: 1,
+                            style: theme.textTheme.headlineMedium,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
+                      ],
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: StudyClock(
@@ -425,39 +446,52 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                           pctToGoal: clockPct,
                           running: timer.isRunning,
                           style: clockStyle,
-                          fontSize: small ? 34 : (isLarge ? 56 : 40),
-                          diameter: small ? 130 : (isLarge ? 220 : 160),
+                          fontSize: core ? 28 : (small ? 34 : (isLarge ? 56 : 40)),
+                          // 🔴 Halka/dilim stillerinde saatin boyu `diameter`
+                          // ile SABİTTİR; `FittedBox` yalnız GENİŞLİĞE göre
+                          // küçültür, dikeyde sınır yok. Çekirdek hücrede 130 px
+                          // tek başına kutunun tamamını yer.
+                          diameter: core
+                              ? 88
+                              : (small ? 130 : (isLarge ? 220 : 160)),
                           // WP-554: yalnız ekran okuyucu etiketi için.
                           phase: timer.phase,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: core ? 8 : 16),
                       // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
-                      if (timer.isRunning) ...[
-                        TimerPhaseIndicator(timer: timer),
-                        const SizedBox(height: 8),
-                        TimerVerificationNotice(timer: timer),
-                        if (timer.mode != TimerMode.stopwatch)
+                      // Faz göstergesi bir DURUM satırıdır (mola mı, çalışma mı),
+                      // mod seçici ise bir kontrol — ilki orta hücrede kalır,
+                      // ikincisi ikincil satırlarla birlikte gizlenir.
+                      if (!core) ...[
+                        if (timer.isRunning) ...[
+                          TimerPhaseIndicator(timer: timer),
+                          const SizedBox(height: 8),
+                          TimerVerificationNotice(timer: timer),
+                          if (timer.mode != TimerMode.stopwatch)
+                            const SizedBox(height: 16),
+                        ] else if (showSecondary) ...[
+                          const TimerModeControls(),
                           const SizedBox(height: 16),
-                      ] else ...[
-                        const TimerModeControls(),
+                        ],
+                      ],
+                      if (showSecondary) ...[
+                        _GoalProgress(
+                          todaySeconds: todayTotal,
+                          goalSeconds: goalSeconds,
+                          pct: pct,
+                          reached: reached,
+                          onEdit: () => _editGoal(context, goalMinutes),
+                        ),
+                        const SizedBox(height: 16),
+                        _SubjectSelector(
+                          subjects: subjects,
+                          selectedId: timer.subjectId,
+                          running: timer.isRunning,
+                          onSelect: notifier.selectSubject,
+                        ),
                         const SizedBox(height: 16),
                       ],
-                      _GoalProgress(
-                        todaySeconds: todayTotal,
-                        goalSeconds: goalSeconds,
-                        pct: pct,
-                        reached: reached,
-                        onEdit: () => _editGoal(context, goalMinutes),
-                      ),
-                      const SizedBox(height: 16),
-                      _SubjectSelector(
-                        subjects: subjects,
-                        selectedId: timer.subjectId,
-                        running: timer.isRunning,
-                        onSelect: notifier.selectSubject,
-                      ),
-                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: timer.isRunning
@@ -501,14 +535,16 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 4),
-                      TextButton.icon(
-                        onPressed: () => addManualSessionFlow(context, ref),
-                        icon: const Icon(Icons.edit_calendar, size: 18),
-                        label: Text(
-                          AppLocalizations.of(context).classroomManuelSureEkle,
+                      if (showSecondary) ...[
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          onPressed: () => addManualSessionFlow(context, ref),
+                          icon: const Icon(Icons.edit_calendar, size: 18),
+                          label: Text(
+                            AppLocalizations.of(context).classroomManuelSureEkle,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -523,27 +559,129 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
 
 /// Sayaç kartının üst şeridindeki aksiyon düğmesi (§3.12).
 ///
-/// [size] hücreye göre 32–48 px arası **ölçülür** (bkz. `StudyTimerCard.build`
-/// içindeki WP-659 notu). 48 px'in altına inildiğinde Material'in `padded`
-/// dokunma kutusu kapatılır, yoksa `constraints` ne verilirse verilsin düğme
-/// yine 48 px yer ister (aynı tuzak `card_scaffold.dart` → `cardHeaderAction`
-/// içinde de ölçülmüştü).
+/// Boyut **sabit** [kMinTouchTarget]'tır. WP-659'daki `size` parametresi ve
+/// `clamp(32, 48)` kaldırıldı: hücre daraldığında küçülen şey düğme değil,
+/// görünen düğme SAYISIDIR (bkz. [_StripActions]).
 Widget _stripAction({
-  required double size,
   required IconData icon,
   required String tooltip,
   required VoidCallback onPressed,
 }) => IconButton(
   tooltip: tooltip,
   icon: Icon(icon),
-  iconSize: size >= 44 ? 24 : 20,
+  iconSize: 24,
   padding: EdgeInsets.zero,
-  constraints: BoxConstraints.tightFor(width: size, height: size),
-  style: size >= 48
-      ? null
-      : IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+  constraints: const BoxConstraints.tightFor(
+    width: kMinTouchTarget,
+    height: kMinTouchTarget,
+  ),
   onPressed: onPressed,
 );
+
+/// Üst şeritteki bir aksiyonun tanımı — hem düğme hem menü satırı olarak
+/// çizilebilsin diye ayrıldı (aynı etiket, aynı ikon, aynı iş).
+class _StripActionSpec {
+  const _StripActionSpec({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// Tetikleyicinin kendi context'i geçilir: `showClockStyleMenu` ve taşma
+  /// menüsü konumu buna göre bağlanır.
+  final void Function(BuildContext context) onPressed;
+}
+
+/// Üst şerit: [slots] kadar 48 px'lik yuvaya sığan aksiyonlar düğme, kalanlar
+/// taşma menüsü satırı olur.
+///
+/// 🔴 Menü düğmesi de bir yuva harcar — bu yüzden 2 yuvada 1 aksiyon + menü
+/// görünür, 3'te hepsi görünür ve menü hiç çizilmez.
+class _StripActions extends StatelessWidget {
+  const _StripActions({required this.slots, required this.ref});
+
+  final int slots;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // Sıra = önem sırası TERSİ: en sondaki en çok korunur. Yuva azaldıkça
+    // baştan menüye düşer, yani en son "Tam ekran odak" kalır.
+    final actions = <_StripActionSpec>[
+      _StripActionSpec(
+        icon: Icons.history,
+        label: l10n.classroomGecmisOturumlar,
+        onPressed: (ctx) => Navigator.of(ctx).push(
+          MaterialPageRoute(builder: (_) => const SessionHistoryScreen()),
+        ),
+      ),
+      _StripActionSpec(
+        icon: Icons.tune,
+        label: l10n.classroomSaatGorunumu,
+        onPressed: (ctx) => showClockStyleMenu(ctx, ref),
+      ),
+      _StripActionSpec(
+        icon: Icons.fullscreen,
+        label: l10n.classroomTamEkranOdak,
+        onPressed: (ctx) => openFocusTimer(ctx),
+      ),
+    ];
+
+    final visibleCount = slots >= actions.length ? actions.length : slots - 1;
+    final hidden = actions.sublist(0, actions.length - visibleCount);
+    final visible = actions.sublist(actions.length - visibleCount);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hidden.isNotEmpty)
+          Builder(
+            builder: (menuContext) => _stripAction(
+              icon: Icons.more_vert,
+              tooltip: l10n.classroomDigerSecenekler,
+              onPressed: () async {
+                final picked = await showAnchoredMenu<int>(
+                  context: menuContext,
+                  items: [
+                    for (var i = 0; i < hidden.length; i++)
+                      PopupMenuItem<int>(
+                        value: i,
+                        child: Row(
+                          children: [
+                            Icon(hidden[i].icon, size: 20),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                hidden[i].label,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+                if (picked == null || !menuContext.mounted) return;
+                hidden[picked].onPressed(menuContext);
+              },
+            ),
+          ),
+        for (final action in visible)
+          Builder(
+            builder: (actionContext) => _stripAction(
+              icon: action.icon,
+              tooltip: action.label,
+              onPressed: () => action.onPressed(actionContext),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 /// Sayaç için ders seçici — kapalıyken seçili dersi (veya "Genel"i) gösteren
 /// bir "dropdown" hap; dururken dokununca ders listesi alt sayfası açılır

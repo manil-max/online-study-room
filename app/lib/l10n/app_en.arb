@@ -810,6 +810,10 @@
   "@classroomDersleriDuzenle": {
     "description": "Classroom user-facing text. Source: Dersleri düzenle"
   },
+  "classroomDigerSecenekler": "More options",
+  "@classroomDigerSecenekler": {
+    "description": "Classroom user-facing text. Source: Diğer seçenekler | WP-662: timer card top-strip overflow menu button"
+  },
   "classroomDurdur": "Stop",
   "@classroomDurdur": {
     "description": "Classroom user-facing text. Source: Durdur"

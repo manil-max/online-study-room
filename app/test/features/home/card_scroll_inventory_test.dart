@@ -339,20 +339,20 @@ String _k(DashboardCardType t, _Screen s, _Box b) =>
     '${t.name}|${s.name}|${b.name}';
 
 const Map<String, double> _budget = {
-  // 🔴 `study_timer_card.dart` — jest kusuru WP-646'da kapandı (kart artık
-  // `kCardOverflowScrollPhysics` + `primary: false`), buradaki paylar GERÇEK
-  // taşmadır: sayaç kartının içeriği (rozet şeridi + saat + mod seçici +
-  // hedef + ders + iki düğme) bu hücrelere gerçekten sığmıyor.
-  // 🔴 Yoğunluğu azaltmak — hangi parçanın küçük hücrede gizleneceği — ÜRÜN
-  // kararıdır; sahibe önizlemeyle sorulur, ajan kendiliğinden yapmaz.
-  // WP-659: yalnız üst şeridin KIRPILMASI düzeltildi (3×48 px düğme 134 px'e
-  // sığmıyordu) — şerit kısaldığı için ilk satır 444.3 → 432.9'a indi.
-  'timer|dar telefon|yarım 16×16': 432.9,
-  'timer|dar telefon|tam 32×16': 358.0,
-  'timer|dar telefon|büyütülmüş 32×26': 253.0,
-  'timer|geniş telefon|yarım 16×16': 345.7,
-  'timer|geniş telefon|tam 32×16': 359.0,
-  'timer|geniş telefon|büyütülmüş 32×26': 232.8,
+  // 🔴 `study_timer_card.dart` — jest kusuru WP-646'da kapandı, YOĞUNLUK ise
+  // WP-662'de: küçük hücrede kartın yalnız ÇEKİRDEĞİ (geçen süre + Başlat/
+  // Durdur) çizilir; ders seçici hapı, günlük hedef çubuğu, mod seçici ve
+  // "manuel süre ekle" gizlenir. Geniş telefonun ÜÇ hücresi tamamen 0'a indi
+  // (345.7 / 359.0 / 232.8 → 0, yani satırları buradan silindi); dar telefonun
+  // üçü ise 432.9 → 34.7, 358.0 → 2.0, 253.0 → 11.0.
+  //
+  // 🔴 Kalan borç (tablet 416 px yüksek hücreler): orası "küçük hücre" değil,
+  // TAM kartın çizildiği yerdir ve tam kart 416 px genişlikte ~543 px istiyor.
+  // Orada hangi satırın gizleneceği ayrı bir ÜRÜN kararıdır (sahibe önizlemeyle
+  // sorulur); WP-662'ye verilen dört kararın içinde değildi, düşürülmedi.
+  'timer|dar telefon|yarım 16×16': 34.7,
+  'timer|dar telefon|tam 32×16': 2.0,
+  'timer|dar telefon|büyütülmüş 32×26': 11.0,
   'timer|tablet/masaüstü|yarım 16×16': 126.0,
   'timer|tablet/masaüstü|tam 32×16': 132.0,
 
@@ -392,16 +392,12 @@ const Map<String, double> _budget = {
   'records|geniş telefon|tam 32×16': 210.0,
   'records|geniş telefon|büyütülmüş 32×26': 83.8,
 
-  // ✅ `leaderboard` — WP-659'da DÖRT satırdan üçü 0'a indi (22.9 / 18.3 / 42.3
-  // → 0). Kalan tek satır gerçek taşmadır ve yalnız bu hücreye özgü: 328 px
-  // genişlikte `tam 32×16` kutusu 160 px yüksek ama kart o genişlikte
-  // "compact" DEĞİL, yani grup hedefi bloğu da çiziliyor ve başlık tek başına
-  // 91 px yiyor; listeye 37 px kalıyor, tek satır ise 54 px. Yani kart tek
-  // satır paketliyor (doğru davranış) ve o satırın 17 px'i kaydırma payına
-  // düşüyor — WP-497 güvenlik ağı.
-  // 🔴 Kalan borcun düzeltmesi ürün kararıdır: "kısa ve geniş hücrede grup
-  // hedefi bloğu gizlensin mi?" — sahibe sorulacak, ajan kendi seçmez.
-  'leaderboard|dar telefon|tam 32×16': 17.0,
+  // ✅ `leaderboard` — artık HİÇBİR hücrede kart-içi kaydırma yok. WP-659 dört
+  // satırdan üçünü (22.9 / 18.3 / 42.3) düşürdü, WP-662 kalanı (17.0) kapattı:
+  // "geniş ama kısa" hücrede grup hedefi bloğu artık çizilmiyor (görünürlük
+  // kararı yalnız GENİŞLİĞE bakıyordu, sorun YÜKSEKLİKTİ) ve kısa hücrede satır
+  // sıkıştırılmış varyanta geçiyor (54 → 34 px), böylece 160×160 hücre tek kişi
+  // yerine iki kişi gösteriyor. Bkz. `leaderboard_dense_row_wp662_test.dart`.
 };
 
 /// Kart-içi kaydırma DEĞİL, düpedüz kırpma: gövde `RenderFlex` taşması veriyor

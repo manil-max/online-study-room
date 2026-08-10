@@ -40,6 +40,24 @@ import 'group_card_shell.dart';
 /// boyu 1.0 / 1.3 / 1.6 yazı ölçeğinde ölçüp bu sayıyla karşılaştırır.
 const double kLeaderboardRowExtent = 54.0;
 
+/// **Sıkıştırılmış** satırın dayatılan yüksekliği (kısa hücre).
+///
+/// 🔴 WP-662 varlık sebebi. WP-659 aritmetiği doğrulttu ama sonuç şuydu:
+/// 160×160 hücrede gövdeye ~83 px kalıyor, satır 54 px, yani kart **tek kişi**
+/// gösteriyordu. Tek kişilik bir "sıralama" tablosu bilgi taşımaz — sıralama en
+/// az bir karşılaştırma demektir.
+///
+/// Bu varyantta satırın boyunu belirleyen şey taçlı avatar kutusudur: taç
+/// merkezin **1.74 katı** yukarı çıktığı için r = 14'lük avatar 45.44 px'lik bir
+/// kutuya oturur. r = 8'de aynı silüet 29.00 px'e iner; dikey padding de 4 → 2
+/// düşürülür. Ölçülen doğal boy (yazı ölçeği 1.0 / 1.3 / 1.6) bu sabitin
+/// altındadır — bkz. `leaderboard_dense_row_wp662_test.dart`.
+///
+/// ⚠️ [kLeaderboardRowExtent] ile aynı tuzak: küçültülürse içerik **sessizce**
+/// kırpılır (yatay `Row` dikey taşmayı raporlamaz). Sözleşme testi satırın
+/// gerçek intrinsic boyunu ölçüp bu sayıyla karşılaştırır.
+const double kLeaderboardDenseRowExtent = 34.0;
+
 /// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Kaç kişi
 /// görüneceği kartın kutusundan **ölçülerek** çıkar (bkz.
 /// [kLeaderboardRowExtent]).
@@ -101,9 +119,32 @@ class LeaderboardCard extends ConsumerWidget {
           // yani yalnız kırpmaya karşı korkuluk. Yanılırsa sonuç "yanlış sayıda
           // kişi" değil, "tüm kart kayar" (WP-497 güvenlik ağı) olur.
           final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+          // Ölçülen iki parça (WP-659): yalnız başlık satırı 44 px, grup hedefi
+          // bloğu (etiket + rozet + yüzde + çubuk) 47 px; yazı ölçeğiyle
+          // sırasıyla 24 ve 16 px büyürler. 44 + 47 = eski 91 px sabiti.
+          final titleReserve = 44.0 + 24.0 * (textScale - 1.0);
+          final goalReserve = 47.0 + 16.0 * (textScale - 1.0);
+
+          // 🔴 WP-662 — "geniş ama KISA" hücrede grup hedefi bloğu kartı yiyor.
+          //
+          // Ölçüldü: 328×160 hücrede kart `isCompact` DEĞİL (genişlik 320 ≥ 220),
+          // yani grup hedefi bloğu çiziliyor ve başlık tek başına 120 px'lik
+          // gövdenin 91'ini alıyor; listeye 37 px kalıyor, tek satır ise 54 px.
+          // Sonuç: kart tek satır paketliyor ve o satırın 17 px'i (yazı ölçeği
+          // 1.3'te 29, 1.6'da 41 px) kart-içi kaydırma payına düşüyordu.
+          //
+          // Görünürlük kararı yalnız GENİŞLİĞE bakıyordu; sorun YÜKSEKLİKTİ.
+          // Kural: blok, kendisinden sonra en az iki normal satır kalıyorsa
+          // çizilir. Sınırsız yükseklikte (Gruplar `ListView`i) hep çizilir —
+          // orada kartın boyu içeriğe göre uzar.
+          final showGroupGoal =
+              !isCompact &&
+              (!isHeightBounded ||
+                  innerHeight >=
+                      titleReserve + goalReserve + 2 * kLeaderboardRowExtent);
+
           final headerReserve =
-              (isCompact ? 44.0 : 91.0) +
-              (isCompact ? 24.0 : 40.0) * (textScale - 1.0);
+              titleReserve + (showGroupGoal ? goalReserve : 0.0);
 
           // Sınırsız yükseklikte (Gruplar `ListView`i) `Expanded` kullanılamaz.
           final fill = isHeightBounded && innerHeight >= headerReserve;
@@ -175,7 +216,10 @@ class LeaderboardCard extends ConsumerWidget {
                   ),
               ],
             ),
-            if (!isCompact) ...[
+            // 🔴 WP-662: koşul `!isCompact` idi — yani yalnız GENİŞLİK
+            // bakılıyordu. Kısa hücrede blok başlığı şişirip listeyi
+            // kaydırıcıya düşürüyordu; bkz. yukarıdaki [showGroupGoal] notu.
+            if (showGroupGoal) ...[
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -234,13 +278,18 @@ class LeaderboardCard extends ConsumerWidget {
             const SizedBox(height: 12),
           ];
 
-          Widget rowFor(List<MapEntry<String, int>> board, int i) => _Row(
+          Widget rowFor(
+            List<MapEntry<String, int>> board,
+            int i, {
+            bool dense = false,
+          }) => _Row(
             rank: i + 1,
             member: memberFor(board[i].key),
             seconds: board[i].value,
             alphaWins: alphaWins[board[i].key] ?? 0,
             isMe: board[i].key == meId,
             isCompact: isCompact,
+            dense: dense,
           );
 
           final emptyText = Text(
@@ -288,10 +337,17 @@ class LeaderboardCard extends ConsumerWidget {
                   // ölçeği, grup adı, rozet) hesap kendiliğinden düzelir.
                   child: LayoutBuilder(
                     builder: (context, bodyConstraints) {
-                      final count =
-                          (bodyConstraints.maxHeight / kLeaderboardRowExtent)
-                              .floor()
-                              .clamp(1, 15);
+                      // 🔴 WP-662 — tek kişilik "sıralama" tablosu bilgi
+                      // taşımaz. Gövde iki NORMAL satır almıyorsa satırlar
+                      // sıkıştırılmış varyanta geçer (küçük avatar, dar
+                      // padding) ve karşılaştırma geri gelir. Karar yükseklikten
+                      // ÖLÇÜLEREK çıkar; "dar ekran" gibi bir tahmin değil.
+                      final bodyHeight = bodyConstraints.maxHeight;
+                      final dense = bodyHeight < 2 * kLeaderboardRowExtent;
+                      final extent = dense
+                          ? kLeaderboardDenseRowExtent
+                          : kLeaderboardRowExtent;
+                      final count = (bodyHeight / extent).floor().clamp(1, 15);
                       final board = ranked.take(count).toList();
                       if (board.isEmpty) return emptyText;
                       return ListView.builder(
@@ -302,9 +358,10 @@ class LeaderboardCard extends ConsumerWidget {
                         primary: false,
                         // Yukarıdaki bölme ile AYNI sayı: paketlenen satır
                         // sayısı kutuya sığar, artık kaydırıcı kalmaz.
-                        itemExtent: kLeaderboardRowExtent,
+                        itemExtent: extent,
                         itemCount: board.length,
-                        itemBuilder: (context, i) => rowFor(board, i),
+                        itemBuilder: (context, i) =>
+                            rowFor(board, i, dense: dense),
                       );
                     },
                   ),
@@ -326,6 +383,7 @@ class _Row extends StatelessWidget {
     required this.alphaWins,
     required this.isMe,
     this.isCompact = false,
+    this.dense = false,
   });
 
   final int rank;
@@ -334,6 +392,12 @@ class _Row extends StatelessWidget {
   final int alphaWins;
   final bool isMe;
   final bool isCompact;
+
+  /// WP-662 — kısa hücrede en az iki kişiyi göstermek için sıkıştırılmış
+  /// varyant: avatar r = 14 → 8, dikey padding 4 → 2, sıra numarası küçülür.
+  /// Taç KALDIRILMADI (kademe rozeti listenin anlamının parçası), yalnız
+  /// küçüldü; satırın boyunu belirleyen şey zaten tacın uzantısıdır.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -361,16 +425,22 @@ class _Row extends StatelessWidget {
             ? () => openMemberProfile(context, member!)
             : null,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          padding: EdgeInsets.symmetric(
+            vertical: dense ? 2 : 4,
+            horizontal: 4,
+          ),
           child: Row(
             children: [
               SizedBox(
-                width: 22,
+                width: dense ? 16 : 22,
                 child: Text(
                   '$rank',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  maxLines: 1,
+                  style:
+                      (dense
+                              ? theme.textTheme.labelMedium
+                              : theme.textTheme.titleSmall)
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
               if (member != null)
@@ -378,22 +448,29 @@ class _Row extends StatelessWidget {
                   userId: member!.id,
                   displayName: name,
                   avatarUrl: member!.avatarUrl,
-                  radius: 14,
+                  radius: dense ? 8 : 14,
                 )
               else
-                CrownedAvatar(displayName: name, radius: 14),
-              const SizedBox(width: 8),
+                CrownedAvatar(displayName: name, radius: dense ? 8 : 14),
+              SizedBox(width: dense ? 6 : 8),
               if (!isCompact) ...[
                 Expanded(
                   child: Text(
                     isMe
                         ? AppLocalizations.of(context).commonSenEtiketi(name)
                         : name,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isMe ? FontWeight.w600 : null,
-                      color: isMe ? theme.colorScheme.primary : null,
-                    ),
+                    // WP-662: sıkıştırılmış satırda ad da küçülür; yoksa yazı
+                    // ölçeği 1.6'da tek başına satırı 34 px'in üstüne çıkarır.
+                    style:
+                        (dense
+                                ? theme.textTheme.bodySmall
+                                : theme.textTheme.bodyMedium)
+                            ?.copyWith(
+                              fontWeight: isMe ? FontWeight.w600 : null,
+                              color: isMe ? theme.colorScheme.primary : null,
+                            ),
                   ),
                 ),
                 if (alphaWins > 0) ...[
