@@ -76,23 +76,35 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final androidSurfaces = _androidSurfacesAvailable;
+    // 🔴 WP-688: masaüstünde katalog hiç çizilmiyor (WP-687), yani Android
+    // başlığı "Widget ve izinler" var olmayan bir yüzeyi vaat ediyordu.
+    // Masaüstü başlığı ekranda gerçekten duran şeyi adlandırır: Android
+    // izinlerinin BİLGİsi. Aynı dize hem AppBar'da hem gövdenin ilk
+    // satırında kullanılır — biri düzeltilip diğeri unutulmasın diye tek yer.
+    final screenTitle = androidSurfaces
+        ? AppLocalizations.of(context).clockWidgetVeIzinler
+        : AppLocalizations.of(context).clockMasaustuAndroidIzinBilgisi;
     final body = ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         // `severe: false`: masaüstünde kullanıcı bir şey kurup boşuna
         // beklemiyor (alarmda öyleydi) — sunulan hiçbir şey yok. Bilgi tonu
         // doğru ton; kırmızı şerit burada yanlış alarm olurdu.
+        //
+        // 🔴 WP-688: metin artık ödünç değil. WP-687 en yakın dizeyi
+        // (`notificationsIzinMasaustundeGecersiz`) kullanmıştı çünkü `.arb`
+        // onun SAHİP yollarında değildi; o cümle yalnız bildirim izninden söz
+        // ediyor, ekranın **öteki yarısı** olan ana ekran widget kataloğunu
+        // hiç anmıyordu. Yeni anahtar ikisini birden söyler.
         if (!androidSurfaces) ...[
           PlatformLimitBanner(
             key: const Key('clock_widgets_desktop_limit_banner'),
-            message: AppLocalizations.of(
-              context,
-            ).notificationsIzinMasaustundeGecersiz,
+            message: AppLocalizations.of(context).clockMasaustuWidgetVeIzinYok,
           ),
           const SizedBox(height: 12),
         ],
         Text(
-          AppLocalizations.of(context).clockWidgetVeIzinler,
+          screenTitle,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -240,20 +252,29 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
               ),
             ),
         ],
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: _refresh,
-          icon: const Icon(Icons.refresh),
-          label: Text(AppLocalizations.of(context).clockIzinleriYenile),
-        ),
+        // 🔴 WP-688: masaüstünde bu düğme **kaldırılır**, devre dışı
+        // bırakılmaz. Dört izin satırı bilgi taşır (Android'de hangi izin
+        // gerekiyor), o yüzden onlar gri düğmeyle yerinde durur — ama bu
+        // düğme yalnız EYLEMDEN ibarettir ve eylemi bu platformda hiçbir
+        // zaman bir şey değiştiremez: `snapshot()` `Platform.isAndroid ==
+        // false` iken kanala hiç gitmeden `unsupported` döner
+        // (`clock_permissions.dart:127`). Devre dışı gri bir düğme
+        // "şimdilik olmuyor" der; doğrusu "bu platformda böyle bir şey yok"
+        // ve o cümle zaten şeritte yazılı.
+        if (androidSurfaces) ...[
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+            label: Text(AppLocalizations.of(context).clockIzinleriYenile),
+          ),
+        ],
       ],
     );
 
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).clockWidgetVeIzinler),
-      ),
+      appBar: AppBar(title: Text(screenTitle)),
       body: body,
     );
   }

@@ -57,7 +57,7 @@ void main() {
     }
   }
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {String locale = 'tr'}) async {
     tester.view.physicalSize = const Size(1080, 6000);
     tester.view.devicePixelRatio = 3;
     addTearDown(() {
@@ -65,12 +65,12 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
     await tester.pumpWidget(
-      const ProviderScope(
+      ProviderScope(
         child: MaterialApp(
-          locale: Locale('tr'),
+          locale: Locale(locale),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: ClockWidgetsScreen(),
+          home: const ClockWidgetsScreen(),
         ),
       ),
     );
@@ -171,6 +171,140 @@ void main() {
       }
       // WP-296 dalı: `available` + eksik izin varken toplu düğme de durur.
       expect(find.textContaining('Eksik izinleri aç'), findsWidgets);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // WP-688 — WP-687'nin bıraktığı metin borcu.
+  //
+  // WP-687 şeridi koydu ama `.arb` onun SAHİP yollarında değildi, bu yüzden
+  // en yakın dizeyi ödünç aldı: `notificationsIzinMasaustundeGecersiz`
+  // ("Masaüstü sürümü işletim sistemi bildirimi göndermez…"). O cümle yalnız
+  // ekranın **izin** yarısını anlatıyor; katalog yarısı hakkında tek kelime
+  // etmiyor. Başlık ("Widget ve izinler") ise masaüstünde artık çizilmeyen bir
+  // şeyi vaat ediyordu.
+  // ────────────────────────────────────────────────────────────────────────
+
+  /// WP-688 şerit metni — iki yarıyı da adıyla anar.
+  const trBanner =
+      'Masaüstü sürümünde ana ekran widget\'ı da Android izinleri de yoktur; '
+      'bu sekmede kurulacak ya da verilecek bir şey yok.';
+  const enBanner =
+      'The desktop build has no home screen widgets and no Android '
+      'permissions, so there is nothing to add or grant on this tab.';
+
+  /// WP-687'nin ödünç aldığı, yalnız bildirim izninden söz eden dize.
+  const borrowedNotificationsOnly =
+      'Masaüstü sürümü işletim sistemi bildirimi göndermez; burada kontrol '
+      'edilecek bir izin yok.';
+
+  testWidgets('WP-688 Windows: şerit iki yarıyı da anlatır (ödünç dize yok)', (
+    tester,
+  ) async {
+    await onPlatform(TargetPlatform.windows, () async {
+      ClockPermissions.debugSnapshotOverride = _windowsSnapshot;
+      await pump(tester);
+
+      expect(
+        find.text(trBanner),
+        findsOneWidget,
+        reason:
+            'Şerit hem ana ekran widget kataloğunun hem de dört iznin bu '
+            'platformda olmadığını söylemeli; ekranda çizilen METİN ölçülür.',
+      );
+      expect(
+        find.text(borrowedNotificationsOnly),
+        findsNothing,
+        reason:
+            'WP-687 bu dizeyi ödünç almıştı: yalnız bildirim izninden söz '
+            'ediyor, kataloğu hiç anmıyor.',
+      );
+    });
+  });
+
+  testWidgets('WP-688 Windows: şerit EN katalogda da çizilir', (tester) async {
+    await onPlatform(TargetPlatform.windows, () async {
+      ClockPermissions.debugSnapshotOverride = _windowsSnapshot;
+      await pump(tester, locale: 'en');
+
+      expect(
+        find.text(enBanner),
+        findsOneWidget,
+        reason: 'Yeni anahtar iki dilde de gerçekten çiziliyor olmalı.',
+      );
+    });
+  });
+
+  testWidgets('WP-688 Windows: başlık olmayan widget\'ı vaat etmez', (
+    tester,
+  ) async {
+    await onPlatform(TargetPlatform.windows, () async {
+      ClockPermissions.debugSnapshotOverride = _windowsSnapshot;
+      await pump(tester);
+
+      expect(
+        find.text('Widget ve izinler'),
+        findsNothing,
+        reason:
+            'Masaüstünde katalog hiç çizilmiyor; başlık var olmayan bir yüzeyi '
+            'vaat edemez.',
+      );
+      expect(
+        find.text('Android izin bilgisi'),
+        findsNWidgets(2),
+        reason:
+            'Başlık iki yerde geçer: AppBar (`:214`) ve gövdenin ilk satırı '
+            '(`:95`). İkisi de düzeltilmeli, biri değil.',
+      );
+    });
+  });
+
+  testWidgets('WP-688 Windows: "İzinleri yenile" düğmesi çizilmez', (
+    tester,
+  ) async {
+    await onPlatform(TargetPlatform.windows, () async {
+      ClockPermissions.debugSnapshotOverride = _windowsSnapshot;
+      await pump(tester);
+
+      // Karar: dört izin SATIRI devre dışı bırakılır (satır bilgi taşır:
+      // Android'de hangi izin gerekiyor), ama bu düğme yalnız EYLEMDEN ibaret.
+      // `snapshot()` masaüstünde `Platform.isAndroid == false` diye kanala hiç
+      // gitmeden `unsupported` döner (`clock_permissions.dart:127`) — yani
+      // "yenile" sonucu ASLA değişemez. Devre dışı gri bir düğme "şimdilik
+      // olmuyor" der; doğrusu "bu platformda böyle bir şey yok".
+      expect(
+        find.text('İzinleri yenile'),
+        findsNothing,
+        reason:
+            'Sonucu değişemeyen, bilgi de taşımayan bir eylem düğmesi '
+            'çizilmemeli (WP-611 bozuk düğme sınıfı).',
+      );
+      expect(
+        find.widgetWithText(OutlinedButton, 'İzinleri yenile'),
+        findsNothing,
+      );
+    });
+  });
+
+  testWidgets('WP-688 Android kolu birebir korunur (başlık + yenile düğmesi)', (
+    tester,
+  ) async {
+    await onPlatform(TargetPlatform.android, () async {
+      ClockPermissions.debugSnapshotOverride = _androidMissingSnapshot;
+      await pump(tester);
+
+      expect(
+        find.text('Widget ve izinler'),
+        findsNWidgets(2),
+        reason: 'Android başlığı bugünkü gibi kalmalı (AppBar + gövde).',
+      );
+      expect(find.text('Android izin bilgisi'), findsNothing);
+      expect(
+        find.widgetWithText(OutlinedButton, 'İzinleri yenile'),
+        findsOneWidget,
+        reason: 'Android\'de yenile düğmesi gerçekten çalışır; kaldırılamaz.',
+      );
+      expect(find.text(trBanner), findsNothing);
     });
   });
 }

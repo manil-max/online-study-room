@@ -2104,5 +2104,9 @@
   "profileAchievementTierKept": "Kademe {tier} kazanıldı · kalıcı",
   "@profileAchievementTierKept": {"description": "WP-663: `current` sinifi metrikte kazanilmis kademenin geri alinmadigini soyleyen satir."},
   "profileAchievementCurrentStreakTowardNext": "Şu anki seri {current} · Kademe {tier} için {target} gerek",
-  "@profileAchievementCurrentStreakTowardNext": {"description": "WP-663: dusen (current) seri degerinin hangi kademeye sayildigini adiyla yazan satir."}
+  "@profileAchievementCurrentStreakTowardNext": {"description": "WP-663: dusen (current) seri degerinin hangi kademeye sayildigini adiyla yazan satir."},
+  "clockMasaustuWidgetVeIzinYok": "Masaüstü sürümünde ana ekran widget'ı da Android izinleri de yoktur; bu sekmede kurulacak ya da verilecek bir şey yok.",
+  "@clockMasaustuWidgetVeIzinYok": {"description": "WP-688: masaustunde ClockWidgetsScreen'in IKI yarisinin da (ana ekran widget katalogu + dort Android izni) bulunmadigini tek cumlede soyleyen serit. Oncesinde WP-687 en yakin dizeyi odunc almisti; o cumle yalniz bildirim izninden soz ediyordu."},
+  "clockMasaustuAndroidIzinBilgisi": "Android izin bilgisi",
+  "@clockMasaustuAndroidIzinBilgisi": {"description": "WP-688: masaustunde ClockWidgetsScreen basligi. Android basligi ('Widget ve izinler') o platformda cizilmeyen bir katalogu vaat ediyordu."}
 }

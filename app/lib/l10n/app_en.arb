@@ -6893,5 +6893,13 @@
         "type": "int"
       }
     }
+  },
+  "clockMasaustuWidgetVeIzinYok": "The desktop build has no home screen widgets and no Android permissions, so there is nothing to add or grant on this tab.",
+  "@clockMasaustuWidgetVeIzinYok": {
+    "description": "WP-688: masaustunde ClockWidgetsScreen'in IKI yarisinin da (ana ekran widget katalogu + dort Android izni) bulunmadigini tek cumlede soyleyen serit. Oncesinde WP-687 en yakin dizeyi odunc almisti; o cumle yalniz bildirim izninden soz ediyordu."
+  },
+  "clockMasaustuAndroidIzinBilgisi": "Android permission info",
+  "@clockMasaustuAndroidIzinBilgisi": {
+    "description": "WP-688: masaustunde ClockWidgetsScreen basligi. Android basligi ('Widget ve izinler') o platformda cizilmeyen bir katalogu vaat ediyordu."
   }
 }
