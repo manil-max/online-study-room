@@ -35,14 +35,41 @@ class RhythmCard extends ConsumerWidget {
       ),
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
-        // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).
-        // WP-508: ritim ızgarası gerçekten taşabilir, kaydırma korunur — ama
-        // yalnız taşma varken; sığdığında sürükleme dış sayfaya bırakılır.
-        child: cardScrollIfOverflows(
-          child: cardScrollIfOverflows(
-            axis: Axis.horizontal,
-            child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // 🔴 WP-643 kök neden. Burada iç içe iki `cardScrollIfOverflows`
+            // vardı (dikey + yatay). Yatay kaydırıcı çocuğuna **sınırsız**
+            // genişlik verir; `WeekHourHeatmap` ise hücre boyutunu
+            // `constraints.maxWidth`ten türetir ve sınırsız genişlikte
+            // `320.0` SABİT yedeğine düşer. Sonuç: ızgara kartın gerçek
+            // genişliğini hiç kullanmıyor, ölçüsü kart büyüdükçe DEĞİŞMİYOR
+            // ve dikey kaydırıcı her boyutta ayakta kalıyordu — sahibin
+            // "kartı ne kadar büyütürsem büyüteyim gene var" dediği tam bu.
+            // Ölçüm (WP-643 envanteri): içerik boyu 328×160'ta da 328×265'te
+            // de 258 px sabit; dikey kaydırma payı 174 px ve 69 px.
+            // Üstelik yatay kaydırıcı da payı sıfırdan büyükte kalıyordu
+            // (328 px kartta 32 px), yani kart iki eksende birden jest yutuyordu.
+            //
+            // Isı haritası bir **desendir**: parça parça kaydırılarak değil
+            // bütün hâlinde okunur. Bu yüzden çözüm kaydırma değil ölçekleme:
+            // sığıyorsa olduğu gibi, sığmıyorsa küçülerek çizilir. Kartta hiç
+            // `Scrollable` kalmadığı için dikey sürükleme her zaman dış
+            // sayfaya gider (WP-508'in aradığı davranış), taşan içerik de
+            // kırpılmaz (WP-497 geri gelmez) — yalnız küçülür.
+            const minWidth = 30.0 + 24 * (6.0 + 2.0); // etiket + en küçük hücre
+            final available = constraints.maxWidth;
+            final width = available.isFinite && available > minWidth
+                ? available
+                : minWidth;
+            return FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: width,
+                child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
+              ),
+            );
+          },
         ),
       ),
     );

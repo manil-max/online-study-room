@@ -45,6 +45,18 @@ class HeatmapCard extends ConsumerWidget {
             // WP-508: ısı haritası gerçekten taşabilir, o yüzden kaydırma
             // korunur — ama yalnız taşma varken; sığdığında iki eksende de
             // sürükleme dış sayfaya bırakılır.
+            //
+            // 🔴 WP-643 ölçümü (düzeltilmedi, ayrı WP): `StudyHeatmap`in hücre
+            // ölçüsü SABİT (13 px) ve boyu 7 satır + gösterge = ~154 px, yani
+            // kart ne kadar uzatılırsa uzatılsın içerik boyu DEĞİŞMEZ. Kısa
+            // hücrede dikey kaydırıcı bu yüzden açık kalıyor (160 px yüksek
+            // hücrede 70 px, 194 px'te 36 px pay; 265 px ve üstünde 0).
+            // `rhythm_card`taki ölçekleme çözümü buraya doğrudan uymuyor:
+            // `StudyHeatmap` kendi içinde yatay bir `SingleChildScrollView`
+            // (reverse) taşıyor ve dar hücrede doğal genişliğine ihtiyaç
+            // duyuyor; genişliği hücreye sabitlemek `RenderFlex` taşması
+            // üretiyor. Doğru düzeltme `study_heatmap.dart`ta (bu lane'in
+            // SAHİP yolu değil).
             return cardScrollIfOverflows(
               child: cardScrollIfOverflows(
                 axis: Axis.horizontal,
