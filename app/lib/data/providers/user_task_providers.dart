@@ -146,7 +146,31 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
     }
   }
 
-  Future<void> updateTask(UserTask task) async {
+  /// WP-647 - tekrarlamaya CEVRILEN gorevin fazi bugunden baslar.
+  ///
+  /// [add] tekrarli gorev olustururken anchor'i acikca kuruyordu
+  /// (`_dateOnly(anchorDate ?? istanbulDay(dueAt ?? now))`), ama duzenleme
+  /// yolu (`tasks_screen` -> `update`) anchor'i hic gecmiyordu. Var olan tek
+  /// seferlik bir gorev "her N gunde bir" yapilinca anchor `null` kaliyor ve
+  /// `taskRecurrenceAnchorDay` gorevin OLUSTURULMA gunune dusuyordu.
+  ///
+  /// Kullanici bunu soyle yasiyor: 5 gun once actigi gorevi bugun "her 3
+  /// gunde bir" yapiyor; gorev **Bugun** bolumunden kayboluyor, "Sirada:
+  /// 11 Agustos" etiketiyle Tekrarlananlar'a dusuyor. Ustelik o gun kutuya
+  /// dokununca `taskOccurrenceDayForCompletion` null donuyor ve kullanici
+  /// hata mesaji aliyor. Ayni gorevi bugun SIFIRDAN olustursa bugune duserdi
+  /// - yani iki yol ayni girdiye farkli cevap veriyordu.
+  ///
+  /// Acik anchor'a **dokunulmaz**: kullanicinin/sunucunun kurdugu faz korunur.
+  UserTask _reanchorIfNeeded(UserTask task) {
+    if (!task.isRecurring || task.anchorDate != null) return task;
+    return task.copyWith(
+      anchorDate: _dateOnly(istanbulDay(task.dueAt ?? _now)),
+    );
+  }
+
+  Future<void> updateTask(UserTask incoming) async {
+    final task = _reanchorIfNeeded(incoming);
     final previous = _current;
     _apply([
       for (final t in previous)
