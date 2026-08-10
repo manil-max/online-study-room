@@ -339,11 +339,15 @@ String _k(DashboardCardType t, _Screen s, _Box b) =>
     '${t.name}|${s.name}|${b.name}';
 
 const Map<String, double> _budget = {
-  // 🔴 `study_timer_card.dart` — BU LANE'İN SAHİP YOLU DEĞİL (WP açılacak).
-  // Kartın gövdesi koşulsuz bir `SingleChildScrollView`; `physics`/`primary`
-  // verilmediği için `AlwaysScrollableScrollPhysics`e düşer ve sığan içerikte
-  // bile dikey jesti yutar. Envanterdeki en kötü kart.
-  'timer|dar telefon|yarım 16×16': 444.3,
+  // 🔴 `study_timer_card.dart` — jest kusuru WP-646'da kapandı (kart artık
+  // `kCardOverflowScrollPhysics` + `primary: false`), buradaki paylar GERÇEK
+  // taşmadır: sayaç kartının içeriği (rozet şeridi + saat + mod seçici +
+  // hedef + ders + iki düğme) bu hücrelere gerçekten sığmıyor.
+  // 🔴 Yoğunluğu azaltmak — hangi parçanın küçük hücrede gizleneceği — ÜRÜN
+  // kararıdır; sahibe önizlemeyle sorulur, ajan kendiliğinden yapmaz.
+  // WP-659: yalnız üst şeridin KIRPILMASI düzeltildi (3×48 px düğme 134 px'e
+  // sığmıyordu) — şerit kısaldığı için ilk satır 444.3 → 432.9'a indi.
+  'timer|dar telefon|yarım 16×16': 432.9,
   'timer|dar telefon|tam 32×16': 358.0,
   'timer|dar telefon|büyütülmüş 32×26': 253.0,
   'timer|geniş telefon|yarım 16×16': 345.7,
@@ -378,30 +382,41 @@ const Map<String, double> _budget = {
   'heatmap|geniş telefon|yarım 16×16': 36.0,
   'heatmap|geniş telefon|tam 32×16': 36.0,
 
-  // 🔴 `records_card.dart` ve `leaderboard_card.dart` hücre BÜYÜTÜLDÜĞÜNDE de
-  // kaydırıcıda kalıyor; ikisinin de düzeltmesi yoğunluk (kaç döşeme / kaç
-  // satır) kararı gerektiriyor, yani sahibin önizleme göreceği bir iş.
-  // Ölçüler teslim raporunda; lider ayrı WP açacak.
+  // 🔴 `records_card.dart` hücre BÜYÜTÜLDÜĞÜNDE de kaydırıcıda kalıyor;
+  // düzeltmesi yoğunluk (kaç döşeme) kararı gerektiriyor, yani sahibin
+  // önizleme göreceği bir iş. Ölçüler teslim raporunda; lider ayrı WP açacak.
   'records|dar telefon|yarım 16×16': 648.0,
   'records|dar telefon|tam 32×16': 316.0,
   'records|dar telefon|büyütülmüş 32×26': 211.0,
   'records|geniş telefon|yarım 16×16': 418.0,
   'records|geniş telefon|tam 32×16': 210.0,
   'records|geniş telefon|büyütülmüş 32×26': 83.8,
-  'leaderboard|dar telefon|yarım 16×16': 22.9,
-  'leaderboard|dar telefon|tam 32×16': 16.4,
-  'leaderboard|dar telefon|büyütülmüş 32×26': 18.3,
-  'leaderboard|geniş telefon|yarım 16×16': 42.3,
+
+  // ✅ `leaderboard` — WP-659'da DÖRT satırdan üçü 0'a indi (22.9 / 18.3 / 42.3
+  // → 0). Kalan tek satır gerçek taşmadır ve yalnız bu hücreye özgü: 328 px
+  // genişlikte `tam 32×16` kutusu 160 px yüksek ama kart o genişlikte
+  // "compact" DEĞİL, yani grup hedefi bloğu da çiziliyor ve başlık tek başına
+  // 91 px yiyor; listeye 37 px kalıyor, tek satır ise 54 px. Yani kart tek
+  // satır paketliyor (doğru davranış) ve o satırın 17 px'i kaydırma payına
+  // düşüyor — WP-497 güvenlik ağı.
+  // 🔴 Kalan borcun düzeltmesi ürün kararıdır: "kısa ve geniş hücrede grup
+  // hedefi bloğu gizlensin mi?" — sahibe sorulacak, ajan kendi seçmez.
+  'leaderboard|dar telefon|tam 32×16': 17.0,
 };
 
-/// Kart-içi kaydırma DEĞİL, düpedüz kırpma: bu üçlülerde gövde `RenderFlex`
-/// taşması veriyor (içerik kesiliyor, kaydırıcı bile yok). Ayrı bir kusur
-/// sınıfı; teslim raporunda ayrı başlıkta. Liste **büyümemeli**.
-const Set<String> _knownRenderFlex = {
-  'timer|dar telefon|yarım 16×16',
-  'hours|dar telefon|yarım 16×16',
-  'weekdayWeekend|dar telefon|yarım 16×16',
-};
+/// Kart-içi kaydırma DEĞİL, düpedüz kırpma: gövde `RenderFlex` taşması veriyor
+/// (içerik kesiliyor, kaydırıcı bile yok). Ayrı bir kusur sınıfı.
+///
+/// ✅ WP-659'da **boşaldı**. Üç kayıt vardı, üçü de 160×160 hücrede:
+///   `timer`          10 px — üst şeritteki 3 × 48 px düğme 134 px'e sığmıyor
+///                    (+ 17 px, ders seçici hapındaki çıplak `Text`)
+///   `hours`           8 px — başlık `Text` sınırsız satırlı, 72 px'e (3 satır)
+///                    sarıp gövdeyi yiyordu
+///   `weekdayWeekend` 22 px — aynı kusur, başlık 96 px (4 satır)
+///
+/// 🔴 Liste **büyümemeli** ve yeniden doldurulmamalı: buraya bir kart eklemek
+/// "kullanıcının göremediği içerik" eklemek demektir.
+const Set<String> _knownRenderFlex = <String>{};
 
 void main() {
   // 840 px içerik genişliği varsayılan 800×600 test penceresine sığmaz;

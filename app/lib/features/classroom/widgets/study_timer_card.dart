@@ -237,6 +237,26 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           final small = constraints.maxWidth < 280;
           final isLarge = constraints.maxWidth >= 400;
 
+          // 🔴 WP-659 — ÜST ŞERİT DAR HÜCREDE KIRPILIYORDU.
+          //
+          // Ölçüldü (160×160 hücre, `card_scroll_inventory_test.dart`
+          // `_knownRenderFlex` kaydı): `Card` kendi 4 px kenar boşluğunu
+          // düştükten sonra `LayoutBuilder`a 152 px kalıyor, şeridin yatay
+          // padding'i (14 + 4) düşünce **134 px**. Üç `IconButton` ise
+          // Material'in 48 px'lik varsayılan dokunma kutusuyla 3 × 48 = 144 px
+          // istiyor → `RenderFlex overflowed by 10.0 pixels on the right`:
+          // tam ekran düğmesinin sağı **kesiliyor**, kaydırıcı bile yok, yani
+          // kullanıcı o pikselleri hiçbir şekilde göremiyor.
+          //
+          // Düğme kaldırmak / menüye taşımak ürün kararıdır ve sahibe sorulur;
+          // burada yapılan tek şey düzeni sıkıştırmak: kutu kalan yere göre
+          // ölçülür, geniş kartta 48 px'te kalır (hiçbir şey değişmez).
+          // Rozete ayrılan pay `Flexible`+`FittedBox` zaten küçültüyor, ama
+          // 0 px'e düşmesin diye asgari bir yer bırakılır.
+          const badgeReserve = 24.0;
+          final stripWidth = constraints.maxWidth - 18;
+          final actionSize = ((stripWidth - badgeReserve) / 3).clamp(32.0, 48.0);
+
           // WP-496: kart artık `Stack` değil **akış**.
           //
           // 🔴 Kök neden buydu: rozet ve üst ikonlar `Positioned` ile içeriğin
@@ -341,11 +361,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
+                          _stripAction(
+                            size: actionSize,
                             tooltip: AppLocalizations.of(
                               context,
                             ).classroomGecmisOturumlar,
-                            icon: const Icon(Icons.history),
+                            icon: Icons.history,
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const SessionHistoryScreen(),
@@ -353,20 +374,22 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             ),
                           ),
                           Builder(
-                            builder: (iconContext) => IconButton(
+                            builder: (iconContext) => _stripAction(
+                              size: actionSize,
                               tooltip: AppLocalizations.of(
                                 context,
                               ).classroomSaatGorunumu,
-                              icon: const Icon(Icons.tune),
+                              icon: Icons.tune,
                               onPressed: () =>
                                   showClockStyleMenu(iconContext, ref),
                             ),
                           ),
-                          IconButton(
+                          _stripAction(
+                            size: actionSize,
                             tooltip: AppLocalizations.of(
                               context,
                             ).classroomTamEkranOdak,
-                            icon: const Icon(Icons.fullscreen),
+                            icon: Icons.fullscreen,
                             onPressed: () => openFocusTimer(context),
                           ),
                         ],
@@ -498,6 +521,30 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   }
 }
 
+/// Sayaç kartının üst şeridindeki aksiyon düğmesi (§3.12).
+///
+/// [size] hücreye göre 32–48 px arası **ölçülür** (bkz. `StudyTimerCard.build`
+/// içindeki WP-659 notu). 48 px'in altına inildiğinde Material'in `padded`
+/// dokunma kutusu kapatılır, yoksa `constraints` ne verilirse verilsin düğme
+/// yine 48 px yer ister (aynı tuzak `card_scaffold.dart` → `cardHeaderAction`
+/// içinde de ölçülmüştü).
+Widget _stripAction({
+  required double size,
+  required IconData icon,
+  required String tooltip,
+  required VoidCallback onPressed,
+}) => IconButton(
+  tooltip: tooltip,
+  icon: Icon(icon),
+  iconSize: size >= 44 ? 24 : 20,
+  padding: EdgeInsets.zero,
+  constraints: BoxConstraints.tightFor(width: size, height: size),
+  style: size >= 48
+      ? null
+      : IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+  onPressed: onPressed,
+);
+
 /// Sayaç için ders seçici — kapalıyken seçili dersi (veya "Genel"i) gösteren
 /// bir "dropdown" hap; dururken dokununca ders listesi alt sayfası açılır
 /// (Claude Code model seçici mantığı). Çalışırken kilitlidir (yalnız etiket).
@@ -533,7 +580,19 @@ class _SubjectSelector extends StatelessWidget {
       children: [
         CircleAvatar(radius: 5, backgroundColor: dotColor),
         const SizedBox(width: 8),
-        Text(label, style: theme.textTheme.labelLarge),
+        // 🔴 WP-659: çıplak `Text` idi. Hapın iç genişliği 160 px hücrede
+        // 92 px; uzun bir ders adı (ya da büyük yazı ölçeği) satırı taşırıyor
+        // ve `RenderFlex overflowed by 17 pixels on the right` ile ders adının
+        // sağı KIRPILIYORDU. Hap zaten `mainAxisSize.min`, `Flexible` yalnız
+        // sığmadığında devreye girer — dar olmayan kartta hiçbir şey değişmez.
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge,
+          ),
+        ),
         if (!running) ...[
           const SizedBox(width: 2),
           Icon(

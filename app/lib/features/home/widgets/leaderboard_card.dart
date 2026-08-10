@@ -20,8 +20,29 @@ import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 import 'group_card_shell.dart';
 
-/// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Boyuta göre üye
-/// sayısı: küçük 3, orta 5, büyük 10.
+/// Bir sıralama satırının **dayatılan** yüksekliği.
+///
+/// 🔴 WP-659 varlık sebebi. Kart eskiden `const rowHeight = 36.0` ile "kaç kişi
+/// sığar"ı hesaplıyordu; 36 px bir zamanlar doğruydu (taçsız avatar r = 14 →
+/// 28 px + 2×4 px padding = tam 36 px), taç geldiğinde sabit güncellenmedi.
+/// Ölçüldü (`leaderboard_row_fit_wp659_test.dart`): taçlı avatar kutusu
+/// 45.44 px, satır **53.44 px** — yani tahmin %48 küçüktü ve kart her hücrede
+/// sığmayacak kadar çok satır paketleyip kalanı kart-içi kaydırıcıya
+/// düşürüyordu (sahip: *"parmağım takılıyor"*).
+///
+/// Bu sayı hem `itemExtent` olarak dayatılır hem de "kaç satır sığar"
+/// aritmetiğinde kullanılır: iki yer AYNI sayıyı okuduğu için hesap yapı gereği
+/// doğrudur, tahmin kalmaz. Taçlı/taçsız üye karışımında satırlar da tek tip
+/// olur.
+///
+/// ⚠️ Küçültülemez: satırın doğal boyunun altına inerse içerik sessizce
+/// kırpılır (yatay `Row` dikey taşmayı **raporlamaz**). Sözleşme testi doğal
+/// boyu 1.0 / 1.3 / 1.6 yazı ölçeğinde ölçüp bu sayıyla karşılaştırır.
+const double kLeaderboardRowExtent = 54.0;
+
+/// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Kaç kişi
+/// görüneceği kartın kutusundan **ölçülerek** çıkar (bkz.
+/// [kLeaderboardRowExtent]).
 class LeaderboardCard extends ConsumerWidget {
   const LeaderboardCard({super.key, this.size = DashboardCardSize.medium});
 
@@ -65,29 +86,27 @@ class LeaderboardCard extends ConsumerWidget {
           final availableHeight = constraints.maxHeight;
           final isHeightBounded = availableHeight.isFinite;
 
-          // Sabit başlık yüksekliği tahmini (dikey padding dahil): başlık satırı +
-          // (yalnız geniş kartta) grup hedefi bloğu + listeden önceki boşluk.
-          const rowHeight = 36.0;
-          // WP-612: hedef satırındaki rozet metin+ikon çiftinden birkaç piksel
-          // yüksek; tahmin onunla birlikte güncellendi.
-          final headerHeight = 32 + 24 + 12 + (isCompact ? 0.0 : 48.0);
+          const cardPadding = EdgeInsets.all(16);
+          final innerHeight = availableHeight - cardPadding.vertical;
 
-          // Kart, başlık + en az bir satırı sığdıramayacak kadar kısaysa TÜM içerik
-          // kaydırılır (Expanded yerine düz Column). Sınırsız yükseklikte (ListView)
-          // Expanded kullanılmamalı, bu yüzden fill = false olmalı.
-          final fill =
-              isHeightBounded && availableHeight >= headerHeight + rowHeight;
+          // 🔴 WP-659 — burada eskiden başlık yüksekliği de TAHMİN ediliyordu
+          // (`32 + 24 + 12 (+48)`) ve o tahmin **kaç kişi görüneceğini**
+          // belirliyordu. Ölçüldü: başlık dar kartta 44 px, grup hedefi
+          // bloğuyla 91 px; yazı ölçeği 1.6'da 58 / 115 px. Yani tahmin hem
+          // yanlıştı hem de yazı ölçeğiyle hiç büyümüyordu.
+          //
+          // Artık bu sayı satır sayısını **belirlemiyor**: satır sayısı aşağıda
+          // gövdenin GERÇEK kalan yüksekliğinden çıkar. Buradaki tek işi,
+          // başlığın kesinlikle sığacağı hücrelerde doldurma düzenini seçmek —
+          // yani yalnız kırpmaya karşı korkuluk. Yanılırsa sonuç "yanlış sayıda
+          // kişi" değil, "tüm kart kayar" (WP-497 güvenlik ağı) olur.
+          final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+          final headerReserve =
+              (isCompact ? 44.0 : 91.0) +
+              (isCompact ? 24.0 : 40.0) * (textScale - 1.0);
 
-          final int count;
-          if (fill) {
-            count = ((availableHeight - headerHeight) / rowHeight)
-                .floor()
-                .clamp(1, 15);
-          } else if (isHeightBounded) {
-            count = 3;
-          } else {
-            count = 10; // Sınırsız yükseklikte en fazla 10 kişi gösterelim.
-          }
+          // Sınırsız yükseklikte (Gruplar `ListView`i) `Expanded` kullanılamaz.
+          final fill = isHeightBounded && innerHeight >= headerReserve;
 
           // Bugünün sıralaması (userId → saniye), büyükten küçüğe.
           final todayByUser = todaySecondsByUser(stats);
@@ -123,11 +142,9 @@ class LeaderboardCard extends ConsumerWidget {
             return null;
           }
 
-          final board =
-              (todayByUser.entries.toList()
-                    ..sort((a, b) => b.value.compareTo(a.value)))
-                  .take(count)
-                  .toList();
+          final ranked =
+              todayByUser.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
 
           // WP-253: üye başına seri rozeti kaldırıldı — bkz. class_stats_view.
           // Bu karttaki ateş ikonu artık YALNIZ grup hedef serisini
@@ -168,10 +185,21 @@ class LeaderboardCard extends ConsumerWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    AppLocalizations.of(context).homeGrupHedefi,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  // 🔴 WP-659 — bu etiket çıplak `Text` idi ve `Spacer` ile
+                  // birlikte satırı taşırıyordu: yazı ölçeği 1.3'te
+                  // `RenderFlex overflowed by 70–78 pixels on the right`.
+                  // Yani "Grup hedefi" yazısının sağı, rozet ve yüzde
+                  // KIRPILIYORDU — kaydırıcı yok, kullanıcı hiç göremiyor.
+                  // Kusuru bu turda liderlik kartının satır aritmetiğini
+                  // ölçerken yeni test yakaladı (1.0 ölçeğinde görünmüyor).
+                  Flexible(
+                    child: Text(
+                      AppLocalizations.of(context).homeGrupHedefi,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -206,7 +234,7 @@ class LeaderboardCard extends ConsumerWidget {
             const SizedBox(height: 12),
           ];
 
-          Widget rowFor(int i) => _Row(
+          Widget rowFor(List<MapEntry<String, int>> board, int i) => _Row(
             rank: i + 1,
             member: memberFor(board[i].key),
             seconds: board[i].value,
@@ -225,6 +253,9 @@ class LeaderboardCard extends ConsumerWidget {
           // Kısa kart / ListView (Gruplar): nested scroll yok (WP-172).
           // Home sonlu kısa hücrede kart içi kaydırma korunur.
           if (!fill) {
+            // Sınırsız yükseklikte en fazla 10 kişi; başlığın sığmadığı çok
+            // kısa hücrede 3 (tümü kart-içi kaydırıcıya girer).
+            final board = ranked.take(isHeightBounded ? 3 : 10).toList();
             final column = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -233,11 +264,11 @@ class LeaderboardCard extends ConsumerWidget {
                 if (board.isEmpty)
                   emptyText
                 else
-                  for (var i = 0; i < board.length; i++) rowFor(i),
+                  for (var i = 0; i < board.length; i++) rowFor(board, i),
               ],
             );
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: cardPadding,
               // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
               child: isHeightBounded
                   ? cardScrollIfOverflows(child: column)
@@ -246,25 +277,38 @@ class LeaderboardCard extends ConsumerWidget {
           }
 
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: cardPadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ...headerChildren,
-                if (board.isEmpty)
-                  emptyText
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      // WP-508: `NeverScrollable` idi — sıralama listeye
-                      // sığmadığında alttaki üyeler kırpılıyor ve hiçbir
-                      // şekilde görülemiyordu (WP-497'nin aynı sınıfı).
-                      physics: kCardOverflowScrollPhysics,
-                      primary: false,
-                      itemCount: board.length,
-                      itemBuilder: (context, i) => rowFor(i),
-                    ),
+                Expanded(
+                  // 🔴 WP-659: satır sayısı burada, başlık çizildikten SONRA
+                  // kalan GERÇEK yükseklikten çıkar. Başlık büyüdüğünde (yazı
+                  // ölçeği, grup adı, rozet) hesap kendiliğinden düzelir.
+                  child: LayoutBuilder(
+                    builder: (context, bodyConstraints) {
+                      final count =
+                          (bodyConstraints.maxHeight / kLeaderboardRowExtent)
+                              .floor()
+                              .clamp(1, 15);
+                      final board = ranked.take(count).toList();
+                      if (board.isEmpty) return emptyText;
+                      return ListView.builder(
+                        // WP-508: `NeverScrollable` idi — sıralama listeye
+                        // sığmadığında alttaki üyeler kırpılıyor ve hiçbir
+                        // şekilde görülemiyordu (WP-497'nin aynı sınıfı).
+                        physics: kCardOverflowScrollPhysics,
+                        primary: false,
+                        // Yukarıdaki bölme ile AYNI sayı: paketlenen satır
+                        // sayısı kutuya sığar, artık kaydırıcı kalmaz.
+                        itemExtent: kLeaderboardRowExtent,
+                        itemCount: board.length,
+                        itemBuilder: (context, i) => rowFor(board, i),
+                      );
+                    },
                   ),
+                ),
               ],
             ),
           );

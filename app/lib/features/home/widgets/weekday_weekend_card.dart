@@ -18,7 +18,6 @@ class WeekdayWeekendCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
     // WP-495C: yükleniyorken iki sütun da 0 görünür.
     final gate = cardDataGate(
@@ -35,9 +34,14 @@ class WeekdayWeekendCard extends ConsumerWidget {
     final weekendColor = subjectColor('chart-4');
 
     return CardScaffold(
-      header: Text(
+      // 🔴 WP-659 — bkz. `hour_activity_card.dart`'taki aynı kusur. Çıplak
+      // `Text` 160×160 hücrede **96 px**e (dört satıra) sarıyordu; iki çubuğa
+      // toplam 20 px kalıyor, her `_Bar` 6 px kutuda çiziliyor ve iki kez
+      // `RenderFlex overflowed by 22 px` düşüyordu. Yazı ölçeği 1.6'da başlık
+      // tek başına **228 px** — kartın tamamından büyük.
+      header: cardTitle(
+        context,
         AppLocalizations.of(context).homeHaftaIciHaftaSonu,
-        style: theme.textTheme.titleMedium,
       ),
       minBodyHeight: 88,
       fallbackBodyHeight: 110,

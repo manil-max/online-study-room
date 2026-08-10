@@ -18,7 +18,6 @@ class HourActivityCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
     // WP-495C: yükleniyorken boş saat dağılımı yanlış iddiadır.
     final gate = cardDataGate(
@@ -31,10 +30,18 @@ class HourActivityCard extends ConsumerWidget {
     final hourly = hourlyTotals(sessions);
 
     return CardScaffold(
-      header: Text(
-        AppLocalizations.of(context).homeCalismaSaatleri,
-        style: theme.textTheme.titleMedium,
-      ),
+      // 🔴 WP-659 — burada çıplak `Text` vardı (satır sayısı sınırsız).
+      // Ölçüldü: 160×160 hücrede "Çalışma saatleri" başlığı **72 px**e (üç
+      // satıra) sarıyor, gövdeye 128 px'lik kutudan 36 px kalıyor ve grafiğin
+      // sabit parçaları (tepe satırı + saat ekseni ≈ 44 px) taşıyordu:
+      // `RenderFlex overflowed by 8.0 px` (yazı ölçeği 1.3'te 16 px, 1.6'da
+      // 44 px). Bu kaydırma değil düpedüz KIRPMA — kullanıcı kesilen kısmı
+      // hiçbir şekilde göremiyordu.
+      //
+      // `CardScaffold` başlığa 44 px ayırır (`cardShouldFill` → headerReserve);
+      // o rezerv **tek satırlık** başlık varsayar. `cardTitle` tam bu yüzden
+      // var: tek satır + ellipsis.
+      header: cardTitle(context, AppLocalizations.of(context).homeCalismaSaatleri),
       bodyBuilder: (context, bodyHeight) =>
           HourActivityChart(hourly: hourly, height: bodyHeight),
     );
