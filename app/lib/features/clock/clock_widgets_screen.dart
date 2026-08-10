@@ -1,10 +1,32 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/time_engine/clock_permissions.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../android_widgets/published_home_widgets.dart';
+import 'platform_limit_banner.dart';
+
+/// 🔴 WP-687: bu ekranın **iki yarısı da** Android'e özgüdür, ama ekran
+/// Windows'ta da açılıyor — Bildirim Merkezi'nin ikinci sekmesi
+/// (`notification_permissions_screen.dart:122`).
+///
+///  * Ana ekran widget kataloğu: Windows'ta ana ekran widget'ı diye bir şey
+///    yok; `androidWidgetServiceProvider` bu platformda `_Noop` döner
+///    (`android_widget_service.dart:23-28`). Kart kullanıcıya kurulamayacak
+///    bir widget vaat ediyordu — WP-461'in dormant widget'lar için verdiği
+///    kararın aynısı burada platform için geçerli.
+///  * Dört izin satırı: `ClockPermissions`ın her `open*Settings()` metodu
+///    `if (!_android) return;` ile erkenden dönüyor
+///    (`clock_permissions.dart:152-188`). "Aç" düğmesi basılıyor, hiçbir şey
+///    olmuyor, sebebi de söylenmiyordu — WP-611'in adını koyduğu **bozuk
+///    düğme**. Düğmeler artık devre dışı, sınır da şeritte yazılı.
+///
+/// Platform `defaultTargetPlatform` üzerinden okunur (`dart:io Platform`
+/// değil): testte `debugDefaultTargetPlatformOverride` ile enjekte edilebilir.
+bool get _androidSurfacesAvailable =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
 /// En sol sekme: ana ekran widget'ları + alarm izin durumu.
 class ClockWidgetsScreen extends ConsumerStatefulWidget {
@@ -53,9 +75,22 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final androidSurfaces = _androidSurfacesAvailable;
     final body = ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
+        // `severe: false`: masaüstünde kullanıcı bir şey kurup boşuna
+        // beklemiyor (alarmda öyleydi) — sunulan hiçbir şey yok. Bilgi tonu
+        // doğru ton; kırmızı şerit burada yanlış alarm olurdu.
+        if (!androidSurfaces) ...[
+          PlatformLimitBanner(
+            key: const Key('clock_widgets_desktop_limit_banner'),
+            message: AppLocalizations.of(
+              context,
+            ).notificationsIzinMasaustundeGecersiz,
+          ),
+          const SizedBox(height: 12),
+        ],
         Text(
           AppLocalizations.of(context).clockWidgetVeIzinler,
           style: theme.textTheme.titleLarge?.copyWith(
@@ -73,31 +108,33 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         // WP-461: Katalog yalnız **yayındaki** widget'ı gösterir. Dormant
         // olanların kartı çizilmez; aksi hâlde kullanıcıya picker'da
         // bulunmayan bir widget vaat edilirdi.
-        if (isHomeWidgetPublished(HomeWidgetProvider.timer))
+        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.timer))
           _WidgetCard(
             icon: Icons.timer,
             title: AppLocalizations.of(context).clockCalismaSayaci,
             subtitle: AppLocalizations.of(context).clockAkanSureBaslatdurdurApp,
           ),
-        if (isHomeWidgetPublished(HomeWidgetProvider.clock))
+        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.clock))
           _WidgetCard(
             icon: Icons.schedule,
             title: AppLocalizations.of(context).clockDijitalSaat,
             subtitle: AppLocalizations.of(context).clockCanliSaatTextclockPil,
           ),
-        if (isHomeWidgetPublished(HomeWidgetProvider.alarm))
+        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.alarm))
           _WidgetCard(
             icon: Icons.alarm,
             title: AppLocalizations.of(context).clockSiradakiAlarm,
             subtitle: AppLocalizations.of(context).clockBirSonrakiAlarmSaati,
           ),
-        if (isHomeWidgetPublished(HomeWidgetProvider.studyStats))
+        if (androidSurfaces &&
+            isHomeWidgetPublished(HomeWidgetProvider.studyStats))
           _WidgetCard(
             icon: Icons.bar_chart,
             title: AppLocalizations.of(context).statsIstatistik,
             subtitle: AppLocalizations.of(context).clockBugunHaftaSeriOzeti,
           ),
-        if (isHomeWidgetPublished(HomeWidgetProvider.groupLeaderboard))
+        if (androidSurfaces &&
+            isHomeWidgetPublished(HomeWidgetProvider.groupLeaderboard))
           _WidgetCard(
             icon: Icons.emoji_events_outlined,
             title: AppLocalizations.of(context).homeGrupSiralamasi,
@@ -125,6 +162,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
           _PermissionStatusSummary(snapshot: _perms),
           const SizedBox(height: 8),
           _PermTile(
+            enabled: androidSurfaces,
             title: AppLocalizations.of(context).clockBildirimler,
             ok: _perms.notifications,
             detail: AppLocalizations.of(
@@ -139,6 +177,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           _PermTile(
+            enabled: androidSurfaces,
             title: AppLocalizations.of(context).clockKesinAlarmExact,
             ok: _perms.exactAlarm,
             detail: AppLocalizations.of(context).clockKesinAlarmIzniKapali,
@@ -148,6 +187,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           _PermTile(
+            enabled: androidSurfaces,
             title: AppLocalizations.of(context).clockPilKisitlamasiYok,
             ok: _perms.batteryUnrestricted,
             detail: AppLocalizations.of(context).clockPilKisitlamasiYok,
@@ -158,6 +198,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           _PermTile(
+            enabled: androidSurfaces,
             title: AppLocalizations.of(context).coreTamEkranAlarm,
             ok: _perms.fullScreenIntent,
             detail: AppLocalizations.of(context).clockKilitEkranindaAlarmYuzeyi,
@@ -310,12 +351,19 @@ class _PermTile extends StatelessWidget {
     required this.ok,
     required this.detail,
     required this.onManage,
+    required this.enabled,
   });
 
   final String title;
   final bool ok;
   final String detail;
   final VoidCallback onManage;
+
+  /// 🔴 WP-687: `false` → bu platformda [ClockPermissions] hiçbir sistem
+  /// ekranı açamaz (`clock_permissions.dart:152-188` erkenden döner). Satır
+  /// bilgi olarak durur, düğme **basılamaz**; sebebi ekranın başındaki
+  /// `PlatformLimitBanner`da yazılıdır.
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +381,7 @@ class _PermTile extends StatelessWidget {
         title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Text(detail, maxLines: 3, overflow: TextOverflow.ellipsis),
         trailing: TextButton(
-          onPressed: onManage,
+          onPressed: enabled ? onManage : null,
           // Android izinleri uygulama tarafından geri alınamaz. İzin zaten
           // verildiyse bu düğme doğrudan ilgili sistem ekranını açar; kullanıcı
           // oradan kapatır. Verilmemişse aynı ekran/istem açma akışına gider.
