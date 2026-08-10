@@ -85,6 +85,60 @@ Widget cardTitle(BuildContext context, String text) => Text(
       style: Theme.of(context).textTheme.titleMedium,
     );
 
+/// Kart **basligina** konan aksiyon simgesi.
+///
+/// 🔴 WP-642 varlik sebebi. [CardScaffold]'ta baslik, govdenin **disinda**
+/// duran ayri bir cocuktur: govdeye kurulan dokunma hedefi (`InkWell`)
+/// basligi KAPSAMAZ. Basliga ciplak bir [Icon] konuldugunda kullanici onu
+/// dugme sanar, basar, hicbir sey olmaz -- proje sahibi bunu cihazda bildirdi
+/// (D-Day kartinin kalem simgesi). Kart testleri govdeye dokundugu icin kusuru
+/// hicbir kapi gormedi.
+///
+/// Bu yardimci [onPressed]'i **zorunlu** kilar: artik basliga aksiyon koymanin
+/// tiklanamayan bir yolu yok. Ciplak [Icon] yazmak hala mumkun ama o zaman da
+/// aksiyon gibi gorunmemesi cagiranin sorumlulugudur.
+///
+/// 🔴 Dokunma hedefi 40x24'e **olculerek** daraltildi, tahminle degil. Pano
+/// hucresi karta sabit piksel yukseklik verir; baslikta buyuyen her piksel
+/// govdeden calinir. Material'in 48 px varsayilani basligi 24.5 px'den 48 px'e
+/// sisirirdi. Ara deger de yetmiyor: 32x32 ile `dday_multi_exam` taşma testi
+/// kucuk kartta **7.47 px** ve **10.94 px** ile kirmizi dustu (uc kayit, iki
+/// yerlesim). Basligin dogal yuksekligi ~24.5 px oldugu icin 24 px hedef
+/// yuksekligi yerlesimi hic degistirmez; genislik 40 px serbesttir cunku
+/// basligi `Expanded` doldurur.
+///
+/// Bu 48 px'lik Material tavsiyesinin altindadir. Kabul edilebilir olmasinin
+/// sebebi simgenin **tek** dokunma hedefi olmamasi: kart govdesi de ayni
+/// pencereyi acar. Simge kesfedilebilirlik, govde ise buyuk hedeftir.
+Widget cardHeaderAction({
+  required IconData icon,
+  required VoidCallback onPressed,
+  required String tooltip,
+  Key? key,
+  double iconSize = 16,
+}) => IconButton(
+      key: key,
+      icon: Icon(icon, size: iconSize),
+      onPressed: onPressed,
+      tooltip: tooltip,
+      padding: EdgeInsets.zero,
+      // 🔴 `constraints` TEK BASINA YETMEZ -- olculdu. [MaterialTapTargetSize]
+      // varsayilani `padded`, butonun etrafina kendi 48 px'lik kutusunu ekler
+      // ve `constraints` ne verilirse verilsin baslik ayni miktarda buyur:
+      // 32x32 ve 32x24 denemeleri kucuk kartta **ayni** 7.47 / 10.94 px taşmayi
+      // uretti. Yerlesimi geri getiren sey `shrinkWrap`tir.
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      // 🔴 `visualDensity: compact` BURADA YOK, kasten. Varken `constraints`i
+      // (-8,-8) daha kucultuyordu: **olculdu**, 32x24 istenirken gercekte
+      // 24x16 cikti -- yani dokunma hedefinin yuksekligi 16 px'lik simgenin
+      // kendisiyle ayniydi. Olculmeseydi "dugme yaptik" denip 16 px'lik bir
+      // hedef gonderilecekti. Verilen `constraints` ile GERCEK boyut ayni sey
+      // degil; testi de gercek boyutu olcer.
+      constraints: const BoxConstraints.tightFor(width: 40, height: 24),
+    );
+
 /// Ortak Ana Sayfa kart iskeleti (§2E): sabit yükseklikli [header] + kalan alanı
 /// dolduran gövde. Gövdeye çözülmüş piksel yüksekliği ([bodyBuilder]'ın ikinci
 /// argümanı) verilir; grafik kartları bunu doğrudan grafik yüksekliği olarak

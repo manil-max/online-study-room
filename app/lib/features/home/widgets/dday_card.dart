@@ -38,10 +38,18 @@ class DDayCard extends ConsumerWidget {
       header: Row(
         children: [
           Expanded(child: cardTitle(context, l10n.homeSinavGeriSayimi)),
-          Icon(
-            Icons.edit_outlined,
-            size: 16,
-            color: theme.colorScheme.onSurfaceVariant,
+          // 🔴 WP-642: bu simge eskiden ciplak bir [Icon] idi. Baslik,
+          // [CardScaffold] icinde govdenin DISINDA durur; govdedeki
+          // `dday-card-open-editor` dokunma hedefi buraya ulasmaz. Yani simge
+          // dugme gibi goruntude durup hicbir sey yapmiyordu (proje sahibi
+          // cihaz bildirimi: "basinca bir sey olmuyor, editlemek icin soldan
+          // listeye basmak gerekiyor"). Artik gercek dugme ve **govdeyle ayni**
+          // pencereyi acar; iki yol da tek kaynaga baglidir.
+          cardHeaderAction(
+            key: const Key('dday-card-header-edit'),
+            icon: Icons.edit_outlined,
+            tooltip: l10n.homeSinavlariDuzenle,
+            onPressed: () => showDDayEditorSheet(context),
           ),
         ],
       ),
