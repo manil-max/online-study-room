@@ -10252,6 +10252,36 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+### WP-668: Play yuklemesi otomatige baglandi + WP-666'nin kurali KURAL OLDU
+Sahip "her sey sende olsun, bir daha ben yuklemeyeyim" dedi. Play servis
+hesabini kendi acti; anahtar secret'a yazildi ve yerel dosyanin UZERINE
+rastgele bayt yazilip silindi.
+
+`tooling/play/play_publish.py` + `play-upload.yml`. Iki tasarim karari:
+- **Iz adi TAHMIN EDILMEZ.** `verify` kipi API'den izleri listeler. Yanlis izle
+  yukleme, dogru paketi yanlis kitleye acar ve geri almasi yayinlamaktan zor.
+- **Magaza notlari `release_notes.json`den TURETILIR.** Ikinci bir metin tutmak
+  v59'daki "surum ile not ayristi" hatasinin yoluydu. Play alan basina 500
+  karakter siniri koyar; kirpma madde sinirinda yapilir.
+Not ureteci API'ye DOKUNMADAN once kendi self-test'ini kosar (hat da once onu
+kosturur): sinir asimi, tek dev maddenin kirpilmasi, bos girdide hata.
+Sabotaj (kirpmayi devre disi birak) 825 karakterlik notu yakaladi.
+
+🔴 **Kendi kuralimi bir saat sonra cignedim.** WP-666'da `release.yml` icin
+"elle girilen deger koda gomulemez" dedim; yeni yazdigim `play-upload.yml`de
+`tag='${{ inputs.tag }}'` yazdim. Kural tek dosyaya yazildiginda kural degil,
+o dosyanin ozelligi oluyor -- WP-667'nin dersinin AYNISI, ayni gun ikinci kez.
+
+Kapi butun `.github/workflows/*.yml` dosyalarina genisletildi ve **26 eski
+ihlal** buldu (database-gates 3, stable-candidate 9, staging-push-diagnostics 2,
+windows-release 12). Hepsini o anda cevirmek, tam o sirada magaza paketini
+ureten `windows-release.yml`i degistirmek demekti. Kapiyi gevsetmek yerine borc
+SAYILABILIR yapildi: donmus envanter (deponun `_knownRenderFlex` deseni).
+Bir dosya kayitli sayiyi ASARSA kirmizi; DUSERSE de kirmizi ("envanteri guncelle"),
+yani duzelen kusur geri sizamaz.
+Sabotaj: yeni is akisina gomulu girdi geri konunca kapi tam mesajla dustu --
+`play-upload.yml: 1 gomulu girdi (kayitli en fazla 0)`. 89/89.
+
 ### WP-667: WP-665'in kapisi SATIR SONUNA bagliydi
 Magaza paketi kosumu (31408383023) `flutter test` adiminda dustu: 2837 gecti,
 **2 dustu** ve dusen sey uygulama degil BENIM YENI KAPIMDI. WP-665'in testi

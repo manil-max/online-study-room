@@ -258,20 +258,51 @@ $passed += 3
 # Iddia SATIR duzeyinde: `${{ inputs.* }}` bir `env:` esleme satirinda serbest,
 # tirnak icinde YASAK. Boylece kural, degerin nerede kullanildigini degil
 # NASIL tasindigini olcer.
-$releaseLines = $releaseWorkflow -split "`r?`n"
-$quotedInputs = @($releaseLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
-if ($quotedInputs.Count -gt 0) {
-  throw ("Elle girilen deger PowerShell koduna gomulu (env: ile gecirilmeli): " +
-    ($quotedInputs -join ' | '))
+# 🔴 WP-668: kural BUTUN is akislarinda gecerli. WP-666 duzeltmesi yalniz
+# `release.yml`e bakiyordu; ayni gun yazilan YENI bir is akisi ayni kusuru
+# tasidi. Bir kural tek dosyaya yazildiginda kural degil, o dosyanin ozelligi
+# olur.
+#
+# 🔴 DONMUS ENVANTER, sifir degil. Tarama 26 ESKI satir buldu (dort
+# dosyada). Hepsini bu turda cevirmek, tam o anda magaza paketini ureten
+# `windows-release.yml`i degistirmek demekti; kapiyi gevsetmek yerine borc
+# SAYILABILIR hale getirildi. Kural: bir dosya kayitli sayisini ASARSA ya da
+# listede olmayan bir dosya ihlal ederse kapi KIRMIZI doner. Yani yeni kusur
+# aninda yakalanir, eski kusur gorunur kalir ve azaltilabilir.
+# Ayni desen depoda `_knownRenderFlex` olarak zaten kullaniliyor.
+$knownEmbeddedInputs = @{
+  'database-gates.yml'            = 3
+  'stable-candidate.yml'          = 9
+  'staging-push-diagnostics.yml'  = 2
+  'windows-release.yml'           = 12
+}
+$workflowDir = Join-Path $repoRoot '.github\workflows'
+$violations = @()
+foreach ($file in Get-ChildItem -LiteralPath $workflowDir -Filter '*.yml' -File) {
+  $wfLines = (Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8) -split "`r?`n"
+  $count = @($wfLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." }).Count
+  $allowed = 0
+  if ($knownEmbeddedInputs.ContainsKey($file.Name)) { $allowed = $knownEmbeddedInputs[$file.Name] }
+  if ($count -gt $allowed) {
+    $violations += ("{0}: {1} gomulu girdi (kayitli en fazla {2})" -f $file.Name, $count, $allowed)
+  }
+}
+if ($violations.Count -gt 0) {
+  throw ("Elle girilen deger kabuk/PowerShell koduna gomulu (env: ile gecirilmeli): " +
+    ($violations -join ' | '))
 }
 $passed++
 
-# Kapinin kendisi sinaniyor: yasak deseni tasiyan bir satir GERCEKTEN yakalaniyor mu?
-# (Depoda bir kapinin sessizce hicbir sey olcmemesi uc kez yasandi.)
-$sabotage = @("        run: |", "          ./x.ps1 -Evidence '`$`{{ inputs.production_evidence }}'")
-$caught = @($sabotage | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
-if ($caught.Count -ne 1) {
-  throw "Gomulu-girdi kapisi kendi sabotajini yakalamiyor: $($caught.Count) eslesme."
+# Envanter KUCULDUKCE kilitlenir: bir dosya duzeltildiginde kayitli sayi da
+# dusurulmeli, yoksa kusur geri sizabilir ve kapi bunu gormez.
+foreach ($name in $knownEmbeddedInputs.Keys) {
+  $path = Join-Path $workflowDir $name
+  if (-not (Test-Path -LiteralPath $path)) { throw "Envanterde olmayan dosya: $name" }
+  $wfLines = (Get-Content -LiteralPath $path -Raw -Encoding UTF8) -split "`r?`n"
+  $count = @($wfLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." }).Count
+  if ($count -lt $knownEmbeddedInputs[$name]) {
+    throw ("$name duzeldi ({0} kaldi) ama envanter hala {1} diyor; sayiyi dusur." -f $count, $knownEmbeddedInputs[$name])
+  }
 }
 $passed++
 

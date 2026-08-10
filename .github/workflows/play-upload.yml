@@ -1,0 +1,119 @@
+name: Play Upload
+
+# 🔴 Bu iş akışı sahibi Play Console'dan ÇIKARMAK için var. Yükleme elle
+# yapıldığı sürece "hangi AAB, hangi iz, hangi notlar" her seferinde yeniden
+# karar veriliyordu; v59'da sürüm ile notların ayrışması tam bu yüzden oldu.
+#
+# İki kip vardır ve `verify` KASITLI olarak ilk sıradadır: iz adı TAHMİN
+# EDİLMEZ, API'den listelenir. Yanlış iz adıyla yükleme, doğru paketi yanlış
+# kitleye açar ve geri alması yayınlamaktan zordur.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'verify = yetkiyi ve iz adlarını ölç · upload = AAB yükle'
+        required: true
+        type: choice
+        options: [verify, upload]
+        default: verify
+      tag:
+        description: 'upload: AAB hangi GitHub Release etiketinden alınacak (örn. v65)'
+        required: false
+        type: string
+      track:
+        description: 'upload: hedef iz — verify çıktısından al, uydurma'
+        required: false
+        type: string
+      status:
+        description: 'upload: draft = Console''da beklet · completed = testçilere aç'
+        required: false
+        type: choice
+        options: [draft, completed]
+        default: draft
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-upload
+  cancel-in-progress: false
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet google-auth requests
+
+      # 🔴 Metin üreteci API'ye DOKUNMADAN önce sınanır. Notlar 500 karakter
+      # sınırını aşarsa Play, paketi ALDIKTAN sonra 400 döner: yükleme yarım
+      # kalır ve düzeltmek yeni bir edit gerektirir. Kapı önce koşar.
+      - name: Not üretecinin kendi kapısı
+        run: python tooling/play/play_publish.py self-test
+
+      - name: Kimlik bilgisi fail-closed
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "${PLAY_SERVICE_ACCOUNT_JSON}" ]; then
+            echo "::error title=Play kimliği yok::PLAY_SERVICE_ACCOUNT_JSON secret'ı boş."
+            exit 1
+          fi
+          echo "kimlik bilgisi var ($(echo -n "${PLAY_SERVICE_ACCOUNT_JSON}" | wc -c) bayt)"
+
+      - name: Yetkiyi ve izleri ölç
+        if: inputs.mode == 'verify'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: python tooling/play/play_publish.py verify
+
+      # Etiketten hem AAB hem sürüm kodu türetilir. İkisini ayrı ayrı girmek,
+      # v65'te yaşandığı gibi elle yazılan bir değerin yanlış olması demekti.
+      - name: AAB'yi sürümden indir
+        if: inputs.mode == 'upload'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # 🔴 WP-668: etiket koda GÖMÜLMEZ. Bunu bir saat önce `release.yml`
+          # için yasakladım (WP-666) ve yeni dosyada aynısını yazdım — kural
+          # tek dosyaya yazıldığında kural olmuyor, o yüzden kapı artık BÜTÜN
+          # iş akışlarını tarıyor.
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="${TAG}"
+          case "$tag" in
+            v[0-9]*) ;;
+            *) echo "::error::Geçersiz etiket: '$tag' (vNN bekleniyor)"; exit 1 ;;
+          esac
+          gh release download "$tag" -p 'app-play-release.aab' -D dist --clobber
+          gh release download "$tag" -p 'app-play-release.aab.sha256' -D dist --clobber
+          cd dist
+          # Yayınlanan hash ile indirilen dosya karşılaştırılır: bozuk indirme
+          # sessizce yüklenirse mağazaya kırık paket gider.
+          expected=$(cut -d' ' -f1 app-play-release.aab.sha256)
+          actual=$(sha256sum app-play-release.aab | cut -d' ' -f1)
+          if [ "$expected" != "$actual" ]; then
+            echo "::error title=AAB bozuk::beklenen $expected, gelen $actual"; exit 1
+          fi
+          echo "sha256 doğrulandı: $actual"
+          echo "BUILD_NUMBER=${tag#v}" >> "$GITHUB_ENV"
+
+      - name: Play'e yükle
+        if: inputs.mode == 'upload'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          TRACK: ${{ inputs.track }}
+          STATUS: ${{ inputs.status }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TRACK}" ]; then
+            echo "::error title=İz verilmedi::Önce verify kipini koş, iz adını oradan al."; exit 1
+          fi
+          python tooling/play/play_publish.py upload \
+            --aab dist/app-play-release.aab \
+            --track "${TRACK}" \
+            --status "${STATUS}" \
+            --build-number "${BUILD_NUMBER}"
