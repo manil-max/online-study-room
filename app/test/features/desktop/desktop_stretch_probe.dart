@@ -1,4 +1,5 @@
 // WP-671 — "mobil gerilmesi" kapisinin OLCUM katmani.
+// WP-677 — GORUNURLUK duzeltmesi (asagida "KUSUR 1").
 //
 // Buradaki her yardimci, kaynak dosyada ne yazdigina DEGIL, karede NE
 // BOYANDIGINA bakar. Sebebi depoda kayitli bir ders: "dogruluk kaynagi
@@ -6,7 +7,7 @@
 // kaldi). `maxWidth: 1440` yazan bir dosya, o kisitin ekrana ulastigini
 // kanitlamaz.
 //
-// Iki teknik nokta:
+// Uc teknik nokta:
 //
 //  1. **Ink != kutu.** `Expanded(child: Text('Bugun ozeti'))` icindeki
 //     `RenderParagraph`in KUTUSU tum satiri kaplar; boyanan glifler solda
@@ -19,6 +20,28 @@
 //     olcumler `getTransformTo(null)` ile EKRAN (global) koordinatina cevrilir.
 //     Olcek kaldirilinca (SPEC §0) ikisi zaten esitlenir; kapi iki durumda da
 //     ayni seyi olcer.
+//
+//  3. **🔴 KUSUR 1 (WP-677) — "boyanmayan" ile "agacta olmayan" ayni sey
+//     DEGIL.** Bu dosya 2026-08-10'a kadar YALAN soyluyordu: bas yorumu
+//     "karede ne boyandigina bakar" diyordu ama `_walk` yalniz `RenderOffstage`
+//     atliyordu. Tam ekran bir rota (ornegin basarimlar) acikken altindaki
+//     sekme `Offstage` DEGILDIR — `Overlay`in render nesnesi `_RenderTheater`
+//     onu `skipCount` ile paint/hit-test disinda birakir ama `visitChildren`
+//     yine gezer. Sonuc: kapi kullanicinin GORMEDIGI metni olcuyordu.
+//
+//     Olculmus kanit (duzeltmeden once, basarimlar @1920): "boyanan" en soldaki
+//     metin x=12 px'te basliyordu; oysa basarimlar ekraninin kendi icerigi
+//     x=232'de basliyor. Aradaki fark, altta duran PROFIL sekmesiydi. Kapi bu
+//     yuzden basarimlar ekranina profil sekmesinin genisligini de yaziyor ve
+//     duzeltme WP'lerini yanlis yone itiyordu.
+//
+//     Duzeltme: cocuklar `RenderObject.paintsChild` ile suzulur (bu, `Offstage`
+//     + sifir opaklik + kaydirma listesinin canli tutulan ama cizilmeyen
+//     ogelerini kapsar) ve `_RenderTheater` icin `visitChildrenForSemantics`
+//     kullanilir — cerceve orada zaten YALNIZ sahnedeki (onstage) girisleri
+//     gezer. Ayni suzgec `find.byType` sonuclarina da uygulanir
+//     ([isPainted]): bir `Card` ya da masaustu yuzey widget'i offstage bir
+//     rotanin icindeyse "cizilmis" sayilmaz.
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,32 +88,94 @@ class PaintedCard {
   double get deadWidth => rect.width - widestText;
 }
 
+/// ============================ GORUNURLUK ===================================
+///
+/// Bu bolumdeki uc yardimci KUSUR 1'in duzeltmesidir; hem sonda (`_walk`) hem
+/// de `find.byType` tabanli olcumler bunlari kullanir.
+
+/// `Overlay`in render nesnesi. Sinif OZELDIR (`_RenderTheater`,
+/// `packages/flutter/lib/src/widgets/overlay.dart:1194`), disari acilmis bir
+/// tipi yoktur; bu yuzden tur ADIYLA taninir.
+///
+/// Neden ozel muamele: `_RenderTheater.visitChildren` BUTUN girisleri gezer
+/// (a.g.e. :1553), oysa boyanan yalniz `skipCount`'tan sonrakilerdir. Cerceve
+/// ayni ayrimi `visitChildrenForSemantics` icinde zaten yapar (a.g.e. :1564,
+/// `_firstOnstageChild`) — biz de onu kullaniriz.
+bool _isTheater(RenderObject node) =>
+    node.runtimeType.toString() == '_RenderTheater';
+
+/// [parent] bu kareyi cizerken [child]'i BOYAR mi?
+bool _parentPaints(RenderObject parent, RenderObject child) {
+  if (_isTheater(parent)) {
+    var onstage = false;
+    parent.visitChildrenForSemantics((candidate) {
+      if (identical(candidate, child)) onstage = true;
+    });
+    return onstage;
+  }
+  // `RenderOffstage` (offstage), `RenderOpacity`/`RenderAnimatedOpacity`
+  // (alpha 0), `RenderTransform` (tekil matris) ve
+  // `RenderSliverMultiBoxAdaptor` (canli tutulan ama cizilmeyen oge) bu
+  // yontemi override eder. Varsayilan `true`dur.
+  return parent.paintsChild(child);
+}
+
+/// [node] kokten kendisine kadar her adimda boyaniyor mu?
+///
+/// `find.byType(..., skipOffstage: true)` bu soruyu YANITLAMAZ: finder yalnizca
+/// `Offstage` widget'ini bilir, `Overlay`in atladigi girisleri bilmez.
+bool isPainted(RenderObject node) {
+  var child = node;
+  var parent = child.parent;
+  while (parent != null) {
+    if (!_parentPaints(parent, child)) return false;
+    child = parent;
+    parent = parent.parent;
+  }
+  return true;
+}
+
 /// Cizilen kareyi olcen sonda.
 class DesktopStretchProbe {
-  DesktopStretchProbe(this.tester) {
+  /// [scope] verilirse olcum o alt agacla SINIRLANIR.
+  ///
+  /// Neden gerekli: `showDesktopPanel` ile acilan yuzeyler (Ayarlar, Calisma
+  /// kayitlarim) OPAK DEGILDIR — altlarindaki sekme de boyanmaya devam eder ve
+  /// dogru olarak [walk] tarafindan gorulur. Kapsam verilmezse o yuzeyin sayisi
+  /// altindaki sekmenin sayisiyla toplanir ve ihlal YANLIS EKRANA yazilir.
+  /// Kapsam verildiginde serit dislama da kapanir: panelin icinde serit yoktur.
+  DesktopStretchProbe(this.tester, {this.scope}) {
     final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
     screenRect = Offset.zero & screen;
-    paneRect = _paneRect();
+    paneRect = scope == null ? _paneRect() : null;
   }
 
   final WidgetTester tester;
+
+  /// Olcumun sinirlandigi alt agac; null ise butun kare.
+  final Finder? scope;
+
   late final Rect screenRect;
 
   /// Sol gezinme paneli. Icerik olcumlerinden dislanir: pane genisligi ayri bir
   /// sozlesmedir (`DesktopNavigationPane.expandedWidth`), icerik sutunu degil.
+  ///
+  /// 🔴 Yalnizca GERCEKTEN boyaniyorsa dislanir. Tam ekran bir rota serit'i
+  /// ortuyorsa serit yoktur; o durumda ekranin sol yarisi da olculmelidir.
   late final Rect? paneRect;
 
   Rect? _paneRect() {
-    final found = find
-        .byType(DesktopNavigationPane, skipOffstage: true)
-        .evaluate();
-    if (found.isEmpty) return null;
-    final ro = found.first.renderObject;
-    if (ro is! RenderBox || !ro.hasSize) return null;
-    return _globalRect(ro);
+    for (final element
+        in find.byType(DesktopNavigationPane, skipOffstage: true).evaluate()) {
+      final ro = element.renderObject;
+      if (ro is! RenderBox || !ro.hasSize) continue;
+      if (!isPainted(ro)) continue;
+      return globalRect(ro);
+    }
+    return null;
   }
 
-  static Rect _globalRect(RenderBox box) =>
+  static Rect globalRect(RenderBox box) =>
       MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
 
   /// `Icon` da bir `RenderParagraph`tir (ikon fontunun ozel kullanim alanindaki
@@ -105,7 +190,7 @@ class DesktopStretchProbe {
   }
 
   /// [p]'nin ekranda boyanan glif kutusu; bos/ikon/gorunmez ise null.
-  static Rect? _ink(RenderParagraph p) {
+  static Rect? ink(RenderParagraph p) {
     if (!p.hasSize) return null;
     final text = p.text.toPlainText();
     if (text.trim().isEmpty || _isIconGlyph(text)) return null;
@@ -127,25 +212,42 @@ class DesktopStretchProbe {
     return true;
   }
 
-  /// Cizilen agactaki butun gorunur paragraflari dolasir. `Offstage` alt
-  /// agaclari atlanir (tembel sekme ana bilgisayari secilmeyen sekmeleri boyle
-  /// saklar; atlanmazsa bes sekmenin metni tek karede toplanir).
-  void _walk(RenderObject node, void Function(RenderParagraph) visit) {
-    if (node is RenderOffstage && node.offstage) return;
+  /// Cizilen agactaki butun BOYANAN paragraflari dolasir.
+  ///
+  /// Boyanmayan alt agaclar atlanir: `Offstage` (tembel sekme ana bilgisayari
+  /// secilmeyen sekmeleri boyle saklar), sifir opaklik, ve `Overlay`in
+  /// ustundeki opak rotanin altinda kalan girisleri (bkz. dosya basi KUSUR 1).
+  static void walk(RenderObject node, void Function(RenderParagraph) visit) {
     if (node is RenderParagraph) visit(node);
-    node.visitChildren((child) => _walk(child, visit));
+    node.visitChildren((child) {
+      if (!_parentPaints(node, child)) return;
+      walk(child, visit);
+    });
   }
 
-  RenderObject? get _root => tester.binding.rootElement?.renderObject;
+  RenderObject? get _root {
+    final scope = this.scope;
+    if (scope == null) return tester.binding.rootElement?.renderObject;
+    final found = scope.evaluate();
+    if (found.isEmpty) return null;
+    return found.first.renderObject;
+  }
+
+  /// [matching]'i kapsamla sinirlar.
+  Finder _within(Finder matching) {
+    final scope = this.scope;
+    if (scope == null) return matching;
+    return find.descendant(of: scope, matching: matching, matchRoot: true);
+  }
 
   List<PaintedText> paintedTexts() {
     final out = <PaintedText>[];
     final root = _root;
     if (root == null) return out;
-    _walk(root, (p) {
-      final ink = _ink(p);
-      if (ink == null || !_isContent(ink)) return;
-      out.add(PaintedText(p.text.toPlainText(), ink));
+    walk(root, (p) {
+      final rect = ink(p);
+      if (rect == null || !_isContent(rect)) return;
+      out.add(PaintedText(p.text.toPlainText(), rect));
     });
     return out;
   }
@@ -166,7 +268,7 @@ class DesktopStretchProbe {
   /// Bir render dugumunun en yakin "satir" atasi (yatay `Flex` ya da
   /// `ListTile`). Gruplama bunun uzerinden yapilir; yoksa iki AYRI kartta ayni
   /// y'de duran metinler yanlislikla "ayni satir" sayilirdi.
-  RenderObject? _rowAncestor(RenderObject node) {
+  static RenderObject? _rowAncestor(RenderObject node) {
     var current = node.parent;
     while (current != null) {
       if (current is RenderFlex && current.direction == Axis.horizontal) {
@@ -185,17 +287,28 @@ class DesktopStretchProbe {
   /// duz metni degil. Sinir olmasa iki cumlelik bir paragraf + buton da ihlal
   /// sayilir ve kapi yalan soylerdi.
   List<LabelValueRow> labelValueRows({int maxValueChars = 16}) {
-    final groups = <RenderObject, List<PaintedText>>{};
     final root = _root;
     if (root == null) return const [];
-    _walk(root, (p) {
-      final ink = _ink(p);
-      if (ink == null || !_isContent(ink)) return;
+    return labelValueRowsIn(root, accept: _isContent, maxValueChars: maxValueChars);
+  }
+
+  /// [root] alt agacindaki etiket-deger satirlari. Hem tam ekran olcumu hem de
+  /// IZOLE bilesen olcumu (WP-677 KUSUR 2) ayni kodu kullanir.
+  static List<LabelValueRow> labelValueRowsIn(
+    RenderObject root, {
+    bool Function(Rect rect)? accept,
+    int maxValueChars = 16,
+  }) {
+    final groups = <RenderObject, List<PaintedText>>{};
+    walk(root, (p) {
+      final rect = ink(p);
+      if (rect == null) return;
+      if (accept != null && !accept(rect)) return;
       final row = _rowAncestor(p);
       if (row == null) return;
       groups
           .putIfAbsent(row, () => <PaintedText>[])
-          .add(PaintedText(p.text.toPlainText(), ink));
+          .add(PaintedText(p.text.toPlainText(), rect));
     });
 
     final rows = <LabelValueRow>[];
@@ -219,17 +332,20 @@ class DesktopStretchProbe {
   /// OLCUM 3 — cizilen kart yuzeyleri ve icerdikleri en genis metin.
   List<PaintedCard> paintedCards() {
     final out = <PaintedCard>[];
-    for (final element in find.byType(Card, skipOffstage: true).evaluate()) {
+    for (final element
+        in _within(find.byType(Card, skipOffstage: true)).evaluate()) {
       final ro = element.renderObject;
       if (ro is! RenderBox || !ro.hasSize) continue;
-      final rect = _globalRect(ro);
+      // 🔴 KUSUR 1: finder offstage bir ROTANIN icindeki karti da bulur.
+      if (!isPainted(ro)) continue;
+      final rect = globalRect(ro);
       if (!_isContent(rect)) continue;
       var widest = 0.0;
       var label = '';
-      _walk(ro, (p) {
-        final ink = _ink(p);
-        if (ink == null || ink.width <= widest) return;
-        widest = ink.width;
+      walk(ro, (p) {
+        final rect = ink(p);
+        if (rect == null || rect.width <= widest) return;
+        widest = rect.width;
         label = p.text.toPlainText();
       });
       out.add(PaintedCard(rect, widest, label));
@@ -241,12 +357,19 @@ class DesktopStretchProbe {
   /// OLCUM 4 — cizilen agacta masaustu yuzey widget'i var mi.
   ///
   /// Kaynak taramasi DEGIL: `find.byType(..., skipOffstage: true)` yalnizca
-  /// gercekten monte edilmis ve gorunur olan agaci gorur. Bir ekranin dosyasina
-  /// `import` eklemek bu olcumu gecirmez.
+  /// gercekten monte edilmis agaci gorur, [isPainted] ise ustune "ve su anda
+  /// BOYANIYOR" sartini koyar. Bir ekranin dosyasina `import` eklemek de,
+  /// altta duran baska bir sekmede monte olmus olmak da bu olcumu gecirmez.
   List<String> mountedDesktopSurfaces(List<Type> candidates) {
     final found = <String>[];
     for (final type in candidates) {
-      final count = find.byType(type, skipOffstage: true).evaluate().length;
+      var count = 0;
+      for (final element
+          in _within(find.byType(type, skipOffstage: true)).evaluate()) {
+        final ro = element.renderObject;
+        if (ro == null || !isPainted(ro)) continue;
+        count++;
+      }
       if (count > 0) found.add('$type x$count');
     }
     return found;
