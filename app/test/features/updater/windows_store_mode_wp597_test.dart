@@ -43,11 +43,15 @@ void main() {
   }
 
   group('WP-597 — Store modu yapılandırması', () {
-    test('üç Partner Center değeri de okunuyor', () {
+    test('dört Partner Center değeri de okunuyor', () {
+      // 🔴 WP-664: dördüncüsü REZERVE EDİLMİŞ UYGULAMA ADI. Diğer üçü doğruyken
+      // bile paketin içindeki ad rezerve adla birebir eşleşmezse Partner Center
+      // gönderimi reddeder.
       for (final name in const [
         'MSIX_STORE_IDENTITY_NAME',
         'MSIX_STORE_PUBLISHER',
         'MSIX_STORE_PUBLISHER_DISPLAY_NAME',
+        'MSIX_STORE_DISPLAY_NAME',
       ]) {
         expect(
           workflow,
@@ -62,7 +66,7 @@ void main() {
       // reddedeceği bir paketi tüm sürüm koşumu bittikten SONRA fark ettirirdi.
       expect(
         workflow,
-        contains(r'$storeSet -gt 0 -and $storeSet -lt 3'),
+        contains(r'$storeSet -gt 0 -and $storeSet -lt 4'),
         reason: 'Yarım Store yapılandırması sessizce geçiyor.',
       );
       expect(
@@ -76,7 +80,7 @@ void main() {
       // Sahip kararı: beta kanalı atlanıyor, Store'a gönderilmiyor.
       expect(
         workflow,
-        contains(r"($storeSet -eq 3) -and ($channel -eq 'stable')"),
+        contains(r"($storeSet -eq 4) -and ($channel -eq 'stable')"),
         reason: 'Store modu kanaldan bağımsız açılıyor.',
       );
     });
@@ -125,6 +129,60 @@ void main() {
         workflow,
         contains(r'$storeMode -and $packageIdentity.Publisher -ne'),
         reason: 'Store paketinin yayıncısı manifestten doğrulanmıyor.',
+      );
+    });
+  });
+
+  group('WP-664 — Store paketi REZERVE EDİLMİŞ adla üretilir', () {
+    /// Paketleme adımının, ada karar veren ve adı doğrulayan bölgesi.
+    String packageStep() {
+      const start = r'$display = if ($storeMode)';
+      const end = r'"withheld_reason=$withheldReason" >> $env:GITHUB_OUTPUT';
+      final from = workflow.indexOf(start);
+      final to = workflow.indexOf(end);
+      expect(
+        from,
+        isNonNegative,
+        reason:
+            'Store modunda paket adını seçen dal yok. Ad koşulsuz yazılıyorsa '
+            'rezerve adla eşleşmesi tesadüfe kalır.',
+      );
+      expect(to, greaterThan(from), reason: 'Paketleme adımının sonu yok.');
+      return workflow.substring(from, to);
+    }
+
+    test('paket adı Store modunda değişkenden gelir, koda gömülü DEĞİL', () {
+      final step = packageStep();
+      final storeBranch = step.substring(0, step.indexOf('elseif'));
+      expect(
+        storeBranch,
+        contains('steps.msix.outputs.store_app_name'),
+        reason: 'Store dalı paket adını Partner Center değerinden almıyor.',
+      );
+      expect(
+        storeBranch.contains('Odak Kampı'),
+        isFalse,
+        reason:
+            'Store paketi hâlâ koda gömülü adla üretiliyor. Rezerve ad bugün '
+            'buna eşit olsa bile bu tesadüftür ve mağaza tarafı değişince '
+            'sessizce ayrışır.',
+      );
+    });
+
+    test('adın pakete GERÇEKTEN girdiği manifestten okunur', () {
+      // Bayrağı komut satırına yazmak, adın pakete işlendiği anlamına gelmez;
+      // Partner Center'ın reddettiği şey manifestteki addır. Bu iddia olmadan
+      // yanlış ad ancak gönderimde, tüm koşum bittikten sonra görülürdü.
+      final step = packageStep();
+      expect(
+        step,
+        contains(r'$appxManifest.Package.Properties.DisplayName'),
+        reason: 'Paket adı manifestten hiç okunmuyor.',
+      );
+      expect(
+        step,
+        contains(r'$storeMode -and $packageDisplayName -ne'),
+        reason: 'Manifestteki ad rezerve adla karşılaştırılmıyor.',
       );
     });
   });

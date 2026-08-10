@@ -123,22 +123,31 @@ olarak şunu koşabilir (imzalı yerel paket gerektirir):
 
 ## Bundan sonrasını hat kendi yapar
 
-Üç değer GitHub'da **repository variables** olarak girilir:
+Dört değer GitHub'da **repository variables** olarak girilir:
 
 | Değişken | Kaynak |
 |---|---|
 | `MSIX_STORE_IDENTITY_NAME` | Package/Identity/Name |
 | `MSIX_STORE_PUBLISHER` | Package/Identity/Publisher (`CN=…`) |
 | `MSIX_STORE_PUBLISHER_DISPLAY_NAME` | Package/Properties/PublisherDisplayName |
+| `MSIX_STORE_DISPLAY_NAME` | **Rezerve edilmiş uygulama adı** (Product management → Manage app name reservations) |
 
-Üçü birden dolduğunda `windows-release.yml` **Store modunu** açar:
+🔴 Dördüncüsü ilk üçüyle aynı sayfada **yazmaz** ve unutulması kolaydır:
+Partner Center, paketin içindeki uygulama adının rezerve edilmiş bir adla
+birebir aynı olmasını şart koşar. Eşleşmezse gönderim *"The name found in the
+package is not one of your reserved app names"* ile reddedilir — kimlik,
+yayıncı ve sürüm doğruyken bile. Ad, uygulamanın kod içinde taşıdığı görünen
+addan **ayrı bir veridir**: mağazada `Focus Camp` rezerve edilmişken hat
+paketi `Odak Kampı` adıyla üretiyordu (WP-664).
+
+Dördü birden dolduğunda `windows-release.yml` **Store modunu** açar:
 
 - `msix:create --store` ile **imzasız** Store paketi üretir,
 - paketin kimliğini ve yayıncısını `AppxManifest.xml`'den **okuyarak doğrular**,
 - paketi `windows-store-package` **artefaktına** koyar.
 
-Üçü de boşsa hat **bugünkü davranışını aynen sürdürür** (taşınabilir ZIP).
-İkisi dolu biri boşsa iş **başlamadan durur** — yarım yapılandırma, Partner
+Dördü de boşsa hat **bugünkü davranışını aynen sürdürür** (taşınabilir ZIP).
+Biri bile eksikse iş **başlamadan durur** — yarım yapılandırma, Partner
 Center'ın reddedeceği bir paketi ancak koşum bittikten sonra fark ettirirdi.
 
 ## 🔴 Store paketi indirme bağlantısı olarak yayınlanmaz

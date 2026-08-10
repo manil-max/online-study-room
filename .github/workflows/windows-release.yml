@@ -91,14 +91,23 @@ jobs:
           $storeIdentity = '${{ vars.MSIX_STORE_IDENTITY_NAME }}'
           $storePublisher = '${{ vars.MSIX_STORE_PUBLISHER }}'
           $storeDisplay = '${{ vars.MSIX_STORE_PUBLISHER_DISPLAY_NAME }}'
-          $storeParts = @($storeIdentity, $storePublisher, $storeDisplay)
+          # 🔴 WP-664 — DÖRDÜNCÜ DEĞER: REZERVE EDİLMİŞ UYGULAMA ADI.
+          # Partner Center, paketin içindeki uygulama adının orada REZERVE
+          # EDİLMİŞ bir adla birebir aynı olmasını şart koşar; değilse gönderim
+          # "The name found in the package is not one of your reserved app
+          # names" ile reddedilir. Bu ad, uygulamanın kod içinde taşıdığı
+          # görünen adla AYNI ŞEY DEĞİL: mağazada rezerve edilen ad ayrı bir
+          # Partner Center verisidir, o yüzden diğer üçü gibi değişkenden gelir
+          # (koda gömülmesi, mağaza tarafı değişince sessizce ayrışmak demek).
+          $storeAppName = '${{ vars.MSIX_STORE_DISPLAY_NAME }}'
+          $storeParts = @($storeIdentity, $storePublisher, $storeDisplay, $storeAppName)
           $storeSet = @($storeParts | Where-Object { $_ }).Count
-          if ($storeSet -gt 0 -and $storeSet -lt 3) {
-            throw "Store yapılandırması YARIM: MSIX_STORE_IDENTITY_NAME / MSIX_STORE_PUBLISHER / MSIX_STORE_PUBLISHER_DISPLAY_NAME değişkenlerinin ÜÇÜ birden dolu olmalı ($storeSet/3 dolu)."
+          if ($storeSet -gt 0 -and $storeSet -lt 4) {
+            throw "Store yapılandırması YARIM: MSIX_STORE_IDENTITY_NAME / MSIX_STORE_PUBLISHER / MSIX_STORE_PUBLISHER_DISPLAY_NAME / MSIX_STORE_DISPLAY_NAME değişkenlerinin DÖRDÜ birden dolu olmalı ($storeSet/4 dolu)."
           }
           # Store paketleri kanaldan bağımsız değildir: beta kanalı Store'a
           # gönderilmiyor (sahip kararı: beta atlanır), o yüzden yalnız stable.
-          $storeMode = ($storeSet -eq 3) -and ($channel -eq 'stable')
+          $storeMode = ($storeSet -eq 4) -and ($channel -eq 'stable')
           if ($storeMode) {
             if ($storePublisher -notmatch '^CN=') { throw "MSIX_STORE_PUBLISHER Partner Center'daki Publisher ID olmalı ve 'CN=' ile başlamalı: $storePublisher" }
             Write-Host "Store modu AÇIK: kimlik=$storeIdentity yayıncı=$storePublisher"
@@ -111,6 +120,7 @@ jobs:
           "store_identity=$storeIdentity" >> $env:GITHUB_OUTPUT
           "store_publisher=$storePublisher" >> $env:GITHUB_OUTPUT
           "store_display=$storeDisplay" >> $env:GITHUB_OUTPUT
+          "store_app_name=$storeAppName" >> $env:GITHUB_OUTPUT
           Write-Host "MSIX kimlik=$identity sürüm=$version"
 
       # 🔴 WP-614 — DAGITIM KANALI. Bu manifest **sideload/ZIP** derlemesini
@@ -274,7 +284,14 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $display = if ('${{ inputs.channel }}' -eq 'beta') { 'Odak Kampı (Beta)' } else { 'Odak Kampı' }
+          $storeMode = '${{ steps.msix.outputs.store_mode }}' -eq 'true'
+          # 🔴 WP-664: burası eskiden KOŞULSUZ 'Odak Kampı' yazıyordu. Store
+          # modu ilk açıldığında paket, Partner Center'da rezerve edilmemiş bir
+          # adla üretilecekti (sahip mağazada 'Focus Camp' rezerve etti) ve
+          # gönderim reddedilirdi — üstelik bütün sürüm koşumu bittikten SONRA.
+          $display = if ($storeMode) {
+            '${{ steps.msix.outputs.store_app_name }}'
+          } elseif ('${{ inputs.channel }}' -eq 'beta') { 'Odak Kampı (Beta)' } else { 'Odak Kampı' }
           # 🔴 Bu adım eskiden pubspec.yaml'ı yerinde regex ile
           # DEĞİŞTİRİYORDU. İki sorun: (1) paylaşılan sıcak dosyaya derleme
           # ortasında yazmak, (2) aynı build numarası ikinci kez koşturulduğunda
@@ -287,7 +304,6 @@ jobs:
           # 🔴 WP-597: Store modunda kimlik ve yayıncı Partner Center'dan gelir;
           # `--store` paketi imzalamaz (Store'a yüklenen paket İMZASIZ olmalı,
           # imzayı Microsoft sertifikasyondan sonra kendisi atar).
-          $storeMode = '${{ steps.msix.outputs.store_mode }}' -eq 'true'
           $expectedIdentity = if ($storeMode) { '${{ steps.msix.outputs.store_identity }}' } else { '${{ steps.msix.outputs.identity }}' }
           if ($storeMode) {
             dart run msix:create --build-windows false --store --version '${{ steps.msix.outputs.version }}' --identity-name $expectedIdentity --publisher '${{ steps.msix.outputs.store_publisher }}' --publisher-display-name '${{ steps.msix.outputs.store_display }}' --display-name $display
@@ -316,6 +332,13 @@ jobs:
           if ($packageIdentity.Name -ne $expectedIdentity) { throw "Paket kimliği beklenenden farklı: $($packageIdentity.Name)" }
           if ($packageIdentity.Version -ne '${{ steps.msix.outputs.version }}') { throw "Paket sürümü beklenenden farklı: $($packageIdentity.Version)" }
           if ($storeMode -and $packageIdentity.Publisher -ne '${{ steps.msix.outputs.store_publisher }}') { throw "Store paketinin yayıncısı Partner Center Publisher ID'siyle eşleşmiyor: $($packageIdentity.Publisher)" }
+
+          # 🔴 WP-664: adı bayrağa verdik diye pakete GİRDİĞİNİ varsaymıyoruz.
+          # Partner Center'ın reddettiği şey manifestteki addır, komut
+          # satırındaki değil; sessizce yok sayılan bir bayrak de aynı sonucu
+          # verir. Bu iddia yanlış adı CI'da yakalar, gönderimde değil.
+          $packageDisplayName = $appxManifest.Package.Properties.DisplayName
+          if ($storeMode -and $packageDisplayName -ne '${{ steps.msix.outputs.store_app_name }}') { throw "Store paketindeki uygulama adı rezerve adla eşleşmiyor: '$packageDisplayName' (beklenen '${{ steps.msix.outputs.store_app_name }}')" }
 
           # 🔴 İMZA GERÇEĞİ. `msix_config`e sertifika verilmediğinde paket,
           # pub.dev'de herkese açık dağıtılan test sertifikasıyla (parola 1234)

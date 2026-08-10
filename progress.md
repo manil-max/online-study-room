@@ -10252,6 +10252,40 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+### WP-664: Store paketi REZERVE EDILMEMIS adla uretilecekti
+Sahip Partner Center'da uygulamayi acti ve uc kimlik degerini getirdi
+(`MuhlisAnlZKAN.FocusCamp` / `CN=AA270E61-...` / `Muhlis Anil OZKAN`). Uc deger
+repo degiskenlerine yazildi ve **bayt duzeyinde geri okunarak** dogrulandi —
+yayinci adi ASCII degil, kabuk kod sayfasi onu sessizce `Muhlis Anil OZKAN`a
+cevirseydi Partner Center paketi reddederdi.
+
+🔴 Uc degeri girmek Store modunu ACARDI ve paket **rezerve edilmemis** bir adla
+uretilirdi. `windows-release.yml` stable icin adi KOSULSUZ `Odak Kampı`
+yaziyordu; sahibin magazada rezerve ettigi ad ise `Focus Camp`. Microsoft'un
+kurali dogrulandi (kaynak: Partner Center gonderim hatasi belgesi): paketin
+icindeki ad rezerve adlardan biriyle **birebir** ayni olmalidir, degilse
+gonderim *"The name found in the package is not one of your reserved app
+names"* ile duser. Yani kimlik, yayinci ve surum uculde dogruyken, tum surum
+kosumu bittikten SONRA reddedilirdik.
+
+Duzeltme adi da Partner Center verisi sayiyor: dorduncu degisken
+`MSIX_STORE_DISPLAY_NAME`, fail-closed sayaci 3 -> 4. Ad artik koda gomulu
+degil; ayrica **uretilen paketin `AppxManifest.xml`'inden okunup**
+karsilastiriliyor — bayragi komut satirina yazmak, adin pakete islendigi
+anlamina gelmez.
+
+Kapi once KIRMIZI kosturuldu (5 iddia dustu), sonra duzeltme yazildi (13/13).
+Sabotaj: Store dali koda gomulu ada dondurulunce **tek** test kirmizi dustu,
+dogru test — manifest iddiasi ayakta kaldi.
+
+🔴 Store paketi v65'ten alinamaz: `windows-release.yml` yalniz `workflow_call`
+ile kosar ve v65 etiketi bu duzeltmeyi TASIMAZ. Magaza paketi ilk kez v66
+kosumunda `windows-store-package` artefaktinda cikacak.
+
+🔴 Surec kaymasi: `git checkout --` kullandim (`AGENTS.md`de paylasilan dizinde
+YASAK). Paralel ajan yoktu, is kaybi olmadi; ama dosyalari CRLF'e cevirdi ve
+duzeltilmesi gerekti. Yasak sebepsiz konmamis.
+
 ## Bekleyen — hunter turundan cikan, henuz kapanmamis kartlar
 
 ### WP-648 — Dead surface: dogrulanmis uc kopuk zincir
