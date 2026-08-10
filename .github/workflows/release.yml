@@ -38,14 +38,29 @@ jobs:
           fetch-depth: 0
       - id: meta
         shell: pwsh
+        # 🔴 WP-666: elle girilen değerler artık koda `${{ }}` ile GÖMÜLMÜYOR,
+        # ortam değişkeniyle giriyor. Gömme, değeri PowerShell KAYNAK KODUNUN
+        # parçası yapar: içindeki tek tırnak dizeyi kapatır ve kalanı komut
+        # olarak çalışır. Bu teorik değil — v65 turu tam bu yüzden `ParserError`
+        # ile düştü (kanıt metninde `CI'da` yazıyordu, koşum 31390722795).
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+          DISPATCH_CHANNEL: ${{ inputs.channel }}
+          DISPATCH_HEAD: ${{ inputs.expected_migration_head }}
+          DISPATCH_SHA: ${{ inputs.expected_git_sha }}
         run: |
-          $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.tag }}' } else { $env:GITHUB_REF_NAME }
-          $channel = if ($tag.StartsWith('beta-v')) { 'beta' } elseif ($tag -match '^v\d+$') { 'stable' } else { throw "Geçersiz release tag: $tag" }
-          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and $channel -ne '${{ inputs.channel }}') { throw 'Seçilen kanal tag ile uyuşmuyor.' }
+          $dispatch = '${{ github.event_name }}' -eq 'workflow_dispatch'
+          $tag = if ($dispatch) { $env:DISPATCH_TAG } else { $env:GITHUB_REF_NAME }
+          # 🔴 Etiket biçimi artık İKİ kanalda da TAM eşleşmeyle doğrulanıyor.
+          # Eskiden beta dalı `StartsWith('beta-v')` idi: `beta-vX` ile başlayan
+          # her şey geçiyor, sonrası hiç sınanmıyordu. Etiket aşağıda başka
+          # adımlara aktarılan bir değer, yani biçimi bir sözleşmedir.
+          $channel = if ($tag -match '^beta-v\d+$') { 'beta' } elseif ($tag -match '^v\d+$') { 'stable' } else { throw "Geçersiz release tag: $tag" }
+          if ($dispatch -and $channel -ne $env:DISPATCH_CHANNEL) { throw 'Seçilen kanal tag ile uyuşmuyor.' }
           $sha = (git rev-parse HEAD).Trim()
           $contract = Get-Content tooling/release/deploy-contract.json -Raw | ConvertFrom-Json
-          $head = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.expected_migration_head }}' } else { $contract.staging.migration_head }
-          $expectedSha = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.expected_git_sha }}' } else { $sha }
+          $head = if ($dispatch) { $env:DISPATCH_HEAD } else { $contract.staging.migration_head }
+          $expectedSha = if ($dispatch) { $env:DISPATCH_SHA } else { $sha }
           $code = [int]($tag -replace '^beta-v|^v', '')
           $version = if ($channel -eq 'beta') { "1.0.$([math]::Floor($code / 100))-beta.$($code % 100)" } else { "1.0.$code" }
           "tag=$tag" >> $env:GITHUB_OUTPUT; "channel=$channel" >> $env:GITHUB_OUTPUT; "git_sha=$expectedSha" >> $env:GITHUB_OUTPUT
@@ -59,9 +74,14 @@ jobs:
           STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
           DEPLOY_APPROVAL_ENVIRONMENT: ${{ steps.meta.outputs.environment }}
+          # 🔴 WP-666: sahibin serbest metin olarak yazdığı iki değer. Kanıt
+          # metni cümlelerden oluşur ve Türkçede kesme işareti KAÇINILMAZDIR
+          # (`CI'da`, `2026-07-27'den`); koda gömülünce dizeyi kapatır.
+          PRODUCTION_CONFIRMATION: ${{ inputs.production_confirmation }}
+          PRODUCTION_EVIDENCE: ${{ inputs.production_evidence }}
         run: |
           $channel = '${{ steps.meta.outputs.channel }}'; $isBeta = $channel -eq 'beta'
-          ./tooling/release/release-preflight.ps1 -Channel $channel -Tag '${{ steps.meta.outputs.tag }}' -ExpectedGitSha '${{ steps.meta.outputs.git_sha }}' -ExpectedMigrationHead '${{ steps.meta.outputs.migration_head }}' -ProjectRef $(if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }) -SupabaseUrl $(if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }) -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ProductionConfirmation '${{ inputs.production_confirmation }}' -ProductionEvidence '${{ inputs.production_evidence }}'
+          ./tooling/release/release-preflight.ps1 -Channel $channel -Tag '${{ steps.meta.outputs.tag }}' -ExpectedGitSha '${{ steps.meta.outputs.git_sha }}' -ExpectedMigrationHead '${{ steps.meta.outputs.migration_head }}' -ProjectRef $(if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }) -SupabaseUrl $(if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }) -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ProductionConfirmation "$env:PRODUCTION_CONFIRMATION" -ProductionEvidence "$env:PRODUCTION_EVIDENCE"
 
       # WP-533: v61 stable turu 15 dakikalik derlemenin SONUNDA
       # `processPlayReleaseGoogleServices` adiminda "File

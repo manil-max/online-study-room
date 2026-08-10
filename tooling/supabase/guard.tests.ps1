@@ -249,6 +249,41 @@ if ($windowsWorkflow -match 'action-gh-release' -or $windowsWorkflow -notmatch '
 }
 $passed += 3
 
+# 🔴 WP-666: elle yazilan girdiler PowerShell KAYNAK KODUNA gomulemez.
+# Tek tirnakla sarilmis bir `${{ inputs.* }}`, degeri kodun parcasi yapar:
+# icindeki tek tirnak dizeyi kapatir ve kalani komut olarak calisir. Bu teorik
+# degil -- v65 turu tam bu yuzden ParserError ile dustu (kanit metninde
+# `CI'da` yaziyordu, kosum 31390722795). Dogrusu `env:` ile gecirmek.
+#
+# Iddia SATIR duzeyinde: `${{ inputs.* }}` bir `env:` esleme satirinda serbest,
+# tirnak icinde YASAK. Boylece kural, degerin nerede kullanildigini degil
+# NASIL tasindigini olcer.
+$releaseLines = $releaseWorkflow -split "`r?`n"
+$quotedInputs = @($releaseLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
+if ($quotedInputs.Count -gt 0) {
+  throw ("Elle girilen deger PowerShell koduna gomulu (env: ile gecirilmeli): " +
+    ($quotedInputs -join ' | '))
+}
+$passed++
+
+# Kapinin kendisi sinaniyor: yasak deseni tasiyan bir satir GERCEKTEN yakalaniyor mu?
+# (Depoda bir kapinin sessizce hicbir sey olcmemesi uc kez yasandi.)
+$sabotage = @("        run: |", "          ./x.ps1 -Evidence '`$`{{ inputs.production_evidence }}'")
+$caught = @($sabotage | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
+if ($caught.Count -ne 1) {
+  throw "Gomulu-girdi kapisi kendi sabotajini yakalamiyor: $($caught.Count) eslesme."
+}
+$passed++
+
+# Kapinin kendisi sinaniyor: yasak deseni tasiyan bir satir GERCEKTEN yakalaniyor mu?
+# (Depoda bir kapinin sessizce hicbir sey olcmemesi uc kez yasandi.)
+$sabotage = @("        run: |", "          ./x.ps1 -Evidence '`$`{{ inputs.production_evidence }}'")
+$caught = @($sabotage | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
+if ($caught.Count -ne 1) {
+  throw "Gomulu-girdi kapisi kendi sabotajini yakalamiyor: $($caught.Count) eslesme."
+}
+$passed++
+
 Assert-TargetContract -Environment staging -ProjectRef $stagingRef -SupabaseUrl "https://$stagingRef.supabase.co" -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -RepoRoot $repoRoot -IgnoreLinkedRef
 $passed++
 

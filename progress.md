@@ -10252,6 +10252,30 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+### WP-666: elle yazilan kanit metni PowerShell KODUNA gomuluyordu
+v65 yayin turu preflight'ta 14 saniyede `ParserError` ile dustu (kosum
+31390722795). Sebep uygulama degil, benim yazdigim kanit metnindeki KESME
+ISARETIYDI: `CI'da`, `2026-07-27'den`. `release.yml` degeri
+`-ProductionEvidence '${{ inputs.production_evidence }}'` diye tek tirnak
+icine gomuyordu; tek tirnak dizeyi kapatti, kalan metin KOMUT oldu.
+
+Turkcede kesme isareti kacinilmaz oldugu icin bu "dikkatli yaz" ile
+cozulmez. Elle girilen dort deger artik `env:` ile geciyor; deger kodun
+parcasi degil VERI. Ayrica etiket bicimi iki kanalda da tam eslesmeyle
+dogrulaniyor: beta dali `StartsWith('beta-v')` idi, yani `beta-v` ile
+baslayan her sey geciyor, sonrasi hic sinanmiyordu.
+
+Kural kapiya baglandi (`guard.tests.ps1`): tirnak icinde `${{ inputs.* }}`
+YASAK, `env:` esleme satirinda serbest. Yani kapi degerin nerede
+kullanildigini degil NASIL tasindigini olcer. Kapi kendi sabotajini da
+kosturuyor -- yasak deseni tasiyan uydurma satiri gercekten yakaliyor mu.
+Once kirmiziydi (gercek satirlari sayarak dustu), sonra 89/89.
+
+🔴 Yanlis ongoru, olculup duzeltildi: bos girdide `$env:X` degeri `$null`
+gelir ve `[string]` parametreye BAGLANMAZ sanmistim. Olctum, baglaniyor
+(bos dizeye donuyor). Cift tirnak zararsiz oldugu icin durdu ama iddia
+tahminle degil olcumle kapandi.
+
 ### WP-665: magaza paketi ancak SURUM KESILEREK alinabiliyordu
 WP-664 uygulamanin koduna hic dokunmadi -- yalniz paketleme adimini duzeltti.
 Buna ragmen magaza paketi v65 etiketinden ALINAMIYORDU: `windows-release.yml`
