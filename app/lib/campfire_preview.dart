@@ -9,6 +9,8 @@ import 'data/providers/moderation_providers.dart';
 import 'data/providers/presence_providers.dart';
 import 'data/providers/study_providers.dart';
 import 'features/classroom/widgets/campfire_layout.dart';
+import 'core/time_engine/sky_phase.dart';
+import 'core/time_engine/solar_anchors.dart';
 import 'features/classroom/widgets/campfire_scene.dart';
 
 /// WP-416 — kamp ateşinin **mobil** parametrik önizlemesi.
@@ -87,6 +89,47 @@ class _PreviewScreenState extends State<_PreviewScreen> {
   var _workingCount = 3;
   var _tuning = _canonical;
 
+  /// 🔴 WP-651 — SAHNE SAATI ONIZLEMEDE ELLE SURULEBILIR.
+  ///
+  /// Sahip "gece gundüzde erken gece oluyor" dedi. Olculdugunde model dogru
+  /// cikti: 10 Agustos'ta sahne 20:01'e kadar tam gunduz, 29 dakikada
+  /// yumusakca kararip 20:30'da geceye geciyor (Istanbul'da gercek gunbatimi
+  /// 20:07, sivil karanlik ~20:38 — sapma ~8 dakika) ve mevsime gore kayiyor.
+  /// Yani bir sayiyi "duzeltmek" dogru calisan tek yuzeyi bozardi.
+  ///
+  /// Bu yuzden once ONIZLEME: sahip saati surer, gecenin kendisine gore hangi
+  /// dakikada bastigini SOYLER, sayi ondan sonra kodlanir ve teste baglanir.
+  /// Kozmetik iste ilk cikti kod degil parametrik onizlemedir.
+  int? _sceneMinuteOverride;
+
+  int _nowMinuteOfDay() {
+    final now = DateTime.now();
+    return now.hour * 60 + now.minute;
+  }
+
+  /// Onizlemenin **olcum** satiri: hangi dakikada hangi faz, ne kadar isik.
+  ///
+  /// Sahip ekrana bakip "iste burada gece oldu" diyebilsin diye sayilar
+  /// yazili; ekran goruntusu tek basina kanit degil, yanindaki sayi kanit.
+  String _skyReadout() {
+    final now = _sceneNow();
+    final anchors = solarSkyAnchors(now);
+    final sky = skyPhase(now, anchors);
+    String hhmm(int m) =>
+        '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+    final at = hhmm(now.hour * 60 + now.minute);
+    return '$at · ${sky.phase.name} · isik ${sky.value.toStringAsFixed(2)}\n'
+        'bugun: safak ${hhmm(anchors.dawnMinute)} · dogus ${hhmm(anchors.sunriseMinute)} · '
+        'batis ${hhmm(anchors.sunsetMinute)} · GECE ${hhmm(anchors.duskMinute)}';
+  }
+
+  DateTime _sceneNow() {
+    final today = DateTime.now();
+    final minute = _sceneMinuteOverride;
+    if (minute == null) return today;
+    return DateTime(today.year, today.month, today.day, minute ~/ 60, minute % 60);
+  }
+
   double get _greenArea =>
       _tuning.greenAreaHeight ?? kCampfirePhoneGreenAreaHeight;
 
@@ -127,7 +170,7 @@ class _PreviewScreenState extends State<_PreviewScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: CampfireScene(tuning: _tuning),
+                  child: CampfireScene(tuning: _tuning, clock: _sceneNow),
                 ),
               ),
             ),
@@ -173,6 +216,21 @@ class _PreviewScreenState extends State<_PreviewScreen> {
           onChanged: (value) => setState(() => _workingCount = value.round()),
         ),
         const Divider(height: 24),
+        _slider(
+          key: 'scene-clock',
+          label: l10n.campfirePreviewTimeOfDay,
+          value: (_sceneMinuteOverride ?? _nowMinuteOfDay()).toDouble(),
+          min: 0,
+          max: 1439,
+          divisions: 287,
+          fractionDigits: 0,
+          onChanged: (value) =>
+              setState(() => _sceneMinuteOverride = value.round()),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(_skyReadout(), style: const TextStyle(fontFeatures: [])),
+        ),
         _slider(
           key: 'green-area',
           label: l10n.campfirePreviewGreenArea,

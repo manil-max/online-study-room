@@ -6368,6 +6368,8 @@
   "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."},
   "campfirePreviewTitle": "Campfire tuning (mobile)",
   "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewTimeOfDay": "Time of day (scene clock)",
+  "@campfirePreviewTimeOfDay": {"description": "Slider label that overrides the campfire scene clock so the sky can be inspected minute by minute."},
   "campfirePreviewGreenArea": "Green area height (px)",
   "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
   "campfirePreviewRingDrop": "Fire and animals drop (px)",

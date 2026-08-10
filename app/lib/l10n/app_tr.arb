@@ -1905,6 +1905,8 @@
   "@adminUgcIdCopied": {"description": "Yönetici sabit moderasyon kimliğini kopyaladığında gösterilir."},
   "campfirePreviewTitle": "Kamp ateşi ayarı (mobil)",
   "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewTimeOfDay": "Günün saati (sahne saati)",
+  "@campfirePreviewTimeOfDay": {"description": "Slider label that overrides the campfire scene clock so the sky can be inspected minute by minute."},
   "campfirePreviewGreenArea": "Yeşil alan yüksekliği (px)",
   "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
   "campfirePreviewRingDrop": "Ateş ve hayvanların aşağı inme payı (px)",
