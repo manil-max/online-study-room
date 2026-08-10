@@ -17,6 +17,19 @@ class InMemorySupportRepository implements SupportRepository {
   }) async {}
 }
 
+/// Sunucuya ulaşılamadığında gösterilen SSS yedeği.
+///
+/// 🔴 WP-658 — BU LİSTE İKİNCİ BİR GERÇEK KAYNAKTIR ve bir kez eskidi.
+/// SSS'in asıl kaynağı veritabanıdır (`supabase/migrations/0091`, `0123`,
+/// `0130`). Buradaki kopya sunucu düzeltildiğinde **kendiliğinden
+/// güncellenmez**: `0130` dokuz SSS cümlesini ürünle çeliştiği için
+/// düzeltti, ama çevrimdışı kullanıcı hâlâ bu listedeki eski metni görürdü.
+///
+/// Kural: buraya **eskiyebilecek iddia yazılmaz.** Sayı vermek ("tek widget",
+/// "2 başarımda bronz"), akış anlatmak ("giriş yaparsan istek iptal olur") ve
+/// eşik saymak yasaktır — hepsi kodun değişmesiyle sessizce yalan olur.
+/// Yalnız yapısal, ürün ömrü boyunca doğru kalan cümleler kalır.
+/// Sözleşme: `app/test/data/faq_fallback_claims_wp658_test.dart`.
 const kFallbackFaq = <FaqEntry>[
   FaqEntry(
     id: 'fallback-tr-widget',
@@ -24,7 +37,7 @@ const kFallbackFaq = <FaqEntry>[
     sortOrder: 1,
     question: 'Ana ekrana widget nasıl eklenir?',
     answer:
-        'Telefonunun widget ekleme ekranından Odak Kampı widgetını seç. Bildirim izni ve pil optimizasyonu ayarları kapalıysa widget güncel kalmayabilir.',
+        'Telefonunun widget ekleme ekranından Odak Kampı widget seçeneklerinden birini seç. Bildirim izni ve pil optimizasyonu ayarları kapalıysa widget güncel kalmayabilir.',
   ),
   FaqEntry(
     id: 'fallback-tr-notifications',
@@ -48,7 +61,7 @@ const kFallbackFaq = <FaqEntry>[
     sortOrder: 1,
     question: 'How do I add a home-screen widget?',
     answer:
-        'Open your phone’s widget picker and select the Focus Camp widget. Notification permission and battery optimisation can affect updates.',
+        'Open your phone’s widget picker and pick one of the Focus Camp widgets. Notification permission and battery optimisation can affect updates.',
   ),
   FaqEntry(
     id: 'fallback-en-notifications',

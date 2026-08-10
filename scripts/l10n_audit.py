@@ -266,6 +266,11 @@ DATA_LAYER_DEBT: dict[str, tuple[int, int, str]] = {
 # (2) Dosya bazlı muafiyetler — Türkçe literal taraması. Her satır bir gerekçe
 # taşır; gerekçesi yazılamayan dosya muaf edilmez.
 LITERAL_EXEMPTIONS: dict[str, str] = {
+    # WP-657: seri rozeti onizlemesi -- gelistirici kosumu, urunde rota yok.
+    "app/lib/goal_streak_preview.dart": (
+        "Gelistirici onizleme kosumu (goal_streak_preview); sahip rozet rengini "
+        "buradan secer, kullanici yuzeyine tasinmaz."
+    ),
     "app/lib/core/time_engine/sky_phase.dart": (
         "Yalnız statik gökyüzü anchor invariantı bozulduğunda geliştiriciye atılan "
         "ArgumentError; kullanıcı yüzeyine taşınmaz."
@@ -348,6 +353,13 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
     "app/lib/wp295_preview.dart": (
         "Geliştirici önizleme koşumu (`wp295_preview`), üründe yönlendirilen "
         "bir rota değil; ölçüm etiketleri çevrilmez."
+    ),
+    # WP-657: seri rozetinin üç durumunu (sıfır / duraklamada / tamam) yan yana
+    # gösteren geliştirici önizlemesi. Sahip rengi buradan seçer; `main()` ile
+    # ayrı çalıştırılır, üründe hiçbir rotadan erişilmez.
+    "app/lib/goal_streak_preview.dart": (
+        "Geliştirici önizleme koşumu (`goal_streak_preview`), üründe "
+        "yönlendirilen bir rota değil; ölçüm etiketleri çevrilmez."
     ),
 }
 
