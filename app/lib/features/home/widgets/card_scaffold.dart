@@ -1,5 +1,34 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
+
+/// WP-676 — SPEC KURAL 2.2: **etiket–değer satırı kabı doldurmaz.**
+///
+/// 🔴 ÖLÇÜLDÜ (gerçek uygulama, `TargetPlatform.windows`, çizilen glif
+/// kutuları): ana panoda "Bugün özeti" → "0sn" satırı 1920 ve 2560 px
+/// pencerede **1408 px**, aradaki boş aralık **1182 px** idi. "Grup hedefi" →
+/// "%0" 873 px, "Sıralama" → grup adı 722 px. Üçü de SPEC'in 600 px'lik sert
+/// tavanının (80 karakter, WCAG 2.1 SC 1.4.8) çok üstünde.
+///
+/// Bu yardımcı SPEC'in **hedef** değerini uygular: 496 px
+/// ([DesktopBreakpoints.labelValueTargetWidth], Bringhurst 66ch). Satır kabı
+/// bundan genişse 496'da bırakılır ve **sola hizalanır** — SPEC §2.2'nin lafzı.
+///
+/// ⚠️ Mobil dal ellenmez: kural yalnız `large` (≥ 1200 px) pencerede açılır
+/// (SPEC §1.2 merdiveni). 390×844'te [child] birebir döner, ağaç değişmez.
+Widget cardLabelValueRow(BuildContext context, {required Widget child}) {
+  if (MediaQuery.sizeOf(context).width < DesktopBreakpoints.large) return child;
+  return Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: DesktopBreakpoints.labelValueTargetWidth,
+      ),
+      child: child,
+    ),
+  );
+}
+
 /// WP-508 — Ana Sayfa kartlarının ortak kaydırma kuralı.
 ///
 /// İçerik kartın kutusuna **sığıyorsa** dikey sürükleme jesti hiç kabul edilmez
@@ -178,7 +207,7 @@ class CardScaffold extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  header,
+                  cardLabelValueRow(context, child: header),
                   SizedBox(height: headerGap),
                   Expanded(
                     child: LayoutBuilder(
@@ -198,7 +227,7 @@ class CardScaffold extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              header,
+              cardLabelValueRow(context, child: header),
               SizedBox(height: headerGap),
               bodyBuilder(context, fallbackBodyHeight),
             ],

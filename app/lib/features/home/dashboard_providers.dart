@@ -46,6 +46,67 @@ List<DashboardCardConfig> defaultDashboardLayout(int columns) {
   ];
 }
 
+/// WP-676 — masaüstü bandına sığdırma.
+///
+/// Kart genişliğini [maxCells] ile sınırlar (SPEC §2.3 grafik kartı tavanı 720
+/// px → 1440 px bantta 16 hücre) ve kartları **okuma sırasını** (önce y, sonra
+/// x) koruyarak ilk uyan hücreye yerleştirir. Böylece mobil için yazılmış "tam
+/// genişlik, alt alta" bir düzen masaüstünde kendiliğinden iki sütuna açılır;
+/// hiçbir kart silinmez, eklenmez, sırası bozulmaz.
+///
+/// Genişliği zaten sığan bir düzende **aynı listeyi** (`identical`) döndürür;
+/// çağıran bunu "değişmedi" işareti olarak kullanır ve kalıcılaştırmaz. Bu,
+/// fonksiyonu idempotent yapar: bir kez sığdırılmış düzen bir daha yazılmaz.
+List<DashboardCardConfig> fitLayoutToDesktopBand(
+  List<DashboardCardConfig> layout, {
+  required int columns,
+  required int maxCells,
+}) {
+  if (maxCells >= columns) return layout;
+  if (layout.every((card) => card.w <= maxCells)) return layout;
+
+  final ordered = [...layout]
+    ..sort((a, b) {
+      final byY = a.y.compareTo(b.y);
+      if (byY != 0) return byY;
+      final byX = a.x.compareTo(b.x);
+      if (byX != 0) return byX;
+      return a.type.index.compareTo(b.type.index);
+    });
+
+  final placed = <GridItemBounds>[];
+  for (final card in ordered) {
+    final w = card.w > maxCells ? maxCells : card.w;
+    var slot = GridItemBounds(id: card.type.name, x: 0, y: 0, w: w, h: card.h);
+    // Yeterince aşağıda hiçbir kart kalmadığı için döngü her zaman biter.
+    for (var y = 0; ; y++) {
+      var settled = false;
+      for (var x = 0; x + w <= columns; x++) {
+        final candidate = slot.copyWith(x: x, y: y);
+        if (placed.every((other) => !candidate.overlaps(other))) {
+          slot = candidate;
+          settled = true;
+          break;
+        }
+      }
+      if (settled) break;
+    }
+    placed.add(slot);
+  }
+
+  final byId = {for (final item in placed) item.id: item};
+  return [
+    for (final card in layout)
+      card.withBounds(
+        x: byId[card.type.name]!.x,
+        y: byId[card.type.name]!.y,
+        w: byId[card.type.name]!.w,
+        h: byId[card.type.name]!.h,
+        columns: columns,
+      ),
+  ];
+}
+
 List<DashboardCardConfig> projectDashboardLayout({
   required List<DashboardCardConfig> source,
   required int fromColumns,
@@ -269,6 +330,19 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
 
   /// Mevcut düzeni diske yazar (canlı sürükleme bitince çağrılır).
   void persist() => _save();
+
+  /// WP-676 — [fitLayoutToDesktopBand] sonucunu tek seferde yazar.
+  ///
+  /// 🔴 Neden kalıcılaştırılıyor: çizilen düzen ile saklanan düzen ayrışırsa
+  /// sürükle-bırak bozulur (grid, bırakma hücresini ÇİZİLEN koordinattan
+  /// hesaplar, sonra SAKLANAN karta yazar). Sığdırma bir kez uygulanıp
+  /// yazıldığı için ikisi hep aynı kalır; [fitLayoutToDesktopBand] idempotent
+  /// olduğundan bu yol ikinci kez tetiklenmez.
+  void replaceAll(List<DashboardCardConfig> next) {
+    if (_sameLayout(state, next)) return;
+    state = next;
+    _save();
+  }
 
   /// Yatay konumları ve boyutları koruyup tüm dikey boşlukları yukarı toplar.
   void compactUp() {

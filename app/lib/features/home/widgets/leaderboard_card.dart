@@ -191,37 +191,45 @@ class LeaderboardCard extends ConsumerWidget {
           // Bu karttaki ateş ikonu artık YALNIZ grup hedef serisini
           // (`groupStreak`) anlatıyor; iki anlam çakışması bitti.
 
+          // 🔴 WP-676: masaüstünde bu satır 722 px'e ("Sıralama" → grup adı),
+          // aşağıdaki hedef satırı 873 px'e ("Grup hedefi" → "%0") uzuyordu.
+          // SPEC KURAL 2.2 → [cardLabelValueRow] 496 px'te bırakır, sola hizalar.
           final headerChildren = <Widget>[
-            Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    AppLocalizations.of(context).homeSiralama,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
-                const Spacer(),
-                if (!isCompact)
+            cardLabelValueRow(
+              context,
+              child: Row(
+                children: [
                   Flexible(
                     child: Text(
-                      group.name,
-                      textAlign: TextAlign.end,
+                      AppLocalizations.of(context).homeSiralama,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: theme.textTheme.titleMedium,
                     ),
                   ),
-              ],
+                  const Spacer(),
+                  if (!isCompact)
+                    Flexible(
+                      child: Text(
+                        group.name,
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             // 🔴 WP-662: koşul `!isCompact` idi — yani yalnız GENİŞLİK
             // bakılıyordu. Kısa hücrede blok başlığı şişirip listeyi
             // kaydırıcıya düşürüyordu; bkz. yukarıdaki [showGroupGoal] notu.
             if (showGroupGoal) ...[
               const SizedBox(height: 10),
-              Row(
+              cardLabelValueRow(
+                context,
+                child: Row(
                 children: [
                   Icon(
                     Icons.flag_outlined,
@@ -261,6 +269,7 @@ class LeaderboardCard extends ConsumerWidget {
                     ),
                   ),
                 ],
+                ),
               ),
               const SizedBox(height: 6),
               ClipRRect(
@@ -429,7 +438,12 @@ class _Row extends StatelessWidget {
             vertical: dense ? 2 : 4,
             horizontal: 4,
           ),
-          child: Row(
+          // WP-676 / SPEC KURAL 2.2: ad ↔ süre bir etiket–değer satırıdır.
+          // Masaüstünde 496'da durur; tıklama/hover hedefi ([InkWell]) tam
+          // genişlikte kalır, yani hiçbir etkileşim daralmaz.
+          child: cardLabelValueRow(
+            context,
+            child: Row(
             children: [
               SizedBox(
                 width: dense ? 16 : 22,
@@ -523,6 +537,7 @@ class _Row extends StatelessWidget {
                   ),
                 ),
             ],
+            ),
           ),
         ),
       ),

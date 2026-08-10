@@ -145,24 +145,29 @@ class TodaySummaryCard extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              CircleAvatar(radius: 5, backgroundColor: color),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  style: theme.textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis,
+                          // WP-676 / SPEC KURAL 2.2: ders adı ↔ süre de bir
+                          // etiket–değer satırıdır; masaüstünde 496'da durur.
+                          cardLabelValueRow(
+                            context,
+                            child: Row(
+                              children: [
+                                CircleAvatar(radius: 5, backgroundColor: color),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: theme.textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                formatHuman(entry.value),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                Text(
+                                  formatHuman(entry.value),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 6),
                           ClipRRect(
@@ -193,28 +198,34 @@ class TodaySummaryCard extends ConsumerWidget {
                 // ölçüsünde bile taşıyordu (320 dp → 11 px sağa taşma), büyük
                 // yazıda ölçü 299 px'e çıkıyordu. Başlık kısalabilir, toplam
                 // süre kısalamaz: esneklik başlığa verildi.
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        AppLocalizations.of(context).homeBugunOzeti,
-                        style: theme.textTheme.titleMedium,
+                // 🔴 WP-676: bu satır masaüstünde 1408 px'e uzuyordu ("Bugün
+                // özeti" solda, "0sn" 1182 px ötede sağda). SPEC KURAL 2.2 →
+                // [cardLabelValueRow] 496 px'te bırakır, sola hizalar.
+                cardLabelValueRow(
+                  context,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context).homeBugunOzeti,
+                          style: theme.textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Toplam süre esnek DEĞİL: kısaltılırsa kartın tek sayısal
+                      // bilgisi ("2s 30dk" → "2s…") yalan söyler. Yer daralınca
+                      // kısalan başlıktır.
+                      Text(
+                        formatHuman(total),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Toplam süre esnek DEĞİL: kısaltılırsa kartın tek sayısal
-                    // bilgisi ("2s 30dk" → "2s…") yalan söyler. Yer daralınca
-                    // kısalan başlıktır.
-                    Text(
-                      formatHuman(total),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (bounded) Expanded(child: breakdownBody) else breakdownBody,

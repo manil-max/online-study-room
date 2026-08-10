@@ -210,6 +210,43 @@ const int kMaxGridColumns = 32;
 const int kFixedGridColumns = 32;
 const List<int> kSupportedGridColumns = [32];
 
+/// WP-676 — masaüstü bandında bir pano kartının **boyanan** genişlik tavanı.
+///
+/// Kaynak: `docs/design/DESKTOP-UI-SPEC.md` §2.3, "Grafik kartı **720** (min
+/// 360)" satırı. Pano kartlarının en geniş türü grafik kartıdır; tek sayılık
+/// döşeme tavanı (320) ondan daha sıkıdır, yani 720 bu ekranın **en
+/// müsamahakâr** tavanı.
+///
+/// 🔴 ÖLÇÜLDÜ (WP-676, gerçek uygulama, `TargetPlatform.windows`,
+/// devicePixelRatio 1, çizilen `Card` kutuları): 1920 ve 2560 px pencerede ana
+/// panonun iki kartı da **1440 px** genişliğinde boyanıyordu ve içindeki en
+/// geniş metin 717 / 442 px'ti — kart içeriğine göre değil **pencereye** göre
+/// boyutlanmıştı. Sahibin "her biri 800 px genişliğinde, içinde tek bir sayı"
+/// şikâyetinin ana panodaki karşılığı budur.
+///
+/// ⚠️ Sütun sayısı (`kMaxGridColumns` = 32) BİLEREK değişmiyor: tavan hücre
+/// sayısıyla değil **piksel** ile konuyor, ızgara koordinat uzayı aynı kalıyor.
+/// Depoda kayıtlı tuzak (yeni sütun seçeneği eklenip `kMaxGridColumns`
+/// yükseltilmeyince runtime assert çökmesi) böylece hiç doğmuyor.
+const double kDesktopMaxCardWidthPx = 720;
+
+/// [cell] genişliğindeki bir ızgarada [kDesktopMaxCardWidthPx]'i aşmayan en
+/// geniş kart — hücre cinsinden.
+///
+/// Kart genişliği `w · cell + (w − 1) · gap` olduğu için tavan doğrudan hücreye
+/// çevrilir; sayı ızgaranın gerçek ölçüsünden gelir, sabit değildir. 1440 px'lik
+/// içerik bandında (SPEC §2.3 ızgara tavanı) sonuç **16**'dır, yani ızgaranın
+/// tam yarısı → masaüstünde pano en az iki sütuna açılır.
+int desktopMaxCardCells({
+  required double cell,
+  required double gap,
+  required int columns,
+}) {
+  if (cell <= 0 || !cell.isFinite) return columns;
+  final fit = ((kDesktopMaxCardWidthPx + gap) / (cell + gap)).floor();
+  return fit.clamp(1, columns);
+}
+
 /// Eski çağrılar/testler için 6-sütun varsayılanı. Aktif render sütunu artık
 /// `dashboardGridColumnsProvider` üzerinden gelir (her zaman 32).
 const int kGridColumns = kDefaultGridColumns;

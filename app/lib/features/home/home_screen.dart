@@ -10,6 +10,7 @@ import '../../core/prefs/app_prefs.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/app_pull_to_refresh.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import '../tours/app_tours.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
@@ -197,6 +198,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         onRemove: ref
                             .read(dashboardLayoutProvider.notifier)
                             .removeCard,
+                        onFitLayout: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .replaceAll,
                       ),
                       if (_editing) ...[
                         const Divider(height: 24),
@@ -244,63 +248,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           )
         : null;
 
-    // Windows: üst dev başlık / sağ ipucu paneli yok — küçük pencerede
-    // sol rail + içerik yeterli (kullanıcı geri bildirimi).
+    // 🔴 WP-676 — Windows sayfa kabuğu. Önceden burada çıplak bir `Scaffold` +
+    // elle kurulmuş bir düğme şeridi vardı ve SPEC §6'nın "BAĞLA, ATMA" dediği
+    // masaüstü yüzeylerinden HİÇBİRİ ağaçta yoktu; ayrıca şerit ve gövde
+    // pencere ne kadar genişse o kadar yayılıyordu.
+    //
+    // ÖLÇÜLDÜ (gerçek uygulama, çizilen glif kutuları): 2560 px pencerede ana
+    // panonun içeriği **1884 px** yayılıyordu (SPEC §2.3 ızgara tavanı 1440).
+    // [DesktopPageScaffold] hem Fluent başlık şeridini hem de bandı verir.
+    //
+    // Tanıtım turu KASTEN bandın İÇİNDE: `TourHost` bir `Stack` kurar ve
+    // "Atla" düğmesini kendi kutusunun sol üstüne koyar. Dışarıda kalırsa o
+    // düğme pencerenin sol kenarına yapışır ve içerik aralığını tek başına
+    // 1884 px'e çıkarır — ölçüldü.
     if (isDesktopWindow) {
-      return _withIntroductionTours(
-        context,
-        layout,
-        Scaffold(
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Material(
-                color: Theme.of(context).colorScheme.surface,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      if (_editing) ...[
-                        TextButton(
-                          onPressed: () => _setEditing(false),
-                          child: Text(AppLocalizations.of(context).homeBitti),
-                        ),
-                        IconButton(
-                          tooltip: AppLocalizations.of(context).homeYukariTopla,
-                          onPressed: ref
-                              .read(dashboardLayoutProvider.notifier)
-                              .compactUp,
-                          icon: const Icon(Icons.vertical_align_top),
-                        ),
-                        IconButton(
-                          tooltip: AppLocalizations.of(context).homeSifirla,
-                          onPressed: _confirmResetDashboard,
-                          icon: const Icon(Icons.restart_alt),
-                        ),
-                        IconButton(
-                          tooltip: AppLocalizations.of(context).homeKartEkle,
-                          onPressed: () => showCardPicker(context),
-                          icon: const Icon(Icons.add),
-                        ),
-                      ] else
-                        IconButton(
-                          tooltip: AppLocalizations.of(
-                            context,
-                          ).homePanoyuDuzenle,
-                          onPressed: () => _setEditing(true),
-                          icon: const Icon(Icons.dashboard_customize_outlined),
-                        ),
-                      const Spacer(),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(child: stickyPanelBelow(body, sizeSheet)),
-            ],
-          ),
+      return DesktopPageScaffold(
+        title: AppLocalizations.of(context).homeAnaSayfa,
+        subtitle: '',
+        icon: Icons.dashboard_outlined,
+        maxWidth: DesktopBreakpoints.maxContentWidth,
+        actions: [
+          if (_editing) ...[
+            TextButton(
+              onPressed: () => _setEditing(false),
+              child: Text(AppLocalizations.of(context).homeBitti),
+            ),
+            IconButton(
+              tooltip: AppLocalizations.of(context).homeYukariTopla,
+              onPressed: ref
+                  .read(dashboardLayoutProvider.notifier)
+                  .compactUp,
+              icon: const Icon(Icons.vertical_align_top),
+            ),
+            IconButton(
+              tooltip: AppLocalizations.of(context).homeSifirla,
+              onPressed: _confirmResetDashboard,
+              icon: const Icon(Icons.restart_alt),
+            ),
+            IconButton(
+              tooltip: AppLocalizations.of(context).homeKartEkle,
+              onPressed: () => showCardPicker(context),
+              icon: const Icon(Icons.add),
+            ),
+          ] else
+            IconButton(
+              tooltip: AppLocalizations.of(context).homePanoyuDuzenle,
+              onPressed: () => _setEditing(true),
+              icon: const Icon(Icons.dashboard_customize_outlined),
+            ),
+        ],
+        child: _withIntroductionTours(
+          context,
+          layout,
+          stickyPanelBelow(body, sizeSheet),
         ),
       );
     }
@@ -413,6 +413,7 @@ class _MatrixGrid extends StatefulWidget {
     required this.onResizeCard,
     required this.onCommit,
     required this.onRemove,
+    required this.onFitLayout,
   });
 
   final List<DashboardCardConfig> layout;
@@ -435,6 +436,10 @@ class _MatrixGrid extends StatefulWidget {
   onResizeCard;
   final VoidCallback onCommit;
   final ValueChanged<DashboardCardType> onRemove;
+
+  /// WP-676: ızgara masaüstü bandına sığdırıldığında (kart genişliği tavanı)
+  /// sonucu kalıcılaştırır; çizilen düzen ile saklanan düzen ayrışmasın.
+  final ValueChanged<List<DashboardCardConfig>> onFitLayout;
 
   @override
   State<_MatrixGrid> createState() => _MatrixGridState();
@@ -463,13 +468,52 @@ class _MatrixGridState extends State<_MatrixGrid> {
         final cell =
             (constraints.maxWidth - (widget.columns - 1) * _kGap) /
             widget.columns;
-        final baseRows = widget.layout.fold<int>(
+
+        // 🔴 WP-676 — MASAÜSTÜ BANDI.
+        //
+        // ÖLÇÜLDÜ: 1920 ve 2560 px pencerede ana panonun kartları **1440 px**
+        // genişliğinde boyanıyordu; içindeki en geniş metin 717 / 442 px'ti.
+        // Kart, içeriğine göre değil pencereye göre boyutlanmıştı — sahibin
+        // "dev kutu, içinde tek bir sayı" şikâyeti.
+        //
+        // SPEC §2.3 kart tavanı (720 px) hücreye çevrilir ve düzen o tavana
+        // sığdırılır: mobil için yazılmış "tam genişlik, alt alta" bir pano
+        // masaüstünde kendiliğinden **iki sütuna** açılır. Kart sayısı, sırası,
+        // türü, yüksekliği değişmez.
+        //
+        // Karar GENİŞLİĞE bağlı (`large` = 1200, SPEC §1.2), platforma değil:
+        // 390×844'te [maxCells] sütun sayısına eşittir ve
+        // [fitLayoutToDesktopBand] **aynı listeyi** döndürür → mobil ağaç
+        // birebir korunur.
+        final maxCells =
+            MediaQuery.sizeOf(context).width >= DesktopBreakpoints.large
+            ? desktopMaxCardCells(
+                cell: cell,
+                gap: _kGap,
+                columns: widget.columns,
+              )
+            : widget.columns;
+        final layout = fitLayoutToDesktopBand(
+          widget.layout,
+          columns: widget.columns,
+          maxCells: maxCells,
+        );
+        if (!identical(layout, widget.layout)) {
+          // Sığdırma, çizimden SONRA kalıcılaştırılır: sürükle-bırak bırakma
+          // hücresini çizilen koordinattan hesaplayıp saklanan karta yazar,
+          // yani ikisi ayrışırsa taşıma bozulur.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onFitLayout(layout);
+          });
+        }
+
+        final baseRows = layout.fold<int>(
           1,
           (max, c) => max > c.y + c.h ? max : c.y + c.h,
         );
         final draggedConfig = _target == null
             ? null
-            : widget.layout.where((c) => c.type == _target!.type).firstOrNull;
+            : layout.where((c) => c.type == _target!.type).firstOrNull;
         final totalRows = draggedConfig == null
             ? baseRows
             : (baseRows > _target!.y + draggedConfig.h
@@ -477,7 +521,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                   : _target!.y + draggedConfig.h);
         final height = totalRows * cell + (totalRows - 1) * _kGap;
         final selectedType = widget.editing
-            ? effectiveSelectedConfig(widget.layout, widget.selectedType)?.type
+            ? effectiveSelectedConfig(layout, widget.selectedType)?.type
             : null;
 
         double leftOf(DashboardCardConfig c) => c.x * (cell + _kGap);
@@ -489,7 +533,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
         void updateTarget(details) {
           final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
           if (box == null) return;
-          final config = widget.layout
+          final config = layout
               .where((c) => c.type == details.data)
               .firstOrNull;
           if (config == null) return;
@@ -552,7 +596,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                       height: heightOf(draggedConfig),
                       child: const _DropGhost(),
                     ),
-                  for (final c in widget.layout)
+                  for (final c in layout)
                     if (useAnim)
                       AnimatedPositioned(
                         key: ValueKey(c.type),
