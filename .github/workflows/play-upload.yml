@@ -21,9 +21,14 @@ on:
         required: false
         type: string
       track:
-        description: 'upload: hedef iz — verify çıktısından al, uydurma'
+        # 🔴 Varsayılan TAHMİN DEĞİL, ÖLÇÜM: 2026-08-10'da `verify` koşumu
+        # (31412522603) izleri listeledi — production/beta/internal boş,
+        # `alpha` sürüm kodu 65 taşıyor. Sahibin kapalı testi `alpha`.
+        # Değiştirmeden önce `verify` koş; iz adı Console'da değişebilir.
+        description: 'upload: hedef iz (ölçülen varsayılan: alpha)'
         required: false
         type: string
+        default: alpha
       status:
         description: 'upload: draft = Console''da beklet · completed = testçilere aç'
         required: false
