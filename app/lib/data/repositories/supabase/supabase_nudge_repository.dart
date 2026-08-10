@@ -10,12 +10,25 @@ class SupabaseNudgeRepository implements NudgeRepository {
 
   final SupabaseClient _client;
 
+  /// Akista tutulan en yeni durtme sayisi.
+  ///
+  /// 🔴 WP-653: bu pencere YOKTU. `_hydrateNudges` sonucu 50'ye kirpiyordu
+  /// ama kirpma ISTEMCIDE oluyordu: sorgu kullanicinin OMUR BOYU aldigi tum
+  /// durtme satirlarini cekiyor, realtime her degisimde ayni yuku tekrar
+  /// tasiyordu. `markRead` hicbir yerden cagrilmadigi icin
+  /// (`NudgeRepository.markRead` -> lib/ icinde sifir cagri yeri) satirlar
+  /// sunucuda omur boyu `read_at = null` kaliyor, yani yuk hic kuculmuyor.
+  /// Sinir artik SUNUCUDA.
+  static const int kNudgeWindow = 50;
+
   @override
   Stream<List<Nudge>> watchReceivedNudges(String userId) {
     return _client
         .from('nudges')
         .stream(primaryKey: ['id'])
         .eq('recipient_id', userId)
+        .order('created_at')
+        .limit(kNudgeWindow)
         .asyncMap(_hydrateNudges);
   }
 
