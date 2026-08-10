@@ -1,7 +1,11 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import 'alarms_screen.dart';
+import 'clock_desktop_layout.dart';
 import 'tasks_screen.dart';
 import 'timers_screen.dart';
 
@@ -77,9 +81,50 @@ class _ClockScreenState extends State<ClockScreen> {
     };
   }
 
+  /// 🔴 WP-678 — masaüstü kolu AYRI bir ağaç.
+  ///
+  /// Mobil dal aşağıda birebir korunur (SPEC §7: "mobil branch değişmez");
+  /// masaüstü kolu SPEC §3 A2'yi uygular. Aynı ağacı `isDesktopWindow`
+  /// bayraklarıyla delik deşik etmek yerine iki kol ayrıldı — kardeş ekran
+  /// Gruplar'da (WP-675) da bu yapıldı.
+  ///
+  /// İki karar, ikisi de ölçüme dayanıyor:
+  ///   * **bant** = [DesktopBreakpoints.maxContentWidth] (1440, SPEC §2.3).
+  ///     Ölçümde içerik 2560 px'lik pencerede 2320 px yayılıyordu. Bant
+  ///     [DesktopContent] ile kurulur — SPEC §6 "BAĞLA, ATMA": bu widget
+  ///     yazılmıştı ama `lib/` içinde çağrı yeri yoktu.
+  ///   * **şerit** = [ClockCommandStrip] ile [kClockStripMaxWidth] (600).
+  ///     Üç eşit `Expanded` bütün pencereyi yiyordu; "Alarm" → "Timer"
+  ///     mesafesi 2560 px'te 839 px'ti (SPEC KURAL 2.2 sert tavanı 600).
+  ///
+  /// Kenar boşluğu bilinçli olarak bandın **içinde**: dışarıda kalsaydı 2560
+  /// px'lik pencerede 24 px'lik kenar boşluğunun hiçbir anlamı olmazdı.
+  Widget _buildDesktop(Widget content) {
+    final density = DesktopDensity.of(context);
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: DesktopContent(
+          maxWidth: DesktopBreakpoints.maxContentWidth,
+          padding: density.pagePadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ClockCommandStrip(child: _buildIconStrip()),
+              const SizedBox(height: 12),
+              Expanded(child: content),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = _buildTabBody();
+
+    if (isDesktopWindow) return _buildDesktop(content);
 
     // Windows: AppBar/sağ panel yok — sol rail + şerit + içerik.
     // WP-460: "Araçlar" başlığı alt menüde zaten yazılı; ikon şeridi bu

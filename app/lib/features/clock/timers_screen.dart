@@ -2,12 +2,14 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_window.dart';
 import '../../core/notifications/alarm_notification_service.dart'
     show localNotificationsSupported;
 import '../../core/time_engine/lap_analysis.dart';
 import '../../data/models/timer_preset.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../../core/widgets/error_retry_view.dart';
+import 'clock_desktop_layout.dart';
 import 'platform_limit_banner.dart';
 
 class TimersScreen extends ConsumerWidget {
@@ -34,7 +36,11 @@ class TimersScreen extends ConsumerWidget {
             ).clockZamanlayiciMasaustundeBildirimYok,
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          // Masaüstünde bandın kendi kenar boşluğu zaten var; 16 px'lik ikinci
+          // bir girinti başlığı kart ızgarasından kaydırırdı.
+          padding: isDesktopWindow
+              ? const EdgeInsets.fromLTRB(0, 0, 0, 8)
+              : const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,7 +70,9 @@ class TimersScreen extends ConsumerWidget {
             height: 48,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: isDesktopWindow
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.symmetric(horizontal: 16),
               itemCount: list.length + 1,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
@@ -112,6 +120,25 @@ class TimersScreen extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
+                );
+              }
+              // 🔴 WP-678: sahibin şikâyetinin en saf hâli buradaydı. Ölçüm
+              // 2560 px'lik pencerede zamanlayıcı kartını **2360 px** buldu;
+              // içindeki en geniş metin **180 px** ("15:00"), yani 2180 px
+              // ölü alan. Masaüstü kolu SPEC §3 A2 ızgarası; kart
+              // [kClockBlockMaxWidth] ile tavanlanır. Sayaç mantığı, epoch
+              // motoru, duraklat/+1dk/+5dk/sıfırla/sil eylemleri ellenmedi.
+              if (isDesktopWindow) {
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+                  children: [
+                    ClockBlockGrid(
+                      blocks: [
+                        for (final instance in list)
+                          _TimerCard(instance: instance),
+                      ],
+                    ),
+                  ],
                 );
               }
               return ListView.builder(

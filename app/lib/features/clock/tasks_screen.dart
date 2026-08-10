@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../core/desktop/desktop_window.dart';
 import '../../core/tasks/task_deadline.dart';
 import '../../core/tasks/task_sections.dart';
 import '../../data/models/user_task.dart';
 import '../../data/providers/user_task_providers.dart';
+import 'clock_desktop_layout.dart';
 
 /// Araçlar → Görevler: tam CRUD (WP-198), bölümlü bilgi mimarisi (WP-450).
 class TasksScreen extends ConsumerStatefulWidget {
@@ -119,15 +121,25 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
     final allAsync = ref.watch(userTasksProvider);
     final now = DateTime.now();
 
+    // 🔴 WP-678: iki sekmelik `TabBar` bandın tamamına yayılıyordu — ölçüm
+    // 2560 px'lik pencerede "Aktif" → "Tamamlananlar" mesafesini **1319 px**
+    // buldu (1920'de 999 px). SPEC KURAL 2.2 sert tavanı 600 px. Masaüstünde
+    // şerit [kClockStripMaxWidth] ile sınırlanır ve sola hizalanır; sekme
+    // sayısı, sırası ve denetleyicisi aynı kalır.
+    final tabBar = TabBar(
+      controller: _tabs,
+      tabs: [
+        Tab(text: l10n.taskListActive),
+        Tab(text: l10n.taskListCompletedSection),
+      ],
+    );
+
     final body = Column(
       children: [
-        TabBar(
-          controller: _tabs,
-          tabs: [
-            Tab(text: l10n.taskListActive),
-            Tab(text: l10n.taskListCompletedSection),
-          ],
-        ),
+        if (isDesktopWindow)
+          ClockCommandStrip(child: tabBar)
+        else
+          tabBar,
         Expanded(
           child: allAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -247,22 +259,48 @@ class _TaskSectionedPane extends StatelessWidget {
       (TaskSection.other, l10n.taskListSectionOther),
     ];
 
+    Widget row(TaskSectionEntry entry) => _TaskRow(
+      entry: entry,
+      now: now,
+      busy: pending.contains(entry.task.id),
+      onToggle: onToggle,
+      onEdit: onEdit,
+      onDelete: onDelete,
+    );
+
+    // 🔴 WP-678 masaüstü kolu: her BÖLÜM (Bugün · Tekrarlanan · Diğer) bir A2
+    // bloğudur ve yan yana akar. Tek sütun 1392 px'lik bandı yiyordu; bölüm
+    // sırası, başlıkları, sayaçları ve satır davranışı (tamamla / düzenle /
+    // sil, tekrarlayan rozeti, sırası gelmemiş occurrence'ın tıklanamaz
+    // olması) birebir korunur — yalnız bloklar yan yana dizilir.
+    if (isDesktopWindow) {
+      final blocks = <Widget>[];
+      for (final (section, label) in sections) {
+        final items = tasksInSection(entries, section);
+        if (items.isEmpty) continue;
+        blocks.add(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TaskSectionHeader(label: label, count: items.length),
+              for (final entry in items) row(entry),
+            ],
+          ),
+        );
+      }
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 88),
+        children: [ClockBlockGrid(blocks: blocks)],
+      );
+    }
+
     final children = <Widget>[];
     for (final (section, label) in sections) {
       final items = tasksInSection(entries, section);
       if (items.isEmpty) continue;
       children.add(_TaskSectionHeader(label: label, count: items.length));
       for (final entry in items) {
-        children.add(
-          _TaskRow(
-            entry: entry,
-            now: now,
-            busy: pending.contains(entry.task.id),
-            onToggle: onToggle,
-            onEdit: onEdit,
-            onDelete: onDelete,
-          ),
-        );
+        children.add(row(entry));
       }
     }
 
@@ -348,19 +386,57 @@ class _TaskListPane extends StatelessWidget {
         ),
       );
     }
+    Widget row(TaskSectionEntry entry) => _TaskRow(
+      entry: entry,
+      now: now,
+      busy: pending.contains(entry.task.id),
+      completedStyle: completedStyle,
+      onToggle: onToggle,
+      onEdit: onEdit,
+      onDelete: onDelete,
+    );
+
+    // 🔴 WP-678 masaüstü kolu: düz liste gazete sütunlarına akıtılır.
+    // [clockColumnChunks] BİTİŞİK böler, dönüşümlü değil — bu liste tamamlanma
+    // tarihine göre sıralıdır ve dönüşümlü dağıtım sırayı okunamaz hâle
+    // getirirdi. Hiçbir satır düşmez.
+    if (isDesktopWindow) {
+      // Sütun sayısı PENCEREDEN değil kalan BANTTAN okunur; 1920 px'lik
+      // pencerede karar verilecek genişlik 1392 px'tir.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final chunks = clockColumnChunks(
+            entries,
+            clockBlockColumns(constraints.maxWidth),
+          );
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(0, 8, 0, 88),
+            children: [
+              ClockBlockGrid(
+                blocks: [
+                  for (final chunk in chunks)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < chunk.length; i++) ...[
+                          if (i > 0) const Divider(height: 1),
+                          row(chunk[i]),
+                        ],
+                      ],
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
       itemCount: entries.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) => _TaskRow(
-        entry: entries[i],
-        now: now,
-        busy: pending.contains(entries[i].task.id),
-        completedStyle: completedStyle,
-        onToggle: onToggle,
-        onEdit: onEdit,
-        onDelete: onDelete,
-      ),
+      itemBuilder: (context, i) => row(entries[i]),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/desktop/desktop_window.dart';
 import '../../core/notifications/alarm_notification_service.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/time_engine/clock_permissions.dart';
@@ -15,6 +16,7 @@ import '../../data/models/alarm_rule.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../../core/widgets/error_retry_view.dart';
 import 'alarm_ringing_screen.dart';
+import 'clock_desktop_layout.dart';
 import 'platform_limit_banner.dart';
 
 class AlarmsScreen extends ConsumerWidget {
@@ -116,6 +118,25 @@ class AlarmsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                );
+              }
+              // 🔴 WP-678: masaüstünde tek sütun `ListView` her alarmı bandın
+              // tamamına yayıyordu — ölçüm 2560 px'lik pencerede kartı
+              // **2360 px** buldu, içindeki en geniş metin 595 px'ti.
+              // Masaüstü kolu SPEC §3 A2 akıcı ızgarası; kart genişliği
+              // [kClockBlockMaxWidth] ile tavanlanır. Alarm sırası, kartların
+              // içeriği ve bütün eylemler (aç/kapat, atla, düzenle, önizle,
+              // sil) aynen korunur — yalnız kutunun şekli değişir.
+              if (isDesktopWindow) {
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 88),
+                  children: [
+                    ClockBlockGrid(
+                      blocks: [
+                        for (final alarm in alarms) _AlarmTile(alarm: alarm),
+                      ],
+                    ),
+                  ],
                 );
               }
               return ListView.builder(
