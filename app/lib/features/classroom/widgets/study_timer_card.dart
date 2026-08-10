@@ -17,6 +17,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../../home/dashboard_card.dart';
+import '../../home/widgets/card_scaffold.dart';
 import '../../profile/session_history_screen.dart';
 import '../../profile/subjects_screen.dart';
 import '../../profile/widgets/goal_editor_dialog.dart';
@@ -245,7 +246,39 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           // Akışta üst şerit kendi yüksekliğini ölçekle birlikte büyütür, yani
           // çakışma yapısal olarak imkânsız — sayıyı büyütmekle çözülmedi,
           // sayının kendisi kaldırıldı.
+          // 🔴 WP-646 — KART İÇİ KAYDIRMA ANA EKRANI TAKIYORDU.
+          //
+          // Proje sahibi cihazda bildirdi: *"bazi kartlarda hala gereksiz kart
+          // icinde asagi yukari kaydirma var; parmagim onlarin ustundeyse
+          // takiliyor. Weekly rhythm ve sayac karti mesela."*
+          //
+          // Buradaki `SingleChildScrollView` ciplakti: ne `physics` ne
+          // `primary` verilmisti. Iki ayri kusur uretiyordu:
+          //
+          //  1. Varsayilan `AlwaysScrollableScrollPhysics`e dusuyordu — yani
+          //     icerik SIGSA BILE dikey suruklemeyi yutuyordu. Pano kartlari
+          //     icin ortak kural (`CardOverflowScrollPhysics`, WP-508) tam da
+          //     bunu engellemek icin yazilmisti; bu kart o kurali hic
+          //     kullanmiyordu. `cardScrollIfOverflows` cagirmak yetmiyor,
+          //     cagirmamak ise kurali bastan bosa cikariyor.
+          //  2. `primary` varsayilani `true` oldugu icin DIS SAYFANIN
+          //     `PrimaryScrollController`’ina baglaniyordu: kart, uzerinde
+          //     olmayan bir kaydiriciyi surukluyordu.
+          //
+          // Olculdu (hunter Lane B envanteri, 18 kart x 3 genislik x 3 hucre):
+          // sayac karti envanterin EN KOTU kartiydi — 840x416 tablet
+          // hucresinde bile 132 px tasiyordu, telefonda 232-444 px. Baska
+          // hicbir kart tablet olcusunde kaymiyordu.
+          //
+          // Not (kalan borç): bu duzeltme JESTI dogru yere yollar; kucuk
+          // hucrelerde icerik GERCEKTEN tastigi icin orada hala kaydirma
+          // kalir. Yogunlugu azaltmak ayri bir urun karari (sahibe onizleme
+          // ile sorulmali), bu yuzden burada yapilmadi.
           return SingleChildScrollView(
+            // Dis sayfanin denetleyicisini CALMA.
+            primary: false,
+            // Icerik sigiyorsa jest dis sayfaya gider.
+            physics: kCardOverflowScrollPhysics,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
