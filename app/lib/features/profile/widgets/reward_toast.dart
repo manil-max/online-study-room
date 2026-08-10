@@ -226,14 +226,38 @@ class _CrownCelebration extends StatelessWidget {
         ),
       ),
     );
-    if (reduceMotion) return child;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.85, end: 1),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutBack,
-      builder: (_, scale, content) =>
-          Transform.scale(scale: scale, child: content),
-      child: child,
+    // 🔴 WP-681: kutlama bir BILDIRIM'dir, bir engel degil. Kendi dokunma
+    // islevi YOKTUR (kapatma dugmesi/detay baglantisi yok; 1800 ms sonra
+    // kendisi kalkar) ama ekranin UST-ORTASINDA durdugu icin altindaki
+    // denetimlerin dokunuslarini yutuyordu.
+    //
+    // OLCULDU (1920 px pencere, widget testi): kutu (862.5, 8)-(1057.5, 56);
+    // Araclar seridinin orta ogesine ("Timer", merkez 1048,39) yapilan dokunus
+    // hic ulasmiyor, `tester.tap` "would not hit test" diyordu. Gercek
+    // uygulamada bu 1800 ms boyunca sessiz bir "uygulama takildi" hissidir.
+    //
+    // Neden IgnorePointer: kutlamanin basilacak hicbir parcasi yok, bu yuzden
+    // "ustteki tiklanabilir kalsin" ihtiyaci yok; kutuyu seridin disina tasimak
+    // ise kabuk dosyasini (`home_shell.dart`) degistirmeyi ve kutlamayi
+    // gorunmez bir kose'ye itmeyi gerektirirdi.
+    //
+    // Semantik KORUNUR: `IgnorePointer` varsayilaninda (`ignoringSemantics`
+    // null) alt agac semantik agactan CIKMAZ, yalniz kullanici eylemleri
+    // bloklanir -- ekran okuyucu tac duyurusunu okumaya devam eder.
+    //
+    // 🔴 Odul banneri (`_RewardBanner`) BILEREK disarida: onun Topla/Kapat
+    // dugmeleri var, IgnorePointer onlari oldururdu (bkz. WP-681 testi
+    // "odul bannerinin kendi dokunma islevi korunur").
+    if (reduceMotion) return IgnorePointer(child: child);
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.85, end: 1),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutBack,
+        builder: (_, scale, content) =>
+            Transform.scale(scale: scale, child: content),
+        child: child,
+      ),
     );
   }
 }

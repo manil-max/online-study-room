@@ -304,7 +304,16 @@ küçültmekle değil, **boşluk daraltmakla** kurulur.
 | **settings** | `features/profile/settings_screen.dart` | **A1** | tek sütun 760 (mevcut) | **master–detay**: 280 kategori + 760 detay | aynı |
 | **session history** | `features/profile/session_history_screen.dart` | **A1** | tek sütun 760 | **master–detay**: 320 gün listesi + 760 oturum detayı | aynı |
 | about / legal / SSS | `features/profile/about_screen.dart`, `legal_center_screen.dart` | **A3** | prose **600** (bugün 760 → düşer) | aynı | aynı |
-| clock / saat | `features/clock/` | **A4** | saat merkezde, sınır yok | aynı | aynı |
+| clock / saat | `features/clock/` | **A2**[^clock-a2] | şerit (cap 600) + tek sütun liste; bant 1440 | aynı | aynı |
+
+[^clock-a2]: 🔴 **WP-681 düzeltmesi — satır koda bakılmadan yazılmıştı.** Tabloda
+    "**A4** · saat merkezde, sınır yok" yazıyordu; WP-678 ölçtü: o sekmede
+    **merkezde bir saat yok**. `clock_screen.dart` yalnız üç listeye açılır
+    (alarm · zamanlayıcı · görev, `_buildTabBody`), masaüstü kolu
+    (`_buildDesktop`) içeriği `DesktopContent(maxWidth: 1440)` bandına alan ve
+    şeridi `kClockStripMaxWidth` (600) ile tavanlayan bir **A2**'dir — A4'ün
+    "sınırsız görsel sahne" tanımının (§3 A4) tam tersi. Belge bir **iddiadır**;
+    kaynakta doğrulanmadan satır yazılmaz.
 
 ### 5.1 Sahibin dört şikâyetinin nereye bağlandığı
 
