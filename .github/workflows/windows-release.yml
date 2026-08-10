@@ -216,8 +216,22 @@ jobs:
           $lastError = ''
           for ($attempt = 1; $attempt -le 2 -and -not $ok; $attempt++) {
             try {
-              & ../scripts/windows_fast_smoke.ps1 -ExecutablePath $exe -OutputPath $shot -TimeoutSeconds 10 -CloseAfter
-              if ($LASTEXITCODE -ne 0) { throw "windows_fast_smoke.ps1 exit $LASTEXITCODE" }
+              # 🔴 WP-640 — BETIK AYRI BIR SUREC OLARAK CAGRILIR.
+              # Eski hali `& ../scripts/windows_fast_smoke.ps1 ...` idi: bu,
+              # betigi ayni pwsh oturumunda kosturur ve `$LASTEXITCODE`'a
+              # DOKUNMAZ (o degisken yalnizca native surecler icin yazilir).
+              # Basarili kosumda degisken `$null` kaliyor, `$null -ne 0` dogru
+              # oluyor ve kapi HER SEFERINDE firlatiyordu. Bedeli: v63 ve v64
+              # Windows paketi, ZIP gercekten acildigi halde (loglarda iki kez
+              # `WINDOWS_FAST_SMOKE PASS`, pencere 1024x720, baslik `Focus Camp`)
+              # yayindan dusuruldu. Kirilan uygulama degil KAPININ KENDISIYDI.
+              # `-File` ile cagirinca okunan sey gercek surec cikis kodudur.
+              & pwsh -NoProfile -NonInteractive -File ../scripts/windows_fast_smoke.ps1 -ExecutablePath $exe -OutputPath $shot -TimeoutSeconds 10 -CloseAfter
+              $code = $LASTEXITCODE
+              # Fail-closed: cikis kodu okunamiyorsa (yani ayni-oturum
+              # cagrisina geri donulmusse) kapi YINE kirmizi duser — sessizce
+              # yesile donmez.
+              if ($null -eq $code -or $code -ne 0) { throw "windows_fast_smoke.ps1 exit '$code'" }
               $ok = $true
             }
             catch {

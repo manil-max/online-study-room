@@ -36,12 +36,23 @@ void main() {
     r"DISTRIBUTION_CHANNEL\s*=\s*'([^']+)'",
   ).allMatches(workflow).map((match) => match.group(1)!).toList();
 
-  /// ZIP smoke adımının gövdesi (açıklama yorumları değil, KOŞAN kısım).
+  /// ZIP smoke adımının gövdesi (adım sınırları içi, yorumlar dahil).
   String smokeStep() => _section(
     workflow,
     '- name: Yayınlanan ZIP gerçekten açılıyor mu',
     '- name: Store derlemesi',
   );
+
+  /// 🔴 Adımın **KOŞAN** kısmı: `#` ile başlayan satırlar atılır.
+  ///
+  /// WP-640'ta ölçüldü: düzeltmeyi anlatan yorum, aranan hatalı çağrının
+  /// metnini birebir taşıyordu ve "eski çağrı geri gelmiş mi" iddiası
+  /// düzeltilmiş dosyada KIRMIZI düştü. Bu dosya aynı hatayı bir kez daha
+  /// yaşadı (bkz. WP-614/4 ilk yazımı); iddia artık yorumları hiç görmüyor.
+  String smokeRun() => smokeStep()
+      .split('\n')
+      .where((line) => !line.trimLeft().startsWith('#'))
+      .join('\n');
 
   /// İş akışındaki dizeyi **kodun** çözümleyicisinden geçir.
   DistributionChannel resolveAsBuildWould(String define) =>
@@ -156,10 +167,10 @@ void main() {
       // silip yerine yorum bırakınca test YİNE GEÇTİ, çünkü aynı yol adı
       // açıklama satırlarında da geçiyor. Kapı tam da kovaladığı hatanın
       // kurbanı olacaktı.
-      final step = smokeStep();
+      final step = smokeRun();
       expect(
         step,
-        contains(r'& ../scripts/windows_fast_smoke.ps1'),
+        contains(r'../scripts/windows_fast_smoke.ps1'),
         reason:
             'Gerçek smoke betiği adım gövdesinden çağrılmıyor: kullanıcıya '
             'giden arşiv bir kez bile açılmadan yayınlanıyor.',
@@ -179,7 +190,7 @@ void main() {
     });
 
     test('smoke başarısızsa iş KIRMIZI düşer (uyarıyla geçilmez)', () {
-      final step = smokeStep();
+      final step = smokeRun();
       expect(
         step,
         contains('throw'),
@@ -207,6 +218,54 @@ void main() {
         testAll,
         contains('"windows-smoke"'),
         reason: 'Kapı anahtarı yok; `--only windows-smoke` ile koşulamaz.',
+      );
+    });
+
+    test('🔴 WP-640 — smoke AYRI SÜREÇ olarak çağrılır, çıkış kodu gerçektir',
+        () {
+      // Bu kapı iki sürüm boyunca YANLIŞ KIRMIZI verdi. `& betik.ps1` çağrısı
+      // betiği aynı pwsh oturumunda koşturur ve `$LASTEXITCODE`'a dokunmaz —
+      // o değişken yalnız native süreçler için yazılır. Başarılı koşumda
+      // `$null` kalıyor, `$null -ne 0` doğru oluyor ve adım fırlatıyordu.
+      // Kanıt (run 31338934743): iki denemede de `WINDOWS_FAST_SMOKE PASS`,
+      // uyarı satırı ise `windows_fast_smoke.ps1 exit ` — çıkış kodu BOŞ.
+      final step = smokeRun();
+      expect(
+        step,
+        contains('-File ../scripts/windows_fast_smoke.ps1'),
+        reason:
+            'Betik ayrı süreç olarak çağrılmıyor; okunan çıkış kodu betiğe '
+            'ait değil, o yüzden kapının kararı anlamsız.',
+      );
+      expect(
+        RegExp(r'&\s+\.\./scripts/windows_fast_smoke\.ps1').hasMatch(step),
+        isFalse,
+        reason:
+            'Aynı oturum çağrısına dönülmüş: `\$LASTEXITCODE` yazılmaz, kapı '
+            'açılan paketi de reddeder (v63/v64 Windows paketi böyle düştü).',
+      );
+      expect(
+        step,
+        contains(r'$null -eq $code'),
+        reason:
+            'Çıkış kodu okunamadığında kapı fail-closed olmalı; aksi hâlde '
+            'aynı hata bu kez SESSİZ YEŞİL olarak geri gelir.',
+      );
+    });
+
+    test('🔴 WP-640 — betik başarı yolunda AÇIK `exit 0` yazar', () {
+      final smoke = _read('../scripts/windows_fast_smoke.ps1');
+      final successPath = _section(
+        smoke,
+        "Write-Output 'WINDOWS_FAST_SMOKE PASS'",
+        'catch {',
+      );
+      expect(
+        successPath,
+        contains('exit 0'),
+        reason:
+            'Betik sessizce bitiyor: çağıran `-File` kullanmazsa çıkış kodu '
+            'hiç yazılmaz. Çıkış kodu bu betiğin sözleşmesidir.',
       );
     });
 

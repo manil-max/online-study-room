@@ -252,6 +252,12 @@ try {
   Write-Output ("mode={0}; pid={1}; visible_ms={2}; window={3}; title={4}" -f $result.launchMode, $result.processId, $result.visibleWindowWithinMs, $result.window, $result.windowTitle)
   Write-Output ("screenshot={0} (kanit_sayilir={1})" -f $OutputPath, $screenshotUsable)
   Write-Output ("manifest={0}" -f $manifestPath)
+
+  # 🔴 WP-640: basari yolunda cikis kodu ACIK yazilir. Betik sessizce bitince
+  # cagiran `-File` kullanmiyorsa `$LASTEXITCODE` hic yazilmiyor ve cagiran
+  # tarafta `$null` kaliyordu; iki Windows yayini bu yuzden dustu. Cikis
+  # kodu bu betigin sozlesmesidir, yan etkisi degil.
+  exit 0
 }
 catch {
   Write-Error ("WINDOWS_FAST_SMOKE FAIL: {0}" -f $_.Exception.Message)

@@ -10103,6 +10103,27 @@ iki test dosyasi). Ama o varsayilan, hedefi gecirmeyi unutan her cagirani
 sahibin REDDETTIGI eski davranisa sessizce dusururdu. `required` yapildi.
 Bu soruyu **derleyici sormali, kullanici degil.**
 
+### WP-640: Windows paketini iki surumdur KAPININ KENDISI dusuruyordu
+`windows-release.yml` ZIP smoke adimi betigi `& ../scripts/windows_fast_smoke.ps1`
+ile ayni pwsh oturumunda kosturuyor, sonra `$LASTEXITCODE`'a bakiyordu. O
+degisken yalnizca **native surecler** icin yazilir; ayni-oturum betik cagrisi ona
+dokunmaz. Basarili kosumda degisken $null kaliyor, `$null -ne 0` DOGRU oluyor ve
+adim her seferinde firlatiyordu.
+
+Kanit (run 31338934743): iki denemede de `WINDOWS_FAST_SMOKE PASS`, pencere
+1024x720, baslik `Focus Camp` — yani ZIP GERCEKTEN ACILIYORDU. Uyari satiri ise
+`windows_fast_smoke.ps1 exit ` idi: cikis kodu **bos**. v63 ve v64'te Windows
+paketi bu yuzden yayindan dustu; kirilan uygulama degil kapinin kendisiydi.
+
+Duzeltme uc noktada: (1) betik `pwsh -File` ile **ayri surec** olarak cagriliyor,
+(2) betik basari yolunda **acik `exit 0`** yaziyor (cikis kodu artik sozlesme),
+(3) cikis kodu okunamazsa kapi **fail-closed** kirmizi duser — sessiz yesile
+donmez. Kapi kasten bozularak sinandi: eski cagri geri konunca test kirmizi.
+
+Ayrica sozlesme testinin kendisi ayni tuzaga dustu: iddia adim govdesindeki
+**yorum** satirini olcuyordu ve duzeltilmis dosyada kirmizi verdi. Artik yalniz
+KOSAN satirlar olculuyor (`smokeRun()`).
+
 ### Yayinlar
 - **v63** (2026-08-09): Android yayinlandi; Windows isi WP-633 yuzunden dustu,
   o surumde Windows paketi YOK.
