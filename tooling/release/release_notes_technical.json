@@ -3,6 +3,58 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.65",
+      "buildNumber": 65,
+      "channel": "stable",
+      "date": "2026-08-10",
+      "title": "v65: native sayac koprusu, kart geometrisi, seri projeksiyonu ve SSS icerigi",
+      "highlights": [
+        "Ana ekran widget'indan ya da bildirimden Baslat'a bastiginda sayac senin sectigin modda basliyor. Eskiden pomodoro veya geri sayim secili olsa bile kronometre baslatiyordu, mola hic gelmiyordu ve uygulamayi actiginda secimin silinmis oluyordu.",
+        "Ana ekran kartlari artik parmagin ustundeyken takilmiyor. Haftalik ritim, sayac ve siralama kartlari sigan iceriklerinde bile kaydirma jestini yutuyordu; kucuk kartlarda kesilen icerikler de duzeldi.",
+        "Seri isareti her temada okunuyor. Isaret soluk oldugu icin goruunmuyordu; artik seri duraklamadaysa ayri bir duraklatma isareti de goruyorsun."
+      ],
+      "fixes": [
+        "Geri sayim kartinin sag ustundeki kalem simgesi calisiyor. Duzenleme penceresini aciyor; eskiden hicbir sey yapmiyordu.",
+        "Kart artik yalniz sinav demiyor: adi 'Geri sayim' oldu, tatil, dogum gunu ve teslim tarihi de girebilirsin.",
+        "Var olan bir gorevi 'her N gunde bir' yaptiginda gorev Bugun listesinden dusmuyor. Eskiden kayboluyordu ve o gun kutuya dokundugunda hata veriyordu.",
+        "Molada bildirimden Calismaya don'e bastiginda ana ekran widget'i sayaci durmus gostermiyor.",
+        "Bir calisma kaydini sildiginde gunluk serin de geri gidiyor. Eskiden XP ve basarim geri gidiyordu ama seri oldugu gibi kaliyordu.",
+        "Grup arkadasinin profilinde kazandigi basarim kademelerini goruyorsun; profilinde gunluk seri, aktif gun ve rekorlar var. Gizli basarimlar gizli kalir.",
+        "Kazandigin bir rozetin altinda artik ciplak sifir yazmiyor; kademe sende kaliyor ve anlik degerin hangi kademeye sayildigi yaziyor.",
+        "Sikca sorulan sorular guncellendi. Dokuz cevap urunun bugunku halini yanlis anlatiyordu; en onemlisi hesap silmenin nasil iptal edildigiydi."
+      ],
+      "notes": [
+        "Native start plan: ACTION_TOGGLE ve bildirim ACTION_START artik flutter.timer_mode okuyor; handleStart'in targetSeconds varsayilani kaldirildi.",
+        "Dart sayac ayarlarinin eksik anahtarlarini acilista diske yaziyor; endBreakPlan fallback'i 0 yerine urun varsayilani.",
+        "Kart geometrisi olculdu: liderlik satiri 36 -> 53.44 px, itemExtent ile dayatiliyor; uc kartta RenderFlex kirpmasi kapandi.",
+        "Migration 0129-0132 iki ortama da uygulandi: oturum silme/guncelleme hedef tamamlamasini geri alir, hedef olaylari hesap/grup silininde temizlenir, grup gun toplami uyelik penceresini kullanir.",
+        "SSS icerigi 0130 ile duzeltildi (dokuz yanlis, alti yeni madde)."
+      ],
+      "titleEn": "v65: the timer now starts in the mode you picked",
+      "highlightsEn": [
+        "Starting the timer from the home-screen widget or the notification now uses the mode you picked. Before, it always started a stopwatch even when you had chosen pomodoro or countdown, no break ever arrived, and your choice was erased when you opened the app.",
+        "Home-screen cards no longer catch your finger. Weekly rhythm, timer and leaderboard cards swallowed the scroll gesture even when their content fitted; clipped content in small cards is fixed too.",
+        "The streak mark is readable in every theme. It was too faint to see, and you now also get a distinct pause mark when a streak is resting."
+      ],
+      "fixesEn": [
+        "The pencil icon on the countdown card works and opens the editor. It did nothing before.",
+        "The card is no longer exam-only: it is now called Countdown, so you can add holidays, birthdays and deadlines.",
+        "Turning an existing task into a repeating one keeps it in Today. It used to disappear and tapping its checkbox raised an error.",
+        "Tapping Back to work from the break notification no longer leaves the home-screen widget showing a stopped timer.",
+        "Deleting a study record now also gives back the daily streak. XP and achievements were already reverted; the streak was not.",
+        "You can see a group member's earned achievement tiers on their profile, and your own profile shows daily streak, active days and records. Secret achievements stay secret.",
+        "An earned badge no longer shows a bare zero underneath; the tier stays yours and the current value says which tier it counts toward.",
+        "The FAQ was updated. Nine answers described the app incorrectly; the most important one was how to cancel account deletion."
+      ],
+      "notesEn": [
+        "Native start plan: ACTION_TOGGLE ve bildirim ACTION_START artik flutter.timer_mode okuyor; handleStart'in targetSeconds varsayilani kaldirildi.",
+        "Dart sayac ayarlarinin eksik anahtarlarini acilista diske yaziyor; endBreakPlan fallback'i 0 yerine urun varsayilani.",
+        "Kart geometrisi olculdu: liderlik satiri 36 -> 53.44 px, itemExtent ile dayatiliyor; uc kartta RenderFlex kirpmasi kapandi.",
+        "Migration 0129-0132 iki ortama da uygulandi: oturum silme/guncelleme hedef tamamlamasini geri alir, hedef olaylari hesap/grup silininde temizlenir, grup gun toplami uyelik penceresini kullanir.",
+        "SSS icerigi 0130 ile duzeltildi (dokuz yanlis, alti yeni madde)."
+      ]
+    },
+    {
       "versionName": "1.0.58",
       "buildNumber": 58,
       "channel": "stable",
@@ -173,58 +225,58 @@
       "date": "2026-07-28",
       "title": "v55: engelleme, şikâyet ve yardim gerçekten çalışıyor",
       "highlights": [
-                         "Engellediğin kişi artık seni dürtemez, sen de onu dürtemezsin — engelleme yalnız görüntüde değil, sunucuda da geçerli.",
-                         "Şikâyet düğmesi dört ayrı yerden açılıyor ve gönderdikten sonra ne olacağını söylüyor.",
-                         "Uygulamada Sık Sorulan Sorular ekranı var; giriş yapmadan ve uçak modunda bile açılıyor.",
-                         "Soru, geri bildirim ve şikâyet artık tek bir destek kutusunda toplanıyor.",
-                         "Grup yöneticisi bir üyeyi kalıcı olarak yasaklayabiliyor; yasaklı kişi geçerli davet koduyla bile geri giremiyor.",
-                         "Davet kodu tek dokunuşla yenilenebiliyor, eski kod anında geçersiz oluyor.",
-                         "Görünen ad ve grup adında uygunsuz kelimeler artık kabul edilmiyor.",
-                         "Başarımların hepsinde nasıl kazanıldığı yazıyor."
-                     ],
+        "Engellediğin kişi artık seni dürtemez, sen de onu dürtemezsin — engelleme yalnız görüntüde değil, sunucuda da geçerli.",
+        "Şikâyet düğmesi dört ayrı yerden açılıyor ve gönderdikten sonra ne olacağını söylüyor.",
+        "Uygulamada Sık Sorulan Sorular ekranı var; giriş yapmadan ve uçak modunda bile açılıyor.",
+        "Soru, geri bildirim ve şikâyet artık tek bir destek kutusunda toplanıyor.",
+        "Grup yöneticisi bir üyeyi kalıcı olarak yasaklayabiliyor; yasaklı kişi geçerli davet koduyla bile geri giremiyor.",
+        "Davet kodu tek dokunuşla yenilenebiliyor, eski kod anında geçersiz oluyor.",
+        "Görünen ad ve grup adında uygunsuz kelimeler artık kabul edilmiyor.",
+        "Başarımların hepsinde nasıl kazanıldığı yazıyor."
+      ],
       "fixes": [
-                         "İki cihazın açıkken ikincisinden Durdur'a basmak koşuyu gerçekten bitiriyor; eskiden yalnız o cihazdaki görüntü duruyordu.",
-                         "Widget ve bildirimde sayaç boştayken 00:00 yazıyor; başlatınca ilk saniyeden itibaren doğru ilerliyor.",
-                         "Tanıtım turunda üst üste binen düğmeler ayrıldı; tur sıfırlandığında hem ekran turları hem ipuçları birlikte sıfırlanıyor.",
-                         "Ayarlar yeniden düzenlendi, en çok kullanılanlar üste alındı.",
-                         "İstatistiklerde özel tarih aralığını takvimin uçlarını sürükleyerek seçebiliyorsun.",
-                         "Kamp ateşi biraz aşağı indi, sahnenin dikey dengesi düzeltildi.",
-                         "Güncelleme notlarında kullanıcıya teknik satırlar görünmüyor."
-                     ],
+        "İki cihazın açıkken ikincisinden Durdur'a basmak koşuyu gerçekten bitiriyor; eskiden yalnız o cihazdaki görüntü duruyordu.",
+        "Widget ve bildirimde sayaç boştayken 00:00 yazıyor; başlatınca ilk saniyeden itibaren doğru ilerliyor.",
+        "Tanıtım turunda üst üste binen düğmeler ayrıldı; tur sıfırlandığında hem ekran turları hem ipuçları birlikte sıfırlanıyor.",
+        "Ayarlar yeniden düzenlendi, en çok kullanılanlar üste alındı.",
+        "İstatistiklerde özel tarih aralığını takvimin uçlarını sürükleyerek seçebiliyorsun.",
+        "Kamp ateşi biraz aşağı indi, sahnenin dikey dengesi düzeltildi.",
+        "Güncelleme notlarında kullanıcıya teknik satırlar görünmüyor."
+      ],
       "notes": [
-                         "Bu sürüm 0090-0094 arası beş şema adımı taşır: destek kutusu bilet türü (0090, WP-387), sunucudan beslenen SSS (0091, WP-388), send_nudge içinde iki yönlü engelleme zorlaması (0092, WP-389), grup yasağı + sunucu tarafı davet kodu yenileme (0093, WP-391) ve herkese açık ad süzgeci (0094, WP-392).",
-                         "Beş adım da eklemeli ya da mevcut fonksiyonu aynı imzayla değiştiriyor (join_group, join_public_group, send_nudge); sahadaki v54 istemcileri apply sırasında kırılmaz.",
-                         "PLAN 3 Faz K (WP-379..386) ve Faz L (WP-387..392) bu sürümle kapandı.",
-                         "WP-381 ve WP-383'ten kalan analyze uyarilari ile guard/preflight head pinleri ayrı bir kayıt hijyeni commitinde kapatıldı; yerel head artık deploy-contract.json'dan türetiliyor.",
-                         "Tur teslim edildiğinde 13 test kırmızıydı; hepsi kapatıldı. Dört kök neden: DE/AR katalog eşliği, WP-379 testinde Riverpod 3 auto-dispose tuzağı, WP-374 koşumunun Scaffold'suz oluşu (WP-387'nin FilterChip'i patlatıyordu) ve kamp ateşi sahnesinde dikey kelepçenin gövde altını hesaba katmaması. Sonuncusu gerçek üründe telefonda 4+ kişide en öndeki hayvanın ayaklarını kestiriyordu; WP-382'nin kompozisyon değerleri değişmedi."
-                     ],
+        "Bu sürüm 0090-0094 arası beş şema adımı taşır: destek kutusu bilet türü (0090, WP-387), sunucudan beslenen SSS (0091, WP-388), send_nudge içinde iki yönlü engelleme zorlaması (0092, WP-389), grup yasağı + sunucu tarafı davet kodu yenileme (0093, WP-391) ve herkese açık ad süzgeci (0094, WP-392).",
+        "Beş adım da eklemeli ya da mevcut fonksiyonu aynı imzayla değiştiriyor (join_group, join_public_group, send_nudge); sahadaki v54 istemcileri apply sırasında kırılmaz.",
+        "PLAN 3 Faz K (WP-379..386) ve Faz L (WP-387..392) bu sürümle kapandı.",
+        "WP-381 ve WP-383'ten kalan analyze uyarilari ile guard/preflight head pinleri ayrı bir kayıt hijyeni commitinde kapatıldı; yerel head artık deploy-contract.json'dan türetiliyor.",
+        "Tur teslim edildiğinde 13 test kırmızıydı; hepsi kapatıldı. Dört kök neden: DE/AR katalog eşliği, WP-379 testinde Riverpod 3 auto-dispose tuzağı, WP-374 koşumunun Scaffold'suz oluşu (WP-387'nin FilterChip'i patlatıyordu) ve kamp ateşi sahnesinde dikey kelepçenin gövde altını hesaba katmaması. Sonuncusu gerçek üründe telefonda 4+ kişide en öndeki hayvanın ayaklarını kestiriyordu; WP-382'nin kompozisyon değerleri değişmedi."
+      ],
       "titleEn": "v55: blocking, reporting and help that actually work",
       "highlightsEn": [
-                         "Someone you block can no longer nudge you, and you cannot nudge them either — blocking now holds on the server, not just on screen.",
-                         "The report button is reachable from four different places and tells you what happens after you send it.",
-                         "The app now has a Frequently Asked Questions screen; it opens without signing in and even in airplane mode.",
-                         "Questions, feedback and reports now land in a single support inbox.",
-                         "A group owner can ban a member for good; a banned person cannot rejoin even with a valid invite code.",
-                         "The invite code can be regenerated with one tap, and the old code stops working immediately.",
-                         "Display names and group names no longer accept abusive words.",
-                         "Every achievement now says how it is earned."
-                     ],
+        "Someone you block can no longer nudge you, and you cannot nudge them either — blocking now holds on the server, not just on screen.",
+        "The report button is reachable from four different places and tells you what happens after you send it.",
+        "The app now has a Frequently Asked Questions screen; it opens without signing in and even in airplane mode.",
+        "Questions, feedback and reports now land in a single support inbox.",
+        "A group owner can ban a member for good; a banned person cannot rejoin even with a valid invite code.",
+        "The invite code can be regenerated with one tap, and the old code stops working immediately.",
+        "Display names and group names no longer accept abusive words.",
+        "Every achievement now says how it is earned."
+      ],
       "fixesEn": [
-                         "With two devices open, pressing Stop on the second one now really ends the run; before, only that device's display stopped.",
-                         "The widget and the notification show 00:00 while the timer is idle, and count correctly from the first second after you start.",
-                         "Overlapping buttons in the intro tour were separated; resetting the tour now clears both the screen tours and the tips.",
-                         "Settings were reorganised, with the most used items moved to the top.",
-                         "In statistics you can now pick a custom range by dragging the ends of the calendar.",
-                         "The campfire moved down a little and the vertical balance of the scene was corrected.",
-                         "Update notes no longer show technical lines to users."
-                     ],
+        "With two devices open, pressing Stop on the second one now really ends the run; before, only that device's display stopped.",
+        "The widget and the notification show 00:00 while the timer is idle, and count correctly from the first second after you start.",
+        "Overlapping buttons in the intro tour were separated; resetting the tour now clears both the screen tours and the tips.",
+        "Settings were reorganised, with the most used items moved to the top.",
+        "In statistics you can now pick a custom range by dragging the ends of the calendar.",
+        "The campfire moved down a little and the vertical balance of the scene was corrected.",
+        "Update notes no longer show technical lines to users."
+      ],
       "notesEn": [
-                         "This release also changes the server side; after updating, closing and reopening the app once is recommended.",
-                         "A person you block is not removed from the campfire scene; their identity is hidden and the participant count stays correct.",
-                         "Timer sync still covers only Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
-                         "The tablet landscape layout was not addressed in this release either.",
-                         "On desktop, resetting the password with a 6-digit code still does not work."
-                     ]
+        "This release also changes the server side; after updating, closing and reopening the app once is recommended.",
+        "A person you block is not removed from the campfire scene; their identity is hidden and the participant count stays correct.",
+        "Timer sync still covers only Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
+        "The tablet landscape layout was not addressed in this release either.",
+        "On desktop, resetting the password with a 6-digit code still does not work."
+      ]
     },
     {
       "versionName": "1.0.54",

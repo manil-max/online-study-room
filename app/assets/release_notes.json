@@ -3,6 +3,50 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.65",
+      "buildNumber": 65,
+      "channel": "stable",
+      "date": "2026-08-10",
+      "title": "v65: sayac artik senin sectigin modda basliyor",
+      "highlights": [
+        "Ana ekran widget'indan ya da bildirimden Baslat'a bastiginda sayac senin sectigin modda basliyor. Eskiden pomodoro veya geri sayim secili olsa bile kronometre baslatiyordu, mola hic gelmiyordu ve uygulamayi actiginda secimin silinmis oluyordu.",
+        "Ana ekran kartlari artik parmagin ustundeyken takilmiyor. Haftalik ritim, sayac ve siralama kartlari sigan iceriklerinde bile kaydirma jestini yutuyordu; kucuk kartlarda kesilen icerikler de duzeldi.",
+        "Seri isareti her temada okunuyor. Isaret soluk oldugu icin goruunmuyordu; artik seri duraklamadaysa ayri bir duraklatma isareti de goruyorsun."
+      ],
+      "fixes": [
+        "Geri sayim kartinin sag ustundeki kalem simgesi calisiyor. Duzenleme penceresini aciyor; eskiden hicbir sey yapmiyordu.",
+        "Kart artik yalniz sinav demiyor: adi 'Geri sayim' oldu, tatil, dogum gunu ve teslim tarihi de girebilirsin.",
+        "Var olan bir gorevi 'her N gunde bir' yaptiginda gorev Bugun listesinden dusmuyor. Eskiden kayboluyordu ve o gun kutuya dokundugunda hata veriyordu.",
+        "Molada bildirimden Calismaya don'e bastiginda ana ekran widget'i sayaci durmus gostermiyor.",
+        "Bir calisma kaydini sildiginde gunluk serin de geri gidiyor. Eskiden XP ve basarim geri gidiyordu ama seri oldugu gibi kaliyordu.",
+        "Grup arkadasinin profilinde kazandigi basarim kademelerini goruyorsun; profilinde gunluk seri, aktif gun ve rekorlar var. Gizli basarimlar gizli kalir.",
+        "Kazandigin bir rozetin altinda artik ciplak sifir yazmiyor; kademe sende kaliyor ve anlik degerin hangi kademeye sayildigi yaziyor.",
+        "Sikca sorulan sorular guncellendi. Dokuz cevap urunun bugunku halini yanlis anlatiyordu; en onemlisi hesap silmenin nasil iptal edildigiydi."
+      ],
+      "notes": [
+        "Windows surumu yeniden cikiyor. v63 ve v64'te paket uretilememisti; sebebi uygulamada degil yayin kontrolundeydi."
+      ],
+      "titleEn": "v65: the timer now starts in the mode you picked",
+      "highlightsEn": [
+        "Starting the timer from the home-screen widget or the notification now uses the mode you picked. Before, it always started a stopwatch even when you had chosen pomodoro or countdown, no break ever arrived, and your choice was erased when you opened the app.",
+        "Home-screen cards no longer catch your finger. Weekly rhythm, timer and leaderboard cards swallowed the scroll gesture even when their content fitted; clipped content in small cards is fixed too.",
+        "The streak mark is readable in every theme. It was too faint to see, and you now also get a distinct pause mark when a streak is resting."
+      ],
+      "fixesEn": [
+        "The pencil icon on the countdown card works and opens the editor. It did nothing before.",
+        "The card is no longer exam-only: it is now called Countdown, so you can add holidays, birthdays and deadlines.",
+        "Turning an existing task into a repeating one keeps it in Today. It used to disappear and tapping its checkbox raised an error.",
+        "Tapping Back to work from the break notification no longer leaves the home-screen widget showing a stopped timer.",
+        "Deleting a study record now also gives back the daily streak. XP and achievements were already reverted; the streak was not.",
+        "You can see a group member's earned achievement tiers on their profile, and your own profile shows daily streak, active days and records. Secret achievements stay secret.",
+        "An earned badge no longer shows a bare zero underneath; the tier stays yours and the current value says which tier it counts toward.",
+        "The FAQ was updated. Nine answers described the app incorrectly; the most important one was how to cancel account deletion."
+      ],
+      "notesEn": [
+        "The Windows build is back. v63 and v64 produced no package, and the cause was in the release check rather than the app."
+      ]
+    },
+    {
       "versionName": "1.0.64",
       "buildNumber": 64,
       "channel": "stable",

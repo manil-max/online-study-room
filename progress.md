@@ -10162,6 +10162,96 @@ duruyor — apply GO'su AYRI karar.
 8. **Sahibin hipotezi de olculur** (WP-651): olcum onu curuttu ve dogru
    calisan bir yuzeyi bozmaktan dondu.
 
+### WP-657: seri rozeti HICBIR temada okunmuyordu
+Sahip "soluk ama tam belli olmuyor, gri daha guzel olur" dedi. Olculdu (15
+hazir tema x 4 durum, rozet gercek kart yuzeyine cizilip renk okunarak):
+`pendingToday` kontrasti **1.63-1.86** (esik 3.0), 15 temanin 15'inde.
+Yani "soluk" bir tercih degil OKUNAMAMA idi; sahibin hic fark edemedigi
+duraklatma isareti de ayni sebeple gorunmuyordu.
+Kok neden: renkler sabit yazilmis ve `Color.lerp(renk, scheme.surface, 0.55)`
+ile soluklastirilmisti — zemine dogru lerp etmek tanim geregi kontrasti
+oldurur. Ayni sinif hata depoda uc kez daha olculmus.
+Duzeltme yeni mekanizma degil: dort durum tek kuraldan uretiliyor,
+`resolveContainerRole` dolgu ile ustundeki glifi zeminden turetiyor.
+Bu, WP-604'un "gri DEGIL, ayni turuncunun dusuk doygunlugu" kaydini
+**gecersiz kilar** (sahip emri, `AGENTS.md §0.1`).
+🔴 Ajanin kendi olcum aygiti bozukmus: `AnimatedTheme` yuzunden butun temalar
+BIRINCI temanin semasiyla olculuyordu; duzeltilmeseydi sayilar yalan olacakti.
+
+### WP-658: cevrimdisi SSS yedegi IKINCI bir gercek kaynakti
+Veritabani duzeldi ama `kFallbackFaq` ayri bir kopya ve kendiliginden
+guncellenmiyor. Metni duzeltmekle birakilmadi: **yedege eskiyebilecek iddia
+yazilmaz** kurali kondu ve kapiya baglandi (sayi veremez, yalanlanmis iddiayi
+tekrar edemez, kucuk kalir).
+
+### WP-659: kart geometrisi TAHMIN ediliyordu
+`leaderboard_card` satiri `36.0` sanıyordu, gercegi **53.44**. Sayi bir zamanlar
+DOGRUYDU (tacsiz avatar 28 + padding 8); tac eklendiginde sabit guncellenmedi.
+Kart bu yuzden hep bir satir fazla paketliyor, kaydirici garanti oluyordu.
+Uc kartin 160x160'ta icerigi KIRPMASI ayni kokten: basliklari ciplak `Text`'ti
+ve `CardScaffold` basliga 44 px ayiriyor; 1.6 yazi olceginde bir baslik tek
+basina **228 px** (kartin tamamindan buyuk).
+Ajan kimsenin gormedigi yeni bir kusur da buldu: liderlik basligi 1.3 yazi
+olceginde tasip **rozeti ve yuzdeyi kirpiyordu** — 1.0'da gorunmuyor.
+🔴 Ajanin kendi itirafi: ilk sabotaji SADAKATSIZDI (stili yanlislikla
+dusurdu), kapi yesil kaldi ve az kalsin "gate ise yaramiyor" diye yanlis
+rapor yaziyordu. **Sabotaj yaklasik degil BIREBIR olmali.**
+
+### WP-660: profil zenginlestirme (sahip maddesi 6)
+Once envanter, sonra kod. Bedava kazanclar baglandi: baskasinin profilinde
+**kazanilmis kademe ilerlemesi** ("3/6 kademe" — eskiden kazanilmis kademeler
+bile bos cubuk gosteriyordu) ve kendi profilinde seri/aktif gun/rekor paneli.
+Gizlilik **sabotajla** kanitlandi: `secretLocked` kapatilinca `?????` kayboldu,
+geri konunca dondu. Yeni tablo/RPC/politika YOK — tek kaynak `can_see_user_sessions`
+kapisindan gecen mevcut akislar.
+Kapsam disi kalan ikisi (baskasinin ham metrigi ve canli serisi) sunucu
+politikasi ister; ajan migration YAZMADI, ne gerektigini yazdi.
+
+### WP-661: 0129 apply'inin YAN ETKISI + seri zincirinin kalan bosluklari
+Lane J benim uyguladigim bir gocun yan etkisini buldu: `0129` apply aninda
+onarim cagiriyor ve o onarimin grup dali toplami yalniz bugunku uyelerden
+aliyordu. Blast radius **olculdu**: silme olcutu "hedefin altinda" degil TAM
+SIFIR, yani yalniz "o gune katki veren herkes ayrilmis" gunler.
+`0131` hedef olaylarini hesap/grup silininde temizler (tek FK cozumu olculup
+REDDEDILDI — `scope_id` cok bicimli, apply aninda duserdi).
+`0132` grup gun toplamini uyelik penceresine baglar (kural `0121:186`da zaten
+yaziliydi, seri yolu kopyalamamis) + silmenin aynasi olan dar onarim.
+🔴 **SONUC DURUSTCE:** onarim iki ortamda da "0 grup gunu geri kondu" yazdi.
+Tehlike gercekti ve kaynaktan olculmustu, ama bu veride etkisi BOS cikti.
+
+### WP-662: dort yogunluk karari
+Sahip "sen hizli bitir" dedi, kararlari lider verdi: 160x160'ta liderlik en az
+2 kisi (dense satir 34 px), kisa hucrede grup hedefi blogu gizlenir, sayac
+seridinde dugme KUCULMEZ sayisi azalir (36.7 -> **48.0** px dokunma hedefi,
+kalanlar tasma menusune), sayac karti kucuk hucrede icerigi gizler
+(433 -> 34.7 px). Tablet 416 px hucreler **bilerek dusurulmedi** — orada
+hangi satirin gizlenecegi ayri bir urun karari.
+🔴 Ajan kendi kapisindaki zayifligi buldu: esik `kMinTouchTarget` sabitinden
+okunuyordu, yani biri sabiti dusurse kapi da onunla duserdi. **Bir kapi,
+olctugu seyin kendi tanimini kullanamaz.**
+
+### WP-663: kazanilmis rozetin altinda ciplak sifir
+Ajan hipotezimi duzeltti: ekranda birebir "0/7" YAZMIYOR; kademe kazanilmisken
+metin `0/30 · sonraki kademe`. "0/7" gorunumu, katalog aciklamasindaki
+"7 gun ust uste" ile dusen serinin yan yana okunmasindan geliyor.
+`fire_streak` tasarim geregi `'current'` (`0050:45`), yani deger DUSER ama
+kademe durur. Lider karari: **kazanilmis kademe geri ALINMAZ** — urunun kendi
+"zorlama yok" politikasi ve sahibin istedigi modelde koruma sinirsiz. Celisen
+sey rozet degil GOSTERIM.
+Artik: `Kademe 1 kazanildi · kalici` + `Su anki seri 0 · Kademe 2 icin 30 gerek`.
+"En iyi: N" secenegi ALINMADI cunku o veri istemcide yok — uydurmak olurdu.
+
+### Yayin v65
+Yukaridakilerin tamami + WP-640/642/643/644/645/646/647/651/652/653.
+`0129`-`0132` iki ortamda da uygulandi (kosum 31380186208 / 31380542690 /
+31387578372 / 31387946060).
+🔴 `0131+0132` staging apply'i ILK denemede KIRMIZI dustu: `tests/059`
+`user_achievements`e duz insert yapiyordu, satiri basarim projeksiyonu zaten
+olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
+— Docker bu hostta kalkmiyor, dosya `OLCEMEDIM` etiketiyle teslim edilmisti.
+**"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
+karsiligini uretti.
+
 ## Bekleyen — hunter turundan cikan, henuz kapanmamis kartlar
 
 ### WP-648 — Dead surface: dogrulanmis uc kopuk zincir

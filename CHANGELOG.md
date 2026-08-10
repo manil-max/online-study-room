@@ -4,6 +4,37 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v65 / 1.0.65+65] - 2026-08-10
+
+> **Sayaç artık senin seçtiğin modda başlıyor.** Ana ekran widget'ından ya da
+> bildirimden Başlat'a bastığında pomodoro veya geri sayım seçimin korunuyor —
+> eskiden kronometre başlatıyor, mola hiç gelmiyor ve uygulamayı açtığında
+> seçimin silinmiş oluyordu. Aynı turda ana ekran kartlarının parmağı takması
+> ve küçük kartlarda içeriğin kesilmesi kapandı.
+
+### Öne çıkanlar
+- Widget/bildirim Başlat'ı kullanıcının seçtiği modu başlatıyor; seçim artık
+  sessizce silinmiyor.
+- Ana ekran kartları sığan içerikte kaydırma jestini yutmuyor (haftalık ritim,
+  sayaç, sıralama); küçük hücrelerde kırpma kalmadı.
+- Seri işareti her temada okunuyor; seri duraklamadaysa ayrı bir duraklatma
+  işareti çiziliyor.
+
+### Düzeltmeler
+- Geri sayım kartındaki kalem simgesi düzenleme penceresini açıyor.
+- Kart artık yalnız sınav demiyor; adı "Geri sayım".
+- Var olan görevi tekrarlıya çevirmek onu Bugün listesinden düşürmüyor.
+- Molada "Çalışmaya dön" sonrası widget sayacı durmuş göstermiyor.
+- Çalışma kaydı silinince günlük seri de geri gidiyor.
+- Başkasının profilinde kazanılmış kademeler görünüyor; kendi profilinde seri,
+  aktif gün ve rekorlar var. Gizli başarımlar gizli kalır.
+- Kazanılmış rozetin altında çıplak sıfır yok.
+- Sıkça sorulan sorularda dokuz yanlış cevap düzeltildi, altı yeni madde eklendi.
+
+### Notlar
+- Windows sürümü yeniden çıkıyor; v63 ve v64'te paket üretilememişti ve sebebi
+  uygulamada değil yayın kontrolündeydi.
+
 ## [v64 / 1.0.64+64] - 2026-08-10
 
 > **Silinen çalışma artık gerçekten siliniyor.** Bir çalışma kaydını
