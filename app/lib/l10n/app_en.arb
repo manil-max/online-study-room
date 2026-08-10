@@ -6563,19 +6563,19 @@
   "@clockIzinDurumuOkunamadi": {
     "description": "Shown when the exact-alarm permission probe fails."
   },
-  "homeSinavGeriSayimi": "Exam countdown",
+  "homeSinavGeriSayimi": "Countdown",
   "@homeSinavGeriSayimi": {
     "description": "WP-575 dashboard card title: countdown to the exam date."
   },
-  "homeSinavGeriSayimiAciklama": "Days left until the exam date you picked.",
+  "homeSinavGeriSayimiAciklama": "Days left until the date you picked.",
   "@homeSinavGeriSayimiAciklama": {
     "description": "WP-575 dashboard card description shown in the card picker."
   },
-  "homeSinavTarihiSecilmedi": "No exam date set",
+  "homeSinavTarihiSecilmedi": "No date set",
   "@homeSinavTarihiSecilmedi": {
     "description": "WP-575 empty state: no exam date has been chosen yet."
   },
-  "homeSinavTarihiniAyarlardanSec": "Pick your exam date under Settings → Study preferences.",
+  "homeSinavTarihiniAyarlardanSec": "Pick your date under Settings → Study preferences.",
   "@homeSinavTarihiniAyarlardanSec": {
     "description": "WP-575 empty state hint pointing at the settings row that sets the date."
   },
@@ -6588,36 +6588,36 @@
       }
     }
   },
-  "homeSinavBugun": "The exam is today",
+  "homeSinavBugun": "It’s today",
   "@homeSinavBugun": {
     "description": "WP-575 countdown headline when the exam date is today (never \"0 days left\")."
   },
-  "homeSinavGecti": "The exam has passed",
+  "homeSinavGecti": "The date has passed",
   "homeSinavTarihiEklemekIcinDokun": "Tap the card to add one.",
   "@homeSinavTarihiEklemekIcinDokun": {
     "description": "WP-632 empty D-Day card hint: how to add the first exam."
   },
-  "homeSinavVarsayilanAd": "Exam",
+  "homeSinavVarsayilanAd": "Date",
   "@homeSinavVarsayilanAd": {
     "description": "WP-632 default label when the user leaves the exam name blank."
   },
-  "homeSinavlariDuzenle": "Edit exams",
+  "homeSinavlariDuzenle": "Edit countdowns",
   "@homeSinavlariDuzenle": {
     "description": "WP-632 title of the D-Day editor sheet."
   },
-  "homeSinavEkle": "Add exam",
+  "homeSinavEkle": "Add date",
   "@homeSinavEkle": {
     "description": "WP-632 dialog title when creating a new exam entry."
   },
-  "homeSinaviDuzenle": "Edit exam",
+  "homeSinaviDuzenle": "Edit date",
   "@homeSinaviDuzenle": {
     "description": "WP-632 dialog title when editing an existing exam entry."
   },
-  "homeSinavAdi": "Exam name",
+  "homeSinavAdi": "Name",
   "@homeSinavAdi": {
     "description": "WP-632 label of the optional exam name field."
   },
-  "homeSinavAdiIstegeBagli": "Optional — leave it blank and it shows “Exam”.",
+  "homeSinavAdiIstegeBagli": "Optional — leave it blank and it shows “Date”.",
   "@homeSinavAdiIstegeBagli": {
     "description": "WP-632 helper text stating the exam name is optional."
   },
@@ -6641,7 +6641,7 @@
   "@homeAsagiTasi": {
     "description": "WP-632 tooltip: move this exam one place down."
   },
-  "homeSinavSil": "Delete exam",
+  "homeSinavSil": "Delete",
   "@homeSinavSil": {
     "description": "WP-632 tooltip for removing an exam entry."
   },
@@ -6649,7 +6649,7 @@
   "@homeKaydet": {
     "description": "WP-632 confirm button of the exam edit dialog."
   },
-  "homeSinavEkleSayac": "{count, plural, other {Add exam ({count}/{max})}}",
+  "homeSinavEkleSayac": "{count, plural, other {Add date ({count}/{max})}}",
   "@homeSinavEkleSayac": {
     "description": "WP-632 add button showing how many exams are stored out of the maximum.",
     "placeholders": {
@@ -6661,7 +6661,7 @@
       }
     }
   },
-  "homeSinavSiniriDoldu": "{max, plural, other {You can add up to {max} exams.}}",
+  "homeSinavSiniriDoldu": "{max, plural, other {You can add up to {max} dates.}}",
   "@homeSinavSiniriDoldu": {
     "description": "WP-632 message shown when the exam limit is reached.",
     "placeholders": {
@@ -6673,11 +6673,11 @@
   "@homeSinavGecti": {
     "description": "WP-575 countdown headline for a past exam date; a negative day count is never shown."
   },
-  "profileSinavTarihi": "Exam date",
+  "profileSinavTarihi": "Countdown date",
   "@profileSinavTarihi": {
     "description": "WP-575 settings row title under study preferences."
   },
-  "profileSinavTarihiniTemizle": "Clear exam date",
+  "profileSinavTarihiniTemizle": "Clear date",
   "@profileSinavTarihiniTemizle": {
     "description": "WP-575 tooltip for the button that removes the saved exam date."
   },
