@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/goal_streak.dart';
@@ -81,7 +82,11 @@ class ProfileStatsPanel extends ConsumerWidget {
     final activeDays = activeDayCount(totals);
     final recordStreak = goalSeconds <= 0
         ? 0
-        : longestStudyStreak(const [], totals: totals, goalSeconds: goalSeconds);
+        : longestStudyStreak(
+            const [],
+            totals: totals,
+            goalSeconds: goalSeconds,
+          );
     final total = totalOfDayTotals(totals);
     final peak = peakDay(totals);
 
@@ -100,7 +105,10 @@ class ProfileStatsPanel extends ConsumerWidget {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(l10n.profileStatsBaslik, style: theme.textTheme.titleMedium),
+                Text(
+                  l10n.profileStatsBaslik,
+                  style: theme.textTheme.titleMedium,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -192,38 +200,54 @@ class _StatRow extends StatelessWidget {
     final theme = Theme.of(context);
     final definition = this.definition;
     final value = this.value;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: theme.textTheme.bodyMedium),
-              if (definition != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  definition,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
-          ),
+    // 🔴 WP-674 / SPEC KURAL 2.2 — aşağıdaki `Expanded` TAVANSIZDI. Sahibin
+    // 2000 px'lik penceresinde "Günlük seri" solda kalıyor, değeri (`0`) ~1900 px
+    // ötede sağa itiliyordu. Bu bir estetik tercih değil okunabilirlik hatası:
+    // göz satır başına dönemeyince satırı kaybeder (WCAG 2.1 SC 1.4.8, SPEC §2.2).
+    //
+    // Kural: satırın kabı 496 px'ten (Bringhurst 66ch hedefi) genissse satır kabı
+    // DOLDURMAZ — 496'da bırakılır ve sola hizalanır. Mobilde (390 px) kap zaten
+    // 496'dan dar olduğu için çizilen ağaç birebir aynı kalır (SPEC §7).
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: DesktopBreakpoints.labelValueTargetWidth,
         ),
-        const SizedBox(width: 12),
-        if (trailing != null)
-          KeyedSubtree(key: valueKey, child: trailing!)
-        else
-          Text(
-            value ?? '—',
-            key: valueKey,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.bodyMedium),
+                  if (definition != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      definition,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-      ],
+            const SizedBox(width: 12),
+            if (trailing != null)
+              KeyedSubtree(key: valueKey, child: trailing!)
+            else
+              Text(
+                value ?? '—',
+                key: valueKey,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../core/desktop/desktop_layout.dart';
+import '../../../core/desktop/desktop_window.dart';
 import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/widgets/anchored_menu.dart';
 import '../../../core/widgets/crown_tiers_sheet.dart';
@@ -69,7 +71,8 @@ IconData achievementIconData(String iconKey) {
 }
 
 // 6 kademe/taç görsel dili tek kaynaktan (progression_visuals) gelir (WP-A).
-String _crownLabel(AppLocalizations l10n, String rank) => crownLabel(rank, l10n);
+String _crownLabel(AppLocalizations l10n, String rank) =>
+    crownLabel(rank, l10n);
 
 String _tierLabel(AppLocalizations l10n, int tier) => tierLabel(tier, l10n);
 
@@ -240,6 +243,7 @@ class AchievementShowcase extends StatefulWidget {
     this.onRetryRewards,
     this.onSelectTitle,
     this.titleUpdating = false,
+    this.statsPanel,
   });
 
   final GamificationProfile gamification;
@@ -268,6 +272,14 @@ class AchievementShowcase extends StatefulWidget {
   final VoidCallback? onRetryRewards;
   final Future<void> Function(String? achievementId)? onSelectTitle;
   final bool titleUpdating;
+
+  /// 🔴 WP-674 — masaüstünde SOL raya konan istatistik paneli
+  /// (`ProfileStatsPanel`). Ekran onu KARDEŞ olarak çizerse geniş pencerede
+  /// tek başına içerik sütununun tamamına yayılan bir `Card` olur; SPEC §2.3
+  /// form/ayar sütunu tavanı 760 px. İki sütunlu düzeni bu widget kurduğu
+  /// için panelin yerini de o verir. Mobilde sıra değişmez: panel bugünkü
+  /// yerinde, başlığın hemen üstünde kalır.
+  final Widget? statsPanel;
 
   @override
   State<AchievementShowcase> createState() => AchievementShowcaseState();
@@ -383,95 +395,161 @@ class AchievementShowcaseState extends State<AchievementShowcase>
       }
     }
 
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: widget.compact ? MainAxisSize.min : MainAxisSize.max,
-      children: [
-        if (widget.displayName != null) ...[
-          Text(
-            widget.displayName!,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-        ],
-        if (titleDefinition != null ||
-            (widget.isSelf && widget.onSelectTitle != null)) ...[
-          _ProfileTitleRow(
-            definition: titleDefinition,
-            available: _dict
-                .where(
-                  (definition) => _userAch(definition.id)?.isUnlocked == true,
-                )
-                .toList(growable: false),
-            selectedId: widget.titleAchievementId,
-            onSelect: widget.onSelectTitle,
-            updating: widget.titleUpdating,
-          ),
-          SizedBox(height: 10),
-        ],
-        _CrownHeader(rank: rank, rankColor: rankColor, xp: xp),
-        SizedBox(height: 12),
-        _XpBar(
-          progress: bar.progress,
-          xp: xp,
-          currentXp: bar.currentXp,
-          nextThreshold: bar.nextThreshold,
-          color: rankColor,
-        ),
-        if (widget.isSelf) ...[
-          SizedBox(height: 12),
-          _StudyXpNote(),
-          if (widget.rewardsLoading ||
-              widget.rewardError ||
-              widget.pendingRewardCount > 0 ||
-              widget.pendingRewards.isNotEmpty) ...[
-            SizedBox(height: 12),
-            AchievementRewardInbox(
-              rewards: widget.pendingRewards,
-              pendingCount: widget.pendingRewardCount,
-              pendingXp: widget.pendingRewardXp,
-              loading: widget.rewardsLoading,
-              hasError: widget.rewardError,
-              claimingIds: widget.claimingRewardIds,
-              claimingAll: widget.claimingAllRewards,
-              dictionary: _dict,
-              onClaimReward: widget.onClaimReward,
-              onClaimAll: widget.onClaimAllRewards,
-              onRetry: widget.onRetryRewards,
-            ),
-          ],
-          if (widget.metricProgress.isNotEmpty) ...[
-            SizedBox(height: 12),
-            _NearestAchievementStrip(
-              dictionary: _dict,
-              userAchievements: widget.userAchievements,
-              metricProgress: widget.metricProgress,
-            ),
-          ],
-        ],
+    // 🔴 WP-674 — vitrin iki parçaya ayrılır: SOL RAY (kimlik + özet) ve
+    // KATALOG (rozet ızgarası). Geniş pencerede ikisi yan yana durur; dar
+    // pencerede ve mobilde bugünkü tek sütun sırası birebir korunur (SPEC §7).
+    final headerChildren = <Widget>[
+      // WP-674: mobil sıra korunur — istatistik paneli başlığın hemen üstünde.
+      if (widget.statsPanel != null) ...[
+        widget.statsPanel!,
         SizedBox(height: 16),
-        _VitrinRow(
-          selectedIds: widget.gamification.selectedBadges,
-          dictionary: _dict,
-          userAchievements: widget.userAchievements,
-          isSelf: widget.isSelf,
-          onToggle: widget.onToggleShowcaseBadge,
+      ],
+      if (widget.displayName != null) ...[
+        Text(
+          widget.displayName!,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        if (widget.showCatalog && !widget.compact) ...[
-          SizedBox(height: 20),
-          Text(
-            AppLocalizations.of(context).profileBasariKatalogu,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+        SizedBox(height: 8),
+      ],
+      if (titleDefinition != null ||
+          (widget.isSelf && widget.onSelectTitle != null)) ...[
+        // SPEC §2.3: ünvan chip'i (etiket) + "Ünvan seç" düğmesi (kontrol) bir
+        // FORM satırıdır, tavanı 760 px. Tavansızken düğme 2400 px'lik pencerenin
+        // sağ kenarına gidiyor, chip solda kalıyordu.
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: DesktopBreakpoints.maxFormWidth,
+            ),
+            child: _ProfileTitleRow(
+              definition: titleDefinition,
+              available: _dict
+                  .where(
+                    (definition) => _userAch(definition.id)?.isUnlocked == true,
+                  )
+                  .toList(growable: false),
+              selectedId: widget.titleAchievementId,
+              onSelect: widget.onSelectTitle,
+              updating: widget.titleUpdating,
             ),
           ),
-          SizedBox(height: 8),
-          ..._buildCatalog(theme),
+        ),
+        SizedBox(height: 10),
+      ],
+      _CrownHeader(rank: rank, rankColor: rankColor, xp: xp),
+      SizedBox(height: 12),
+      _XpBar(
+        progress: bar.progress,
+        xp: xp,
+        currentXp: bar.currentXp,
+        nextThreshold: bar.nextThreshold,
+        color: rankColor,
+      ),
+      if (widget.isSelf) ...[
+        SizedBox(height: 12),
+        _StudyXpNote(),
+        if (widget.rewardsLoading ||
+            widget.rewardError ||
+            widget.pendingRewardCount > 0 ||
+            widget.pendingRewards.isNotEmpty) ...[
+          SizedBox(height: 12),
+          AchievementRewardInbox(
+            rewards: widget.pendingRewards,
+            pendingCount: widget.pendingRewardCount,
+            pendingXp: widget.pendingRewardXp,
+            loading: widget.rewardsLoading,
+            hasError: widget.rewardError,
+            claimingIds: widget.claimingRewardIds,
+            claimingAll: widget.claimingAllRewards,
+            dictionary: _dict,
+            onClaimReward: widget.onClaimReward,
+            onClaimAll: widget.onClaimAllRewards,
+            onRetry: widget.onRetryRewards,
+          ),
+        ],
+        if (widget.metricProgress.isNotEmpty) ...[
+          SizedBox(height: 12),
+          _NearestAchievementStrip(
+            dictionary: _dict,
+            userAchievements: widget.userAchievements,
+            metricProgress: widget.metricProgress,
+          ),
         ],
       ],
+      SizedBox(height: 16),
+      _VitrinRow(
+        selectedIds: widget.gamification.selectedBadges,
+        dictionary: _dict,
+        userAchievements: widget.userAchievements,
+        isSelf: widget.isSelf,
+        onToggle: widget.onToggleShowcaseBadge,
+      ),
+    ];
+
+    final catalogChildren = <Widget>[
+      if (widget.showCatalog && !widget.compact) ...[
+        SizedBox(height: 20),
+        Text(
+          AppLocalizations.of(context).profileBasariKatalogu,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 8),
+        ..._buildCatalog(theme),
+      ],
+    ];
+
+    // 🔴 Sahibin 1 numaralı şikayeti: "taç ortada, iki yanında devasa
+    // boşluk". Vitrin TEK sütun kaldığı sürece taç şeridi 2500 px'lik bir
+    // satırın ortasında yalnız kalır ve katalog kartları aynı genişliğe yayılır.
+    // `large` (1200 — SPEC §1.2, M3: bir `large` pencere iki pane taşır)
+    // eşiğinden itibaren ekran iki pane'e ayrılır:
+    //   sol  496 px — kimlik + özet rayı (SPEC KURAL 2.2'nin hedef ölçüsü)
+    //   sağ  kalan — katalog ızgarası (SPEC §5 "rozet ızgarası")
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final twoPane =
+            isDesktopWindow &&
+            widget.showCatalog &&
+            !widget.compact &&
+            catalogChildren.isNotEmpty &&
+            width >= DesktopBreakpoints.large;
+        if (!twoPane) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: widget.compact ? MainAxisSize.min : MainAxisSize.max,
+            children: [...headerChildren, ...catalogChildren],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: DesktopBreakpoints.labelValueTargetWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: headerChildren,
+              ),
+            ),
+            // SPEC §4: masaüstü ızgara oluğu 24 px (WinUI/Fluent, >640 px).
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: catalogChildren,
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     return Stack(
@@ -521,19 +599,22 @@ class AchievementShowcaseState extends State<AchievementShowcase>
           ),
         ),
       );
-      for (final def in items) {
-        widgets.add(
-          _CatalogTile(
-            def: def,
-            userAch: _userAch(def.id),
-            metricValue: widget.isSelf ? _metricValue(def.id) : null,
-            unlocked: _isUnlocked(def),
-            isSelected: widget.gamification.selectedBadges.contains(def.id),
-            isSelf: widget.isSelf,
-            onToggle: widget.onToggleShowcaseBadge,
-          ),
-        );
-      }
+      widgets.add(
+        _CatalogGrid(
+          tiles: [
+            for (final def in items)
+              _CatalogTile(
+                def: def,
+                userAch: _userAch(def.id),
+                metricValue: widget.isSelf ? _metricValue(def.id) : null,
+                unlocked: _isUnlocked(def),
+                isSelected: widget.gamification.selectedBadges.contains(def.id),
+                isSelf: widget.isSelf,
+                onToggle: widget.onToggleShowcaseBadge,
+              ),
+          ],
+        ),
+      );
     }
     return widgets;
   }
@@ -1629,6 +1710,75 @@ class _BadgeCircle extends StatelessWidget {
   }
 }
 
+/// 🔴 WP-674 — katalog döşemelerinin akıcı ızgarası (SPEC §3 A2).
+///
+/// Ölçüm (2560 px pencere, düzeltme öncesi): her katalog kartı **2520 px**
+/// genişlikteydi ve içindeki en geniş metin 260 px'ti — 2260 px ölü alan.
+/// Sahibin "her biri 800 px, içinde tek bir satır" şikayetinin birebir hali.
+///
+/// Sütun sayısı iki kuraldan KÜÇÜK olanıdır:
+///  1. SPEC §5 merdiveni: `expanded` 4, `large` 5, `xlarge` 6 sütun.
+///  2. **Okunabilir taban:** döşeme 320 px'in altına inmez. SPEC §2.3 tek
+///     sayılık istatistik döşemesine 320 px tavanı verir; katalog döşemesi
+///     rozet + ad + açıklama + kademe şeridi taşıdığı için ondan DAR olamaz.
+///
+/// İkisi birlikte gerekli: SPEC'in kendi ızgara tavanı 1440 px olduğu için
+/// 6 sütun döşemeyi 220 px'e düşürürdü, yani pencere genişledikçe kart
+/// DARALIRDI. Sapma ve gerekçesi WP raporunda.
+///
+/// Mobil dal hiç değişmez (SPEC §7): `isDesktopWindow` false iken sütun 1'dir,
+/// yani bugünkü dikey liste. Telefonun yatay çevrilmesi de bunu bozmaz.
+class _CatalogGrid extends StatelessWidget {
+  const _CatalogGrid({required this.tiles});
+
+  final List<Widget> tiles;
+
+  /// SPEC §2.3'ün döşeme ölçüsü; burada TAVAN değil TABAN olarak kullanılır.
+  static const double minTileWidth = 320;
+
+  /// SPEC §4: >640 px pencerede ızgara oluğu 24 px (Fluent 2 Layout).
+  static const double gutter = 24;
+
+  @visibleForTesting
+  static int columnsFor(double width) {
+    if (!isDesktopWindow) return 1;
+    final ladder = switch (DesktopBreakpoints.windowClass(width)) {
+      DesktopNavigationMode.xlarge => 6,
+      DesktopNavigationMode.large => 5,
+      _ => 4,
+    };
+    final fits = ((width + gutter) / (minTileWidth + gutter)).floor();
+    if (fits < 1) return 1;
+    return fits < ladder ? fits : ladder;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = columnsFor(constraints.maxWidth);
+        if (columns <= 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: tiles,
+          );
+        }
+        // `floorToDouble`: kalan kesir oluğa eklenir. Aksi halde tek bir
+        // yuvarlama hatası son döşemeyi alt satıra atardı.
+        final tileWidth =
+            ((constraints.maxWidth - gutter * (columns - 1)) / columns)
+                .floorToDouble();
+        return Wrap(
+          spacing: gutter,
+          children: [
+            for (final tile in tiles) SizedBox(width: tileWidth, child: tile),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _CatalogTile extends StatelessWidget {
   const _CatalogTile({
     required this.def,
@@ -1875,7 +2025,10 @@ class _CatalogTile extends StatelessWidget {
                                 ).profileAchievementProgressUnavailable
                               : AppLocalizations.of(
                                   context,
-                                ).profileAchievementPersonalBest(progress, need),
+                                ).profileAchievementPersonalBest(
+                                  progress,
+                                  need,
+                                ),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: progress == null
                                 ? theme.colorScheme.onSurfaceVariant
