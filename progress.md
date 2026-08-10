@@ -10252,6 +10252,112 @@ olusturmustu. Kusur MIGRATION'da degil TESTTEydi ve yalniz orada bulunabilirdi
 **"Kosamadim" demek "gecti" demekten iyidir**; bu tur bunun iki somut
 karsiligini uretti.
 
+## 2026-08-10 aksami — MASAUSTU TASARIM TURU (WP-670…WP-684)
+
+Sahip Windows surumunu acti ve **reddetti**: *"dikey mobil uygulama icin
+tasarlanan arayuzler yatay pc ekraninda cok kotu duruyor... tamamen mobilin
+penceresi gibi olmus."* Emir netti: islev ayni kalsin, tasarim bastan.
+
+### 🔴 KOK NEDEN: uygulama pencerenin gercek genisligini HIC GORMUYORDU
+`desktop_proportional_scale.dart` butun masaustu govdesini sarip iceriye SAHTE
+bir MediaQuery veriyordu. Olculdu:
+
+| gercek pencere | uygulamanin GORDUGU |
+|---:|---:|
+| 1100-1650 | **hep 1100** |
+| 2000 | 1333 (her sey 1.5x cizilir) |
+| 2560 | 1707 |
+
+Yani 1100-1650 bandinda hicbir kirilim noktasi tetiklenmiyor; arayuz yeniden
+duzenlenmiyor **BUYUTULUYOR**. Sahibin "mobilin penceresi gibi" cumlesi bunun
+birebir tarifi — gerilme degil ZUM.
+
+Kodun kendi yorumu kusuru itiraf ediyordu ama ozellik gibi yazilmisti:
+*"olcek ici MediaQuery = tasarim boyutu -> pane her zaman expanded."*
+Ustelik `desktop_home_shell_test.dart`in bir baslgi **"reflow yok"** diyordu:
+yesil bir test, sahibin reddettigi davranisi KILITLIYORDU.
+
+Sira zorunluydu: once olcek kalkti (WP-672), sonra ekranlar baglandi.
+
+### Ne yapildi (on bir ekran ailesi)
+| WP | is | olculen en buyuk duzelme |
+|---|---|---|
+| 670 | tasarim speci (kaynakli, sayili) | — |
+| 671 | "mobil gerilmesi" kapisi | 10/10 KIRMIZI dogdu |
+| 672 | kabuk + pencere | pencere 1100x720 -> 1440x900, min 560x540 -> 880x600 |
+| 673 | istatistik | icerik 1744 -> **898 px**, satir 1270 -> **187 px** |
+| 674 | profil + basarimlar | satir **2488 -> 464 px**, kart 2520 -> 496 px |
+| 675 | gruplar + kamp atesi | satir **2328 -> 424 px**, olu alan 2174 -> 270 px |
+| 676 | ana pano | satir 1408 -> **496 px**, kart 1440 -> 692 px |
+| 677 | kapinin kendi kusuru + kapsam 5 -> 15 yuzey | — |
+| 678 | saat sekmesi | kart **2360 -> 632 px** |
+| 679 | ayarlar + 12 alt ekran | dersler **2508 -> 1059 px**, yasal metin 251 -> **80 karakter** |
+| 680 | giris/kayit/tanitim + grup istatistik | kurtarma **2512 -> 760 px** |
+| 681 | odul kutlamasi sekmeyi tiklanamaz yapiyordu | — |
+| 682 | odul banneri seridi suresiz ortuyordu | — |
+
+Olcunun kaynagi SPEC: govde yazisi 15 px, `1ch ~= 7.5 px`, WCAG 1.4.8'in 80
+karakter tavani = **600 px sert tavan**, Bringhurst 66 karakter = 496 px hedef.
+Yani "kotu duruyor" yerine "etiket-deger mesafesi 2488 px, sinir 600" denebilir
+hale geldi.
+
+### 🔴 BUGUN "YESIL" KAC KEZ YALAN CIKTI — ALTI
+Turun asil urunu bu liste. Hepsini ajanlarin KENDISI buldu ve raporladi;
+saklayabilirlerdi.
+
+1. **Kapi gorunmeyeni olcuyordu.** Tam ekran rota acikken alttaki sekme ve
+   gezinme seridi **boyanmaz ama olculur** (`_RenderTheater` skip listesi
+   `RenderOffstage` degil). Basarimlar ekraninda "boyaniyor" sanilan 132
+   metnin **26'si** kullanicinin gormedigi yerdendi. Sonuc: basarimlar kapisi
+   profil sekmesinin genisligini de kisitliyor, tasarimciyi yanlis karara
+   itiyordu.
+2. **Kapi kok nedeni goremiyordu.** `profile_stats_panel` tavani sonsuza
+   acildiginda bilesen 2360 px'e yayiliyor ama ekran kapisi **YESIL kaliyor** —
+   dis kap kusuru maskeliyor. Bilesen duzeyinde ayri iddia eklendi.
+3. **Kapi rastgele kirmizi dusuyordu.** Ayni test bir kosumda 735 px, baska
+   kosumda 1060 px olcuyordu. Tek tur `pumpAndSettle` yetmiyormus.
+4. **Iki ajan kendi testini sahte yesil yazdi.** Anahtari `Align`a koymuslar;
+   `Align` kabi doldurdugu icin test tavani degil KABI olcuyordu. Ikisi de
+   kendileri yakalayip duzeltti.
+5. **Eski bir commit yalan soyluyordu.** `0bd23f4` (WP-53): *">=1008 bes
+   sekmede baglamsal duzen... 7 PASS"*. Testler gercek — ama widget'lari izole
+   kuruyor, **tek bir gercek ekran monte etmiyor**. Bes sekmenin hicbirinde o
+   widget'lar yoktu. `DesktopPageScaffold` 471 satir + kendi testi, `lib/`
+   icinde **sifir cagri yeri**. Hafizadaki *"bitmis backend + baglanmamis UI"*
+   dersinin dorduncu ornegi.
+6. **Kapinin baseline sayisi hicbir commit'e bagli degildi.** "basarimlar 2560
+   -> 14 ihlal" yaziyordu; ayni yerde 13 olculdu. Sayim `take(5)`/`take(4)`
+   kirpma sinirinin dibinde duruyordu — bir fazla satir toplami sessizce
+   kaydiriyordu. Artik kirpilmamis dokum yaziliyor ve tablo commit'e sabitli.
+
+### SPEC yalanlandi — dort yerde
+Spec kaynakli ve sayiliydi, ama koda bakmadan yazilan satirlari vardi:
+- kamp atesinin dosyasini **yanlis** gosteriyordu (`class_detail_screen` degil
+  `classroom_screen`; olculen 12 ihlalin tamami oradan)
+- saat sekmesi icin *"A4, merkezde saat, sinir yok"* diyordu — o sekmede
+  **merkezde saat yok**, uc liste var; sinirsizlik kusurun ta kendisiydi
+- ayarlar icin *"1200+ master-detay"* diyordu — o ekran masaustunde pencereyi
+  hic almiyor, **sabit 920 px panelde** yasiyor (olcum: 1920 ve 2560 px
+  pencerede icerik AYNI, 772 px). Karar uygulanamazdi.
+- kullanicinin **ILK gordugu dort ekran** (giris, kayit, kurtarma, tanitim)
+  karar tablosunda **hic yoktu** — ve en agir iki ihlal (1872 ve 2512 px)
+  tam da orada cikti.
+
+### Yan urun: uc gercek kusur
+- **Odul kutlamasi sekmeyi tiklanamaz yapiyordu.** Olculdu: kutlama kutusu
+  (862,8)-(1057,56), "Timer" merkezi (1048,39) — tam altinda. 1800 ms boyunca
+  dokunuş yutuluyordu. `IgnorePointer` ile cozuldu (kutlamanin basilacak
+  parcasi yok, islev kaybi sifir).
+- **Odul banneri ayni seridi SURESIZ ortuyordu** ve `IgnorePointer` cozum
+  degildi (Topla/Kapat dugmeleri var). `Stack` -> `Column`+`Expanded`: banner
+  artik yer ayiriyor, hicbir seyin ustune binmiyor. Ilginc ayrinti: masaustunde
+  dugmenin MERKEZI bannerin solunda kaldigi icin merkez tiklamasi geciyordu —
+  olu olan dugmenin gorunen sag yarisiydi.
+- **`_StatCard` telefonda 73 px, haftalik karsilastirma 23 px tasiyordu.**
+  Bugunku isten ONCE de vardi. Gorulmemesinin sebebi: mevcut istatistik
+  testleri 800 ve 2400 px'te kosuyor, **hicbiri telefon genisliginde
+  cizmiyordu**. "Mobilde sorunsuz" varsayimi hic olculmemisti.
+
 ### WP-668: Play yuklemesi otomatige baglandi + WP-666'nin kurali KURAL OLDU
 Sahip "her sey sende olsun, bir daha ben yuklemeyeyim" dedi. Play servis
 hesabini kendi acti; anahtar secret'a yazildi ve yerel dosyanin UZERINE
