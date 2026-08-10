@@ -24,7 +24,6 @@ import 'package:online_study_room/data/models/user_task.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/user_task_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_user_task_repository.dart';
-import 'package:online_study_room/data/repositories/user_task_repository.dart';
 
 void main() {
   test('5 gun once acilan gorev bugun "her 3 gunde bir" yapilinca BUGUN sayilir',
