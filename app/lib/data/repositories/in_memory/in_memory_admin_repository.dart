@@ -10,6 +10,7 @@ import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
 import '../../models/feedback_ticket_message.dart';
 import '../../models/feedback_ticket_thread_summary.dart';
+import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -189,6 +190,19 @@ class InMemoryAdminRepository implements AdminRepository {
     required String reason,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
+  }
+
+  /// WP-F: grup basina uye listesi (yonetici gorunumu).
+  final Map<String, List<Profile>> _groupMembers = {};
+
+  /// Test/demo kurulumu icin tohumlama.
+  void seedGroupMembers(String groupId, List<Profile> members) {
+    _groupMembers[groupId] = [...members];
+  }
+
+  @override
+  Future<List<Profile>> fetchGroupMembers(String groupId) async {
+    return List.unmodifiable(_groupMembers[groupId] ?? const <Profile>[]);
   }
 
   @override

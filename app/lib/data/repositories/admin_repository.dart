@@ -7,6 +7,7 @@ import '../models/feedback_ticket.dart';
 import '../models/feedback_ticket_note.dart';
 import '../models/feedback_ticket_message.dart';
 import '../models/feedback_ticket_thread_summary.dart';
+import '../models/profile.dart';
 import '../models/study_group.dart';
 
 const int kMaxFeedbackSubjectLength = 80;
@@ -169,6 +170,24 @@ abstract class AdminRepository {
   });
 
   Future<List<StudyGroup>> fetchGroups();
+
+  /// WP-F: **yoneticinin** bir grubun uye listesi.
+  ///
+  /// 🔴 Neden ayri bir yol: `group_member_directory`
+  /// (`supabase/migrations/0115_profile_titles.sql:103`) cagirani
+  /// `is_group_member` ile suzer ve uyesi olmayan yoneticiye `42501` doner;
+  /// `group_members` uzerinde de yonetici SELECT politikasi yoktur
+  /// (`0001_initial_schema.sql:156`). Yani yonetici bir gruptan uye
+  /// *atabiliyor* ama kimin uye oldugunu *goremiyordu*.
+  ///
+  /// Sunucu tarafi: `admin-operations` edge fonksiyonunun
+  /// `list_group_members` eylemi — servis rolu ile calisir (RLS'i asar) ve
+  /// yonetici kapisinin arkasindadir. RLS'e kalici bir yonetici istisnasi
+  /// acilmadi.
+  ///
+  /// Reddedilen okuma **bos liste degil** hata dondurur: bos grup ile
+  /// okunamayan liste ayni sey degildir.
+  Future<List<Profile>> fetchGroupMembers(String groupId);
 
   Future<List<Announcement>> fetchAnnouncements();
 

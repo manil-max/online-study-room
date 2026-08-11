@@ -8,6 +8,7 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import 'admin_group_members.dart';
 import 'admin_search_field.dart';
 
 /// WP-D (`docs/design/ADMIN-PANEL-PLAN.md` §2.3 / §5 WP-D kabul 2) — grup
@@ -24,14 +25,32 @@ import 'admin_search_field.dart';
 ///   2. `adminUsersProvider` — yonetici kullanici dizini (e-postalar buradan
 ///      gelir; uye akisi e-posta tasimaz).
 ///
-/// 🔴 SUNUCU SINIRI (olculdu, uydurulmadi): `group_member_directory`
-/// (`supabase/migrations/0115_profile_titles.sql:103`) cagirani
-/// `is_group_member` ile suzer ve uye olmayan bir yoneticiye `42501` doner.
+/// 🔴 SUNUCU SINIRI (WP-D'nin olctugu) ve WP-F'nin kapattigi delik:
+/// `group_member_directory` (`0115_profile_titles.sql:103`) cagirani
+/// `is_group_member` ile suzer ve uye olmayan bir yoneticiye `42501` doner;
 /// `group_members` uzerinde yonetici SELECT politikasi da yoktur
-/// (`0001_initial_schema.sql:156`). Yani uyesi olmadigin bir grubun listesi
-/// **uretimde okunamaz**. Bu durumda ekran susmaz: kayip acikca yazilir ve
-/// hedef, kullanici dizininden yine de secilebilir — hicbir yerde ham UUID
-/// kutusu acilmaz.
+/// (`0001_initial_schema.sql:156`). Yani uyesi olmadigin bir grubun listesi bu
+/// akistan **uretimde okunamazdi** — yonetici uye ATABILIYOR ama kimin uye
+/// oldugunu GOREMIYORDU.
+///
+/// WP-F ucuncu bir kaynak ekledi: [adminGroupMembersProvider] →
+/// `admin-operations` edge fonksiyonunun `list_group_members` eylemi (service
+/// role, yonetici kapisinin arkasinda). Iki kaynagin **birlesimi** cizilir
+/// ([adminGroupMemberUnion]); kayip metni yalniz IKISI DE duserse yazilir.
+/// Satir etiketi: ad bos ise kimlik yazilir.
+///
+/// 🔴 `0115` engellenen uyenin adini BOSALTIR (satiri silmez). O kural kamp
+/// atesi icindir ve degistirilmedi. Ama bos bir baslik, tiklanabilir ama
+/// okunamaz bir satir demektir; yonetici kimi attigini gormeli.
+String adminMemberLabel(Profile member) =>
+    member.displayName.trim().isEmpty ? member.id : member.displayName;
+
+/// Yonetici yolunu ve uye akisini birlikte tazeler.
+void refreshAdminGroupMembers(WidgetRef ref, String groupId) {
+  ref.invalidate(adminGroupMembersProvider(groupId));
+  ref.invalidate(groupMembersByIdProvider(groupId));
+}
+
 @immutable
 class AdminDirectoryEntry {
   const AdminDirectoryEntry({
@@ -114,21 +133,25 @@ class AdminGroupMemberList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final members = ref.watch(groupMembersByIdProvider(groupId));
+    final view = adminGroupMemberUnion(
+      adminList: ref.watch(adminGroupMembersProvider(groupId)),
+      memberStream: ref.watch(groupMembersByIdProvider(groupId)),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.adminUyeler, style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
-        members.when(
-          loading: () => const Padding(
+        if (view.isLoading)
+          const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: LinearProgressIndicator(),
-          ),
-          // 🔴 Sessiz bos liste YOK: okunamayan bir liste ile bos bir grup
-          // ayni sey degildir; yonetici hangisi oldugunu bilmeli.
-          error: (error, _) => Row(
+          )
+        // 🔴 Sessiz bos liste YOK: okunamayan bir liste ile bos bir grup
+        // ayni sey degildir; yonetici hangisi oldugunu bilmeli.
+        else if (view.unavailable)
+          Row(
             children: [
               Icon(
                 Icons.error_outline,
@@ -140,41 +163,39 @@ class AdminGroupMemberList extends ConsumerWidget {
               IconButton(
                 tooltip: l10n.adminUyeListesiniYenile,
                 icon: const Icon(Icons.refresh, size: 20),
-                onPressed: () =>
-                    ref.invalidate(groupMembersByIdProvider(groupId)),
+                onPressed: () => refreshAdminGroupMembers(ref, groupId),
               ),
             ],
-          ),
-          data: (items) {
-            if (items.isEmpty) return Text(l10n.adminUyeYok);
-            return Column(
-              children: [
-                for (final member in items)
-                  ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.person_outline, size: 20),
-                    title: Text(member.displayName),
-                    subtitle: Text(
-                      l10n.adminIdGroupid(member.id),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    trailing: IconButton(
-                      tooltip: l10n.adminUyeyiAt,
-                      icon: const Icon(Icons.person_remove_outlined, size: 20),
-                      onPressed: () => onRemove(
-                        AdminDirectoryEntry(
-                          id: member.id,
-                          displayName: member.displayName,
-                          isMember: true,
-                        ),
+          )
+        else if (view.members.isEmpty)
+          Text(l10n.adminUyeYok)
+        else
+          Column(
+            children: [
+              for (final member in view.members)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.person_outline, size: 20),
+                  title: Text(adminMemberLabel(member)),
+                  subtitle: Text(
+                    l10n.adminIdGroupid(member.id),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: IconButton(
+                    tooltip: l10n.adminUyeyiAt,
+                    icon: const Icon(Icons.person_remove_outlined, size: 20),
+                    onPressed: () => onRemove(
+                      AdminDirectoryEntry(
+                        id: member.id,
+                        displayName: adminMemberLabel(member),
+                        isMember: true,
                       ),
                     ),
                   ),
-              ],
-            );
-          },
-        ),
+                ),
+            ],
+          ),
       ],
     );
   }
@@ -209,11 +230,14 @@ class _AdminMemberPickerDialogState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final members = ref.watch(groupMembersByIdProvider(widget.group.id));
+    final view = adminGroupMemberUnion(
+      adminList: ref.watch(adminGroupMembersProvider(widget.group.id)),
+      memberStream: ref.watch(groupMembersByIdProvider(widget.group.id)),
+    );
     final users = ref.watch(adminUsersProvider);
 
     final entries = adminMergeDirectory(
-      members: members.value ?? const [],
+      members: view.members,
       users: users.value ?? const [],
     );
     final visible = entries
@@ -237,7 +261,7 @@ class _AdminMemberPickerDialogState
               onChanged: (value) => setState(() => _query = value),
             ),
             const SizedBox(height: 12),
-            if (members.hasError)
+            if (view.unavailable)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(

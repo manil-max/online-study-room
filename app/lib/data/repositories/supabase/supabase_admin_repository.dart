@@ -9,6 +9,7 @@ import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
 import '../../models/feedback_ticket_message.dart';
 import '../../models/feedback_ticket_thread_summary.dart';
+import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -343,6 +344,30 @@ class SupabaseAdminRepository implements AdminRepository {
       throw AdminException('Servis hatası: ${e.details}');
     } catch (e) {
       throw AdminException('Beklenmeyen hata: $e');
+    }
+  }
+
+  @override
+  Future<List<Profile>> fetchGroupMembers(String groupId) async {
+    try {
+      final response = await _client.functions.invoke(
+        'admin-operations',
+        body: {'action': 'list_group_members', 'targetGroupId': groupId},
+      );
+      if (response.status != 200) {
+        throw AdminException('Üye listesi alınamadı: ${response.data}');
+      }
+      final items = (response.data['data'] as List<dynamic>?) ?? const [];
+      return [
+        for (final item in items)
+          Profile.fromMap(Map<String, dynamic>.from(item as Map)),
+      ];
+    } on AdminException {
+      rethrow;
+    } on FunctionException catch (e) {
+      throw AdminException('Servis hatası: ${e.details}');
+    } catch (e) {
+      throw AdminException('Üye listesi alınamadı: $e');
     }
   }
 

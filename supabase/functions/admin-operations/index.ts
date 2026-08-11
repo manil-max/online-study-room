@@ -47,8 +47,17 @@ serve(async (req) => {
     const body = await req.json()
     const { action, targetGroupId, targetUserId, reason } = body
 
-    if (!targetGroupId || !reason?.trim()) {
-      throw new Error('targetGroupId and reason are required')
+    // 🔴 Salt-okuma eylemleri (WP-F): bir listeyi GORMEK bir yaptirim degildir.
+    // Kosulsuz gerekce zorunlulugu okumayi da reddediyordu; denetim kaydi ise
+    // her ekran acilisinda sisiyordu.
+    const READ_ONLY_ACTIONS = ['list_group_members']
+    const isReadOnly = READ_ONLY_ACTIONS.includes(action)
+
+    if (!targetGroupId) {
+      throw new Error('targetGroupId is required')
+    }
+    if (!isReadOnly && !reason?.trim()) {
+      throw new Error('reason is required')
     }
 
     let result = null
@@ -61,6 +70,71 @@ serve(async (req) => {
           .eq('id', targetGroupId)
         if (error) throw error
         result = { success: true }
+        break
+      }
+      case 'list_group_members': {
+        // 🔴 Neden bu dal var: yonetici bir gruptan uye ATABILIYOR
+        // (`remove_group_member`) ama kimin uye oldugunu GOREMIYORDU.
+        //   * `0115_profile_titles.sql:103` — `group_member_directory` cagirani
+        //     `is_group_member` ile suzer, uye olmayana `42501` doner.
+        //   * `0001_initial_schema.sql:156` — `members_select` politikasi da
+        //     `is_group_member(group_id)`; yonetici icin SELECT istisnasi yok.
+        // Bu dal `supabaseAdmin` (service role) ile calisir, yani RLS'i asar,
+        // ve yukaridaki yonetici kapisinin ARKASINDADIR. RLS'e kalici bir
+        // yonetici istisnasi acilmadi: `is_group_member` bu depoda cok yerde
+        // kullaniliyor, oraya acilan istisna butun yuzeyleri etkilerdi.
+        const { data: memberRows, error: memberError } = await supabaseAdmin
+          .from('group_members')
+          .select('user_id, joined_at, left_at')
+          .eq('group_id', targetGroupId)
+        if (memberError) throw memberError
+
+        const rows = memberRows ?? []
+        const userIds = rows.map((row) => row.user_id)
+        if (userIds.length === 0) {
+          result = []
+          break
+        }
+
+        const { data: profileRows, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select(
+            'id, display_name, avatar_url, created_at, daily_goal_minutes, animal, monthly_report_opt_in, title_achievement_id',
+          )
+          .in('id', userIds)
+        if (profileError) throw profileError
+
+        const profileById = new Map(
+          (profileRows ?? []).map((profile) => [profile.id, profile]),
+        )
+
+        // 🔴 Engellenen uye kurali (0115) BURADA UYGULANMAZ ve orada da
+        // degistirilmedi: kamp atesinde engellenen kisi satirda kalir ama
+        // kimligi bosalir. Moderasyon gorunumu bunun tersini ister —
+        // yoneticinin kisisel engel listesi kimi attigini gormesini
+        // engellememeli. Ayrim bilinclidir: bu dal yalniz yoneticiye acik.
+        result = rows
+          .map((row) => {
+            const profile = profileById.get(row.user_id)
+            return {
+              id: row.user_id,
+              // Profil satiri silinmis olabilir; uye yine de LISTELENIR,
+              // yoksa yonetici atayamadigi bir hayalet uyeyle kalir.
+              display_name: profile?.display_name ?? '',
+              avatar_url: profile?.avatar_url ?? null,
+              created_at: profile?.created_at ?? row.joined_at,
+              daily_goal_minutes: profile?.daily_goal_minutes ?? null,
+              animal: profile?.animal ?? null,
+              monthly_report_opt_in: profile?.monthly_report_opt_in ?? false,
+              title_achievement_id: profile?.title_achievement_id ?? null,
+              is_active: row.left_at === null,
+              joined_at: row.joined_at,
+              left_at: row.left_at,
+            }
+          })
+          .sort((a, b) =>
+            (a.display_name || a.id).localeCompare(b.display_name || b.id, 'tr'),
+          )
         break
       }
       case 'remove_group_member': {
@@ -121,16 +195,18 @@ serve(async (req) => {
         throw new Error('Unknown action: ' + action)
     }
 
-    // Audit log
-    const { error: auditError } = await supabaseAdmin
-      .from('admin_audit_logs')
-      .insert({
-        admin_id: user.id,
-        target_user_id: targetUserId,
-        action: action,
-        reason: reason || 'Gerekçe belirtilmedi',
-      })
-    if (auditError) throw auditError
+    // Audit log — salt-okuma eylemi denetim kaydi yazmaz (WP-F).
+    if (!isReadOnly) {
+      const { error: auditError } = await supabaseAdmin
+        .from('admin_audit_logs')
+        .insert({
+          admin_id: user.id,
+          target_user_id: targetUserId,
+          action: action,
+          reason: reason || 'Gerekçe belirtilmedi',
+        })
+      if (auditError) throw auditError
+    }
 
     return new Response(JSON.stringify({ data: result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
