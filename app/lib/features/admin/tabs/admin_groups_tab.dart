@@ -6,37 +6,99 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
-class AdminGroupsTab extends ConsumerWidget {
+import '../directory/admin_member_picker.dart';
+import '../directory/admin_search_field.dart';
+
+/// WP-D (`docs/design/ADMIN-PANEL-PLAN.md` §5 WP-D kabul 1, 2, 4) — grup
+/// dizini.
+///
+/// Neyi degistirdi:
+///   1. Listenin ustunde **arama kutusu** var; ad, davet kodu ve kimlik
+///      parcasiyla filtreler (eskiden hicbir filtre yoktu, §2.3).
+///   2. Her grup karti **uye listesini** cizer; "Uye At" artik hedefi
+///      **secmene** izin verir — elle UUID yazdiran kutu kalkti
+///      (eski `admin_groups_tab.dart:68-77`).
+///   3. Arama sonuc vermezse ekranda **filtreyi temizleyen** kontrol durur
+///      (§2.4 "filtre cikmazi").
+class AdminGroupsTab extends ConsumerStatefulWidget {
   const AdminGroupsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminGroupsTab> createState() => _AdminGroupsTabState();
+}
+
+class _AdminGroupsTabState extends ConsumerState<AdminGroupsTab> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final groups = ref.watch(adminGroupsProvider);
     final l10n = AppLocalizations.of(context);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(adminGroupsProvider);
-        await ref.read(adminGroupsProvider.future);
-      },
-      child: groups.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) =>
-            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(child: Text(l10n.adminGrupBulunamadi));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              return _GroupCard(group: items[index]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: AdminSearchField(
+            label: l10n.adminGrupAra,
+            value: _query,
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(adminGroupsProvider);
+              await ref.read(adminGroupsProvider.future);
             },
-          );
-        },
-      ),
+            child: groups.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) =>
+                  Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
+              data: (items) {
+                final visible = items
+                    .where(
+                      (group) => adminMatchesQuery(_query, [
+                        group.name,
+                        group.inviteCode,
+                        group.id,
+                      ]),
+                    )
+                    .toList(growable: false);
+
+                if (visible.isEmpty) {
+                  // Kaydirilabilir kalir ki "asagi cek-yenile" bos ekranda da
+                  // calissin.
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+                    children: [
+                      AdminEmptyResult(
+                        message: items.isEmpty
+                            ? l10n.adminGrupBulunamadi
+                            : l10n.adminSonucYok,
+                        onClearFilter: _query.isEmpty
+                            ? null
+                            : () => setState(() => _query = ''),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: visible.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) =>
+                      _GroupCard(group: visible[index]),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -46,37 +108,65 @@ class _GroupCard extends ConsumerWidget {
 
   final StudyGroup group;
 
-  Future<void> _performAction(
+  /// Hedefi **secilmis** bir uye/kullanici icin gerekce sorar ve eylemi
+  /// uygular. Gerekce zorunlulugu korunur (PLAN §3 "Korunacaklar").
+  Future<void> _removeMember(
     BuildContext context,
     WidgetRef ref,
-    String action,
-    String promptTitle,
+    AdminDirectoryEntry target,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final reasonController = TextEditingController();
-    final targetUserController = TextEditingController();
-    final requiresUser = action == 'remove_group_member';
+    final reason = await _askReason(
+      context,
+      title: l10n.adminUyeyiAt,
+      subtitle: target.primaryLabel,
+    );
+    if (reason == null) return;
+    if (!context.mounted) return;
+    await _perform(
+      context,
+      ref,
+      action: 'remove_group_member',
+      reason: reason,
+      targetUserId: target.id,
+    );
+  }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(promptTitle),
+  Future<void> _deleteGroup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final reason = await _askReason(
+      context,
+      title: l10n.adminGrubuSil,
+      subtitle: group.name,
+    );
+    if (reason == null) return;
+    if (!context.mounted) return;
+    await _perform(context, ref, action: 'delete_group', reason: reason);
+  }
+
+  /// Gerekce diyalogu. Kontrolun `dispose`u burada garanti — eski kod iki
+  /// `TextEditingController`i hic serbest birakmiyordu (§2.4).
+  Future<String?> _askReason(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (requiresUser) ...[
-                TextField(
-                  controller: targetUserController,
-                  decoration: InputDecoration(
-                    labelText: l10n.adminHedefKullaniciIdZorunlu,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+              Text(subtitle),
+              const SizedBox(height: 12),
               TextField(
-                controller: reasonController,
+                controller: controller,
+                autofocus: true,
                 decoration: InputDecoration(
                   labelText: l10n.adminGerekceZorunlu,
                   border: const OutlineInputBorder(),
@@ -94,30 +184,39 @@ class _GroupCard extends ConsumerWidget {
               child: Text(l10n.adminOnayla),
             ),
           ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-    final reason = reasonController.text.trim();
-    final targetUser = targetUserController.text.trim();
-
-    if (reason.isEmpty || (requiresUser && targetUser.isEmpty)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.adminGerekliAlanlarDoldurulmalidir)),
-        );
+        ),
+      );
+      if (confirmed != true) return null;
+      final reason = controller.text.trim();
+      if (reason.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.adminGerekliAlanlarDoldurulmalidir)),
+          );
+        }
+        return null;
       }
-      return;
+      return reason;
+    } finally {
+      controller.dispose();
     }
+  }
 
+  Future<void> _perform(
+    BuildContext context,
+    WidgetRef ref, {
+    required String action,
+    required String reason,
+    String? targetUserId,
+  }) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await ref
           .read(adminRepositoryProvider)
           .performGroupAction(
             action: action,
             targetGroupId: group.id,
-            targetUserId: requiresUser ? targetUser : null,
+            targetUserId: targetUserId,
             reason: reason,
           );
       ref.invalidate(adminGroupsProvider);
@@ -153,27 +252,30 @@ class _GroupCard extends ConsumerWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
+            AdminGroupMemberList(
+              groupId: group.id,
+              onRemove: (entry) => _removeMember(context, ref, entry),
+            ),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () => _performAction(
-                    context,
-                    ref,
-                    'remove_group_member',
-                    l10n.adminUyeyiAt,
-                  ),
-                  icon: const Icon(Icons.person_remove, size: 18),
+                  onPressed: () async {
+                    final target = await showAdminMemberPicker(
+                      context: context,
+                      group: group,
+                    );
+                    if (target == null) return;
+                    if (!context.mounted) return;
+                    await _removeMember(context, ref, target);
+                  },
+                  icon: const Icon(Icons.person_remove_outlined, size: 18),
                   label: Text(l10n.adminUyeAt),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => _performAction(
-                    context,
-                    ref,
-                    'delete_group',
-                    l10n.adminGrubuSil,
-                  ),
+                  onPressed: () => _deleteGroup(context, ref),
                   icon: Icon(
                     Icons.delete_outline,
                     size: 18,

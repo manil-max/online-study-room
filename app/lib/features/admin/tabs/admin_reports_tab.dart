@@ -9,6 +9,23 @@ import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/features/profile/feedback_tickets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../directory/admin_search_field.dart';
+
+/// WP-D (`docs/design/ADMIN-PANEL-PLAN.md` §2.4 / §5 WP-D kabul 4 ve 5) —
+/// destek bileti kuyrugu.
+///
+/// Iki kusur duzeltildi:
+///   1. 🔴 **Filtre cikmazi.** Tur cipleri yalniz liste **dolu** oldugunda
+///      ciziliyordu (listenin ilk satirina gomuluydu); bir ture filtreleyip sonuc bos
+///      gelirse filtreyi kaldiracak kontrol ekranda kalmiyordu — sekmeden
+///      cikip donmek gerekiyordu. Filtre seridi artik listenin **disinda**,
+///      her durumda gorunur; bos sonucta ayrica "Filtreyi temizle" durur.
+///   2. 🔴 **Yalan etiket.** Arsiv cipinin ustunde profil katalogundan gelen
+///      "Tamamlandi" yaziyordu; yaptigi is arsivlemek. Ayni cip ters yonde de
+///      calisiyor ve yazisi degismiyordu. Artik "Arsivle" / "Arsivden cikar".
+///      Arsiv gorunum dugmesi de etiketsizdi (`tooltip` yok) — PLAN §4.6 geregi
+///      yalniz-ikon her dugmede tooltip var.
+
 class AdminReportsTab extends ConsumerStatefulWidget {
   const AdminReportsTab({super.key});
 
@@ -20,6 +37,13 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
   var _showArchive = false;
   FeedbackTicketType? _type;
 
+  bool get _hasFilter => _type != null || _showArchive;
+
+  void _clearFilter() => setState(() {
+    _type = null;
+    _showArchive = false;
+  });
+
   @override
   Widget build(BuildContext context) {
     final tickets = ref.watch(
@@ -29,83 +53,93 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
     );
     final l10n = AppLocalizations.of(context);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(adminFeedbackTicketsProvider(_type));
-        ref.invalidate(adminArchivedFeedbackTicketsProvider(_type));
-        await ref.read(
-          (_showArchive
-                  ? adminArchivedFeedbackTicketsProvider(_type)
-                  : adminFeedbackTicketsProvider(_type))
-              .future,
-        );
-      },
-      child: tickets.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        data: (items) {
-          final visibleItems = _showArchive
-              ? items.where((ticket) => ticket.archivedAt != null).toList()
-              : items;
-          if (visibleItems.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.adminHenuzRaporYok),
-                  IconButton.outlined(
-                    icon: Icon(
-                      _showArchive
-                          ? Icons.inventory_2
-                          : Icons.inventory_2_outlined,
-                    ),
-                    onPressed: () =>
-                        setState(() => _showArchive = !_showArchive),
-                  ),
-                ],
-              ),
-            );
-          }
-          return ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: visibleItems.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.end,
-                  children: [
-                    for (final type in FeedbackTicketType.values)
-                      FilterChip(
-                        label: Text(_typeLabel(l10n, type)),
-                        selected: _type == type,
-                        onSelected: (selected) =>
-                            setState(() => _type = selected ? type : null),
-                      ),
-                    IconButton.outlined(
-                      icon: Icon(
-                        _showArchive
-                            ? Icons.inventory_2
-                            : Icons.inventory_2_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _showArchive = !_showArchive),
-                    ),
-                  ],
-                );
-              }
-              return _TicketCard(
-                ticket: visibleItems[index - 1],
-                showArchived: _showArchive,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: _filterBar(l10n),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(adminFeedbackTicketsProvider(_type));
+              ref.invalidate(adminArchivedFeedbackTicketsProvider(_type));
+              await ref.read(
+                (_showArchive
+                        ? adminArchivedFeedbackTicketsProvider(_type)
+                        : adminFeedbackTicketsProvider(_type))
+                    .future,
               );
             },
-          );
-        },
-      ),
+            child: tickets.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) =>
+                  Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
+              data: (items) {
+                final visibleItems = _showArchive
+                    ? items.where((ticket) => ticket.archivedAt != null).toList()
+                    : items;
+                if (visibleItems.isEmpty) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+                    children: [
+                      AdminEmptyResult(
+                        message: _hasFilter
+                            ? l10n.adminSonucYok
+                            : l10n.adminHenuzRaporYok,
+                        onClearFilter: _hasFilter ? _clearFilter : null,
+                      ),
+                    ],
+                  );
+                }
+                return ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: visibleItems.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    return _TicketCard(
+                      ticket: visibleItems[index],
+                      showArchived: _showArchive,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tur cipleri + arsiv gorunumu. Listenin **disinda** durur; bos sonucta da
+  /// ekranda kalir (PLAN §2.4).
+  Widget _filterBar(AppLocalizations l10n) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (final type in FeedbackTicketType.values)
+          FilterChip(
+            label: Text(_typeLabel(l10n, type)),
+            selected: _type == type,
+            onSelected: (selected) =>
+                setState(() => _type = selected ? type : null),
+          ),
+        IconButton.outlined(
+          tooltip: _showArchive
+              ? l10n.adminAktifleriGoster
+              : l10n.adminArsiviGoster,
+          icon: Icon(
+            _showArchive ? Icons.inventory_2 : Icons.inventory_2_outlined,
+          ),
+          onPressed: () => setState(() => _showArchive = !_showArchive),
+        ),
+      ],
     );
   }
 }
@@ -237,7 +271,9 @@ class _TicketCard extends ConsumerWidget {
                         : Icons.archive_outlined,
                     size: 18,
                   ),
-                  label: Text(l10n.profileTamamland),
+                  label: Text(
+                    showArchived ? l10n.adminArsivdenCikar : l10n.adminArsivle,
+                  ),
                   onPressed: () async {
                     final profile = ref.read(authStateProvider).value;
                     if (profile == null) return;

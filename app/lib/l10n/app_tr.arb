@@ -2150,5 +2150,21 @@
   "adminSanctionHardConfirmMismatch": "Yazdığın metin eşleşmiyor; işlem uygulanmadı.",
   "@adminSanctionHardConfirmMismatch": {"description": "Error shown when the typed confirmation does not match."},
   "adminSanctionAccountActions": "Hesap işlemleri",
-  "@adminSanctionAccountActions": {"description": "Heading of the account action row in the person file."}
+  "@adminSanctionAccountActions": {"description": "Heading of the account action row in the person file."},
+  "adminGrupAra": "Grup ara",
+  "adminKisiAra": "Kişi ara (e-posta)",
+  "adminAramayiTemizle": "Aramayı temizle",
+  "adminFiltreyiTemizle": "Filtreyi temizle",
+  "adminSonucYok": "Filtreyle eşleşen kayıt yok.",
+  "adminArsivle": "Arşivle",
+  "adminArsivdenCikar": "Arşivden çıkar",
+  "adminArsiviGoster": "Arşivi göster",
+  "adminAktifleriGoster": "Aktifleri göster",
+  "adminUyeler": "Üyeler",
+  "adminUyeListesiOkunamadi": "Üye listesi okunamadı.",
+  "adminUyeYok": "Bu grupta görünen üye yok.",
+  "adminUyeSecBaslik": "Atılacak kişiyi seç",
+  "adminUyeListesiniYenile": "Üye listesini yenile",
+  "adminDenetimYonetici": "Yönetici: {admin}",
+  "adminDenetimHedef": "Hedef: {target}"
 }
