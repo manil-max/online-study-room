@@ -6,12 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/animals/camp_animal.dart';
+import '../../../core/desktop/desktop_layout.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/time_engine/sky_phase.dart';
 import '../../../core/time_engine/solar_anchors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/second_ticker.dart';
+import '../../../data/models/daily_stat.dart';
+import '../../../data/models/goal_streak.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/report_target.dart';
@@ -20,9 +23,11 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../profile/social_profile_screen.dart';
 import '../../safety/block_user_action.dart';
 import '../../safety/peer_safety_actions.dart';
 import '../../safety/report_sheet.dart';
+import '../../stats/widgets/goal_streak_flame.dart';
 import 'camp_critter.dart';
 import 'campfire/layered_campfire_fire.dart';
 import 'campfire_layout.dart';
@@ -912,179 +917,418 @@ void _showCamperDetails(
   _Camper camper,
   String? viewerId,
 ) {
-  final status = camper.status;
-  final (Color dot, String label) = switch (status) {
-    PresenceStatus.studying => (
-      subjectColor('chart-2'),
-      AppLocalizations.of(context).classroomCalisiyor,
-    ),
-    PresenceStatus.onBreak => (
-      subjectColor('chart-3'),
-      AppLocalizations.of(context).classroomMolada,
-    ),
-    PresenceStatus.offline => (
-      Theme.of(context).colorScheme.outline,
-      AppLocalizations.of(context).classroomCevrimdisi,
-    ),
-  };
-  final sheetNow = DateTime.now();
-  final live = camper.liveExtra(sheetNow);
-  final liveToday = camper.liveTodayExtra(sheetNow);
-  final name = _camperName(AppLocalizations.of(context), camper);
-
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (ctx) {
-      final theme = Theme.of(ctx);
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
-          // 🔴 WP-511: alt sayfa varsayılan olarak ekranın 9/16'sını geçemez.
-          // Dürtme düğmesi eklenince içerik kısa ekranda taşıyor (ölçüldü: 600 dp
-          // yükseklikte 2,5 px) ve büyük yazı ölçeğinde gerçek cihazda da taşar.
-          // Kaydırıcı olmadan taşan kısım **hiç görülemez** olurdu.
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CustomPaint(
-                  size: const Size(72, 72),
-                  painter: CritterPainter(
-                    species: speciesFor(camper.animal.id),
-                    pose: CritterPose.idle,
+    // Geniş pencerede sayfa kenardan kenara uzamaz: içerik etiket–değer
+    // satırlarından oluşuyor ve SPEC §2.3 bu satıra 600 px sert tavan koyuyor
+    // (80 karakter, WCAG 2.1 SC 1.4.8). Tavansızken sayfa 720 px'lik bir
+    // pencerede %80 boş ölçülüyordu.
+    constraints: const BoxConstraints(
+      maxWidth: DesktopBreakpoints.maxLabelValueWidth,
+    ),
+    // 🔴 `ctx` alt sayfanın kendi bağlamıdır ve `pop`tan sonra ölür. Rapor
+    // sayfası, engelleme onayı ve profil rotası **dıştaki** `context` üzerinden
+    // açılır; SnackBar'ı çizen `Scaffold` de orada durur.
+    builder: (ctx) => _CamperSheet(
+      camper: camper,
+      viewerId: viewerId,
+      onOpenProfile: () {
+        Navigator.pop(ctx);
+        SocialProfileScreen.open(context, camper.member);
+      },
+      onNudgeBeforeAction: () => Navigator.pop(ctx),
+      onReport: () {
+        Navigator.pop(ctx);
+        showReportSheet(
+          context,
+          ref,
+          target: ReportTarget.profile(
+            userId: camper.member.id,
+            hint: camper.member.displayName,
+          ),
+        );
+      },
+      onBlock: () {
+        Navigator.pop(ctx);
+        confirmAndBlockUser(context, ref, userId: camper.member.id);
+      },
+    ),
+  );
+}
+
+/// Kamp ateşindeki bir hayvana dokununca açılan kişi sayfası (WP-711).
+///
+/// Sahip (2026-08-11): *"açılan yerden profile gidilebilsin … sağı solu boş
+/// mesela offline kısmı sol üste alınabilir, today kısmı da küçük bir stats
+/// kısmı olabilir sağda (stats yazmasın yer kaplamasın)."*
+///
+/// Ölçüldü (`campfire_camper_sheet_wp711_test.dart`, boyanan glif + yaprak
+/// çizim kutuları 4 px ızgaraya basılarak): revizyondan önce yüzeyin
+/// **%79,5'i boştu** (360 dp) ve **%81,2'si boştu** (720 dp). Sebep tek bir
+/// dikey sütundu: her satır kabın tamamını alıyor, içine tek bir kısa metin
+/// koyuyordu.
+///
+/// Yerleşim artık **iki kolonlu**: solda kimlik (durum rozeti sol üstte, altında
+/// hayvan + ad), sağda sayı rayı. Ray'ın **başlığı yoktur** — sahip açıkça
+/// "stats yazmasın" dedi; sayılar kendi etiketlerini taşır.
+///
+/// 🔴 Sayıların hiçbiri uydurulmaz. Kaynak matrisi:
+///
+/// | alan | kendi kartın | başkasının kartı |
+/// |---|---|---|
+/// | bugünkü toplam | `groupTodaySecondsProvider` + canlı oturum | aynı |
+/// | şu anki oturum | `presence.startedAt` | aynı |
+/// | günlük seri | `goalStreakProjectionProvider` (sunucu) | **YOK** — projeksiyon self-only |
+/// | rekor seri | `dailyTotalsProvider` + kendi hedefin | `group_daily_totals` + o üyenin hedefi |
+/// | toplam | aynı harita | aynı harita |
+///
+/// Başkasında görünür kayıt yoksa toplam/seri döşemeleri **hiç çizilmez**:
+/// `0` yazmak "bu kişi hiç çalışmadı" demek olurdu, oysa doğrusu
+/// "göremiyoruz" (`can_see_user_sessions` kapısının istemcideki yansıması —
+/// `profile_stats_panel.dart` ile aynı kural).
+class _CamperSheet extends ConsumerWidget {
+  const _CamperSheet({
+    required this.camper,
+    required this.viewerId,
+    required this.onOpenProfile,
+    required this.onNudgeBeforeAction,
+    required this.onReport,
+    required this.onBlock,
+  });
+
+  final _Camper camper;
+  final String? viewerId;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onNudgeBeforeAction;
+  final VoidCallback onReport;
+  final VoidCallback onBlock;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final sheetNow = DateTime.now();
+    final live = camper.liveExtra(sheetNow);
+    final liveToday = camper.liveTodayExtra(sheetNow);
+    final isSelf = viewerId != null && camper.member.id == viewerId;
+
+    // Gün → saniye haritası. Kendi kartında kendi oturumların, başkasında
+    // RLS'ten geçmiş grup günlük toplamları (`profile_stats_panel.dart` ile
+    // AYNI kaynak; iki yüzeyin farklı sayı göstermemesi için).
+    final Map<DateTime, int> dayTotals;
+    final int goalSeconds;
+    if (isSelf) {
+      dayTotals = ref.watch(dailyTotalsProvider);
+      goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
+    } else {
+      final stats =
+          ref.watch(groupDailyStatsProvider).value ?? const <DailyStat>[];
+      dayTotals = userDayTotals(stats, camper.member.id);
+      goalSeconds = camper.member.dailyGoalMinutes * 60;
+    }
+    final hasHistory = dayTotals.isNotEmpty;
+    final recordStreak = longestStudyStreak(
+      const [],
+      totals: dayTotals,
+      goalSeconds: goalSeconds,
+    );
+
+    final groupId = ref.watch(userGroupProvider).value?.id;
+    final showNudge = groupId != null && !isSelf;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        // 🔴 WP-511: alt sayfa varsayılan olarak ekranın 9/16'sını geçemez;
+        // kaydırıcı olmadan taşan kısım **hiç görülemez** olurdu.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // — Sahip maddesi: durum bilgisi SOL ÜST —
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _CamperStatusChip(camper: camper),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 5, child: _CamperIdentity(camper: camper)),
+                  const SizedBox(width: 12),
+                  // — Sahip maddesi: sağda küçük sayı rayı, BAŞLIKSIZ —
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _CamperStat(
+                          slotKey: const Key('camper-stat-today'),
+                          label: l10n.classroomBugunkuToplam,
+                          value: formatHumanSeconds(
+                            camper.recordedToday + liveToday,
+                          ),
+                        ),
+                        if (camper.studying) ...[
+                          const SizedBox(height: 10),
+                          _CamperStat(
+                            slotKey: const Key('camper-stat-session'),
+                            label: l10n.classroomSuAnkiOturum,
+                            value: formatHms(live),
+                          ),
+                        ],
+                        if (isSelf) ...[
+                          const SizedBox(height: 10),
+                          _CamperStat(
+                            slotKey: const Key('camper-stat-streak'),
+                            label: l10n.profileStatsGunlukSeri,
+                            trailing: GoalStreakBadge(
+                              scope: GoalStreakScope.personal(
+                                camper.member.id,
+                              ),
+                              size: GoalStreakFlameSize.compact,
+                            ),
+                          ),
+                        ] else if (hasHistory) ...[
+                          const SizedBox(height: 10),
+                          _CamperStat(
+                            slotKey: const Key('camper-stat-streak'),
+                            label: l10n.statsRekorSeri,
+                            value: recordStreak > 0
+                                ? l10n.statsStreakGun('$recordStreak')
+                                : '—',
+                          ),
+                        ],
+                        if (hasHistory) ...[
+                          const SizedBox(height: 10),
+                          _CamperStat(
+                            slotKey: const Key('camper-stat-total'),
+                            label: l10n.statsToplam,
+                            value: formatHuman(totalOfDayTotals(dayTotals)),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(name, style: theme.textTheme.titleLarge),
-                Text(
-                  '${camper.animal.label(AppLocalizations.of(context))} 🏕️',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: dot,
-                        shape: BoxShape.circle,
+                ],
+              ),
+              const SizedBox(height: 18),
+              // — Eylemler: yan yana, satırı doldururlar —
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const Key('camper-sheet-profile'),
+                      onPressed: onOpenProfile,
+                      icon: const Icon(Icons.account_circle_outlined, size: 20),
+                      label: Text(
+                        l10n.profileTamProfil,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(label, style: theme.textTheme.bodyMedium),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _StatRow(
-                  label: AppLocalizations.of(context).classroomBugunkuToplam,
-                  value: formatHumanSeconds(camper.recordedToday + liveToday),
-                ),
-                if (status == PresenceStatus.studying)
-                  _StatRow(
-                    label: AppLocalizations.of(context).classroomSuAnkiOturum,
-                    value: formatHms(live),
                   ),
-                // WP-511: sayfa bugüne kadar salt okunurdu. Dürtme mantığı
-                // **kopyalanmadı**; üye satırıyla aynı bileşen kullanılıyor.
-                //
-                // 🔴 `onBeforeAction` boşuna değil: SnackBar'ı çizen `Scaffold`
-                // bu modal alt sayfanın **altında** kalır, yani sayfa kapanmadan
-                // gönderildi/hata mesajı hiç görünmezdi (ölü düğme hissi).
-                Consumer(
-                  builder: (consumerContext, ref, _) {
-                    final groupId = ref.watch(userGroupProvider).value?.id;
-                    if (groupId == null) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                  // WP-511: dürtme mantığı **kopyalanmadı**; üye satırıyla aynı
+                  // bileşen. `onBeforeAction` boşuna değil: SnackBar'ı çizen
+                  // `Scaffold` bu modal sayfanın **altında** kalır.
+                  if (showNudge) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: NudgeAction(
                         groupId: groupId,
                         recipient: camper.member,
                         isRecipientStudying: camper.studying,
                         style: NudgeActionStyle.labeled,
-                        onBeforeAction: () => Navigator.pop(ctx),
+                        onBeforeAction: onNudgeBeforeAction,
                       ),
-                    );
-                  },
-                ),
-                // 🔴 WP-617: kamp atesinde bildir/engelle yolu HIC yoktu. Kamp
-                // atesi uygulamanin iki imza yuzeyinden biri ve orada bir
-                // uyeye dokunan kullanicinin elindeki tek eylem "durt"tu; yani
-                // rahatsiz eden kisiyi engellemek icin onun SOHBETE MESAJ
-                // YAZMASINI beklemek gerekiyordu. Google Play kullanici
-                // uretimi icerik barindiran uygulamalarda bildirme/engelleme
-                // yolu ister — bu bir kolaylik degil, kapi.
-                //
-                // Kendi satirinda gosterilmez; `showActions` karsiligi.
-                if (viewerId != null && camper.member.id != viewerId) ...[
-                  const Divider(height: 24),
-                  // 🔴 Alt sayfa eylemden ONCE kapatilir: rapor sayfasi da bir
-                  // modal, engelleme onayindan sonraki SnackBar'i cizen
-                  // `Scaffold` ise bu sayfanin ALTINDA kalir (`onBeforeAction`
-                  // ile ayni tuzak). Disaridaki `context`/`ref` kullanilir,
-                  // cunku bu sayfanin kendi `ctx`i pop'tan sonra oludur.
-                  ...peerSafetyTiles(
-                    ctx,
-                    onReport: () {
-                      Navigator.pop(ctx);
-                      showReportSheet(
-                        context,
-                        ref,
-                        target: ReportTarget.profile(
-                          userId: camper.member.id,
-                          hint: camper.member.displayName,
-                        ),
-                      );
-                    },
-                    onBlock: () {
-                      Navigator.pop(ctx);
-                      confirmAndBlockUser(
-                        context,
-                        ref,
-                        userId: camper.member.id,
-                      );
-                    },
-                  ),
+                    ),
+                  ],
                 ],
+              ),
+              // 🔴 WP-617: kamp atesinde bildir/engelle yolu HIC yoktu. Google
+              // Play kullanici uretimi icerik barindiran uygulamalarda
+              // bildirme/engelleme yolu ister — bu bir kolaylik degil, kapi.
+              //
+              // Kendi satirinda gosterilmez; `showActions` karsiligi.
+              if (viewerId != null && camper.member.id != viewerId) ...[
+                const Divider(height: 24),
+                // Satırın kendi 16 px iç payı, sayfanın 20 px payına EKLENİYOR
+                // ve solda 36 px ölü şerit bırakıyordu; sayfa payı zaten var.
+                ListTileTheme.merge(
+                  contentPadding: EdgeInsets.zero,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: peerSafetyTiles(
+                      context,
+                      onReport: onReport,
+                      onBlock: onBlock,
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
-      );
-    },
-  );
+      ),
+    );
+  }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
+/// Kişinin o anki durumu — sayfanın **sol üst** köşesindeki rozet.
+///
+/// Renk tek kanal değildir: nokta rengiyle birlikte durum **yazısı** da durur
+/// (renk körü kullanıcı için), metin rengi ise zeminden değil temanın
+/// `onSurface`ından gelir — bu depoda "kırmızı rozet kırmızı temada kayboluyor"
+/// hatası bir kez yaşandı.
+class _CamperStatusChip extends StatelessWidget {
+  const _CamperStatusChip({required this.camper});
 
-  final String label;
-  final String value;
+  final _Camper camper;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    final l10n = AppLocalizations.of(context);
+    final (Color dot, String label) = switch (camper.status) {
+      PresenceStatus.studying => (
+        subjectColor('chart-2'),
+        l10n.classroomCalisiyor,
+      ),
+      PresenceStatus.onBreak => (subjectColor('chart-3'), l10n.classroomMolada),
+      PresenceStatus.offline => (
+        theme.colorScheme.outline,
+        l10n.classroomCevrimdisi,
+      ),
+    };
+    return Container(
+      key: const Key('camper-sheet-status'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: dot.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: dot.withValues(alpha: 0.55)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sol kolon: hayvan + ad + tür etiketi.
+class _CamperIdentity extends StatelessWidget {
+  const _CamperIdentity({required this.camper});
+
+  final _Camper camper;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomPaint(
+          size: const Size(56, 56),
+          painter: CritterPainter(
+            species: speciesFor(camper.animal.id),
+            pose: CritterPose.idle,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _camperName(l10n, camper),
+                style: theme.textTheme.titleLarge,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${camper.animal.label(l10n)} 🏕️',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Sağ raydaki tek sayı: üstte etiket, altında değer.
+///
+/// Değer `maxLines: 1` + kısaltmalıdır: rayın genişliği kabın oranından gelir,
+/// yani çok büyük yazı ölçeğinde bile satır **taşamaz** (bu depoda taşmalar iki
+/// kez yalnız geniş ekranda test edildiği için kaçtı).
+class _CamperStat extends StatelessWidget {
+  const _CamperStat({
+    required this.slotKey,
+    required this.label,
+    this.value,
+    this.trailing,
+  });
+
+  final Key slotKey;
+  final String label;
+  final String? value;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final trailing = this.trailing;
+    return KeyedSubtree(
+      key: slotKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
             label,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+          const SizedBox(height: 2),
+          if (trailing != null)
+            trailing
+          else
+            Text(
+              value ?? '—',
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
         ],
       ),
     );
