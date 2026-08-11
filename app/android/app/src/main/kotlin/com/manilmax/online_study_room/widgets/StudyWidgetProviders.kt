@@ -284,8 +284,18 @@ internal data class SpRamp(val narrow: Float, val medium: Float, val wide: Float
  * düşer.
  */
 internal object WidgetTypography {
-    val timerTime = SpRamp(15f, 22f, 30f)
-    val timerAction = SpRamp(11f, 12f, 14f)
+    // 🔴 WP-718 (sahibin cihazda gordugu kusur): eski merdiven (15/22/30) en
+    // dar sinifta 15sp'lik bir "00:00" ciziyordu. Yeni sayilar ayni kirpma
+    // modelinin (0.60 x punto x karakter + 8dp emniyet) izin verdigi EN BUYUK
+    // degerlerdir; daha buyugu gercekten kirpar.
+    //   NARROW 110dp: (110 - 2*7 - 8) / (0.60 * 8) = 18.3 -> 18sp
+    //   MEDIUM 150dp: (150 - 2*7 - 8) / (0.60 * 8) = 26.6 -> 26sp
+    //   WIDE   220dp: (220 - 2*7 - 8) / (0.60 * 8) = 41.2 -> 40sp
+    val timerTime = SpRamp(18f, 26f, 40f)
+    val timerAction = SpRamp(13f, 14f, 16f)
+
+    /** WP-718: ders hapi. Yalniz genislik >= MEDIUM iken cizilir. */
+    val timerSubject = SpRamp(11f, 11f, 13f)
     val clockTime = SpRamp(24f, 36f, 52f)
     val clockDate = SpRamp(11f, 12f, 14f)
     val countdownDays = SpRamp(24f, 30f, 46f)
@@ -309,6 +319,72 @@ internal fun widgetRootPaddingDp(basePaddingDp: Int, heightClass: WidgetHeightCl
         WidgetHeightClass.MEDIUM -> basePaddingDp + 1
         WidgetHeightClass.TALL -> basePaddingDp + 2
     }
+
+// ---------------------------------------------------------------------------
+// WP-718 · sayac widget'inin dokunma hedefi ve satir gorunurlugu
+// ---------------------------------------------------------------------------
+
+/**
+ * Android widget kilavuzunun asgari dokunma hedefi. Eski Baslat/Durdur hapi
+ * `minHeight=32dp` idi — bunun ucte ikisi.
+ */
+internal const val WIDGET_MIN_TOUCH_TARGET_DP = 48
+
+/** `@dimen/widget_design_row_gap` (WP-717) — layout ile testin ortak sayisi. */
+internal const val WIDGET_DESIGN_ROW_GAP_DP = 4
+
+/** Kontrol hapinin yatay dolgusu (`odak_timer_widget.xml`). */
+internal const val WIDGET_TIMER_PILL_H_PADDING_DP = 4
+
+/**
+ * Kontrol satiri (ders hapi + Baslat/Durdur) yalniz 48dp'lik hedefin
+ * GERCEKTEN sigdigi yukseklikte cizilir.
+ *
+ * En kisa kutuda (80dp) dikey butce `80 - 2*6 - 8 = 60dp`dir; 48dp'lik hap +
+ * en kucuk puntolu sayi (18sp -> 23.4dp) + 4dp aralik = 75.4dp. Yani hap o
+ * kutuda ya kirpilir ya da sayiyi tekrar 15sp'ye dusurur — sahibin sikayet
+ * ettigi yer. Cozum hapi kucultmek DEGIL, o boyutta kaldirip **kokun
+ * kendisini** hedef yapmaktir: 1 hucrelik widget launcher'in gercek
+ * hucresine cizilir (~70-85dp), yani yuzey zaten >= 48dp'dir.
+ */
+internal fun timerControlsVisible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+/**
+ * Ders hapi IKI eksene birden baglidir ve bu bilerek boyledir: satirin
+ * yarisina dusen genislik `MEDIUM` (150dp) altinda "Durdur" bile sigmaz,
+ * `SHORT` yukseklikte ise zaten kontrol satiri yoktur.
+ */
+internal fun timerSubjectVisible(size: WidgetSizeClass): Boolean =
+    timerControlsVisible(size.height) && size.width != WidgetWidthClass.NARROW
+
+/**
+ * Sayinin puntosu: genislik merdiveni, `MEDIUM` yukseklikte TAVANLI.
+ *
+ * 4x2 gibi genis ama kisa bir kutuda dikey butce `110 - 2*7 - 8 = 88dp`dir;
+ * 40sp'lik satir (52dp) + 4dp aralik + 48dp hap = 104dp > 88dp. Tavan
+ * olmadan bu kutuda ya sayi ya dugme kirpilirdi. `SHORT`ta kontrol satiri
+ * olmadigi icin tavana gerek yoktur, `TALL`da ise yer zaten var.
+ */
+internal fun timerTimeSp(size: WidgetSizeClass): Float {
+    val base = WidgetTypography.timerTime.of(size.width)
+    return if (size.height == WidgetHeightClass.MEDIUM) minOf(base, 26f) else base
+}
+
+/**
+ * Kok dolgu. WP-717'nin paylasilan `widget_design_padding` olcusu 12dp'dir ve
+ * metin+ilerleme kartlari icin dogrudur; sayac tile'i icin degil: 110dp'lik
+ * bir kutuda 12dp'lik cift yan dolgu genisligin %22'sini yer ve puntoyu tam
+ * da sahibin sikayet ettigi yere geri dusurur. WP-717 rengi ve olcuyu ayri
+ * simgelerde tuttugu icin bu ayrisma dilin disina cikmaz.
+ *
+ * 🔴 Dolgu YUKSEKLIKLE buyur (WP-699: "uzun kutuda cerceve de nefes alsin"),
+ * ama DAR kutuda buyumez. 2x3 gibi dar-uzun bir kutuda 8dp'lik dolgu
+ * genisligin 16dp'sini yer ve 18sp'lik sayiyi kirpar; kazanilan estetigin
+ * bedeli okunabilirlik olurdu.
+ */
+internal fun timerRootPaddingDp(size: WidgetSizeClass): Int =
+    if (size.width == WidgetWidthClass.NARROW) 6 else widgetRootPaddingDp(6, size.height)
 
 // Satır görünürlüğü YÜKSEKLİK sınıfından türer. Saf tutuldu ki JVM testi
 // kullanıcının gerçekten gördüğü dalı ölçebilsin.
@@ -357,6 +433,28 @@ private fun RemoteViews.applyRootPadding(context: Context, viewId: Int, dp: Int)
     setViewPadding(viewId, px, px, px, px)
 }
 
+/**
+ * WP-718: widget → [TimerActionReceiver] yayini.
+ *
+ * Acik (explicit) intent + `FLAG_IMMUTABLE` (WP-118). `requestCode` aksiyon
+ * basina AYRI olmak zorundadir: `PendingIntent` esitligi `Intent.filterEquals`
+ * ile olculur ve extra'lar o karsilastirmaya GIRMEZ — iki aksiyon ayni
+ * requestCode'u paylassaydi ikincisi birincisini ezerdi. (Aksiyon burada
+ * `Intent.action` alaninda tasindigi icin `filterEquals` zaten ayirir; ayri
+ * requestCode ikinci emniyettir.)
+ */
+private fun widgetBroadcast(
+    context: Context,
+    action: String,
+    requestCode: Int,
+): android.app.PendingIntent = android.app.PendingIntent.getBroadcast(
+    context,
+    requestCode,
+    android.content.Intent(context, TimerActionReceiver::class.java).setAction(action),
+    android.app.PendingIntent.FLAG_UPDATE_CURRENT or
+        android.app.PendingIntent.FLAG_IMMUTABLE,
+)
+
 class TimerWidgetProvider : HomeWidgetProvider() {
     // WP-699: yeniden boyutlandırma tek başına `onUpdate` tetiklemez —
     // `AppWidgetProvider.onAppWidgetOptionsChanged` gövdesi boştur ve
@@ -382,9 +480,11 @@ class TimerWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
                 val size = appWidgetManager.sizeClass(WidgetSizeSpecs.timer, widgetId)
-                val timerPrefs = readTimerWidgetPrefs(
-                    context.getSharedPreferences(TimerStateStore.PREFS_NAME, Context.MODE_PRIVATE),
+                val widgetPrefs = context.getSharedPreferences(
+                    TimerStateStore.PREFS_NAME,
+                    Context.MODE_PRIVATE,
                 )
+                val timerPrefs = readTimerWidgetPrefs(widgetPrefs)
                 val isRunning = timerPrefs.startedAtMs != null
                 val projection = timerChronometerProjection(
                     isRunning = isRunning,
@@ -395,17 +495,30 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     nowElapsedRealtimeMs = SystemClock.elapsedRealtime(),
                 )
                 // WP-134: Chronometer HER boyutta VISIBLE (compact GONE kaldırıldı).
-                // WP-699: iki satırın ikisi de her boyutta durur — sayaçta
-                // gizlenebilecek "detay" yoktur; düğme gizlenirse widget işlevini
-                // kaybeder. Esneklik punto ve dolguyla sağlanır.
+                // WP-699: iki satırın ikisi de her boyutta duruyordu.
+                // 🔴 WP-718 bunu boyuta bagladi: en kisa kutuda 48dp'lik hedef
+                // ile okunur bir sayi AYNI ANDA sigmiyor (gerekce
+                // `timerControlsVisible`). O kutuda kontrol satiri kalkar ve
+                // kokun kendisi baslat/durdur olur — islev kaybolmaz, hedef
+                // BUYUR.
+                val controlsVisible = timerControlsVisible(size.height)
+                val subjectVisible = timerSubjectVisible(size)
                 setViewVisibility(R.id.timer_widget_elapsed, View.VISIBLE)
-                setViewVisibility(R.id.timer_widget_action, View.VISIBLE)
-                applySp(R.id.timer_widget_elapsed, WidgetTypography.timerTime.of(size.width))
+                setViewVisibility(
+                    R.id.timer_widget_controls,
+                    if (controlsVisible) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.timer_widget_subject,
+                    if (subjectVisible) View.VISIBLE else View.GONE,
+                )
+                applySp(R.id.timer_widget_elapsed, timerTimeSp(size))
                 applySp(R.id.timer_widget_action, WidgetTypography.timerAction.of(size.width))
+                applySp(R.id.timer_widget_subject, WidgetTypography.timerSubject.of(size.width))
                 applyRootPadding(
                     context,
                     R.id.timer_widget_root,
-                    widgetRootPaddingDp(6, size.height),
+                    timerRootPaddingDp(size),
                 )
                 if (projection.direction != TimerChronometerDirection.IDLE) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -443,27 +556,61 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     },
                 )
 
-                val actionIntent = android.content.Intent(context, TimerActionReceiver::class.java).apply {
-                    action = TimerActionReceiver.ACTION_TOGGLE_TIMER
+                // WP-718: ders hapinin metni. Sayac KOSARKEN o kosunun dersi
+                // (`KEY_SUBJECT`), dururken KALICI TERCIH okunur — ikisi ayri
+                // anahtardir ve birincisi durunca silinir.
+                if (subjectVisible) {
+                    val accountId = widgetAccountId(widgetPrefs)
+                    val subjects = widgetSubjectOptions(widgetPrefs, accountId)
+                    // Bozuk prefs widget'i etiketsiz birakir, SURECI oldurmez
+                    // (bu kod bir BroadcastReceiver icinde kosar).
+                    val current = runCatching {
+                        if (isRunning) {
+                            widgetPrefs.getString(TimerStateStore.KEY_SUBJECT, null)
+                        } else {
+                            widgetPrefs.getString(subjectPreferenceKey(accountId), null)
+                        }
+                    }.getOrNull()
+                    val label = widgetSubjectLabel(current, subjects)
+                    setTextViewText(R.id.timer_widget_subject, label)
+                    setContentDescription(R.id.timer_widget_subject, label)
                 }
-                val pendingIntent = android.app.PendingIntent.getBroadcast(
+
+                val togglePending = widgetBroadcast(
                     context,
-                    0,
-                    actionIntent,
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    TimerActionReceiver.ACTION_TOGGLE_TIMER,
+                    requestCode = 0,
                 )
-                setOnClickPendingIntent(R.id.timer_widget_action, pendingIntent)
-                // WP-700: KOK artik sayac bolumunu ACAR, toggle etmez.
-                // Baslat/Durdur yalniz kendi hapinda kalir (`minHeight=32dp`,
-                // 48dp'lik dokunma hedefine yakin); kok de toggle olsaydi
-                // "uzerine dokununca o bolum acilsin" istegi karsilanamazdi.
+                setOnClickPendingIntent(R.id.timer_widget_action, togglePending)
+                // WP-718: ders hapi yalniz DURURKEN secim yapar; kosarken
+                // baglanmaz ve kokun derin baglantisini devralir (kullanici o
+                // an dersi degil kosuyu gormek ister). Dart'ta da kural ayni:
+                // `selectSubject` kosarken hicbir sey yapmaz.
+                if (subjectVisible && !isRunning) {
+                    setOnClickPendingIntent(
+                        R.id.timer_widget_subject,
+                        widgetBroadcast(
+                            context,
+                            TimerActionReceiver.ACTION_CYCLE_SUBJECT,
+                            requestCode = 1,
+                        ),
+                    )
+                }
+                // WP-700: KOK sayac bolumunu ACAR, toggle etmez.
+                // 🔴 WP-718 istisnasi: kontrol satirinin cizilmedigi en kucuk
+                // boyutta kok baslat/durdur olur. Aksi halde o boyutta
+                // widget'in HICBIR aksiyonu kalmazdi.
                 setOnClickPendingIntent(
                     R.id.timer_widget_root,
-                    WidgetDeepLink.pendingIntent(
-                        context,
-                        WidgetDeepLink.ROUTE_TIMER,
-                        widgetId,
-                    ),
+                    if (controlsVisible) {
+                        WidgetDeepLink.pendingIntent(
+                            context,
+                            WidgetDeepLink.ROUTE_TIMER,
+                            widgetId,
+                        )
+                    } else {
+                        togglePending
+                    },
                 )
             }
             appWidgetManager.updateAppWidget(widgetId, views)

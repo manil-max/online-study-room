@@ -27,6 +27,15 @@
      puntoyla bile ~92dp genislik, ~78dp yukseklik gerekir). Varsayilan 2x2'ye
      cikti; kucultme siniri 110x80dp, yani icerigin gercekten sigdigi en kucuk
      kutu. Ust sinir 4x3: sayacin iki satiri var, daha buyugu bos alan olur.
+
+     WP-718: SAYILAR DEGISMEDI, ama en kucuk kutunun ANLAMI degisti.
+     Eskiden 110x80dp'lik kutuda 15sp'lik bir sayi ve 32dp'lik bir hap vardi;
+     32dp Android'in asgari dokunma hedefinin (48dp) ucte ikisidir. Artik o
+     kutuda (`SHORT` sinifi) kontrol satiri hic cizilmez ve KOKUN KENDISI
+     baslat/durdur olur - yani hedef, launcher'in gercek hucresi kadar buyur.
+     48dp'lik hap yalniz 110dp ve uzeri yukseklikte cizilir; olcum
+     `TimerWidgetWp718Test.kt`. Gercek 1x1 isteyen kullanicinin yolu bu widget
+     degil `odak_minimal_timer_widget_info.xml`dir (alt sinir 40x40dp).
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_timer_widget"

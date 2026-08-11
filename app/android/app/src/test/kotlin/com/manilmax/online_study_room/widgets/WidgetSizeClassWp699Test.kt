@@ -197,40 +197,45 @@ class WidgetSizeClassWp699Test {
 
     // --- kirpma yok: her sinifin EN DAR halinde icerik sigar ---------------
 
+    // 🔴 WP-718 — BU IDDIA YENIDEN YAZILDI, SILINMEDI.
+    //
+    // Eski hali uc sayiyi sabit varsayiyordu: dugme `minHeight=32dp`, dugme
+    // ustu bosluk 6dp ve "iki satir HER boyutta cizilir". Ucu de artik yanlis:
+    //   * 32dp, Android'in asgari dokunma hedefinin (48dp) ucte ikisiydi ve
+    //     sahip cihazda tam olarak bunu "kucuk" diye bildirdi;
+    //   * bosluk artik paylasilan `@dimen/widget_design_row_gap` (4dp);
+    //   * en kisa sinifta kontrol satiri HIC cizilmez — 48dp'lik hedef ile
+    //     okunur bir sayi o kutuya birlikte sigmadigi icin (olcum
+    //     `TimerWidgetWp718Test`).
+    //
+    // Burada kalan is GENISLIK tarafidir: punto merdiveni her sinifin en dar
+    // kutusunda kirpilmamali. Yukseklik/dokunma hedefi aritmetigi WP-718
+    // dosyasinda, cunku artik gorunurluk kararina baglidir.
     @Test
     fun timer_hicbir_boyutta_kirpilmaz() {
         val spec = WidgetSizeSpecs.timer
-        val basePadding = 6
         val karakter = 8 // "00:00:00"
-        val dugmeYuksekligiDp = 32f // layout'taki minHeight
-        val dugmeUstBosluguDp = 6f
 
-        // Genislik: her sinifin en dar kutusu.
         listOf(
             Triple("NARROW", 110, WidgetWidthClass.NARROW),
             Triple("MEDIUM", spec.mediumWidthDp, WidgetWidthClass.MEDIUM),
             Triple("WIDE", spec.wideWidthDp, WidgetWidthClass.WIDE),
         ).forEach { (ad, kutu, sinif) ->
-            assertEquals(sinif, widgetSizeClass(spec, kutu, 110).width)
+            val size = widgetSizeClass(spec, kutu, 110)
+            assertEquals(sinif, size.width)
             assertFits(
                 "timer/$ad saat",
-                textWidthDp(WidgetTypography.timerTime.of(sinif), karakter),
-                usableWidthDp(kutu, widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)),
+                textWidthDp(timerTimeSp(size), karakter),
+                usableWidthDp(kutu, timerRootPaddingDp(size)),
             )
         }
 
-        // Yukseklik: en kisa kutu (minResizeHeight) en kucuk puntoyla.
-        val kisaDolgu = widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)
+        // En dar-uzun kose: dolgu yukseklikle buyurken genisligi yememeli.
+        val darUzun = widgetSizeClass(spec, 110, spec.tallHeightDp)
         assertFits(
-            "timer/SHORT iki satir",
-            lineHeightDp(WidgetTypography.timerTime.narrow) + dugmeUstBosluguDp + dugmeYuksekligiDp,
-            usableHeightDp(80, kisaDolgu),
-        )
-        val uzunDolgu = widgetRootPaddingDp(basePadding, WidgetHeightClass.TALL)
-        assertFits(
-            "timer/TALL iki satir",
-            lineHeightDp(WidgetTypography.timerTime.wide) + dugmeUstBosluguDp + dugmeYuksekligiDp,
-            usableHeightDp(spec.tallHeightDp, uzunDolgu),
+            "timer/NARROW+TALL saat",
+            textWidthDp(timerTimeSp(darUzun), karakter),
+            usableWidthDp(110, timerRootPaddingDp(darUzun)),
         )
     }
 

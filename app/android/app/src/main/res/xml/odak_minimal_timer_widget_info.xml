@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-718: minimal sayac widget'inin boyut beyani.
+
+     Hucre -> dp donusumu Android'in formulu `70 * n - 30`dur: 1=40dp,
+     2=110dp, 3=180dp, 4=250dp. Depodaki eski "1 hucre = 40dp" yorumu yalniz
+     n=1 icin dogruydu.
+
+     ## Neden varsayilan 2x1
+     Sahip "1x1'lik devam etsin" dedi ve `minResize*` 40dp ile 1x1 GERCEKTEN
+     ulasilabilir (mevcut sayac widget'inda degildi: alt sinir 110x80dp idi,
+     yani 1 hucre hic secilemiyordu). Ama VARSAYILAN 1x1 degil 2x1:
+     kronometre bir saati gecince "1:23:45" yazar, yani 7-8 karakter. 40dp
+     genislikte o dizi ~8sp ile cizilir - sahibin sikayet ettigi seyin daha
+     kotusu. 110dp'de ayni dizi 20sp ile sigar (aritmetik
+     `TimerWidgetWp718Test.minimal_widget_hicbir_boyutta_kirpilmaz`).
+
+     ## Ust sinir
+     4x2 (250x110dp). Daha buyugu "minimal" olmaktan cikar; ust sinir
+     yazilmazsa kullanici widget'i ekran boyu uzatabilir.
+
+     ## updatePeriodMillis=0
+     Tek dinamik oge kendi kendine tiklayan `Chronometer`dir. Baslat/durdur
+     aninda `StudyTimerService -> TimerWidgets.updateAll` iter, boot sonrasi
+     tazeleme `TimerBootReceiver` icindedir. Periyodik uyandirma pil yakar ve
+     hicbir sey tazelemez. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/odak_minimal_timer_widget"
+    android:maxResizeHeight="110dp"
+    android:maxResizeWidth="250dp"
+    android:minHeight="40dp"
+    android:minResizeHeight="40dp"
+    android:minResizeWidth="40dp"
+    android:minWidth="110dp"
+    android:previewLayout="@layout/odak_minimal_timer_widget"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="1"
+    android:targetCellWidth="2"
+    android:updatePeriodMillis="0" />

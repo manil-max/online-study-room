@@ -98,11 +98,50 @@ void main() {
           .listSync()
           .map((entity) => entity.uri.pathSegments.last)
           .where((name) => name.endsWith('_widget_info.xml'))
-          .toList();
+          .toSet();
+      // Her katalog uyesinin KENDI tanimi repoda durmali (dormant olan da).
+      // Eski sayim bunu "toplam sayi tutuyor mu" ile vekaleten olcuyordu;
+      // iki tanim yer degistirse fark etmezdi.
+      for (final provider in HomeWidgetProvider.values) {
+        final start = manifest.indexOf(
+          'android:name=".widgets.${provider.androidClassName}"',
+        );
+        final block = manifest.substring(
+          start,
+          manifest.indexOf('</receiver>', start),
+        );
+        final resource = RegExp(r'@xml/(\w+)').firstMatch(block)?.group(1);
+        expect(
+          resource,
+          isNotNull,
+          reason: '${provider.androidClassName} bir xml tanimi gostermiyor',
+        );
+        expect(
+          infos,
+          contains('$resource.xml'),
+          reason: '${provider.androidClassName} icin xml tanimi kayip',
+        );
+      }
+      // 🔴 WP-718 — SAYIM IDDIASI YENIDEN YAZILDI, GEVSETILMEDI.
+      //
+      // Eskiden `infos.length == HomeWidgetProvider.values.length` idi ve
+      // "her katalog uyesinin bir xml'i var" demek istiyordu; gercekte
+      // "xml sayisi katalog sayisina esit" diyordu. WP-718 katalog uyesi
+      // OLMAYAN bir saglayici ekledi (minimal sayac: Android widget
+      // secicisinde var, uygulama ici katalog karti henuz yok — gerekce
+      // `timer_widget_wp718_test.dart`), ve eski sayim bunu "xml silinmis"
+      // diye bildirirdi. Katalog disi tanimlar artik ACIK bir listede durur;
+      // liste bos olmayan her uye icin gerekcesi yazili olmalidir.
+      const katalogDisiTanimlar = <String>{'odak_minimal_timer_widget_info.xml'};
       expect(
         infos.length,
-        HomeWidgetProvider.values.length,
+        HomeWidgetProvider.values.length + katalogDisiTanimlar.length,
         reason: 'widget xml tanımları revizyon için repoda kalmalı',
+      );
+      expect(
+        infos,
+        containsAll(katalogDisiTanimlar),
+        reason: 'katalog disi tanim silinmis',
       );
     });
 

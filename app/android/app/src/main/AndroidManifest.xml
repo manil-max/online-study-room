@@ -76,12 +76,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- WP-118: exported=false — yalnız aynı uygulamanın PendingIntent'i tetikler. -->
+        <!-- WP-118: exported=false — yalnız aynı uygulamanın PendingIntent'i tetikler.
+             WP-718: ikinci aksiyon widget'taki ders hapidir; uygulama kapalıyken
+             de çalışır (Flutter motoru gerekmez, kaynak `subjects_cache` aynası). -->
         <receiver
             android:name=".widgets.TimerActionReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.manilmax.online_study_room.ACTION_TOGGLE_TIMER" />
+                <action android:name="com.manilmax.online_study_room.ACTION_CYCLE_WIDGET_SUBJECT" />
             </intent-filter>
         </receiver>
         <!-- WP-42/51: Sayacın native foreground servisi. Widget/bildirim Başlat-Durdur
@@ -141,6 +144,25 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/odak_timer_widget_info" />
+        </receiver>
+        <!-- WP-718: minimal sayac. Yayinda (`enabled` bayragi YOK) — yani
+             Android'in widget secicisinde bulunur ve kurulabilir.
+             🔴 Uygulama ICI katalogda (`clock_widgets_screen.dart`) karti
+             HENUZ yoktur: kart eklemek `HomeWidgetProvider` enum'una uye
+             eklemeyi, o da tuketici `switch`i ve iki `.arb` dosyasini
+             degistirmeyi gerektirir; ikisi de bu WP'nin SAHIP yolu degil ve
+             `.arb` su anda baska bir lane tarafindan yaziliyor. Borc
+             `timer_widget_wp718_test.dart` icinde ACIK bir iddiaya baglandi
+             ki sessizce unutulmasin (WP-705 kusuru tam olarak buydu). -->
+        <receiver
+            android:name=".widgets.MinimalTimerWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_minimal_timer_widget_info" />
         </receiver>
         <!-- WP-695: sinav geri sayimi. Yayinda (enabled bayragi yok);
              katalogdaki `published: true` ile ayni tarafta durmali.
