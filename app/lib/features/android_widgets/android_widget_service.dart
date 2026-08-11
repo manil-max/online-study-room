@@ -40,6 +40,29 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
   Future<void> seedPlaceholder() async {}
 }
 
+/// WP-696: cizimi native akan, Flutter yayinina IHTIYACI OLMAYAN saglayicilar.
+///
+/// `ClockWidgetProvider.onUpdate` yalniz layout'u sisirir; iki `TextClock`
+/// sistem saatiyle kendi akar (`StudyWidgetProviders.kt:356-368`). Bu yuzden
+/// [StudyHomeWidget] uyesi olmasina gerek yoktur.
+///
+/// `AlarmWidgetProvider` (`StudyWidgetProviders.kt:371-410`) bu listede DEGIL:
+/// `flutter.native_alarm_mirror_v1`'i yalniz `onUpdate` icinde okur ve mirror
+/// degistiginde (`native_alarm_bridge.dart:145`) kimse ona yayin gondermez;
+/// tek tazeleme kaynagi `odak_alarm_widget_info.xml`'deki 30 dakikalik
+/// `updatePeriodMillis`'tir.
+const Set<HomeWidgetProvider> kSelfUpdatingHomeWidgets = {
+  HomeWidgetProvider.clock,
+};
+
+/// Yayindaki bir saglayicinin tazeleme yolu var mi?
+///
+/// Iki gecerli yol: [StudyHomeWidget] uyesi olmak (Flutter `updateWidget`
+/// gonderir) ya da [kSelfUpdatingHomeWidgets] icinde olmak.
+bool hasHomeWidgetRefreshPath(HomeWidgetProvider provider) =>
+    kSelfUpdatingHomeWidgets.contains(provider) ||
+    StudyHomeWidget.values.any((widget) => widget.catalogProvider == provider);
+
 enum StudyHomeWidget {
   timer(
     androidName: 'TimerWidgetProvider',
@@ -121,6 +144,53 @@ abstract final class AndroidWidgetKeys {
   static const leaderboardRow2 = 'leaderboard_row_2';
   static const leaderboardRow3 = 'leaderboard_row_3';
   static const leaderboardMyRank = 'leaderboard_my_rank';
+
+  /// WP-696: her snapshot yalniz KENDI anahtarlarini yazar.
+  ///
+  /// `_syncStatsWidgets` ayni turda iki kez `saveSnapshot` cagiriyor; her
+  /// snapshot 17 anahtarin hepsini yazdigi icin ikinci cagri birincinin gercek
+  /// degerlerini placeholder ile eziyordu (gunluk hedef ve grup hedefi hep
+  /// `%0`). Sahiplik kumeleri bu ezmeyi imkansiz kilar.
+  static const Set<String> timerGroup = {
+    timerTitle,
+    timerElapsed,
+    timerStatus,
+    timerAction,
+  };
+  static const Set<String> statsGroup = {
+    statsTitle,
+    statsToday,
+    statsWeek,
+    statsStreak,
+  };
+  static const Set<String> dailyGoalGroup = {dailyGoalPercent, dailyGoalDetail};
+  static const Set<String> groupGoalGroup = {groupGoalPercent, groupGoalDetail};
+  static const Set<String> leaderboardGroup = {
+    leaderboardTitle,
+    leaderboardRow1,
+    leaderboardRow2,
+    leaderboardRow3,
+    leaderboardMyRank,
+  };
+
+  /// `goals` turu: gunluk + grup hedefi gercek; ozet basligi/degeri gunluk
+  /// hedefin aynasi. Seri (`statsStreak`) icin gercek uretici YOKTUR, bu yuzden
+  /// bu tur ona dokunmaz — saglayici kendi kaynak yedegini gosterir.
+  static const Set<String> goalsGroup = {
+    ...dailyGoalGroup,
+    ...groupGoalGroup,
+    statsTitle,
+    statsToday,
+    statsWeek,
+  };
+
+  static const Set<String> all = {
+    ...timerGroup,
+    ...statsGroup,
+    ...dailyGoalGroup,
+    ...groupGoalGroup,
+    ...leaderboardGroup,
+  };
 }
 
 @immutable
@@ -142,6 +212,7 @@ class AndroidWidgetSnapshot {
     required this.groupGoalDetail,
     required this.leaderboardMyRank,
     required this.emptyLeaderboardLabel,
+    this.ownedKeys = AndroidWidgetKeys.all,
   });
 
   AndroidWidgetSnapshot.placeholder(AppLocalizations l10n)
@@ -160,7 +231,8 @@ class AndroidWidgetSnapshot {
       leaderboardTitle = l10n.androidWidgetsKampSiralamasi,
       leaderboardRows = [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
       leaderboardMyRank = l10n.commonSiralamaOlusuncaBuradaGorunur,
-      emptyLeaderboardLabel = l10n.androidWidgetsHenuzGrupVerisiYok;
+      emptyLeaderboardLabel = l10n.androidWidgetsHenuzGrupVerisiYok,
+      ownedKeys = AndroidWidgetKeys.all;
 
   AndroidWidgetSnapshot.timer({
     required AppLocalizations l10n,
@@ -184,6 +256,7 @@ class AndroidWidgetSnapshot {
          leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
          leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
          emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
+         ownedKeys: AndroidWidgetKeys.timerGroup,
        );
 
   AndroidWidgetSnapshot.stats({
@@ -208,6 +281,7 @@ class AndroidWidgetSnapshot {
          leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
          leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
          emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
+         ownedKeys: AndroidWidgetKeys.statsGroup,
        );
 
   AndroidWidgetSnapshot.leaderboard({
@@ -231,6 +305,7 @@ class AndroidWidgetSnapshot {
          leaderboardRows: rows,
          leaderboardMyRank: myRank ?? l10n.commonSiralamaOlusuncaBuradaGorunur,
          emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
+         ownedKeys: AndroidWidgetKeys.leaderboardGroup,
        );
 
   AndroidWidgetSnapshot.goals({
@@ -256,6 +331,7 @@ class AndroidWidgetSnapshot {
          leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
          leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
          emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
+         ownedKeys: AndroidWidgetKeys.goalsGroup,
        );
 
   final String timerTitle;
@@ -275,9 +351,12 @@ class AndroidWidgetSnapshot {
   final String leaderboardMyRank;
   final String emptyLeaderboardLabel;
 
+  /// Bu snapshot'in GERCEK deger tasidigi anahtarlar; yalniz bunlar yazilir.
+  final Set<String> ownedKeys;
+
   Map<String, Object> toWidgetData() {
     final rows = paddedLeaderboardRows;
-    return {
+    final all = <String, Object>{
       AndroidWidgetKeys.timerTitle: timerTitle,
       AndroidWidgetKeys.timerElapsed: timerElapsed,
       AndroidWidgetKeys.timerStatus: timerStatus,
@@ -295,6 +374,10 @@ class AndroidWidgetSnapshot {
       AndroidWidgetKeys.leaderboardRow2: rows[1],
       AndroidWidgetKeys.leaderboardRow3: rows[2],
       AndroidWidgetKeys.leaderboardMyRank: leaderboardMyRank,
+    };
+    return {
+      for (final entry in all.entries)
+        if (ownedKeys.contains(entry.key)) entry.key: entry.value,
     };
   }
 
