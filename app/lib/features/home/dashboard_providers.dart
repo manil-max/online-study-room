@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/grid/grid_reflow.dart';
 import '../../core/prefs/app_prefs.dart';
+import '../classroom/widgets/clock_style.dart';
 import 'dashboard_card.dart';
 
 const _kLayoutKey = 'dashboard_layout';
 const _kLayoutProfilePrefix = 'dashboard_layout_v2_';
 const _kLastColumnsKey = 'dashboard_grid_last_columns';
 const _kClassroomTimerKey = 'classroom_show_timer';
+
+/// WP-722 — kompakt görünüme geçerken sayaç kartının **kompakt öncesi** satır
+/// sayısı. Geri dönüş yolunun tek kaynağı; `null` = küçültme uygulanmadı.
+const _kTimerRowsBeforeCompactKey = 'dashboard_timer_rows_before_compact';
 
 /// Izgara sütun sayısı — herkeste sabit 32 (WP-186 seçiciyi kaldırdı).
 ///
@@ -43,6 +49,121 @@ List<DashboardCardConfig> defaultDashboardLayout(int columns) {
       w: columns - left,
       h: (3 * columns / kDefaultGridColumns).round(),
     ),
+  ];
+}
+
+/// 🔴 WP-722 — kompakt saat görünümünde sayaç kartının ızgarada kapladığı
+/// **satır** sayısı.
+///
+/// ÖLÇÜLDÜ (`timer_compact_cell_wp722_test.dart`, 360 dp telefon): kompakt
+/// kart 116.0 px boyanıyor; aynı genişlikte ızgara hücresi 2.5 px ve boşluk
+/// 8 px, yani `h` satır = `10.5·h − 8` px. **12 satır = 118.0 px** — kartın
+/// istediğini geçen en küçük satır sayısı (11 satır 107.5 px'te kalır ve kart
+/// içinde kaydırma doğar). Varsayılan sayaç kartı 21 satır = 212.5 px'ti, yani
+/// hücrenin 94.5 px'i boş alandı.
+///
+/// ⚠️ Sınır kontrolü: `kMaxGridColumns` (32) **genişlik/x** tavanıdır ve bu WP
+/// yalnız `h`ye dokunur; `DashboardCardConfig` yükseklik için `h >= 1` dışında
+/// bir iddia taşımaz. Depoda kayıtlı "ızgara sınırını aşınca analyze temiz
+/// geçer ama çalışma anında assert çöker" tuzağı bu yüzden burada doğmaz.
+int compactTimerRows(int columns) =>
+    (12 * columns / kFixedGridColumns).round().clamp(1, 99);
+
+/// 🔴 WP-722 — kompakt seçimi ile sayaç kartının satır sayısı arasındaki **tek**
+/// kural. Saf fonksiyon: girdi düzen + seçim + "kompakt öncesi satır" hatırası,
+/// çıktı yeni düzen + yeni hatıra.
+///
+/// Üç karar burada yazılıdır (hepsi kullanıcının kaydedilmiş düzenine dokunur):
+///
+/// 1. **Küçültme bir olaydır, sürekli bir kural değil.** Yalnız hatıra boşken
+///    (yani küçültme henüz uygulanmamışken) tetiklenir. Böylece kullanıcı
+///    kompakt kartı elle büyüttükten sonra her yeniden açılışta yeniden
+///    küçültülmez.
+/// 2. **Geri dönüş yolu açık kalır.** Kompakttan çıkınca kart hatırlanan eski
+///    boyuna döner; seçim tek yönlü bir kapı değildir.
+/// 3. **Elle verilen boyut ezilmez.** Kullanıcı kompaktken kartı kendi
+///    boyutlandırdıysa (satır artık hedeften farklıdır) geri dönüşte eski boyut
+///    **geri yüklenmez** — son söz kullanıcınındır, hatıra sessizce düşer.
+///
+/// Satır değişikliği ızgaranın kendi akış kuralından (`placeGridItem`) geçer:
+/// küçültme kimseyi itmez (çakışma doğmaz), geri yükleme ise araya girmiş bir
+/// kart varsa onu aşağı iter — yani düzen hiçbir durumda üst üste binmez.
+({List<DashboardCardConfig> layout, int? rowsBeforeCompact})
+resolveCompactTimerRows(
+  List<DashboardCardConfig> layout, {
+  required int columns,
+  required bool compact,
+  required int? rowsBeforeCompact,
+}) {
+  final current = layout
+      .where((card) => card.type == DashboardCardType.timer)
+      .firstOrNull;
+  if (current == null) {
+    // Sayaç kartı düzende yoksa dokunacak bir şey yok; hatıra da anlamsızdır.
+    return (
+      layout: layout,
+      rowsBeforeCompact: compact ? rowsBeforeCompact : null,
+    );
+  }
+  final target = compactTimerRows(columns);
+
+  if (compact) {
+    if (rowsBeforeCompact != null || current.h <= target) {
+      return (layout: layout, rowsBeforeCompact: rowsBeforeCompact);
+    }
+    return (
+      layout: _withTimerRows(layout, target, columns),
+      rowsBeforeCompact: current.h,
+    );
+  }
+
+  // Hatıra yoksa küçültme hiç uygulanmadı; kullanıcı kompaktken kartı elle
+  // boyutlandırdıysa (satır hedeften farklı) son söz onundur.
+  if (rowsBeforeCompact == null || current.h != target) {
+    return (layout: layout, rowsBeforeCompact: null);
+  }
+  return (
+    layout: _withTimerRows(layout, rowsBeforeCompact, columns),
+    rowsBeforeCompact: null,
+  );
+}
+
+List<DashboardCardConfig> _withTimerRows(
+  List<DashboardCardConfig> layout,
+  int rows,
+  int columns,
+) {
+  final timer = layout.firstWhere(
+    (card) => card.type == DashboardCardType.timer,
+  );
+  final flowed = placeGridItem(
+    items: [
+      for (final card in layout)
+        GridItemBounds(
+          id: card.type.name,
+          x: card.x,
+          y: card.y,
+          w: card.w,
+          h: card.h,
+        ),
+    ],
+    id: timer.type.name,
+    x: timer.x,
+    y: timer.y,
+    w: timer.w,
+    h: rows,
+    columns: columns,
+  );
+  final byId = {for (final item in flowed) item.id: item};
+  return [
+    for (final card in layout)
+      card.withBounds(
+        x: byId[card.type.name]!.x,
+        y: byId[card.type.name]!.y,
+        w: byId[card.type.name]!.w,
+        h: byId[card.type.name]!.h,
+        columns: columns,
+      ),
   ];
 }
 
@@ -175,37 +296,61 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   List<DashboardCardConfig> build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final columns = ref.watch(dashboardGridColumnsProvider);
-    final stored = prefs.getStringList(_profileKey(columns));
-    if (stored != null) {
-      prefs.setInt(_kLastColumnsKey, columns);
-      return DashboardCardConfig.decodeList(stored, columns: columns);
-    }
+    // 🔴 WP-722: kompakt seçimi kartın yalnız İÇERİĞİNİ değil, ızgarada ona
+    // AYRILAN hücreyi de değiştirir (WP-715 içeriği kısalttı, hücre eski
+    // yerinde durdu). Düzen bu yüzden saat stilini izler; kural her yeniden
+    // kuruluşta da uygulanır, yani ekran kapanıp açılınca kaybolmaz.
+    final compact = ref.watch(clockStyleProvider) == ClockStyle.compact;
 
-    final lastColumns = prefs.getInt(_kLastColumnsKey);
-    final lastProfile = lastColumns == null
-        ? null
-        : prefs.getStringList(_profileKey(lastColumns));
-    final legacy = prefs.getStringList(_kLayoutKey);
-    final sourceColumns = lastProfile != null
-        ? lastColumns!
-        : kDefaultGridColumns;
-    final sourceRaw = lastProfile ?? legacy;
-    final layout = sourceRaw == null
-        ? defaultDashboardLayout(columns)
-        : projectDashboardLayout(
-            source: DashboardCardConfig.decodeList(
-              sourceRaw,
-              columns: sourceColumns,
-            ),
-            fromColumns: sourceColumns,
-            toColumns: columns,
-          );
-    prefs.setStringList(
-      _profileKey(columns),
-      layout.map((item) => item.encode()).toList(),
-    );
+    final stored = prefs.getStringList(_profileKey(columns));
+    final List<DashboardCardConfig> layout;
+    if (stored != null) {
+      layout = DashboardCardConfig.decodeList(stored, columns: columns);
+    } else {
+      final lastColumns = prefs.getInt(_kLastColumnsKey);
+      final lastProfile = lastColumns == null
+          ? null
+          : prefs.getStringList(_profileKey(lastColumns));
+      final legacy = prefs.getStringList(_kLayoutKey);
+      final sourceColumns = lastProfile != null
+          ? lastColumns!
+          : kDefaultGridColumns;
+      final sourceRaw = lastProfile ?? legacy;
+      layout = sourceRaw == null
+          ? defaultDashboardLayout(columns)
+          : projectDashboardLayout(
+              source: DashboardCardConfig.decodeList(
+                sourceRaw,
+                columns: sourceColumns,
+              ),
+              fromColumns: sourceColumns,
+              toColumns: columns,
+            );
+    }
     prefs.setInt(_kLastColumnsKey, columns);
-    return layout;
+
+    final resolved = resolveCompactTimerRows(
+      layout,
+      columns: columns,
+      compact: compact,
+      rowsBeforeCompact: prefs.getInt(_kTimerRowsBeforeCompactKey),
+    );
+    if (stored == null || !_sameLayout(layout, resolved.layout)) {
+      prefs.setStringList(
+        _profileKey(columns),
+        resolved.layout.map((item) => item.encode()).toList(),
+      );
+    }
+    _writeRowsBeforeCompact(prefs, resolved.rowsBeforeCompact);
+    return resolved.layout;
+  }
+
+  void _writeRowsBeforeCompact(SharedPreferences prefs, int? rows) {
+    if (rows == null) {
+      prefs.remove(_kTimerRowsBeforeCompactKey);
+    } else {
+      prefs.setInt(_kTimerRowsBeforeCompactKey, rows);
+    }
   }
 
   void _save() {
@@ -368,8 +513,23 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   }
 
   /// Ana Sayfa düzenini varsayılana döndür.
+  ///
+  /// WP-722: sıfırlama düzeni tazeler, saat seçimini değil. Kullanıcı kompakt
+  /// görünümdeyse varsayılan 21 satırlık sayaç hücresi geri gelmez; kural
+  /// hatırasız (yani "yeni baştan") uygulanır ve geri dönüş yolu korunur.
   void reset() {
-    state = defaultDashboardLayout(ref.read(dashboardGridColumnsProvider));
+    final columns = ref.read(dashboardGridColumnsProvider);
+    final resolved = resolveCompactTimerRows(
+      defaultDashboardLayout(columns),
+      columns: columns,
+      compact: ref.read(clockStyleProvider) == ClockStyle.compact,
+      rowsBeforeCompact: null,
+    );
+    state = resolved.layout;
+    _writeRowsBeforeCompact(
+      ref.read(sharedPreferencesProvider),
+      resolved.rowsBeforeCompact,
+    );
     _save();
   }
 
