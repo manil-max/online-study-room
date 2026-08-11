@@ -7152,6 +7152,8 @@
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: tap line for a widget without a deep link."},
   "clockWidgetGunlukHedefOzeti": "Your daily goal percentage and progress",
   "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."},
+  "profileCrownSuAnki": "Current",
+  "@profileCrownSuAnki": {"description": "WP-712: marks the crown tier the user is currently on in the tiers sheet."},
   "coreKadimUye": "Ancient Member",
   "@coreKadimUye": {"description": "WP-721: name of the membership tenure achievement."},
   "coreAyniGruptaGecirilenGun": "Days spent as a member of the same group",

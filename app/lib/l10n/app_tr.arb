@@ -2247,6 +2247,8 @@
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: derin baglantisi olmayan widget icin dokunma satiri."},
   "clockWidgetGunlukHedefOzeti": "Günlük hedefinin yüzdesi ve ilerlemesi",
   "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."},
+  "profileCrownSuAnki": "Şu an",
+  "@profileCrownSuAnki": {"description": "WP-712: tac kademeleri sayfasinda kullanicinin SU AN bulundugu kademenin isareti."},
   "coreKadimUye": "Kadim Üye",
   "@coreKadimUye": {"description": "WP-721: uyelik suresi basariminin adi."},
   "coreAyniGruptaGecirilenGun": "Aynı grupta üye olarak geçirilen gün",
