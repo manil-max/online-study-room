@@ -335,6 +335,7 @@ void main() {
             V8TestDeviceIntegrationService(),
           ),
           androidWidgetServiceProvider.overrideWithValue(V8TestWidgetGateway()),
+          ...desktopInMemoryDataOverrides(),
         ],
         child: const OnlineStudyRoomApp(),
       ),
@@ -371,6 +372,7 @@ void main() {
             V8TestDeviceIntegrationService(),
           ),
           androidWidgetServiceProvider.overrideWithValue(V8TestWidgetGateway()),
+          ...desktopInMemoryDataOverrides(),
         ],
         child: MaterialApp(
           locale: const Locale('tr'),

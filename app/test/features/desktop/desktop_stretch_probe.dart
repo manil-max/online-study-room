@@ -44,7 +44,16 @@
 //     rotanin icindeyse "cizilmis" sayilmaz.
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/data/providers/achievement_provider.dart';
+import 'package:online_study_room/data/providers/achievement_reward_provider.dart';
+import 'package:online_study_room/data/providers/gamification_providers.dart';
+import 'package:online_study_room/data/providers/subject_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_achievement_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_achievement_reward_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_gamification_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_subject_repository.dart';
 import 'package:online_study_room/features/desktop/desktop_navigation_pane.dart';
 
 /// Ekranda boyanan bir metin parcasi (global koordinat).
@@ -477,4 +486,73 @@ class DesktopStretchProbe {
     }
     return found;
   }
+}
+
+/// ================= YAPILANDIRMADAN BAGIMSIZ VERI (WP-689) ==================
+///
+/// 🔴 OLCULDU, tahmin edilmedi. Kapi (`scripts/test_all.py:280`) testleri
+/// `--dart-define-from-file=env.json` ILE kosar; ajanlar ise define'siz
+/// kosturuyordu. Ayni dosyalar define'siz 3117/3117 yesil, define'liyken 10
+/// kirmizi dusuyordu — ve dusen iddialarin hicbiri bir DUZEN olcusu degildi:
+/// hepsi "olculecek metin CIZILMEMIS" diyordu.
+///
+/// Kok neden zincirinin tamami:
+///
+///   `SupabaseConfig.isConfigured` yalniz `String.fromEnvironment` okur, yani
+///   DERLEME ZAMANI sabitidir. `env.json` verilince `true` olur ve asagidaki
+///   dort saglayici bellek-ici dala DUSMEZ; hepsi dogrudan
+///   `Supabase.instance.client` ister:
+///
+///     `subjectRepositoryProvider`           (`subject_providers.dart:13`)
+///     `gamificationRepositoryProvider`      (`gamification_providers.dart:22`)
+///     `achievementRepositoryProvider`       (`achievement_provider.dart:17`)
+///     `achievementRewardRepositoryProvider` (`achievement_reward_provider.dart:13`)
+///
+///   Widget testinde `main()` kosmaz, dolayisiyla `Supabase.initialize` da
+///   cagrilmaz ve `Supabase.instance` firlatir:
+///   "You must initialize the supabase instance before calling
+///   Supabase.instance". Dordu de hata durumuna duser. Sonuc URUN KUSURU
+///   DEGILDIR — gercek uygulamada `main()` once `Supabase.initialize` cagirir
+///   (`lib/main.dart:108`); kusur yalniz test ortaminda gorulur, ama kapiyi
+///   kirmizi dusurur.
+///
+///   Ekranda gorulen iki ayri belirti:
+///
+///    · `cardDataGate` (`card_data_gate.dart`) kaynaklarin hepsi `hasValue`
+///      olmadikca kart govdesini CIZDIRMEZ; basligi koruyup yerine
+///      hata/iskelet kutusu koyar. Onun icin "Bugun ozeti" bulunuyor ama
+///      yanindaki "0sn" bulunamiyordu. Basarimlar ekraninda ayni sebeple ne
+///      istatistik satiri ("En verimli gun") ne de katalog dossemeleri
+///      ciziliyordu.
+///
+///    · `social_profile_screen.dart:359` odul yetenegini bir post-frame
+///      callback icinde `ref.read` ile okur. Hata durumundaki saglayici orada
+///      SENKRON firlatir; cerceve bunu "EXCEPTION CAUGHT BY SCHEDULER
+///      LIBRARY" diye raporlar ve testi olcum yapmadan dusurur. Bu yuzden
+///      odul deposu da listede.
+///
+/// Cozum ekrani ya da esikleri DEGISTIRMEZ: test veriyi KENDI tohumlar, boylece
+/// ekran hangi derleme yapilandirmasinda olursa olsun ayni icerigi cizer ve
+/// olcum yine kullanicinin GORDUGU kutudan (`getRect`/`getSize`) okunur.
+///
+/// Bu liste `authRepositoryProvider` / `groupRepositoryProvider` /
+/// `sharedPreferencesProvider` override'larinin YERINE gecmez, yanina eklenir.
+List<Override> desktopInMemoryDataOverrides() {
+  final subjects = InMemorySubjectRepository();
+  final gamification = InMemoryGamificationRepository();
+  final achievements = InMemoryAchievementRepository();
+  final rewards = InMemoryAchievementRewardRepository();
+  // Saglayici `overrideWithValue` ile verildiginde `ref.onDispose` calismaz;
+  // yayinlar testin sonunda elle kapatilir (akis sizintisi = sonraki testte
+  // aciklanamayan kirmizi).
+  addTearDown(subjects.dispose);
+  addTearDown(gamification.dispose);
+  addTearDown(achievements.dispose);
+  addTearDown(rewards.dispose);
+  return [
+    subjectRepositoryProvider.overrideWithValue(subjects),
+    gamificationRepositoryProvider.overrideWithValue(gamification),
+    achievementRepositoryProvider.overrideWithValue(achievements),
+    achievementRewardRepositoryProvider.overrideWithValue(rewards),
+  ];
 }

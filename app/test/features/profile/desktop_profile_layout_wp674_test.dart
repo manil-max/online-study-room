@@ -40,6 +40,7 @@ import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:online_study_room/main.dart';
 
 import '../../support/v8_test_setup.dart';
+import '../desktop/desktop_stretch_probe.dart';
 
 /// SPEC §2.3 "Form / ayar satiri" = `DesktopSurface.readingWidth`.
 /// Tek bir kart yuzeyi icin depodaki en musamahakar tavan.
@@ -104,6 +105,7 @@ void main() {
             V8TestDeviceIntegrationService(),
           ),
           androidWidgetServiceProvider.overrideWithValue(V8TestWidgetGateway()),
+          ...desktopInMemoryDataOverrides(),
         ],
         child: const OnlineStudyRoomApp(),
       ),

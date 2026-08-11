@@ -34,6 +34,7 @@ import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:online_study_room/main.dart';
 
 import '../../support/v8_test_setup.dart';
+import '../desktop/desktop_stretch_probe.dart';
 
 /// SPEC §2.3 "Grafik karti **720** (min 360)" — pano kartinin en musamahakar
 /// tavani. Tek sayilik doseme tavani (320) bundan sikidir.
@@ -145,6 +146,7 @@ void main() {
             V8TestDeviceIntegrationService(),
           ),
           androidWidgetServiceProvider.overrideWithValue(V8TestWidgetGateway()),
+          ...desktopInMemoryDataOverrides(),
         ],
         child: const OnlineStudyRoomApp(),
       ),
