@@ -64,7 +64,11 @@ class OnboardingNotifier extends Notifier<bool> {
   }
 
   Future<void> complete() async {
-    final user = ref.read(authStateProvider).asData?.value;
+    // 🔴 WP-716: `asData?.value` idi. `asData` **yeniden yükleme**
+    // (watch bağımlılığı değişti, `isRefresh: false`) durumunda boşalır;
+    // `value` önceki profili korur. Kullanıcı elimizdeyken sessizce çıkmak,
+    // "Atla"yı ölü düğmeye çevirir: bayrak diske yazılmaz, hata da görünmez.
+    final user = ref.read(authStateProvider).value;
     if (user == null) return;
     await persistOnboardingComplete(
       ref.read(sharedPreferencesProvider),
@@ -75,7 +79,10 @@ class OnboardingNotifier extends Notifier<bool> {
 
   /// Test / ayarlardan yeniden göster (yalnız aktif kullanıcı).
   Future<void> reset() async {
-    final user = ref.read(authStateProvider).asData?.value;
+    // WP-716: aynı tuzak. Kimlik boş gelirse [persistOnboardingReset] yalnız
+    // eski cihaz-geneli anahtarı siler, kullanıcıya özel bayrağı `false`
+    // yapmaz — sıfırlama ilk yeniden yüklemede kendini geri alırdı.
+    final user = ref.read(authStateProvider).value;
     await persistOnboardingReset(
       ref.read(sharedPreferencesProvider),
       user?.id,
