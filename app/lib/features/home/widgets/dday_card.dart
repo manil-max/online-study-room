@@ -7,9 +7,14 @@ import '../dday_prefs.dart';
 import 'card_scaffold.dart';
 import 'dday_editor_sheet.dart';
 
-/// WP-575 / WP-632 — sınav geri sayımı kartı.
+/// WP-575 / WP-632 / WP-694 — sınav geri sayımı kartı.
 ///
-/// Veri tamamen cihaz içidir (`examListProvider`), yeni izin/veri yoktur.
+/// **Veri cihazda kalmaz.** Kartın çizdiği kaynak hâlâ yerel kopyadır
+/// (`examListProvider`) — uygulama internetsiz açılsa da geri sayım ilk karede
+/// görünür — ama doğruluğun kaynağı WP-694'ten beri sunucudur: açılışta bir tur
+/// yapılır, her düzenleme hesaba bağlı satır olarak yazılır (`dday_prefs.dart`
+/// → `ExamCountdownRepository`). Ağ düşerse yerel kopya ekranda **kalır**, kart
+/// boşalmaz.
 ///
 /// **Yerleşim sözleşmesi (proje sahibi kararı, `URUN-POLITIKALARI` §8.1):**
 /// hiçbir kayıt öne çıkarılmamışsa tüm sınavlar **eşit** satırlar hâlinde

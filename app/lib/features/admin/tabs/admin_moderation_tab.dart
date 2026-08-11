@@ -5,6 +5,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../../data/models/moderation_appeal.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
 import '../../../data/repositories/admin_moderation_repository.dart';
+import '../cards/admin_work_card.dart';
 import '../queue/moderation_dialogs.dart';
 import '../queue/moderation_review_view.dart';
 
@@ -109,6 +110,29 @@ class _AppealQueue extends ConsumerWidget {
   }
 }
 
+/// WP-703: itiraz karti da **tek kart dilinden** turer.
+///
+/// WP-698 panelde ortak kart dilini kurdu (`cards/admin_work_card.dart`) ve
+/// sikayet + destek bileti kartlarini oraya tasidi; itiraz karti o turda
+/// atlandi ve kendi `Card > Column`unda kaldi. Alan esleme (islev kaybi yok):
+///
+/// | eski | yeni |
+/// | --- | --- |
+/// | `appeal-sanction-action` satiri | `metaLine` (ayni metin, tek olcek) |
+/// | yaptirim gerekcesi (`titleSmall`) | `title` |
+/// | itiraz metni (`bodyMedium`, 4 satir) | `excerpt` (2 satir) |
+/// | `appeal-conflict-note` (kirmizi metin) | isaret seridi, ayni anahtar |
+/// | `appeal-uphold-*` / `appeal-overturn-*` | eylem seridi, ayni anahtarlar |
+///
+/// 🔴 Iki bilinen odun, gizlenmesin diye burada yazili:
+///   * Cakisma notu artik bir isaret hapidir ve 280 px'lik kuyruk sutununda
+///     tek satira kirpilir (390 px'te tam sigar). Anahtarin ve kirmizi tonun
+///     korunmasi, cumlenin dar sutunda tam okunmasindan once geldi: eylemler
+///     zaten hic cizilmiyor, hap ise **neden** cizilmedigini isaretliyor.
+///   * Durum hapi bu kartta karar kontroludur. Karara baglayamayan yoneticiye
+///     secenek verilmez; liste bos kalir ve `PopupMenuButton` menuyu hic acmaz
+///     (Flutter `showButtonMenu` bos listede geri doner). Sunucunun
+///     reddedecegi bir eylemi vaat etmemek WP-442 kabulunun aynisidir.
 class _AppealCard extends ConsumerWidget {
   const _AppealCard({required this.appeal});
 
@@ -117,76 +141,71 @@ class _AppealCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final action = appeal.sanctionAction;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔴 WP-B kabul 5 (`ADMIN-PANEL-PLAN.md` §2.1): model
-            // `sanctionAction` taşıyordu ama kart onu HİÇ çizmiyordu; yönetici
-            // **hangi cezaya** itiraz edildiğini görmeden "Yaptırımı koru /
-            // kaldır" düğmesine basıyordu.
-            if (action != null)
-              Text(
-                '${l10n.adminItirazEdilenYaptirim}: '
-                '${moderationActionLabel(l10n, action)}',
-                key: const Key('appeal-sanction-action'),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            Text(
-              appeal.sanctionReason ?? '',
-              style: theme.textTheme.titleSmall,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              appeal.statement,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            if (!appeal.canBeDecidedNow)
-              Text(
-                l10n.adminModerationAppealOwnSanction,
-                key: const Key('appeal-conflict-note'),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              )
-            else
-              // 🔴 `Row` degil `Wrap`: WP-B ile itiraz kutusu 280 px'lik kuyruk
-              // sutununda da duruyor ve `Row` orada 279 px tasiyordu (olcum:
-              // `moderation_review_flow_test.dart` ilk yesil kosumunda
-              // "RenderFlex overflowed by 279 pixels").
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  TextButton(
-                    key: Key('appeal-uphold-${appeal.id}'),
-                    onPressed: () => _decide(context, ref, overturn: false),
-                    child: Text(l10n.adminModerationAppealUphold),
-                  ),
-                  FilledButton(
-                    key: Key('appeal-overturn-${appeal.id}'),
-                    onPressed: () => _decide(context, ref, overturn: true),
-                    child: Text(l10n.adminModerationAppealOverturn),
-                  ),
-                ],
-              ),
-          ],
+    final decidable = appeal.canBeDecidedNow;
+    final reason = (appeal.sanctionReason ?? '').trim();
+    final tone = decidable ? AdminWorkTone.open : AdminWorkTone.waiting;
+
+    return AdminWorkCard(
+      typeIcon: Icons.gavel_outlined,
+      // "Ne hakkinda": yaptirimin gerekcesi. Eski kartta da en buyuk satir
+      // buydu; sunucu gerekce gondermezse baslik bos kutu olmasin diye tire.
+      title: reason.isEmpty ? '—' : reason,
+      tone: tone,
+      status: AdminWorkStatusPill<ModerationAppealStatus>(
+        label: l10n.adminAcik,
+        tone: tone,
+        options: decidable
+            ? const [
+                ModerationAppealStatus.upheld,
+                ModerationAppealStatus.overturned,
+              ]
+            : const <ModerationAppealStatus>[],
+        optionLabel: (status) => status == ModerationAppealStatus.overturned
+            ? l10n.adminModerationAppealOverturn
+            : l10n.adminModerationAppealUphold,
+        onSelected: (status) => _decide(
+          context,
+          ref,
+          overturn: status == ModerationAppealStatus.overturned,
         ),
+        tooltip: decidable ? null : l10n.adminModerationAppealOwnSanction,
       ),
+      // Kullanicinin kendi yazdigi itiraz metni.
+      excerpt: appeal.statement,
+      // 🔴 WP-B kabul 5 (`ADMIN-PANEL-PLAN.md` §2.1): model `sanctionAction`
+      // tasiyordu ama kart onu HIC cizmiyordu; yonetici **hangi cezaya**
+      // itiraz edildigini gormeden "Yaptirimi koru / kaldir"a basiyordu.
+      metaLine: action == null
+          ? null
+          : '${l10n.adminItirazEdilenYaptirim}: '
+                '${moderationActionLabel(l10n, action)}',
+      flagsKey: const Key('appeal-conflict-note'),
+      flags: decidable
+          ? const <AdminWorkFlag>[]
+          : [
+              AdminWorkFlag(
+                l10n.adminModerationAppealOwnSanction,
+                tone: AdminWorkTone.urgent,
+              ),
+            ],
+      actions: decidable
+          ? [
+              AdminWorkAction(
+                buttonKey: Key('appeal-uphold-${appeal.id}'),
+                label: l10n.adminModerationAppealUphold,
+                icon: Icons.shield_outlined,
+                onPressed: () => _decide(context, ref, overturn: false),
+              ),
+              AdminWorkAction(
+                buttonKey: Key('appeal-overturn-${appeal.id}'),
+                label: l10n.adminModerationAppealOverturn,
+                icon: Icons.undo,
+                primary: true,
+                onPressed: () => _decide(context, ref, overturn: true),
+              ),
+            ]
+          : const <AdminWorkAction>[],
     );
   }
 

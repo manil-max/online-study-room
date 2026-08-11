@@ -30,14 +30,26 @@ class NumberStepper extends StatelessWidget {
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 4),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             HoldRepeatButton(
               icon: Icons.remove,
               enabled: value > min,
               onStep: () => onChanged((value - 1).clamp(min, max)),
             ),
-            Text('$value', style: theme.textTheme.titleLarge),
+            // 🔴 ÖLÇÜLDÜ: sabit puntolu bir `Text` burada 360 dp telefonda
+            // **8 px** taşırdı (`RenderFlex overflowed by 8.0 pixels`).
+            // Aritmetiği: günlük hedef diyaloğu 360 dp ekranda 280 dp'ye
+            // kilitlenir ve iki sayaca 110 dp bırakır; iki dokunma hedefi
+            // 48+48 = 96 dp yer kaplar, "59" ise ~22 dp ister.
+            // Küçülen tek şey **yazıdır**: düğmeler 48 dp dokunma hedefini
+            // korur, çünkü taşmayı düğmeyi kısaltarak kapatmak erişilebilirlik
+            // borcunu yerleşim borcuyla takas etmek olurdu.
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('$value', style: theme.textTheme.titleLarge),
+              ),
+            ),
             HoldRepeatButton(
               icon: Icons.add,
               enabled: value < max,
