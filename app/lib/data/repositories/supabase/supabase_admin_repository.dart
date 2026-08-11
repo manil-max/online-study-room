@@ -355,7 +355,12 @@ class SupabaseAdminRepository implements AdminRepository {
         body: {'action': 'list_group_members', 'targetGroupId': groupId},
       );
       if (response.status != 200) {
-        throw AdminException('Üye listesi alınamadı: ${response.data}');
+        // 🔴 Bu dosya `l10n_audit.py` DATA_LAYER_DEBT listesinde: mevcut
+        // gomulu metinler hosgorulur ama SAYI DONMUSTUR, yani yeni metin
+        // eklenemez. WP-F uc yeni cumle ekleyince kapi hakli olarak kirmizi
+        // dustu (22 -> 25). Cozum sayiyi yukseltmek DEGIL, dosyanin kendi
+        // `_friendlyMessage` esleyicisini kullanmak: yeni kaynak acilmiyor.
+        throw AdminException(_friendlyMessage('${response.data}'));
       }
       final items = (response.data['data'] as List<dynamic>?) ?? const [];
       return [
@@ -365,9 +370,9 @@ class SupabaseAdminRepository implements AdminRepository {
     } on AdminException {
       rethrow;
     } on FunctionException catch (e) {
-      throw AdminException('Servis hatası: ${e.details}');
+      throw AdminException(_friendlyMessage('${e.details}'));
     } catch (e) {
-      throw AdminException('Üye listesi alınamadı: $e');
+      throw AdminException(_friendlyMessage('$e'));
     }
   }
 

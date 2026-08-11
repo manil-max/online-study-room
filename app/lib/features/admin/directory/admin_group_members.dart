@@ -30,8 +30,15 @@ final adminGroupMembersProvider = FutureProvider.family<List<Profile>, String>(
     // olmayan bir oturum bu istegi sunucuya hic ulastirmaz (fail-closed).
     final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
     if (!isAdmin) {
+      // 🔴 Mesaj TR duz metin DEGIL, kod dizesidir ve bu kasitlidir:
+      // bu istisna kullaniciya HIC gosterilmiyor. Yuzey `view.unavailable`
+      // dalinda kendi cevirisini ciziyor (`admin_member_picker.dart:268`,
+      // `l10n.adminUyeListesiOkunamadi`). Buraya Turkce cumle yazmak,
+      // hicbir yerde gorunmeyen ikinci bir metin kaynagi acardi -- l10n
+      // denetimi (`scripts/l10n_audit.py`) bunu hakli olarak kirmiziya
+      // dusurdu.
       throw const AdminException(
-        'Bu listeyi görmek için yönetici olman gerekir.',
+        'admin_required',
         code: 'admin_required',
       );
     }
