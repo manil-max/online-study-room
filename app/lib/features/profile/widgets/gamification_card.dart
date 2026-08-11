@@ -16,10 +16,10 @@ import '../social_profile_screen.dart';
 import 'achievement_showcase.dart';
 import 'unread_message_badge.dart';
 
-/// Profil özeti: taç + taç XP barı + başarım rozetleri (WP-187/192).
+/// Profil özeti: taç + XP satırı + başarım rozetleri (WP-187/192, WP-712).
 ///
 /// Level/quest/streak/freeze/total UI yok. Backend XP'ye yazılmaz —
-/// yalnız görüntü (`xpBarMetrics` + sunucu profil XP).
+/// yalnız görüntü (`CrownXpHeader` + sunucu profil XP).
 class GamificationCard extends ConsumerWidget {
   const GamificationCard({super.key});
 
@@ -124,9 +124,6 @@ class _BadgeSummary extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final dict = kAchievementDictV3(l10n);
     final rank = profile.crownRank;
-    final rankColor = crownColorFor(rank, theme.colorScheme);
-    final bar = xpBarMetrics(profile.xp);
-    final atMax = profile.xp >= kCrownXpThresholds.last;
 
     final unlockedIds = {
       for (final a in achievements)
@@ -148,7 +145,7 @@ class _BadgeSummary extends StatelessWidget {
     final tierById = {for (final a in achievements) a.achievementId: a.tier};
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
@@ -162,75 +159,28 @@ class _BadgeSummary extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.profileBasarilar,
-                          style: theme.textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    crownLabel(rank, l10n),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: rankColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                l10n.profileBasarilar,
+                style: theme.textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
               ),
             ),
+            const Icon(Icons.chevron_right),
           ],
         ),
         const SizedBox(height: 12),
-        // WP-192: taç XP barı (level değil — bir sonraki taç eşiği)
-        Text(
-          atMax ? l10n.profileCrownMax : l10n.profileNextCrown,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Semantics(
-          // WP-623: "XP" birimi katalogdan (bkz. `commonXpMiktari`).
-          label: atMax
-              ? '${l10n.commonXpMiktari(profile.xp)} · ${l10n.profileCrownMax}'
-              : '${l10n.commonXpIlerlemesi(bar.currentXp, bar.nextThreshold)} · '
-                    '${(bar.progress * 100).round()}%',
-          value: '${(bar.progress * 100).round()}%',
-          child: ExcludeSemantics(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: atMax ? 1 : bar.progress,
-                minHeight: 8,
-                color: rankColor,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          atMax
-              ? l10n.commonXpMiktari(profile.xp)
-              : '${l10n.commonXpIlerlemesi(bar.currentXp, bar.nextThreshold)} '
-                    '(${(bar.progress * 100).round()}%)',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        // 🔴 WP-712 — sahip: "alttaki barı ve altındaki renklerle kademeleri
+        // sil; sadece hangi taça sahip olduğu ve sağında XP kalsın, XP'yi de
+        // XP/XP yap." Bar + yüzde metni + "Sonraki taç" başlığı üç ayrı satır
+        // olarak üst üste diziliydi (madde 2); üçünün taşıdığı bilgi tek
+        // satırda: rütbe adı + `XP / sonraki eşik`. Kademelerin tamamı bu
+        // satıra basınca açılan sayfada (madde 6).
+        CrownXpHeader(
+          rank: rank,
+          xp: profile.xp,
+          onTap: () => showCrownTiers(context, currentXp: profile.xp),
         ),
         const SizedBox(height: 12),
         if (showcaseIds.isEmpty)

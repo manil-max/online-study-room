@@ -14,9 +14,14 @@ import 'package:online_study_room/features/profile/widgets/gamification_card.dar
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// WP-187/192: level/quest/streak yok; taç XP barı + CrownedAvatar var.
+/// WP-187/192: level/quest/streak yok; taç + CrownedAvatar var.
+///
+/// 🔴 WP-712 güncellemesi: bu dosya "XP barı VAR" diye iddia ediyordu
+/// (`LinearProgressIndicator` + "Next crown"). Sahip 2026-08-11'de barı ve
+/// altındaki kademe şeridini sildirdi; bar iddiası bayatladı. İddia silinmedi,
+/// **tersine çevrildi**: bar yok, XP `XP / sonraki eşik` olarak tek satırda.
 void main() {
-  testWidgets('GamificationCard omits level quest streak; has crown XP bar', (
+  testWidgets('GamificationCard omits level quest streak; has crown XP row', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -73,9 +78,11 @@ void main() {
     expect(find.byType(GamificationCard), findsOneWidget);
     expect(find.text('Achievements'), findsOneWidget);
     expect(find.byType(CrownedAvatar), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    expect(find.textContaining('Next crown'), findsOneWidget);
-    expect(find.textContaining('XP'), findsOneWidget);
+    // WP-712: bar ve "Next crown" başlığı gitti; XP mutlak `XP / eşik` oldu.
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.textContaining('Next crown'), findsNothing);
+    expect(find.text('1200 / 20000 XP'), findsOneWidget);
+    expect(find.text('Golden Crown'), findsOneWidget);
 
     // Level/quest/streak hâlâ yok
     expect(find.textContaining('Level'), findsNothing);

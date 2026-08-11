@@ -7123,5 +7123,7 @@
   "clockWidgetDokununcaUygulama": "Tapping opens the app, not a specific section",
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: tap line for a widget without a deep link."},
   "clockWidgetGunlukHedefOzeti": "Your daily goal percentage and progress",
-  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."}
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."},
+  "profileCrownSuAnki": "Current",
+  "@profileCrownSuAnki": {"description": "WP-712: marks the crown tier the user is currently on in the tiers sheet."}
 }

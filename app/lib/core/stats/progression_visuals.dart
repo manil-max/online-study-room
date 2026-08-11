@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
-import 'achievement_ledger_engine.dart' show kCrownXpThresholds;
+import 'achievement_ledger_engine.dart'
+    show crownRankForXp, kCrownXpThresholds;
 
 export 'achievement_ledger_engine.dart' show crownRankForXp, kCrownXpThresholds;
 
@@ -173,6 +174,157 @@ xpBarMetrics(int xp) {
     nextThreshold: next,
     progress: progress,
   );
+}
+
+/// Taç kademesi satırının üç durumu (WP-712).
+enum CrownTierState { locked, unlocked, current }
+
+/// Açılmamış tacın opaklığı. Sahip: "açmadığı taçlar silik olsun."
+///
+/// 0.38 Material'in `disabled` opaklığıdır: metin hâlâ okunur (WCAG AA'yı
+/// koruyan tek adım), ama açılmış satırın yanında bakışta geri plana düşer.
+const double kCrownTierLockedOpacity = 0.38;
+
+/// XP → o kademenin durumu. Tek kaynak: eşikler [kCrownXpThresholds].
+CrownTierState crownTierStateFor({required int tier, required int currentXp}) {
+  final index = (tier - 1).clamp(0, kCrownXpThresholds.length - 1);
+  if (crownTierNumber(crownRankForXp(currentXp)) == tier) {
+    return CrownTierState.current;
+  }
+  return currentXp >= kCrownXpThresholds[index]
+      ? CrownTierState.unlocked
+      : CrownTierState.locked;
+}
+
+/// Kademe satırının ÖLÇÜLEBİLİR görsel sözleşmesi (WP-712 madde 7).
+///
+/// Sahip "ayrımı net olsun" dedi; bu bir izlenim değil üç sayıdır:
+///   kilitli  → opaklık 0.38, kenarlık 1 px, dolgu 0.04
+///   açılmış  → opaklık 1.00, kenarlık 1 px, dolgu 0.10
+///   mevcut   → opaklık 1.00, kenarlık **3 px**, dolgu 0.22
+/// Yani "açılmış mı" sorusunu opaklık, "şu an hangisindeyim" sorusunu
+/// kenarlık kalınlığı + dolgu ayrı ayrı yanıtlar (tek işarete bağlı değil).
+({double opacity, double borderWidth, double fillAlpha}) crownTierRowVisual(
+  CrownTierState state,
+) {
+  switch (state) {
+    case CrownTierState.current:
+      return (opacity: 1.0, borderWidth: 3.0, fillAlpha: 0.22);
+    case CrownTierState.unlocked:
+      return (opacity: 1.0, borderWidth: 1.0, fillAlpha: 0.10);
+    case CrownTierState.locked:
+      return (
+        opacity: kCrownTierLockedOpacity,
+        borderWidth: 1.0,
+        fillAlpha: 0.04,
+      );
+  }
+}
+
+/// Taç + XP satırı — profil yüzeylerinin **tek** taç/XP kaynağı (WP-712).
+///
+/// Sahip emri: XP barı ve altındaki renkli kademe şeridi kaldırıldı. Barın
+/// taşıdığı bilgi kaybolmadı, bu satıra taşındı: rozet artık mutlak
+/// `XP / sonraki eşik` yazar (`commonXpIlerlemesi`). Yüzde ayrıca yazılmaz —
+/// iki sayıdan türetilir ve onu görselleştiren çubuk artık yok.
+///
+/// Kademelerin tamamı [onTap] ile açılan sayfada durur (sahip maddesi 6).
+///
+/// 🔴 Bu widget bilerek `core/stats` altında ve sayfayı kendisi AÇMAZ: iki
+/// profil kolu (genel kart + sosyal profil) aynı görünümü kopyalamadan
+/// kullansın diye. Bu depoda aynı bilgi için iki kol tutulduğunda biri
+/// eksik kaldı (WP-550, WP-594).
+class CrownXpHeader extends StatelessWidget {
+  const CrownXpHeader({
+    super.key,
+    required this.rank,
+    required this.xp,
+    this.onTap,
+  });
+
+  final String rank;
+  final int xp;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final color = crownColorFor(rank, theme.colorScheme);
+    final bar = xpBarMetrics(xp);
+    final atMax = xp >= kCrownXpThresholds.last;
+
+    return InkWell(
+      key: const ValueKey('crown-xp-header'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        // DoD erişilebilirlik: 48 dp dokunma alanı yazı ölçeğiyle büyür.
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        // 🔴 360 dp kapısı: `500000 / 1000000 XP` + "Zümrüt Taç" dar ekranda
+        // satıra sığmıyor (ölçüldü: 360 dp'de 92 px taşma). Çözüm ellipsis
+        // DEĞİL — kısalan bir XP sayısı yanlış bilgi olur. `scaleDown` yalnız
+        // gerekince küçültür, hiçbir şey kırpılmaz ve satır ortalı kalır.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.workspace_premium, color: color, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                crownLabel(rank, l10n),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+              ),
+              const SizedBox(width: 8),
+              Container(
+                key: const ValueKey('crown-xp-value'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  atMax
+                      ? l10n.commonXpMiktari(xp)
+                      : l10n.commonXpIlerlemesi(
+                          bar.currentXp,
+                          bar.nextThreshold,
+                        ),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: color.withValues(alpha: 0.75),
+                semanticLabel: l10n.profileTumKademeler,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Rozet rengi: gizli kilit → koyu mor; gizli açık → eflatun; normal → kademe.

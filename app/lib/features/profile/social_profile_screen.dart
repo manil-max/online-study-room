@@ -211,6 +211,8 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         crownRank: gamification.crownRank,
                         showAura: true,
                       ),
+                      SizedBox(height: 8),
+                      _displayName(theme),
                       SizedBox(height: 24),
                       Center(child: CircularProgressIndicator()),
                     ],
@@ -230,6 +232,14 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                           // WP-298: aura yalnız bu iki profil yüzeyinde açık.
                           showAura: true,
                         ),
+                        // 🔴 WP-712 — sahip: "üstten alta pp → stats → isim
+                        // olmuş; ismi pp'nin altına taşıyalım." İsim vitrinin
+                        // İÇİNDE, istatistik panelinin ALTINDA çiziliyordu
+                        // (`achievement_showcase.dart` başlık listesi). Artık
+                        // ekran onu avatarın hemen altında çiziyor ve vitrine
+                        // `displayName` GEÇMİYOR — iki kolda birden çizilmesin.
+                        SizedBox(height: 8),
+                        _displayName(theme),
                         SizedBox(height: 16),
                         if (isSelf) const PrimaryGroupMissingBanner(),
                         AchievementShowcase(
@@ -245,7 +255,6 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                           ),
                           gamification: gamification,
                           userAchievements: achs,
-                          displayName: widget.profile.displayName,
                           titleAchievementId: _selectedTitleId,
                           isSelf: isSelf,
                           compact: false,
@@ -290,6 +299,20 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// WP-712 — görünen ad artık ekranın kendi ağacında, avatarın hemen altında.
+  /// Yükleme dalıyla veri dalı aynı yardımcıyı kullanır ki ad, vitrin gelince
+  /// yerinden zıplamasın.
+  Widget _displayName(ThemeData theme) {
+    return Text(
+      widget.profile.displayName,
+      key: const Key('social-profile-display-name'),
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 
