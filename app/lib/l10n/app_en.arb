@@ -457,6 +457,30 @@
   "@adminOzet": {
     "description": "Admin user-facing text. Source: Özet"
   },
+  "adminYuzeyKuyruk": "Queue",
+  "@adminYuzeyKuyruk": {
+    "description": "Admin navigation surface. Source: Kuyruk"
+  },
+  "adminYuzeyKisilerGruplar": "People & Groups",
+  "@adminYuzeyKisilerGruplar": {
+    "description": "Admin navigation surface. Source: Kisiler & Gruplar"
+  },
+  "adminYuzeyKayitYayin": "Records & Broadcast",
+  "@adminYuzeyKayitYayin": {
+    "description": "Admin navigation surface. Source: Kayit & Yayin"
+  },
+  "adminIcerikSikayetleri": "Content Reports",
+  "@adminIcerikSikayetleri": {
+    "description": "Admin navigation surface. Source: Icerik Sikayetleri"
+  },
+  "adminBaglamPaneli": "Context",
+  "@adminBaglamPaneli": {
+    "description": "Admin third pane title. Source: Baglam"
+  },
+  "adminBaglamBosDurum": "Details appear here when you select a record.",
+  "@adminBaglamBosDurum": {
+    "description": "Admin third pane empty state. Source: Bir kayit sectiginde ayrintilar burada gorunur."
+  },
   "adminUyeAt": "Remove Member",
   "@adminUyeAt": {
     "description": "Admin user-facing text. Source: Üye At"

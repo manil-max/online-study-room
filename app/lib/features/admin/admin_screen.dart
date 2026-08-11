@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
-import 'tabs/admin_announcements_tab.dart';
-import 'tabs/admin_audit_log_tab.dart';
-import 'tabs/admin_dashboard_tab.dart';
-import 'tabs/admin_groups_tab.dart';
-import 'tabs/admin_moderation_tab.dart';
-import 'tabs/admin_reports_tab.dart';
-import 'tabs/admin_users_tab.dart';
+import 'shell/admin_shell.dart';
 
+/// Yonetim paneli — yetki kapisi + kabuk.
+///
+/// 🔴 WP-A (`docs/design/ADMIN-PANEL-PLAN.md` §5): bu dosya eskiden
+/// `DefaultTabController(length: 7)` + `TabBar(isScrollable: true)` idi ve
+/// besinci sekmenin adi koda gomulu ham `'UGC'` dizesiydi. Yedi sekme uc
+/// yuzeye indi ve duzen [AdminShell]e tasindi; burada yalniz yetki karari
+/// kaldi.
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
 
@@ -36,50 +37,7 @@ class AdminScreen extends ConsumerWidget {
             ),
           );
         }
-
-        return DefaultTabController(
-          length: 7,
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text(l10n.adminYonetimPaneli),
-              bottom: TabBar(
-                isScrollable: true,
-                tabs: [
-                  Tab(text: l10n.adminOzet, icon: const Icon(Icons.dashboard)),
-                  Tab(
-                    text: l10n.adminKullanicilar,
-                    icon: const Icon(Icons.people),
-                  ),
-                  Tab(text: l10n.adminGruplar, icon: const Icon(Icons.groups)),
-                  Tab(text: l10n.adminRaporlar, icon: const Icon(Icons.report)),
-                  const Tab(
-                    text: 'UGC',
-                    icon: Icon(Icons.flag_outlined),
-                  ),
-                  Tab(
-                    text: l10n.adminDuyurular,
-                    icon: const Icon(Icons.campaign),
-                  ),
-                  Tab(
-                    text: l10n.adminDenetim,
-                    icon: const Icon(Icons.admin_panel_settings),
-                  ),
-                ],
-              ),
-            ),
-            body: const TabBarView(
-              children: [
-                AdminDashboardTab(),
-                AdminUsersTab(),
-                AdminGroupsTab(),
-                AdminReportsTab(),
-                AdminModerationTab(),
-                AdminAnnouncementsTab(),
-                AdminAuditLogTab(),
-              ],
-            ),
-          ),
-        );
+        return const AdminShell();
       },
     );
   }

@@ -49,10 +49,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Yönetim Paneli'), findsOneWidget);
-    expect(find.text('Kullanıcılar'), findsWidgets);
+
+    // 🔴 WP-A (ADMIN-PANEL-PLAN §5): yedi sekmelik `TabBar` KALKTI, yerine üç
+    // yüzey + `NavigationRail` geldi. Bu testin eski "Kullanıcılar sekmesi
+    // ekranda yazıyor" iddiası bu yüzden bayattır: 'Kullanıcılar' artık
+    // "Kişiler & Gruplar" yüzeyinin bir bölümüdür ve o yüzeye geçmeden
+    // çizilmez. Yedi eski sekmenin yedisinin de hâlâ ulaşılabilir olduğunu
+    // ölçen harita testi: `test/features/admin/admin_shell_layout_test.dart`
+    // ("yedi eski sekmenin hepsi uc yuzeyden ulasilir").
+    expect(find.byType(TabBar), findsNothing);
     expect(find.text('Raporlar'), findsWidgets);
 
-    // Raporlar sekmesine geç
+    // Raporlar bölümüne geç (varsayılan bölüm zaten bu; seçici çalışıyor mu?)
     await tester.tap(find.text('Raporlar').first);
     await tester.pumpAndSettle();
 
