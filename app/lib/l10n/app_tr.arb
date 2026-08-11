@@ -2225,5 +2225,19 @@
   "adminWorkCardSubmitter": "Gönderen",
   "@adminWorkCardSubmitter": {"description": "WP-698: destek biletini gonderen kisi etiketi."},
   "adminWorkCardArchived": "Arşivde",
-  "@adminWorkCardArchived": {"description": "WP-698: arsivlenmis is kartinin isareti."}
+  "@adminWorkCardArchived": {"description": "WP-698: arsivlenmis is kartinin isareti."},
+  "clockWidgetGrupHedefiOzeti": "Grubun günlük hedefindeki ilerleme",
+  "@clockWidgetGrupHedefiOzeti": {"description": "WP-705: ana ekran widget katalogunda grup hedefi kartinin ozeti."},
+  "clockWidgetGeriSayimOzeti": "En yakın sınava kalan gün",
+  "@clockWidgetGeriSayimOzeti": {"description": "WP-705: ana ekran widget katalogunda geri sayim kartinin ozeti."},
+  "clockWidgetGorevOzeti": "Görev listesi; kutucuğa dokununca uygulama kapalıyken bile işaretlenir",
+  "@clockWidgetGorevOzeti": {"description": "WP-705: ana ekran widget katalogunda gorev kartinin ozeti."},
+  "clockWidgetVarsayilanBoyut": "Varsayılan {w}×{h} hücre; büyütülüp küçültülebilir",
+  "@clockWidgetVarsayilanBoyut": {"description": "WP-705: karttaki boyut satiri; sayilar odak_*_widget_info.xml targetCell degerleridir.", "placeholders": {"w": {"type": "int"}, "h": {"type": "int"}}},
+  "clockWidgetDokununcaBolum": "Dokununca uygulamada {section} açılır",
+  "@clockWidgetDokununcaBolum": {"description": "WP-705: karttaki dokunma satiri.", "placeholders": {"section": {"type": "String"}}},
+  "clockWidgetDokununcaUygulama": "Dokununca uygulama açılır; belirli bir bölüme gitmez",
+  "@clockWidgetDokununcaUygulama": {"description": "WP-705: derin baglantisi olmayan widget icin dokunma satiri."},
+  "clockWidgetGunlukHedefOzeti": "Günlük hedefinin yüzdesi ve ilerlemesi",
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."}
 }

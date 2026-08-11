@@ -7109,5 +7109,19 @@
   "adminWorkCardSubmitter": "Submitted by",
   "@adminWorkCardSubmitter": {"description": "WP-698: label for the person who filed the support ticket."},
   "adminWorkCardArchived": "Archived",
-  "@adminWorkCardArchived": {"description": "WP-698: flag shown on an archived work card."}
+  "@adminWorkCardArchived": {"description": "WP-698: flag shown on an archived work card."},
+  "clockWidgetGrupHedefiOzeti": "Progress toward the group's daily goal",
+  "@clockWidgetGrupHedefiOzeti": {"description": "WP-705: summary of the group goal card in the home widget catalog."},
+  "clockWidgetGeriSayimOzeti": "Days left until the next exam",
+  "@clockWidgetGeriSayimOzeti": {"description": "WP-705: summary of the countdown card in the home widget catalog."},
+  "clockWidgetGorevOzeti": "Task list; ticking a box marks it even while the app is closed",
+  "@clockWidgetGorevOzeti": {"description": "WP-705: summary of the task card in the home widget catalog."},
+  "clockWidgetVarsayilanBoyut": "Default {w}×{h} cells; can be resized",
+  "@clockWidgetVarsayilanBoyut": {"description": "WP-705: size line on a catalog card; numbers come from odak_*_widget_info.xml targetCell values.", "placeholders": {"w": {"type": "int"}, "h": {"type": "int"}}},
+  "clockWidgetDokununcaBolum": "Tapping opens {section} in the app",
+  "@clockWidgetDokununcaBolum": {"description": "WP-705: tap line on a catalog card.", "placeholders": {"section": {"type": "String"}}},
+  "clockWidgetDokununcaUygulama": "Tapping opens the app, not a specific section",
+  "@clockWidgetDokununcaUygulama": {"description": "WP-705: tap line for a widget without a deep link."},
+  "clockWidgetGunlukHedefOzeti": "Your daily goal percentage and progress",
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."}
 }

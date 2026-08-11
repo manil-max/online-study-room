@@ -111,15 +111,29 @@ void main() {
     });
   });
 
-  test('katalog ekranı allowlist bayrağını okuyor', () {
+  // 🔴 WP-705: bu iddia YESILDI ama olcmesi gereken seyi olcmuyordu.
+  // "Bazi kartlar bayragi okuyor" ile "yayindaki HER widget'in karti var"
+  // ayni sey degil; ikincisi hicbir yerde yazili olmadigi icin WP-695'in geri
+  // sayimi ve WP-701'in gorev widget'i yayinda oldugu halde katalogda HIC
+  // gorunmedi. Cift yonlu olcum artik `widget_catalog_wp705_test.dart`
+  // icindedir ve gercek ekrani monte eder.
+  //
+  // Buraya kalan borc YAPISALDIR: ekran kart listesini elle saymamali.
+  test('katalog ekrani kart listesini yayin listesinden turetiyor', () {
     final source = File('lib/features/clock/clock_widgets_screen.dart')
         .readAsStringSync()
         .replaceAll('\r\n', '\n');
-    expect(source.contains('isHomeWidgetPublished'), isTrue);
     expect(
-      source.contains('HomeWidgetProvider.timer'),
+      source.contains('for (final provider in publishedHomeWidgets)'),
       isTrue,
-      reason: 'sayaç kartı allowlist üzerinden çizilmeli',
+      reason: 'kartlar yayin listesinden turetilmeli',
+    );
+    expect(
+      source.contains('isHomeWidgetPublished(HomeWidgetProvider.'),
+      isFalse,
+      reason:
+          'saglayici saglayici elle sayim geri gelmis: yayin listesi '
+          'buyudugunde yeni widget yine katalogda gorunmez',
     );
   });
 

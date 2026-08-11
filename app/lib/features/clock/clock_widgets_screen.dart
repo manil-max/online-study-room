@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/navigation/nav_index.dart';
 import '../../core/time_engine/clock_permissions.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../android_widgets/published_home_widgets.dart';
+import '../android_widgets/widget_deep_link.dart';
 import 'platform_limit_banner.dart';
 
 /// 🔴 WP-687: bu ekranın **iki yarısı da** Android'e özgüdür, ama ekran
@@ -27,6 +29,154 @@ import 'platform_limit_banner.dart';
 /// değil): testte `debugDefaultTargetPlatformOverride` ile enjekte edilebilir.
 bool get _androidSurfacesAvailable =>
     !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+/// WP-705: bir katalog kartının kullanıcıya söylediği her şey.
+///
+/// 🔴 Kartlar eskiden **elle sayılıyordu**: gövdede beş ayrı
+/// `if (isHomeWidgetPublished(...))` bloğu vardı ve yayın listesi büyüdüğünde
+/// kimse onları güncellemedi. WP-695 (geri sayım) ve WP-701 (görev) yayına
+/// girdiği hâlde kullanıcı bu katalogda ikisini de hiç görmedi; yalnız
+/// Android'in kendi widget seçicisinde bulunabiliyorlardı. Ayrışmayı test
+/// etmek yetmez, ayrışmayı **imkânsız** kılmak gerekir: kartlar artık
+/// [publishedHomeWidgets] üzerinde dönülerek çizilir ve [homeWidgetCardSpec]
+/// enum üzerinde tüketici bir `switch`tir — kataloğa yeni bir sağlayıcı
+/// eklendiğinde metin yazılmadan **derleme kırılır**.
+@immutable
+class HomeWidgetCardSpec {
+  const HomeWidgetCardSpec({
+    required this.icon,
+    required this.title,
+    required this.summary,
+    required this.route,
+    required this.cellWidth,
+    required this.cellHeight,
+  });
+
+  final IconData icon;
+  final String title;
+
+  /// Widget'ın ne gösterdiği.
+  final String summary;
+
+  /// Dokunulduğunda açılan bölüm; `null` ise widget yalnız uygulamayı açar
+  /// (belirli bir bölüme gitmez). Vaadin doğruluğu Kotlin sağlayıcısındaki
+  /// gerçek `PendingIntent`e karşı ölçülür.
+  final WidgetRoute? route;
+
+  /// `res/xml/odak_*_widget_info.xml` içindeki `targetCellWidth/Height`.
+  /// `null` ise o tanımda varsayılan hücre boyutu beyan edilmemiştir ve kart
+  /// boyut vaadi etmez.
+  final int? cellWidth;
+  final int? cellHeight;
+}
+
+/// Kataloğun **tek** metin kaynağı. `switch` ifadesi enum üzerinde tüketicidir.
+@visibleForTesting
+HomeWidgetCardSpec homeWidgetCardSpec(
+  HomeWidgetProvider provider,
+  AppLocalizations l10n,
+) => switch (provider) {
+  HomeWidgetProvider.timer => HomeWidgetCardSpec(
+    icon: Icons.timer,
+    title: l10n.clockCalismaSayaci,
+    summary: l10n.clockAkanSureBaslatdurdurApp,
+    route: WidgetRoute.timer,
+    cellWidth: 2,
+    cellHeight: 2,
+  ),
+  HomeWidgetProvider.countdown => HomeWidgetCardSpec(
+    icon: Icons.event,
+    title: l10n.homeSinavGeriSayimi,
+    summary: l10n.clockWidgetGeriSayimOzeti,
+    route: WidgetRoute.countdown,
+    cellWidth: 2,
+    cellHeight: 2,
+  ),
+  // 🔴 `route: null` bilinçli: `TaskWidget.kt` başlığa paketin launcher
+  // intent'ini bağlar (`getLaunchIntentForPackage`), `WidgetDeepLink`i
+  // kullanmaz. Kart "görev bölümü açılır" deseydi vaat edip yapmamış olurdu.
+  HomeWidgetProvider.task => HomeWidgetCardSpec(
+    icon: Icons.checklist,
+    title: l10n.taskListTitle,
+    summary: l10n.clockWidgetGorevOzeti,
+    route: null,
+    cellWidth: 3,
+    cellHeight: 2,
+  ),
+  // 🔴 Kart metni sağlayıcının GERÇEKTE çizdiğini anlatır. Eski kart
+  // "İstatistik / Bugün / hafta / seri özeti" diyordu; `StudyStatsWidgetProvider`
+  // ise başlığı native `widget_daily_goal` dizesinden alır ve gövdesinde
+  // `daily_goal_percent` + `daily_goal_detail` gösterir
+  // (`StudyWidgetProviders.kt:495-520`). Seri satırı yalnız TALL boyutta
+  // açılır ve hiçbir yerden yazılmaz (`goalsGroup` `statsStreak`i dışarıda
+  // bırakır, `AndroidWidgetSnapshot.stats` çağrısı `lib/` içinde yok).
+  HomeWidgetProvider.studyStats => HomeWidgetCardSpec(
+    icon: Icons.bar_chart,
+    title: l10n.profileGunlukHedef,
+    summary: l10n.clockWidgetGunlukHedefOzeti,
+    route: WidgetRoute.stats,
+    cellWidth: 2,
+    cellHeight: 2,
+  ),
+  HomeWidgetProvider.groupGoal => HomeWidgetCardSpec(
+    icon: Icons.flag_outlined,
+    title: l10n.homeGrupHedefi,
+    summary: l10n.clockWidgetGrupHedefiOzeti,
+    route: WidgetRoute.group,
+    cellWidth: 2,
+    cellHeight: 2,
+  ),
+  HomeWidgetProvider.groupLeaderboard => HomeWidgetCardSpec(
+    icon: Icons.emoji_events_outlined,
+    title: l10n.homeGrupSiralamasi,
+    summary: l10n.clockKampLeaderboardOzeti,
+    route: WidgetRoute.group,
+    cellWidth: 3,
+    cellHeight: 2,
+  ),
+  HomeWidgetProvider.clock => HomeWidgetCardSpec(
+    icon: Icons.schedule,
+    title: l10n.clockDijitalSaat,
+    summary: l10n.clockCanliSaatTextclockPil,
+    route: WidgetRoute.clock,
+    cellWidth: 2,
+    cellHeight: 2,
+  ),
+  // Alarm tanımı WP-699 kapsamı dışında bırakıldı: `odak_alarm_widget_info.xml`
+  // `targetCell*` beyan etmez, `AlarmWidgetProvider` da hiçbir derin bağlantı
+  // kurmaz. İkisi de burada `null` — kart olmayan bir şeyi vaat etmez.
+  HomeWidgetProvider.alarm => HomeWidgetCardSpec(
+    icon: Icons.alarm,
+    title: l10n.clockSiradakiAlarm,
+    summary: l10n.clockBirSonrakiAlarmSaati,
+    route: null,
+    cellWidth: null,
+    cellHeight: null,
+  ),
+};
+
+/// Kartın "dokununca ne olur" satırı.
+///
+/// Tek yer: kartın çizdiği dize ile testin ölçtüğü dize aynı fonksiyondan
+/// gelir; bölümün DOĞRU bölüm olduğunu Kotlin sözleşmesi ölçer
+/// (`widget_catalog_wp705_test.dart` → `WidgetDeepLink.ROUTE_*`).
+@visibleForTesting
+String homeWidgetCardTapLine(HomeWidgetCardSpec spec, AppLocalizations l10n) {
+  final route = spec.route;
+  return route == null
+      ? l10n.clockWidgetDokununcaUygulama
+      : l10n.clockWidgetDokununcaBolum(_routeSectionLabel(route, l10n));
+}
+
+/// Derin bağlantının açtığı sekmenin kullanıcıya görünen adı.
+String _routeSectionLabel(WidgetRoute route, AppLocalizations l10n) =>
+    switch (route.tab) {
+      AppTab.home => l10n.coreAnaSayfa,
+      AppTab.tools => l10n.navTools,
+      AppTab.groups => l10n.coreGruplar,
+      AppTab.stats => l10n.profileStatsBaslik,
+      AppTab.profile => l10n.coreProfil,
+    };
 
 /// En sol sekme: ana ekran widget'ları + alarm izin durumu.
 class ClockWidgetsScreen extends ConsumerStatefulWidget {
@@ -120,38 +270,17 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         // WP-461: Katalog yalnız **yayındaki** widget'ı gösterir. Dormant
         // olanların kartı çizilmez; aksi hâlde kullanıcıya picker'da
         // bulunmayan bir widget vaat edilirdi.
-        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.timer))
-          _WidgetCard(
-            icon: Icons.timer,
-            title: AppLocalizations.of(context).clockCalismaSayaci,
-            subtitle: AppLocalizations.of(context).clockAkanSureBaslatdurdurApp,
-          ),
-        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.clock))
-          _WidgetCard(
-            icon: Icons.schedule,
-            title: AppLocalizations.of(context).clockDijitalSaat,
-            subtitle: AppLocalizations.of(context).clockCanliSaatTextclockPil,
-          ),
-        if (androidSurfaces && isHomeWidgetPublished(HomeWidgetProvider.alarm))
-          _WidgetCard(
-            icon: Icons.alarm,
-            title: AppLocalizations.of(context).clockSiradakiAlarm,
-            subtitle: AppLocalizations.of(context).clockBirSonrakiAlarmSaati,
-          ),
-        if (androidSurfaces &&
-            isHomeWidgetPublished(HomeWidgetProvider.studyStats))
-          _WidgetCard(
-            icon: Icons.bar_chart,
-            title: AppLocalizations.of(context).statsIstatistik,
-            subtitle: AppLocalizations.of(context).clockBugunHaftaSeriOzeti,
-          ),
-        if (androidSurfaces &&
-            isHomeWidgetPublished(HomeWidgetProvider.groupLeaderboard))
-          _WidgetCard(
-            icon: Icons.emoji_events_outlined,
-            title: AppLocalizations.of(context).homeGrupSiralamasi,
-            subtitle: AppLocalizations.of(context).clockKampLeaderboardOzeti,
-          ),
+        //
+        // 🔴 WP-705: liste artık `publishedHomeWidgets`ten TÜRETİLİR. Eskiden
+        // beş sağlayıcı elle sayılıyordu ve yayın listesi büyüdüğünde iki
+        // widget (WP-695 geri sayımı, WP-701 görevleri) katalogda hiç
+        // görünmedi. Elle sayım, ayrışmayı zamanla kaçınılmaz kılar.
+        if (androidSurfaces)
+          for (final provider in publishedHomeWidgets)
+            _WidgetCard(
+              key: ValueKey<String>('home_widget_card_${provider.name}'),
+              spec: homeWidgetCardSpec(provider, AppLocalizations.of(context)),
+            ),
         const SizedBox(height: 20),
         Text(
           AppLocalizations.of(context).clockAlarmIcinGerekliIzinler,
@@ -343,24 +472,46 @@ class _PermissionStatusSummary extends StatelessWidget {
 }
 
 class _WidgetCard extends StatelessWidget {
-  const _WidgetCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
+  const _WidgetCard({super.key, required this.spec});
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final HomeWidgetCardSpec spec;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final detailStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
+        isThreeLine: true,
+        leading: Icon(spec.icon),
+        title: Text(
+          spec.title,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(spec.summary),
+            const SizedBox(height: 2),
+            // Boyut satırı yalnız tanımda `targetCell*` beyan edilmişse
+            // çizilir; alarm tanımında yoktur ve olmayan bir varsayılan
+            // boyut vaat edilemez.
+            if (spec.cellWidth != null && spec.cellHeight != null)
+              Text(
+                l10n.clockWidgetVarsayilanBoyut(
+                  spec.cellWidth!,
+                  spec.cellHeight!,
+                ),
+                style: detailStyle,
+              ),
+            Text(homeWidgetCardTapLine(spec, l10n), style: detailStyle),
+          ],
+        ),
       ),
     );
   }
