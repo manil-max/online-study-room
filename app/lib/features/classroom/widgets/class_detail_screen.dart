@@ -37,9 +37,10 @@ import '../../safety/report_sheet.dart';
 import 'group_avatar.dart';
 import 'nudge_action.dart';
 
-/// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
-/// alt kısım ayarlar (sınıftan çık) ve admin işlemleri (ad değiştir, kod yenile,
-/// üye çıkar, sınıfı sil). Admin = sınıfı oluşturan (`group.createdBy`).
+/// Bir sınıfın bilgi + ayarları (§3.8). Sıra (WP-714): üyeler → bilgiler
+/// (davet kodu, hedef, gizlilik, saat dilimi) → ayarlar (sınıftan çık) ve admin
+/// işlemleri (ad değiştir, kod yenile, üye çıkar, sınıfı sil).
+/// Admin = sınıfı oluşturan (`group.createdBy`).
 class ClassDetailScreen extends ConsumerWidget {
   const ClassDetailScreen({super.key, required this.group});
 
@@ -138,6 +139,22 @@ class ClassDetailScreen extends ConsumerWidget {
                   ),
               ],
             ),
+            const SizedBox(height: 16),
+
+            // --- Üyeler ---
+            //
+            // 🔴 WP-714 (sahip emri): üyeler bilgilerin **üstünde**. Bu ekrana
+            // girmenin günlük sebebi kimin grupta olduğunu görmek ve satırdaki
+            // eylemleri (dürt / sustur / moderasyon) kullanmaktır; davet kodu,
+            // hedef, saat dilimi ve oluşturulma tarihi ise nadiren okunur.
+            // Eski sırada 360 dp telefonda ilk üye satırı dy≈756 dp'deydi —
+            // yani her seferinde kaydırma gerekiyordu.
+            Text(
+              AppLocalizations.of(context).classroomUyeler,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
             const SizedBox(height: 16),
 
             // --- Bilgiler ---
@@ -296,15 +313,6 @@ class ClassDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // --- Üyeler ---
-            Text(
-              AppLocalizations.of(context).classroomUyeler,
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
             const SizedBox(height: 16),
 
             // --- Ayarlar / tehlikeli işlemler ---
