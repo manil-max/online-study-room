@@ -131,6 +131,15 @@ void main() {
 
       await _chooseLadderStep(tester, ModerationAction.banPermanent);
       await _confirmReason(tester, 'ağır ihlal');
+      // 🔴 WP-C (PLAN §4.4/1, sahip kararı S3): kalıcı yasak artık hedefin
+      // e-postası **yazılmadan** uygulanmaz. Bu satırdan önce iddia bayattı —
+      // geri alınamayan tek yaptırım tek dokunuşla iniyordu.
+      await tester.enterText(
+        find.byKey(const Key('admin-sanction-hard-email')),
+        'hedef@example.com',
+      );
+      await tester.tap(find.byKey(const Key('admin-sanction-hard-submit')));
+      await tester.pumpAndSettle();
 
       final sanction = (await moderation.fetchSanctions(_targetId)).single;
       expect(sanction.action, ModerationAction.banPermanent);
