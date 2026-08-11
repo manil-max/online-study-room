@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: ana ekran widget'larinin PAYLASILAN gorsel dili (acik tema).
+
+     Kullanim (WP-718 / WP-719 dahil, tek desen):
+       kok gorunum : android:background="@drawable/widget_card_bg"
+                     android:padding="@dimen/widget_design_padding"
+       ana metin   : android:textColor="@color/widget_design_ink"
+       yardimci    : android:textColor="@color/widget_design_ink_muted"
+       vurgu/sayi  : android:textColor="@color/widget_design_accent"
+       ilerleme    : <ProgressBar ... android:progressDrawable=
+                       "@drawable/widget_progress_arc"   (ters U)
+                       "@drawable/widget_progress_bar"   (duz pill)
+                     ve Kotlin'de RemoteViews.setProgressBar(
+                       id, WidgetDesign.PROGRESS_MAX,
+                       WidgetDesign.arcPercent(f) / barPercent(f), false)
+
+     🔴 Renkler UYGULAMA temasindan da DUVAR KAGIDINDAN da bagimsizdir.
+     Iki ders birlestirildi:
+       - Bu depoda kirmizi uyari rozeti kirmizi temada kayboldu: rengini
+         uzerine cizildigi paletten alan bir isaret, o palet degisince
+         gorunmez olur. Widget simgeleri o yuzden SABIT hex tasir.
+       - Android tarafinin ayni tuzagi `@android:color/system_*` (Material
+         You) referanslaridir: rengi duvar kagidi secer, kontrasti kimse
+         olcmez. `values-v31` bu dosyayi bilerek EZMEZ.
+     Zemin OPAKtir; duvar kagidi arkadan sizmaz, yani kontrast orani her
+     duvar kagidinda ayni kalir. Oranlar olculur:
+     `test/features/android_widgets/countdown_widget_wp717_test.dart`.
+-->
+<resources>
+    <!-- Kart zemini: opak, hafif soguk beyaz. -->
+    <color name="widget_design_surface">#F2F5FA</color>
+    <!-- Ana metin (WCAG AA kritik metin). -->
+    <color name="widget_design_ink">#151A21</color>
+    <!-- Yardimci metin / etiket. -->
+    <color name="widget_design_ink_muted">#4C5563</color>
+    <!-- Vurgu: buyuk sayi ve yayin DOLU parcasi. Kamp atesi kehribari. -->
+    <color name="widget_design_accent">#A64B00</color>
+    <!-- Ilerlemenin BOS parcasi (yay izi / cubuk izi). -->
+    <color name="widget_design_track">#CBD5E3</color>
+
+    <!-- Olculer: kart kosesi, kok dolgu, yay yuksekligi, satir araligi. -->
+    <dimen name="widget_design_corner">18dp</dimen>
+    <dimen name="widget_design_padding">12dp</dimen>
+    <dimen name="widget_design_arc_height">26dp</dimen>
+    <dimen name="widget_design_row_gap">4dp</dimen>
+</resources>

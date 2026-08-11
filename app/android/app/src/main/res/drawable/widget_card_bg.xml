@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: paylasilan kart zemini. Her widget'in kok gorunumu bunu kullanir.
+
+     Neden OPAK bir zemin: widget duvar kagidinin uzerinde durur. Yari saydam
+     ya da sistem paletinden turetilen bir zeminde metin kontrasti duvar
+     kagidina gore degisir ve olculemez. Opak zemin, kontrast orani iddiasini
+     (bkz. countdown_widget_wp717_test.dart) her cihazda gecerli kilar.
+     Kose yaricapi launcher'in kirptigi yaricapla ayni olmak zorunda degildir;
+     18dp Android 12+ widget kirpmasinin altinda kaldigi icin kose kesilmez. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_design_surface" />
+    <corners android:radius="@dimen/widget_design_corner" />
+</shape>

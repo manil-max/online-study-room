@@ -24,9 +24,15 @@
      belirsizdi. Icerik uc satir (sinav adi / gun sayisi / etiket); kisa halde
      ad dusurulur, geriye iki satir kalir - bu 110x80dp'ye sigar.
 -->
+<!-- WP-717: `maxResizeHeight` 180dp -> 250dp (3 -> 4 hucre).
+     Widget artik tek kayit degil UC sinav tasiyor (kahraman blogu + iki
+     yardimci satir + ters U yay). 180dp'de o bilesim sikisiyordu; ust
+     sinir 4 hucreye acildi ki kullanici isterse hepsini rahat gorsun.
+     Varsayilan boyut DEGISMEDI (2x2 = 110x110dp): sahip "boyutlari
+     kocaman" dedi, buyume yalniz kullanicinin istegiyle olur. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_countdown_widget"
-    android:maxResizeHeight="180dp"
+    android:maxResizeHeight="250dp"
     android:maxResizeWidth="250dp"
     android:minHeight="110dp"
     android:minResizeHeight="80dp"

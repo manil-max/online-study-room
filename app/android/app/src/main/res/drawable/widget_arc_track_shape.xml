@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: "ters U" yayin BOS parcasi (iz).
+
+     Sahip: "buraya renkli bir bar koysan mesela ters U seklinde daha guzel
+     olur." Ters U = yarim daire; vektorde tek karsiligi eliptik yay komutudur
+     (`A`). Yay bir CIZGIdir (stroke), dolgu degil: uclari yuvarlak.
+
+     Gorus kutusu 100x56, yay merkezi (50,50), yaricap 44, kalinlik 7 ->
+     ust kenar y=2.5, alt uc y=53.5, sol kenar x=2.5; hicbiri kutunun disina
+     tasmaz, yani `ProgressBar` yayi kirpmadan olceklendirir. Kutu genisleyince
+     yay yassilasir ama cizgi KALINLIGI sabit kalir (VectorDrawable stroke
+     olcegi tek skalerdir). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="56dp"
+    android:viewportWidth="100"
+    android:viewportHeight="56">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M6,50 A44,44 0 0 1 94,50"
+        android:strokeColor="@color/widget_design_track"
+        android:strokeLineCap="round"
+        android:strokeWidth="7" />
+</vector>

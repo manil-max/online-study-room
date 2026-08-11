@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: RemoteViews'ta SURULEBILIR ters U ilerleme cizimi.
+
+     🔴 RemoteViews sinirlidir: kendi `View`ini alamaz, `Canvas` cizemez,
+     rastgele metot cagiramaz. Denenen ve ELENEN yollar:
+       - `Canvas` -> `Bitmap` -> `setImageViewBitmap`: calisir ama her
+         guncellemede bitmap uretir (widget bitmap bellek siniri) ve JVM
+         biriminde `android.graphics` saplamalari yuzunden hic test edilemez.
+       - Onceden uretilmis `LevelListDrawable`: acisal olarak dogru ama her
+         kademe icin ayri vektor dosyasi ister (21 dosya) ve `setImageLevel`
+         yolu `setProgressBar` kadar acik bir sozlesme degildir.
+     Secilen yol: `ProgressBar` + ozel `progressDrawable`. `setProgressBar`
+     RemoteViews'un birinci sinif APIsidir; `ProgressBar` seviyeyi
+     (`level` 0..10000) `@android:id/progress` katmanina verir. O katman bir
+     `<clip>` OLMAK ZORUNDA - seviyeyi yorumlayan tek sey odur; duz bir
+     `<item>` konsaydi ilerleme sessizce hicbir sey yapmazdi.
+
+     Yatay kirpma yayi soldan saga doldurur: sol bacak -> tepe -> sag bacak.
+     Yatay konum ile ACI arasindaki kosinus egrilmesi Kotlin tarafinda
+     duzeltilir (`WidgetDesign.arcPercent`), yani gorunen dolu YAY UZUNLUGU
+     ilerlemeyle dogru orantilidir. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@android:id/background"
+        android:drawable="@drawable/widget_arc_track_shape" />
+    <item android:id="@android:id/progress">
+        <clip
+            android:clipOrientation="horizontal"
+            android:drawable="@drawable/widget_arc_fill_shape"
+            android:gravity="left" />
+    </item>
+</layer-list>

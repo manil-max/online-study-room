@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: paylasilan gorsel dil - koyu tema.
+     Ad kumesi `values/widget_design.xml` ile BIREBIR ayni olmak zorundadir;
+     bir simge burada unutulursa gece modunda o yuzey okunmaz hale gelir ve
+     hicbir derleme hatasi bunu soylemez (test ad kumelerini karsilastirir).
+     Olculer tema ile degismez, yalniz renkler burada tanimlanir. -->
+<resources>
+    <color name="widget_design_surface">#121821</color>
+    <color name="widget_design_ink">#FFFFFF</color>
+    <color name="widget_design_ink_muted">#B4BFCF</color>
+    <color name="widget_design_accent">#FFB15C</color>
+    <color name="widget_design_track">#2E3743</color>
+</resources>

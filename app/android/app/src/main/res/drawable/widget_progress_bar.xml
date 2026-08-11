@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-717: gorsel dilin DUZ (pill) ilerleme cizimi.
+
+     Ters U bir kahraman gostergesidir; satir ici ilerleme (gorev listesi,
+     gunluk hedef) icin yassi bir cubuk daha okunur. Ayni sozlesme:
+       <ProgressBar android:progressDrawable="@drawable/widget_progress_bar" …/>
+       setProgressBar(id, WidgetDesign.PROGRESS_MAX,
+                      WidgetDesign.barPercent(fraction), false)
+     Burada acisal duzeltme YOKTUR: duz cubukta yatay konum zaten ilerlemedir,
+     `barPercent` yalniz kirpar ve yuvarlar. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/widget_design_track" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip
+            android:clipOrientation="horizontal"
+            android:gravity="left">
+            <shape android:shape="rectangle">
+                <solid android:color="@color/widget_design_accent" />
+                <corners android:radius="8dp" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

@@ -90,8 +90,37 @@ internal fun parseExamDay(raw: String?): Long? {
  * varsa o, yoksa listenin ilki. Farklı seçmek, kullanıcının uygulamada gördüğü
  * sınavla widget'ta gördüğünü ayrıştırırdı.
  */
-internal fun countdownWidgetModel(rawJson: String?, nowMs: Long): CountdownWidgetModel {
-    val empty = CountdownWidgetModel(CountdownState.EMPTY, "", 0L, COUNTDOWN_DASH)
+internal fun countdownWidgetModel(rawJson: String?, nowMs: Long): CountdownWidgetModel =
+    countdownWidgetList(rawJson, nowMs).head
+
+/**
+ * WP-717: widget'in cizecegi **tum** kayitlar.
+ *
+ * Beta testcisi: "sadece 1 sinavin geri sayimi gorunuyor; uygulamadaki gibi
+ * 3'u de gorunse." Model o yuzden tek kayit degil, kartla ayni siradaki liste
+ * uretir. [head] geriye donuk uyumu tasir: WP-695'in olctugu buyuk sayi hala
+ * listenin ilk kaydidir.
+ */
+internal data class CountdownRow(
+    val state: CountdownState,
+    val name: String,
+    val days: Long,
+    val daysText: String,
+)
+
+internal data class CountdownWidgetList(
+    val rows: List<CountdownRow>,
+    /** One cikarilan kayit GERCEKTEN var mi (silinmis kimlik sayilmaz). */
+    val hasPriority: Boolean,
+) {
+    val head: CountdownWidgetModel
+        get() = rows.firstOrNull()?.let {
+            CountdownWidgetModel(it.state, it.name, it.days, it.daysText)
+        } ?: CountdownWidgetModel(CountdownState.EMPTY, "", 0L, COUNTDOWN_DASH)
+}
+
+internal fun countdownWidgetList(rawJson: String?, nowMs: Long): CountdownWidgetList {
+    val empty = CountdownWidgetList(emptyList(), false)
     val root = MiniJson.parse(rawJson) as? Map<*, *> ?: return empty
     // WP-694 kaydin ustune `synced` / `deleted` listelerini ve her girdiye
     // `updatedAt` alanini ekledi. Ayristirici **tanimadigi alani yok sayar**;
@@ -112,16 +141,110 @@ internal fun countdownWidgetModel(rawJson: String?, nowMs: Long): CountdownWidge
         .filterNot { (it["id"] as? String) in deleted }
     if (entries.isEmpty()) return empty
     val priorityId = (root["priority"] as? String)?.takeIf { it.isNotEmpty() }
-    val chosen = entries.firstOrNull { (it["id"] as? String) == priorityId } ?: entries.first()
-    val examDay = parseExamDay(chosen["day"] as? String) ?: return empty
-    val name = (chosen["name"] as? String)?.trim().orEmpty()
-    val diff = examDay - istanbulEpochDay(nowMs)
-    return when {
-        diff > 0L -> CountdownWidgetModel(CountdownState.FUTURE, name, diff, diff.toString())
-        diff == 0L -> CountdownWidgetModel(CountdownState.TODAY, name, 0L, "0")
-        // 🔴 Geçmiş tarih negatif gün YAZMAZ ("-12 gün kaldı" bir hatadır).
-        else -> CountdownWidgetModel(CountdownState.PAST, name, diff, COUNTDOWN_DASH)
+    val featured = entries.firstOrNull { (it["id"] as? String) == priorityId }
+    // Siralama `dday_card.dart` ile birebir: one cikarilan basa alinir,
+    // digerleri kullanicinin kendi sirasinda kalir.
+    val ordered =
+        if (featured == null) entries else listOf(featured) + entries.filter { it !== featured }
+    val today = istanbulEpochDay(nowMs)
+    val rows = ordered.mapNotNull { entry ->
+        val examDay = parseExamDay(entry["day"] as? String) ?: return@mapNotNull null
+        val name = (entry["name"] as? String)?.trim().orEmpty()
+        val diff = examDay - today
+        when {
+            diff > 0L -> CountdownRow(CountdownState.FUTURE, name, diff, diff.toString())
+            diff == 0L -> CountdownRow(CountdownState.TODAY, name, 0L, "0")
+            // 🔴 Geçmiş tarih negatif gün YAZMAZ ("-12 gün kaldı" bir hatadır).
+            else -> CountdownRow(CountdownState.PAST, name, diff, COUNTDOWN_DASH)
+        }
     }
+    if (rows.isEmpty()) return empty
+    return CountdownWidgetList(rows, featured != null)
+}
+
+// ---------------------------------------------------------------------------
+// WP-717 — yerlesim kurallari (saf; JVM testi bunlari dogrudan olcer)
+//
+// Kural kaynagi uygulamadaki kart: `lib/features/home/widgets/dday_card.dart`
+// `useHero = featured != null && (density != tight || others.length <= 1)`.
+// Tek fark widget'a ozel: kayit TEK ise kahraman her zaman kullanilir — 2x2
+// bir kutuyu tek satirlik kucuk yaziyla doldurmak alani ziyan ederdi.
+// ---------------------------------------------------------------------------
+
+/** Duzendeki statik satir sayisi; RemoteViews dinamik satir uretemez. */
+internal const val COUNTDOWN_ROW_SLOTS = 3
+
+/** Liste (kahramansiz) halde kac satir cizilir. */
+internal fun countdownRowCapacity(height: WidgetHeightClass): Int = when (height) {
+    WidgetHeightClass.SHORT -> 2
+    WidgetHeightClass.MEDIUM -> COUNTDOWN_ROW_SLOTS
+    WidgetHeightClass.TALL -> COUNTDOWN_ROW_SLOTS
+}
+
+/** Kahraman blogunun ALTINDA kac yardimci satira yer kalir. */
+internal fun countdownHeroRowCapacity(height: WidgetHeightClass): Int = when (height) {
+    WidgetHeightClass.SHORT -> 0
+    WidgetHeightClass.MEDIUM -> 1
+    WidgetHeightClass.TALL -> 2
+}
+
+internal fun countdownUsesHero(
+    height: WidgetHeightClass,
+    rowCount: Int,
+    hasPriority: Boolean,
+): Boolean = when {
+    rowCount <= 0 -> false
+    rowCount == 1 -> true
+    !hasPriority -> false
+    else -> height != WidgetHeightClass.SHORT || rowCount <= 2
+}
+
+internal fun countdownVisibleRowCount(
+    height: WidgetHeightClass,
+    rowCount: Int,
+    hasPriority: Boolean,
+): Int = if (countdownUsesHero(height, rowCount, hasPriority)) {
+    minOf(rowCount - 1, countdownHeroRowCapacity(height), COUNTDOWN_ROW_SLOTS)
+} else {
+    minOf(rowCount, countdownRowCapacity(height), COUNTDOWN_ROW_SLOTS)
+}
+
+/**
+ * Yayin doluluk kesiri. Kayitta baslangic tarihi YOKTUR, o yuzden olcek bir
+ * ufuktur: bir yil. 365 gun ve otesi bos yay, sinav gunu tam dolu yay.
+ * (Sahibin cihazindaki uc sinav — 76 / 312 / 313 gun — bu olcekte
+ * %79 / %15 / %14 verir; ayni ufuk uc kaydi da ayirt edilebilir kilar.)
+ */
+internal const val COUNTDOWN_ARC_HORIZON_DAYS = 365L
+
+internal fun countdownArcFraction(model: CountdownWidgetModel): Double = when (model.state) {
+    CountdownState.TODAY -> 1.0
+    CountdownState.FUTURE -> {
+        val remaining = model.days.coerceIn(0L, COUNTDOWN_ARC_HORIZON_DAYS)
+        (COUNTDOWN_ARC_HORIZON_DAYS - remaining).toDouble() / COUNTDOWN_ARC_HORIZON_DAYS
+    }
+    // Bos ya da gecmis kayitta gosterilecek ilerleme yoktur; yay 0 degil,
+    // GIZLIdir (bkz. countdownArcVisible) — bos bir iz "veri var ama sifir"
+    // gibi okunurdu.
+    CountdownState.EMPTY, CountdownState.PAST -> 0.0
+}
+
+/** Kisa kutuda yaya yer yok; bos/gecmis durumda anlami yok. */
+internal fun countdownArcVisible(height: WidgetHeightClass, state: CountdownState): Boolean =
+    height != WidgetHeightClass.SHORT &&
+        (state == CountdownState.FUTURE || state == CountdownState.TODAY)
+
+/** Satirin sag ucundaki metin; uygulamadaki kartla ayni sozcukler. */
+internal fun countdownRowValueText(
+    row: CountdownRow,
+    daysLeftLabel: String,
+    todayLabel: String,
+    passedLabel: String,
+): String = when (row.state) {
+    CountdownState.FUTURE -> "${row.daysText} $daysLeftLabel"
+    CountdownState.TODAY -> todayLabel
+    CountdownState.PAST -> passedLabel
+    CountdownState.EMPTY -> COUNTDOWN_DASH
 }
 
 /** Yalnız `getString` — sayı okunmaz (bkz. sınıf yorumu, putLong/getInt tuzağı). */
@@ -169,28 +292,31 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
-        val model = runCatching {
-            countdownWidgetModel(
+        val list = runCatching {
+            countdownWidgetList(
                 readCountdownJson(
                     context.getSharedPreferences(COUNTDOWN_PREFS_NAME, Context.MODE_PRIVATE),
                 ),
                 System.currentTimeMillis(),
             )
-        }.getOrElse {
-            CountdownWidgetModel(CountdownState.EMPTY, "", 0L, COUNTDOWN_DASH)
-        }
+        }.getOrElse { CountdownWidgetList(emptyList(), false) }
 
+        val model = list.head
+        val daysLeftLabel = context.getString(R.string.widget_countdown_days_left)
+        val todayLabel = context.getString(R.string.widget_countdown_today)
+        val passedLabel = context.getString(R.string.widget_countdown_passed)
+        val defaultName = context.getString(R.string.widget_countdown_default_name)
         val label = when (model.state) {
             CountdownState.EMPTY -> context.getString(R.string.widget_countdown_empty)
-            CountdownState.FUTURE -> context.getString(R.string.widget_countdown_days_left)
-            CountdownState.TODAY -> context.getString(R.string.widget_countdown_today)
-            CountdownState.PAST -> context.getString(R.string.widget_countdown_passed)
+            CountdownState.FUTURE -> daysLeftLabel
+            CountdownState.TODAY -> todayLabel
+            CountdownState.PAST -> passedLabel
         }
         val title = when {
             model.state == CountdownState.EMPTY ->
                 context.getString(R.string.widget_countdown_title)
             model.name.isNotEmpty() -> model.name
-            else -> context.getString(R.string.widget_countdown_default_name)
+            else -> defaultName
         }
 
         appWidgetIds.forEach { widgetId ->
@@ -199,6 +325,16 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // `minWidth=110dp` kutuya sigar ama 2 hucreden dar bir kutuda
                 // kirpilirdi ve buyutuldugunde ayni puntoda kalirdi.
                 val size = countdownWidgetSizeClass(appWidgetManager, widgetId)
+                // WP-717: kahraman mi liste mi? Kural uygulamadaki kartla ayni
+                // (`dday_card.dart` -> `useHero`). Bos durumda kahraman blogu
+                // yine gorunur, cunku "henuz geri sayim eklenmedi" satirini o
+                // tasir.
+                val hero = countdownUsesHero(size.height, list.rows.size, list.hasPriority)
+                val heroVisible = hero || list.rows.isEmpty()
+                setViewVisibility(
+                    R.id.countdown_widget_hero,
+                    if (heroVisible) android.view.View.VISIBLE else android.view.View.GONE,
+                )
                 setTextViewText(R.id.countdown_widget_name, title)
                 setTextViewText(R.id.countdown_widget_days, model.daysText)
                 setTextViewText(R.id.countdown_widget_label, label)
@@ -221,12 +357,64 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // satiri kalir: widget'in tasidigi bilgi budur.
                 setViewVisibility(
                     R.id.countdown_widget_name,
-                    if (countdownNameVisible(size.height)) {
+                    if (heroVisible && countdownNameVisible(size.height)) {
                         android.view.View.VISIBLE
                     } else {
                         android.view.View.GONE
                     },
                 )
+
+                // WP-717 — "ters U" yay. Gorunurluk ve deger AYRI surulur:
+                // duzende durup hicbir zaman deger almayan bir gosterge, bu
+                // depoda `resizeMode`un dustugu olu-bayrak tuzagidir.
+                setViewVisibility(
+                    R.id.countdown_widget_arc,
+                    if (countdownArcVisible(size.height, model.state)) {
+                        android.view.View.VISIBLE
+                    } else {
+                        android.view.View.GONE
+                    },
+                )
+                setProgressBar(
+                    R.id.countdown_widget_arc,
+                    WidgetDesign.PROGRESS_MAX,
+                    WidgetDesign.arcPercent(countdownArcFraction(model)),
+                    false,
+                )
+
+                // WP-717 — diger sinavlar. Kahraman varsa listenin GERISI,
+                // yoksa listenin TAMAMI cizilir (uygulamadaki kartla ayni).
+                val rowSp = COUNTDOWN_ROW_SP.of(size.width)
+                val drawn = if (hero) list.rows.drop(1) else list.rows
+                val visibleRows =
+                    countdownVisibleRowCount(size.height, list.rows.size, list.hasPriority)
+                for (slot in 0 until COUNTDOWN_ROW_SLOTS) {
+                    val row = drawn.getOrNull(slot).takeIf { slot < visibleRows }
+                    setViewVisibility(
+                        COUNTDOWN_ROW_CONTAINER_IDS[slot],
+                        if (row == null) android.view.View.GONE else android.view.View.VISIBLE,
+                    )
+                    if (row == null) continue
+                    setTextViewText(
+                        COUNTDOWN_ROW_NAME_IDS[slot],
+                        row.name.ifEmpty { defaultName },
+                    )
+                    setTextViewText(
+                        COUNTDOWN_ROW_DAYS_IDS[slot],
+                        countdownRowValueText(row, daysLeftLabel, todayLabel, passedLabel),
+                    )
+                    setTextViewTextSize(
+                        COUNTDOWN_ROW_NAME_IDS[slot],
+                        android.util.TypedValue.COMPLEX_UNIT_SP,
+                        rowSp,
+                    )
+                    setTextViewTextSize(
+                        COUNTDOWN_ROW_DAYS_IDS[slot],
+                        android.util.TypedValue.COMPLEX_UNIT_SP,
+                        rowSp,
+                    )
+                }
+
                 val paddingPx = (
                     widgetRootPaddingDp(12, size.height) *
                         context.resources.displayMetrics.density
@@ -255,6 +443,27 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
         }
     }
 }
+
+/** Satir puntosu; kahraman sayisindan kucuk kalmali ki hiyerarsi bozulmasin. */
+private val COUNTDOWN_ROW_SP = SpRamp(11f, 12f, 14f)
+
+private val COUNTDOWN_ROW_CONTAINER_IDS = intArrayOf(
+    R.id.countdown_widget_row_1,
+    R.id.countdown_widget_row_2,
+    R.id.countdown_widget_row_3,
+)
+
+private val COUNTDOWN_ROW_NAME_IDS = intArrayOf(
+    R.id.countdown_widget_row_name_1,
+    R.id.countdown_widget_row_name_2,
+    R.id.countdown_widget_row_name_3,
+)
+
+private val COUNTDOWN_ROW_DAYS_IDS = intArrayOf(
+    R.id.countdown_widget_row_days_1,
+    R.id.countdown_widget_row_days_2,
+    R.id.countdown_widget_row_days_3,
+)
 
 /**
  * JSON'un yalnız bu kaydın kullandığı alt kümesini çözen küçük ayrıştırıcı.
