@@ -161,6 +161,40 @@ enum StudyHomeWidget {
   /// anlamlıdır; yoksa her snapshot 17 boş platform kanalı turudur.
   static bool get anyPublishedConsumesWidgetData =>
       values.any((widget) => widget.isPublished && widget.consumesWidgetData);
+
+  /// 🔴 WP-708: sağlayıcının Kotlin `onUpdate`'inin GERÇEKTEN okuduğu anahtarlar.
+  ///
+  /// Neden gerekli: [anyPublishedConsumesWidgetData] **genel** bir kapıdır.
+  /// WP-707 dört widget'ı yayına alınca kapı `true` oldu ve `saveSnapshot`
+  /// yeniden **her** anahtarı yazmaya başladı — `widgetData`'ya hiç bakmayan
+  /// sayaç widget'ının dört anahtarı dâhil. WP-558'in kapattığı israf tam
+  /// olarak buydu (sayaç turu: 0 kanal turu → yine 4). Genel kapı, yayın
+  /// listesi büyüdüğü anda ölçmeyi bırakan bir kapıydı.
+  ///
+  /// Kümeler elle sayılmadı, `StudyWidgetProviders.kt` sınıf gövdelerinden
+  /// türetilip doğrulandı (`widget_key_ownership_wp708_test.dart`). Ölçüm:
+  /// `stats_title` / `stats_today` / `stats_week` sabitleri tanımlı ama
+  /// **hiçbir sağlayıcı okumuyor** — o üç anahtar artık hiç yazılmaz.
+  Set<String> get readKeys => switch (this) {
+    StudyHomeWidget.stats => const {
+      AndroidWidgetKeys.dailyGoalPercent,
+      AndroidWidgetKeys.dailyGoalDetail,
+      AndroidWidgetKeys.statsStreak,
+    },
+    StudyHomeWidget.leaderboard => AndroidWidgetKeys.leaderboardGroup,
+    StudyHomeWidget.groupGoal => AndroidWidgetKeys.groupGoalGroup,
+    // `consumesWidgetData: false` olanlar veriyi kendi prefs kaydından okur.
+    StudyHomeWidget.timer ||
+    StudyHomeWidget.countdown ||
+    StudyHomeWidget.task => const <String>{},
+  };
+
+  /// Yayındaki tüketicilerin okuduğu anahtarların birleşimi — `saveSnapshot`
+  /// yalnız bunları yazar. Boşsa tek kanal turu bile yapılmaz.
+  static Set<String> get writableKeys => {
+    for (final widget in values)
+      if (widget.isPublished && widget.consumesWidgetData) ...widget.readKeys,
+  };
 }
 
 abstract final class AndroidWidgetKeys {
@@ -458,8 +492,17 @@ class AndroidWidgetService implements AndroidWidgetGateway {
   Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot) async {
     // WP-558: yayında `widgetData` okuyan sağlayıcı yoksa tek anahtar bile
     // yazılmaz — 17 anahtar × ayrı kanal turu boşuna gidiyordu.
-    if (!StudyHomeWidget.anyPublishedConsumesWidgetData) return;
+    //
+    // 🔴 WP-708: kapı artık ANAHTAR BASINA. Genel bayrak tek başına yetmiyor:
+    // WP-707 dört widget'ı yayına alınca bayrak `true` oldu ve okuyucusu
+    // OLMAYAN anahtarlar da yeniden yazılmaya başladı (sayaç turu 0 → 4 kanal).
+    // Bir kapının, ölçtüğü koşul genişleyince sessizce ölçmeyi bırakması bu
+    // depodaki tekrarlayan kusur; burada koşul yayın listesine değil,
+    // anahtarın gerçek okuyucusuna bağlandı.
+    final writable = StudyHomeWidget.writableKeys;
+    if (writable.isEmpty) return;
     for (final entry in snapshot.toWidgetData().entries) {
+      if (!writable.contains(entry.key)) continue;
       await _saveValue(entry.key, entry.value);
     }
   }

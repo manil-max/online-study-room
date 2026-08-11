@@ -87,7 +87,16 @@ void main() {
         reason: 'geri sayim prefs\'ten okur; widgetData tuketicisi ilan '
             'edilirse WP-558\'in kapattigi 17 kanal turu geri acilir',
       );
-      expect(StudyHomeWidget.anyPublishedConsumesWidgetData, isFalse);
+      // WP-708: bu satir eskiden `anyPublishedConsumesWidgetData` genel
+      // bayragini `false` bekliyordu. WP-707 dort widget'i yayina alinca
+      // bayrak `true` oldu ve iddia bayatladi. Genel bayragi gevsetmek
+      // yerine iddia ASIL korudugu seye baglandi: geri sayimin kendi
+      // anahtarlari yazilmaz, yani 17 anahtarlik firtina geri gelmez.
+      expect(countdown.readKeys, isEmpty);
+      expect(
+        StudyHomeWidget.writableKeys.intersection(countdown.readKeys),
+        isEmpty,
+      );
     });
   });
 
