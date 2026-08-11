@@ -40,9 +40,23 @@ class OnboardingNotifier extends Notifier<bool> {
     final auth = ref.watch(authStateProvider);
 
     // Auth yüklenene kadar "tamam" sayma — aksi halde AuthGate kısa süre HomeShell'e kaçar.
-    if (auth.isLoading) return false;
+    //
+    // 🔴 WP-709: koşul ÖNCE düz `auth.isLoading` idi ve günlük hedef
+    // kaydedildikten sonra kullanıcıya bir kare TANITIM EKRANI çiziyordu.
+    // Zincir: `settings_screen.dart` yazmadan sonra
+    // `ref.invalidate(authStateProvider)` çağırır → akış yeniden kurulur ve
+    // `SupabaseAuthRepository._sessionProfiles` ilk `yield`den önce `profiles`
+    // satırını ağdan çeker. O pencerede durum "önceki değeri taşıyan
+    // `AsyncLoading`"tır (`isRefreshing`): `AuthGate` `when`i varsayılan
+    // `skipLoadingOnRefresh: true` ile hala VERİ dalını çizer, ama burası
+    // `false` döndüğü için kapı `OnboardingScreen`e geçiyordu.
+    //
+    // Bilinmezlik yalnız DEĞER YOKKEN gerçektir; yeniden yükleme sırasında
+    // önceki profil elimizdedir. Aynı ders: `asData` yeniden yüklemede boşalır,
+    // `value` önceki değeri korur (`docs/qa/V58-ASYNC-EMPTY-AUDIT.md §1`).
+    if (auth.isLoading && !auth.hasValue) return false;
 
-    final Profile? user = auth.asData?.value;
+    final Profile? user = auth.value;
     // Çıkışlı: AuthGate AuthScreen gösterir; true = onboarding engeli yok.
     if (user == null) return true;
 
