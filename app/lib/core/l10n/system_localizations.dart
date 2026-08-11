@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'app_locale.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -34,5 +36,36 @@ Future<AppLocalizations> loadSystemLocalizations([Locale? requested]) {
   final resolved = requested == null
       ? activeAppLocale
       : resolvePreferredAppLocale(requested, AppLanguage.system);
+  return AppLocalizations.delegate.load(resolved);
+}
+
+/// Kullanicinin uygulamada SECTIGI dil — bellekteki global degil, diskteki
+/// tercih.
+///
+/// 🔴 WP-719: [activeAppLocale] **degisken bir global**dir ve ilk degeri
+/// cihazin dilinden ([AppLanguage.system]) tohumlanir; kullanicinin tercihine
+/// ancak `AppLanguageNotifier` kurulunca ya da `MaterialApp`in
+/// `localeResolutionCallback`i kosunca duzeltilir. Ana ekran widget'larinin
+/// metnini yazan yollar bundan once (acilis turu) veya baska bir bellek
+/// alaninda (arka plan isolate'i) kosabilir; o zaman diske YANLIS dil yazilir
+/// ve kart bir daha yazilana kadar orada kalir. Sahibin cihazinda olculen
+/// celiski buydu: uygulama Turkce, widget "Tasks / No tasks yet".
+///
+/// 🔴 Burada `SharedPreferences.getInstance()` **cagrilmaz** — cagiran zaten
+/// yuklenmis ornegi verir. Eklenti sahte degerlerle kurulmadiginda o cagri hic
+/// tamamlanmaz ve cagirani sonsuza kadar bekletir (dosyanin ustundeki not).
+Locale appLocaleFromPrefs(SharedPreferences prefs) => resolvePreferredAppLocale(
+  platformLocale(),
+  appLanguageFromPreferences(prefs),
+);
+
+/// Prefs elde varken dogru dili yukler **ve** [activeAppLocale]'i tohumlar.
+///
+/// Tohumlama isin yarisidir: ayni turda `loadSystemLocalizations()` ile metin
+/// ureten diger widget yollari (siralama/hedef anlik goruntuleri,
+/// `study_providers.dart`) da boylece uygulama dilini konusur.
+Future<AppLocalizations> loadAppLocalizations(SharedPreferences prefs) {
+  final resolved = appLocaleFromPrefs(prefs);
+  setActiveAppLocale(resolved);
   return AppLocalizations.delegate.load(resolved);
 }

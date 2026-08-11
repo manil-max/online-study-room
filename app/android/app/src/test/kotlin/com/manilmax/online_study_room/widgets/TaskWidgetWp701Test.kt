@@ -189,17 +189,18 @@ class TaskWidgetWp701Test {
     }
 
     @Test
-    fun YUKSEKLIK_satir_sayisini_GENISLIK_puntoyu_secer() {
+    fun YUKSEKLIK_basligi_GENISLIK_puntoyu_secer() {
+        // WP-719: satir SAYISI artik sinifin isi degil (bkz.
+        // TaskWidgetSizeWp719Test); sinif yalniz baslik gorunurlugunu ve punto
+        // merdivenini secer.
         val spec = TASK_WIDGET_SIZE_SPEC
 
         val genisAmaKisa = widgetSizeClass(spec, 250, 80)
         assertEquals(WidgetWidthClass.WIDE, genisAmaKisa.width)
-        assertEquals(2, taskWidgetRowCount(genisAmaKisa.height))
         assertFalse("kisa kutuda baslik yer kaplamamali", taskWidgetTitleVisible(genisAmaKisa.height))
 
         val darAmaUzun = widgetSizeClass(spec, 110, 250)
         assertEquals(WidgetWidthClass.NARROW, darAmaUzun.width)
-        assertEquals(TASK_WIDGET_MAX_ROWS, taskWidgetRowCount(darAmaUzun.height))
         assertTrue(taskWidgetTitleVisible(darAmaUzun.height))
     }
 
@@ -208,22 +209,15 @@ class TaskWidgetWp701Test {
         val model = parseTaskWidgetMirror(
             mirror("a" to false, "b" to false, "c" to false, "d" to false, "e" to false),
         )
-        assertEquals(2, taskWidgetVisibleItems(model, WidgetHeightClass.SHORT).size)
-        assertEquals(3, taskWidgetVisibleItems(model, WidgetHeightClass.MEDIUM).size)
-        assertEquals(5, taskWidgetVisibleItems(model, WidgetHeightClass.TALL).size)
+        // Kutu buyudukce satir sayisi artmali (WP-719: olcu kutudan gelir).
+        val kisa = taskWidgetVisibleItems(model, boxHeightDp = 80, titleVisible = false, paddingDp = 12)
+        val orta = taskWidgetVisibleItems(model, boxHeightDp = 110, titleVisible = true, paddingDp = 13)
+        val uzun = taskWidgetVisibleItems(model, boxHeightDp = 210, titleVisible = true, paddingDp = 14)
+        assertTrue("kisa: ${kisa.size}, orta: ${orta.size}", kisa.size < orta.size)
+        assertTrue("orta: ${orta.size}, uzun: ${uzun.size}", orta.size < uzun.size)
+        assertEquals(TASK_WIDGET_MAX_ROWS, uzun.size)
         // Kirpma listenin BASINDAN alir: kullanicinin sirasi korunur.
-        assertEquals(
-            listOf("a", "b"),
-            taskWidgetVisibleItems(model, WidgetHeightClass.SHORT).map { it.id },
-        )
-    }
-
-    @Test
-    fun gorunen_satirlar_kutuya_SIGAR() {
-        // Her yukseklik sinifinin EN KUCUK kutusunda baslik + satirlar sigmali.
-        assertHeightFits(WidgetHeightClass.SHORT, boxDp = 80, widthClass = WidgetWidthClass.NARROW)
-        assertHeightFits(WidgetHeightClass.MEDIUM, boxDp = 110, widthClass = WidgetWidthClass.MEDIUM)
-        assertHeightFits(WidgetHeightClass.TALL, boxDp = 180, widthClass = WidgetWidthClass.WIDE)
+        assertEquals(listOf("a"), kisa.map { it.id })
     }
 
     @Test
@@ -243,25 +237,6 @@ class TaskWidgetWp701Test {
     // --- aritmetik model ---------------------------------------------------
 
     private val safetyMarginDp = 8f
-
-    private fun lineHeightDp(sp: Float): Float = sp * 1.30f
-
-    private fun assertHeightFits(
-        height: WidgetHeightClass,
-        boxDp: Int,
-        widthClass: WidgetWidthClass,
-    ) {
-        val paddingDp = widgetRootPaddingDp(12, height)
-        val available = boxDp - 2f * paddingDp - safetyMarginDp
-        var needed = taskWidgetRowCount(height) * lineHeightDp(TASK_ROW_SP.of(widthClass))
-        if (taskWidgetTitleVisible(height)) {
-            needed += lineHeightDp(TASK_TITLE_SP.of(widthClass))
-        }
-        assertTrue(
-            "$height: $needed dp gerekiyor, $available dp var -> TASAR",
-            needed <= available,
-        )
-    }
 
     /** Kutuya sigan etiket karakteri (kutucuk + bosluk ~2 karakter dusulur). */
     private fun labelCharsThatFit(boxDp: Int, widthClass: WidgetWidthClass): Int {

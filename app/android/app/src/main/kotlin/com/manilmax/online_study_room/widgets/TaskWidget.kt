@@ -250,20 +250,48 @@ internal val TASK_WIDGET_SIZE_SPEC = WidgetSizeSpec(
 internal val TASK_TITLE_SP = SpRamp(12f, 13f, 15f)
 internal val TASK_ROW_SP = SpRamp(11f, 13f, 14f)
 
+/**
+ * Bir gorev satirinin yuksekligi. `odak_task_widget.xml` icindeki
+ * `android:minHeight="32dp"` ile AYNI sayidir (dokunma hedefi oradan gelir);
+ * ayrisirsa `task_widget_wp719_test.dart` kirmizi duser.
+ */
+internal const val TASK_ROW_HEIGHT_DP = 32
+
+/** Baslik satirinin kapladigi dikey blok (13sp metin + satir araligi). */
+internal const val TASK_TITLE_HEIGHT_DP = 20
+
 /** Kisa kutuda baslik dusurulur; widget'in tasidigi bilgi GOREV SATIRLARIDIR. */
 internal fun taskWidgetTitleVisible(height: WidgetHeightClass): Boolean =
     height != WidgetHeightClass.SHORT
 
-internal fun taskWidgetRowCount(height: WidgetHeightClass): Int = when (height) {
-    WidgetHeightClass.SHORT -> 2
-    WidgetHeightClass.MEDIUM -> 3
-    WidgetHeightClass.TALL -> TASK_WIDGET_MAX_ROWS
+/**
+ * Kutuya GERCEKTEN sigan satir sayisi.
+ *
+ * 🔴 WP-719: bu sayi eskiden kaba yukseklik SINIFINDAN turuyordu
+ * (SHORT=2, MEDIUM=3, TALL=5) ve sinifin dogrulugu bir aritmetik modelle
+ * sinaniyordu; ama o model satir yuksekligini "punto x 1.30" (~17dp) sayiyordu,
+ * layout'ta satir ise `minHeight="32dp"`. Gercek: 110dp'lik kutuda baslik + 3
+ * satir 140dp ister — kart kutuyu 30dp asiyor ve kirpiliyordu. Kapasite artik
+ * kutunun bildirdigi yukseklikten cikar, yani sayilar tek yerde ve olculebilir.
+ */
+internal fun taskWidgetRowCapacity(
+    boxHeightDp: Int,
+    titleVisible: Boolean,
+    paddingDp: Int,
+): Int {
+    val titleDp = if (titleVisible) TASK_TITLE_HEIGHT_DP else 0
+    val usable = boxHeightDp - 2 * paddingDp - titleDp
+    if (usable <= 0) return 0
+    return (usable / TASK_ROW_HEIGHT_DP).coerceIn(0, TASK_WIDGET_MAX_ROWS)
 }
 
 internal fun taskWidgetVisibleItems(
     model: TaskWidgetModel,
-    height: WidgetHeightClass,
-): List<TaskWidgetItem> = model.items.take(taskWidgetRowCount(height))
+    boxHeightDp: Int,
+    titleVisible: Boolean,
+    paddingDp: Int,
+): List<TaskWidgetItem> =
+    model.items.take(taskWidgetRowCapacity(boxHeightDp, titleVisible, paddingDp))
 
 internal fun taskWidgetSizeClass(
     appWidgetManager: AppWidgetManager,
@@ -273,6 +301,24 @@ internal fun taskWidgetSizeClass(
     val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
     val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
     return widgetSizeClass(TASK_WIDGET_SIZE_SPEC, width, height)
+}
+
+/**
+ * Launcher'in bildirdigi kutu yuksekligi (dp).
+ *
+ * Bundle bos gelirse (`getInt` 0) varsayilan kullanilir: 0'i oldugu gibi
+ * kullanmak ilk cizimde kapasiteyi sifirlar ve kullanici widget'i ekler eklemez
+ * bos bir kart gorurdu. `getInt` burada guvenlidir — `AppWidgetManager`
+ * seceneklerini SISTEM yazar, Dart'in `putLong` tuzagi yalniz
+ * `FlutterSharedPreferences` dosyasi icin gecerlidir.
+ */
+internal fun taskWidgetBoxHeightDp(
+    appWidgetManager: AppWidgetManager,
+    widgetId: Int,
+): Int {
+    val options = runCatching { appWidgetManager.getAppWidgetOptions(widgetId) }.getOrNull()
+    val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+    return if (height <= 0) WIDGET_TASK_DEFAULT_HEIGHT_DP else height
 }
 
 private val ROW_IDS = intArrayOf(
@@ -340,7 +386,14 @@ class TaskWidgetProvider : HomeWidgetProvider() {
 
         appWidgetIds.forEach { widgetId ->
             val size = taskWidgetSizeClass(appWidgetManager, widgetId)
-            val visible = taskWidgetVisibleItems(model, size.height)
+            val titleVisible = taskWidgetTitleVisible(size.height)
+            val paddingDp = widgetRootPaddingDp(12, size.height)
+            val visible = taskWidgetVisibleItems(
+                model,
+                taskWidgetBoxHeightDp(appWidgetManager, widgetId),
+                titleVisible,
+                paddingDp,
+            )
             val views = RemoteViews(context.packageName, R.layout.odak_task_widget).apply {
                 setTextViewText(R.id.task_widget_title, heading)
                 setTextViewTextSize(
@@ -350,7 +403,7 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                 )
                 setViewVisibility(
                     R.id.task_widget_title,
-                    if (taskWidgetTitleVisible(size.height)) View.VISIBLE else View.GONE,
+                    if (titleVisible) View.VISIBLE else View.GONE,
                 )
 
                 setTextViewText(R.id.task_widget_empty, emptyLabel)
@@ -397,8 +450,7 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                 }
 
                 val paddingPx = (
-                    widgetRootPaddingDp(12, size.height) *
-                        context.resources.displayMetrics.density
+                    paddingDp * context.resources.displayMetrics.density
                     ).toInt()
                 setViewPadding(
                     R.id.task_widget_root,
@@ -436,6 +488,10 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                 // Baslik kisa yukseklikte GONE oluyor (`taskWidgetTitleVisible`);
                 // kok baglanmazsa o boyutta hicbir gezinme hedefi kalmazdi.
                 setOnClickPendingIntent(R.id.task_widget_root, openTasks)
+                // WP-719: kart artik kutuyu doldurmuyor (`wrap_content`).
+                // Kartin disinda kalan seffaf alan baglanmazsa kullanicinin
+                // dokunusu launcher'a gider ve widget "olu" hissettirir.
+                setOnClickPendingIntent(R.id.task_widget_frame, openTasks)
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }

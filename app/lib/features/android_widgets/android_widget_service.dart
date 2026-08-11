@@ -708,10 +708,18 @@ class TaskWidgetBridge {
   }
 
   /// Görev listesini aynaya yazar ve widget'a yeniden çizim yayını gönderir.
+  ///
+  /// 🔴 WP-719: metin `loadSystemLocalizations()` ile değil
+  /// [loadAppLocalizations] ile üretilir. Birincisi bellekteki `activeAppLocale`
+  /// globaline bakar; o global cihaz dilinden tohumlanır ve kullanıcının
+  /// tercihine ancak arayüz kurulunca düzeltilir. Açılış turu ondan önce
+  /// koşarsa aynaya **cihaz dili** yazılır ve ana ekranda kalır: uygulama
+  /// Türkçe iken widget "Tasks / No tasks yet" diyordu. Tercih diskte durur,
+  /// `prefs` de zaten elimizdedir.
   Future<void> syncMirror(List<UserTask> tasks) async {
     if (!_isAndroid) return;
     final prefs = _ref.read(sharedPreferencesProvider);
-    final l10n = await loadSystemLocalizations();
+    final l10n = await loadAppLocalizations(prefs);
     await prefs.setString(
       TaskWidgetPrefsKeys.mirror,
       encodeTaskWidgetMirror(

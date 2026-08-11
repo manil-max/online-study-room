@@ -10,11 +10,20 @@
      cunku icerik gorev BASLIKLARIDIR: 110dp genislikte tek satirda ~11
      karakter sigar, gercek gorev adlari orada hep kirpilirdi.
 
-     `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir. Ust sinir
-     4 hucre yukseklik (250dp) cunku layout'ta bes satir vardir; daha uzun bir
-     kutu bos beyaz alan olurdu. `updatePeriodMillis=0`: veri OLAY BAZLIDIR
-     (Dart `updateWidget` yayini + dokunustan sonra receiver'in yeniden
-     cizdirmesi), periyodik uyanma pil harcardi.
+     `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir.
+     `updatePeriodMillis=0`: veri OLAY BAZLIDIR (Dart `updateWidget` yayini +
+     dokunustan sonra receiver'in yeniden cizdirmesi), periyodik uyanma pil
+     harcardi.
+
+     🔴 WP-719 — DIKEY SINIRLAR CIZILEBILEN KARTA BAGLANDI. Sahip "bunlar
+     kuculmuyor, boyutlari kocaman" dedi. Iki ucu da olculdu (satir 32dp,
+     baslik 20dp, dolgu 12-14dp; `TaskWidget.kt` sabitleri):
+       - alt sinir 80dp -> 56dp: 12+32+12, yani TEK satirlik kartin tam olcusu.
+         Kullanici widget'i gercekten kucultebilir.
+       - ust sinir 250dp -> 210dp: bes satir + baslik + dolgu = 208dp. Daha
+         uzun kutunun karsiligi icerik degil bos alandi.
+     Kart artik `wrap_content` (bkz. layout) oldugu icin kalan bosluk BOYANMAZ;
+     kart kutunun icinde dikey ortalanir.
 
      Kotlin esikleriyle (WIDGET_TASK_* sabitleri, TaskWidget.kt) ayrisma
      `test/features/android_widgets/task_widget_wp701_test.dart` icinde
@@ -24,10 +33,10 @@
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_task_widget"
-    android:maxResizeHeight="250dp"
+    android:maxResizeHeight="210dp"
     android:maxResizeWidth="320dp"
     android:minHeight="110dp"
-    android:minResizeHeight="80dp"
+    android:minResizeHeight="56dp"
     android:minResizeWidth="110dp"
     android:minWidth="180dp"
     android:previewLayout="@layout/odak_task_widget"

@@ -5,8 +5,8 @@
 
      Satirlar STATIKTIR (bes tane): RemoteViews `ListView` disinda dinamik
      satir uretemez ve `RemoteViewsService` bu widget icin fazladan bir
-     surec/adaptor maliyetidir. Yukseklik sinifina gore fazlasi GONE olur
-     (`taskWidgetRowCount`).
+     surec/adaptor maliyetidir. Kutuya sigmayan satir GONE olur
+     (`taskWidgetRowCapacity`).
 
      Kutucuk bir CheckBox DEGIL, metin isaretidir: RemoteViews `CheckBox`i
      yalniz API 31+ kabul eder, bu uygulamanin minSdk'si daha eskidir. Isaret
@@ -15,11 +15,32 @@
 
      Ilk cizimde ayna henuz yazilmamis olabilir: o durumda satirlar GONE olur
      ve `task_widget_empty` gorunur, yani launcher onizlemesi bos bir
-     dikdortgen degildir. -->
+     dikdortgen degildir.
+
+     🔴 WP-719 — IKI KATMAN. Once tek katman vardi ve boyali kok
+     `match_parent` idi: kutuya ne kadar yer ayrilirsa ayrilsin kart o kadarini
+     boyuyordu, yani "Gorevler / Henuz gorev yok" yazan widget kocaman bos bir
+     dikdortgen olarak duruyordu. Simdi:
+
+       task_widget_frame  -> seffaf, kutunun tamami, icerigi DIKEY ORTALAR
+       task_widget_root   -> boyali kart, `wrap_content`
+
+     Boylece cizilen kart icerigi kadardir: bos durumda ~44dp, bes gorevde
+     ~208dp. Olcum `test/features/android_widgets/task_widget_wp719_test.dart`
+     icinde tablo halinde kirmizi duser. Kart artik kutuyu doldurmadigi icin
+     kalan seffaf alanin da bir dokunma hedefi olmali; saglayici
+     `task_widget_frame`e de gorev ekranini baglar (WP-706 korunur). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/task_widget_root"
+    android:id="@+id/task_widget_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="vertical">
+
+<LinearLayout
+    android:id="@+id/task_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="@color/widget_stats_surface"
     android:orientation="vertical"
     android:padding="12dp">
@@ -185,4 +206,5 @@
             android:textColor="@color/widget_primary_text"
             android:textSize="13sp" />
     </LinearLayout>
+</LinearLayout>
 </LinearLayout>
