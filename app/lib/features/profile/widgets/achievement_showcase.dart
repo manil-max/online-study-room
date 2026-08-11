@@ -1550,8 +1550,13 @@ class _RewardRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${_tierLabel(AppLocalizations.of(context), reward.tier)} · '
-                '+${AppLocalizations.of(context).commonXpMiktari(reward.xpAmount)}',
+                // WP-713: gizli ödülde kademe adı yok — satırın adı zaten
+                // "Gizli ödül"; altına "Bronz" yazmak sırrı kademe
+                // merdivenine bağlar (bkz. `_BadgeCircle` gerekçesi).
+                secret
+                    ? '+${AppLocalizations.of(context).commonXpMiktari(reward.xpAmount)}'
+                    : '${_tierLabel(AppLocalizations.of(context), reward.tier)} · '
+                          '+${AppLocalizations.of(context).commonXpMiktari(reward.xpAmount)}',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -1628,10 +1633,21 @@ class _BadgeCircle extends StatelessWidget {
     );
 
     final title = secretLocked ? '?????' : def.name;
+    // 🔴 WP-713 (sahip: "gizli başarımları bronz olarak kategorilendirmesek").
+    // Gizli başarımların hepsi TEK kademelidir (`achievement_ledger_engine`
+    // sözlüğünde `[(1, 1, …)]`), yani kazanıldıklarında `tier == 1` olur ve
+    // `tierLabel(1)` "Bronz" döner. Sonuç: 6 kademeli merdivenin en alt
+    // basamağının adı, merdivenin parçası olmayan bir sırra yapıştırılıyordu.
+    // Renk tarafı zaten ayrıydı (`badgeVisualColor` mor verir); ayrık olmayan
+    // tek şey etiketti. Katalog kartının kendi satırıyla (aşağıda
+    // "Gizli · Tamamlandı") aynı dil kullanılır.
     final subtitle = secretLocked
         ? AppLocalizations.of(context).profileGizliBasarim
         : unlocked
-        ? '${_tierLabel(AppLocalizations.of(context), tier)} · $tier'
+        ? (def.isSecret
+              ? '${AppLocalizations.of(context).profileGizli} · '
+                    '${AppLocalizations.of(context).profileTamamland}'
+              : '${_tierLabel(AppLocalizations.of(context), tier)} · $tier')
         : AppLocalizations.of(context).profileKilitli;
 
     return Tooltip(
