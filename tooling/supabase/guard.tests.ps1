@@ -280,7 +280,7 @@ $workflowDir = Join-Path $repoRoot '.github\workflows'
 $violations = @()
 foreach ($file in Get-ChildItem -LiteralPath $workflowDir -Filter '*.yml' -File) {
   $wfLines = (Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8) -split "`r?`n"
-  $count = @($wfLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." }).Count
+  $count = @($wfLines | Where-Object { $_ -match "['`"][^'`"]*\`$\{\{\s*inputs\." }).Count
   $allowed = 0
   if ($knownEmbeddedInputs.ContainsKey($file.Name)) { $allowed = $knownEmbeddedInputs[$file.Name] }
   if ($count -gt $allowed) {
@@ -299,7 +299,7 @@ foreach ($name in $knownEmbeddedInputs.Keys) {
   $path = Join-Path $workflowDir $name
   if (-not (Test-Path -LiteralPath $path)) { throw "Envanterde olmayan dosya: $name" }
   $wfLines = (Get-Content -LiteralPath $path -Raw -Encoding UTF8) -split "`r?`n"
-  $count = @($wfLines | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." }).Count
+  $count = @($wfLines | Where-Object { $_ -match "['`"][^'`"]*\`$\{\{\s*inputs\." }).Count
   if ($count -lt $knownEmbeddedInputs[$name]) {
     throw ("$name duzeldi ({0} kaldi) ama envanter hala {1} diyor; sayiyi dusur." -f $count, $knownEmbeddedInputs[$name])
   }
@@ -308,9 +308,15 @@ $passed++
 
 # Kapinin kendisi sinaniyor: yasak deseni tasiyan bir satir GERCEKTEN yakalaniyor mu?
 # (Depoda bir kapinin sessizce hicbir sey olcmemesi uc kez yasandi.)
-$sabotage = @("        run: |", "          ./x.ps1 -Evidence '`$`{{ inputs.production_evidence }}'")
-$caught = @($sabotage | Where-Object { $_ -match "['`"]\s*\`$\{\{\s*inputs\." })
-if ($caught.Count -ne 1) {
+# 🔴 WP-693: sabotaj artik IKI bicimi de tasiyor. Eski desen yalniz
+# tirnaktan HEMEN sonra gelen girdiyi goruyordu; uzun bir dizenin ICINE
+# gomulu girdiyi (`echo 'hedef ${{ inputs.x }} tamam'`) KACIRIYORDU -- oysa
+# enjeksiyon acisindan asil tehlikeli bicim odur. WP-E ajani olctu.
+$sabotage = @("        run: |",
+  "          ./x.ps1 -Evidence '`$`{{ inputs.production_evidence }}'",
+  "          echo 'deploying `$`{{ inputs.target }} now'")
+$caught = @($sabotage | Where-Object { $_ -match "['`"][^'`"]*\`$\{\{\s*inputs\." })
+if ($caught.Count -ne 2) {
   throw "Gomulu-girdi kapisi kendi sabotajini yakalamiyor: $($caught.Count) eslesme."
 }
 $passed++
