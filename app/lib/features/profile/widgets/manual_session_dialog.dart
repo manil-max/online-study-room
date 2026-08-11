@@ -1,9 +1,11 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 
+import '../../../core/prefs/app_prefs.dart';
 import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
@@ -72,6 +74,46 @@ bool isManualAddBlocked({
   return isSameDay(dayOf(date), dayOf(now ?? DateTime.now()));
 }
 
+/// WP-697: manuel kayıtta **son seçilen ders** (kullanıcı başına).
+///
+/// 🔴 Sayacın `selected_study_subject.<uid>` anahtarı bilerek PAYLAŞILMAZ.
+/// İkisi farklı niyettir: sayaç "şu an ne çalışıyorum", manuel giriş "geçmişe
+/// hangi dersi işliyorum". Paylaşılsaydı, Matematik sayacı çalışırken elle bir
+/// Fizik kaydı girmek sayacın seçili dersini de Fizik'e çevirirdi. Ayrıca
+/// `study_providers.dart` bu WP'nin sahip yollarında değil; oradaki özel sabiti
+/// buradan kopyalamak iki dosyayı sessizce birbirine bağlardı.
+const kManualSessionGeneralSubject = '__general__';
+
+/// [kManualSessionGeneralSubject] ile aynı sözleşme: yazılmamış anahtar "hiç
+/// seçim yapılmadı", sabit değer ise "bilinçli olarak Genel" demektir.
+String manualSessionSubjectKey(String userId) =>
+    'manual_session_subject.$userId';
+
+/// Hatırlanan seçimi döndürür. Tercih yalnız **görünen listede varsa**
+/// uygulanır: silinmiş/erişilemeyen ders yerelde diriltilmez, Genel'e düşer.
+String? rememberedManualSubjectId(
+  SharedPreferences prefs,
+  String userId,
+  List<Subject> subjects,
+) {
+  final stored = prefs.getString(manualSessionSubjectKey(userId));
+  if (stored == null || stored == kManualSessionGeneralSubject) return null;
+  return subjects.any((s) => s.id == stored) ? stored : null;
+}
+
+/// Seçimi kalıcılaştırır. `null` → Genel (silmek yerine sabit yazılır, yoksa
+/// "hiç seçim yok" ile ayırt edilemezdi).
+Future<void> rememberManualSubjectId(
+  SharedPreferences prefs,
+  String userId,
+  String? subjectId,
+) {
+  return prefs.setString(
+    manualSessionSubjectKey(userId),
+    subjectId ?? kManualSessionGeneralSubject,
+  );
+}
+
 /// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif kullanıcı
 /// kontrolü + ders seçimli diyalog + `study_sessions`'a yazma. Oturumu seçilen
 /// günde eklendiği andaki saatte bitmiş gibi yerleştirir ([manualSessionRange]).
@@ -84,8 +126,17 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
     );
     return;
   }
-  final subjects = ref.read(userSubjectsProvider).value ?? [];
-  final result = await showManualSessionDialog(context, subjects: subjects);
+  final subjectsAsync = ref.read(userSubjectsProvider);
+  final subjects = subjectsAsync.value ?? <Subject>[];
+  final prefs = ref.read(sharedPreferencesProvider);
+  final result = await showManualSessionDialog(
+    context,
+    subjects: subjects,
+    // WP-697: son seçim kalıcı; her açılışta Genel'e düşmez.
+    initialSubjectId: rememberedManualSubjectId(prefs, user.id, subjects),
+    // Ne ders var ne de sebebi: ekran sessizce boş kalmasın.
+    subjectsError: subjects.isEmpty ? subjectsAsync.error : null,
+  );
   if (result == null) return;
 
   // WP-253: bugüne manuel ekleme, çalışan sayacın aralığıyla FİZİKSEL olarak
@@ -109,6 +160,30 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
     return;
   }
 
+  // WP-697: çevrimdışıyken liste yerel aynadan gelebilir; o ayna sunucuda
+  // silinmiş bir dersi gösteriyorsa yazılan satır `subject_id` yabancı anahtar
+  // ihlaline düşer. Kayıt outbox'ta ölmesin diye, ELDE TAZE SUNUCU LİSTESİ
+  // VARKEN doğrulanır ve gerekiyorsa Genel'e indirilir — sessizce değil,
+  // kullanıcıya söylenerek.
+  var subjectId = result.subjectId;
+  final latest = ref.read(userSubjectsProvider);
+  final confirmed = latest.hasError ? null : latest.value;
+  if (subjectId != null &&
+      confirmed != null &&
+      !confirmed.any((s) => s.id == subjectId)) {
+    subjectId = null;
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).studySelectedSubjectUnavailable,
+          ),
+        ),
+      );
+    }
+  }
+  await rememberManualSubjectId(prefs, user.id, subjectId);
+
   final range = manualSessionRange(result.date, result.seconds);
   await ref
       .read(studyRepositoryProvider)
@@ -116,7 +191,7 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
         StudySession(
           id: Uuid().v4(),
           userId: user.id,
-          subjectId: result.subjectId,
+          subjectId: subjectId,
           start: range.start,
           end: range.end,
           durationSeconds: result.seconds,
@@ -135,6 +210,7 @@ showManualSessionDialog(
   int? initialSeconds,
   String? initialSubjectId,
   List<Subject> subjects = const [],
+  Object? subjectsError,
 }) {
   return showDialog<({DateTime date, int seconds, String? subjectId})>(
     context: context,
@@ -143,6 +219,7 @@ showManualSessionDialog(
       initialSeconds: initialSeconds,
       initialSubjectId: initialSubjectId,
       subjects: subjects,
+      subjectsError: subjectsError,
     ),
   );
 }
@@ -153,12 +230,16 @@ class _ManualSessionDialog extends StatefulWidget {
     this.initialSeconds,
     this.initialSubjectId,
     this.subjects = const [],
+    this.subjectsError,
   });
 
   final DateTime? initialDate;
   final int? initialSeconds;
   final String? initialSubjectId;
   final List<Subject> subjects;
+
+  /// Ders listesi hiç okunamadıysa sebebi (çevrimdışı + önbellek yok).
+  final Object? subjectsError;
 
   @override
   State<_ManualSessionDialog> createState() => _ManualSessionDialogState();
@@ -251,6 +332,19 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
               ),
             ],
           ),
+          if (widget.subjects.isEmpty && widget.subjectsError != null) ...[
+            SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(
+                context,
+              ).profileDerslerYuklenemediE('${widget.subjectsError}'),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ],
           if (widget.subjects.isNotEmpty) ...[
             SizedBox(height: 16),
             Text(
