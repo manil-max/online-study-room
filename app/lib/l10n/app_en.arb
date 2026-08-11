@@ -481,6 +481,82 @@
   "@adminBaglamBosDurum": {
     "description": "Admin third pane empty state. Source: Bir kayit sectiginde ayrintilar burada gorunur."
   },
+  "adminIncelemeVakaSec": "Pick a case from the list to review.",
+  "@adminIncelemeVakaSec": {
+    "description": "Admin review pane empty state. Source: Incelemek icin listeden bir vaka sec."
+  },
+  "adminIncelemeIcerik": "Reported content",
+  "@adminIncelemeIcerik": {
+    "description": "Admin review section title for the reported content itself."
+  },
+  "adminIncelemeIcerikYok": "No content was captured.",
+  "@adminIncelemeIcerikYok": {
+    "description": "Admin review empty state when the report carries no content snapshot."
+  },
+  "adminIncelemeEk": "Evidence image",
+  "@adminIncelemeEk": {
+    "description": "Admin review section title for the screenshot attached to a report."
+  },
+  "adminIncelemeEkiAc": "Open image",
+  "@adminIncelemeEkiAc": {
+    "description": "Admin review button that opens the attached evidence image."
+  },
+  "adminIncelemeEkYok": "No image was attached to this report.",
+  "@adminIncelemeEkYok": {
+    "description": "Admin review empty state when the report has no attachment."
+  },
+  "adminIncelemeEkAcilamadi": "The image could not be opened.",
+  "@adminIncelemeEkAcilamadi": {
+    "description": "Admin review error shown when the attachment signed URL fails."
+  },
+  "adminIncelemeAciklama": "Reporter's note",
+  "@adminIncelemeAciklama": {
+    "description": "Admin review section title for the free text the reporter wrote."
+  },
+  "adminIncelemeBaglam": "Conversation context",
+  "@adminIncelemeBaglam": {
+    "description": "Admin review section title for the surrounding chat messages."
+  },
+  "adminIncelemeGecmis": "Target's history",
+  "@adminIncelemeGecmis": {
+    "description": "Admin review section title for previous sanctions on the target."
+  },
+  "adminIncelemeGecmisYok": "No sanction has been applied to this target before.",
+  "@adminIncelemeGecmisYok": {
+    "description": "Admin review empty state for the sanction history section."
+  },
+  "adminIncelemeGerekce": "Reason",
+  "@adminIncelemeGerekce": {
+    "description": "Admin review label for the reason the reporter selected."
+  },
+  "adminIncelemeGelisZamani": "Received",
+  "@adminIncelemeGelisZamani": {
+    "description": "Admin review label for the moment the report arrived."
+  },
+  "adminIncelemeKarar": "Decision",
+  "@adminIncelemeKarar": {
+    "description": "Admin review decision bar title."
+  },
+  "adminIncelemeGeriAl": "Undo",
+  "@adminIncelemeGeriAl": {
+    "description": "Admin review button that reverts the last decision."
+  },
+  "adminIncelemeKararGeriAlindi": "Decision undone.",
+  "@adminIncelemeKararGeriAlindi": {
+    "description": "Admin review confirmation after the last decision was reverted."
+  },
+  "adminIncelemeListeyeDon": "Back to queue",
+  "@adminIncelemeListeyeDon": {
+    "description": "Admin review button that returns from a case to the queue list."
+  },
+  "adminIncelemeDetayYok": "This historical record is not linked to a report; its content cannot be shown.",
+  "@adminIncelemeDetayYok": {
+    "description": "Admin review notice for pre-0104 rows that have no report id."
+  },
+  "adminItirazEdilenYaptirim": "Sanction under appeal",
+  "@adminItirazEdilenYaptirim": {
+    "description": "Admin appeal card label for the sanction the appeal targets."
+  },
   "adminUyeAt": "Remove Member",
   "@adminUyeAt": {
     "description": "Admin user-facing text. Source: Üye At"

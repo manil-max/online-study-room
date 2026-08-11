@@ -174,9 +174,20 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
     final history = Map<String, dynamic>.from(
       (detail['history'] as Map?) ?? const {},
     );
+    final attachment = (report['attachment_path'] as String?)?.trim();
     return ModerationCaseDetail(
       snapshot: (report['content_snapshot'] as String?) ?? '',
       details: report['details'] as String?,
+      // 🔴 WP-B: bu dört alan sunucudan `0097`ten beri geliyordu ve burada
+      // sessizce atiliyordu (`ADMIN-PANEL-PLAN.md` §2.1).
+      attachmentPath: (attachment == null || attachment.isEmpty)
+          ? null
+          : attachment,
+      reason: report['reason'] as String?,
+      createdAt: DateTime.tryParse(
+        report['created_at'] as String? ?? '',
+      )?.toLocal(),
+      status: report['status'] as String?,
       contextMessages: [
         for (final raw in (detail['context'] as List? ?? const []))
           if (raw is Map)
@@ -187,9 +198,17 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
             ),
       ],
       reportCount: (history['report_count'] as num?)?.toInt() ?? 0,
-      sanctionReasons: [
+      // Eskiden yalnız `reason` alınıyordu; `action` ve `created_at` atılıyordu.
+      sanctions: [
         for (final raw in (history['sanctions'] as List? ?? const []))
-          if (raw is Map && raw['reason'] is String) raw['reason'] as String,
+          if (raw is Map)
+            ModerationSanctionHistoryEntry(
+              action: raw['action'] as String?,
+              reason: raw['reason'] as String?,
+              createdAt: DateTime.tryParse(
+                raw['created_at'] as String? ?? '',
+              )?.toLocal(),
+            ),
       ],
     );
   }

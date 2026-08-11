@@ -6,6 +6,8 @@ import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../sanctions/admin_case_target_link.dart';
+
 /// WP-440: Vaka kartı.
 ///
 /// Kabul kriteri: **durum seçenekleri arasında kart yüksekliği ve tipografisi
@@ -18,14 +20,23 @@ class ModerationQueueCard extends StatelessWidget {
     super.key,
     required this.moderationCase,
     required this.onStatusSelected,
-    this.onOpenDetail,
+    this.onSelect,
+    this.selected = false,
     this.onSanction,
     this.onQuarantineToggle,
   });
 
   final ModerationCase moderationCase;
   final ValueChanged<ModerationCaseStatus> onStatusSelected;
-  final VoidCallback? onOpenDetail;
+
+  /// WP-B: kart artik **secilebilir liste satiri**dir. Eskiden govde dokunusu
+  /// bir alt sayfa aciyordu ve o sayfada tek karar dugmesi yoktu
+  /// (`ADMIN-PANEL-PLAN.md` §2.2); simdi dokunus vakayi yandaki inceleme
+  /// panosuna baglar.
+  final VoidCallback? onSelect;
+
+  /// Su an incelenen vaka bu mu? (SPEC §4: gorunur secim + hover/focus.)
+  final bool selected;
 
   /// WP-441: Basamaklı yaptırım sayfasını açar.
   final VoidCallback? onSanction;
@@ -43,8 +54,11 @@ class ModerationQueueCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: selected ? theme.colorScheme.secondaryContainer : null,
       child: InkWell(
-        onTap: onOpenDetail,
+        onTap: onSelect,
+        hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+        focusColor: theme.colorScheme.primary.withValues(alpha: 0.12),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
           child: Column(
@@ -77,6 +91,22 @@ class ModerationQueueCard extends StatelessWidget {
               _IdentityLine(
                 label: l10n.adminUgcTarget,
                 identity: moderationCase.targetIdentity,
+                // 🔴 PLAN §2.3 / WP-C ölçüt 5: vakadan kişiye köprü yoktu. Tek
+                // yardım üç noktadaki "Kopyala" idi — UUID'yi panoya alıp sekme
+                // değiştirip aramasız listede gözle arıyordun. WP-C varış
+                // noktasını (kişi dosyası) kurdu; köprü burada bağlanır.
+                //
+                // Neden başlık satırında değil: ölçüldü — 280 px'lik kuyruk
+                // sütununda başlık satırı (metin + durum çipi + üç nokta) zaten
+                // 240 px'i doldurmuş; oraya 48 px eklemek "RenderFlex
+                // overflowed" veriyordu. Kimlik satırında `Expanded` metin
+                // esniyor, taşma olmuyor. Grup hedefinde çizilecek kişi yok.
+                trailing: moderationCase.targetIdentity == null
+                    ? null
+                    : AdminCaseTargetLink(
+                        targetUserId: moderationCase.targetIdentity!.id,
+                        compact: true,
+                      ),
               ),
               const SizedBox(height: 4),
               _IdentityLine(
@@ -327,11 +357,15 @@ class _IdentityLine extends StatelessWidget {
     required this.label,
     required this.identity,
     this.extraCount = 0,
+    this.trailing,
   });
 
   final String label;
   final ModerationIdentity? identity;
   final int extraCount;
+
+  /// Satırın sağ ucundaki tek eylem (bugün: hedefin dosyasına köprü).
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +393,7 @@ class _IdentityLine extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        ?trailing,
       ],
     );
   }

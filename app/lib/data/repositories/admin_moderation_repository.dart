@@ -83,20 +83,81 @@ abstract class AdminModerationRepository {
 }
 
 /// Detay sayfasının okuduğu ham kayıt.
+///
+/// 🔴 WP-B ölçümü (`docs/design/ADMIN-PANEL-PLAN.md` §2.1): sunucu
+/// (`0097_moderation_report_detail.sql:73-83`) `reason`, `details`,
+/// `content_snapshot`, **`attachment_path`**, `status`, `created_at`, bağlam ve
+/// tam yaptırım geçmişini döndürüyordu; bu sınıf yalnız **beş** alan taşıyordu.
+/// Düşen alanların en pahalısı `attachment_path`'ti: kullanıcı şikâyetine
+/// kanıt fotoğrafı yüklüyor, sunucu admin'e vermeye hazır bekliyor, panel hiç
+/// istemiyordu. Aşağıdaki alanlar o kaybı kapatır — yeni RPC yazılmadı.
 class ModerationCaseDetail {
   const ModerationCaseDetail({
     required this.snapshot,
     required this.details,
     required this.contextMessages,
     required this.reportCount,
-    required this.sanctionReasons,
+    this.sanctions = const [],
+    this.attachmentPath,
+    this.reason,
+    this.createdAt,
+    this.status,
   });
 
   final String snapshot;
   final String? details;
   final List<ModerationContextMessage> contextMessages;
   final int reportCount;
-  final List<String> sanctionReasons;
+
+  /// Hedefin geçmişi — **eylemiyle birlikte**. Eskiden yalnız `reason` alınıp
+  /// `action` atılıyordu; "bu kişiye daha önce ne yapıldı" cevapsız kalıyordu.
+  final List<ModerationSanctionHistoryEntry> sanctions;
+
+  /// Şikâyete eklenen görselin private Storage yolu (`report_attachments`).
+  final String? attachmentPath;
+
+  /// Şikâyetçinin seçtiği gerekçe kodu (`harassment`, `spam`, …).
+  final String? reason;
+
+  /// Şikâyetin sunucuya düştüğü an.
+  final DateTime? createdAt;
+
+  /// Raporun sunucudaki durumu (`open`, `in_review`, …).
+  final String? status;
+
+  /// Geriye dönük kolaylık: eski çağrı yerleri yalnız gerekçe metnini okuyordu.
+  List<String> get sanctionReasons => [
+    for (final entry in sanctions)
+      if ((entry.reason ?? '').isNotEmpty) entry.reason!,
+  ];
+}
+
+/// Hedefe daha önce uygulanmış tek bir yaptırım/denetim satırı.
+///
+/// [action] **ham dize**dir: kaynak `admin_audit_logs.action`, yani
+/// [ModerationAction] merdiveninin dışında değerler de (`soft_delete_user`
+/// gibi) gelebilir. Merdivene oturanı [moderationAction] çözer, oturmayanı
+/// yutmaz — ham dize korunur.
+class ModerationSanctionHistoryEntry {
+  const ModerationSanctionHistoryEntry({
+    required this.action,
+    this.reason,
+    this.createdAt,
+  });
+
+  final String? action;
+  final String? reason;
+  final DateTime? createdAt;
+
+  ModerationAction? get moderationAction {
+    final raw = action;
+    if (raw == null) return null;
+    try {
+      return ModerationAction.fromWire(raw);
+    } on ArgumentError {
+      return null;
+    }
+  }
 }
 
 class ModerationContextMessage {

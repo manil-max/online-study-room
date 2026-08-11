@@ -107,14 +107,27 @@ class InMemoryAdminModerationRepository implements AdminModerationRepository {
     return _cases[index].reportCount;
   }
 
+  /// Rapor kimliği -> detay. WP-B: testler ve demo modu artık **gerçek** bir
+  /// detay kaydı (ek yolu, gerekçe, bağlam, geçmiş) besleyebilir; boşsa
+  /// aşağıdaki taklit kayıt döner.
+  final Map<String, ModerationCaseDetail> details = {};
+
   @override
   Future<ModerationCaseDetail> fetchDetail(String reportId) async =>
+      details[reportId] ??
       ModerationCaseDetail(
         snapshot: 'demo snapshot $reportId',
         details: null,
         contextMessages: const [],
         reportCount: _cases.isEmpty ? 0 : _cases.first.reportCount,
-        sanctionReasons: [for (final sanction in _sanctions) sanction.reason],
+        sanctions: [
+          for (final sanction in _sanctions)
+            ModerationSanctionHistoryEntry(
+              action: sanction.action.wire,
+              reason: sanction.reason,
+              createdAt: sanction.appliedAt,
+            ),
+        ],
       );
 
   @override
