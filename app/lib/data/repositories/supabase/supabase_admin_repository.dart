@@ -13,6 +13,11 @@ import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
+/// Postgres "permission denied for function" SQLSTATE'i.
+const String _kPermissionDeniedCode = '42501';
+const String _kPurgeHealthDenied = 'purge_health_denied';
+const String _kPurgeHealthUnreadable = 'purge_health_unreadable';
+
 class SupabaseAdminRepository implements AdminRepository {
   SupabaseAdminRepository(this._client);
 
@@ -621,6 +626,32 @@ class SupabaseAdminRepository implements AdminRepository {
       );
     } on PostgrestException catch (e) {
       throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<AccountPurgeHealth> fetchAccountPurgeHealth() async {
+    try {
+      final row = await _client.rpc('get_account_purge_health');
+      // `returns table (...)` PostgREST'te tek elemanli LISTE olarak doner.
+      final first = row is List ? (row.isEmpty ? null : row.first) : row;
+      if (first is! Map) {
+        // 🔴 Bos cevap "kuyruk temiz" DEGILDIR; sessizce saglikli donmek
+        // kartin engellemeye calistigi korlugun ta kendisi olurdu.
+        throw AdminException(
+          _friendlyMessage(_kPurgeHealthUnreadable),
+          code: _kPurgeHealthUnreadable,
+        );
+      }
+      return AccountPurgeHealth.fromMap(Map<String, dynamic>.from(first));
+    } on PostgrestException catch (e) {
+      // 🔴 `get_account_purge_health` `0113:349-350`te YALNIZ `service_role`a
+      // verilmistir; yoneticinin kendi JWT'si bugun `42501` alir. Bu yol
+      // sessizce yutulmaz — kart erisim reddini de bir ARIZA olarak gosterir.
+      throw AdminException(
+        _friendlyMessage(e.message),
+        code: e.code == _kPermissionDeniedCode ? _kPurgeHealthDenied : null,
+      );
     }
   }
 

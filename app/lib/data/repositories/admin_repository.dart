@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import '../models/admin_audit_log.dart';
 import '../models/admin_user_dto.dart';
@@ -113,6 +113,87 @@ class AdminDashboardSummary {
       groupCount: (map['group_count'] as num?)?.toInt() ?? 0,
       sessionCount: (map['session_count'] as num?)?.toInt() ?? 0,
       openTicketCount: (map['open_ticket_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// Kuyrugun tek cumlelik hali. `healthy` DISINDAKI her sey kullaniciya
+/// gorunur bir uyaridir.
+enum AccountPurgeHealthLevel {
+  /// Yapilandirma yazili ve birikmis/kilitli/kalici hatali is yok.
+  healthy,
+
+  /// `account_purge_runtime_config` satiri yok — worker HIC kosmuyor.
+  ///
+  /// 🔴 Bu durum `failing` ile ayni ciddiyettedir ama AYRI bir seviyedir:
+  /// sayaclar sifirdir, cunku hicbir is baslamamistir.
+  notConfigured,
+
+  /// Kuyruk kosuyor ama takilmis: kilitli lease, kalici hata ya da birikme.
+  failing,
+}
+
+/// `get_account_purge_health()` ciktisinin tek satiri
+/// (`supabase/migrations/0113_account_purge_scheduler.sql:300`).
+///
+/// 🔴 [level] neden [isConfigured] ile BASLAR: yapilandirilmamis bir kuyruk
+/// sifir hata uretir ve "saglikli" gorunur. Bu tuzak migration'in kendi
+/// yorumunda (`0113:295`) ve `production-purge-activation.yml:15`te yazili;
+/// hata sayilarina bakip once yapilandirmayi sormayan her saglik iddiasi
+/// ayni yanilgiyi tekrar eder.
+@immutable
+class AccountPurgeHealth {
+  const AccountPurgeHealth({
+    required this.configurationStatus,
+    required this.dueCount,
+    required this.processingCount,
+    required this.staleLeaseCount,
+    required this.terminalFailedCount,
+    required this.oldestDueAgeSeconds,
+    required this.purgedLast30d,
+  });
+
+  /// Sunucunun "yapilandirma yazili" dedigi TEK deger.
+  static const String configuredStatus = 'configured';
+
+  /// Birikme esigi. `0113`teki zamanlayici **saatlik** kosar; ucuncu turu da
+  /// kaciran bir is artik normal gecikme degildir. Yeni sayi uretilmedi,
+  /// esik cron periyodundan turedi.
+  static const int backlogToleranceSeconds = 3 * 3600;
+
+  final String configurationStatus;
+  final int dueCount;
+  final int processingCount;
+  final int staleLeaseCount;
+  final int terminalFailedCount;
+  final int oldestDueAgeSeconds;
+  final int purgedLast30d;
+
+  bool get isConfigured => configurationStatus == configuredStatus;
+
+  AccountPurgeHealthLevel get level {
+    // 🔴 SIRA onemli: once yapilandirma, sonra sayaclar.
+    if (!isConfigured) return AccountPurgeHealthLevel.notConfigured;
+    if (staleLeaseCount > 0 ||
+        terminalFailedCount > 0 ||
+        oldestDueAgeSeconds > backlogToleranceSeconds) {
+      return AccountPurgeHealthLevel.failing;
+    }
+    return AccountPurgeHealthLevel.healthy;
+  }
+
+  factory AccountPurgeHealth.fromMap(Map<String, dynamic> map) {
+    int intOf(String key) => (map[key] as num?)?.toInt() ?? 0;
+    return AccountPurgeHealth(
+      // Bilinmeyen/eksik alan `configured` SAYILMAZ: eksik kanit saglik
+      // kaniti degildir.
+      configurationStatus: (map['configuration_status'] as String?) ?? '',
+      dueCount: intOf('due_count'),
+      processingCount: intOf('processing_count'),
+      staleLeaseCount: intOf('stale_lease_count'),
+      terminalFailedCount: intOf('terminal_failed_count'),
+      oldestDueAgeSeconds: intOf('oldest_due_age_seconds'),
+      purgedLast30d: intOf('purged_last_30d'),
     );
   }
 }
@@ -243,6 +324,17 @@ abstract class AdminRepository {
     required String userId,
     required String ticketId,
   });
+
+  /// WP-E: hesap silme kuyrugunun sagligi (`get_account_purge_health`).
+  ///
+  /// 🔴 Neden UI'a tasindi: RPC `0113`ten beri sunucuda duruyordu ama
+  /// `app/lib/` icinde adi HIC gecmiyordu. Yani kuyruk tikanirsa (kilitli
+  /// lease, tukenmis deneme sayaci, hic yazilmamis runtime config) kimsenin
+  /// haberi olmuyordu; kullanicinin "hesabimi sil" istegi sessizce oluyordu.
+  ///
+  /// Reddedilen/okunamayan saglik **bos sonuc degil** [AdminException] doner:
+  /// "sorulamadi" ile "sorun yok" ayni sey degildir.
+  Future<AccountPurgeHealth> fetchAccountPurgeHealth();
 
   Future<List<AdminAuditLog>> fetchAuditLogs();
 }

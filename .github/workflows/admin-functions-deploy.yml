@@ -1,0 +1,160 @@
+name: Admin Functions Deploy
+
+# 🔴 Bu is akisinin varlik sebebi (WP-E): yonetim panelinin SUNUCU tarafi
+# (`admin-user-actions`, `admin-operations`) YALNIZCA
+# `production-purge-activation.yml:132-137` ve `staging-purge-activation.yml`
+# icinde deploy ediliyordu. Yani admin panelinin sunucu tarafini yayinlamak
+# icin "hesap silme aktivasyonu" adli tamamen alakasiz bir is akisini
+# kosturmak gerekiyordu: o is akisi ayrica Edge secret'i yeniden uretir,
+# `0113` runtime config satirini yeniden yazar ve worker'i dry-run eder.
+# Admin paneline dokunan her tur bunlarin hepsini tetiklemek zorunda kaliyordu.
+#
+# WP-625 kablolamayi oraya BILEREK koymustu (gerekcesi
+# `production-purge-activation.yml:116-127`): o gun bu iki fonksiyon hicbir
+# yerde deploy edilmiyordu ve calisan tek yol oydu. Artik admin paneli
+# yeniden yazildi ve her turda deploy gerekiyor; is akisinin kendi kapisi
+# olmali.
+#
+# ⚠️ ESKI YOL BILEREK BIRAKILDI. Purge aktivasyonundaki deploy adimlari
+# SILINMEDI: bugun calistigi dogrulanmis tek yol odur. Once bu is akisi
+# kosturulup dogrulanacak, temizlik AYRI bir WP'de yapilacak.
+#
+# ⚠️ Bu is akisi HICBIR migration uygulamaz, HICBIR secret uretmez ve HICBIR
+# kullanici verisine dokunmaz. Yalniz iki Edge fonksiyonunu deploy eder ve
+# yetki kapisinin ayakta oldugunu dogrular.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Hangi Supabase projesine deploy edilecek.
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+      expected_git_sha:
+        description: Deploy edilecek tam main commit SHA'si.
+        required: true
+        type: string
+      confirm_production:
+        description: >-
+          Yalniz target=production icin: tam olarak PRODUCTION yaz.
+          Production yayini ayri bir ops kapisidir (.agents/AGENTS.md §2).
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-functions-deploy-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.target }} admin panel functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.target }}
+    # 🔴 Elle girilen hicbir deger kabuk KAYNAK KODUNA gomulmez; hepsi `env:`
+    # ile gecer (WP-666/668 dersi, `tooling/supabase/guard.tests.ps1`).
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      TARGET: ${{ inputs.target }}
+      EXPECTED_GIT_SHA: ${{ inputs.expected_git_sha }}
+      CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
+      PROJECT_REF: ${{ inputs.target == 'production' && vars.PRODUCTION_SUPABASE_PROJECT_REF || vars.STAGING_SUPABASE_PROJECT_REF }}
+      SUPABASE_URL: ${{ inputs.target == 'production' && secrets.PRODUCTION_SUPABASE_URL || secrets.STAGING_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ inputs.target == 'production' && secrets.PRODUCTION_SUPABASE_ANON_KEY || secrets.STAGING_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify deploy contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$TARGET" = "production" && "$CONFIRM_PRODUCTION" != "PRODUCTION" ]]; then
+            echo "Production admin deploy needs confirm_production=PRODUCTION."
+            exit 1
+          fi
+          [[ "$EXPECTED_GIT_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "expected_git_sha must be a full SHA"
+            exit 1
+          }
+          [[ "$GITHUB_SHA" = "$EXPECTED_GIT_SHA" ]] || {
+            echo "The checked-out commit does not match expected_git_sha"
+            exit 1
+          }
+          for value in SUPABASE_ACCESS_TOKEN PROJECT_REF SUPABASE_URL SUPABASE_ANON_KEY; do
+            [[ -n "${!value}" ]] || { echo "Missing required configuration: $value"; exit 1; }
+          done
+          [[ "$PROJECT_REF" =~ ^[a-z0-9]{20}$ ]] || { echo "Invalid project ref"; exit 1; }
+          [[ "$SUPABASE_URL" = "https://$PROJECT_REF.supabase.co" ]] || {
+            echo "URL/project ref mismatch for $TARGET"
+            exit 1
+          }
+          echo "Admin functions deploy contract verified: $TARGET ($PROJECT_REF)."
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # 🔴 `--no-verify-jwt` YOK ve olmamali: bu iki fonksiyon cagiranin KENDI
+      # token'iyla `is_super_admin()` kapisindan gecer. JWT dogrulamasini
+      # kapatmak o kapinin onundeki ilk kilidi acar
+      # (`production-purge-activation.yml:126-127` ayni gerekce).
+      - name: Deploy admin panel functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy admin-user-actions \
+            --project-ref "$PROJECT_REF" \
+            --use-api
+          supabase functions deploy admin-operations \
+            --project-ref "$PROJECT_REF" \
+            --use-api
+
+      # 🔴 "Deploy komutu 0 dondu" ile "fonksiyon ayakta ve yetki kapisi
+      # calisiyor" ayni sey degildir. Taze rota isinirken kisa sure 503
+      # donebiliyor, o yuzden pencere var. Iddia: anon token ile cagirinca
+      # 401/403 donmeli -- 200 donmesi yetki kapisinin ACIK oldugu anlamina
+      # gelir ve deploy'u BASARISIZ saymak gerekir.
+      - name: Verify both functions answer and keep the admin gate closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          for fn in admin-user-actions admin-operations; do
+            ok=false
+            for attempt in {1..12}; do
+              code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+                -X POST "$SUPABASE_URL/functions/v1/$fn" \
+                -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+                -H 'Content-Type: application/json' \
+                --data '{}')"
+              case "$code" in
+                401|403)
+                  ok=true
+                  break
+                  ;;
+                200)
+                  echo "$fn answered 200 to an anonymous call; the admin gate is OPEN."
+                  exit 1
+                  ;;
+                *)
+                  echo "$fn is not ready yet (HTTP $code, attempt $attempt/12); retrying."
+                  sleep 5
+                  ;;
+              esac
+            done
+            [[ "$ok" = true ]] || {
+              echo "$fn never answered with a closed admin gate."
+              exit 1
+            }
+            echo "$fn deployed and gated."
+          done
+          echo "Admin panel functions verified on $TARGET."

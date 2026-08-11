@@ -15,8 +15,13 @@ import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
 class InMemoryAdminRepository implements AdminRepository {
-  InMemoryAdminRepository({Set<String> superAdminUserIds = const {}})
-    : _superAdminUserIds = {...superAdminUserIds};
+  InMemoryAdminRepository({
+    Set<String> superAdminUserIds = const {},
+    AccountPurgeHealth? accountPurgeHealth,
+    AdminException? accountPurgeHealthError,
+  }) : _superAdminUserIds = {...superAdminUserIds},
+       _purgeHealth = accountPurgeHealth ?? kInMemoryHealthyAccountPurge,
+       _purgeHealthError = accountPurgeHealthError;
 
   final _uuid = const Uuid();
   final Set<String> _superAdminUserIds;
@@ -24,6 +29,11 @@ class InMemoryAdminRepository implements AdminRepository {
   final List<FeedbackTicketMessage> _ticketMessages = [];
   final Map<(String, String), int> _readWatermarks = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();
+  AccountPurgeHealth _purgeHealth;
+  final AdminException? _purgeHealthError;
+
+  /// Testler kuyrugu calisirken bozabilsin diye.
+  set accountPurgeHealth(AccountPurgeHealth value) => _purgeHealth = value;
 
   @override
   Future<bool> isSuperAdmin(String userId) async {
@@ -418,6 +428,13 @@ class InMemoryAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<AccountPurgeHealth> fetchAccountPurgeHealth() async {
+    final error = _purgeHealthError;
+    if (error != null) throw error;
+    return _purgeHealth;
+  }
+
+  @override
   Future<List<AdminAuditLog>> fetchAuditLogs() async {
     return [
       AdminAuditLog(
@@ -451,3 +468,17 @@ class InMemoryAdminRepository implements AdminRepository {
 
   void dispose() => _changes.close();
 }
+
+/// Sahtenin varsayilani: yapilandirilmis ve temiz kuyruk.
+///
+/// 🔴 `configured` BILEREK yaziliyor: bos bir sahte `not_configured` uretseydi
+/// her sahte kosumda kart kirmizi yanar ve gercek regresyon gurultuye karisirdi.
+const AccountPurgeHealth kInMemoryHealthyAccountPurge = AccountPurgeHealth(
+  configurationStatus: AccountPurgeHealth.configuredStatus,
+  dueCount: 0,
+  processingCount: 0,
+  staleLeaseCount: 0,
+  terminalFailedCount: 0,
+  oldestDueAgeSeconds: 0,
+  purgedLast30d: 0,
+);
