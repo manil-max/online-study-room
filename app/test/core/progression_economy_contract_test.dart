@@ -47,6 +47,10 @@ void main() {
       final repricedSql = File(
         '../supabase/migrations/0065_reprice_core_economy.sql',
       ).readAsStringSync();
+      // WP-721: Kadim Üye + Metronom 0056'dan sonra geldi, tuple'ları 0134'te.
+      final wp721Sql = File(
+        '../supabase/migrations/0134_ancient_member_and_metronome.sql',
+      ).readAsStringSync();
       const repricedIds = {
         'marathon_total',
         'steel_will',
@@ -59,6 +63,7 @@ void main() {
       for (final entry in achievements.entries) {
         final sql = switch (entry.key) {
           'alpha_wolf_weekly' => weeklySql,
+          'ancient_member' || 'metronome' => wp721Sql,
           final id when repricedIds.contains(id) => repricedSql,
           _ => economySql,
         };

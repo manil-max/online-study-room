@@ -134,6 +134,24 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       icon: 'star',
     ),
     e(
+      // WP-721 — Metronom: günlük seriye **sağlıklı alternatif**. Zincir günden
+      // değil HAFTADAN sayılır; bir hafta içinde iki gün kaçırmak zinciri
+      // kırmaz, çünkü kural "haftada en az 5 hedef günü"dür. Günlük seri
+      // mantığını haftaya kopyalamak (her günü şart koşmak) bu başarımın
+      // varlık sebebini yok eder — bkz. `metronomeWeekChain`.
+      'metronome',
+      'streak',
+      (l10n?.coreMetronom ?? 'coremetronom'),
+      (l10n?.coreHaftalikRitim ?? 'corehaftalikritim'),
+      [
+        (1, 4, 'metronome_weeks', 1000),
+        (2, 12, 'metronome_weeks', 3000),
+        (3, 26, 'metronome_weeks', 8000),
+        (4, 52, 'metronome_weeks', 20000),
+      ],
+      icon: 'graphic_eq',
+    ),
+    e(
       'alpha_wolf',
       'group',
       (l10n?.coreAlfaKurt ?? 'corealfakurt'),
@@ -191,6 +209,24 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (6, 1000, 'campfire_hours', 25000),
       ],
       icon: 'whatshot',
+    ),
+    e(
+      // WP-721 — Kadim Üye: `group_members.joined_at` üzerinden **tek** grupta
+      // geçirilen gün. Gruplar toplanmaz; en uzun üyelik sayılır. Yeniden
+      // katılma sayacı sıfırlamaz: `join_group` (0012) aynı satırın
+      // `joined_at`'ini bugüne çeker, bu yüzden sunucu projeksiyonu
+      // `greatest(mevcut, yeni)` ile yazar (0134).
+      'ancient_member',
+      'group',
+      (l10n?.coreKadimUye ?? 'corekadimuye'),
+      (l10n?.coreAyniGruptaGecirilenGun ?? 'coreaynigruptagecirilengun'),
+      [
+        (1, 30, 'membership_days', 500),
+        (2, 100, 'membership_days', 1500),
+        (3, 365, 'membership_days', 5000),
+        (4, 730, 'membership_days', 12000),
+      ],
+      icon: 'history',
     ),
     e(
       'inspiration',
@@ -333,6 +369,9 @@ const Map<String, String> kAchievementMetricSourceVersions = {
   'fire_streak': 'metric_v2',
   'weekend_goal_days': 'metric_v2',
   'perfect_month': 'perfect_month_28_v1',
+  // WP-721 (sunucu: 0134). İkisi de `cumulative`: kazanılmış değer düşmez.
+  'ancient_member': 'membership_tenure_v1',
+  'metronome': 'weekly_cadence_v1',
   'alpha_wolf': 'group_verified_v1',
   'alpha_wolf_weekly': 'weekly_alpha_verified_v1',
   'team_player': 'metric_v2',
@@ -363,6 +402,54 @@ String crownRankForXp(int xp) {
   if (xp >= kCrownXpThresholds[1]) return 'silver_learner';
   return 'bronze_beginner';
 }
+
+/// WP-721 — Metronom zinciri: **haftada en az [minGoalDaysPerWeek] hedef günü**
+/// tutturulan ARDIŞIK haftaların en uzun serisi.
+///
+/// 🔴 Tasarım amacı (sahip kararı): bu, günlük serinin (`fire_streak`) sağlıklı
+/// alternatifidir. Bir hafta içinde **iki gün kaçırmak zinciri KIRMAZ** — 7
+/// günün 5'i yeterlidir. Zincir yalnız bir hafta 5 günün altında kalınca
+/// kopar. Gün bazlı seri mantığını buraya kopyalamak özelliği anlamsız kılar.
+///
+/// [goalDays] hedefe ulaşılmış **gün anahtarlarıdır** (Europe/Istanbul,
+/// [istanbulDay] çıktısı). Hafta ISO pazartesi ile başlar; sunucudaki
+/// `date_trunc('week', …)` ile aynı sınır.
+int metronomeWeekChain(
+  Iterable<DateTime> goalDays, {
+  int minGoalDaysPerWeek = 5,
+}) {
+  final daysPerWeek = <DateTime, Set<DateTime>>{};
+  for (final day in goalDays) {
+    final key = DateTime(day.year, day.month, day.day);
+    final weekStart = DateTime(key.year, key.month, key.day - (key.weekday - 1));
+    daysPerWeek.putIfAbsent(weekStart, () => <DateTime>{}).add(key);
+  }
+  final qualifying =
+      daysPerWeek.entries
+          .where((entry) => entry.value.length >= minGoalDaysPerWeek)
+          .map((entry) => entry.key)
+          .toList()
+        ..sort();
+
+  var longest = 0;
+  var run = 0;
+  DateTime? previous;
+  for (final week in qualifying) {
+    run = (previous != null && _dayOrdinal(week) - _dayOrdinal(previous) == 7)
+        ? run + 1
+        : 1;
+    if (run > longest) longest = run;
+    previous = week;
+  }
+  return longest;
+}
+
+/// Takvim günü sırası. `difference` yerine bu kullanılır: gün anahtarları
+/// cihazın yerel gece yarısıdır ve yaz saati geçişinde iki anahtarın farkı
+/// 24 saat değil 23/25 saat çıkar.
+int _dayOrdinal(DateTime day) =>
+    DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
+    Duration.millisecondsPerDay;
 
 String ledgerEventKey(String userId, String achievementId, int tier) =>
     '$userId|$achievementId|tier_$tier';
@@ -496,6 +583,14 @@ class AchievementLedgerEngine {
     // WP-D: Kusursuz Ay = takvim ayında ≥28 hedef günü (en fazla 2 kaçırma).
     final perfectMonths = byMonth.values.where((d) => d >= 28).length;
 
+    // WP-721: hedefe ulaşılan günler → haftalık ritim zinciri. Sunucu aynı
+    // günleri `goal_progress_events` (`goal_completed`) üzerinden okur; kural
+    // iki uçta da "gün toplamı ≥ günlük hedef".
+    final metronomeWeeks = metronomeWeekChain([
+      for (final entry in dayTotals.entries)
+        if (entry.value >= goalSecs) entry.key,
+    ]);
+
     return {
       'total_hours': totalSeconds ~/ 3600,
       'max_session_minutes': maxSessionMinutes,
@@ -503,6 +598,7 @@ class AchievementLedgerEngine {
       'streak_days': streak,
       'weekend_goal_days': weekendGoalDays,
       'perfect_months': perfectMonths,
+      'metronome_weeks': metronomeWeeks,
       'goal_minutes': dailyGoalMinutes,
       // Offline: sosyal metrikler oturumdan türetilmez (sunucu 0025).
       'nudge_starts': 0,
@@ -536,6 +632,13 @@ class AchievementLedgerEngine {
         return metrics['weekend_goal_days'] as int? ?? 0;
       case 'perfect_month':
         return metrics['perfect_months'] as int? ?? 0;
+      case 'metronome':
+        return metrics['metronome_weeks'] as int? ?? 0;
+      // WP-721: Kadim Üye `group_members.joined_at`'ten gelir; yerel motorun
+      // üyelik verisi yoktur. `alpha_wolf` ile aynı gerekçe — gerçek değer
+      // sunucu projeksiyonundan (`membership_tenure_v1`, 0134) okunur.
+      case 'ancient_member':
+        return 0;
       case 'secret_break_enemy':
         return secrets['break_enemy'] == true ? 1 : 0;
       // WP-F: alpha_wolf / campfire_hours / locomotive **grup-verified** metriklerdir;

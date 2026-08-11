@@ -25,6 +25,9 @@ void main() {
     'campfire_hours': 10,
     'inspiration': 5,
     'locomotive': 5,
+    // WP-721
+    'ancient_member': 30,
+    'metronome': 4,
   };
 
   test('katalog ilk kademe eşiklerini TR ve EN koşul metniyle korur', () {

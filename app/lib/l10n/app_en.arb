@@ -7151,5 +7151,17 @@
   "clockWidgetDokununcaUygulama": "Tapping opens the app, not a specific section",
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: tap line for a widget without a deep link."},
   "clockWidgetGunlukHedefOzeti": "Your daily goal percentage and progress",
-  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."}
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."},
+  "coreKadimUye": "Ancient Member",
+  "@coreKadimUye": {"description": "WP-721: name of the membership tenure achievement."},
+  "coreAyniGruptaGecirilenGun": "Days spent as a member of the same group",
+  "@coreAyniGruptaGecirilenGun": {"description": "WP-721: catalog description of Ancient Member."},
+  "coreMetronom": "Metronome",
+  "@coreMetronom": {"description": "WP-721: name of the weekly cadence achievement."},
+  "coreHaftalikRitim": "Consecutive weeks with at least 5 goal days",
+  "@coreHaftalikRitim": {"description": "WP-721: catalog description of Metronome."},
+  "profileBasarimKadimUyeKosulu": "Stay a member of the same group for {count, plural, =1 {1 day} other {{count} days}}.",
+  "@profileBasarimKadimUyeKosulu": {"description": "WP-721: Ancient Member tier condition.", "placeholders": {"count": {"type": "int"}}},
+  "profileBasarimMetronomKosulu": "Hit your daily goal on at least 5 days a week for {count, plural, =1 {1 consecutive week} other {{count} consecutive weeks}}.",
+  "@profileBasarimMetronomKosulu": {"description": "WP-721: Metronome tier condition; missing two days must not break the chain.", "placeholders": {"count": {"type": "int"}}}
 }

@@ -65,6 +65,11 @@ IconData achievementIconData(String iconKey) {
       return Icons.memory;
     case 'celebration':
       return Icons.celebration;
+    // WP-721
+    case 'history':
+      return Icons.history;
+    case 'graphic_eq':
+      return Icons.graphic_eq;
     default:
       return Icons.emoji_events_outlined;
   }
@@ -126,6 +131,13 @@ String achievementTierConditionTr(
       return l10n.profileBasarimDurtmeKosulu(value);
     case 'locomotive':
       return l10n.profileBasarimLokomotifKosulu(value);
+    // WP-721: koşul metni kuralı SÖYLER. Metronom'unki bilerek "üst üste N
+    // hafta … haftada en az 5 gün" der; "N gün üst üste" yazmak onu günlük
+    // serinin kopyası gibi gösterirdi.
+    case 'ancient_member':
+      return l10n.profileBasarimKadimUyeKosulu(value);
+    case 'metronome':
+      return l10n.profileBasarimMetronomKosulu(value);
   }
   switch (tier.unit) {
     case 'hours':

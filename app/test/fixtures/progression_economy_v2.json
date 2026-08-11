@@ -6,7 +6,7 @@
     "weekend_goal_days", "perfect_month", "alpha_wolf", "team_player",
     "campfire_hours", "inspiration", "locomotive"
   ],
-  "extensionTieredAchievementIds": ["alpha_wolf_weekly"],
+  "extensionTieredAchievementIds": ["alpha_wolf_weekly", "ancient_member", "metronome"],
   "achievements": {
     "marathon_total": [[1,50,"hours",1500],[2,200,"hours",5000],[3,500,"hours",15000],[4,1000,"hours",30000],[5,2500,"hours",75000],[6,5000,"hours",150000]],
     "steel_will": [[1,60,"minutes",500],[2,90,"minutes",1000],[3,120,"minutes",1500],[4,180,"minutes",2500],[5,300,"minutes",7500],[6,480,"minutes",15000]],
@@ -20,6 +20,8 @@
     "campfire_hours": [[1,10,"campfire_hours",100],[2,50,"campfire_hours",400],[3,150,"campfire_hours",1500],[4,300,"campfire_hours",5000],[5,600,"campfire_hours",12000],[6,1000,"campfire_hours",25000]],
     "inspiration": [[1,5,"nudge_starts",100],[2,20,"nudge_starts",400],[3,50,"nudge_starts",1200],[4,150,"nudge_starts",4000],[5,500,"nudge_starts",15000],[6,1000,"nudge_starts",30000]],
     "locomotive": [[1,5,"locomotive_events",250],[2,15,"locomotive_events",750],[3,30,"locomotive_events",1500],[4,100,"locomotive_events",4500],[5,300,"locomotive_events",15000],[6,600,"locomotive_events",30000]],
+    "ancient_member": [[1,30,"membership_days",500],[2,100,"membership_days",1500],[3,365,"membership_days",5000],[4,730,"membership_days",12000]],
+    "metronome": [[1,4,"metronome_weeks",1000],[2,12,"metronome_weeks",3000],[3,26,"metronome_weeks",8000],[4,52,"metronome_weeks",20000]],
     "secret_night_owl": [[1,1,"secret_night_owl",2000]],
     "secret_dawn": [[1,1,"secret_dawn",2500]],
     "secret_404": [[1,1,"secret_404",5000]],

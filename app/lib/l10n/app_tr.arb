@@ -2246,5 +2246,17 @@
   "clockWidgetDokununcaUygulama": "Dokununca uygulama açılır; belirli bir bölüme gitmez",
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: derin baglantisi olmayan widget icin dokunma satiri."},
   "clockWidgetGunlukHedefOzeti": "Günlük hedefinin yüzdesi ve ilerlemesi",
-  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."}
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."},
+  "coreKadimUye": "Kadim Üye",
+  "@coreKadimUye": {"description": "WP-721: uyelik suresi basariminin adi."},
+  "coreAyniGruptaGecirilenGun": "Aynı grupta üye olarak geçirilen gün",
+  "@coreAyniGruptaGecirilenGun": {"description": "WP-721: Kadim Uye basariminin katalog aciklamasi."},
+  "coreMetronom": "Metronom",
+  "@coreMetronom": {"description": "WP-721: haftalik ritim basariminin adi."},
+  "coreHaftalikRitim": "Haftada en az 5 gün hedef tutturulan üst üste hafta",
+  "@coreHaftalikRitim": {"description": "WP-721: Metronom basariminin katalog aciklamasi."},
+  "profileBasarimKadimUyeKosulu": "Aynı grupta {count} gün üye kal.",
+  "@profileBasarimKadimUyeKosulu": {"description": "WP-721: Kadim Uye kademe kosulu.", "placeholders": {"count": {"type": "int"}}},
+  "profileBasarimMetronomKosulu": "Üst üste {count} hafta boyunca haftada en az 5 gün günlük hedefine ulaş.",
+  "@profileBasarimMetronomKosulu": {"description": "WP-721: Metronom kademe kosulu; iki gun kacirmak zinciri kirmaz.", "placeholders": {"count": {"type": "int"}}}
 }

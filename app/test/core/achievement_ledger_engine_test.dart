@@ -22,9 +22,10 @@ StudySession _session({
 
 void main() {
   group('AchievementLedgerEngine', () {
-    test('sözlük 20 başarım içerir (çalışma+seri+grup+sosyal+gizli)', () {
+    test('sözlük 23 başarım içerir (çalışma+seri+grup+sosyal+gizli)', () {
       final dict = kAchievementDictV3();
-      expect(dict.length, 21);
+      // WP-721: 21 + Kadim Üye + Metronom.
+      expect(dict.length, 23);
       expect(dict.where((e) => e.isSecret).length, 9);
       expect(dict.any((e) => e.id == 'marathon_total'), isTrue);
       expect(dict.any((e) => e.id == 'secret_404'), isTrue);
@@ -305,7 +306,7 @@ void main() {
     test('processEvent idempotent ve sözlük dolu', () async {
       final repo = InMemoryAchievementRepository();
       final dict = await repo.fetchDictionary();
-      expect(dict.length, 21);
+      expect(dict.length, 23); // WP-721: + Kadim Üye, Metronom
 
       final sessions = [
         _session(id: 's1', start: DateTime.utc(2026, 6, 1, 12, 0), minutes: 90),
