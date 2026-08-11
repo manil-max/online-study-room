@@ -11,6 +11,7 @@ import '../../data/providers/device_integration_listener.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/providers/nudge_notification_listener.dart';
 import '../../data/providers/presence_lifecycle.dart';
+import '../../features/android_widgets/android_widget_service.dart';
 import '../../features/android_widgets/widget_deep_link.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
@@ -121,6 +122,9 @@ class HomeShell extends ConsumerWidget {
     // izlenir cunku kabuk uygulama boyunca monte kalir; soguk baslangicta
     // (surec widget intent'iyle DOGDUGUNDA) rotayi soracak olan da odur.
     ref.watch(widgetDeepLinkListenerProvider);
+    // WP-704: gorev widget'i koprusu. Bu tek satir olmadan WP-701'in tamami
+    // olu kod: ana ekranda konan isaret uygulanmaz, ayna hic yazilmaz.
+    ref.watch(taskWidgetBridgeStarterProvider);
     // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).
     ref.watch(reminderSyncListenerProvider);
 

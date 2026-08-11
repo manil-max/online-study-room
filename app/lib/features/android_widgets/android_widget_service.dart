@@ -714,3 +714,19 @@ final taskWidgetBridgeProvider = Provider<TaskWidgetBridge>((ref) {
   }
   return bridge;
 });
+
+/// Köprüyü **gerçekten başlatan** tek yer (WP-704).
+///
+/// 🔴 WP-701 köprünün her parçasını yazdı ve 20/20 yeşil test bıraktı, ama
+/// `lib/` içinde [TaskWidgetBridge.start] çağıran hiçbir satır yoktu: testler
+/// köprüyü kendileri başlatıyordu. O hâlde ayna hiç yazılmaz, bekleyen kuyruk
+/// hiç boşalmaz — kullanıcının ana ekranda koyduğu işaret uygulama açılınca
+/// **geri döner**. Depoda kayıtlı ders: *"bitmiş backend + bağlanmamış UI"*.
+///
+/// Neden ayrı bir sağlayıcı: [taskWidgetBridgeProvider] senkron bir `Provider`
+/// ve `start()` asenkron. Kabuğun `build`'i içinden `unawaited(...)` çağırmak
+/// her yeniden çizimde yeni bir tur başlatırdı; `FutureProvider` turu **bir
+/// kez** koşturur ve kabuk monte kaldığı sürece diri tutar.
+final taskWidgetBridgeStarterProvider = FutureProvider<void>((ref) async {
+  await ref.watch(taskWidgetBridgeProvider).start();
+});

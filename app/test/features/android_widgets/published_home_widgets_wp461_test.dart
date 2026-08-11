@@ -29,12 +29,17 @@ String _receiverHeader(String className) {
 
 void main() {
   group('yayın allowlist\'i', () {
-    // WP-695: yayin listesi ikiye cikti (sayac + sinav geri sayimi).
+    // WP-701: yayin listesi uce cikti (sayac + sinav geri sayimi + gorev).
     // Iddia yine **acik**: kazayla acilan/kapanan bir bayrak kirmizi dussun.
-    test('yayinda iki widget var: 1x1 sayac + sinav geri sayimi', () {
+    //
+    // Bu iddia WP-701 turunda bayat kaldi ve kapiyi kirmizi dusurdu -- yani
+    // gorevini yapti. Listeyi genisletirken sirasi da baglayici: enum sirasi
+    // katalog sirasidir, katalog ekrani da o sirada cizer.
+    test('yayinda uc widget var: 1x1 sayac + sinav geri sayimi + gorev', () {
       expect(publishedHomeWidgets, [
         HomeWidgetProvider.timer,
         HomeWidgetProvider.countdown,
+        HomeWidgetProvider.task,
       ]);
     });
 
