@@ -53,30 +53,21 @@ import 'package:online_study_room/main.dart';
 
 import '../support/v8_test_setup.dart';
 
-/// 🔴 WP-690 TESLIM NOTU — duzeltme bu lane'in yollarinin DISINDA.
+/// 🔴 WP-690 — DUZELTME LIDER KARARIYLA IKI PARCA.
 ///
-/// Iki kusurun da kodu `app/lib/features/classroom/**` icinde DEGIL:
+/// Kusurlarin kodu `classroom/**` icinde degil, `home/widgets/` ve
+/// `stats/widgets/` icinde; ustelik ayni iki widget Ana Sayfa panosunda da
+/// cizilir (`home/dashboard_card.dart:540-541`). Bu yuzden duzeltme GLOBAL
+/// degil KOSULLU yapildi:
 ///
-///   * KUSUR 1 → `app/lib/features/home/widgets/leaderboard_card.dart:228-286`
-///   * KUSUR 2 → `app/lib/features/home/widgets/group_goal_card.dart:244-269`
-///   * rozetin "daha buyuk" olcusu → `app/lib/features/stats/widgets/
-///     goal_streak_flame.dart:39` (`GoalStreakFlameSize` yalniz compact/regular;
-///     Gruplar sekmesinde ZATEN regular, yani "kucuk" olan compact degil)
+///   * `LeaderboardCard.showGoalRow` — varsayilan `true` (Ana Sayfa panosu
+///     DEGISMEDI), `classroom_screen.dart` `false` geciyor.
+///   * `GoalStreakFlameSize.large` — yeni kademe; "kucuk" olan `compact`
+///     DEGILDI, Gruplar sekmesindeki rozet zaten `regular`di (olculdu: ikon
+///     20 px), o yuzden yeni kademe sart oldu.
 ///
-/// `classroom_screen.dart:291-295` bu kartlari yalnizca `const GroupGoalCard()`
-/// / `const LeaderboardCard()` diye CAGIRIR; davranis parametresi yoktur, yani
-/// Gruplar sekmesine ozel bir duzen classroom tarafindan verilemez. Ustelik ayni
-/// iki widget Ana Sayfa panosunda da cizilir (`home/dashboard_card.dart:540-541`)
-/// — degisiklik iki yuzeyi birden etkiler.
-///
-/// Bu lane'in SAHIP yollari `home/**` ve `stats/**`i kapsamadigi icin sozlesme
-/// testleri `skip` ile teslim edilir: kapiyi kirmizi birakmazlar ama yollar
-/// verilir verilmez `skip:` satirini silmek yeterlidir. Kirmizi dustukleri
-/// OLCULDU; cikti raporda.
-const String kWp690Blocked =
-    'WP-690: duzeltme app/lib/features/home/widgets/{leaderboard,group_goal}'
-    '_card.dart + stats/widgets/goal_streak_flame.dart icinde; bu lane bu '
-    'yollara yazamiyor (YASAK: home/**, stats/**). Yollar verilince skip sil.';
+/// Asagidaki `PANO` testi "Ana Sayfa degismedi" iddiasini olcer — kosullu
+/// duzeltmenin sessizce global olmadigini yakalayan tek kanca odur.
 
 void main() {
   final tr = AppLocalizationsTr();
@@ -294,6 +285,21 @@ void main() {
             .evaluate()
             .length;
 
+        final timeText = find.descendant(
+          of: find.byType(GroupGoalCard),
+          matching: find.text('3sa 22dk / 6sa'),
+        );
+        final label = find.descendant(
+          of: find.byType(GroupGoalCard),
+          matching: find.text(tr.homeGrupHedefi),
+        );
+        // ignore: avoid_print
+        print(
+          'WP690-PARCA@$w | sureMetni ${tester.getRect(timeText)} '
+          '| etiket ${tester.getRect(label.at(1))} '
+          '| baslik ${tester.getRect(label.first)} '
+          '| rozet $badge',
+        );
         // ignore: avoid_print
         print(
           'WP690-OLCUM@$w | hedefKarti ${goal.width}x${goal.height} '
@@ -404,8 +410,7 @@ void main() {
     final platform = w == 390 ? TargetPlatform.android : TargetPlatform.windows;
 
     testWidgets(
-      '$w px: siralama kartinda "Grup hedefi" satiri YOK '
-      '[ATLANDI] $kWp690Blocked',
+      '$w px: siralama kartinda "Grup hedefi" satiri YOK',
       (tester) async => onPlatform(platform, () async {
         await openGroups(
           tester,
@@ -467,9 +472,88 @@ void main() {
               'olmus.',
         );
       }),
-      skip: true,
     );
   }
+
+  // ==== 2b. ANA SAYFA PANOSU DEGISMEDI (kosullu duzeltmenin kancasi) =======
+  //
+  // 🔴 Bu testin varlik sebebi: KUSUR 1'in duzeltmesi `LeaderboardCard`
+  // widget'inda yapildi ve ayni widget Ana Sayfa panosunda da cizilir
+  // (`home/dashboard_card.dart:541`, varsayilan duzende leaderboard VAR —
+  // `dashboard_providers.dart:38`). Global kaldirilsaydi, "Grup hedefi"
+  // kartini panosuna hic eklememis bir kullanici o bilgiyi tamamen kaybederdi.
+  // Bu iddia olmadan duzeltme sessizce global olabilir ve hicbir kapi gormez.
+
+  testWidgets(
+    'PANO: Ana Sayfa siralama kartinda grup hedefi satiri DURUYOR',
+    (tester) async => onPlatform(TargetPlatform.windows, () async {
+      await openGroups(
+        tester,
+        window: const Size(1920, 1080),
+        myTodaySeconds: 2 * 3600 + 22 * 60,
+        peerTodaySeconds: 3600,
+      );
+
+      // Gruplar sekmesindeki ornek: satir KAPALI.
+      final inGroups = tester.widgetList<LeaderboardCard>(
+        find.byType(LeaderboardCard),
+      );
+      expect(inGroups, isNotEmpty);
+      for (final card in inGroups) {
+        expect(
+          card.showGoalRow,
+          isFalse,
+          reason: 'Gruplar sekmesindeki kart hala hedef satirini istiyor.',
+        );
+      }
+
+      await tester.tap(find.text(tr.desktopAnaSayfa).first);
+      await settle(tester);
+
+      // Ana Sayfa panosundaki ornek: satir ACIK (varsayilan davranis).
+      final inHome = tester.widgetList<LeaderboardCard>(
+        find.byType(LeaderboardCard),
+      );
+      expect(
+        inHome,
+        isNotEmpty,
+        reason:
+            'Ana Sayfa panosunda siralama karti hic cizilmemis; varsayilan '
+            'duzende olmasi gerekiyordu (dashboard_providers.dart:38). Bu '
+            'halde "pano degismedi" iddiasi SAHTE YESIL olur.',
+      );
+      for (final card in inHome) {
+        expect(
+          card.showGoalRow,
+          isTrue,
+          reason:
+              'Ana Sayfa panosundaki kart da hedef satirini kaybetmis — '
+              'kosullu olmasi gereken duzeltme GLOBAL olmus.',
+        );
+      }
+
+      // Cagri yeri sozlesmesi yetmez; satirin GERCEKTEN cizildigini de gor.
+      // (Pano hucresi kisaysa `showGroupGoal` yine kapanabilir — bu durumda
+      // sebep WP-662 yukseklik kurali, WP-690 degil; ayirt edebilmek icin
+      // ciktiyi yazdiriyoruz.)
+      final drawn = find
+          .descendant(
+            of: find.byType(LeaderboardCard),
+            matching: find.text(tr.homeGrupHedefi),
+          )
+          .evaluate()
+          .length;
+      // ignore: avoid_print
+      print('WP690-PANO | anaSayfada cizilen grup hedefi satiri: $drawn');
+      expect(
+        drawn,
+        greaterThan(0),
+        reason:
+            'Ana Sayfa panosunda satir cizilmiyor; kart genisligi/yuksekligi '
+            'degil WP-690 degisikligi sizmis olabilir.',
+      );
+    }),
+  );
 
   // ============ 3. SOZLESME — hedef kartinin sagi degerlendirilmis =========
 
@@ -478,8 +562,7 @@ void main() {
     final platform = w == 390 ? TargetPlatform.android : TargetPlatform.windows;
 
     testWidgets(
-      '$w px: seri rozeti kartin SAG yarisinda ve BUYUK '
-      '[ATLANDI] $kWp690Blocked',
+      '$w px: seri rozeti kartin SAG yarisinda ve BUYUK',
       (tester) async => onPlatform(platform, () async {
         await openGroups(
           tester,
@@ -506,8 +589,8 @@ void main() {
               '${card.right - badge.right} px olu alan; bosluk '
               'degerlendirilmemis.',
         );
-        // "Daha buyuk koyma sansi": bugun ikon 20 px (regular). Sag bosluk
-        // degerlendirildiyse rozet bundan BUYUK olmali.
+        // "Daha buyuk koyma sansi": ONCE ikon 20 px'di (regular kademe).
+        // Sag bosluk degerlendirildiyse rozet bundan BUYUK olmali.
         expect(
           badgeIconSizeIn(tester, find.byType(GroupGoalCard)),
           greaterThan(20.0),
@@ -519,6 +602,40 @@ void main() {
         expect(badge.right, lessThanOrEqualTo(card.right));
         expect(badge.left, greaterThanOrEqualTo(card.left));
 
+        // 🔴 BEDEL KANCASI — rozet buyuyunce yanindaki kolon daralir. Ilk
+        // denemede olculdu: "3sa 22dk / 6sa" 136 px kolona UC SATIR sardi
+        // (kutu 136x60) ve kart 152 -> 164 px UZADI. Iki taraftan da
+        // korunuyor: satir TEK kalacak (yuksekligi tek satir tavanini
+        // asmayacak) ama olcek de okunmaz kadar kucultmeyecek.
+        final timeRect = tester.getRect(
+          find.descendant(
+            of: find.byType(GroupGoalCard),
+            matching: find.text('3sa 22dk / 6sa'),
+          ),
+        );
+        expect(
+          timeRect.height,
+          lessThanOrEqualTo(24.0),
+          reason:
+              'Sure metni ${timeRect.width}x${timeRect.height} — tek satirdan '
+              'uzun, yani rozet kolonu ezip metni sardirmis.',
+        );
+        expect(
+          timeRect.height,
+          greaterThanOrEqualTo(12.0),
+          reason:
+              'Sure metni ${timeRect.height} px boyuna kucultulmus; rozet '
+              'kolondan cok yer aliyor, okunmaz.',
+        );
+
+        // Kart YUKSEKLIGI kontrolden cikmasin (lider sarti; ONCE 152 / 184).
+        expect(
+          card.height,
+          lessThanOrEqualTo(w == 390 ? 152.0 : 184.0),
+          reason:
+              'Hedef karti ${card.height} px — rozet buyurken kart da uzamis.',
+        );
+
         // ISLEV KAYBI YOK: sure/hedef satiri duruyor.
         expect(
           find.descendant(
@@ -529,7 +646,6 @@ void main() {
           reason: 'Sure/hedef satiri kaybolmus.',
         );
       }),
-      skip: true,
     );
   }
 }

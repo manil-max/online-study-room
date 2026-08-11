@@ -241,6 +241,22 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  // 🔴 WP-690 — seri rozeti KOLONUN ALTINDAN cikip satirin SAG
+                  // ucuna tasindi ve `large` kademesine gecti.
+                  //
+                  // Sahip: *"grup hedefi kisminda sag taraf bos kalmis, oraya
+                  // seriyi koysak daha guzel olur, hem daha buyuk koyma sansi
+                  // olur."* Olculdu (`group_cards_wp690_test.dart`, once):
+                  // rozet merkezi 154.1 px, kart merkezi 195.0 px — yani SOL
+                  // yarida; rozetin sagi ile kart kenari arasinda 189.9 px
+                  // (telefon) / 239.9 px (masaustu) olu alan vardi.
+                  //
+                  // Yan etki (istenen): rozet kolondan cikinca kolonun boyu
+                  // kisaliyor, satirin boyunu artik halka belirliyor — kart
+                  // UZAMIYOR, kisaliyor.
+                  //
+                  // ⚠️ Rozetin rengi hala `goalStreakFlameVisual` ile zeminden
+                  // turetilir (WP-657); buyuten sey yalniz olcu kademesi.
                   Row(
                     children: [
                       ring,
@@ -249,9 +265,21 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${formatHuman(todayTotal)} / ${formatHuman(goalSeconds)}',
-                              style: theme.textTheme.titleSmall,
+                            // 🔴 WP-690 OLCULDU: rozet satira girince kolon
+                            // 326 -> 136 px'e dustu ve "3sa 22dk / 6sa" UC
+                            // SATIRA sardi (kutu 136x60), kart da 152 -> 164
+                            // px uzadi. Sarma yerine olcekleme: ayni teknik
+                            // bu dosyanin `isCompact` dalinda (yukarida)
+                            // zaten kullaniliyor, bilgi kaybi yok, satir tek
+                            // kaliyor ve kartin boyunu artik halka belirliyor.
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                '${formatHuman(todayTotal)} / ${formatHuman(goalSeconds)}',
+                                maxLines: 1,
+                                style: theme.textTheme.titleSmall,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -260,10 +288,13 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            GoalStreakBadge(scope: streakScope),
                           ],
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      GoalStreakBadge(
+                        scope: streakScope,
+                        size: GoalStreakFlameSize.large,
                       ),
                     ],
                   ),

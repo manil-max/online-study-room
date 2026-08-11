@@ -62,9 +62,30 @@ const double kLeaderboardDenseRowExtent = 34.0;
 /// görüneceği kartın kutusundan **ölçülerek** çıkar (bkz.
 /// [kLeaderboardRowExtent]).
 class LeaderboardCard extends ConsumerWidget {
-  const LeaderboardCard({super.key, this.size = DashboardCardSize.medium});
+  const LeaderboardCard({
+    super.key,
+    this.size = DashboardCardSize.medium,
+    this.showGoalRow = true,
+  });
 
   final DashboardCardSize size;
+
+  /// Kartin basliginda grup hedefi ozeti (bayrak + etiket + seri rozeti +
+  /// yuzde + ilerleme cubugu) cizilsin mi.
+  ///
+  /// 🔴 WP-690 — sahip Gruplar sekmesinde: *"ranking kismida group goal
+  /// olmasina gerek yok, hemen ustunde var zaten, gereksiz yere uzatiyor
+  /// karti."* Olculdu (`group_cards_wp690_test.dart`): ayni istatistikle iki
+  /// kart da **%56** ciziyor, yani satir gercekten TEKRAR. Ekranda gorulen
+  /// %23/%22 farki olcum farki degil, `GroupGoalCard._tick` canli sayacinin
+  /// onde olmasi (240 sn'de hedef %56 -> %57, siralama %56'da kaldi).
+  ///
+  /// ⚠️ Varsayilan **`true`** ve oyle kalmali: bu kart Ana Sayfa panosunda da
+  /// cizilir (`home/dashboard_card.dart:541`) ve orada kartlari **kullanici
+  /// diziyor** — "Grup hedefi" kartini hic eklememis olabilir. Global
+  /// kaldirmak o kullanicida bilgi KAYBI olurdu. Yalniz `classroom_screen.dart`
+  /// `false` gecer, cunku orada iki kart her zaman yan yana/alt alta durur.
+  final bool showGoalRow;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -137,7 +158,11 @@ class LeaderboardCard extends ConsumerWidget {
           // Kural: blok, kendisinden sonra en az iki normal satır kalıyorsa
           // çizilir. Sınırsız yükseklikte (Gruplar `ListView`i) hep çizilir —
           // orada kartın boyu içeriğe göre uzar.
+          // 🔴 WP-690: `showGoalRow` ilk kosul — cagiran yuzey satiri hic
+          // istemiyorsa yukseklik aritmetigi bile calismaz ve `goalReserve`
+          // asagida 0 olur, yani kart o kadar KISALIR (olculdu: 187 -> 144 px).
           final showGroupGoal =
+              showGoalRow &&
               !isCompact &&
               (!isHeightBounded ||
                   innerHeight >=

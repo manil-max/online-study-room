@@ -34,6 +34,7 @@ import 'package:online_study_room/data/models/nudge.dart';
 import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
+import 'package:online_study_room/data/providers/analytics_query_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/chat_providers.dart';
@@ -171,6 +172,13 @@ void main() {
             V8TestDeviceIntegrationService(),
           ),
           androidWidgetServiceProvider.overrideWithValue(V8TestWidgetGateway()),
+          // 🔴 WP-690 — bu override olmadan `LeaderboardCard` "Veriler
+          // yuklenemedi" hata kabuguna dusuyordu ve bu dosyanin butun kutu
+          // olcumleri BOS bir kabugu olcuyordu (yukaridaki gercek-govde
+          // iddiasi eklendiginde 12 test birden kirmizi dustu). Sebep:
+          // `groupAlphaScoresProvider` widget testinde bulunmayan gercek
+          // analitik deposunu ariyor.
+          groupAlphaScoresProvider.overrideWith((ref) async => const {}),
           if (peer != null)
             groupPresenceProvider.overrideWith(
               (ref) => Stream.value([
@@ -201,6 +209,49 @@ void main() {
           'Gruplar sekmesi cizilmedi; hicbir sey olculemez. Once kabugun '
           'ayakta oldugundan emin ol.',
     );
+
+    // 🔴 WP-690 — SAHTE YESIL KAPATILDI.
+    //
+    // Bu dosyanin butun olcumleri `find.byType(LeaderboardCard)` /
+    // `GroupGoalCard` ile kutu ariyor. Ama o tipler kartin HATA KABUGUNDA da
+    // agacta durur: `cardDataGate` ("Veriler yuklenemedi." + "Tekrar dene")
+    // `LeaderboardCard.build` icinden erken doner, yani `find.byType` yine
+    // eslesir ve `getRect` bir kutu dondurur. Sonuc: "kart 448 px, yan yana,
+    // tavani asmiyor" iddialari kartin ICI BOSKEN de yesil yanar.
+    //
+    // Olculdu (WP-690): bu fixture'da `groupAlphaScoresProvider` gercek
+    // analitik deposunu ariyor, bulamiyor ve kart tam da o hata kabuguna
+    // dusuyordu — asagidaki iddia eklendiginde 12 test birden kirmizi dustu.
+    // Duzeltme: provider override edildi (yukarida), boylece olculen sey
+    // gercek kart govdesi.
+    expect(
+      find.descendant(
+        of: find.byType(LeaderboardCard),
+        matching: find.text(tr.homeSiralama),
+      ),
+      findsOneWidget,
+      reason:
+          'Siralama karti govdesini cizmemis (veri/hata kapisi). Bu halde '
+          'asagidaki butun kutu olcumleri BOS bir kabugu olcer.',
+    );
+    expect(
+      find.descendant(
+        of: find.byType(GroupGoalCard),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              w.data != null &&
+              RegExp(r'^%\d+$').hasMatch(w.data!),
+        ),
+      ),
+      findsOneWidget,
+      reason:
+          'Grup hedefi kartinda halka yuzdesi yok; kart iskelet/hata '
+          'kabugunda ve genislik olcumu anlamsiz. (Halka widget tipi yerine '
+          'CIZILEN yuzde araniyor: `cardDataGate` iskeleti de bir donen '
+          'gosterge cizebilir, ama yuzde cizmez.)',
+    );
+
     return _Fixture(me: me, peer: peer, nudges: nudges);
   }
 

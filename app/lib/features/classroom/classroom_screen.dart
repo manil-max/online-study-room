@@ -290,7 +290,12 @@ class _GroupView extends ConsumerWidget {
         const SizedBox(height: 16),
         const GroupGoalCard(),
         const SizedBox(height: 16),
-        const LeaderboardCard(),
+        // 🔴 WP-690 — `showGoalRow: false`: siralama karti hemen ustundeki
+        // "Grup hedefi" kartini TEKRAR ediyordu (ayni istatistikten ayni
+        // yuzde; olculdu, %56 = %56). Ana Sayfa panosunda varsayilan `true`
+        // kalir — orada kartlari kullanici diziyor ve hedef kartini hic
+        // eklememis olabilir.
+        const LeaderboardCard(showGoalRow: false),
         const SizedBox(height: 16),
         const GroupTrendCard(),
         // Alt menü için nefes payı
@@ -439,7 +444,8 @@ class _GroupBlockGrid extends StatelessWidget {
           children: [
             for (final block in const <Widget>[
               GroupGoalCard(),
-              LeaderboardCard(),
+              // WP-690: mobil dalla AYNI karar — tekrar eden hedef satiri yok.
+              LeaderboardCard(showGoalRow: false),
               GroupTrendCard(),
             ])
               SizedBox(width: width, child: block),

@@ -37,7 +37,21 @@ import '../../../data/providers/goal_streak_providers.dart';
 ///
 /// Kişisel/grup ayrımı ise çerçeve **biçimiyle** sürüyor (yuvarlak / köşeli),
 /// yani kapsam etiketi kalksa da renksiz bir kanal kalıyor.
-enum GoalStreakFlameSize { compact, regular }
+/// Rozetin uc olcu kademesi.
+///
+/// 🔴 WP-690 — `large` sahip emriyle acildi. Sahip Gruplar sekmesindeki "Grup
+/// hedefi" karti icin: *"sag taraf bos kalmis, oraya seriyi koysak daha guzel
+/// olur, hem daha buyuk koyma sansi olur."*
+///
+/// ⚠️ "Buyuk" olan `compact` degil `regular`di: olculdu (`group_cards_wp690_
+/// test.dart`), Gruplar sekmesindeki rozet zaten `regular` ve ikonu **20 px**.
+/// Yani "compact -> regular" yukseltmesi hicbir sey degistirmezdi; yeni bir
+/// kademe sart oldu.
+///
+/// ⚠️ Renkler bu kademede de [goalStreakFlameVisual] uzerinden ZEMINDEN
+/// turetilir (WP-657). Buyuk rozete sabit renk yazmak 15 temanin bir kisminda
+/// okunmaz sonuc verir — kademe yalniz OLCU degistirir.
+enum GoalStreakFlameSize { compact, regular, large }
 
 class GoalStreakFlame extends StatelessWidget {
   const GoalStreakFlame({
@@ -50,6 +64,7 @@ class GoalStreakFlame extends StatelessWidget {
   final GoalStreakFlameSize size;
 
   bool get _isCompact => size == GoalStreakFlameSize.compact;
+  bool get _isLarge => size == GoalStreakFlameSize.large;
 
   @override
   Widget build(BuildContext context) {
@@ -71,8 +86,8 @@ class GoalStreakFlame extends StatelessWidget {
           // Sahip şikâyeti "rozet gereğinden büyük" idi; metin gidince dolgu da
           // küçülüyor, yoksa boş bir kutu kalırdı.
           padding: EdgeInsets.symmetric(
-            horizontal: _isCompact ? 6 : 8,
-            vertical: _isCompact ? 2 : 4,
+            horizontal: _isCompact ? 6 : (_isLarge ? 10 : 8),
+            vertical: _isCompact ? 2 : (_isLarge ? 8 : 4),
           ),
           decoration: BoxDecoration(
             color: visual.background,
@@ -88,16 +103,18 @@ class GoalStreakFlame extends StatelessWidget {
             children: [
               Icon(
                 visual.icon,
-                size: _isCompact ? 16 : 20,
+                size: _isCompact ? 16 : (_isLarge ? 28 : 20),
                 color: visual.foreground,
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: _isLarge ? 6 : 4),
               Text(
                 '${projection.currentStreak}',
                 style:
                     (_isCompact
                             ? theme.textTheme.labelMedium
-                            : theme.textTheme.titleMedium)
+                            : (_isLarge
+                                  ? theme.textTheme.headlineSmall
+                                  : theme.textTheme.titleMedium))
                         ?.copyWith(
                           color: visual.foreground,
                           fontWeight: FontWeight.w700,
