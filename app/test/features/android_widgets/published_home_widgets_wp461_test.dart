@@ -1,4 +1,6 @@
 // WP-461: Yayında yalnız 1×1 Başlat/Durdur widget'ı görünür.
+// WP-695: yanina sinav geri sayimi eklendi; dosyanin asil konusu
+// **katalog <-> manifest esligi**dir, tek bir widget degil.
 //
 // Tuzak (kartta yazılı): beş widget'ı silmek ya da yeniden tasarlamak. Bu
 // yüzden testler "yok mu" diye değil, **dormant mı** diye bakar: sağlayıcı
@@ -27,8 +29,13 @@ String _receiverHeader(String className) {
 
 void main() {
   group('yayın allowlist\'i', () {
-    test('yayında tek widget var: 1×1 sayaç', () {
-      expect(publishedHomeWidgets, [HomeWidgetProvider.timer]);
+    // WP-695: yayin listesi ikiye cikti (sayac + sinav geri sayimi).
+    // Iddia yine **acik**: kazayla acilan/kapanan bir bayrak kirmizi dussun.
+    test('yayinda iki widget var: 1x1 sayac + sinav geri sayimi', () {
+      expect(publishedHomeWidgets, [
+        HomeWidgetProvider.timer,
+        HomeWidgetProvider.countdown,
+      ]);
     });
 
     test('altı sağlayıcının hepsi katalogda kayıtlı kalır', () {
@@ -42,23 +49,18 @@ void main() {
   });
 
   group('manifest sözleşmesi', () {
-    test('yalnız sayaç sağlayıcısı etkin', () {
-      final timer = _receiverHeader(
-        HomeWidgetProvider.timer.androidClassName,
-      );
-      expect(
-        timer.contains('android:enabled="false"'),
-        isFalse,
-        reason: 'yayındaki widget kapatılmış',
-      );
-
+    // WP-695: olcu yayin bayragindan turetilir. Eskiden `timer` adiyla
+    // sabitlenmisti; ikinci bir widget yayina girdiginde iddia bayatladi ve
+    // gercekte olctugu seyi (katalog <-> manifest esligi) olcemez oldu.
+    test('manifest `enabled` bayragi katalog ile ayni tarafta', () {
       for (final provider in HomeWidgetProvider.values) {
-        if (provider == HomeWidgetProvider.timer) continue;
         final header = _receiverHeader(provider.androidClassName);
         expect(
           header.contains('android:enabled="false"'),
-          isTrue,
-          reason: '${provider.androidClassName} hâlâ picker\'da görünür',
+          !isHomeWidgetPublished(provider),
+          reason: isHomeWidgetPublished(provider)
+              ? '${provider.androidClassName} yayinda ama pickerda yok'
+              : '${provider.androidClassName} hala pickerda gorunur',
         );
       }
     });

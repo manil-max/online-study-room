@@ -75,4 +75,14 @@
     <string name="widget_percent_zero">0%</string>
     <string name="cd_stats_widget">İstatistik widget\'ını yenile</string>
     <string name="cd_leaderboard_widget">Grup sıralaması widget\'ını yenile</string>
+
+    <!-- WP-695: sinav geri sayimi widget'i -->
+    <string name="widget_countdown_title">Sınav geri sayımı</string>
+    <string name="widget_countdown_default_name">Sınav</string>
+    <string name="widget_countdown_days_left">gün kaldı</string>
+    <string name="widget_countdown_today">Bugün o gün</string>
+    <string name="widget_countdown_passed">Tarih geçti</string>
+    <string name="widget_countdown_empty">Henüz geri sayım eklenmedi</string>
+    <string name="widget_label_countdown">Odak sınav geri sayımı</string>
+    <string name="cd_countdown_widget">Sınav geri sayımı widget\'ı</string>
 </resources>

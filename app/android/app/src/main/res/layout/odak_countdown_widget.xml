@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-695: sinav geri sayimi. Duzen deseni odak_stats_widget.xml'den alindi:
+     ayni renk kaynaklari (values/ + values-night/ widget_colors.xml), ayni
+     dolgu ve tek satirlik ellipsize kurallari.
+
+     Varsayilan metinler bos durumu cizer: launcher onizlemesi ve veri
+     yazilmadan once gelen ilk `onUpdate` bos bir dikdortgen degil, "henuz geri
+     sayim eklenmedi" satiri gosterir. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/countdown_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/widget_stats_surface"
+    android:contentDescription="@string/cd_countdown_widget"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/countdown_widget_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="@string/widget_countdown_title"
+        android:textColor="@color/widget_heading"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/countdown_widget_days"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="@string/widget_em_dash"
+        android:textColor="@color/widget_primary_text"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/countdown_widget_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:text="@string/widget_countdown_empty"
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="12sp" />
+</LinearLayout>

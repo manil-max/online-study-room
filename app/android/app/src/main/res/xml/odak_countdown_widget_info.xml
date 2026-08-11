@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-695: 2x1 boyut sinifi. `updatePeriodMillis` 30 dk (sistemin kabul
+     ettigi en kisa deger); geri sayim gun cozunurlugunde oldugu icin daha sik
+     guncelleme pil harcar, daha seyrek olan ise gun donumunu gec yakalar. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/odak_countdown_widget"
+    android:minWidth="110dp"
+    android:minHeight="80dp"
+    android:previewLayout="@layout/odak_countdown_widget"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

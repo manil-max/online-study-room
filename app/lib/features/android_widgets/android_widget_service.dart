@@ -91,6 +91,23 @@ enum StudyHomeWidget {
         'com.manilmax.online_study_room.widgets.GroupGoalWidgetProvider',
     catalogProvider: HomeWidgetProvider.groupGoal,
     consumesWidgetData: true,
+  ),
+
+  /// WP-695: sınav geri sayımı.
+  ///
+  /// `consumesWidgetData: false` — sağlayıcı veriyi `home_widget`in
+  /// `widgetData` sözlüğünden değil, uygulamanın kendi
+  /// `FlutterSharedPreferences` kaydından (`flutter.dday.exams_v2`) okur.
+  /// `true` yazmak [anyPublishedConsumesWidgetData] kapısını açar ve
+  /// WP-558'in kapattığı "her anlık görüntüde 17 platform kanalı turu"
+  /// gerilemesini geri getirirdi; ayrıca widget yalnız uygulama en az bir kez
+  /// snapshot yazdıktan sonra dolardı.
+  countdown(
+    androidName: 'CountdownWidgetProvider',
+    qualifiedAndroidName:
+        'com.manilmax.online_study_room.widgets.CountdownWidgetProvider',
+    catalogProvider: HomeWidgetProvider.countdown,
+    consumesWidgetData: false,
   );
 
   const StudyHomeWidget({

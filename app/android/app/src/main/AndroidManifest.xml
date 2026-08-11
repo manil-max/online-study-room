@@ -142,6 +142,20 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/odak_timer_widget_info" />
         </receiver>
+        <!-- WP-695: sinav geri sayimi. Yayinda (enabled bayragi yok);
+             katalogdaki `published: true` ile ayni tarafta durmali.
+             Ayrisirsa countdown_widget_wp695_test kirmizi duser. -->
+        <receiver
+            android:name=".widgets.CountdownWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_countdown">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_countdown_widget_info" />
+        </receiver>
         <!-- WP-461: Yayinda yalniz 1x1 Baslat/Durdur widget'i var.
              Asagidaki bes saglayici SILINMEDI; revizyon icin kodu, layout'u
              ve xml tanimi repoda duruyor. `enabled="false"` bileseni

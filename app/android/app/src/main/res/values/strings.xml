@@ -84,4 +84,14 @@
     <string name="widget_percent_zero">0%</string>
     <string name="cd_stats_widget">Refresh statistics widget</string>
     <string name="cd_leaderboard_widget">Refresh group leaderboard widget</string>
+
+    <!-- WP-695: exam countdown widget -->
+    <string name="widget_countdown_title">Exam countdown</string>
+    <string name="widget_countdown_default_name">Exam</string>
+    <string name="widget_countdown_days_left">days left</string>
+    <string name="widget_countdown_today">Today is the day</string>
+    <string name="widget_countdown_passed">Date has passed</string>
+    <string name="widget_countdown_empty">No countdown added yet</string>
+    <string name="widget_label_countdown">Odak exam countdown</string>
+    <string name="cd_countdown_widget">Exam countdown widget</string>
 </resources>

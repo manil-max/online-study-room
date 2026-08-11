@@ -20,7 +20,10 @@ enum HomeWidgetProvider {
   groupGoal('GroupGoalWidgetProvider'),
   groupLeaderboard('GroupLeaderboardWidgetProvider'),
   clock('ClockWidgetProvider'),
-  alarm('AlarmWidgetProvider');
+  alarm('AlarmWidgetProvider'),
+
+  /// WP-695 — sınav geri sayımı. Yayında olan **ikinci** widget.
+  countdown('CountdownWidgetProvider');
 
   const HomeWidgetProvider(this.androidClassName);
 
@@ -57,6 +60,12 @@ const List<HomeWidgetCatalogEntry> kHomeWidgetCatalog = [
   ),
   HomeWidgetCatalogEntry(provider: HomeWidgetProvider.clock, published: false),
   HomeWidgetCatalogEntry(provider: HomeWidgetProvider.alarm, published: false),
+  // WP-695: kullanıcı isteği ("bunun widget hâli de gelsin"). Manifest'teki
+  // receiver `enabled` bayrağı taşımaz — iki taraf aynı yerde durur.
+  HomeWidgetCatalogEntry(
+    provider: HomeWidgetProvider.countdown,
+    published: true,
+  ),
 ];
 
 /// Yayındaki widget'lar — katalog ekranı ve sözleşme testi bunu okur.
