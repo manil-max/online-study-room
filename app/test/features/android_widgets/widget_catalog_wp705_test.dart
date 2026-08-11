@@ -27,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/time_engine/clock_permissions.dart';
 import 'package:online_study_room/features/android_widgets/published_home_widgets.dart';
+import 'package:online_study_room/features/android_widgets/widget_deep_link.dart';
 import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -313,20 +314,32 @@ void main() {
       }
     });
 
-    test('gorev widget\'i BILEREK derin baglanti vaat etmiyor', () {
-      // WP-701 `ROUTE_TASKS` sabitini tanimladi ama `TaskWidget.kt` basliga
-      // paketin launcher intent'ini bagliyor. Bu iddia, birileri kartta
-      // "gorev bolumu acilir" yazmaya kalkarsa kirmizi duser.
+    // 🔴 WP-706 — BU IDDIA TERSINE CEVRILDI, SILINMEDI.
+    //
+    // WP-705 bu testi "gorev widget'i BILEREK derin baglanti vaat etmiyor"
+    // diye yazmisti ve HAKLIYDI: `ROUTE_TASKS` sabiti tanimliydi ama
+    // `TaskWidget.kt` icinde hic KULLANILMIYORDU. Iki ajan da dosyayi
+    // "digerinin SAHIP yolu" sayip dokunmayinca is dikiste kalmisti.
+    // WP-706 baglantiyi kurdu; iddia artik ters yonu olcer.
+    test('gorev widgeti gercekten Gorevler bolumune baglaniyor', () {
       expect(
         homeWidgetCardSpec(HomeWidgetProvider.task, l10n).route,
-        isNull,
+        WidgetRoute.tasks,
       );
+      final body = _read('$_kotlinDir/TaskWidget.kt');
       expect(
-        _read('$_kotlinDir/TaskWidget.kt').contains('WidgetDeepLink'),
-        isFalse,
+        body.contains('WidgetDeepLink.ROUTE_TASKS'),
+        isTrue,
+        reason: 'kart "Gorevler bolumu acilir" diyor ama Kotlin baglamiyor',
+      );
+      // Satirlarin KENDISI toggle KALMALI: sahibin birincil istegi
+      // "yaptiklarini oradan isaretleseler". Satir da gezinmeye baglanirsa
+      // ana ekrandan isaretleme ozelligi sessizce olur.
+      expect(
+        body.contains('togglePendingIntent(context, widgetId, index, item.id)'),
+        isTrue,
         reason:
-            'TaskWidget.kt derin baglanti kurmaya baslamis: kart artik '
-            '"Gorevler bolumu acilir" diyebilir, guncelle',
+            'satir toggle baglantisi kayboldu: ana ekrandan isaretleme oldu',
       );
     });
   });

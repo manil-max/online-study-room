@@ -99,7 +99,13 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     icon: Icons.checklist,
     title: l10n.taskListTitle,
     summary: l10n.clockWidgetGorevOzeti,
-    route: null,
+    // WP-706: bu satir `null` idi. WP-701 `ROUTE_TASKS` sabitini
+    // tanimlamis ama `TaskWidget.kt` icinde hic kullanmamisti; iki ajan
+    // da 'bu dosya digerinin SAHIP yolu' diye dokunmayinca is dikiste
+    // kaldi. Satirlar toggle olarak KALIR (sahibin birincil istegi:
+    // 'yaptiklarini oradan isaretleseler'); gezinme baslik, bos durum
+    // metni ve kok dolgu alanindan.
+    route: WidgetRoute.tasks,
     cellWidth: 3,
     cellHeight: 2,
   ),

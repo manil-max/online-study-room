@@ -407,21 +407,35 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                     paddingPx,
                     paddingPx,
                 )
-                // Kok dokunma: yalniz "uygulamayi ac". Gorev bolumune derin
-                // baglanti WP-700'un isidir.
-                setOnClickPendingIntent(
-                    R.id.task_widget_title,
-                    PendingIntent.getActivity(
+                // 🔴 WP-706 — BU DIKISTE BOSLUK VARDI.
+                //
+                // WP-701 buraya "derin baglanti WP-700'un isi" yazip
+                // `getLaunchIntentForPackage`i birakti; WP-700 ise bu dosyayi
+                // "WP-701'in SAHIP yolu" diye elleme kararı aldi. Ikisi de
+                // kurala uydu ve is ORTADA kaldi: `ROUTE_TASKS` sabiti
+                // tanimliydi ama Kotlin'de HIC KULLANILMIYORDU. Yani sahibin
+                // "uzerine tiklayinca o bolum acilsa, oradan duzenlerler"
+                // istegi tam da gorev widgetinda karsilanmiyordu.
+                //
+                // Satirlarin KENDISI toggle olarak kalir (sahibin birincil
+                // istegi: "yaptiklarini oradan isaretleseler"). Gezinme
+                // satirlarin DISINDA kalan her yere baglanir: baslik, bos
+                // durum metni ve kok dolgu alani. RemoteViews'ta cocuk
+                // tiklamasi koke gore oncelikli oldugu icin ikisi carpismaz.
+                val openTasks =
+                    WidgetDeepLink.pendingIntent(
                         context,
-                        700 + widgetId,
-                        context.packageManager.getLaunchIntentForPackage(context.packageName)
-                            ?.addFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
-                            )
-                            ?: Intent(),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                    ),
-                )
+                        WidgetDeepLink.ROUTE_TASKS,
+                        widgetId,
+                    )
+                setOnClickPendingIntent(R.id.task_widget_title, openTasks)
+                // Bos durum ozellikle onemli: gorevi olmayan kullanicinin
+                // widgettan yapabilecegi TEK sey uygulamaya gecip gorev
+                // eklemektir.
+                setOnClickPendingIntent(R.id.task_widget_empty, openTasks)
+                // Baslik kisa yukseklikte GONE oluyor (`taskWidgetTitleVisible`);
+                // kok baglanmazsa o boyutta hicbir gezinme hedefi kalmazdi.
+                setOnClickPendingIntent(R.id.task_widget_root, openTasks)
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
