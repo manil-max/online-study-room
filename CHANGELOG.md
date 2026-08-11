@@ -4,6 +4,62 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v68 / 1.0.68+68] - 2026-08-11
+
+> **Ana ekran widget'ları turu.** İki kaynak: beta testçisinin *"Sınav geri
+> sayımında telefon ve tablette ayrı ayarlanması gerekiyor / Senkron değil"* +
+> *"Bunun widget hâli de gelsin"* geri bildirimi ve sahibin *"task widget'ı ve
+> sınava geri sayım widget'ı da olsun… üzerine tıklayınca uygulamada o bölüm
+> açılsa güzel olur… task widget'ında yaptıklarını oradan işaretleseler"*
+> emri.
+
+### Öne çıkanlar
+- **Görev widget'ı**: kutucuğa dokununca görev uygulama kapalıyken bile
+  işaretlenir. Dört parça: ayna, iyimser çizim, kalıcı bekleyen kuyruk ve
+  mutlak-durum koruması (kuyruk *toggle* değil `done:true/false` taşır, iki kez
+  işlense de işaret geri dönmez).
+- **Sınav geri sayımı cihazlar arası senkron**. "Senkron değil" bir tercih
+  kusuru değildi: kod ölçüldü, ortada bir sunucu tablosu **hiç yoktu**.
+- **Yayında yedi widget**: sayaç, geri sayım, görevler, saat, günlük hedef,
+  grup hedefi, grup sıralaması. Alarm bilerek dışarıda (30 dk bayat kalabilir).
+- **Dokununca ilgili bölüm açılır** — sıcak ve soğuk başlatma ayrı ayrı
+  ölçüldü.
+
+### 🔴 "Yeşil ama ölçmüyor" — bu turda sekiz kez
+1. `resizeMode` altı sağlayıcıda **ölü bayraktı**: `onAppWidgetOptionsChanged`
+   hiçbirinde override edilmemişti, ekranda hiçbir şey değişmiyordu.
+2. **Köprünün çağrı yeri yoktu** (WP-704): 20/20 yeşil test ölü kodu
+   koruyordu, çünkü hepsi köprüyü kendisi başlatıyordu. Sabotaj: 20 yeşil /
+   1 kırmızı.
+3. **Katalog kapısı eksik kümeyi ölçüyordu**: "allowlist bayrağını okuyor"
+   yeşildi çünkü *bazı* kartlar okuyordu; yayına alınan iki widget kullanıcının
+   kataloğunda hiç görünmüyordu.
+4. **`ROUTE_TASKS` dikişte kaldı** (WP-706): iki ajan da dosyayı diğerinin
+   sahip yolu sayıp dokunmadı, sabit tanımlıydı ama hiç kullanılmıyordu.
+5. **Genel kapı, yayın listesi büyüyünce ölçmeyi bıraktı** (WP-708): dört
+   widget yayına girince israf geri açıldı (sayaç turu 0 → 4). Kapı gevşetilmedi,
+   koşul anahtar başına bağlandı.
+6. **`saveSnapshot` ilk satırda dönüyordu**: manifest açılmasaydı dört widget
+   sonsuza kadar native yedek metin gösterirdi.
+7. **`stats_title` / `stats_today` / `stats_week`** tanımlı ama hiçbir
+   sağlayıcı okumuyor — artık hiç yazılmıyor.
+8. **`number_stepper` taşması 800 dp'de ölçülüyordu**; mevcut test dosyası
+   360 dp'deki 8 px taşmayı yorumunda itiraf edip hiçbir iddiaya bağlamamıştı.
+
+### Düzeltmeler
+- Kalıcı red artık 38 saniye dönen çark değil (13 kullanıcı sağlayıcısında
+  depoya 11 kez gidiyordu, 1'e indi). Geçici ağ hatalarında yeniden deneme
+  açık kaldı ve ayrı iddiayla ölçülüyor.
+- Grup hedefi/sıralama gerçek değeri gösteriyor; hedef serisi satırı gerçek
+  sayıya bağlandı (ölü `AndroidWidgetSnapshot.stats` kurucusu canlandırıldı).
+- `number_stepper` 360 dp taşması, `dday_card` yalan yorumu, `_AppealCard`
+  kart dili.
+
+### Notlar
+- 🔴 `0133` için pgTAP hiç koşmadı (Docker motoru bu hostta kalkmıyor);
+  25 iddialık SQL testi yazıldı ama çalıştırılmadı.
+- Widget ve izinler ekranı uzadı: 7 kart, izin ayarları altta.
+
 ## [v67 / 1.0.67+67] - 2026-08-11
 
 > **Yönetim paneli sıfırdan yazıldı.** Sahibin dört şikâyetinin dördü de kodda

@@ -3,6 +3,58 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.68",
+      "buildNumber": 68,
+      "channel": "stable",
+      "date": "2026-08-11",
+      "title": "v68: widget turu (WP-694…WP-708) + 0133",
+      "highlights": [
+        "Gorev listesi ana ekrana geldi. Kutucuga dokununca gorev, uygulama kapaliyken bile isaretleniyor; uygulamayi actiginda isaret duruyor.",
+        "Sinav geri sayimi artik telefon ve tablette ayni. Eskiden her cihazda ayri ayri kurmak gerekiyordu; bir cihazda ekledigin sinav digerinde gorunmuyordu.",
+        "Ana ekranda yedi widget var: calisma sayaci, sinav geri sayimi, gorevler, saat, gunluk hedef, grup hedefi ve grup siralamasi. Hepsi buyutulup kucultulebiliyor ve boyuta gore icerigi degisiyor -- kucukken iki satir, buyukken bes satir.",
+        "Bir widget'a dokununca uygulamada o bolum aciliyor; oradan duzenleyebiliyorsun."
+      ],
+      "fixes": [
+        "Widget'lar uygulamanin kendi listesinde de gorunuyor. Geri sayim ve gorev widget'lari yalniz telefonun widget secicisinde bulunuyordu.",
+        "Grup hedefi ve siralama widget'lari gercek degeri gosteriyor; hedef serisi satiri da artik gercek sayiyi yaziyor.",
+        "Bir islem izin verilmedigi icin reddedildiginde uygulama artik hemen soyluyor. Eskiden yaklasik 38 saniye donen cark gorunuyor, sonuc hicbir zaman yazilmiyordu.",
+        "Sayi secicilerdeki tasma dar telefon ekranlarinda duzeldi.",
+        "Yonetim panelinde itiraz karti da digerleriyle ayni gorunume gecti."
+      ],
+      "notes": [
+        "0133 `exam_countdowns`: PK (user_id, id), `id` TEXT (uuid DEGIL -- yerel id'ler bulut'tan once dogdu, cevirmek satir bagini koparir ve ayni sinav iki kez gorunur). RLS select-only; mutasyonlar `authenticated`tan geri alindi, hepsi RPC'den gecer. Cakisma KAYIT basina (liste basina olsaydi telefondaki yeniden adlandirma ya da tabletteki yeni sinav sessizce duserdi). Istemci saati now()+5dk'ya kirpilir.",
+        "🔴 0133 icin pgTAP HIC KOSMADI: tests/060 (25 iddia) yazildi, Docker motoru bu hostta kalkmadigi icin calistirilmadi. Uretimde YALNIZ Dart tarafi kanitiyla duruyor.",
+        "WP-704: WP-701'in koprusunun `lib/` icinde CAGRI YERI yoktu; 20/20 yesil test olu kodu koruyordu. Sabotaj: cagri yeri silinince 20 yesil / 1 kirmizi.",
+        "WP-706: `ROUTE_TASKS` tanimliydi ama Kotlin'de hic kullanilmiyordu -- iki ajan da dosyayi 'digerinin SAHIP yolu' sayip dokunmadi, is dikiste kaldi.",
+        "WP-708: `anyPublishedConsumesWidgetData` GENEL kapisi, WP-707 dort widget'i yayina alinca `true` olup israfi geri actı (sayac turu 0 -> 4, istatistik 0 -> 37). Kapi anahtar basina baglandi: istatistik 23, sayac 0. Anahtar sahipligi StudyWidgetProviders.kt'den TURETILIYOR; turetme `stats_title/today/week`in hicbir saglayici tarafindan okunmadigini ortaya cikardi.",
+        "WP-699/701: `resizeMode` tek basina olu bayrak -- `onAppWidgetOptionsChanged` override edilmeden ekranda hicbir sey degismez. Hucre formulu 70n-30 (depodaki '1 hucre ~ 40dp' yorumu yanlis).",
+        "WP-702: Riverpod 3 `defaultRetry` yalniz Error/ProviderException icin durur; kalici red 13 kullanici saglayicisinda 11 kez depoya gidiyordu."
+      ],
+      "titleEn": "v68: home screen widgets",
+      "highlightsEn": [
+        "Your task list is now on the home screen. Ticking a box marks the task even while the app is closed, and the mark is still there when you open it.",
+        "The exam countdown is now the same on your phone and tablet. It used to need setting up separately on each one, and an exam added on one never appeared on the other.",
+        "There are seven home screen widgets: study timer, exam countdown, tasks, clock, daily goal, group goal and group ranking. All of them resize, and the content changes with the size -- two rows when small, five when large.",
+        "Tapping a widget opens that section of the app so you can edit it there."
+      ],
+      "fixesEn": [
+        "Widgets now appear in the app's own list too. The countdown and task widgets could only be found in the phone's widget picker.",
+        "The group goal and ranking widgets show real values, and the goal streak line now shows the real number.",
+        "When something is refused because you lack permission, the app says so right away. It used to show a spinner for about 38 seconds and never write the result.",
+        "Fixed overflow in number pickers on narrow phone screens.",
+        "The appeal card in the admin panel now matches the others."
+      ],
+      "notesEn": [
+        "0133 `exam_countdowns`: PK (user_id, id), `id` TEXT (uuid DEGIL -- yerel id'ler bulut'tan once dogdu, cevirmek satir bagini koparir ve ayni sinav iki kez gorunur). RLS select-only; mutasyonlar `authenticated`tan geri alindi, hepsi RPC'den gecer. Cakisma KAYIT basina (liste basina olsaydi telefondaki yeniden adlandirma ya da tabletteki yeni sinav sessizce duserdi). Istemci saati now()+5dk'ya kirpilir.",
+        "🔴 0133 icin pgTAP HIC KOSMADI: tests/060 (25 iddia) yazildi, Docker motoru bu hostta kalkmadigi icin calistirilmadi. Uretimde YALNIZ Dart tarafi kanitiyla duruyor.",
+        "WP-704: WP-701'in koprusunun `lib/` icinde CAGRI YERI yoktu; 20/20 yesil test olu kodu koruyordu. Sabotaj: cagri yeri silinince 20 yesil / 1 kirmizi.",
+        "WP-706: `ROUTE_TASKS` tanimliydi ama Kotlin'de hic kullanilmiyordu -- iki ajan da dosyayi 'digerinin SAHIP yolu' sayip dokunmadi, is dikiste kaldi.",
+        "WP-708: `anyPublishedConsumesWidgetData` GENEL kapisi, WP-707 dort widget'i yayina alinca `true` olup israfi geri actı (sayac turu 0 -> 4, istatistik 0 -> 37). Kapi anahtar basina baglandi: istatistik 23, sayac 0. Anahtar sahipligi StudyWidgetProviders.kt'den TURETILIYOR; turetme `stats_title/today/week`in hicbir saglayici tarafindan okunmadigini ortaya cikardi.",
+        "WP-699/701: `resizeMode` tek basina olu bayrak -- `onAppWidgetOptionsChanged` override edilmeden ekranda hicbir sey degismez. Hucre formulu 70n-30 (depodaki '1 hucre ~ 40dp' yorumu yanlis).",
+        "WP-702: Riverpod 3 `defaultRetry` yalniz Error/ProviderException icin durur; kalici red 13 kullanici saglayicisinda 11 kez depoya gidiyordu."
+      ]
+    },
+    {
       "versionName": "1.0.67",
       "buildNumber": 67,
       "channel": "stable",
