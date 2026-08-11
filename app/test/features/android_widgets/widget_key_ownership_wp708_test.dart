@@ -23,7 +23,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
-import 'package:online_study_room/features/android_widgets/published_home_widgets.dart';
 
 const _kotlinPath =
     'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/'

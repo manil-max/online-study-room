@@ -58,7 +58,16 @@ void main() {
   }
 
   Future<void> pump(WidgetTester tester, {String locale = 'tr'}) async {
-    tester.view.physicalSize = const Size(1080, 6000);
+        // 🔴 WP-708: yukseklik 6000 -> 14000 (mantiksal 2000 -> ~4667).
+    // WP-707 dort widget'i yayina alinca katalog 3 karttan 7 karta cikti
+    // ve IZIN satirlari 2000 px'in altina dustu. `ListView(children:)`
+    // gorunmeyen cocugun ELEMENTINI kurmaz, yani satirlar agacta hic
+    // olusmadi ve `find` onlari bulamadi -- islev kaybi DEGIL, olcum
+    // alani yetersizligi. Bu dosyanin iddiasi yapisal ("Android kolunda
+    // kontroller duruyor"), o yuzden dogru duzeltme alani buyutmek.
+    // Kaydirarak da olculebilirdi; alani buyutmek iddianin "hepsi ayni
+    // anda var" anlamini korur.
+    tester.view.physicalSize = const Size(1080, 14000);
     tester.view.devicePixelRatio = 3;
     addTearDown(() {
       tester.view.resetPhysicalSize();
