@@ -2219,5 +2219,11 @@
   "adminPurgeSaat": "{hours} sa",
   "@adminPurgeSaat": {"description": "WP-E: account purge health panel.", "placeholders": {"hours": {"type": "int"}}},
   "adminPurgeYenile": "Kuyruk sağlığını yenile",
-  "@adminPurgeYenile": {"description": "WP-E: account purge health panel."}
+  "@adminPurgeYenile": {"description": "WP-E: account purge health panel."},
+  "adminWorkCardMoreActions": "Diğer işlemler",
+  "@adminWorkCardMoreActions": {"description": "WP-698: yonetim kartindaki uc nokta menusunun ipucu."},
+  "adminWorkCardSubmitter": "Gönderen",
+  "@adminWorkCardSubmitter": {"description": "WP-698: destek biletini gonderen kisi etiketi."},
+  "adminWorkCardArchived": "Arşivde",
+  "@adminWorkCardArchived": {"description": "WP-698: arsivlenmis is kartinin isareti."}
 }

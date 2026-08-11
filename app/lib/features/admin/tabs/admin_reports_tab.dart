@@ -9,22 +9,29 @@ import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/features/profile/feedback_tickets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../cards/admin_work_card.dart';
 import '../directory/admin_search_field.dart';
 
-/// WP-D (`docs/design/ADMIN-PANEL-PLAN.md` §2.4 / §5 WP-D kabul 4 ve 5) —
-/// destek bileti kuyrugu.
+/// WP-D (`docs/design/ADMIN-PANEL-PLAN.md` §2.4) — destek bileti kuyrugu.
 ///
-/// Iki kusur duzeltildi:
-///   1. 🔴 **Filtre cikmazi.** Tur cipleri yalniz liste **dolu** oldugunda
-///      ciziliyordu (listenin ilk satirina gomuluydu); bir ture filtreleyip sonuc bos
-///      gelirse filtreyi kaldiracak kontrol ekranda kalmiyordu — sekmeden
-///      cikip donmek gerekiyordu. Filtre seridi artik listenin **disinda**,
-///      her durumda gorunur; bos sonucta ayrica "Filtreyi temizle" durur.
-///   2. 🔴 **Yalan etiket.** Arsiv cipinin ustunde profil katalogundan gelen
-///      "Tamamlandi" yaziyordu; yaptigi is arsivlemek. Ayni cip ters yonde de
-///      calisiyor ve yazisi degismiyordu. Artik "Arsivle" / "Arsivden cikar".
-///      Arsiv gorunum dugmesi de etiketsizdi (`tooltip` yok) — PLAN §4.6 geregi
-///      yalniz-ikon her dugmede tooltip var.
+/// WP-D'de iki kusur duzeltildi ve **korunur**:
+///   1. 🔴 **Filtre cikmazi.** Tur cipleri listenin **disinda** durur; bos
+///      sonucta ayrica "Filtreyi temizle" kalir.
+///   2. 🔴 **Yalan etiket.** Arsiv eylemi "Arsivle" / "Arsivden cikar" yazar,
+///      profil katalogundan gelen "Tamamlandi" degil.
+///
+/// **WP-698 — kart sifirdan.** Sahip: *"sikayet, oneri, istek vs hepsinde
+/// sisteme dusen kart sistemi ayni"*. Olculdu: bu dosyadaki `_TicketCard`
+/// 280 px'te **610 px** yuksekligindeydi (vaka karti 242 px) — tek bilet bir
+/// telefon ekranini doldururdu. Icinde 7 cip vardi; 3'u bilgi, 4'u eylemdi ve
+/// hepsi ayni 34 px'lik pilldi, yani neye basilabilecegi gorunmuyordu. Kartin
+/// sekiz dokunma hedefinin sekizi de 48 px'in altindaydi.
+///
+/// Kart artik [AdminWorkCard]'dir — moderasyon kuyruguyla **ayni** bilesen.
+/// Tur farki veriyle anlatilir: ikon, meta satirindaki tur adi, taraf listesi.
+/// Bilgi cip degildir (durum hapte, tur metada, gonderen taraf satirinda);
+/// cip gorunumu yalniz *istisnai* isaretlere (arsiv) kalir. Eylemler tek
+/// ritimli bir seritte, 48 px yuksekliginde ve tek vurgulu ("Yanit yaz").
 
 class AdminReportsTab extends ConsumerStatefulWidget {
   const AdminReportsTab({super.key});
@@ -95,11 +102,10 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
                     ],
                   );
                 }
-                return ListView.separated(
+                return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   itemCount: visibleItems.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     return _TicketCard(
                       ticket: visibleItems[index],
@@ -144,199 +150,146 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
   }
 }
 
+/// Destek bileti = **ayni** kart dili, farkli veri.
 class _TicketCard extends ConsumerWidget {
   const _TicketCard({required this.ticket, required this.showArchived});
 
   final FeedbackTicket ticket;
   final bool showArchived;
 
-  void _showNotesDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (_) => _TicketNotesDialog(ticket: ticket),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  ticket.type == FeedbackTicketType.report
-                      ? Icons.bug_report_outlined
-                      : ticket.type == FeedbackTicketType.question
-                      ? Icons.question_answer_outlined
-                      : Icons.lightbulb_outline,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    ticket.subject,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                _StatusMenu(ticket: ticket),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(ticket.message, maxLines: 4, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 6),
-            // WP-437: Yonetici karti zaman cizgisini de okur; "ne zaman
-            // acildi, en son ne zaman hareket etti" karti terk etmeden gorunur.
-            Text(
-              l10n.feedbackTicketTimeline(
-                feedbackTicketTimestampLabel(l10n, ticket.createdAt),
-                feedbackTicketTimestampLabel(l10n, ticket.updatedAt),
-              ),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(_statusLabel(l10n, ticket.status)),
-                ),
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(_typeLabel(l10n, ticket.type)),
-                ),
-                if (ticket.reporterDisplayName?.isNotEmpty == true)
-                  Chip(
-                    visualDensity: VisualDensity.compact,
-                    avatar: const Icon(Icons.person_outline, size: 18),
-                    label: Text(ticket.reporterDisplayName!),
-                  ),
-                if (ticket.attachmentPath != null)
-                  ActionChip(
-                    visualDensity: VisualDensity.compact,
-                    avatar: const Icon(Icons.image_outlined, size: 18),
-                    label: Text(l10n.adminEkranGoruntusu),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => _AttachmentPreviewDialog(
-                          path: ticket.attachmentPath!,
-                        ),
-                      );
-                    },
-                  ),
-                ActionChip(
-                  key: Key('feedback-reply-${ticket.id}'),
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  avatar: Icon(
-                    Icons.forum_outlined,
-                    size: 18,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                  label: Text(
-                    l10n.feedbackWriteReply,
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  onPressed: () => showFeedbackTicketConversation(
-                    context: context,
-                    ticket: ticket,
-                  ),
-                ),
-                ActionChip(
-                  key: Key('feedback-notes-${ticket.id}'),
-                  visualDensity: VisualDensity.compact,
-                  avatar: const Icon(Icons.lock_outline, size: 18),
-                  label: Text(l10n.adminIcNotlar),
-                  onPressed: () => _showNotesDialog(context, ref),
-                ),
-                ActionChip(
-                  visualDensity: VisualDensity.compact,
-                  avatar: Icon(
-                    showArchived
-                        ? Icons.unarchive_outlined
-                        : Icons.archive_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    showArchived ? l10n.adminArsivdenCikar : l10n.adminArsivle,
-                  ),
-                  onPressed: () async {
-                    final profile = ref.read(authStateProvider).value;
-                    if (profile == null) return;
-                    await ref
-                        .read(adminRepositoryProvider)
-                        .setFeedbackArchived(
-                          userId: profile.id,
-                          ticketId: ticket.id,
-                          archived: !showArchived,
-                        );
-                    ref.invalidate(adminFeedbackTicketsProvider(null));
-                    ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
-                    ref.invalidate(adminArchivedFeedbackTicketsProvider(null));
-                    ref.invalidate(
-                      adminArchivedFeedbackTicketsProvider(ticket.type),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
+    final reporter = ticket.reporterDisplayName;
+
+    return AdminWorkCard(
+      typeIcon: _typeIcon(ticket.type),
+      title: ticket.subject,
+      tone: _tone(),
+      // Kullanicinin yazdigi metnin ilk iki satiri: "ne hakkinda" sorusu
+      // karti terk etmeden yanitlanir.
+      excerpt: ticket.message,
+      status: AdminWorkStatusPill<FeedbackTicketStatus>(
+        label: _statusLabel(l10n, ticket.status),
+        tone: _statusTone(ticket.status),
+        options: FeedbackTicketStatus.values,
+        optionLabel: (status) => _statusLabel(l10n, status),
+        onSelected: (status) => _setStatus(context, ref, l10n, status),
       ),
-    );
-  }
-}
-
-class _StatusMenu extends ConsumerWidget {
-  const _StatusMenu({required this.ticket});
-
-  final FeedbackTicket ticket;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return PopupMenuButton<FeedbackTicketStatus>(
-      tooltip: l10n.adminDurumuDegistir,
-      initialValue: ticket.status,
-      onSelected: (status) async {
-        final profile = ref.read(authStateProvider).value;
-        if (profile == null) return;
-        try {
-          await ref
-              .read(adminRepositoryProvider)
-              .updateFeedbackStatus(
-                userId: profile.id,
-                ticketId: ticket.id,
-                status: status,
-              );
-          ref.invalidate(adminFeedbackTicketsProvider(null));
-          ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
-        } on AdminException {
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-          );
-        }
-      },
-      itemBuilder: (context) => [
-        for (final status in FeedbackTicketStatus.values)
-          PopupMenuItem(value: status, child: Text(_statusLabel(l10n, status))),
+      participants: [
+        if (reporter != null && reporter.isNotEmpty)
+          AdminWorkParticipant(
+            roleLabel: l10n.adminWorkCardSubmitter,
+            name: reporter,
+          ),
+      ],
+      // WP-437: "ne zaman acildi, en son ne zaman hareket etti" karti terk
+      // etmeden gorunur — artik tur adiyla ayni satirda.
+      metaLine:
+          '${_typeLabel(l10n, ticket.type)} · '
+          '${l10n.feedbackTicketTimeline(feedbackTicketTimestampLabel(l10n, ticket.createdAt), feedbackTicketTimestampLabel(l10n, ticket.updatedAt))}',
+      flags: [
+        if (ticket.archivedAt != null)
+          AdminWorkFlag(l10n.adminWorkCardArchived, tone: AdminWorkTone.done),
+      ],
+      actions: [
+        // Tek vurgulu eylem: kullaniciya giden yol. Ic notlardan **once**.
+        AdminWorkAction(
+          buttonKey: Key('feedback-reply-${ticket.id}'),
+          label: l10n.feedbackWriteReply,
+          icon: Icons.forum_outlined,
+          primary: true,
+          onPressed: () =>
+              showFeedbackTicketConversation(context: context, ticket: ticket),
+        ),
+        AdminWorkAction(
+          buttonKey: Key('feedback-notes-${ticket.id}'),
+          label: l10n.adminIcNotlar,
+          icon: Icons.lock_outline,
+          onPressed: () => showDialog<void>(
+            context: context,
+            builder: (_) => _TicketNotesDialog(ticket: ticket),
+          ),
+        ),
+        if (ticket.attachmentPath != null)
+          AdminWorkAction(
+            label: l10n.adminEkranGoruntusu,
+            icon: Icons.image_outlined,
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) =>
+                  _AttachmentPreviewDialog(path: ticket.attachmentPath!),
+            ),
+          ),
+        AdminWorkAction(
+          label: showArchived ? l10n.adminArsivdenCikar : l10n.adminArsivle,
+          icon: showArchived
+              ? Icons.unarchive_outlined
+              : Icons.archive_outlined,
+          onPressed: () => _setArchived(ref),
+        ),
       ],
     );
+  }
+
+  AdminWorkTone _tone() {
+    if (showArchived || ticket.archivedAt != null) return AdminWorkTone.done;
+    return _statusTone(ticket.status);
+  }
+
+  static AdminWorkTone _statusTone(FeedbackTicketStatus status) =>
+      switch (status) {
+        FeedbackTicketStatus.open => AdminWorkTone.open,
+        FeedbackTicketStatus.inProgress => AdminWorkTone.waiting,
+        FeedbackTicketStatus.closed => AdminWorkTone.done,
+      };
+
+  static IconData _typeIcon(FeedbackTicketType type) => switch (type) {
+    FeedbackTicketType.report => Icons.bug_report_outlined,
+    FeedbackTicketType.question => Icons.question_answer_outlined,
+    FeedbackTicketType.feedback => Icons.lightbulb_outline,
+  };
+
+  Future<void> _setStatus(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    FeedbackTicketStatus status,
+  ) async {
+    final profile = ref.read(authStateProvider).value;
+    if (profile == null) return;
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .updateFeedbackStatus(
+            userId: profile.id,
+            ticketId: ticket.id,
+            status: status,
+          );
+      ref.invalidate(adminFeedbackTicketsProvider(null));
+      ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
+    } on AdminException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+      );
+    }
+  }
+
+  Future<void> _setArchived(WidgetRef ref) async {
+    final profile = ref.read(authStateProvider).value;
+    if (profile == null) return;
+    await ref
+        .read(adminRepositoryProvider)
+        .setFeedbackArchived(
+          userId: profile.id,
+          ticketId: ticket.id,
+          archived: !showArchived,
+        );
+    ref.invalidate(adminFeedbackTicketsProvider(null));
+    ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
+    ref.invalidate(adminArchivedFeedbackTicketsProvider(null));
+    ref.invalidate(adminArchivedFeedbackTicketsProvider(ticket.type));
   }
 }
 

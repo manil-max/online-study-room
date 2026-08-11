@@ -7103,5 +7103,11 @@
   "adminPurgeSaat": "{hours} h",
   "@adminPurgeSaat": {"description": "Purge health: a wait of an hour or more.", "placeholders": {"hours": {"type": "int"}}},
   "adminPurgeYenile": "Refresh queue health",
-  "@adminPurgeYenile": {"description": "Tooltip of the purge health refresh button."}
+  "@adminPurgeYenile": {"description": "Tooltip of the purge health refresh button."},
+  "adminWorkCardMoreActions": "More actions",
+  "@adminWorkCardMoreActions": {"description": "WP-698: tooltip of the admin work card overflow menu."},
+  "adminWorkCardSubmitter": "Submitted by",
+  "@adminWorkCardSubmitter": {"description": "WP-698: label for the person who filed the support ticket."},
+  "adminWorkCardArchived": "Archived",
+  "@adminWorkCardArchived": {"description": "WP-698: flag shown on an archived work card."}
 }

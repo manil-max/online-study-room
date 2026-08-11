@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:online_study_room/core/utils/duration_format.dart';
-import 'package:online_study_room/core/widgets/user_avatar.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../cards/admin_work_card.dart';
 import '../sanctions/admin_case_target_link.dart';
 
-/// WP-440: Vaka kartı.
+/// WP-440 / **WP-698**: icerik sikayeti karti.
 ///
-/// Kabul kriteri: **durum seçenekleri arasında kart yüksekliği ve tipografisi
-/// sıçramaz.** Bunu sabit piksel yüksekliğiyle değil (metin ölçeği 1.3'te
-/// taşardı), her satırın `maxLines` ile kilitlenmesi ve durum çipinin her
-/// durumda aynı `textStyle` + tek satır kullanmasıyla sağlıyoruz. Böylece
-/// yükseklik yalnız font metriklerine bağlı kalır, seçilen duruma değil.
+/// WP-698'e kadar bu dosya kendi `Card > Column`unu, kendi durum cipini, kendi
+/// rozetlerini ve kendi kimlik satirini cizerdi; destek bileti karti da
+/// (`tabs/admin_reports_tab.dart`) tamamen ayrisik bir tasarim kullanirdi.
+/// Ayni isi gosteren iki kart **tek widget paylasmiyordu** ve 280 px'te
+/// yukseklikleri 242 / 610 px idi. Artik ikisi de [AdminWorkCard]'dan turer;
+/// bu dosyada kalan tek is, **vakayi o dilin alanlarina cevirmektir**.
+///
+/// Korunan kabuller:
+///   - Durum secimi hala hapten yapilir (`moderation-status-chip`) ve menu
+///     `PopupMenuItem<ModerationCaseStatus>` uretir.
+///   - Yaptirim / karantina / kopyala hala `moderation-secondary-actions`
+///     menusunde. **Tehlikeli eylem kartin yuzune cikmaz** (WP-B/C: karar
+///     seridi inceleme panosunda).
+///   - Rozet seridi `moderation-case-badges` anahtarini korur.
+///   - Durum degistiginde kart yuksekligi sicramaz: her satir `maxLines` ile
+///     kilitli, hap her durumda ayni `labelSmall` + tek satir.
 class ModerationQueueCard extends StatelessWidget {
   const ModerationQueueCard({
     super.key,
@@ -29,119 +40,157 @@ class ModerationQueueCard extends StatelessWidget {
   final ModerationCase moderationCase;
   final ValueChanged<ModerationCaseStatus> onStatusSelected;
 
-  /// WP-B: kart artik **secilebilir liste satiri**dir. Eskiden govde dokunusu
-  /// bir alt sayfa aciyordu ve o sayfada tek karar dugmesi yoktu
-  /// (`ADMIN-PANEL-PLAN.md` §2.2); simdi dokunus vakayi yandaki inceleme
-  /// panosuna baglar.
+  /// WP-B: kart **secilebilir liste satiri**dir; dokunus vakayi yandaki
+  /// inceleme panosuna baglar.
   final VoidCallback? onSelect;
 
   /// Su an incelenen vaka bu mu? (SPEC §4: gorunur secim + hover/focus.)
   final bool selected;
 
-  /// WP-441: Basamaklı yaptırım sayfasını açar.
+  /// WP-441: Basamakli yaptirim sayfasini acar.
   final VoidCallback? onSanction;
 
-  /// WP-441: Karantinayı açar/kapatır — geri alınabilir olduğu için tek düğme.
+  /// WP-441: Karantinayi acar/kapatir — geri alinabilir oldugu icin tek dugme.
   final ValueChanged<bool>? onQuarantineToggle;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final reporter = moderationCase.reporters.isEmpty
         ? null
         : moderationCase.reporters.first;
+    final overdue = moderationCase.isOverdue(DateTime.now());
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: selected ? theme.colorScheme.secondaryContainer : null,
-      child: InkWell(
-        onTap: onSelect,
-        hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-        focusColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      _targetLine(l10n),
-                      style: theme.textTheme.titleSmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _StatusChip(
-                    status: moderationCase.status,
-                    onSelected: onStatusSelected,
-                  ),
-                  _SecondaryActions(
-                    moderationCase: moderationCase,
-                    onSanction: onSanction,
-                    onQuarantineToggle: onQuarantineToggle,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              _IdentityLine(
-                label: l10n.adminUgcTarget,
-                identity: moderationCase.targetIdentity,
-                // 🔴 PLAN §2.3 / WP-C ölçüt 5: vakadan kişiye köprü yoktu. Tek
-                // yardım üç noktadaki "Kopyala" idi — UUID'yi panoya alıp sekme
-                // değiştirip aramasız listede gözle arıyordun. WP-C varış
-                // noktasını (kişi dosyası) kurdu; köprü burada bağlanır.
-                //
-                // Neden başlık satırında değil: ölçüldü — 280 px'lik kuyruk
-                // sütununda başlık satırı (metin + durum çipi + üç nokta) zaten
-                // 240 px'i doldurmuş; oraya 48 px eklemek "RenderFlex
-                // overflowed" veriyordu. Kimlik satırında `Expanded` metin
-                // esniyor, taşma olmuyor. Grup hedefinde çizilecek kişi yok.
-                trailing: moderationCase.targetIdentity == null
-                    ? null
-                    : AdminCaseTargetLink(
-                        targetUserId: moderationCase.targetIdentity!.id,
-                        compact: true,
-                      ),
-              ),
-              const SizedBox(height: 4),
-              _IdentityLine(
-                label: l10n.adminUgcReporter,
-                identity: reporter,
-                extraCount: moderationCase.reportCount > 1
-                    ? moderationCase.reportCount - 1
-                    : 0,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _metaLine(context, l10n),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              _CaseBadges(moderationCase: moderationCase),
-            ],
-          ),
-        ),
+    return AdminWorkCard(
+      typeIcon: _typeIcon(moderationCase.targetType),
+      title: _reasons(l10n),
+      tone: _tone(overdue),
+      selected: selected,
+      onTap: onSelect,
+      status: AdminWorkStatusPill<ModerationCaseStatus>(
+        key: const Key('moderation-status-chip'),
+        label: _statusLabel(l10n, moderationCase.status),
+        tone: _statusTone(moderationCase.status),
+        options: ModerationCaseStatus.writableValues,
+        optionLabel: (status) => _statusLabel(l10n, status),
+        onSelected: onStatusSelected,
       ),
+      participants: [
+        AdminWorkParticipant(
+          roleLabel: l10n.adminUgcTarget,
+          name: _name(l10n, moderationCase.targetIdentity),
+          avatarUrl: moderationCase.targetIdentity?.avatarUrl,
+          // 🔴 PLAN §2.3 / WP-C olcut 5: vakadan kisiye kopru yoktu. Tek yardim
+          // uc noktadaki "Kopyala" idi. Kopru taraf satirinda durur: baslik
+          // satiri 280 px'te zaten hap + `…` ile dolu.
+          trailing: moderationCase.targetIdentity == null
+              ? null
+              : AdminCaseTargetLink(
+                  targetUserId: moderationCase.targetIdentity!.id,
+                  compact: true,
+                ),
+        ),
+        AdminWorkParticipant(
+          roleLabel: l10n.adminUgcReporter,
+          name: _name(l10n, reporter),
+          avatarUrl: reporter?.avatarUrl,
+          extraCount: moderationCase.reportCount > 1
+              ? moderationCase.reportCount - 1
+              : 0,
+        ),
+      ],
+      metaLine: _metaLine(context, l10n),
+      flagsKey: const Key('moderation-case-badges'),
+      flags: [
+        if (moderationCase.severity == ModerationSeverity.high)
+          AdminWorkFlag(
+            l10n.adminModerationSeverityHigh,
+            tone: AdminWorkTone.urgent,
+          ),
+        if (overdue)
+          AdminWorkFlag(l10n.adminModerationOverdue, tone: AdminWorkTone.urgent),
+        if (moderationCase.quarantined)
+          AdminWorkFlag(
+            l10n.adminModerationQuarantined,
+            tone: AdminWorkTone.done,
+          ),
+      ],
+      overflowKey: const Key('moderation-secondary-actions'),
+      overflowItems: [
+        if (onSanction != null)
+          AdminWorkMenuItem(
+            label: l10n.adminModerationSanctionTitle,
+            onSelected: () => onSanction!(),
+          ),
+        // Karantina vaka kimligi ister; `0104` oncesi tarihsel satirlarda
+        // secenek hic gosterilmez — olu menu girdisi birakmiyoruz.
+        if (onQuarantineToggle != null && moderationCase.supportsCaseActions)
+          AdminWorkMenuItem(
+            label: moderationCase.quarantined
+                ? l10n.adminModerationQuarantineRelease
+                : l10n.adminModerationQuarantine,
+            onSelected: () => onQuarantineToggle!(!moderationCase.quarantined),
+          ),
+        AdminWorkMenuItem(
+          label: l10n.classroomKopyala,
+          onSelected: () => _copyTargetId(context, l10n),
+        ),
+      ],
+      // Yaptirim/karantina gorunur seride **konmaz**: kart bir ozettir.
+      actions: const <AdminWorkAction>[],
     );
   }
 
-  String _targetLine(AppLocalizations l10n) {
-    final type = switch (moderationCase.targetType) {
-      ReportTargetType.message => l10n.classroomSohbet,
-      ReportTargetType.profile => l10n.adminUgcTarget,
-      ReportTargetType.group => l10n.classroomGrup,
-      ReportTargetType.groupName => l10n.classroomGrupAdi,
-    };
-    return '$type · ${_reasons(l10n)}';
+  Future<void> _copyTargetId(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    // Degismez hedef kimligi: destek yazismasinda vakayi bu id tekillestirir.
+    await Clipboard.setData(ClipboardData(text: moderationCase.targetId));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.adminUgcIdCopied)));
   }
+
+  /// Aciliyet: sunucunun bildigi iki sinyal (onem + SLA) disinda istemci risk
+  /// uydurmaz.
+  AdminWorkTone _tone(bool overdue) {
+    if (moderationCase.status.isClosed) return AdminWorkTone.done;
+    if (overdue || moderationCase.severity == ModerationSeverity.high) {
+      return AdminWorkTone.urgent;
+    }
+    return moderationCase.status == ModerationCaseStatus.inReview
+        ? AdminWorkTone.waiting
+        : AdminWorkTone.open;
+  }
+
+  static AdminWorkTone _statusTone(ModerationCaseStatus status) =>
+      switch (status) {
+        ModerationCaseStatus.open => AdminWorkTone.open,
+        ModerationCaseStatus.inReview => AdminWorkTone.waiting,
+        ModerationCaseStatus.resolved ||
+        ModerationCaseStatus.rejected => AdminWorkTone.done,
+      };
+
+  static IconData _typeIcon(ReportTargetType type) => switch (type) {
+    ReportTargetType.message => Icons.forum_outlined,
+    ReportTargetType.profile => Icons.person_outline,
+    ReportTargetType.group => Icons.groups_outlined,
+    ReportTargetType.groupName => Icons.drive_file_rename_outline,
+  };
+
+  static String _name(AppLocalizations l10n, ModerationIdentity? identity) =>
+      identity == null || identity.isDeleted
+      ? l10n.adminUgcDeletedUser
+      : identity.displayName;
+
+  String _typeLabel(AppLocalizations l10n) => switch (moderationCase.targetType) {
+    ReportTargetType.message => l10n.classroomSohbet,
+    ReportTargetType.profile => l10n.adminUgcTarget,
+    ReportTargetType.group => l10n.classroomGrup,
+    ReportTargetType.groupName => l10n.classroomGrupAdi,
+  };
 
   String _reasons(AppLocalizations l10n) {
     if (moderationCase.reasons.isEmpty) return '—';
@@ -158,243 +207,22 @@ class ModerationQueueCard extends StatelessWidget {
         _ => reason,
       };
 
-  /// Bekleme süresi + rapor sayısı. Önem/SLA rozetleri artık `0105` ile
-  /// sunucudan geliyor ve ayrı satırda gösteriliyor.
+  static String _statusLabel(
+    AppLocalizations l10n,
+    ModerationCaseStatus status,
+  ) => switch (status) {
+    ModerationCaseStatus.open => l10n.adminAcik,
+    ModerationCaseStatus.inReview => l10n.adminUgcStatusInReview,
+    ModerationCaseStatus.resolved => l10n.adminUgcStatusResolved,
+    ModerationCaseStatus.rejected => l10n.adminUgcStatusRejected,
+  };
+
+  /// Tur · bekleme suresi · rapor sayisi. Onem/SLA isaret seridinde durur.
   String _metaLine(BuildContext context, AppLocalizations l10n) {
     final waited = moderationCase.waitingFor(DateTime.now());
     final languageCode = Localizations.localeOf(context).languageCode;
     final duration = formatHumanForLocale(waited.inSeconds, languageCode);
-    return '$duration · ${l10n.adminRaporlar}: ${moderationCase.reportCount}';
-  }
-}
-
-/// Durum çipi — seçim doğrudan buradan yapılır (üç nokta değil).
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status, required this.onSelected});
-
-  final ModerationCaseStatus status;
-  final ValueChanged<ModerationCaseStatus> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final (background, foreground) = switch (status) {
-      ModerationCaseStatus.open => (scheme.errorContainer, scheme.onErrorContainer),
-      ModerationCaseStatus.inReview => (
-          scheme.tertiaryContainer,
-          scheme.onTertiaryContainer,
-        ),
-      ModerationCaseStatus.resolved ||
-      ModerationCaseStatus.rejected =>
-        (scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
-    };
-
-    return PopupMenuButton<ModerationCaseStatus>(
-      key: const Key('moderation-status-chip'),
-      onSelected: onSelected,
-      position: PopupMenuPosition.under,
-      itemBuilder: (_) => [
-        for (final option in ModerationCaseStatus.writableValues)
-          PopupMenuItem<ModerationCaseStatus>(
-            value: option,
-            child: Text(_label(l10n, option)),
-          ),
-      ],
-      child: Semantics(
-        button: true,
-        container: true,
-        // Etiket çipin kendisidir; alttaki Text'in düğümü ikinci kez
-        // okunmasın diye dışarıda bırakılır.
-        excludeSemantics: true,
-        label: _label(l10n, status),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 32, maxWidth: 148),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            _label(l10n, status),
-            // Her durumda aynı stil ve tek satır: yükseklik sıçramaz.
-            style: theme.textTheme.labelMedium?.copyWith(color: foreground),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _label(AppLocalizations l10n, ModerationCaseStatus status) =>
-      switch (status) {
-        ModerationCaseStatus.open => l10n.adminAcik,
-        ModerationCaseStatus.inReview => l10n.adminUgcStatusInReview,
-        ModerationCaseStatus.resolved => l10n.adminUgcStatusResolved,
-        ModerationCaseStatus.rejected => l10n.adminUgcStatusRejected,
-      };
-}
-
-/// Sunucudan gelen önem/SLA/karantina rozetleri.
-///
-/// Rozetler yalnız **sunucunun bildiği** alanlardan çizilir; istemci risk
-/// uydurmaz. Hiçbiri tek başına yaptırım anlamına gelmez.
-class _CaseBadges extends StatelessWidget {
-  const _CaseBadges({required this.moderationCase});
-
-  final ModerationCase moderationCase;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final overdue = moderationCase.isOverdue(DateTime.now());
-    final labels = <(String, Color, Color)>[
-      if (moderationCase.severity == ModerationSeverity.high)
-        (l10n.adminModerationSeverityHigh, scheme.errorContainer, scheme.onErrorContainer),
-      if (overdue)
-        (l10n.adminModerationOverdue, scheme.tertiaryContainer, scheme.onTertiaryContainer),
-      if (moderationCase.quarantined)
-        (
-          l10n.adminModerationQuarantined,
-          scheme.surfaceContainerHighest,
-          scheme.onSurfaceVariant,
-        ),
-    ];
-    if (labels.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      key: const Key('moderation-case-badges'),
-      padding: const EdgeInsets.only(top: 6),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          for (final (label, background, foreground) in labels)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(color: foreground),
-                maxLines: 1,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Üç nokta yalnız ikincil eylemleri taşır — durum değişimi çipte.
-class _SecondaryActions extends StatelessWidget {
-  const _SecondaryActions({
-    required this.moderationCase,
-    this.onSanction,
-    this.onQuarantineToggle,
-  });
-
-  final ModerationCase moderationCase;
-  final VoidCallback? onSanction;
-  final ValueChanged<bool>? onQuarantineToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    // Karantina vaka kimliği ister; `0104` öncesi tarihsel satırlarda seçenek
-    // hiç gösterilmez — ölü menü girdisi bırakmıyoruz.
-    final canQuarantine =
-        onQuarantineToggle != null && moderationCase.supportsCaseActions;
-    return PopupMenuButton<String>(
-      key: const Key('moderation-secondary-actions'),
-      onSelected: (value) async {
-        switch (value) {
-          case 'sanction':
-            onSanction?.call();
-          case 'quarantine':
-            onQuarantineToggle?.call(!moderationCase.quarantined);
-          case 'copy':
-            // Değişmez hedef kimliği: destek yazışmasında vakayı bu id
-            // tekilleştirir.
-            await Clipboard.setData(
-              ClipboardData(text: moderationCase.targetId),
-            );
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(l10n.adminUgcIdCopied)));
-        }
-      },
-      itemBuilder: (_) => [
-        if (onSanction != null)
-          PopupMenuItem(
-            value: 'sanction',
-            child: Text(l10n.adminModerationSanctionTitle),
-          ),
-        if (canQuarantine)
-          PopupMenuItem(
-            value: 'quarantine',
-            child: Text(
-              moderationCase.quarantined
-                  ? l10n.adminModerationQuarantineRelease
-                  : l10n.adminModerationQuarantine,
-            ),
-          ),
-        PopupMenuItem(value: 'copy', child: Text(l10n.classroomKopyala)),
-      ],
-    );
-  }
-}
-
-class _IdentityLine extends StatelessWidget {
-  const _IdentityLine({
-    required this.label,
-    required this.identity,
-    this.extraCount = 0,
-    this.trailing,
-  });
-
-  final String label;
-  final ModerationIdentity? identity;
-  final int extraCount;
-
-  /// Satırın sağ ucundaki tek eylem (bugün: hedefin dosyasına köprü).
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final resolved = identity;
-    final name = resolved == null || resolved.isDeleted
-        ? l10n.adminUgcDeletedUser
-        : resolved.displayName;
-
-    return Row(
-      children: [
-        UserAvatar(
-          displayName: name,
-          avatarUrl: resolved?.avatarUrl,
-          radius: 14,
-          enableZoom: false,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            extraCount > 0 ? '$label: $name (+$extraCount)' : '$label: $name',
-            style: theme.textTheme.bodyMedium,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        ?trailing,
-      ],
-    );
+    return '${_typeLabel(l10n)} · $duration · '
+        '${l10n.adminRaporlar}: ${moderationCase.reportCount}';
   }
 }
