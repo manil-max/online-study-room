@@ -2,7 +2,6 @@ package com.manilmax.online_study_room.widgets
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.widget.RemoteViews
 import com.manilmax.online_study_room.R
@@ -239,18 +238,16 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                     paddingPx,
                     paddingPx,
                 )
+                // WP-700: rota tasimayan kopya cagri kaldirildi; tek kaynak
+                // `WidgetDeepLink`. Eskisi paketin launcher intent'ini
+                // kullaniyordu ve uygulamayi "en son nerede kaldiysa" oraya
+                // aciyordu.
                 setOnClickPendingIntent(
                     R.id.countdown_widget_root,
-                    android.app.PendingIntent.getActivity(
+                    WidgetDeepLink.pendingIntent(
                         context,
-                        60 + widgetId,
-                        context.packageManager.getLaunchIntentForPackage(context.packageName)
-                            ?.addFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
-                            )
-                            ?: Intent(),
-                        android.app.PendingIntent.FLAG_UPDATE_CURRENT or
-                            android.app.PendingIntent.FLAG_IMMUTABLE,
+                        WidgetDeepLink.ROUTE_COUNTDOWN,
+                        widgetId,
                     ),
                 )
             }

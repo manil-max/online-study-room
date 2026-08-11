@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.LocaleList
 import androidx.annotation.RequiresApi
 import com.manilmax.online_study_room.timer.StudyTimerService
+import com.manilmax.online_study_room.widgets.WidgetDeepLink
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -19,6 +20,16 @@ class MainActivity : FlutterActivity() {
     private val TIMER_CHANNEL = "com.manilmax.online_study_room/timer"
     private var initialAction: String? = null
     private var timerChannel: MethodChannel? = null
+
+    /**
+     * WP-700 SOGUK YOL. Kullanici widget'a dokundugunda uygulama cogu zaman
+     * KAPALIDIR; o durumda `onNewIntent` HIC cagrilmaz ve rota kaybolur.
+     * Rota bu yuzden `onCreate`te yakalanip Dart ilk kez sorana kadar burada
+     * bekletilir. Yalniz sicak yolu kurmak, ozelligi calisiyor gosterip
+     * pratikte yari olu birakirdi.
+     */
+    private var initialWidgetRoute: String? = null
+    private var widgetRouteChannel: MethodChannel? = null
 
     /** WP-136: Native servis durum değişince Dart'a reconcile.
      *  Eskiden yalnız onResume…onPause dinleniyordu → arka planda bayat UI.
@@ -32,6 +43,10 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         initialAction = intent.action
+        initialWidgetRoute = WidgetDeepLink.routeOf(
+            intent.action,
+            intent.getStringExtra(WidgetDeepLink.EXTRA_ROUTE),
+        )
         super.onCreate(savedInstanceState)
     }
 
@@ -106,6 +121,27 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // WP-700: widget rotasi AYRI kanaldan gider. `device_integrations`
+        // kanalindaki `getInitialAction` tek seferliktir ve
+        // `deviceIntegrationListener` tarafindan tuketilir; ayni kanali
+        // paylasmak iki dinleyici arasinda yaris olustururdu.
+        widgetRouteChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            WidgetDeepLink.CHANNEL,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    WidgetDeepLink.METHOD_INITIAL_ROUTE -> {
+                        result.success(initialWidgetRoute)
+                        // Tek seferlik: yeniden baglanan bir engine ayni
+                        // rotayi ikinci kez uygulamasin.
+                        initialWidgetRoute = null
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
+
         // WP-58: Exact alarm izin kanalı
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ExactAlarmHelper.CHANNEL)
             .setMethodCallHandler { call, result ->
@@ -171,6 +207,13 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // WP-700 SICAK YOL: uygulama zaten acikti.
+        WidgetDeepLink.routeOf(
+            intent.action,
+            intent.getStringExtra(WidgetDeepLink.EXTRA_ROUTE),
+        )?.let { route ->
+            widgetRouteChannel?.invokeMethod(WidgetDeepLink.METHOD_ON_ROUTE, route)
+        }
         intent.action?.let { action ->
             flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
                 MethodChannel(messenger, CHANNEL).invokeMethod("onIntentAction", action)

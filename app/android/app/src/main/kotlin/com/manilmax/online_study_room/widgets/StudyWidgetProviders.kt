@@ -2,7 +2,6 @@ package com.manilmax.online_study_room.widgets
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.SystemClock
@@ -358,16 +357,6 @@ private fun RemoteViews.applyRootPadding(context: Context, viewId: Int, dp: Int)
     setViewPadding(viewId, px, px, px, px)
 }
 
-private fun openAppPendingIntent(context: Context, requestCode: Int) =
-    android.app.PendingIntent.getActivity(
-        context,
-        requestCode,
-        context.packageManager.getLaunchIntentForPackage(context.packageName)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            ?: Intent(),
-        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE,
-    )
-
 class TimerWidgetProvider : HomeWidgetProvider() {
     // WP-699: yeniden boyutlandırma tek başına `onUpdate` tetiklemez —
     // `AppWidgetProvider.onAppWidgetOptionsChanged` gövdesi boştur ve
@@ -464,8 +453,18 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
                 )
                 setOnClickPendingIntent(R.id.timer_widget_action, pendingIntent)
-                // Kök tıklama da toggle (küçük 1×1'de düğme isabet alanı dar olabilir).
-                setOnClickPendingIntent(R.id.timer_widget_root, pendingIntent)
+                // WP-700: KOK artik sayac bolumunu ACAR, toggle etmez.
+                // Baslat/Durdur yalniz kendi hapinda kalir (`minHeight=32dp`,
+                // 48dp'lik dokunma hedefine yakin); kok de toggle olsaydi
+                // "uzerine dokununca o bolum acilsin" istegi karsilanamazdi.
+                setOnClickPendingIntent(
+                    R.id.timer_widget_root,
+                    WidgetDeepLink.pendingIntent(
+                        context,
+                        WidgetDeepLink.ROUTE_TIMER,
+                        widgetId,
+                    ),
+                )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -505,7 +504,11 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                 setProgressBar(R.id.stats_goal_progress, 100, progress, false)
                 setOnClickPendingIntent(
                     R.id.stats_widget_root,
-                    openAppPendingIntent(context, 20 + widgetId),
+                    WidgetDeepLink.pendingIntent(
+                        context,
+                        WidgetDeepLink.ROUTE_STATS,
+                        widgetId,
+                    ),
                 )
                 setTextViewText(
                     R.id.stats_widget_week,
@@ -591,7 +594,11 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     )
                     setOnClickPendingIntent(
                         R.id.leaderboard_widget_root,
-                        openAppPendingIntent(context, 30 + widgetId),
+                        WidgetDeepLink.pendingIntent(
+                            context,
+                            WidgetDeepLink.ROUTE_GROUP,
+                            widgetId,
+                        ),
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_2,
@@ -668,7 +675,11 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
                 )
                 setOnClickPendingIntent(
                     R.id.group_goal_widget_root,
-                    openAppPendingIntent(context, 40 + widgetId),
+                    WidgetDeepLink.pendingIntent(
+                        context,
+                        WidgetDeepLink.ROUTE_GROUP,
+                        widgetId,
+                    ),
                 )
                 setViewVisibility(
                     R.id.group_goal_widget_detail,
@@ -722,6 +733,15 @@ class ClockWidgetProvider : HomeWidgetProvider() {
                     context,
                     R.id.clock_widget_root,
                     widgetRootPaddingDp(12, size.height),
+                )
+                // WP-700: bu widget'in daha once HIC tiklama intent'i yoktu.
+                setOnClickPendingIntent(
+                    R.id.clock_widget_root,
+                    WidgetDeepLink.pendingIntent(
+                        context,
+                        WidgetDeepLink.ROUTE_CLOCK,
+                        widgetId,
+                    ),
                 )
             }
             appWidgetManager.updateAppWidget(widgetId, views)

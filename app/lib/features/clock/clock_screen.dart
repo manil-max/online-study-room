@@ -1,8 +1,10 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../android_widgets/widget_deep_link.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'alarms_screen.dart';
 import 'clock_desktop_layout.dart';
@@ -13,15 +15,48 @@ import 'timers_screen.dart';
 /// Yön değişimi ürün yüzeyini değiştirmez; yatayda da aynı Araçlar akışı kalır.
 enum ClockTab { alarm, multiTimer, tasks }
 
-class ClockScreen extends StatefulWidget {
+/// WP-700: rotanin IKINCI seviyesi. Ana kabuk yalniz "Araclar" sekmesini
+/// secebilir; hangi arac oldugunu bilen tek yer burasi oldugu icin esleme de
+/// burada durur (`widget_deep_link.dart` `ClockTab`i tanimaz — enum'u oraya
+/// kopyalamak iki gercek uretirdi).
+ClockTab? clockTabForWidgetRoute(WidgetRoute? route) => switch (route) {
+  WidgetRoute.clock => ClockTab.alarm,
+  WidgetRoute.tasks => ClockTab.tasks,
+  _ => null,
+};
+
+class ClockScreen extends ConsumerStatefulWidget {
   const ClockScreen({super.key});
 
   @override
-  State<ClockScreen> createState() => _ClockScreenState();
+  ConsumerState<ClockScreen> createState() => _ClockScreenState();
 }
 
-class _ClockScreenState extends State<ClockScreen> {
+class _ClockScreenState extends ConsumerState<ClockScreen> {
   ClockTab _tab = ClockTab.alarm;
+  int _appliedRouteTick = 0;
+
+  /// 🔴 SOGUK YOL. Bu ekran `IndexedStack` icinde uygulama acilisinda kurulur;
+  /// widget rotasi ise kanal cevabi geldiginde, yani cogu zaman DAHA SONRA
+  /// duser. Yine de ilk kurulum okunur: kanal cevabi bu ekran monte
+  /// olmadan once gelirse `ref.listen` o degisimi kaciracakti.
+  @override
+  void initState() {
+    super.initState();
+    _applyRoute(ref.read(widgetRouteProvider), initial: true);
+  }
+
+  void _applyRoute(WidgetRouteRequest request, {bool initial = false}) {
+    if (request.tick == _appliedRouteTick) return;
+    _appliedRouteTick = request.tick;
+    final tab = clockTabForWidgetRoute(request.route);
+    if (tab == null || tab == _tab) return;
+    if (initial) {
+      _tab = tab;
+    } else {
+      setState(() => _tab = tab);
+    }
+  }
 
   void _onTabChanged(ClockTab tab) => setState(() => _tab = tab);
 
@@ -122,6 +157,8 @@ class _ClockScreenState extends State<ClockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // SICAK YOL: uygulama zaten acikken gelen rota.
+    ref.listen(widgetRouteProvider, (_, next) => _applyRoute(next));
     final content = _buildTabBody();
 
     if (isDesktopWindow) return _buildDesktop(content);
