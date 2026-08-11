@@ -23,7 +23,10 @@ enum HomeWidgetProvider {
   alarm('AlarmWidgetProvider'),
 
   /// WP-695 — sınav geri sayımı. Yayında olan **ikinci** widget.
-  countdown('CountdownWidgetProvider');
+  countdown('CountdownWidgetProvider'),
+
+  /// WP-701 — görev listesi; satırları ana ekrandan işaretlenir.
+  task('TaskWidgetProvider');
 
   const HomeWidgetProvider(this.androidClassName);
 
@@ -66,6 +69,10 @@ const List<HomeWidgetCatalogEntry> kHomeWidgetCatalog = [
     provider: HomeWidgetProvider.countdown,
     published: true,
   ),
+  // WP-701: kullanıcı isteği ("task widget'ında yaptıklarını oradan
+  // işaretleseler güzel olur"). Manifest'teki receiver `enabled` bayrağı
+  // taşımaz — iki taraf aynı yerde durur.
+  HomeWidgetCatalogEntry(provider: HomeWidgetProvider.task, published: true),
 ];
 
 /// Yayındaki widget'lar — katalog ekranı ve sözleşme testi bunu okur.

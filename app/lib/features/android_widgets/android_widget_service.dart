@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +8,9 @@ import 'package:home_widget/home_widget.dart';
 
 import 'package:online_study_room/core/notifications/timer_external_command_store.dart';
 import 'package:online_study_room/core/l10n/system_localizations.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/data/models/user_task.dart';
+import 'package:online_study_room/data/providers/user_task_providers.dart';
 import 'package:online_study_room/features/android_widgets/published_home_widgets.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -107,6 +113,20 @@ enum StudyHomeWidget {
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.CountdownWidgetProvider',
     catalogProvider: HomeWidgetProvider.countdown,
+    consumesWidgetData: false,
+  ),
+
+  /// WP-701: görev listesi.
+  ///
+  /// `consumesWidgetData: false` — sağlayıcı `home_widget`in `widgetData`
+  /// sözlüğünü değil, [TaskWidgetPrefsKeys.mirror] aynasını okur (geri
+  /// sayımın deseni). `true` yazmak WP-558'in kapattığı "her anlık görüntüde
+  /// 17 platform kanalı turu" gerilemesini geri getirirdi.
+  task(
+    androidName: 'TaskWidgetProvider',
+    qualifiedAndroidName:
+        'com.manilmax.online_study_room.widgets.TaskWidgetProvider',
+    catalogProvider: HomeWidgetProvider.task,
     consumesWidgetData: false,
   );
 
@@ -466,3 +486,231 @@ class AndroidWidgetService implements AndroidWidgetGateway {
     return HomeWidget.saveWidgetData<String>(key, value.toString());
   }
 }
+
+// ---------------------------------------------------------------------------
+// WP-701 · görev widget'ı: ayna + bekleyen kuyruk
+//
+// Kullanıcı ana ekranda kutucuğa dokunduğunda Flutter süreci çoğu zaman
+// KAPALIDIR; gerçek `UserTasksNotifier.toggle` burada, Dart tarafındadır ve
+// Supabase RPC'sine gider. Yol dört parçadır (ilk üçü Kotlin'de,
+// `widgets/TaskWidget.kt` + `TaskActionReceiver.kt`):
+//
+//   1. Dart görev listesini [TaskWidgetPrefsKeys.mirror] anahtarına JSON
+//      olarak yazar; widget yalnız bunu okur.
+//   2. Dokunma anında Kotlin aynayı çevirir ve widget'ı hemen yeniden çizer
+//      (kullanıcı dokunup "hiçbir şey olmadı" görmez).
+//   3. Kotlin niyeti [TaskWidgetPrefsKeys.pending] kuyruğuna kalıcı yazar.
+//   4. Uygulama açılınca [TaskWidgetBridge.drainPending] kuyruğu boşaltıp
+//      gerçek `toggle`ı uygular.
+//
+// 🔴 Çift uygulama koruması kuyruğun **biçiminde**dir: kayıt bir *toggle*
+// değil, **istenen mutlak durum** taşır (`done: true/false`). Kuyruk iki kez
+// işlense bile sonuç değişmez; toggle taşısaydı ikinci tur işaretlemeyi geri
+// alırdı. [applyPendingTaskToggles] ayrıca hedef durum zaten sağlanmışsa
+// `toggle`ı hiç çağırmaz.
+//
+// 🔴 Tip tuzağı: iki tarafın dokunduğu her prefs değeri `String`tir. Dart
+// `setInt` diske `putLong` yazar; Kotlin `getInt` okursa `ClassCastException`
+// bir `BroadcastReceiver` içinde uygulama **sürecini** öldürür (v58 geri
+// sayım/pomodoro çökmesi buydu). Zaman damgası bile JSON içinde metindir.
+// ---------------------------------------------------------------------------
+
+abstract final class TaskWidgetPrefsKeys {
+  /// Dart tarafındaki `SharedPreferences` anahtarı.
+  static const mirror = 'tasks.widget_v1';
+  static const pending = 'tasks.widget_pending_v1';
+
+  /// Flutter `shared_preferences` diske hep bu önekle yazar; Kotlin tarafı
+  /// anahtarları önekli hâliyle okur.
+  static const androidPrefix = 'flutter.';
+  static const androidMirror = '$androidPrefix$mirror';
+  static const androidPending = '$androidPrefix$pending';
+}
+
+/// Layout'taki satır sayısı (`odak_task_widget.xml`). Fazlası yazılmaz.
+const int kTaskWidgetMaxRows = 5;
+
+/// Kuyruktaki tek niyet: [taskId] görevi [done] durumuna gelsin.
+@immutable
+class TaskWidgetPendingToggle {
+  const TaskWidgetPendingToggle({
+    required this.opId,
+    required this.taskId,
+    required this.done,
+  });
+
+  final String opId;
+  final String taskId;
+  final bool done;
+}
+
+/// Widget'ın okuyacağı ayna. Başlık ve boş durum metni **buradan** gider:
+/// native `strings.xml` ikinci bir çeviri kaynağı olmasın ve widget cihaz
+/// dilini değil uygulamada seçilen dili konuşsun.
+String encodeTaskWidgetMirror({
+  required String title,
+  required String emptyLabel,
+  required List<UserTask> tasks,
+}) {
+  final visible = <Map<String, Object>>[];
+  for (final task in tasks) {
+    if (visible.length >= kTaskWidgetMaxRows) break;
+    if (task.isArchived) continue;
+    if (task.id.isEmpty || task.title.trim().isEmpty) continue;
+    visible.add({
+      'id': task.id,
+      'title': task.title.trim(),
+      'done': task.completed,
+    });
+  }
+  return jsonEncode({
+    'title': title,
+    'empty': emptyLabel,
+    'tasks': visible,
+  });
+}
+
+/// Kotlin'in yazdığı kuyruğu çözer.
+///
+/// Aynı görevin birden çok niyeti varsa **sonuncusu** kalır: kullanıcı
+/// uygulama kapalıyken işaretleyip geri aldıysa Dart'ın yapması gereken tek iş
+/// son durumdur. Bozuk kayıt kuyruğun tamamını düşürmez, o satır atlanır.
+List<TaskWidgetPendingToggle> decodeTaskWidgetPending(String? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  Object? decoded;
+  try {
+    decoded = jsonDecode(raw);
+  } catch (_) {
+    return const [];
+  }
+  if (decoded is! Map) return const [];
+  final ops = decoded['ops'];
+  if (ops is! List) return const [];
+  final collapsed = <String, TaskWidgetPendingToggle>{};
+  for (final entry in ops) {
+    if (entry is! Map) continue;
+    final taskId = (entry['taskId'] as String?)?.trim() ?? '';
+    if (taskId.isEmpty) continue;
+    collapsed.remove(taskId); // sonuncu kazanır, sırası da sona gider
+    collapsed[taskId] = TaskWidgetPendingToggle(
+      opId: (entry['id'] as String?)?.trim() ?? '',
+      taskId: taskId,
+      done: entry['done'] as bool? ?? false,
+    );
+  }
+  return collapsed.values.toList(growable: false);
+}
+
+/// Bekleyen niyetleri gerçek `toggle`a çevirir; uygulananların kimliğini döner.
+///
+/// İki koruma: bilinmeyen kimlik (uygulamada silinmiş görev) atlanır, hedef
+/// durum **zaten sağlanmışsa** `toggle` hiç çağrılmaz — kuyruk iki kez
+/// boşaltılsa bile işaretleme geri dönmez.
+@visibleForTesting
+Future<List<String>> applyPendingTaskToggles({
+  required List<TaskWidgetPendingToggle> pending,
+  required List<UserTask> tasks,
+  required Future<void> Function(String taskId) toggle,
+}) async {
+  final byId = {for (final task in tasks) task.id: task};
+  final applied = <String>[];
+  for (final op in pending) {
+    final task = byId[op.taskId];
+    if (task == null) continue;
+    if (task.completed == op.done) continue;
+    await toggle(op.taskId);
+    applied.add(op.taskId);
+  }
+  return applied;
+}
+
+/// Görev listesi ↔ ana ekran widget'ı köprüsü.
+///
+/// 🔴 Bu sınıf bir kez **okunmadıkça** hiçbir şey yapmaz: `Provider` gövdesi
+/// tembeldir. Uygulama açılışında (ör. kabuk kurulurken) `ref.watch/read` ile
+/// çağrılmalıdır; çağrı yeri yoksa widget aynası hiç yazılmaz ve bekleyen
+/// kuyruk hiç boşalmaz.
+class TaskWidgetBridge {
+  TaskWidgetBridge(this._ref);
+
+  final Ref _ref;
+  bool _started = false;
+
+  static bool get _isAndroid =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  /// Bekleyen kuyruğu boşaltır ve aynanın ilk hâlini yazar.
+  ///
+  /// Görev listesi sonradan değiştiğinde ayna [taskWidgetBridgeProvider]
+  /// gövdesindeki dinleyiciyle güncellenir; burada yalnız **açılış** turu
+  /// vardır ve tekrar çağrılsa da bir kez koşar.
+  Future<void> start() async {
+    if (_started || !_isAndroid) return;
+    _started = true;
+    final tasks = await _ref.read(userTasksProvider.future);
+    await drainPending(tasks: tasks);
+    await syncMirror(_ref.read(userTasksProvider).value ?? tasks);
+  }
+
+  /// Görev listesini aynaya yazar ve widget'a yeniden çizim yayını gönderir.
+  Future<void> syncMirror(List<UserTask> tasks) async {
+    if (!_isAndroid) return;
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final l10n = await loadSystemLocalizations();
+    await prefs.setString(
+      TaskWidgetPrefsKeys.mirror,
+      encodeTaskWidgetMirror(
+        title: l10n.taskListTitle,
+        emptyLabel: l10n.taskListEmpty,
+        tasks: tasks,
+      ),
+    );
+    await _ref
+        .read(androidWidgetServiceProvider)
+        .refresh(widgets: const [StudyHomeWidget.task]);
+  }
+
+  /// Uygulama kapalıyken ana ekrandan yapılan işaretlemeleri uygular.
+  ///
+  /// Kuyruk **önce okunur, uygulandıktan sonra silinir**; arada uygulama
+  /// ölürse aynı kuyruk bir daha işlenir ve [applyPendingTaskToggles] hedef
+  /// durumu zaten sağlanmış kayıtlara dokunmaz.
+  Future<int> drainPending({List<UserTask>? tasks}) async {
+    if (!_isAndroid) return 0;
+    final prefs = _ref.read(sharedPreferencesProvider);
+    // Kotlin bu dosyayı süreç dışında değiştirmiş olabilir; Dart tarafındaki
+    // bellek kopyası bayattır.
+    await prefs.reload();
+    final pending = decodeTaskWidgetPending(
+      prefs.getString(TaskWidgetPrefsKeys.pending),
+    );
+    if (pending.isEmpty) return 0;
+    final List<UserTask> current =
+        tasks ?? await _ref.read(userTasksProvider.future);
+    final actions = _ref.read(userTaskActionsProvider);
+    final applied = await applyPendingTaskToggles(
+      pending: pending,
+      tasks: current,
+      toggle: actions.toggle,
+    );
+    await prefs.remove(TaskWidgetPrefsKeys.pending);
+    return applied.length;
+  }
+}
+
+/// Köprünün tek örneği. Çağrı yeri uygulama açılışıdır (bkz. [TaskWidgetBridge]).
+///
+/// Dinleyici gövdede kurulur (`build` dışında `ref.listen` çağrılmaz) ve bu
+/// sayede sağlayıcı yaşadığı sürece `userTasksProvider` de canlı kalır: WP-548
+/// dersi — dinleyicisiz bir provider her okumada yeniden kurulur ve
+/// güncellemeler sessizce kaybolur.
+final taskWidgetBridgeProvider = Provider<TaskWidgetBridge>((ref) {
+  final bridge = TaskWidgetBridge(ref);
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    ref.listen<AsyncValue<List<UserTask>>>(userTasksProvider, (_, next) {
+      final tasks = next.value;
+      if (tasks != null) unawaited(bridge.syncMirror(tasks));
+    });
+  }
+  return bridge;
+});

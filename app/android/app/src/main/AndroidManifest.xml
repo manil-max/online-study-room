@@ -156,6 +156,29 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/odak_countdown_widget_info" />
         </receiver>
+        <!-- WP-701: gorev widget'inin kutucuk dokunusu. exported=false —
+             yalniz uygulamanin kendi explicit + IMMUTABLE PendingIntent'i
+             tetikler; Flutter surecine ihtiyac duymaz. -->
+        <receiver
+            android:name=".widgets.TaskActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.manilmax.online_study_room.ACTION_TOGGLE_TASK" />
+            </intent-filter>
+        </receiver>
+        <!-- WP-701: gorev listesi widget'i. Yayinda (enabled bayragi yok);
+             katalogdaki `published: true` ile ayni tarafta durmali.
+             Ayrisirsa published_home_widgets sozlesme testi kirmizi duser. -->
+        <receiver
+            android:name=".widgets.TaskWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_task_widget_info" />
+        </receiver>
         <!-- WP-461: Yayinda yalniz 1x1 Baslat/Durdur widget'i var.
              Asagidaki bes saglayici SILINMEDI; revizyon icin kodu, layout'u
              ve xml tanimi repoda duruyor. `enabled="false"` bileseni

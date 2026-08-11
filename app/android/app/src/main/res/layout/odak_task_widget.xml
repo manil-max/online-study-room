@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-701: gorev listesi widget'i. Duzen deseni odak_countdown_widget.xml'den
+     alindi: ayni renk kaynaklari (values/ + values-night/ widget_colors.xml),
+     ayni tek satirlik ellipsize kurallari.
+
+     Satirlar STATIKTIR (bes tane): RemoteViews `ListView` disinda dinamik
+     satir uretemez ve `RemoteViewsService` bu widget icin fazladan bir
+     surec/adaptor maliyetidir. Yukseklik sinifina gore fazlasi GONE olur
+     (`taskWidgetRowCount`).
+
+     Kutucuk bir CheckBox DEGIL, metin isaretidir: RemoteViews `CheckBox`i
+     yalniz API 31+ kabul eder, bu uygulamanin minSdk'si daha eskidir. Isaret
+     bir SEMBOLdur (U+2610 / U+2611), cevrilecek bir metin degil; satirin
+     yazisi ve baslik Dart tarafindan (l10n) gelir.
+
+     Ilk cizimde ayna henuz yazilmamis olabilir: o durumda satirlar GONE olur
+     ve `task_widget_empty` gorunur, yani launcher onizlemesi bos bir
+     dikdortgen degildir. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/task_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/widget_stats_surface"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/task_widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/widget_today"
+        android:textColor="@color/widget_heading"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/task_widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="@string/widget_no_records"
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/task_widget_row_0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/task_widget_box_0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="☐"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/task_widget_label_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/task_widget_row_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/task_widget_box_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="☐"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/task_widget_label_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/task_widget_row_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/task_widget_box_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="☐"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/task_widget_label_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/task_widget_row_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/task_widget_box_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="☐"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/task_widget_label_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/task_widget_row_4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="32dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/task_widget_box_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="☐"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/task_widget_label_4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

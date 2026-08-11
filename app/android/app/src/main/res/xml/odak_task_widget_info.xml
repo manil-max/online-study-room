@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-701: boyut ve esneklik.
+
+     Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
+     ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
+     4=250dp, 5=320dp. (Depodaki eski "1 hucre ~ 40dp" yorumu yalniz n=1 icin
+     dogruydu.)
+
+     Varsayilan 3x2 hucre = 180x110dp. Geri sayimin 2x2'sinden GENIS acilir
+     cunku icerik gorev BASLIKLARIDIR: 110dp genislikte tek satirda ~11
+     karakter sigar, gercek gorev adlari orada hep kirpilirdi.
+
+     `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir. Ust sinir
+     4 hucre yukseklik (250dp) cunku layout'ta bes satir vardir; daha uzun bir
+     kutu bos beyaz alan olurdu. `updatePeriodMillis=0`: veri OLAY BAZLIDIR
+     (Dart `updateWidget` yayini + dokunustan sonra receiver'in yeniden
+     cizdirmesi), periyodik uyanma pil harcardi.
+
+     Kotlin esikleriyle (WIDGET_TASK_* sabitleri, TaskWidget.kt) ayrisma
+     `test/features/android_widgets/task_widget_wp701_test.dart` icinde
+     kirmizi duser. `resizeMode` TEK BASINA yetmez: saglayici
+     `onAppWidgetOptionsChanged`i gecersiz kilmazsa ekranda hicbir sey
+     degismez (WP-699'da alti saglayicida bulunan kusur).
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/odak_task_widget"
+    android:maxResizeHeight="250dp"
+    android:maxResizeWidth="320dp"
+    android:minHeight="110dp"
+    android:minResizeHeight="80dp"
+    android:minResizeWidth="110dp"
+    android:minWidth="180dp"
+    android:previewLayout="@layout/odak_task_widget"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="3"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />
