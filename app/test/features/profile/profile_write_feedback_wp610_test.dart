@@ -21,6 +21,17 @@
 // Her yol icin IKI YONLU iddia var: hata varken uyari CIKAR, basaride CIKMAZ
 // (ve basari mesaji gorunur). Sabotaj: dort `catch` dalindan biri daraltilirsa
 // ya da basari SnackBar'i silinirse bu dosya kirmiziya doner.
+//
+// 🔴 WP-710 (proje sahibi emri) iki yolun YUZEYINI degistirdi; iddialar
+// silinmedi, tasindi:
+//   * gunluk hedef  -> Ayarlar'dan kaldirildi; kanonik yer sayac kartindaki
+//     hedef satiri (`study_timer_card.dart` `_editGoal`, WP-619 ayni kusuru
+//     orada da kapatmisti). Ayarlar'a ozel iki mesaj artik hic cizilmedigi
+//     icin olculen uyari kartin genel mesajidir.
+//   * kamp hayvani  -> Ayarlar'dan Gruplar'a tasindi; satırın kendisi
+//     `CampAnimalTile` (`profile/widgets/camp_animal_picker.dart`). Mesajlar
+//     aynen korundu. Satirin Gruplar ekranina BAGLI oldugu ayri olculur:
+//     `test/features/classroom/camp_animal_moved_wp710_test.dart`.
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -32,11 +43,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:online_study_room/core/animals/camp_animal.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/data/models/study_group.dart';
+import 'package:online_study_room/data/models/study_session.dart';
+import 'package:online_study_room/data/models/subject.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/providers/group_providers.dart';
+import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/data/repositories/auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
+import 'package:online_study_room/features/classroom/widgets/study_timer_card.dart';
 import 'package:online_study_room/features/profile/profile_screen.dart';
-import 'package:online_study_room/features/profile/settings_screen.dart';
+import 'package:online_study_room/features/profile/widgets/camp_animal_picker.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
@@ -48,6 +66,13 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 /// PostgREST guncellemesi `PostgrestException`, Storage yuklemesi
 /// `StorageException`, kopuk baglanti `SocketException` uretir. Hicbiri
 /// `AuthException` DEGILDIR.
+/// Gercek notifier kanal/dinleyici kurar; burada olculen sey yazma geri
+/// bildirimi, sayacin kendisi degil.
+class _IdleTimerNotifier extends StudyTimerNotifier {
+  @override
+  StudyTimerState build() => const StudyTimerState();
+}
+
 class _NetworkFailingAuthRepository extends InMemoryAuthRepository {
   Object? error;
 
@@ -186,7 +211,7 @@ void main() {
     });
   });
 
-  group('1 - gunluk hedef (Ayarlar)', () {
+  group('1 - gunluk hedef (sayac karti)', () {
     Future<_NetworkFailingAuthRepository> pump(WidgetTester tester) async {
       final prefs = await emptyPrefs();
       final auth = await signedUpRepo();
@@ -195,14 +220,26 @@ void main() {
         app([
           sharedPreferencesProvider.overrideWithValue(prefs),
           authRepositoryProvider.overrideWithValue(auth),
-        ], const SettingsScreen()),
+          userSessionsProvider.overrideWith(
+            (_) => Stream.value(const <StudySession>[]),
+          ),
+          userSubjectsProvider.overrideWith(
+            (_) => Stream.value(const <Subject>[]),
+          ),
+          userGroupProvider.overrideWithValue(
+            const AsyncData<StudyGroup?>(null),
+          ),
+          studyTimerProvider.overrideWith(_IdleTimerNotifier.new),
+        ], const Scaffold(
+          body: SizedBox(width: 380, height: 900, child: StudyTimerCard()),
+        )),
       );
       await tester.pumpAndSettle();
       return auth;
     }
 
     Future<void> editGoal(WidgetTester tester) async {
-      await tester.tap(find.byKey(const Key('settings-daily-goal')));
+      await tester.tap(find.text('Günlük hedef'));
       await tester.pumpAndSettle();
       // Dakika sutununun "+" tusu.
       await tester.tap(
@@ -219,28 +256,28 @@ void main() {
     }
 
     AppLocalizations l10nOf(WidgetTester tester) =>
-        AppLocalizations.of(tester.element(find.byType(SettingsScreen)));
+        AppLocalizations.of(tester.element(find.byType(StudyTimerCard)));
 
     testWidgets('ag hatasinda kullaniciya SOYLENIR', (tester) async {
       final auth = await pump(tester);
       final l10n = l10nOf(tester);
-      // Iki mesaj gercekten farkli olmali; aksi halde iddia bos kalir.
-      expect(
-        l10n.profileGunlukHedefKaydedilemedi,
-        isNot(l10n.profileGunlukHedefGuncellendi),
-      );
 
       auth.error = _postgrestFailure();
       await editGoal(tester);
 
       expect(auth.goalCalls, 1);
-      expect(find.text(l10n.profileGunlukHedefKaydedilemedi), findsOneWidget);
-      expect(find.text(l10n.profileGunlukHedefGuncellendi), findsNothing);
+      expect(
+        find.text(l10n.authBeklenmeyenBirHataOlustu),
+        findsOneWidget,
+        reason:
+            'Yazma dustu ama ekran sessiz kaldi: `catch` dali yine gercek '
+            'hatanin yanindan geciyor.',
+      );
       // Deger gercekten kaydedilmedi.
       expect(auth.currentUser?.dailyGoalMinutes, 360);
     });
 
-    testWidgets('basaride onay cikar, hata CIKMAZ', (tester) async {
+    testWidgets('basaride hata CIKMAZ, deger yazilir', (tester) async {
       final auth = await pump(tester);
       final l10n = l10nOf(tester);
 
@@ -248,12 +285,11 @@ void main() {
 
       expect(auth.goalCalls, 1);
       expect(auth.currentUser?.dailyGoalMinutes, 361);
-      expect(find.text(l10n.profileGunlukHedefGuncellendi), findsOneWidget);
-      expect(find.text(l10n.profileGunlukHedefKaydedilemedi), findsNothing);
+      expect(find.text(l10n.authBeklenmeyenBirHataOlustu), findsNothing);
     });
   });
 
-  group('2 - kamp hayvani (Ayarlar)', () {
+  group('2 - kamp hayvani (tasinan satir)', () {
     Future<_NetworkFailingAuthRepository> pump(WidgetTester tester) async {
       final prefs = await emptyPrefs();
       final auth = await signedUpRepo();
@@ -262,7 +298,7 @@ void main() {
         app([
           sharedPreferencesProvider.overrideWithValue(prefs),
           authRepositoryProvider.overrideWithValue(auth),
-        ], const SettingsScreen()),
+        ], const Scaffold(body: Center(child: CampAnimalTile()))),
       );
       await tester.pumpAndSettle();
       return auth;
@@ -278,10 +314,10 @@ void main() {
         animalId: auth.currentUser!.animal,
       );
       final target = kCampAnimals.firstWhere((a) => a.id != shown.id);
-      await tester.tap(find.text('Kamp hayvanın'));
+      await tester.tap(find.byKey(kCampAnimalTileKey));
       await tester.pumpAndSettle();
       final l10n = AppLocalizations.of(
-        tester.element(find.byType(SettingsScreen)),
+        tester.element(find.byType(CampAnimalTile)),
       );
       await tester.tap(find.text(target.label(l10n)).last);
       await tester.pumpAndSettle();
@@ -289,7 +325,7 @@ void main() {
     }
 
     AppLocalizations l10nOf(WidgetTester tester) =>
-        AppLocalizations.of(tester.element(find.byType(SettingsScreen)));
+        AppLocalizations.of(tester.element(find.byType(CampAnimalTile)));
 
     testWidgets('ag hatasinda kullaniciya SOYLENIR', (tester) async {
       final auth = await pump(tester);

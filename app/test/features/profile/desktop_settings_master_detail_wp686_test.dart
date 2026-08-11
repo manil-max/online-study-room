@@ -194,12 +194,15 @@ void main() {
     return out;
   }
 
-  /// Yedi kategori basligi — master listenin satirlari.
+  /// Kategori basliklari — master listenin satirlari.
+  ///
+  /// WP-710 (sahip emri): "Calisma tercihleri" bolumu KALDIRILDI, yediden
+  /// altiya indi. Iddia silinmedi; liste yeni gercegi olcuyor ve asagidaki
+  /// [rowsByCategory] tasinan sifirlama satirini "Yardim"da ariyor.
   List<String> sectionTitles() => [
     tr.settingsSectionAppearance,
     tr.settingsSectionNotifications,
     tr.settingsSectionAccount,
-    tr.settingsSectionStudyPreferences,
     tr.settingsSectionPrivacySecurity,
     tr.settingsSectionAboutLegal,
     tr.settingsSectionHelp,
@@ -210,17 +213,16 @@ void main() {
   /// 🔴 Bu tablo islev kaybi kapisidir: master-detay ayni anda tek kategori
   /// cizer, yani "anahtar agacta mi" diye bakmak artik yanlis olcumdur.
   Map<String, List<Key>> rowsByCategory() => {
-    tr.settingsSectionStudyPreferences: const [
-      Key('settings-daily-goal'),
-      Key('settings-exam-date'),
-      Key('reset-introduction-tours'),
-    ],
     tr.settingsSectionPrivacySecurity: const [Key('settings-muted-nudges')],
     tr.settingsSectionAboutLegal: const [
       Key('settings-about-updates'),
       Key('settings-feedback'),
     ],
-    tr.settingsSectionHelp: const [Key('settings-faq')],
+    // WP-710: sifirlama satiri "Calisma tercihleri"nden buraya tasindi.
+    tr.settingsSectionHelp: const [
+      Key('settings-faq'),
+      Key('reset-introduction-tours'),
+    ],
   };
 
   Future<void> selectCategory(WidgetTester tester, String title) async {
@@ -415,12 +417,12 @@ void main() {
 
   group('islev kaybi yok — SPEC §7', () {
     testWidgets(
-      '@1920 yedi kategori de secilebilir, her ayar satiri ULASILABILIR',
+      '@1920 her kategori secilebilir, her ayar satiri ULASILABILIR',
       (tester) async => onWindows(() async {
         await pumpApp(tester, const Size(1920, 1000));
         await openSettingsPanel(tester);
 
-        // Yedi baslik master listede AYNI ANDA duruyor.
+        // Butun basliklar master listede AYNI ANDA duruyor.
         for (final title in sectionTitles()) {
           expect(
             find.descendant(
@@ -552,8 +554,9 @@ void main() {
         for (final window in const [Size(1200, 1000), Size(1920, 1000)]) {
           await pumpApp(tester, window);
           await openSettingsPanel(tester);
-          // En uzun kategori: Calisma tercihleri (dort kart).
-          await selectCategory(tester, tr.settingsSectionStudyPreferences);
+          // WP-710'dan sonra en uzun kategori Gorunum: tema satiri + dil
+          // acilir listesi (kutulu form alani, iki satirlik yardim metniyle).
+          await selectCategory(tester, tr.settingsSectionAppearance);
           expect(
             scrollExtent(tester, find.byType(SettingsScreen)),
             0,

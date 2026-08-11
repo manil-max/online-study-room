@@ -358,7 +358,7 @@ void main() {
             tr.settingsSectionAppearance,
             tr.settingsSectionNotifications,
             tr.settingsSectionAccount,
-            tr.settingsSectionStudyPreferences,
+            // WP-710: "Çalışma tercihleri" bölümü kaldırıldı (sahip emri).
             tr.settingsSectionPrivacySecurity,
             tr.settingsSectionAboutLegal,
             tr.settingsSectionHelp,
@@ -374,10 +374,8 @@ void main() {
           // secilebiliyor mu ve satiri o zaman geliyor mu. Yedi kategorinin
           // hepsi tek tek gezilir — eski dort anahtardan DAHA GENIS bir kapi.
           for (final entry in <String, List<Key>>{
-            tr.settingsSectionStudyPreferences: const [
-              Key('settings-daily-goal'),
-              Key('settings-exam-date'),
-            ],
+            // WP-710: günlük hedef ve sınav tarihi satırları Ayarlar'dan çıktı;
+            // taşınan sıfırlama satırı artık "Yardım" kategorisinde ölçülüyor.
             tr.settingsSectionPrivacySecurity: const [
               Key('settings-muted-nudges'),
             ],
@@ -385,7 +383,10 @@ void main() {
               Key('settings-about-updates'),
               Key('settings-feedback'),
             ],
-            tr.settingsSectionHelp: const [Key('settings-faq')],
+            tr.settingsSectionHelp: const [
+              Key('settings-faq'),
+              Key('reset-introduction-tours'),
+            ],
           }.entries) {
             await selectCategory(tester, entry.key);
             for (final key in entry.value) {

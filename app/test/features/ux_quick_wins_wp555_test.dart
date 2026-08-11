@@ -17,16 +17,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/utils/duration_format.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/models/study_session.dart';
+import 'package:online_study_room/data/models/subject.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/classroom/widgets/group_discovery_screen.dart';
+import 'package:online_study_room/features/classroom/widgets/study_timer_card.dart';
 import 'package:online_study_room/features/profile/session_history_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -62,6 +66,12 @@ class _CountingDiscoveryRepository extends InMemoryGroupRepository {
 }
 
 /// `updateDailyGoal` cagrilarini sayan bellek-ici auth deposu (IS 2).
+/// Gerçek notifier kanal/dinleyici kurar; burada ölçülen şey hedef yazma yolu.
+class _IdleTimerNotifier extends StudyTimerNotifier {
+  @override
+  StudyTimerState build() => const StudyTimerState();
+}
+
 class _CountingAuthRepository extends InMemoryAuthRepository {
   int goalCalls = 0;
   int? lastGoalMinutes;
@@ -150,10 +160,14 @@ void main() {
     });
   });
 
-  group('IS 2 - gunluk hedef Ayarlar ekranindan degistirilebilir', () {
-    Future<_CountingAuthRepository> pumpSettings(WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
+  // 🔴 WP-710 (proje sahibi emri) bu maddeyi TERSINE cevirdi: "study
+  // preferences kismindan gunluk hedef ... kaldir". WP-555'in olctugu DAVRANIS
+  // olmedi (diyalog acilir, 15 dk siniri korunur, yeni deger yansir); yalniz
+  // YUZEYI degisti. Kanonik yer artik sayac kartindaki hedef satiri
+  // (`study_timer_card.dart` `_GoalProgress` -> `_editGoal`). Bayat iddia
+  // silinmedi, yeni gercege tasindi; ustune "Ayarlar'da artik yok" eklendi.
+  group('IS 2 - gunluk hedef sayac kartindan degistirilebilir', () {
+    Future<_CountingAuthRepository> signedUp() async {
       final auth = _CountingAuthRepository();
       addTearDown(auth.dispose);
       await auth.signUp(
@@ -161,24 +175,45 @@ void main() {
         password: 'gizli123',
         displayName: 'Ben',
       );
-      // 🔴 800dp genislik bilincli secildi. `goal_editor_dialog.dart` 360dp'de
-      // 8px RenderFlex tasmasi uretiyor (AlertDialog 280dp minimuma kilitlenip
-      // iki `NumberStepper`a 110dp birakiyor) -- WP-555'ten ONCE de vardi ve o
-      // dosya bu WP'nin SAHIP yolu degil. `wp85_l10n_test` de ayni diyalogu
-      // varsayilan 800dp'de aciyor. Bu test hedef akisini olcer, diyalogun dar
-      // ekran yerlesimini degil; tasma ayri kart olarak raporlandi.
-      tester.view.physicalSize = const Size(800, 3000);
+      return auth;
+    }
+
+    /// 800dp genislik bilincli secildi: `goal_editor_dialog.dart` 360dp'de 8px
+    /// RenderFlex tasmasi uretiyor (WP-555'ten ONCE de vardi) ve o dosya bu
+    /// WP'nin SAHIP yolu degil. Bu test hedef akisini olcer, dar ekran
+    /// yerlesimini degil.
+    void wideView(WidgetTester tester, {double height = 1400}) {
+      tester.view.physicalSize = Size(800, height);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
+    }
+
+    Future<_CountingAuthRepository> pumpTimerCard(WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final auth = await signedUp();
+      wideView(tester);
 
       await tester.pumpWidget(
         app([
           sharedPreferencesProvider.overrideWithValue(prefs),
           authRepositoryProvider.overrideWithValue(auth),
-        ], const SettingsScreen()),
+          userSessionsProvider.overrideWith(
+            (_) => Stream.value(const <StudySession>[]),
+          ),
+          userSubjectsProvider.overrideWith(
+            (_) => Stream.value(const <Subject>[]),
+          ),
+          userGroupProvider.overrideWithValue(
+            const AsyncData<StudyGroup?>(null),
+          ),
+          studyTimerProvider.overrideWith(_IdleTimerNotifier.new),
+        ], const Scaffold(
+          body: SizedBox(width: 380, height: 900, child: StudyTimerCard()),
+        )),
       );
       await tester.pumpAndSettle();
       return auth;
@@ -189,19 +224,39 @@ void main() {
       matching: find.byIcon(icon),
     );
 
+    testWidgets('WP-710: Ayarlar ekraninda hedef satiri artik YOK', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final auth = await signedUp();
+      wideView(tester, height: 3000);
+
+      await tester.pumpWidget(
+        app([
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authRepositoryProvider.overrideWithValue(auth),
+        ], const SettingsScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings-daily-goal')), findsNothing);
+    });
+
     testWidgets('satir vardir, diyalog acilir ve yeni deger yansir', (
       tester,
     ) async {
-      final auth = await pumpSettings(tester);
-      final row = find.byKey(const Key('settings-daily-goal'));
-      expect(row, findsOneWidget);
-      // Varsayilan 360 dk = 6 saat, satirda okunur.
+      final auth = await pumpTimerCard(tester);
+      expect(find.text('Günlük hedef'), findsOneWidget);
+      // Varsayilan 360 dk hedef satirinda okunur ("<bugun> / <hedef>").
+      // Beklenen metin kartla AYNI bicimlendiriciden uretilir; sabit '6sa'
+      // yazmak testi activeAppLocale genel durumuna bagimli kilardi.
       expect(
-        find.descendant(of: row, matching: find.text('6sa')),
-        findsOneWidget,
+        find.textContaining(formatHumanSeconds(360 * 60)),
+        findsWidgets,
       );
 
-      await tester.tap(row);
+      await tester.tap(find.text('Günlük hedef'));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
 
@@ -215,14 +270,14 @@ void main() {
       expect(auth.lastGoalMinutes, 361);
       expect(auth.currentUser?.dailyGoalMinutes, 361);
       expect(
-        find.descendant(of: row, matching: find.text('6sa 1dk')),
-        findsOneWidget,
+        find.textContaining(formatHumanSeconds(361 * 60)),
+        findsWidgets,
       );
     });
 
     testWidgets('gecersiz (15 dk alti) deger reddedilir', (tester) async {
-      final auth = await pumpSettings(tester);
-      await tester.tap(find.byKey(const Key('settings-daily-goal')));
+      final auth = await pumpTimerCard(tester);
+      await tester.tap(find.text('Günlük hedef'));
       await tester.pumpAndSettle();
 
       // 6 sa 0 dk -> 0 sa 0 dk.

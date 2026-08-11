@@ -72,7 +72,11 @@ void main() {
     expect(find.text('Otomatik'), findsNothing);
 
     expect(find.text('Kamp ateşi'), findsNothing);
-    expect(find.text('Kamp hayvanın'), findsOneWidget);
+    // 🔴 WP-710 (proje sahibi emri): kamp hayvanı satırı Ayarlar'dan
+    // çıktı, **Gruplar** ekranına taşındı. İddia silinmedi, tersine çevrildi;
+    // satırın yeni evinde çalıştığını ölçen yer:
+    // `test/features/classroom/camp_animal_moved_wp710_test.dart`.
+    expect(find.text('Kamp hayvanın'), findsNothing);
     expect(find.text('Gruplar'), findsNothing);
     expect(find.text('Gruplar ekranında da sayaç göster'), findsNothing);
     expect(find.text('Bildirim Merkezi'), findsOneWidget);
@@ -101,11 +105,14 @@ void main() {
     // aynı "Hesap" bölümündedir, yasal merkez en son bölümdedir.
     // WP-514: SSS iki kat derindeydi (Ayarlar → Hakkında → SSS); artık kendi
     // "Yardım" bölümüyle listenin **en altında**.
+    // WP-710: "Çalışma tercihleri" bölümü kalktı — içindeki üç satır
+    // kaldırıldı, sıfırlama satırı "Yardım"a taşındı, geriye boş bir başlık
+    // kalmıştı. Altı bölümün SIRASI hala ölçülüyor.
+    expect(find.text('Çalışma tercihleri'), findsNothing);
     final sections = [
       find.text('Görünüm'),
       find.text('Bildirimler'),
       find.text('Hesap'),
-      find.text('Çalışma tercihleri'),
       find.text('Gizlilik ve güvenlik'),
       find.text('Hakkında ve yasal'),
       find.text('Yardım'),

@@ -296,7 +296,7 @@ void main() {
             tr.settingsSectionAppearance,
             tr.settingsSectionNotifications,
             tr.settingsSectionAccount,
-            tr.settingsSectionStudyPreferences,
+            // WP-710: "Calisma tercihleri" bolumu kaldirildi (sahip emri).
             tr.settingsSectionPrivacySecurity,
             tr.settingsSectionAboutLegal,
             tr.settingsSectionHelp,
@@ -310,28 +310,29 @@ void main() {
           // 🔴 WP-686: >= 1200'de ayarlar master-detaydir, yani ayni anda
           // TEK kategori cizilir. "Anahtar agacta mi" artik YANLIS olcumdur;
           // dogru olcum "kategorisi secilince geliyor mu".
+          // WP-710: olculen satir degisti. "Gunluk hedef" Ayarlar'dan
+          // kaldirildi; yerine ayni kapiyi TASINAN satir tasiyor — sifirlama
+          // artik "Yardim" kategorisinde ve SSS ile ayni yerde olculuyor.
           if (window >= DesktopBreakpoints.large) {
-            await selectCategory(tester, tr.settingsSectionStudyPreferences);
-            expect(
-              find.byKey(const Key('settings-daily-goal')),
-              findsOneWidget,
-              reason:
-                  'Gunluk hedef satiri "Calisma tercihleri" kategorisinde '
-                  'bulunamadi — master-detay bir satiri ULASILAMAZ yapti.',
-            );
             await selectCategory(tester, tr.settingsSectionHelp);
-            expect(
-              find.byKey(const Key('settings-faq')),
-              findsOneWidget,
-              reason: 'SSS satiri "Yardim" kategorisinde bulunamadi.',
-            );
-          } else {
-            expect(
-              find.byKey(const Key('settings-daily-goal')),
-              findsOneWidget,
-            );
-            expect(find.byKey(const Key('settings-faq')), findsOneWidget);
           }
+          expect(
+            find.byKey(const Key('settings-faq')),
+            findsOneWidget,
+            reason: 'SSS satiri "Yardim" kategorisinde bulunamadi.',
+          );
+          expect(
+            find.byKey(const Key('reset-introduction-tours')),
+            findsOneWidget,
+            reason:
+                'Tasinan sifirlama satiri "Yardim" kategorisinde bulunamadi '
+                '— master-detay bir satiri ULASILAMAZ yapti.',
+          );
+          expect(
+            find.byKey(const Key('settings-daily-goal')),
+            findsNothing,
+            reason: 'Gunluk hedef satiri hala Ayarlar\'da.',
+          );
 
           // ISLEV KAYBI YOK: panel Esc ile kapanir (WP-569 sozlesmesi).
           await tester.sendKeyEvent(LogicalKeyboardKey.escape);

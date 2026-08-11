@@ -16,6 +16,7 @@ import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
 import '../home/widgets/leaderboard_card.dart';
+import '../profile/widgets/camp_animal_picker.dart';
 import '../tours/app_tours.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
@@ -228,6 +229,18 @@ class _NoGroupView extends ConsumerWidget {
                 icon: const Icon(Icons.travel_explore),
                 label: Text(AppLocalizations.of(context).groupDiscoveryAction),
               ),
+              // 🔴 WP-710: kamp hayvanı seçimi Ayarlar'dan buraya taşındı.
+              // Grupsuz dalda da duruyor çünkü hayvan hesabın özelliğidir,
+              // grubun değil: yalnız gruplu dala koysaydık henüz gruba
+              // katılmamış kullanıcı hayvanını HIÇ seçemezdi — ayarı
+              // taşımak değil öldürmek olurdu.
+              const SizedBox(height: 24),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: kGroupBlockMaxWidth,
+                ),
+                child: const CampAnimalTile(),
+              ),
             ],
           ),
         ),
@@ -287,6 +300,10 @@ class _GroupView extends ConsumerWidget {
         _CompactGroupHeader(group: group, switcherKey: switcherKey),
         const SizedBox(height: 8),
         CampfireScene(key: campfireKey),
+        const SizedBox(height: 16),
+        // WP-710: sahnede seni temsil eden hayvanı sahnenin hemen altından
+        // seçersin; ayarların üç katmanına inmek gerekmiyor.
+        const CampAnimalTile(),
         const SizedBox(height: 16),
         const GroupGoalCard(),
         const SizedBox(height: 16),
@@ -393,6 +410,18 @@ class _DesktopGroupView extends StatelessWidget {
               // A4 — sahne bandın tamamını alır (SPEC §3 A4: "genişledikçe
               // bozulmaz"). Sahne geometrisi ellenmez.
               CampfireScene(key: campfireKey),
+              const SizedBox(height: 16),
+              // WP-710: satır bir A2 bloğudur — 1392 px'lik banda yayılırsa
+              // aynı "dev kutu, tek satır" kusuru geri gelir.
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: kGroupBlockMaxWidth,
+                  ),
+                  child: const CampAnimalTile(),
+                ),
+              ),
               const SizedBox(height: 16),
               const _GroupBlockGrid(),
               const SizedBox(height: 24),
