@@ -10358,6 +10358,85 @@ Spec kaynakli ve sayiliydi, ama koda bakmadan yazilan satirlari vardi:
   testleri 800 ve 2400 px'te kosuyor, **hicbiri telefon genisliginde
   cizmiyordu**. "Mobilde sorunsuz" varsayimi hic olculmemisti.
 
+## 2026-08-11 — ADMIN PANELI SIFIRDAN (WP-691 plan + WP-A…F) + WP-690
+
+Sahip paneli reddetti: *"ne adam akilli goruntuleyebiliyorum ne de sikayetleri
+cevaplayip admin islemleri yapabiliyorum... iki uc tane butonla islerini
+degistirip gelirsen bu isi yapmasin."* Once PLAN (WP-691), sahip dort karari
+verdi, sonra uygulama.
+
+### Sahibin dort cumlesi, kodda olculmus karsiligi
+| sikayet | olculen kok neden |
+|---|---|
+| "neyi sikayet ettigini anlayamiyorum" | `0097` sunucu `attachment_path`+`reason`+`created_at` **gonderiyor**, `ModerationCaseDetail` bes alan tasiyip gerisini **atiyor**. Kullanicinin ekledigi ekran goruntusu admin'e **hic gosterilmiyordu** (bucket ve yetki `0096`da hazir). |
+| "onay verdim, nasil baslayacagimi bilmiyorum" | Karar **8 adim**, uc katman, iki ayri gerekce alani. Kanit ve karar hicbir an ayni ekranda degil. |
+| "banlama farkli yere gidiyorum herhalde" | **Dogru**: uc ayri yer, **iki farkli basamak listesi** (UGC 9, Kullanicilar 5). Vakadan kisiye kopru yok. |
+| "tus neyi ne oldugu belli degil" | Bes etiketsiz kontrol; arsiv cipinin ustunde **"Tamamlandi"** yaziyordu. Ban yolu uc nokta menusunde **sakli**. |
+
+### Sonuc
+7 sekme -> 3 yuzey. 1280'de iki bolme (master 280), 1600'de uc (baglam 320),
+telefonda tek ekran. Karar **8 adim -> 1 dokunus** + 10 sn geri al; kalici
+yasak ve hesap silme **e-posta yazdiran teyit** (sahip karari). Yaptirim tek
+kanonik listeden. `revokeSanction` lib icinde **0 cagri yerinden 2'ye** —
+kanit "cagri var" degil, `tap` sonrasi deponun kaydinin `revoked` olmasi.
+
+🔴 **Sunucu boslugu (plan yalanlandi):** WP-D olctu, lider dogruladi —
+`group_member_directory` (`0115:103`) ve `members_select` (`0001:156`) ikisi de
+`is_group_member` istiyor, admin edge fonksiyonunda **uye LISTELEME yok** ama
+**uye SILME var**. Yani yonetici *kimi atacagini goremeden atabiliyordu*.
+Plan §7 "yeni RPC/edge gerekmiyor" diyordu; **yanlisti**. WP-F `admin-operations`a
+`list_group_members` ekledi ve migration YAZMADI: `is_group_member`'a yonetici
+istisnasi acmak kamp atesi/uye akisi/oturumlar dahil butun yuzeyleri etkilerdi.
+
+### 🔴 ONUNCU "YESIL AMA OLCMUYOR"
+WP-F raporu temizdi; **tam kapi uc gomulu Turkce metin yakaladi** ve ajan
+bundan hic soz etmemisti. Ikisi ayri kusurdu: (1) `features/` altindaki metin
+kullaniciya **hic gosterilmiyordu** (yuzey kendi cevirisini ciziyor) — yani
+gorunmeyen ikinci bir kaynak; (2) depo dosyasi `DATA_LAYER_DEBT` listesinde ve
+sayi **DONMUS**. Cazibe sayiyi 22->25 yukseltip gecmekti; **yapilmadi**, cunku
+kuralin kendisi "yeni gomulu metin eklenemez" diyor ve sayiyi yukseltmek
+kurali olu hale getirirdi. Uc cagri dosyanin kendi `_friendlyMessage`ine
+baglandi, borc **383'te kaldi**.
+
+### Ajanlarin kendi kapilarini yalanlamasi (bu turda dort kez)
+- WP-C: "iki liste esit mi" testi **bugun de yesil yaniyordu** (degerler
+  tesaduefen ayni). Kusuru yakalayan, kaynakta elle yazilmis ikinci listeyi
+  arayan iddia oldu. Sozlesme `identical()` ile kuruldu — kopya esit olabilir,
+  ayni olamaz.
+- WP-B: liderin talimatini **olcup reddetti** — kopruyu baslik satirina koymak
+  `RenderFlex overflowed by 279` veriyordu; bir alt satira koydu, gerekcesini
+  yazdi.
+- WP-690: kendi duzeltmesinin bedelini yakaladi — rozeti satira alinca metin
+  uc satira sardi ve kart 152 -> **164 px uzadi**; yani sikayeti cozerken
+  yenisini yaratiyordu. `FittedBox` + dolgu ayariyla 144 px'e indi.
+- WP-690: **dunku bir testin 12/14 iddiasinin bos bir hata kabugunu olctugunu**
+  buldu (`find.byType` "Veriler yuklenemedi" kabugunda da esleşiyor).
+
+### Sinir disina cikan iki ajan, ikisi de BILDIRDI
+- WP-A: kabuk degisince `admin_screen_test.dart:52`nin "Kullanicilar sekmesi
+  ekranda" iddiasi kacinilmaz olarak bayatladi. Iddiayi silmedi, `TabBar`
+  yoklugu ile degistirdi ve kaybolan kapsami harita testine bagladi.
+- WP-C: liderin iki sarti **celisiyordu** — eski test "kalici yasak tek
+  dokunusla iner" diyordu, yeni karar "e-posta yazilmadan inmez". Bayat olani
+  guncelledi, asil iddiayi (yasagin kalici oldugu) korudu.
+
+### Yan bulgu, henuz kapanmadi
+Riverpod 3'un varsayilan otomatik yeniden denemesi hatali saglayiciyi
+**~38 sn `AsyncLoading(retrying)`** halinde tutuyor: reddedilen bir okuma
+ekranda yarim dakika donen cark olarak gorunuyor ve `.future` bekleyen kod
+kilitleniyor. WP-F kendi saglayicisinda kapatti (S6 sabotajiyla kanitlandi);
+`admin_providers.dart` icindeki tum `AdminException` atan saglayicilar ayni
+tuzakta.
+
+### WP-690 (gruplar sekmesi, sahip telefonda fark etti)
+"Ranking" karti ustundeki karti tekrar ediyordu. Olculdu: ayni saglayici,
+ayni yuzde — fark yalniz **canli sayac gecikmesi** (hedef karti calisan uye
+basina saniyede +1 ekliyor). Yani bilgi kaybi yok. Satir **kosullu** kaldirildi:
+Gruplar sekmesinde yok, Ana Sayfa panosunda VAR (orada kullanici kartlari kendi
+diziyor, Grup hedefi kartini hic eklememis olabilir). Siralama karti **187 ->
+140 px**. Seri rozeti kolonun altindan satirin sag ucuna, `large` kademesiyle
+**60x36 -> 82x52**; olu alan 239.9 -> 16 px.
+
 ### WP-683…689: kalan ekranlar, panel, bildirim yuzeyleri ve KAPININ KENDISI
 Tasarim turunun ikinci yarisi. Sayilar `docs/design/DESKTOP-UI-SPEC.md`den.
 

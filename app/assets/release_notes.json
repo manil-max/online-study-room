@@ -3,6 +3,46 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.67",
+      "buildNumber": 67,
+      "channel": "stable",
+      "date": "2026-08-11",
+      "title": "v67: yonetim paneli bastan yazildi",
+      "highlights": [
+        "Bir sikayeti incelerken sikayet edilen icerik, varsa eklenen ekran goruntusu ve gecmis artik ayni ekranda. Eskiden ek hic gosterilmiyordu; karar vermek icin once icerigi acip kapatmak, sonra baska bir yerden karara girmek gerekiyordu.",
+        "Karar tek dokunusa indi ve yanlislikla verilen karar 10 saniye icinde geri alinabiliyor. Kalici yasak ve hesap silme ise kisinin e-postasini yazdiran bir onay istiyor.",
+        "Kisitlama artik tek yerden yapiliyor. Uc ayri yerde iki farkli liste vardi; sikayetten kisinin dosyasina tek dokunusla gecilliyor."
+      ],
+      "fixes": [
+        "Yonetici bir grubun uye listesini gorebiliyor. Uye atabiliyordu ama kimin uye oldugunu goremiyordu; uye eklerken de elle kimlik yazmak gerekiyordu, artik listeden seciliyor.",
+        "Panel genis ekranda uc bolmeli, telefonda tek ekran calisiyor. Yedi sekme uc yuzeyde toplandi; hicbir islev kaldirilmadi.",
+        "Dugmelerin ne yaptigi yaziyor. Arsivleme dugmesinin ustunde 'Tamamlandi' yaziyordu; bazi dugmelerin hicbir aciklamasi yoktu.",
+        "Denetim kaydinda islemi kimin yaptigi goruluyor.",
+        "Aramada sonuc cikmayinca filtreyi temizleyen bir dugme var; eskiden bos ekranda takilip kaliyordun.",
+        "Gruplar sekmesinde ayni bilgi iki kez yaziliyordu; siralama karti kisaldi ve seri isareti buyuyup sag tarafa alindi."
+      ],
+      "notes": [
+        "Bu turun tamami yonetim tarafi ve gruplar sekmesiyle ilgili; gunluk kullanimda baska bir degisiklik yok."
+      ],
+      "titleEn": "v67: the admin panel was rebuilt from scratch",
+      "highlightsEn": [
+        "When reviewing a report you now see the reported content, any attached screenshot, and the history on one screen. Attachments were never shown before, and deciding meant opening the content, closing it, then finding the decision somewhere else.",
+        "A decision is now one tap, and a mistaken one can be undone within 10 seconds. Permanent bans and account deletion ask you to type the person's email to confirm.",
+        "Restrictions are applied from one place. There were three separate places with two different lists; you can now go from a report to the person's file in one tap."
+      ],
+      "fixesEn": [
+        "An admin can see a group's member list. Removing a member was possible without ever seeing who the members were, and adding one meant typing an id by hand; you now pick from a list.",
+        "The panel is three panes on a wide screen and a single screen on a phone. Seven tabs became three surfaces with nothing removed.",
+        "Buttons say what they do. The archive button was labelled 'Done', and some buttons had no description at all.",
+        "The audit log shows who performed each action.",
+        "When a search returns nothing there is a button to clear the filter; you used to get stuck on an empty screen.",
+        "The groups tab showed the same figure twice; the ranking card is shorter and the streak mark is bigger and moved to the right."
+      ],
+      "notesEn": [
+        "This round is entirely about the admin side and the groups tab; nothing else changed in day-to-day use."
+      ]
+    },
+    {
       "versionName": "1.0.66",
       "buildNumber": 66,
       "channel": "stable",

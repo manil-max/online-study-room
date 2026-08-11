@@ -4,6 +4,37 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v67 / 1.0.67+67] - 2026-08-11
+
+> **Yönetim paneli sıfırdan yazıldı.** Sahibin dört şikâyetinin dördü de kodda
+> ölçüldü: şikâyete eklenen ekran görüntüsü hiç gösterilmiyordu (sunucu
+> gönderiyor, istemci atıyordu), karar 8 adım sürüyordu ve kanıtla karar
+> hiçbir an aynı ekranda değildi, kısıtlama üç ayrı yerde iki farklı listeyle
+> yapılıyordu, düğmelerin ne yaptığı yazmıyordu ("Arşivle" düğmesinin üstünde
+> "Tamamlandı" yazıyordu).
+
+### Öne çıkanlar
+- Kanıt + karar tek ekranda; karar tek dokunuş, 10 saniye geri alınabilir.
+- Kalıcı yasak ve hesap silme e-posta yazdıran teyit ister (sahip kararı).
+- Yaptırım tek kanonik basamak listesinden; vakadan kişinin dosyasına tek
+  dokunuşla geçiliyor.
+- 7 sekme 3 yüzeye indi; 1280 px'te iki, 1600 px'te üç bölme, telefonda tek
+  ekran. Hiçbir işlev kaldırılmadı.
+
+### Düzeltmeler
+- Yönetici, üyesi olmadığı grubun üye listesini görebiliyor (üye atabiliyordu
+  ama kimleri atacağını göremiyordu).
+- "Üye at" artık elle kimlik istemiyor.
+- Denetim kaydı işlemi kimin yaptığını yazıyor.
+- Boş arama sonucunda filtreyi temizleyen kontrol var.
+- Özet ızgarası genişliğe göre 2/4/6 sütun.
+- Gruplar sekmesindeki tekrar eden satır kalktı; sıralama kartı 47 px kısaldı,
+  seri işareti büyüyüp sağ tarafa alındı.
+
+### Notlar
+- Üye listesi üretimde ancak yönetim fonksiyonları yeniden yayınlandıktan
+  sonra çalışır.
+
 ## [v66 / 1.0.66+66] - 2026-08-11
 
 > **Windows sürümü artık masaüstü için tasarlandı.** Uygulama pencerenin
