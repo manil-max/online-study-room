@@ -10358,6 +10358,69 @@ Spec kaynakli ve sayiliydi, ama koda bakmadan yazilan satirlari vardi:
   testleri 800 ve 2400 px'te kosuyor, **hicbiri telefon genisliginde
   cizmiyordu**. "Mobilde sorunsuz" varsayimi hic olculmemisti.
 
+### WP-683…689: kalan ekranlar, panel, bildirim yuzeyleri ve KAPININ KENDISI
+Tasarim turunun ikinci yarisi. Sayilar `docs/design/DESKTOP-UI-SPEC.md`den.
+
+- **683** yedi ekran daha (bildirim merkezi, duyurular, izinler, SSS,
+  engellenenler, susturulanlar, surum notlari): @2560 **2528 -> 600 px**.
+  Ayrica **orta bant gedigi**: istatistik sutunu 1008 px'te 960 px'e
+  yayiliyordu (240 px ihlal) — iki kapi da yalniz 1920/2560 cizdigi icin
+  kimse gormemisti. Sabotaj: bes duzeltme birden geri alininca **48 kirmizi**.
+- **684** paneller **sabit 920 px**ti, pencereyle hic buyumuyordu (olcum: 1920
+  ve 2560 px pencerede icerik AYNI). 920 / 1088 / 1472 merdivenine baglandi.
+  Ayrica kapinin **olu alan olcutu** grafik/tablo kartlarini yapisal olarak
+  cezalandiriyordu (`kart − en genis METIN`); olcut icerik murekkebine
+  cevrildi ve **tek yonlu daraldi**, yani hicbir yuzey bu degisiklikle
+  yesillenemez. Tema olusturucuda iki gercek ihlal cikti (791 ve 603 px).
+- **685** 🔴 hunter hipotezi CURUTTU: tani kartinin masaustunde gizlenmesi
+  DOGRU (icindeki iki dugme o platformda calisamaz, ustelik ekran zaten
+  platform gercegini yaziyor). Ama ayni ekranda gercek kusur buldu: **durtme
+  ve guncelleme anahtarlari acik, dokunulabilir ve varsayilani ACIK** —
+  teslim yolu yalniz Android. "Duyurular"a DOKUNMADI cunku o masaustunde
+  gercekten calisiyor; hepsini birden kapatmak calisan ozelligi oldururdu.
+- **686** ayarlarda master-detay. WP-679 bunu uygulayamamisti (panel sigmiyordu)
+  ve o gun DOGRU karardi. Esik pencereye degil **KABA** bagli: panel icinde
+  `MediaQuery` hala tum pencereyi verir. Test iki yonlu kilitliyor: kap 1087
+  -> acilmaz, 1088 -> acilir.
+- **687** Windows'ta ekran kurulamayacak bir widget'i **vaat ediyor** ve
+  altinda **dort bozuk "Ac" dugmesi** duruyordu. Ekranda zaten "bu izinler
+  yalniz Android'de gecerli" yazan bir kart vardi — **ama dugmeler yine de
+  etkindi**. Ajanin cumlesi: *"uyari dugmeyi kapatmiyor."*
+- **688** `.arb` onun yolu olmadigi icin WP-687 en yakin dizeyi odunc alip
+  DURDU. Iki yeni anahtar (TR+EN) + baslik duzeltmesi + ucuncu bozuk dugme
+  ("Izinleri yenile" etkindi, sonucu ASLA degisemezdi).
+
+### 🔴 WP-689: on uc ekranin duzeni YAYINLANMAYAN yapilandirmada dogrulanmis
+Butun ekran ajanlari "kapim yesil" dedi. Lider tam kaliteyi kosturunca **10
+kirmizi** dustu. Degisken izole edildi — sorumlu `--coverage` ya da paralellik
+DEGIL, `--dart-define-from-file=env.json`:
+
+| kosum | sonuc |
+|---|---|
+| define'siz (ajanlarin kostugu) | 3117/3117 yesil (iki bagimsiz kosum) |
+| define'li (kapinin kostugu) | 3107 gecti, **10 dustu** (iki bagimsiz kosum, birebir ayni 10) |
+
+Kok neden zinciri: `SupabaseConfig.isConfigured` yalniz `String.fromEnvironment`
+okur — **DERLEME ZAMANI sabiti**. `env.json` verilince dort saglayici
+bellek-ici dala DUSMEZ ve `Supabase.instance` ister; widget testinde `main()`
+kosmadigi icin o hic baslatilmamistir. `cardDataGate` kaynaklar `hasValue`
+olmadikca kart govdesini cizmez — "Bugun ozeti" bulunuyor ama olculecek "0sn"
+**hic cizilmiyordu**.
+
+**Urun kusuru DEGIL** (gercek uygulamada `main()` once `Supabase.initialize`
+cagirir, `main.dart:108`). Ama on uc ekranin duzeni gercek yapilandirmada hic
+olculmemis demekti.
+
+Cozum esikleri degistirmedi: test veriyi KENDI tohumluyor. Kanit iki yonlu —
+define'li 49/49, define'siz 49/49.
+🔴 Sabotaj lider tarafindan **URUN kodunda** kosturuldu (`cardLabelValueRow`
+tavani kaldirildi) -> kapi iki genislikte de kirmizi. Tohumlamayi bozmak
+hicbir sey kanitlamazdi: "veri yok" diye duserdi.
+
+**Turun dersi:** bugun sekiz kez "yesil ama olcmuyor" cikti; sonuncusu
+on uc ekrani birden kapsiyordu ve yalniz TAM KAPI yakaladi. Alt kapilar
+yesilken tam kapi kirmizidir — tersi degil.
+
 ### WP-668: Play yuklemesi otomatige baglandi + WP-666'nin kurali KURAL OLDU
 Sahip "her sey sende olsun, bir daha ben yuklemeyeyim" dedi. Play servis
 hesabini kendi acti; anahtar secret'a yazildi ve yerel dosyanin UZERINE

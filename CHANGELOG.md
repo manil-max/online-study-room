@@ -4,6 +4,34 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v66 / 1.0.66+66] - 2026-08-11
+
+> **Windows sürümü artık masaüstü için tasarlandı.** Uygulama pencerenin
+> gerçek genişliğini görmüyordu: 1100–1650 px arasında her zaman 1100 px
+> sanıyor, üstünde ise arayüzü yeniden dizmek yerine 1,5 kat büyütüyordu.
+> Sahibin "mobilin penceresi gibi olmuş" tarifi bunun birebir karşılığıydı.
+> Ölçek kaldırıldı ve on üç ekran ailesi masaüstü düzenine bağlandı.
+
+### Öne çıkanlar
+- Geniş ekranda içerik yan yana diziliyor; kırılım noktaları artık gerçekten
+  tetikleniyor (640 / 1008 / 1200 / 1600).
+- Etiket–değer satırları okunabilir genişlikte. En kötü ölçüm 2488 px'ti;
+  sert tavan artık 600 px (gövde yazısı 15 px, WCAG 1.4.8'in 80 karakteri).
+- Kartlar içeriğine göre boyutlanıyor; tek sayı taşıyan 2360 px'lik kartlar
+  kalktı.
+
+### Düzeltmeler
+- Ödül kutlaması ve ödül şeridi üst menüyü örtmüyor.
+- Ayarlar geniş pencerede başlık listesi + içerik olarak açılıyor.
+- Giriş/kayıt ekranı geniş pencerede iki panele ayrılıyor.
+- Windows'ta teslim edilemeyen bildirim ayarları gerekçeli olarak kapalı.
+- Widget ve izinler sekmesi Windows'ta kurulamayacak bir widget'ı vaat
+  etmiyor; çalışmayan dört düğme kaldırıldı.
+- Telefonda istatistik kartlarındaki taşma düzeldi.
+
+### Notlar
+- Telefon görünümü değişmedi; bu tur tamamen masaüstü düzeniyle ilgili.
+
 ## [v65 / 1.0.65+65] - 2026-08-10
 
 > **Sayaç artık senin seçtiğin modda başlıyor.** Ana ekran widget'ından ya da

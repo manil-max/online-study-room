@@ -3,6 +3,56 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.66",
+      "buildNumber": 66,
+      "channel": "stable",
+      "date": "2026-08-11",
+      "title": "v66: masaustu duzen mimarisi -- oranli olcek kaldirildi, on uc ekran ailesi baglandi",
+      "highlights": [
+        "Uygulama pencerenin gercek genisligini goruyor. Eskiden ne kadar buyutursen buyut ayni dar duzeni cizip her seyi bir buçuk kat sisiriyordu; simdi genis ekranda icerik yan yana diziliyor.",
+        "Satirlar artik okunabilir. Bir etiket solda, degeri ekranin oteki ucunda duruyordu -- bazi yerlerde aralarinda 2500 pikselden fazla bosluk vardi. Her satir goz bir bakista takip edecek genislikte.",
+        "Kartlar iceriklerine gore boyutlaniyor. Icinde tek bir sayi olan kart ekranin yarisini kaplamiyor."
+      ],
+      "fixes": [
+        "Odul kutlamasi ve odul seridi ust menuyu ortmuyor. Kutlama gorunurken bastigin sekme acilmiyordu; serit ise sen kapatana kadar menunun onunde duruyordu.",
+        "Ayarlar genis pencerede solda baslik listesi, sagda icerik olarak aciliyor; dar pencerede eskisi gibi tek sutun.",
+        "Giris ve kayit ekrani genis pencerede solda uygulama tanitimi, sagda form olarak aciliyor. Eskiden form pencerenin besde birinde sikisik duruyordu.",
+        "Windows'ta calismayan ayarlar artik kapali ve sebebi yazili. Durtme ve guncelleme bildirimi anahtarlari acik gorunuyordu ama masaustune bildirim hic gonderilmiyordu.",
+        "Widget ve izinler sekmesi Windows'ta artik dogru bilgi veriyor. Kurulamayacak bir widget'i listeliyor ve basildiginda hicbir sey yapmayan dort dugme gosteriyordu.",
+        "Telefonda istatistik kartlarindaki tasma duzeldi."
+      ],
+      "notes": [
+        "Kok neden: DesktopProportionalScale iceriye sahte MediaQuery veriyordu; 1100-1650 bandinda uygulama HER ZAMAN 1100 px goruyor, ustunde 1.5x olcekle buyutuyordu. Kaldirildi (WP-672).",
+        "Kirilim merdiveni 640/1008 -> 640/1008/1200/1600. Varsayilan pencere 1100x720 -> 1440x900, minimum 560x540 -> 880x600.",
+        "SPEC (docs/design/DESKTOP-UI-SPEC.md): etiket-deger sert tavan 600 px (15 px govde yazisi, WCAG 1.4.8'in 80 karakter tavani), hedef 496 px.",
+        "Kapi: desktop_stretch_contract_test 5 -> 15 yuzey. Kapinin kendisi iki kez duzeltildi -- gorunmeyeni olcuyordu (_RenderTheater skip listesi) ve olu alan olcutu grafik/tablo kartlarini yapisal olarak cezalandiriyordu.",
+        "Panel genisligi pencereye baglandi (920/1088/1472); ayarlarda master-detay bu sayede mumkun oldu ve esik PENCEREYE degil KABA bagli.",
+        "Windows'ta teslim edilemeyen dort bildirim yuzeyi gerekceli devre disi."
+      ],
+      "titleEn": "v66: the Windows build is now designed for the desktop",
+      "highlightsEn": [
+        "The app now sees the real width of your window. However large you made it, it used to draw the same narrow layout and scale everything up by half; now wide screens lay content out side by side.",
+        "Rows are readable again. A label sat on the left with its value at the far edge of the screen -- in places more than 2500 pixels apart. Every row now fits within a width your eye can follow.",
+        "Cards are sized by their content. A card holding a single number no longer takes up half the screen."
+      ],
+      "fixesEn": [
+        "The reward celebration and reward bar no longer cover the top menu. While the celebration was visible, the tab you pressed would not open; the bar sat in front of the menu until you dismissed it.",
+        "Settings open as a list of sections on the left and content on the right in a wide window, and as a single column in a narrow one.",
+        "Sign-in and sign-up show the app on the left and the form on the right in a wide window. The form used to be squeezed into a fifth of the window.",
+        "Settings that do nothing on Windows are now switched off with the reason written next to them. Nudge and update notification toggles looked enabled even though nothing was ever delivered on desktop.",
+        "The widgets and permissions tab now tells the truth on Windows. It listed a widget that cannot be installed and showed four buttons that did nothing when pressed.",
+        "Fixed overflowing statistics cards on phones."
+      ],
+      "notesEn": [
+        "Kok neden: DesktopProportionalScale iceriye sahte MediaQuery veriyordu; 1100-1650 bandinda uygulama HER ZAMAN 1100 px goruyor, ustunde 1.5x olcekle buyutuyordu. Kaldirildi (WP-672).",
+        "Kirilim merdiveni 640/1008 -> 640/1008/1200/1600. Varsayilan pencere 1100x720 -> 1440x900, minimum 560x540 -> 880x600.",
+        "SPEC (docs/design/DESKTOP-UI-SPEC.md): etiket-deger sert tavan 600 px (15 px govde yazisi, WCAG 1.4.8'in 80 karakter tavani), hedef 496 px.",
+        "Kapi: desktop_stretch_contract_test 5 -> 15 yuzey. Kapinin kendisi iki kez duzeltildi -- gorunmeyeni olcuyordu (_RenderTheater skip listesi) ve olu alan olcutu grafik/tablo kartlarini yapisal olarak cezalandiriyordu.",
+        "Panel genisligi pencereye baglandi (920/1088/1472); ayarlarda master-detay bu sayede mumkun oldu ve esik PENCEREYE degil KABA bagli.",
+        "Windows'ta teslim edilemeyen dort bildirim yuzeyi gerekceli devre disi."
+      ]
+    },
+    {
       "versionName": "1.0.65",
       "buildNumber": 65,
       "channel": "stable",
