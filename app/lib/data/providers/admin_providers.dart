@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/net/read_retry_policy.dart';
 import '../models/admin_audit_log.dart';
 import '../models/admin_user_dto.dart';
 import '../models/announcement.dart';
@@ -14,70 +15,15 @@ import '../repositories/supabase/supabase_admin_repository.dart';
 import 'auth_providers.dart';
 import 'notification_providers.dart';
 
-/// WP-692 — reddedilen okuma **yarim dakika donen cark** olarak gorunuyordu.
+/// WP-692/WP-702 — reddedilen okuma **yarim dakika donen cark** olarak
+/// gorunuyordu: Riverpod 3 varsayilani her `Exception`i 10 kez / ~38 sn
+/// yeniden dener.
 ///
-/// Riverpod 3 varsayilani (`ProviderContainer.defaultRetry`) yalniz `Error` ve
-/// `ProviderException` icin durur; her `Exception` **10 kez / ~38 sn** boyunca
-/// yeniden denenir. O sure boyunca durum `AsyncLoading(retrying: true)` kalir
-/// (donen cark, kayip yazilmaz) ve `.future` **tamamlanmaz** — onu bekleyen
-/// kod da bagli saglayicilar da kilitlenir.
-///
-/// Bu depoda okuma saglayicilarina ulasan baskin hata sinifi
-/// [AdminException]'dir ve icerigi **sunucunun kesin reddidir**: `403`,
-/// `42501`/RLS, `not_super_admin`, oturum yok, dogrulama. Bunlarin hicbiri
-/// tekrar denemekle duzelmez — bu yuzden varsayilan **kapali**.
-///
-/// 🔴 Kapatma TOPTAN DEGIL. Ayni tip gercekten gecici bir hatayi da sarar:
-/// depo katmanindaki genis `catch (e)` dallari ag hatasini
-/// (`SocketException`, `ClientException`, zaman asimi) yine [AdminException]
-/// olarak firlatir. Bu izler yakalanip yeniden deneme **acik birakilir**;
-/// olcumu `test/features/admin/admin_provider_retry_wp692_test.dart` WP-692/3.
-Duration? adminRetryPolicy(int retryCount, Object error) {
-  if (_isPermanentFailure(error)) return null;
-  return ProviderContainer.defaultRetry(retryCount, error);
-}
-
-/// Gecici (yeniden denemeye deger) ag izleri. Kullaniciya gosterilen metin
-/// degil, istisna sinifi adlari/soket hata metinleridir — l10n kapsami disi.
-const List<String> _transientErrorMarkers = <String>[
-  'socketexception',
-  'clientexception',
-  'httpexception',
-  'handshakeexception',
-  'timeoutexception',
-  'timed out',
-  'failed host lookup',
-  'connection closed',
-  'connection reset',
-  'connection refused',
-  'connection attempt failed',
-  'network is unreachable',
-  'software caused connection abort',
-];
-
-bool _looksTransient(String message) {
-  final normalized = message.toLowerCase();
-  return _transientErrorMarkers.any(normalized.contains);
-}
-
-bool _isPermanentFailure(Object error) {
-  if (error is AdminException) {
-    // Varsayilan: kalici. `AdminException` = "sunucu/istemci kapisi HAYIR
-    // dedi". Yalniz acikca gecici bir ag izi tasiyorsa istisna yapilir.
-    return !_looksTransient('${error.code ?? ''} ${error.message}');
-  }
-  if (error is PostgrestException) {
-    // Ham PostgREST hatasi da saglayiciya ulasabilir (ornegin
-    // `fetchMyFeedbackTickets` sarmalamaz). Siniflandirma icin **yeni bir
-    // kaynak acilmaz**, deponun kendi esleyicisi kullanilir.
-    return classifyFeedbackSubmitError(
-          postgrestCode: error.code,
-          message: error.message,
-        ) ==
-        'session_or_rls';
-  }
-  return false;
-}
+/// Politikanin govdesi WP-702'de tek kanonik kaynaga tasindi
+/// (`core/net/read_retry_policy.dart`): ayni tuzak kullaniciya gorunen
+/// saglayicilarda da duruyordu ve "admin" adi orada yalan olurdu. Bu ad
+/// WP-692 regresyon aginin olctugu semboldur, degismeden korunur.
+const adminRetryPolicy = readRetryPolicy;
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   final client = _supabaseClientOrNull();

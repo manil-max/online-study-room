@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/net/read_retry_policy.dart';
 import '../models/moderation_appeal.dart';
 import '../models/moderation_case.dart';
 import '../models/moderation_sanction.dart';
@@ -26,13 +27,13 @@ final moderationQueueProvider = FutureProvider<List<ModerationCase>>((
   ref,
 ) async {
   return ref.watch(adminModerationRepositoryProvider).fetchQueue();
-});
+}, retry: readRetryPolicy);
 
 /// Tek raporun detay/timeline verisi.
 final moderationCaseDetailProvider =
     FutureProvider.family<ModerationCaseDetail, String>((ref, reportId) async {
   return ref.watch(adminModerationRepositoryProvider).fetchDetail(reportId);
-});
+}, retry: readRetryPolicy);
 
 /// WP-441: Hedefin yaptırım geçmişi.
 ///
@@ -46,11 +47,11 @@ final moderationSanctionsProvider =
   return ref
       .watch(adminModerationRepositoryProvider)
       .fetchSanctions(targetUserId);
-});
+}, retry: readRetryPolicy);
 
 /// WP-442: İtiraz kuyruğu. Açık itirazlar başta gelir.
 final moderationAppealsProvider = FutureProvider<List<ModerationAppeal>>((
   ref,
 ) async {
   return ref.watch(adminModerationRepositoryProvider).fetchAppeals();
-});
+}, retry: readRetryPolicy);

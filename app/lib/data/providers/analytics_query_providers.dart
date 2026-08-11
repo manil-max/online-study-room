@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/net/read_retry_policy.dart';
 import '../../core/stats/study_stats.dart';
 import '../../features/stats/analytics/analytics_period.dart';
 import '../models/analytics_query_models.dart';
@@ -62,7 +63,7 @@ final analyticsUserDayTotalsProvider =
       // Fallback: hot window partial.
       if (hot != null) return dailyTotals(inRange(hot, from, to));
       return const {};
-    });
+    }, retry: readRetryPolicy);
 
 /// Dönem oturumları + bu listenin dönemi gerçekten kapsayıp kapsamadığı.
 ///
@@ -114,7 +115,7 @@ final analyticsUserSessionsInRangeProvider =
         if (partial.isNotEmpty) return (sessions: partial, hotLimited: true);
       }
       return _emptyRange;
-    });
+    }, retry: readRetryPolicy);
 
 final analyticsGroupContributionProvider =
     FutureProvider.family<List<GroupContributionRow>, AnalyticsPeriod>((
@@ -130,7 +131,7 @@ final analyticsGroupContributionProvider =
         if (stats != null) repo.seedGroupStats(group.id, stats);
       }
       return repo.getGroupContribution(groupId: group.id, from: from, to: to);
-    });
+    }, retry: readRetryPolicy);
 
 final analyticsGroupLeaderboardSeriesProvider =
     FutureProvider.family<List<GroupLeaderboardPoint>, AnalyticsPeriod>((
@@ -150,7 +151,7 @@ final analyticsGroupLeaderboardSeriesProvider =
         from: from,
         to: to,
       );
-    });
+    }, retry: readRetryPolicy);
 
 /// WP-K: Sadece server-verified finalized günlerden gelen grup alpha toplamları.
 /// Boş/erişilemeyen veri, UI'da göstergeyi gizler; istemci fallback hesap yapmaz.
@@ -161,4 +162,4 @@ final groupAlphaScoresProvider = FutureProvider<Map<String, int>>((ref) async {
       .read(analyticsQueryRepositoryProvider)
       .getGroupAlphaScores(groupId: group.id);
   return {for (final score in scores) score.userId: score.alphaWins};
-});
+}, retry: readRetryPolicy);
