@@ -10862,6 +10862,108 @@ WP-348…WP-351 zinciri kapandı; yeniden verilmez. WP-346 fiziksel V3 kabulü
 olarak parkta kalır — WP-357 onu **besler**, yerine geçmez. Faz F3'ün hiçbir
 kartı production/stable'da V3 flag'i açmaz.
 
+## 2026-08-11 aksami — ANA EKRAN WIDGET TURU (WP-694…WP-705) + `0133`
+
+Iki kaynak: beta testcisinin iki cumlesi (*"Sinav geri sayiminda telefon ve
+tablette ayri ayarlanmasi gerekiyor / Sekronize degil"*, *"Bide bunun widget
+hali de gelsin"*) ve sahibin emri (*"task widgeti ve sinava geri sayim widgeti
+da olsun... uzerine tiklayinca uygulamada o bolum acilsa guzel olur... task
+widgetinda yaptiklarini oradan isaretleseler"*).
+
+### 🔴 "Senkron degil" bir TERCIH kusuru degildi — OZELLIK HIC YOKTU
+Olculdu, varsayilmadi: `dday_prefs.dart:217-220` listeyi yalniz
+SharedPreferences'tan okuyor ve `supabase/migrations` uzerinde arama sinav
+geri sayimi tablosu **hic bulmadi**. Yani "senkronu ac" diye bir dugme yoktu;
+yazilacak sey sunucu tarafiydi (`0133`).
+
+`0133`'un iki karari kayda deger:
+- **`id` `uuid` DEGIL `text`.** Yerel id'ler bulut'tan once dogdu (eski,
+  mikrosaniye sayaci). Uuid'e cevirmek yerel satir ile bulut satirin bagini
+  koparir ve ikinci senkrondan sonra ayni sinav IKI KEZ gorunur.
+- **Cakisma cozumu KAYIT basina, liste basina degil.** Liste kurali olsaydi ya
+  telefonda yapilan yeniden adlandirma ya tablette eklenen sinav sessizce
+  dusherdi.
+
+### Ne yapildi
+| WP | is | kanit |
+|---|---|---|
+| 694 | geri sayim cihazlar arasi senkron (`0133`) | once kirmizi: ikinci cihaz `['YKS']` bekledi, `[]` gordu |
+| 695 | geri sayim ana ekran widgeti | — |
+| 696 | bes gizli widget denetimi | ikinci snapshot birincisini eziyordu |
+| 697 | manuel kayitta ders hatirlanir + cevrimdisi ders | — |
+| 698 | yonetim panelinde tek kart dili | — |
+| 699 | widget boyutlari + iki eksenli esneklik | `resizeMode` alti saglayicida OLU bayrakti |
+| 700 | widget'a dokununca ILGILI bolum acilir | sabotajlar 2/1/1/1 ayri iddia dusurdu |
+| 701 | gorev widgeti + ana ekrandan isaretleme | sabotajlar 2/2/1 |
+| 702 | 38 sn donen cark kullanici tarafinda da | kalici hata 11 cagri -> 1 |
+| 703 | tasma + yalan yorum + cevrilmemis itiraz karti | sabotaj 4/1/1/1 |
+| 704 | **koprunun CAGRI YERI yoktu** | sabotaj: 20 yesil / 1 kirmizi |
+| 705 | yayindaki widget katalogda gorunmuyordu | — |
+
+### 🔴 TURUN ASIL URUNU: "yesil ama olcmuyor" bes kez daha
+1. **`resizeMode` tek basina olu bayrak.** Alti saglayicinin hepsinde
+   `resizeMode` yaziliydi ama `onAppWidgetOptionsChanged` hicbirinde override
+   edilmemisti. Bildirge "yeniden boyutlandirilabilir" diyor, ekranda hicbir
+   sey degismiyordu (WP-699).
+2. **WP-701 kopruyu yazdi, cagri yerini yazmadi (WP-704).** 20/20 yesil test
+   vardi — ama HEPSI kopruyu kendisi baslatiyordu. `lib/` icinde
+   `bridge.start()` cagiran tek satir yoktu: ana ekranda konan isaret uygulama
+   acilinca GERI DONERDI. Sabotaj bunu kanitladi: cagri yeri satiri silindiginde
+   WP-701'in 20 testi YESIL kaldi, yalniz yeni iddia kirmizi dustu. Depodaki
+   *"bitmis backend + baglanmamis UI"* dersinin bir ornegi daha. **Ajan bunu
+   kendisi bildirdi.**
+3. **Katalog kapisi eksik kumeyi olcuyordu (WP-705).** *"katalog ekrani
+   allowlist bayragini okuyor"* adli test YESIL — cunku BAZI kartlar bayragi
+   okuyor. Hicbir iddia "yayindaki HER widget'in karti var" demiyordu; yayina
+   alinan `countdown` ve `task` kullanicinin kataloğunda hic gorunmuyordu.
+4. **Bayat iddia kapiyi kirmizi dusurdu ve GOREVINI YAPTI.** `wp461` testi
+   yayin listesini `[timer, countdown]` diye sabitliyordu; gercek uce cikinca
+   kapi kirmizi dustu. Ajan dosyayi kendi SAHIP yolu olmadigi icin ELLEMEDI ve
+   raporladi — dogru davranis.
+5. **`number_stepper` tasmasi 800 dp'de olculuyordu (WP-703).**
+   `ux_quick_wins_wp555_test.dart:164` dialogu bilerek 800 dp'de aciyor ve
+   yorumunda 360 dp'deki 8 px tasmayi ITIRAF ediyor — ama hicbir iddiaya
+   baglamiyordu. Ayni kor nokta gecen tur `_StatCard`'ta 73 px sakladi.
+
+### Kendi olcum aracim iki kez bozuldu
+- `gh run view --json ... -q` bos dondu; 28 tur "bekliyor" yazdirdim. Duz
+  bicimle bakinca ikisi de coktan **bitmisti**.
+- `testWidgets` govdesinde platform bayragini `setUp`ta acmak "foundation debug
+  degiskeni degistirildi" hatasi uretip ASIL iddiayi maskeledi. Olcum araci
+  bozuldugunda dusen kirmizi, olcmek istedigin sey degildir.
+
+### `0133` iki ortama da uygulandi — ve kapi beni bir kez REDDETTI
+Ilk production dispatch'i (run 31517050914) `production_confirmation` bos
+oldugu icin reddedildi. `Assert-ProductionApproval` (DeployGuard.psm1:733)
+birebir `PRODUCTION GO:<sha>:<head>:<project-ref>` istiyor ve **buyuk/kucuk
+harf duyarli** karsilastiriyor: yani production apply, staging komutunun kas
+hafizasiyla dispatch edilemiyor. Ret bir kosuma mal oldu, karsiliginda kapinin
+gercekten bir sey olctugunu gosterdi.
+
+Sira korundu: staging (run 31516659514) ONCE uygulandi ve post-check'i OKUNDU,
+sonra production (run 31517540149). Ikisi de head `0133`. Bayraklar acilis
+commit'indeki yazili taahhude uygun olarak **ayri bir commit'te** yeniden
+kilitlendi (`d0bee83`).
+
+### 🔴 ODENMEMIS: `0133` icin pgTAP HIC KOSMADI
+`supabase/tests/060_exam_countdown_sync.test.sql` (25 iddia) yazildi, **hic
+calistirilmadi** — Docker Desktop motoru bu hostta kalkmiyor (bu turda bir kez
+daha denendi, yine kalkmadi). `0133` uretimde YALNIZ Dart tarafi kanitiyla
+duruyor. Docker'i calisan ilk hostta kosulmali.
+
+### Yan is: yonetim fonksiyonlari kendi deploy yolundan yayinlandi
+`admin-operations` + `admin-user-actions` artik `admin-functions-deploy.yml`
+ile yayinlaniyor (once staging'de dogrulandi, sonra production). Oncesinde bu
+iki fonksiyonu yayinlamak icin "hesap silme aktivasyonu" adli alakasiz bir is
+akisini kosturmak gerekiyordu. Uye listesi bu deploy'a kadar uretimde oludu.
+
+### Sahibe kalan kararlar
+- Dort dormant widget (`clock`, `studyStats`, `groupGoal`, `groupLeaderboard`)
+  yayina alinsin mi? `alarm` haric — 30 dk bayat kaliyor, tazeleme yolu yok.
+- Sayac widgetinin KOKU artik toggle degil, sayac bolumunu aciyor
+  (Baslat/Durdur kendi hapinda duruyor, islev kaybi yok). Cihazda denenmeli.
+- Itiraz kartinda cakisma notu 280 px kuyruk sutununda tek satira kirpiliyor.
+
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 
 > Her worker önce Aktif Çalışma Kaydı'nı okur, kendi lane'ini claim eder ve SAHİP yolları çakışıyorsa başlamaz. Production/stable hiçbir WP'nin örtük parçası değildir.
