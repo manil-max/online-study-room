@@ -179,13 +179,14 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/odak_task_widget_info" />
         </receiver>
-        <!-- WP-461: Yayinda yalniz 1x1 Baslat/Durdur widget'i var.
-             Asagidaki bes saglayici SILINMEDI; revizyon icin kodu, layout'u
-             ve xml tanimi repoda duruyor. `enabled="false"` bileseni
-             picker'dan ve sistemden dusurur; geri acmak tek nitelik. -->
+        <!-- WP-707: asagidaki dort saglayici (stats / group goal / leaderboard /
+             clock) yayina alindi; `enabled="false"` niteligi KALDIRILDI.
+             Bayrak `published_home_widgets.dart` ile ayni tarafta durmak
+             zorundadir - ayrisirsa published_home_widgets_wp461_test kirmizi
+             duser. Yalniz alarm dormant kaldi: tazeleme yolu yok (30 dk
+             updatePeriodMillis), yayina alinsa bayat veri gosterirdi. -->
         <receiver
             android:name=".widgets.StudyStatsWidgetProvider"
-            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -196,7 +197,6 @@
         </receiver>
         <receiver
             android:name=".widgets.GroupGoalWidgetProvider"
-            android:enabled="false"
             android:exported="true"
             android:label="@string/widget_label_group_goal">
             <intent-filter>
@@ -208,7 +208,6 @@
         </receiver>
         <receiver
             android:name=".widgets.GroupLeaderboardWidgetProvider"
-            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -219,7 +218,6 @@
         </receiver>
         <receiver
             android:name=".widgets.ClockWidgetProvider"
-            android:enabled="false"
             android:exported="true"
             android:label="@string/widget_label_clock">
             <intent-filter>

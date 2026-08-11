@@ -210,9 +210,17 @@ abstract final class AndroidWidgetKeys {
     leaderboardMyRank,
   };
 
+  /// WP-707: seri satirinin **tek** sahibi.
+  ///
+  /// Kendi kumesinde durur cunku uretici de ayridir: gunluk/grup hedefi yerel
+  /// projeksiyondan, seri ise sunucudaki kanonik `goal_streak_projection`
+  /// RPC'sinden gelir. Ayni snapshot'a katilsaydi RPC yavas/cevrimdisi
+  /// oldugunda hedef yuzdesi de yazilamazdi.
+  static const Set<String> streakGroup = {statsStreak};
+
   /// `goals` turu: gunluk + grup hedefi gercek; ozet basligi/degeri gunluk
-  /// hedefin aynasi. Seri (`statsStreak`) icin gercek uretici YOKTUR, bu yuzden
-  /// bu tur ona dokunmaz — saglayici kendi kaynak yedegini gosterir.
+  /// hedefin aynasi. Seri (`statsStreak`) [streakGroup] tarafindan ayri
+  /// yazilir; bu tur ona dokunmaz.
   static const Set<String> goalsGroup = {
     ...dailyGoalGroup,
     ...groupGoalGroup,
@@ -296,10 +304,14 @@ class AndroidWidgetSnapshot {
          ownedKeys: AndroidWidgetKeys.timerGroup,
        );
 
-  AndroidWidgetSnapshot.stats({
+  /// WP-707: seri satiri (`stats_streak`).
+  ///
+  /// 🔴 Bu kurucu once `AndroidWidgetSnapshot.stats` adiyla vardi ve `lib/`
+  /// icinde HIC cagrilmiyordu; ustelik `statsGroup`u sahiplendigi icin
+  /// cagrilsaydi `goals` turunun gercek gunluk hedef degerlerini ezerdi
+  /// (WP-696 kusuru). Artik tek isi vardir ve tek anahtar sahiplenir.
+  AndroidWidgetSnapshot.streak({
     required AppLocalizations l10n,
-    required String today,
-    required String week,
     required String streak,
   }) : this(
          timerTitle: l10n.desktopOdakKampi,
@@ -307,8 +319,8 @@ class AndroidWidgetSnapshot {
          timerStatus: l10n.commonCalismaHazir,
          timerAction: l10n.androidWidgetsUygulamayiAc,
          statsTitle: l10n.androidWidgetsCalismaOzeti,
-         statsToday: today,
-         statsWeek: week,
+         statsToday: l10n.clockMDk('0'),
+         statsWeek: l10n.androidWidgetsHafta0Sa,
          statsStreak: streak,
          dailyGoalPercent: '0%',
          dailyGoalDetail: '${l10n.clockMDk('0')} / ${l10n.clockMDk('0')}',
@@ -318,7 +330,7 @@ class AndroidWidgetSnapshot {
          leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
          leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
          emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
-         ownedKeys: AndroidWidgetKeys.statsGroup,
+         ownedKeys: AndroidWidgetKeys.streakGroup,
        );
 
   AndroidWidgetSnapshot.leaderboard({

@@ -26,6 +26,7 @@ import '../../core/stats/study_stats.dart';
 import '../../features/android_widgets/android_widget_service.dart';
 import '../models/daily_stat.dart';
 import '../models/global_timer.dart';
+import '../models/goal_streak.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
@@ -41,6 +42,7 @@ import 'auth_providers.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
 import 'global_timer_providers.dart';
+import 'goal_streak_providers.dart';
 import 'subject_providers.dart';
 
 SupabaseClient? _supabaseClientOrNull() {
@@ -3053,7 +3055,43 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         myRank: ownRank,
       ),
     );
+    final streakDays = await _readGoalStreakDays(user?.id);
+    if (streakDays != null) {
+      await widgetService.saveSnapshot(
+        AndroidWidgetSnapshot.streak(
+          l10n: l10n,
+          streak:
+              '${l10n.coreGunlukHedefSerisi}: '
+              '${l10n.statsStreakGun('$streakDays')}',
+        ),
+      );
+    }
     await widgetService.refresh(widgets: _kStatsWidgets);
+  }
+
+  /// WP-707: istatistik widget'indaki seri satirinin TEK kaynagi.
+  ///
+  /// Ekrandaki `GoalStreakBadge` ile ayni kanonik projeksiyon okunur.
+  /// `currentStreak()` motoru BILEREK kullanilmaz: WP-481 iki motorun
+  /// ayni degeri farkli hesaplamasini kapatti, widget'i eskisine baglamak
+  /// ayrismayi ana ekrana tasirdi.
+  ///
+  /// Akis degil tek atislik okuma: Riverpod 3'te dinleyicisiz bir
+  /// `StreamProvider` her `read`de yeniden kurulur ve `AsyncLoading`
+  /// doner — deger hep `null` gelir, yani widget yine SIFIR yazardi.
+  ///
+  /// Okuma basarisizsa `null` doner ve seri anahtari HIC yazilmaz:
+  /// cevrimdisi bir tur, ekranda duran gercek seriyi sifirla ezmemelidir.
+  Future<int?> _readGoalStreakDays(String? userId) async {
+    if (userId == null) return null;
+    try {
+      final projection = await ref
+          .read(goalStreakRepositoryProvider)
+          .readProjection(GoalStreakScope.personal(userId));
+      return projection.currentStreak;
+    } catch (_) {
+      return null;
+    }
   }
 
   int _goalPercent(int currentSeconds, int goalSeconds) {

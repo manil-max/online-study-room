@@ -35,12 +35,26 @@ void main() {
     // Bu iddia WP-701 turunda bayat kaldi ve kapiyi kirmizi dusurdu -- yani
     // gorevini yapti. Listeyi genisletirken sirasi da baglayici: enum sirasi
     // katalog sirasidir, katalog ekrani da o sirada cizer.
-    test('yayinda uc widget var: 1x1 sayac + sinav geri sayimi + gorev', () {
+    test('yayinda yedi widget var; dormant kalan yalniz alarm', () {
+      // WP-707: dort uykudaki widget yayina alindi. Sira baglayici: enum
+      // sirasi katalog sirasidir, katalog ekrani da o sirada cizer.
       expect(publishedHomeWidgets, [
         HomeWidgetProvider.timer,
+        HomeWidgetProvider.studyStats,
+        HomeWidgetProvider.groupGoal,
+        HomeWidgetProvider.groupLeaderboard,
+        HomeWidgetProvider.clock,
         HomeWidgetProvider.countdown,
         HomeWidgetProvider.task,
       ]);
+      // Iddia bos kalmasin: en az bir saglayici dormant kalmali, yoksa
+      // asagidaki "manifest enabled bayragi" testinin `false` yonu hic
+      // olculmez ve sozlesme tek yonlu kalir.
+      expect(
+        HomeWidgetProvider.values.where((p) => !isHomeWidgetPublished(p)),
+        [HomeWidgetProvider.alarm],
+        reason: 'alarm widgetinin tazeleme yolu yok (WP-696); yayina alinamaz',
+      );
     });
 
     test('altı sağlayıcının hepsi katalogda kayıtlı kalır', () {
@@ -161,15 +175,22 @@ void main() {
           .setMockMethodCallHandler(channel, null);
     });
 
-    test('yayinda olmayan saglayiciya updateWidget gonderilmez', () async {
+    test('yalniz yayindaki saglayiciya updateWidget gonderilir', () async {
       const service = AndroidWidgetService();
-      final dormant = StudyHomeWidget.values
-          .where((widget) => !widget.isPublished)
-          .toList();
-      expect(dormant, isNotEmpty, reason: 'iddia bos olmasin');
+      // WP-707: `StudyHomeWidget` uyelerinin HEPSI artik yayinda (dormant
+      // kalan tek saglayici `alarm` ve o bu enumda yok). Bu yuzden olcu
+      // "kapali olana gonderilmiyor mu" degil, KATALOG BAYRAGININ gercekten
+      // kapi oldugu: bayragi kapali sayilan bir uye listeye giremez.
+      expect(
+        StudyHomeWidget.values.where((widget) => !widget.isPublished),
+        isEmpty,
+        reason:
+            'bir uye yayindan dusuruldiyse asagidaki iddia bayat: kapali '
+            'uyeye yayin gitmedigini de olc',
+      );
 
-      await service.refresh(widgets: dormant);
-      expect(updated, isEmpty);
+      await service.refresh(widgets: const <StudyHomeWidget>[]);
+      expect(updated, isEmpty, reason: 'bos hedef listesi tek tur bile acmaz');
 
       await service.refresh();
       expect(

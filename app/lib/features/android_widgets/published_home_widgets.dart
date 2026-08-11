@@ -1,7 +1,10 @@
-/// WP-461: Yayında **yalnız 1×1 Başlat/Durdur** ana ekran widget'ı vardır.
+/// WP-461 yayında yalnız 1×1 Başlat/Durdur widget'ını bırakmıştı; WP-695/701
+/// geri sayımı ve görev listesini, **WP-707** de günlük hedef, grup hedefi,
+/// kamp sıralaması ve dijital saati yayına aldı. Yayında olmayan tek sağlayıcı
+/// `alarm`dır (tazeleme yolu yok — bkz. aşağıdaki not).
 ///
-/// Diğer beş widget silinmedi: sağlayıcı sınıfları, layout'ları ve
-/// `res/xml/*_widget_info.xml` tanımları revizyon için repoda duruyor.
+/// Yayından düşürülen sağlayıcı silinmez: sınıfı, layout'u ve
+/// `res/xml/*_widget_info.xml` tanımı revizyon için repoda durur.
 /// Yayından düşürme tek yerden yapılır:
 ///
 ///  * Android tarafı: `AndroidManifest.xml` içinde `android:enabled="false"`.
@@ -49,19 +52,33 @@ class HomeWidgetCatalogEntry {
 /// Katalogda **her** widget listelenir; yalnız `published` olanlar gösterilir.
 const List<HomeWidgetCatalogEntry> kHomeWidgetCatalog = [
   HomeWidgetCatalogEntry(provider: HomeWidgetProvider.timer, published: true),
+  // WP-707: gunluk hedef widget'i. Yayina alinmasinin sarti seri satirinin
+  // gercek veriye baglanmasiydi (`_syncStatsWidgets` -> `stats_streak`);
+  // baglanmadan yayina alinsaydi kullanici widget'i buyutunce serisini HEP
+  // 0 gorurdu.
   HomeWidgetCatalogEntry(
     provider: HomeWidgetProvider.studyStats,
-    published: false,
+    published: true,
   ),
+  // WP-707: grup hedefi. Verisi `AndroidWidgetSnapshot.goals` icindeki
+  // `groupGoalGroup` anahtarlarindan gelir (WP-696 ezme kusuru kapali).
   HomeWidgetCatalogEntry(
     provider: HomeWidgetProvider.groupGoal,
-    published: false,
+    published: true,
   ),
+  // WP-707: kamp siralamasi. Verisi `AndroidWidgetSnapshot.leaderboard`ten.
   HomeWidgetCatalogEntry(
     provider: HomeWidgetProvider.groupLeaderboard,
-    published: false,
+    published: true,
   ),
-  HomeWidgetCatalogEntry(provider: HomeWidgetProvider.clock, published: false),
+  // WP-707: dijital saat. Cizimi native akar (`TextClock`), Flutter'dan veri
+  // ISTEMEZ; bu yuzden `StudyHomeWidget` uyesi degil, `kSelfUpdatingHomeWidgets`
+  // uyesidir.
+  HomeWidgetCatalogEntry(provider: HomeWidgetProvider.clock, published: true),
+  // WP-707: alarm BILEREK yayinda degil. Tek tazeleme kaynagi
+  // `odak_alarm_widget_info.xml`'deki 30 dakikalik `updatePeriodMillis`;
+  // kullanici alarm kurunca widget 30 dakikaya kadar bayat kalir
+  // (`hidden_widgets_wp696_test.dart` bunu iddia olarak tutuyor).
   HomeWidgetCatalogEntry(provider: HomeWidgetProvider.alarm, published: false),
   // WP-695: kullanıcı isteği ("bunun widget hâli de gelsin"). Manifest'teki
   // receiver `enabled` bayrağı taşımaz — iki taraf aynı yerde durur.
