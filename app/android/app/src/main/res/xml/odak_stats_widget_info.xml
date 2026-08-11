@@ -1,8 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-699: boyut ve esneklik.
+
+     Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
+     ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
+     4=250dp, 5=320dp. (Bu dosyalarin eski basliginda yazan "1 hucre = 40dp"
+     yalniz n=1 icin dogruydu ve 2 hucreyi 80dp sanmaya yol aciyordu.)
+
+     `targetCellWidth/Height` Android 12+ (API 31) varsayilan boyutudur;
+     `minWidth/minHeight` daha eski surumlerde AYNI ise yarar. Ikisi ayni
+     boyutu soylemek zorundadir, yoksa widget surume gore farkli buyuklukte
+     acilir. `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir;
+     ust sinir yazilmazsa kullanici widget'i ekran boyu uzatabilir.
+
+     Boyut kararlari icerikten turedi; aritmetik
+     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
+     icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
+-->
+<!-- WP-699: icerik bes ogedir (baslik / yuzde / ilerleme cubugu / gun ozeti /
+     seri). Baslik + yuzde + cubuk en az 110dp yukseklik ister; bu yuzden
+     kucultme siniri 110x110dp - daha kisasinda cubuk taser. Gun ozeti 150dp'de,
+     seri satiri 180dp'de acilir (esikler StudyWidgetProviders.kt icinde).
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_stats_widget"
-    android:minWidth="110dp"
+    android:maxResizeHeight="250dp"
+    android:maxResizeWidth="250dp"
     android:minHeight="110dp"
+    android:minResizeHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minWidth="110dp"
     android:previewLayout="@layout/odak_stats_widget"
     android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="2"
     android:updatePeriodMillis="1800000" />

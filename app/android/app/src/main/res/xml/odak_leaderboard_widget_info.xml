@@ -1,8 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-699: boyut ve esneklik.
+
+     Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
+     ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
+     4=250dp, 5=320dp. (Bu dosyalarin eski basliginda yazan "1 hucre = 40dp"
+     yalniz n=1 icin dogruydu ve 2 hucreyi 80dp sanmaya yol aciyordu.)
+
+     `targetCellWidth/Height` Android 12+ (API 31) varsayilan boyutudur;
+     `minWidth/minHeight` daha eski surumlerde AYNI ise yarar. Ikisi ayni
+     boyutu soylemek zorundadir, yoksa widget surume gore farkli buyuklukte
+     acilir. `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir;
+     ust sinir yazilmazsa kullanici widget'i ekran boyu uzatabilir.
+
+     Boyut kararlari icerikten turedi; aritmetik
+     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
+     icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
+-->
+<!-- WP-699: eski `minWidth=250dp` varsayilani DORT hucre genisliginde
+     aciyordu - sahibin "cok buyuk olmasin" itirazinin en belirgin ornegi.
+     Uc hucreye (180dp) indi; isim satirlari zaten ellipsize'dir, dar kutuda
+     kirpilmaz kisalir. Yukseklik: kisa halde yalniz KULLANICININ sirasi,
+     110dp'de iki satir, 150dp'de uc satir.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_leaderboard_widget"
-    android:minWidth="250dp"
+    android:maxResizeHeight="250dp"
+    android:maxResizeWidth="320dp"
     android:minHeight="110dp"
+    android:minResizeHeight="80dp"
+    android:minResizeWidth="180dp"
+    android:minWidth="180dp"
     android:previewLayout="@layout/odak_leaderboard_widget"
     android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="3"
     android:updatePeriodMillis="1800000" />

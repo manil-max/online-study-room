@@ -1,19 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-134: 1 hücre ≈ 40dp formülü; resize korunur. -->
-<!-- WP-558: updatePeriodMillis=0 — periyodik uyandirma kaldirildi.
-     Tek dinamik oge kendi kendine tiklayan Chronometer'dir; dugme etiketi
-     basla/durdur aninda StudyTimerService -> TimerWidgets.updateAll ile
-     itilir, boot sonrasi tazeleme TimerBootReceiver icinde. Eski yarim
-     saatlik periyot, sistemi gunde ~48 kez hicbir bilgi tasimayan
-     onUpdate icin uyandiriyordu. -->
+<!-- WP-699: boyut ve esneklik.
+
+     Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
+     ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
+     4=250dp, 5=320dp. (Bu dosyalarin eski basliginda yazan "1 hucre = 40dp"
+     yalniz n=1 icin dogruydu ve 2 hucreyi 80dp sanmaya yol aciyordu.)
+
+     `targetCellWidth/Height` Android 12+ (API 31) varsayilan boyutudur;
+     `minWidth/minHeight` daha eski surumlerde AYNI ise yarar. Ikisi ayni
+     boyutu soylemek zorundadir, yoksa widget surume gore farkli buyuklukte
+     acilir. `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir;
+     ust sinir yazilmazsa kullanici widget'i ekran boyu uzatabilir.
+
+     Boyut kararlari icerikten turedi; aritmetik
+     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
+     icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
+-->
+<!-- WP-558: updatePeriodMillis=0 - periyodik uyandirma KALDIRILDI. Tek dinamik
+     oge kendi kendine tiklayan Chronometer'dir; dugme etiketi basla/durdur
+     aninda StudyTimerService -> TimerWidgets.updateAll ile itilir, boot sonrasi
+     tazeleme TimerBootReceiver icindedir. Bu sayiya dokunma: eski yarim
+     saatlik periyot sistemi gunde ~48 kez bos yere uyandiriyordu.
+
+     WP-699 boyut gerekcesi: eski varsayilan 1x1 (40x40dp) idi ve o kutuya
+     "00:00:00" ile Basla/Durdur dugmesi ALT ALTA sigmiyordu (en kucuk
+     puntoyla bile ~92dp genislik, ~78dp yukseklik gerekir). Varsayilan 2x2'ye
+     cikti; kucultme siniri 110x80dp, yani icerigin gercekten sigdigi en kucuk
+     kutu. Ust sinir 4x3: sayacin iki satiri var, daha buyugu bos alan olur.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_timer_widget"
-    android:minWidth="40dp"
-    android:minHeight="40dp"
-    android:minResizeWidth="40dp"
-    android:minResizeHeight="40dp"
+    android:maxResizeHeight="180dp"
+    android:maxResizeWidth="250dp"
+    android:minHeight="110dp"
+    android:minResizeHeight="80dp"
+    android:minResizeWidth="110dp"
+    android:minWidth="110dp"
     android:previewLayout="@layout/odak_timer_widget"
     android:resizeMode="horizontal|vertical"
-    android:targetCellWidth="1"
-    android:targetCellHeight="1"
+    android:targetCellHeight="2"
+    android:targetCellWidth="2"
     android:updatePeriodMillis="0" />

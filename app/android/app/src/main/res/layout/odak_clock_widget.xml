@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Dijital masaüstü saati — TextClock sistem saatiyle akar (Flutter yok). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clock_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0B0F0E"
@@ -10,9 +11,12 @@
 
     <TextClock
         android:id="@+id/clock_widget_time"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
         android:format12Hour="h:mm"
+        android:gravity="center"
+        android:maxLines="1"
         android:format24Hour="HH:mm"
         android:textColor="#FFFFFF"
         android:textSize="36sp"
@@ -20,10 +24,13 @@
 
     <TextClock
         android:id="@+id/clock_widget_date"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
+        android:ellipsize="end"
         android:format12Hour="EEE d MMM"
+        android:gravity="center"
+        android:maxLines="1"
         android:format24Hour="EEE d MMM"
         android:textColor="#88FFFFFF"
         android:textSize="12sp" />

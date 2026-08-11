@@ -109,11 +109,253 @@ private object StudyWidgetKeys {
 private fun SharedPreferences.text(key: String, fallback: String): String =
     getString(key, fallback) ?: fallback
 
-private fun AppWidgetManager.isCompact(context: Context, widgetId: Int): Boolean {
-    val options = getAppWidgetOptions(widgetId)
-    val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110)
-    val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
-    return width < 150 || height < 110
+// ---------------------------------------------------------------------------
+// WP-699: boyut sınıfları
+//
+// Model **iki eksenlidir** ve bu bilerek böyledir:
+//   • GENİŞLİK punto merdivenini seçer (dar bir kutuda büyük punto kırpılır),
+//   • YÜKSEKLİK kaç satırın görüneceğini seçer (kısa bir kutuda alt satırlar
+//     taşar).
+// Tek bir `compact` bayrağı bu ikisini birbirine bağlıyordu: 4×1 gibi geniş
+// ama kısa bir widget'ta punto küçülüyor, 2×3 gibi dar ama uzun bir widget'ta
+// detay satırları gizleniyordu — ikisi de yanlış taraftı.
+//
+// Eşikler widget başına ayrıdır çünkü içerik ayrıdır: sıralama widget'ı üç
+// isim satırı taşır, saat widget'ı tek sayı. Eşiği içerikten türetmek yerine
+// tek bir global merdiven kullanmak, ya sıralamayı kırpar ya saati küçültürdü.
+// ---------------------------------------------------------------------------
+
+internal enum class WidgetWidthClass { NARROW, MEDIUM, WIDE }
+
+internal enum class WidgetHeightClass { SHORT, MEDIUM, TALL }
+
+internal data class WidgetSizeClass(
+    val width: WidgetWidthClass,
+    val height: WidgetHeightClass,
+)
+
+/**
+ * Bir widget'ın boyut eşikleri. [defaultWidthDp]/[defaultHeightDp] `res/xml`
+ * içindeki `minWidth`/`minHeight` ile birebir aynıdır; launcher henüz bir
+ * boyut bildirmediğinde (seçenek paketi boş gelir, `getInt` 0 döner) sınıf
+ * **varsayılan boyuttan** hesaplanır. 0'ı olduğu gibi kullanmak, ilk çizimde
+ * her widget'ı en dar/en kısa sınıfa düşürür ve kullanıcı widget'ı ekleyince
+ * bir anlığına detaysız bir kutu görürdü.
+ */
+internal data class WidgetSizeSpec(
+    val defaultWidthDp: Int,
+    val defaultHeightDp: Int,
+    val mediumWidthDp: Int,
+    val wideWidthDp: Int,
+    val mediumHeightDp: Int,
+    val tallHeightDp: Int,
+)
+
+// Eşikler `res/xml/odak_*_widget_info.xml` içindeki minResize/maxResize
+// sınırlarıyla birlikte anlam taşır; ikisinin ayrışmadığını
+// `test/features/android_widgets/widget_sizing_wp699_test.dart` ölçer.
+internal const val WIDGET_TIMER_DEFAULT_WIDTH_DP = 110
+internal const val WIDGET_TIMER_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_TIMER_MEDIUM_WIDTH_DP = 150
+internal const val WIDGET_TIMER_WIDE_WIDTH_DP = 220
+internal const val WIDGET_TIMER_MEDIUM_HEIGHT_DP = 110
+internal const val WIDGET_TIMER_TALL_HEIGHT_DP = 180
+
+internal const val WIDGET_CLOCK_DEFAULT_WIDTH_DP = 110
+internal const val WIDGET_CLOCK_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_CLOCK_MEDIUM_WIDTH_DP = 150
+internal const val WIDGET_CLOCK_WIDE_WIDTH_DP = 220
+internal const val WIDGET_CLOCK_MEDIUM_HEIGHT_DP = 110
+internal const val WIDGET_CLOCK_TALL_HEIGHT_DP = 180
+
+internal const val WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP = 110
+internal const val WIDGET_COUNTDOWN_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_COUNTDOWN_MEDIUM_WIDTH_DP = 150
+internal const val WIDGET_COUNTDOWN_WIDE_WIDTH_DP = 220
+internal const val WIDGET_COUNTDOWN_MEDIUM_HEIGHT_DP = 110
+internal const val WIDGET_COUNTDOWN_TALL_HEIGHT_DP = 180
+
+internal const val WIDGET_STATS_DEFAULT_WIDTH_DP = 110
+internal const val WIDGET_STATS_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_STATS_MEDIUM_WIDTH_DP = 150
+internal const val WIDGET_STATS_WIDE_WIDTH_DP = 220
+internal const val WIDGET_STATS_MEDIUM_HEIGHT_DP = 150
+internal const val WIDGET_STATS_TALL_HEIGHT_DP = 180
+
+internal const val WIDGET_GROUP_GOAL_DEFAULT_WIDTH_DP = 110
+internal const val WIDGET_GROUP_GOAL_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_GROUP_GOAL_MEDIUM_WIDTH_DP = 150
+internal const val WIDGET_GROUP_GOAL_WIDE_WIDTH_DP = 220
+internal const val WIDGET_GROUP_GOAL_MEDIUM_HEIGHT_DP = 150
+internal const val WIDGET_GROUP_GOAL_TALL_HEIGHT_DP = 180
+
+internal const val WIDGET_LEADERBOARD_DEFAULT_WIDTH_DP = 180
+internal const val WIDGET_LEADERBOARD_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_LEADERBOARD_MEDIUM_WIDTH_DP = 220
+internal const val WIDGET_LEADERBOARD_WIDE_WIDTH_DP = 280
+internal const val WIDGET_LEADERBOARD_MEDIUM_HEIGHT_DP = 110
+internal const val WIDGET_LEADERBOARD_TALL_HEIGHT_DP = 150
+
+internal object WidgetSizeSpecs {
+    val timer = WidgetSizeSpec(
+        WIDGET_TIMER_DEFAULT_WIDTH_DP,
+        WIDGET_TIMER_DEFAULT_HEIGHT_DP,
+        WIDGET_TIMER_MEDIUM_WIDTH_DP,
+        WIDGET_TIMER_WIDE_WIDTH_DP,
+        WIDGET_TIMER_MEDIUM_HEIGHT_DP,
+        WIDGET_TIMER_TALL_HEIGHT_DP,
+    )
+    val clock = WidgetSizeSpec(
+        WIDGET_CLOCK_DEFAULT_WIDTH_DP,
+        WIDGET_CLOCK_DEFAULT_HEIGHT_DP,
+        WIDGET_CLOCK_MEDIUM_WIDTH_DP,
+        WIDGET_CLOCK_WIDE_WIDTH_DP,
+        WIDGET_CLOCK_MEDIUM_HEIGHT_DP,
+        WIDGET_CLOCK_TALL_HEIGHT_DP,
+    )
+    val countdown = WidgetSizeSpec(
+        WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP,
+        WIDGET_COUNTDOWN_DEFAULT_HEIGHT_DP,
+        WIDGET_COUNTDOWN_MEDIUM_WIDTH_DP,
+        WIDGET_COUNTDOWN_WIDE_WIDTH_DP,
+        WIDGET_COUNTDOWN_MEDIUM_HEIGHT_DP,
+        WIDGET_COUNTDOWN_TALL_HEIGHT_DP,
+    )
+    val stats = WidgetSizeSpec(
+        WIDGET_STATS_DEFAULT_WIDTH_DP,
+        WIDGET_STATS_DEFAULT_HEIGHT_DP,
+        WIDGET_STATS_MEDIUM_WIDTH_DP,
+        WIDGET_STATS_WIDE_WIDTH_DP,
+        WIDGET_STATS_MEDIUM_HEIGHT_DP,
+        WIDGET_STATS_TALL_HEIGHT_DP,
+    )
+    val groupGoal = WidgetSizeSpec(
+        WIDGET_GROUP_GOAL_DEFAULT_WIDTH_DP,
+        WIDGET_GROUP_GOAL_DEFAULT_HEIGHT_DP,
+        WIDGET_GROUP_GOAL_MEDIUM_WIDTH_DP,
+        WIDGET_GROUP_GOAL_WIDE_WIDTH_DP,
+        WIDGET_GROUP_GOAL_MEDIUM_HEIGHT_DP,
+        WIDGET_GROUP_GOAL_TALL_HEIGHT_DP,
+    )
+    val leaderboard = WidgetSizeSpec(
+        WIDGET_LEADERBOARD_DEFAULT_WIDTH_DP,
+        WIDGET_LEADERBOARD_DEFAULT_HEIGHT_DP,
+        WIDGET_LEADERBOARD_MEDIUM_WIDTH_DP,
+        WIDGET_LEADERBOARD_WIDE_WIDTH_DP,
+        WIDGET_LEADERBOARD_MEDIUM_HEIGHT_DP,
+        WIDGET_LEADERBOARD_TALL_HEIGHT_DP,
+    )
+}
+
+/** Saf sınıflandırma — JVM testi bunu doğrudan ölçer (`WidgetSizeClassWp699Test`). */
+internal fun widgetSizeClass(
+    spec: WidgetSizeSpec,
+    widthDp: Int,
+    heightDp: Int,
+): WidgetSizeClass {
+    val width = if (widthDp > 0) widthDp else spec.defaultWidthDp
+    val height = if (heightDp > 0) heightDp else spec.defaultHeightDp
+    return WidgetSizeClass(
+        width = when {
+            width >= spec.wideWidthDp -> WidgetWidthClass.WIDE
+            width >= spec.mediumWidthDp -> WidgetWidthClass.MEDIUM
+            else -> WidgetWidthClass.NARROW
+        },
+        height = when {
+            height >= spec.tallHeightDp -> WidgetHeightClass.TALL
+            height >= spec.mediumHeightDp -> WidgetHeightClass.MEDIUM
+            else -> WidgetHeightClass.SHORT
+        },
+    )
+}
+
+/** Punto merdiveni; genişlik sınıfına göre seçilir. */
+internal data class SpRamp(val narrow: Float, val medium: Float, val wide: Float) {
+    fun of(widthClass: WidgetWidthClass): Float = when (widthClass) {
+        WidgetWidthClass.NARROW -> narrow
+        WidgetWidthClass.MEDIUM -> medium
+        WidgetWidthClass.WIDE -> wide
+    }
+}
+
+/**
+ * Punto tablosu. Sayılar içerikten türedi: her sınıfın **en dar** halinde
+ * satırın tahmini genişliği kutuya sığmalı. Aritmetiği
+ * `WidgetSizeClassWp699Test.kt` yeniden kurar; punto büyütülürse test kırmızı
+ * düşer.
+ */
+internal object WidgetTypography {
+    val timerTime = SpRamp(15f, 22f, 30f)
+    val timerAction = SpRamp(11f, 12f, 14f)
+    val clockTime = SpRamp(24f, 36f, 52f)
+    val clockDate = SpRamp(11f, 12f, 14f)
+    val countdownDays = SpRamp(24f, 30f, 46f)
+    val countdownName = SpRamp(12f, 12f, 15f)
+    val countdownLabel = SpRamp(11f, 12f, 14f)
+    val statsValue = SpRamp(22f, 28f, 34f)
+    val statsTitle = SpRamp(12f, 14f, 16f)
+    val statsRow = SpRamp(11f, 12f, 14f)
+    val leaderboardTitle = SpRamp(13f, 14f, 16f)
+    val leaderboardRow = SpRamp(12f, 13f, 15f)
+}
+
+/**
+ * Kök dolgu yükseklik sınıfıyla birlikte büyür: uzun bir kutuda aynı dolguyla
+ * çizmek, sahibin "büyük boyutta içerik ortada kucucuk kalmasın" itirazının
+ * diğer yarısıdır — içerik büyür, çerçeve de nefes alır.
+ */
+internal fun widgetRootPaddingDp(basePaddingDp: Int, heightClass: WidgetHeightClass): Int =
+    when (heightClass) {
+        WidgetHeightClass.SHORT -> basePaddingDp
+        WidgetHeightClass.MEDIUM -> basePaddingDp + 1
+        WidgetHeightClass.TALL -> basePaddingDp + 2
+    }
+
+// Satır görünürlüğü YÜKSEKLİK sınıfından türer. Saf tutuldu ki JVM testi
+// kullanıcının gerçekten gördüğü dalı ölçebilsin.
+internal fun clockDateVisible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+internal fun countdownNameVisible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+internal fun statsDetailVisible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+internal fun statsStreakVisible(height: WidgetHeightClass): Boolean =
+    height == WidgetHeightClass.TALL
+
+internal fun groupGoalDetailVisible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+/** Kısa halde tek satır kalır; o satır listenin başı değil KULLANICININ sırasıdır. */
+internal fun leaderboardShowsMyRank(height: WidgetHeightClass): Boolean =
+    height == WidgetHeightClass.SHORT
+
+internal fun leaderboardRow2Visible(height: WidgetHeightClass): Boolean =
+    height != WidgetHeightClass.SHORT
+
+internal fun leaderboardRow3Visible(height: WidgetHeightClass): Boolean =
+    height == WidgetHeightClass.TALL
+
+/**
+ * Launcher'ın bildirdiği boyut. `OPTION_APPWIDGET_MIN_*` **bilerek** seçildi:
+ * `MAX_*` diğer ekran yönündeki ölçüdür; ona göre çizmek, cihaz döndüğünde
+ * dar kalan yönde metni kırpardı.
+ */
+private fun AppWidgetManager.sizeClass(spec: WidgetSizeSpec, widgetId: Int): WidgetSizeClass {
+    val options = runCatching { getAppWidgetOptions(widgetId) }.getOrNull()
+    val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+    val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+    return widgetSizeClass(spec, width, height)
+}
+
+private fun RemoteViews.applySp(viewId: Int, sp: Float) =
+    setTextViewTextSize(viewId, android.util.TypedValue.COMPLEX_UNIT_SP, sp)
+
+private fun RemoteViews.applyRootPadding(context: Context, viewId: Int, dp: Int) {
+    val px = (dp * context.resources.displayMetrics.density).toInt()
+    setViewPadding(viewId, px, px, px, px)
 }
 
 private fun openAppPendingIntent(context: Context, requestCode: Int) =
@@ -127,6 +369,21 @@ private fun openAppPendingIntent(context: Context, requestCode: Int) =
     )
 
 class TimerWidgetProvider : HomeWidgetProvider() {
+    // WP-699: yeniden boyutlandırma tek başına `onUpdate` tetiklemez —
+    // `AppWidgetProvider.onAppWidgetOptionsChanged` gövdesi boştur ve
+    // `HomeWidgetProvider` onu geçersiz kılmaz. Bu metot yazılmadan boyut
+    // sınıfı ekranda hiç değişmezdi; `updatePeriodMillis=0` olan bu widget'ta
+    // ise bir daha ASLA yeniden çizilmezdi.
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -135,7 +392,7 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
-                val compact = appWidgetManager.isCompact(context, widgetId)
+                val size = appWidgetManager.sizeClass(WidgetSizeSpecs.timer, widgetId)
                 val timerPrefs = readTimerWidgetPrefs(
                     context.getSharedPreferences(TimerStateStore.PREFS_NAME, Context.MODE_PRIVATE),
                 )
@@ -149,17 +406,18 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     nowElapsedRealtimeMs = SystemClock.elapsedRealtime(),
                 )
                 // WP-134: Chronometer HER boyutta VISIBLE (compact GONE kaldırıldı).
-                // Compact'te yalnızca punto küçülür — 1×1'de saat üstte, mini düğme altta.
-                // Chronometer yalnız kronometre modunda akar; base formülü korunur.
+                // WP-699: iki satırın ikisi de her boyutta durur — sayaçta
+                // gizlenebilecek "detay" yoktur; düğme gizlenirse widget işlevini
+                // kaybeder. Esneklik punto ve dolguyla sağlanır.
                 setViewVisibility(R.id.timer_widget_elapsed, View.VISIBLE)
                 setViewVisibility(R.id.timer_widget_action, View.VISIBLE)
-                if (compact) {
-                    setTextViewTextSize(R.id.timer_widget_elapsed, android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
-                    setTextViewTextSize(R.id.timer_widget_action, android.util.TypedValue.COMPLEX_UNIT_SP, 11f)
-                } else {
-                    setTextViewTextSize(R.id.timer_widget_elapsed, android.util.TypedValue.COMPLEX_UNIT_SP, 26f)
-                    setTextViewTextSize(R.id.timer_widget_action, android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
-                }
+                applySp(R.id.timer_widget_elapsed, WidgetTypography.timerTime.of(size.width))
+                applySp(R.id.timer_widget_action, WidgetTypography.timerAction.of(size.width))
+                applyRootPadding(
+                    context,
+                    R.id.timer_widget_root,
+                    widgetRootPaddingDp(6, size.height),
+                )
                 if (projection.direction != TimerChronometerDirection.IDLE) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         setChronometerCountDown(
@@ -215,6 +473,16 @@ class TimerWidgetProvider : HomeWidgetProvider() {
 }
 
 class StudyStatsWidgetProvider : HomeWidgetProvider() {
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -223,7 +491,7 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_stats_widget).apply {
-                val compact = appWidgetManager.isCompact(context, widgetId)
+                val size = appWidgetManager.sizeClass(WidgetSizeSpecs.stats, widgetId)
                 val percentText = widgetData.text(StudyWidgetKeys.DailyGoalPercent, "0%")
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
@@ -253,8 +521,26 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                         context.getString(R.string.widget_streak_zero),
                     ),
                 )
-                setViewVisibility(R.id.stats_widget_week, if (compact) View.GONE else View.VISIBLE)
-                setViewVisibility(R.id.stats_widget_streak, if (compact) View.GONE else View.VISIBLE)
+                // WP-699: iki satır artık AYRI eşiklerde açılır. Eskiden ikisi
+                // birden tek `compact` bayrağına bağlıydı; 2×2'de ikisi de
+                // taşıyor, 2×3'te ikisi birden gelip sıkışıyordu.
+                setViewVisibility(
+                    R.id.stats_widget_week,
+                    if (statsDetailVisible(size.height)) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.stats_widget_streak,
+                    if (statsStreakVisible(size.height)) View.VISIBLE else View.GONE,
+                )
+                applySp(R.id.stats_widget_title, WidgetTypography.statsTitle.of(size.width))
+                applySp(R.id.stats_widget_today, WidgetTypography.statsValue.of(size.width))
+                applySp(R.id.stats_widget_week, WidgetTypography.statsRow.of(size.width))
+                applySp(R.id.stats_widget_streak, WidgetTypography.statsRow.of(size.width))
+                applyRootPadding(
+                    context,
+                    R.id.stats_widget_root,
+                    widgetRootPaddingDp(14, size.height),
+                )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -262,6 +548,16 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
 }
 
 class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -271,7 +567,7 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views =
                 RemoteViews(context.packageName, R.layout.odak_leaderboard_widget).apply {
-                    val compact = appWidgetManager.isCompact(context, widgetId)
+                    val size = appWidgetManager.sizeClass(WidgetSizeSpecs.leaderboard, widgetId)
                     setTextViewText(
                         R.id.leaderboard_widget_title,
                         widgetData.text(
@@ -281,7 +577,7 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_1,
-                        if (compact) {
+                        if (leaderboardShowsMyRank(size.height)) {
                             widgetData.text(
                                 StudyWidgetKeys.LeaderboardMyRank,
                                 context.getString(R.string.widget_no_rank),
@@ -305,8 +601,30 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                         R.id.leaderboard_widget_row_3,
                         widgetData.text(StudyWidgetKeys.LeaderboardRow3, "-"),
                     )
-                    setViewVisibility(R.id.leaderboard_widget_row_2, if (compact) View.GONE else View.VISIBLE)
-                    setViewVisibility(R.id.leaderboard_widget_row_3, if (compact) View.GONE else View.VISIBLE)
+                    // WP-699: üçüncü satır ancak gerçekten uzun kutuda gelir.
+                    // Eskiden 2. ve 3. satır birlikte açılıyordu; 3×2'de üç
+                    // satır + başlık 110dp'ye sığmıyordu.
+                    setViewVisibility(
+                        R.id.leaderboard_widget_row_2,
+                        if (leaderboardRow2Visible(size.height)) View.VISIBLE else View.GONE,
+                    )
+                    setViewVisibility(
+                        R.id.leaderboard_widget_row_3,
+                        if (leaderboardRow3Visible(size.height)) View.VISIBLE else View.GONE,
+                    )
+                    applySp(
+                        R.id.leaderboard_widget_title,
+                        WidgetTypography.leaderboardTitle.of(size.width),
+                    )
+                    val rowSp = WidgetTypography.leaderboardRow.of(size.width)
+                    applySp(R.id.leaderboard_widget_row_1, rowSp)
+                    applySp(R.id.leaderboard_widget_row_2, rowSp)
+                    applySp(R.id.leaderboard_widget_row_3, rowSp)
+                    applyRootPadding(
+                        context,
+                        R.id.leaderboard_widget_root,
+                        widgetRootPaddingDp(14, size.height),
+                    )
                 }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -314,6 +632,16 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
 }
 
 class GroupGoalWidgetProvider : HomeWidgetProvider() {
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -322,7 +650,7 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_group_goal_widget).apply {
-                val compact = appWidgetManager.isCompact(context, widgetId)
+                val size = appWidgetManager.sizeClass(WidgetSizeSpecs.groupGoal, widgetId)
                 val percentText = widgetData.text(StudyWidgetKeys.GroupGoalPercent, "0%")
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
@@ -344,7 +672,15 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
                 )
                 setViewVisibility(
                     R.id.group_goal_widget_detail,
-                    if (compact) View.GONE else View.VISIBLE,
+                    if (groupGoalDetailVisible(size.height)) View.VISIBLE else View.GONE,
+                )
+                applySp(R.id.group_goal_widget_title, WidgetTypography.statsTitle.of(size.width))
+                applySp(R.id.group_goal_widget_percent, WidgetTypography.statsValue.of(size.width))
+                applySp(R.id.group_goal_widget_detail, WidgetTypography.statsRow.of(size.width))
+                applyRootPadding(
+                    context,
+                    R.id.group_goal_widget_root,
+                    widgetRootPaddingDp(14, size.height),
                 )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -354,6 +690,16 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
 
 /** Dijital saat — TextClock native akar; Flutter tick yok. */
 class ClockWidgetProvider : HomeWidgetProvider() {
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -361,7 +707,23 @@ class ClockWidgetProvider : HomeWidgetProvider() {
         widgetData: SharedPreferences,
     ) {
         appWidgetIds.forEach { widgetId ->
-            val views = RemoteViews(context.packageName, R.layout.odak_clock_widget)
+            val views = RemoteViews(context.packageName, R.layout.odak_clock_widget).apply {
+                // WP-699: saatin tek boyutu vardı — 36sp saat + tarih, ne
+                // küçülüyor ne büyüyordu. `minHeight=40dp` ile eklenen bir saat
+                // 12dp dolgu + 36sp satırı taşırıyordu.
+                val size = appWidgetManager.sizeClass(WidgetSizeSpecs.clock, widgetId)
+                applySp(R.id.clock_widget_time, WidgetTypography.clockTime.of(size.width))
+                applySp(R.id.clock_widget_date, WidgetTypography.clockDate.of(size.width))
+                setViewVisibility(
+                    R.id.clock_widget_date,
+                    if (clockDateVisible(size.height)) View.VISIBLE else View.GONE,
+                )
+                applyRootPadding(
+                    context,
+                    R.id.clock_widget_root,
+                    widgetRootPaddingDp(12, size.height),
+                )
+            }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
     }

@@ -1,9 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-699: boyut ve esneklik.
+
+     Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
+     ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
+     4=250dp, 5=320dp. (Bu dosyalarin eski basliginda yazan "1 hucre = 40dp"
+     yalniz n=1 icin dogruydu ve 2 hucreyi 80dp sanmaya yol aciyordu.)
+
+     `targetCellWidth/Height` Android 12+ (API 31) varsayilan boyutudur;
+     `minWidth/minHeight` daha eski surumlerde AYNI ise yarar. Ikisi ayni
+     boyutu soylemek zorundadir, yoksa widget surume gore farkli buyuklukte
+     acilir. `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir;
+     ust sinir yazilmazsa kullanici widget'i ekran boyu uzatabilir.
+
+     Boyut kararlari icerikten turedi; aritmetik
+     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
+     icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
+-->
+<!-- WP-699: eski minHeight 40dp idi; 12dp dolgu + 36sp saat satiri o kutuya
+     sigmaz (yaklasik 63dp gerekir). Kucultme siniri 110x70dp, varsayilan 2x2.
+     Ust sinir 5x3: saat serit gibi tam genislikte kullanilabilir, ama uzunlugu
+     sinirlidir - iki satirdan fazlasi yok.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_clock_widget"
+    android:maxResizeHeight="180dp"
+    android:maxResizeWidth="320dp"
+    android:minHeight="110dp"
+    android:minResizeHeight="70dp"
+    android:minResizeWidth="110dp"
     android:minWidth="110dp"
-    android:minHeight="40dp"
     android:previewLayout="@layout/odak_clock_widget"
     android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="2"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

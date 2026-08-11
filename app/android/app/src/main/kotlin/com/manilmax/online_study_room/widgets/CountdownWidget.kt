@@ -129,7 +129,41 @@ internal fun countdownWidgetModel(rawJson: String?, nowMs: Long): CountdownWidge
 internal fun readCountdownJson(prefs: SharedPreferences): String? =
     runCatching { prefs.getString(COUNTDOWN_PREFS_KEY, null) }.getOrNull()
 
+/**
+ * Launcher'in bildirdigi kutu -> boyut sinifi. Siniflandirmanin kendisi saf
+ * [widgetSizeClass] fonksiyonudur (JVM testi onu olcer); buradaki tek is
+ * `Bundle`i okumaktir. `OPTION_APPWIDGET_MIN_*` bilerek secildi: `MAX_*`
+ * diger ekran yonundeki olcudur, ona gore cizmek cihaz dondugunde metni
+ * kirpardi.
+ */
+internal fun countdownWidgetSizeClass(
+    appWidgetManager: AppWidgetManager,
+    widgetId: Int,
+): WidgetSizeClass {
+    val options = runCatching { appWidgetManager.getAppWidgetOptions(widgetId) }.getOrNull()
+    val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+    val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+    return widgetSizeClass(WidgetSizeSpecs.countdown, width, height)
+}
+
 class CountdownWidgetProvider : HomeWidgetProvider() {
+    /**
+     * WP-699: yeniden boyutlandirma `onUpdate` tetiklemez.
+     * `AppWidgetProvider.onAppWidgetOptionsChanged` govdesi bostur ve
+     * `HomeWidgetProvider` (home_widget 0.9.3) onu gecersiz kilmaz. Bu metot
+     * yazilmadan, kullanici widget'i buyutunce dar/genis dali degismiyor,
+     * yalniz bir sonraki periyodik guncellemede (burada 30 dk) yakalaniyordu.
+     */
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -162,9 +196,49 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
 
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_countdown_widget).apply {
+                // WP-699: geri sayimin tek duzeni vardi; 30sp gun sayisi
+                // `minWidth=110dp` kutuya sigar ama 2 hucreden dar bir kutuda
+                // kirpilirdi ve buyutuldugunde ayni puntoda kalirdi.
+                val size = countdownWidgetSizeClass(appWidgetManager, widgetId)
                 setTextViewText(R.id.countdown_widget_name, title)
                 setTextViewText(R.id.countdown_widget_days, model.daysText)
                 setTextViewText(R.id.countdown_widget_label, label)
+                setTextViewTextSize(
+                    R.id.countdown_widget_name,
+                    android.util.TypedValue.COMPLEX_UNIT_SP,
+                    WidgetTypography.countdownName.of(size.width),
+                )
+                setTextViewTextSize(
+                    R.id.countdown_widget_days,
+                    android.util.TypedValue.COMPLEX_UNIT_SP,
+                    WidgetTypography.countdownDays.of(size.width),
+                )
+                setTextViewTextSize(
+                    R.id.countdown_widget_label,
+                    android.util.TypedValue.COMPLEX_UNIT_SP,
+                    WidgetTypography.countdownLabel.of(size.width),
+                )
+                // Kisa kutuda sinav ADI dusulur, gun sayisi ile "gun kaldi"
+                // satiri kalir: widget'in tasidigi bilgi budur.
+                setViewVisibility(
+                    R.id.countdown_widget_name,
+                    if (countdownNameVisible(size.height)) {
+                        android.view.View.VISIBLE
+                    } else {
+                        android.view.View.GONE
+                    },
+                )
+                val paddingPx = (
+                    widgetRootPaddingDp(12, size.height) *
+                        context.resources.displayMetrics.density
+                    ).toInt()
+                setViewPadding(
+                    R.id.countdown_widget_root,
+                    paddingPx,
+                    paddingPx,
+                    paddingPx,
+                    paddingPx,
+                )
                 setOnClickPendingIntent(
                     R.id.countdown_widget_root,
                     android.app.PendingIntent.getActivity(
