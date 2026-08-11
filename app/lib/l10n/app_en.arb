@@ -1090,9 +1090,37 @@
   "@classroomMesajYaz": {
     "description": "Classroom user-facing text. Source: Mesaj yaz"
   },
-  "classroomMinimal": "Minimal",
+  "classroomMinimal": "Thin ring",
   "@classroomMinimal": {
-    "description": "Classroom user-facing text. Source: Minimal"
+    "description": "Clock face option label (WP-715). Renamed from Minimal: the style only thins the ring line, it does not shrink the card."
+  },
+  "classroomSaatKompakt": "Compact",
+  "@classroomSaatKompakt": {
+    "description": "Clock face option label: single-row timer card."
+  },
+  "classroomSaatSadeRakamAciklama": "Time only, no ring or color.",
+  "@classroomSaatSadeRakamAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
+  },
+  "classroomSaatHedefHalkasiAciklama": "Time plus a thick ring filling toward the daily goal.",
+  "@classroomSaatHedefHalkasiAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
+  },
+  "classroomSaatRenkGecisiAciklama": "Digit color turns red to green as the goal nears.",
+  "@classroomSaatRenkGecisiAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
+  },
+  "classroomSaatYarisDilimiAciklama": "Time plus a circle filling like a pie slice.",
+  "@classroomSaatYarisDilimiAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
+  },
+  "classroomSaatIncehalkaAciklama": "Hairline ring. A line style; it does not shrink the card.",
+  "@classroomSaatIncehalkaAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
+  },
+  "classroomSaatKompaktAciklama": "One row: time and Start/Stop only. Card gets much shorter.",
+  "@classroomSaatKompaktAciklama": {
+    "description": "Clock face option description shown under its label in the picker."
   },
   "classroomMola": "Break",
   "@classroomMola": {
@@ -7123,7 +7151,5 @@
   "clockWidgetDokununcaUygulama": "Tapping opens the app, not a specific section",
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: tap line for a widget without a deep link."},
   "clockWidgetGunlukHedefOzeti": "Your daily goal percentage and progress",
-  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."},
-  "profileCrownSuAnki": "Current",
-  "@profileCrownSuAnki": {"description": "WP-712: marks the crown tier the user is currently on in the tiers sheet."}
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: summary of the StudyStats card; the provider actually renders the daily goal percentage."}
 }

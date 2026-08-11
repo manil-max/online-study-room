@@ -23,8 +23,19 @@ enum ClockStyle {
   /// Pasta dilimi gibi dolan yarış stili.
   slice,
 
-  /// Çok ince çizgi stili (minimal/neon esintili).
+  /// Saç teli inceliğinde halka. **Çizgi kalınlığı** stilidir; kartın
+  /// boyutuyla ilgisi yoktur (WP-715: eski adı "Minimal"di ve küçüklük vaat
+  /// ediyordu — etiket `classroomMinimal` "İnce halka"ya çevrildi).
   minimal,
+
+  /// 🔴 WP-715 — kartı GERÇEKTEN küçülten tek görünüm.
+  ///
+  /// Yukarıdaki beş stil yalnız saatin ÇİZİMİNİ değiştirir; sayaç kartının
+  /// yüksekliğine hiçbiri dokunmaz. `compact` kartı tek satıra indirir:
+  /// **süre + Başlat/Durdur** kalır, "Bugün" toplamı, mod seçici, günlük hedef
+  /// çubuğu, ders seçici hapı ve "manuel süre ekle" gizlenir.
+  /// Ölçüm: `timer_card_compact_wp715_test.dart`.
+  compact,
 }
 
 extension ClockStyleInfo on ClockStyle {
@@ -34,6 +45,31 @@ extension ClockStyleInfo on ClockStyle {
     ClockStyle.colorShift => AppLocalizations.of(context).classroomRenkGecisi,
     ClockStyle.slice => AppLocalizations.of(context).classroomYarisDilimi,
     ClockStyle.minimal => AppLocalizations.of(context).classroomMinimal,
+    ClockStyle.compact => AppLocalizations.of(context).classroomSaatKompakt,
+  };
+
+  /// Seçenek ne yapar? 🔴 WP-715: sahip "seçenekler var ama tam farklarını
+  /// anlayamadım" dedi. Menüde ad tek başına yetmiyor — özellikle "Minimal"
+  /// adı boyut vaat edip çizgi inceltiyordu.
+  String description(BuildContext context) => switch (this) {
+    ClockStyle.digits => AppLocalizations.of(
+      context,
+    ).classroomSaatSadeRakamAciklama,
+    ClockStyle.ring => AppLocalizations.of(
+      context,
+    ).classroomSaatHedefHalkasiAciklama,
+    ClockStyle.colorShift => AppLocalizations.of(
+      context,
+    ).classroomSaatRenkGecisiAciklama,
+    ClockStyle.slice => AppLocalizations.of(
+      context,
+    ).classroomSaatYarisDilimiAciklama,
+    ClockStyle.minimal => AppLocalizations.of(
+      context,
+    ).classroomSaatIncehalkaAciklama,
+    ClockStyle.compact => AppLocalizations.of(
+      context,
+    ).classroomSaatKompaktAciklama,
   };
 
   IconData get icon => switch (this) {
@@ -42,6 +78,7 @@ extension ClockStyleInfo on ClockStyle {
     ClockStyle.colorShift => Icons.gradient,
     ClockStyle.slice => Icons.pie_chart,
     ClockStyle.minimal => Icons.trip_origin,
+    ClockStyle.compact => Icons.density_small,
   };
 }
 
@@ -169,7 +206,10 @@ class StudyClock extends StatelessWidget {
     final text = formatHms(seconds);
 
     switch (style) {
+      // `compact` saati SADE RAKAM olarak çizer; kartı küçülten şey çizim
+      // değil `StudyTimerCard`'ın tek satırlık düzenidir.
       case ClockStyle.digits:
+      case ClockStyle.compact:
         return _digits(
           text,
           fontSize,
@@ -301,13 +341,41 @@ Future<void> showClockStyleMenu(BuildContext context, WidgetRef ref) async {
       for (final s in ClockStyle.values)
         PopupMenuItem<ClockStyle>(
           value: s,
+          // İki satır: ad + ne yaptığı. Yükseklik `PopupMenuItem`ın asgarisi
+          // değil içeriğidir, o yüzden açıklama kırpılmaz.
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(s.icon, size: 20),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(s.icon, size: 20),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: Text(s.label(context))),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(s.label(context)),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.description(context),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               if (s == current)
-                Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2, left: 8),
+                  child: Icon(
+                    Icons.check,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
             ],
           ),
         ),

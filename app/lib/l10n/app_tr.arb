@@ -244,7 +244,14 @@
   "classroomKucult": "Küçült",
   "classroomManuelSureEkle": "Manuel süre ekle",
   "classroomMesajYaz": "Mesaj yaz",
-  "classroomMinimal": "Minimal",
+  "classroomMinimal": "İnce halka",
+  "classroomSaatKompakt": "Kompakt",
+  "classroomSaatSadeRakamAciklama": "Yalnız süre; halka da renk de yok.",
+  "classroomSaatHedefHalkasiAciklama": "Süre + günlük hedefe göre dolan kalın halka.",
+  "classroomSaatRenkGecisiAciklama": "Rakam rengi hedefe yaklaştıkça kırmızıdan yeşile döner.",
+  "classroomSaatYarisDilimiAciklama": "Süre + pasta dilimi gibi dolan daire.",
+  "classroomSaatIncehalkaAciklama": "Saç teli inceliğinde halka. Çizgi stilidir, kartı küçültmez.",
+  "classroomSaatKompaktAciklama": "Tek satır: yalnız süre ve Başlat/Durdur. Kart çok kısalır.",
   "classroomMola": "Mola",
   "classroomMolaDk": "Mola dk",
   "classroomMolada": "Molada",
@@ -2239,7 +2246,5 @@
   "clockWidgetDokununcaUygulama": "Dokununca uygulama açılır; belirli bir bölüme gitmez",
   "@clockWidgetDokununcaUygulama": {"description": "WP-705: derin baglantisi olmayan widget icin dokunma satiri."},
   "clockWidgetGunlukHedefOzeti": "Günlük hedefinin yüzdesi ve ilerlemesi",
-  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."},
-  "profileCrownSuAnki": "Şu an",
-  "@profileCrownSuAnki": {"description": "WP-712: tac kademeleri sayfasinda kullanicinin SU AN bulundugu kademenin isareti."}
+  "@clockWidgetGunlukHedefOzeti": {"description": "WP-705: katalogdaki StudyStats widget kartinin ozeti; saglayici gercekte gunluk hedef yuzdesini cizer."}
 }
