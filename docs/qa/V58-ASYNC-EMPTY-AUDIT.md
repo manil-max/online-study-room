@@ -345,7 +345,7 @@ verisi eksik dışa aktarılabilir.
 | `features/classroom/classroom_screen.dart:53` | `asData?.value` | **Doğru desen:** `asData == null` yükleniyor sayılıyor, tur açılmıyor. |
 | `features/classroom/classroom_screen.dart:58` | `asData?.value` | Yukarıdaki kapıdan sonra okunuyor. |
 | `features/classroom/widgets/class_detail_screen.dart:869` | `.value` | **Doğru desen (WP-494):** `null` → iskelet/hata, boş liste değil. |
-| `features/onboarding/onboarding_prefs.dart:45` | `asData?.value` | Oturum yoksa akış zaten başlamaz. |
+| `features/onboarding/onboarding_prefs.dart:45` | `asData?.value` | 🔴 **BU SATIR YANLIŞ SINIFLANDI (WP-709, 2026-08-11).** "Oturum yoksa akış zaten başlamaz" denmiş; ama sorun oturumun HIÇ olmaması değil, **yeniden kurulması**ydı. `settings_screen.dart` günlük hedefi yazınca `authStateProvider`ı invalidate ediyor; akış ilk `yield`den önce ağdan profil çektiği için pencere bir gidiş-dönüş açık kalıyor ve kapı o karede TANITIM EKRANINI çiziyordu. Sahip bunu cihazda gördü. Aynı yol ad değiştirme, kamp hayvanı değiştirme, sayacı başlatma ve giriş ekranında da tetikleniyordu. **Ders: "zararsız" hükmü, satırın çağrıldığı her yolu saymadan verilemez.** |
 | `features/profile/feedback_screen.dart:32` | `.value ?? boş` | Rozetin yokluğu 'yok' iddiası değil; veri gelince belirir. |
 | `features/profile/profile_screen.dart:62` | `.value ?? boş` | Aynı. |
 | `features/profile/settings_screen.dart:80` | `.value ?? boş` | Aynı. |
