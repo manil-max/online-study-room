@@ -57,11 +57,13 @@ select is(
   'iki metrik de cumulative: kazanilmis deger dusmez'
 );
 
--- Mevcut katalog bozulmadi: 21 eski + 2 yeni.
+-- Mevcut SUNUCU katalogu bozulmadi: 25 eski + 2 yeni. Flutter'in yerel
+-- vitrini daha dar bir urun alt kumesidir; sunucu sozlugu sayisini istemci
+-- katalogundan turetmek bu testi gercek PostgreSQL'de yanlis kirmizi yapar.
 select is(
   (select count(*)::int from public.achievements_dict),
-  23,
-  'mevcut 21 basarim duruyor, uzerine 2 yeni geldi'
+  27,
+  'mevcut 25 sunucu basarimi duruyor, uzerine 2 yeni geldi'
 );
 select is(
   (select count(*)::int from public.achievements_dict where is_secret),
