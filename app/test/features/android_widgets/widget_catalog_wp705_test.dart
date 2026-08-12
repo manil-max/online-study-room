@@ -48,6 +48,7 @@ const String _kotlinDir =
 /// Saglayici -> `res/xml/odak_<ad>_widget_info.xml` govde adi.
 const Map<HomeWidgetProvider, String> _infoXmlName = {
   HomeWidgetProvider.timer: 'timer',
+  HomeWidgetProvider.minimalTimer: 'minimal_timer',
   HomeWidgetProvider.studyStats: 'stats',
   HomeWidgetProvider.groupGoal: 'group_goal',
   HomeWidgetProvider.groupLeaderboard: 'leaderboard',
@@ -60,6 +61,7 @@ const Map<HomeWidgetProvider, String> _infoXmlName = {
 /// Saglayici sinifinin yasadigi Kotlin dosyasi.
 const Map<HomeWidgetProvider, String> _kotlinFile = {
   HomeWidgetProvider.timer: 'StudyWidgetProviders.kt',
+  HomeWidgetProvider.minimalTimer: 'MinimalTimerWidget.kt',
   HomeWidgetProvider.studyStats: 'StudyWidgetProviders.kt',
   HomeWidgetProvider.groupGoal: 'StudyWidgetProviders.kt',
   HomeWidgetProvider.groupLeaderboard: 'StudyWidgetProviders.kt',
@@ -79,6 +81,14 @@ String _read(String path) {
 String? _attr(String xml, String name) {
   final stripped = xml.replaceAll(RegExp(r'<!--[\s\S]*?-->'), '');
   return RegExp('android:$name="([^"]*)"').firstMatch(stripped)?.group(1);
+}
+
+int? _cellCountFromDp(String? value) {
+  final match = RegExp(r'^(\d+)dp$').firstMatch(value ?? '');
+  if (match == null) return null;
+  final dp = int.parse(match.group(1)!);
+  final numerator = dp + 30;
+  return numerator % 70 == 0 ? numerator ~/ 70 : null;
 }
 
 /// Saglayici sinifinin govdesi: bir sonraki ust duzey `class` bildirimine kadar.
@@ -233,6 +243,22 @@ void main() {
           reason: '${provider.name}: boyut satiri yok',
         );
 
+        if (spec.minimumCellWidth != null && spec.minimumCellHeight != null) {
+          expect(
+            find.descendant(
+              of: card,
+              matching: find.text(
+                l10n.clockWidgetEnKucukBoyut(
+                  spec.minimumCellWidth!,
+                  spec.minimumCellHeight!,
+                ),
+              ),
+            ),
+            findsOneWidget,
+            reason: '${provider.name}: gercek kucultme alt siniri yazili degil',
+          );
+        }
+
         expect(
           find.descendant(
             of: card,
@@ -260,6 +286,15 @@ void main() {
         homeWidgetCardSpec(HomeWidgetProvider.countdown, en).summary,
         isNot(homeWidgetCardSpec(HomeWidgetProvider.countdown, l10n).summary),
       );
+      final minimalTr = homeWidgetCardSpec(
+        HomeWidgetProvider.minimalTimer,
+        l10n,
+      );
+      final minimalEn = homeWidgetCardSpec(HomeWidgetProvider.minimalTimer, en);
+      expect(minimalEn.title, isNot(minimalTr.title));
+      expect(minimalEn.summary, isNot(minimalTr.summary));
+      expect(minimalTr.title, isNot(l10n.clockCalismaSayaci));
+      expect(minimalEn.title, isNot(en.clockCalismaSayaci));
     });
   });
 
@@ -283,6 +318,20 @@ void main() {
           declaredHeight,
           reason: '${provider.name}: kart varsayilan YUKSEKLIGI XML ile ayrisiyor',
         );
+        if (spec.minimumCellWidth != null || spec.minimumCellHeight != null) {
+          expect(
+            spec.minimumCellWidth,
+            _cellCountFromDp(_attr(xml, 'minResizeWidth')),
+            reason:
+                '${provider.name}: kart minimum GENISLIGI XML ile ayrisiyor',
+          );
+          expect(
+            spec.minimumCellHeight,
+            _cellCountFromDp(_attr(xml, 'minResizeHeight')),
+            reason:
+                '${provider.name}: kart minimum YUKSEKLIGI XML ile ayrisiyor',
+          );
+        }
       }
     });
 
@@ -291,6 +340,22 @@ void main() {
         final body = _kotlinClassBody(provider);
         final spec = homeWidgetCardSpec(provider, l10n);
         final route = spec.route;
+
+        if (spec.directTap == HomeWidgetDirectTap.togglesTimer) {
+          expect(provider, HomeWidgetProvider.minimalTimer);
+          expect(route, isNull);
+          expect(
+            body.contains('TimerActionReceiver.ACTION_TOGGLE_TIMER'),
+            isTrue,
+            reason: 'kart baslat/durdur diyor ama native broadcast yok',
+          );
+          expect(
+            body.contains('WidgetDeepLink.pendingIntent('),
+            isFalse,
+            reason: 'minimal sayac toggle yerine uygulamayi acmaya donmus',
+          );
+          continue;
+        }
 
         if (route == null) {
           expect(

@@ -354,21 +354,18 @@ void main() {
       );
     });
 
-    // 🔴 ACIK BORC — sessizce unutulmasin diye iddiaya baglandi.
-    //
-    // WP-705'in yakaladigi kusur tam olarak buydu: widget yayindaydi ama
-    // uygulamanin KENDI katalogunda gorunmuyordu. Buradaki fark, borcun
-    // BILINCLI olmasi ve nedeninin yazili olmasi: katalog karti
-    // `HomeWidgetProvider` enum'una uye eklemeyi gerektirir, o da
-    // `clock_widgets_screen.dart` icindeki tuketici `switch`i ve iki `.arb`
-    // dosyasini — ucu de bu WP'nin SAHIP yolu degil.
-    test('katalog borcu ACIK: minimal widget henuz kart tasimiyor', () {
+    // WP-726: bilincli acik borc kapandi. Saglayici manifestte etkin oldugu
+    // gibi uygulamanin kendi katalog enum'u ve yayin listesinde de yer alir.
+    // Kart, boyut ve dokunma davranisinin tamligi WP-705 testinde olculur.
+    test('minimal widget uygulamanin kendi katalogunda yayinda', () {
       expect(
         HomeWidgetProvider.values.map((provider) => provider.name),
-        isNot(contains('minimalTimer')),
-        reason:
-            'katalog uyesi eklenmis: bu iddiayi kaldir ve WP-705 testlerinin '
-            '(kart + boyut + dokunma satiri) gectigini dogrula',
+        contains('minimalTimer'),
+      );
+      expect(
+        isHomeWidgetPublished(HomeWidgetProvider.minimalTimer),
+        isTrue,
+        reason: 'manifestte etkin minimal saglayici katalogda da yayinlanmali',
       );
     });
   });

@@ -46,11 +46,14 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
   Future<void> seedPlaceholder() async {}
 }
 
-/// WP-696: cizimi native akan, Flutter yayinina IHTIYACI OLMAYAN saglayicilar.
+/// WP-696: cizimi/tazelemesi native akan, Flutter yayinina IHTIYACI OLMAYAN
+/// saglayicilar.
 ///
 /// `ClockWidgetProvider.onUpdate` yalniz layout'u sisirir; iki `TextClock`
 /// sistem saatiyle kendi akar (`StudyWidgetProviders.kt:356-368`). Bu yuzden
-/// [StudyHomeWidget] uyesi olmasina gerek yoktur.
+/// [StudyHomeWidget] uyesi olmasina gerek yoktur. WP-718'in minimal sayaci da
+/// `TimerWidgets.updateAll` ile timer olaylarinda tazelenir; gorunen sureyi
+/// native `Chronometer` akitir ve `widgetData` okumaz.
 ///
 /// `AlarmWidgetProvider` (`StudyWidgetProviders.kt:371-410`) bu listede DEGIL:
 /// `flutter.native_alarm_mirror_v1`'i yalniz `onUpdate` icinde okur ve mirror
@@ -58,6 +61,7 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
 /// tek tazeleme kaynagi `odak_alarm_widget_info.xml`'deki 30 dakikalik
 /// `updatePeriodMillis`'tir.
 const Set<HomeWidgetProvider> kSelfUpdatingHomeWidgets = {
+  HomeWidgetProvider.minimalTimer,
   HomeWidgetProvider.clock,
 };
 

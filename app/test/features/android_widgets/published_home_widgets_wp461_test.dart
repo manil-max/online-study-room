@@ -35,11 +35,13 @@ void main() {
     // Bu iddia WP-701 turunda bayat kaldi ve kapiyi kirmizi dusurdu -- yani
     // gorevini yapti. Listeyi genisletirken sirasi da baglayici: enum sirasi
     // katalog sirasidir, katalog ekrani da o sirada cizer.
-    test('yayinda yedi widget var; dormant kalan yalniz alarm', () {
-      // WP-707: dort uykudaki widget yayina alindi. Sira baglayici: enum
+    test('yayinda sekiz widget var; dormant kalan yalniz alarm', () {
+      // WP-707: dort uykudaki widget yayina alindi; WP-726 minimal sayaci
+      // katalog borcu olmaktan cikardi. Sira baglayici: enum
       // sirasi katalog sirasidir, katalog ekrani da o sirada cizer.
       expect(publishedHomeWidgets, [
         HomeWidgetProvider.timer,
+        HomeWidgetProvider.minimalTimer,
         HomeWidgetProvider.studyStats,
         HomeWidgetProvider.groupGoal,
         HomeWidgetProvider.groupLeaderboard,
@@ -57,7 +59,7 @@ void main() {
       );
     });
 
-    test('altı sağlayıcının hepsi katalogda kayıtlı kalır', () {
+    test('dokuz sağlayıcının hepsi katalogda kayıtlı kalır', () {
       expect(kHomeWidgetCatalog.length, HomeWidgetProvider.values.length);
       expect(
         kHomeWidgetCatalog.map((entry) => entry.provider).toSet(),
@@ -122,26 +124,12 @@ void main() {
           reason: '${provider.androidClassName} icin xml tanimi kayip',
         );
       }
-      // 🔴 WP-718 — SAYIM IDDIASI YENIDEN YAZILDI, GEVSETILMEDI.
-      //
-      // Eskiden `infos.length == HomeWidgetProvider.values.length` idi ve
-      // "her katalog uyesinin bir xml'i var" demek istiyordu; gercekte
-      // "xml sayisi katalog sayisina esit" diyordu. WP-718 katalog uyesi
-      // OLMAYAN bir saglayici ekledi (minimal sayac: Android widget
-      // secicisinde var, uygulama ici katalog karti henuz yok — gerekce
-      // `timer_widget_wp718_test.dart`), ve eski sayim bunu "xml silinmis"
-      // diye bildirirdi. Katalog disi tanimlar artik ACIK bir listede durur;
-      // liste bos olmayan her uye icin gerekcesi yazili olmalidir.
-      const katalogDisiTanimlar = <String>{'odak_minimal_timer_widget_info.xml'};
+      // WP-726: WP-718'in bilincli katalog borcu kapandi. Manifestte etkin
+      // minimal saglayici artik enum/katalog uyesi; disarida tanim kalmamali.
       expect(
         infos.length,
-        HomeWidgetProvider.values.length + katalogDisiTanimlar.length,
+        HomeWidgetProvider.values.length,
         reason: 'widget xml tanımları revizyon için repoda kalmalı',
-      );
-      expect(
-        infos,
-        containsAll(katalogDisiTanimlar),
-        reason: 'katalog disi tanim silinmis',
       );
     });
 

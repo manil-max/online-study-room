@@ -1,7 +1,8 @@
 /// WP-461 yayında yalnız 1×1 Başlat/Durdur widget'ını bırakmıştı; WP-695/701
-/// geri sayımı ve görev listesini, **WP-707** de günlük hedef, grup hedefi,
-/// kamp sıralaması ve dijital saati yayına aldı. Yayında olmayan tek sağlayıcı
-/// `alarm`dır (tazeleme yolu yok — bkz. aşağıdaki not).
+/// geri sayımı ve görev listesini, **WP-707** günlük hedef, grup hedefi,
+/// kamp sıralaması ve dijital saati, **WP-726** da WP-718'in minimal sayacını
+/// kataloğa aldı. Yayında olmayan tek sağlayıcı `alarm`dır (tazeleme yolu yok
+/// — bkz. aşağıdaki not).
 ///
 /// Yayından düşürülen sağlayıcı silinmez: sınıfı, layout'u ve
 /// `res/xml/*_widget_info.xml` tanımı revizyon için repoda durur.
@@ -19,6 +20,9 @@ import 'package:flutter/foundation.dart';
 /// Android tarafındaki sağlayıcı sınıf adı (manifest'teki `.widgets.<name>`).
 enum HomeWidgetProvider {
   timer('TimerWidgetProvider'),
+
+  /// WP-718/WP-726 — yalnız süreyi gösteren, tüm yüzeyi başlat/durdur olan sayaç.
+  minimalTimer('MinimalTimerWidgetProvider'),
   studyStats('StudyStatsWidgetProvider'),
   groupGoal('GroupGoalWidgetProvider'),
   groupLeaderboard('GroupLeaderboardWidgetProvider'),
@@ -52,6 +56,10 @@ class HomeWidgetCatalogEntry {
 /// Katalogda **her** widget listelenir; yalnız `published` olanlar gösterilir.
 const List<HomeWidgetCatalogEntry> kHomeWidgetCatalog = [
   HomeWidgetCatalogEntry(provider: HomeWidgetProvider.timer, published: true),
+  HomeWidgetCatalogEntry(
+    provider: HomeWidgetProvider.minimalTimer,
+    published: true,
+  ),
   // WP-707: gunluk hedef widget'i. Yayina alinmasinin sarti seri satirinin
   // gercek veriye baglanmasiydi (`_syncStatsWidgets` -> `stats_streak`);
   // baglanmadan yayina alinsaydi kullanici widget'i buyutunce serisini HEP

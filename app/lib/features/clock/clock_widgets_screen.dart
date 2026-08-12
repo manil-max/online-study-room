@@ -50,6 +50,9 @@ class HomeWidgetCardSpec {
     required this.route,
     required this.cellWidth,
     required this.cellHeight,
+    this.minimumCellWidth,
+    this.minimumCellHeight,
+    this.directTap = HomeWidgetDirectTap.opensApp,
   });
 
   final IconData icon;
@@ -63,12 +66,26 @@ class HomeWidgetCardSpec {
   /// gerçek `PendingIntent`e karşı ölçülür.
   final WidgetRoute? route;
 
+  /// Route açmayan sağlayıcının gerçek doğrudan dokunma davranışı.
+  ///
+  /// Mevcut route'lu sağlayıcıların sözleşmesini değiştirmez. Minimal sayaçta
+  /// kökün tamamı native broadcast ile başlat/durdur olduğu için `opensApp`
+  /// varsayımı doğru değildir.
+  final HomeWidgetDirectTap directTap;
+
   /// `res/xml/odak_*_widget_info.xml` içindeki `targetCellWidth/Height`.
   /// `null` ise o tanımda varsayılan hücre boyutu beyan edilmemiştir ve kart
   /// boyut vaadi etmez.
   final int? cellWidth;
   final int? cellHeight;
+
+  /// `minResizeWidth/Height` ile gerçekten erişilebilen en küçük hücre boyutu.
+  /// Null ise katalog alt sınır vaadi üretmez.
+  final int? minimumCellWidth;
+  final int? minimumCellHeight;
 }
+
+enum HomeWidgetDirectTap { opensApp, togglesTimer }
 
 /// Kataloğun **tek** metin kaynağı. `switch` ifadesi enum üzerinde tüketicidir.
 @visibleForTesting
@@ -83,6 +100,17 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     route: WidgetRoute.timer,
     cellWidth: 2,
     cellHeight: 2,
+  ),
+  HomeWidgetProvider.minimalTimer => HomeWidgetCardSpec(
+    icon: Icons.timer_outlined,
+    title: l10n.clockMinimalSayac,
+    summary: l10n.clockMinimalSayacOzeti,
+    route: null,
+    directTap: HomeWidgetDirectTap.togglesTimer,
+    cellWidth: 2,
+    cellHeight: 1,
+    minimumCellWidth: 1,
+    minimumCellHeight: 1,
   ),
   HomeWidgetProvider.countdown => HomeWidgetCardSpec(
     icon: Icons.event,
@@ -169,9 +197,14 @@ HomeWidgetCardSpec homeWidgetCardSpec(
 @visibleForTesting
 String homeWidgetCardTapLine(HomeWidgetCardSpec spec, AppLocalizations l10n) {
   final route = spec.route;
-  return route == null
-      ? l10n.clockWidgetDokununcaUygulama
-      : l10n.clockWidgetDokununcaBolum(_routeSectionLabel(route, l10n));
+  if (route != null) {
+    return l10n.clockWidgetDokununcaBolum(_routeSectionLabel(route, l10n));
+  }
+  return switch (spec.directTap) {
+    HomeWidgetDirectTap.opensApp => l10n.clockWidgetDokununcaUygulama,
+    HomeWidgetDirectTap.togglesTimer =>
+      l10n.clockWidgetDokununcaSayaciBaslatDurdur,
+  };
 }
 
 /// Derin bağlantının açtığı sekmenin kullanıcıya görünen adı.
@@ -512,6 +545,14 @@ class _WidgetCard extends StatelessWidget {
                 l10n.clockWidgetVarsayilanBoyut(
                   spec.cellWidth!,
                   spec.cellHeight!,
+                ),
+                style: detailStyle,
+              ),
+            if (spec.minimumCellWidth != null && spec.minimumCellHeight != null)
+              Text(
+                l10n.clockWidgetEnKucukBoyut(
+                  spec.minimumCellWidth!,
+                  spec.minimumCellHeight!,
                 ),
                 style: detailStyle,
               ),

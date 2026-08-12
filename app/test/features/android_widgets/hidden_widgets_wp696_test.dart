@@ -165,6 +165,21 @@ void main() {
       );
       // Saatte boyle bir kusur yok: cizim native akar.
       expect(hasHomeWidgetRefreshPath(HomeWidgetProvider.clock), isTrue);
+      // WP-726: minimal sayac widgetData okumaz; timer olaylarinda native
+      // `TimerWidgets.updateAll`, arada da Chronometer ile kendi tazelenir.
+      expect(
+        kSelfUpdatingHomeWidgets,
+        contains(HomeWidgetProvider.minimalTimer),
+      );
+      final timerWidgets = File(
+        'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/'
+        'TimerWidgets.kt',
+      ).readAsStringSync();
+      expect(
+        timerWidgets.contains('MinimalTimerWidgetProvider::class.java'),
+        isTrue,
+        reason: 'Dart self-update diyor ama native timer yayini minimalde yok',
+      );
       // Uc istatistik saglayicisinin yolu Flutter tarafindan gelir.
       for (final provider in const [
         HomeWidgetProvider.timer,
