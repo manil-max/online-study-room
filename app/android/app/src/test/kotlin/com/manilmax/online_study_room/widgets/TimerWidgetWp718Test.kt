@@ -411,21 +411,18 @@ class TimerWidgetWp718Test {
             Kutu("2x2", 110, 110),
             Kutu("4x2", 250, 110),
         ).forEach { kutu ->
-            val size = widgetSizeClass(minimalTimerSizeSpec, kutu.w, kutu.h)
-            val sp = minimalTimerTimeSp(size)
+            val sp = minimalTimerTimeSp(kutu.w, kutu.h)
             assertFits(
                 "minimal/${kutu.ad} yukseklik",
                 lineHeightDp(sp),
                 usableDp(kutu.h, dolgu),
             )
-            // Tek hucrede olcu 5 karakterdir ("00:00" — ilk saat boyunca
-            // gorunen bicim); 8 karakterlik "00:00:00" oraya HICBIR okunur
-            // puntoyla sigmaz. Bu, 1x1'in KABUL EDILEN sinirdir ve
-            // varsayilanin 2x1 olmasinin sebebidir.
-            val karakter = if (kutu.w < WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP) 5 else timeChars
+            // WP-728: idle 5 karakterle yetinmek saatin dolmasindan sonraki
+            // kirpmayi gizliyordu. Her kutu calisan en kotu 8 karakterle olculur.
+            val karakter = timeChars
             assertFits(
                 "minimal/${kutu.ad} genislik",
-                textWidthDp(sp, karakter),
+                textWidthDp(sp, karakter) * WIDGET_MINIMAL_TIMER_TEXT_SCALE_X,
                 usableDp(kutu.w, dolgu),
             )
         }
@@ -435,9 +432,8 @@ class TimerWidgetWp718Test {
     fun minimal_widget_varsayilan_boyutta_sayacin_en_kucuk_halinden_BUYUK_yazar() {
         // Widget'in varlik sebebi: 1-2 hucrede okunur bir sayi. Eski sayac
         // widget'i o boyutta 15sp yaziyordu.
-        val varsayilan = widgetSizeClass(minimalTimerSizeSpec, 110, 40)
-        assertTrue(minimalTimerTimeSp(varsayilan) > puntoOncesi.narrow)
-        assertEquals(19f, minimalTimerTimeSp(varsayilan))
+        assertTrue(minimalTimerTimeSp(110, 40) > puntoOncesi.narrow)
+        assertEquals(21f, minimalTimerTimeSp(110, 40))
     }
 
     @Test
@@ -448,8 +444,8 @@ class TimerWidgetWp718Test {
         // 40dp'lik satir 21sp'de keser.
         val genisKisa = widgetSizeClass(minimalTimerSizeSpec, 250, 40)
         assertEquals(WidgetWidthClass.WIDE, genisKisa.width)
-        assertNotEquals(minimalTimerTypography.wide, minimalTimerTimeSp(genisKisa))
-        assertEquals(21f, minimalTimerTimeSp(genisKisa))
+        assertNotEquals(minimalTimerTypography.wide, minimalTimerTimeSp(250, 40))
+        assertEquals(21f, minimalTimerTimeSp(250, 40))
     }
 }
 

@@ -7,6 +7,10 @@
      icin yer birakmaz (olcum `TimerWidgetWp718Test.kt`). Yuzeyin tamami hedef
      olunca hedef, launcher'in gercek hucresi kadar buyuk olur.
 
+     WP-728: 0.75 yatay glif olcegi auto-fit DEGILDIR; sure 00:00'dan
+     00:00:00'a gecince degismez. Bu sabit geometri 1x1'de 16sp rakami
+     korurken sekiz karakteri de kirpmadan tasir. 2x1 varsayilan punto 21sp'dir.
+
      Dolgu 2dp: varsayilan yukseklik 1 hucre (40dp) ve o kutuda dolgunun her
      dp'si dogrudan puntodan dusuyor. Renkler WP-717'nin paylasilan dilinden
      (`widget_card_bg`, `widget_design_ink`, `widget_design_accent`); calisan
@@ -32,6 +36,7 @@
         android:maxLines="1"
         android:text="00:00"
         android:textColor="@color/widget_design_ink"
-        android:textSize="19sp"
+        android:textScaleX="0.75"
+        android:textSize="21sp"
         android:textStyle="bold" />
 </LinearLayout>

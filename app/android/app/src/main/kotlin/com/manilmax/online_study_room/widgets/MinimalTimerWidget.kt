@@ -62,11 +62,14 @@ class MinimalTimerWidgetProvider : AppWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val options = runCatching { appWidgetManager.getAppWidgetOptions(widgetId) }.getOrNull()
-            val size = widgetSizeClass(
-                minimalTimerSizeSpec,
-                options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0,
-                options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0,
-            )
+            val reportedWidthDp =
+                options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+            val reportedHeightDp =
+                options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+            val widthDp = reportedWidthDp.takeIf { it > 0 }
+                ?: WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP
+            val heightDp = reportedHeightDp.takeIf { it > 0 }
+                ?: WIDGET_MINIMAL_TIMER_DEFAULT_HEIGHT_DP
             val prefs = context.getSharedPreferences(
                 TimerStateStore.PREFS_NAME,
                 Context.MODE_PRIVATE,
@@ -86,7 +89,7 @@ class MinimalTimerWidgetProvider : AppWidgetProvider() {
                 setTextViewTextSize(
                     R.id.minimal_timer_widget_elapsed,
                     android.util.TypedValue.COMPLEX_UNIT_SP,
-                    minimalTimerTimeSp(size),
+                    minimalTimerTimeSp(widthDp, heightDp),
                 )
                 // Calisiyor/duruyor ayrimi RENKLE yapilir: ikinci bir satir
                 // eklemek widget'i "minimal" olmaktan cikarirdi. Simgeler
@@ -168,6 +171,9 @@ internal const val WIDGET_MINIMAL_TIMER_TALL_HEIGHT_DP = 110
 /** Kok dolgu 2dp: 40dp'lik varsayilan yukseklikte her dp puntodan duser. */
 internal const val WIDGET_MINIMAL_TIMER_PADDING_DP = 2
 
+/** Sabit yatay glif olcegi; sure uzayinca punto/olcek degismez. */
+internal const val WIDGET_MINIMAL_TIMER_TEXT_SCALE_X = 0.75f
+
 internal val minimalTimerSizeSpec = WidgetSizeSpec(
     WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP,
     WIDGET_MINIMAL_TIMER_DEFAULT_HEIGHT_DP,
@@ -181,20 +187,18 @@ internal val minimalTimerSizeSpec = WidgetSizeSpec(
  * Genislik merdiveni. Kirpma modeli WP-699 ile ayni: karakter genisligi
  * `0.60 x punto`, 8dp emniyet payi.
  *
- * 🔴 `NARROW` sinifi 40dp'den 149dp'ye kadar UZANIR ve baglayici kutu en
- * kucugudur. Bir hucrelik widget launcher'in gercek hucresine cizilir; en dar
- * yaygin hucre ~70dp'dir ve `getAppWidgetOptions` o gercek olcuyu bildirir
- * (beyandaki 40dp yalniz yerlestirme icindir). O kutuda "00:00" (5 karakter)
- * icin tavan `(70 - 2*2 - 8) / (0.60 * 5) = 19.3` -> 19sp.
- *   NARROW  70dp / 5 karakter: 19sp   (bir hucre — ilk saat boyunca gorunen bicim)
- *   NARROW 110dp / 8 karakter: (110 - 4 - 8) / 4.8 = 20.4, yani 19sp rahat sigar
- *   MEDIUM 150dp / 8 karakter: (150 - 4 - 8) / 4.8 = 28.7 -> 28sp
- *   WIDE   220dp / 8 karakter: (220 - 4 - 8) / 4.8 = 43.3 -> 38sp (estetik tavan)
- *
- * Bir hucrede sekiz karakterlik "00:00:00" HICBIR okunur puntoyla sigmaz;
- * varsayilanin 1x1 degil 2x1 olmasinin sebebi budur.
+ * `NARROW` sinifi 40dp'den 149dp'ye uzandigi icin tek basina yeterli degildir:
+ * 1x1 ve 2x1 ayni puntoyu alir. WP-728 bu araligi gercek kutu genisligiyle
+ * iki sabit basamaga ayirir. Minimal layout'un 0.75 yatay glif olcegiyle:
+ *   1x1  70dp / 8 karakter: 16sp -> 57.6dp (kullanilabilir 58dp)
+ *   2x1 110dp / 8 karakter: 21sp -> 75.6dp (kullanilabilir 98dp)
+ *   3x2 150dp / 8 karakter: 28sp -> 100.8dp (kullanilabilir 138dp)
+ *   4x2 220dp / 8 karakter: 38sp -> 136.8dp (kullanilabilir 208dp)
  */
-internal val minimalTimerTypography = SpRamp(19f, 28f, 38f)
+internal val minimalTimerTypography = SpRamp(21f, 28f, 38f)
+
+/** Gercek 1x1 genisligi icin ayri ve okunur alt basamak. */
+internal const val WIDGET_MINIMAL_TIMER_ONE_CELL_SP = 16f
 
 /**
  * Yukseklik tavani. Genislik merdiveni tek basina yetmez: 4x1 gibi genis ama
@@ -209,5 +213,21 @@ internal fun minimalTimerHeightCapSp(height: WidgetHeightClass): Float = when (h
     WidgetHeightClass.TALL -> 60f
 }
 
-internal fun minimalTimerTimeSp(size: WidgetSizeClass): Float =
-    minOf(minimalTimerTypography.of(size.width), minimalTimerHeightCapSp(size.height))
+/**
+ * Boyuta bagli ama icerikten bagimsiz punto merdiveni.
+ *
+ * Onceki merdiven 40..149dp araligini tek sinif sayiyordu: 1x1 ve 2x1 ayni
+ * 19sp'yi aliyordu. Ustelik 1x1 testi yalniz 5 karakteri olcuyor, calisan
+ * sayacin 8 karakterlik `00:00:00` halini disarida birakiyordu. Sabit 0.75
+ * yatay geometriyle 1x1'de 16sp'nin sekiz karakteri 57.6dp yer kaplar; yaygin
+ * 70dp hucrede 2dp dolgu ve 8dp emniyet sonrasi kalan alan 58dp'dir.
+ */
+internal fun minimalTimerTimeSp(widthDp: Int, heightDp: Int): Float {
+    val size = widgetSizeClass(minimalTimerSizeSpec, widthDp, heightDp)
+    val widthSp = if (widthDp in 1 until WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP) {
+        WIDGET_MINIMAL_TIMER_ONE_CELL_SP
+    } else {
+        minimalTimerTypography.of(size.width)
+    }
+    return minOf(widthSp, minimalTimerHeightCapSp(size.height))
+}
