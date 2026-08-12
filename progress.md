@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-08-09** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-08-12** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. Eskiden buraya işaret
@@ -125,6 +125,56 @@
   v56 kaydında `0100`dür.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### 2026-08-12 — v68 sonrası sayaç/widget/profil turu (WP-709…WP-726)
+
+**Durum: Kod tamamlandı; yerel otomatik kapı kırmızısız. CI, gerçek Android
+cihaz kabulü, `0134` pgTAP/remote terfisi ve v69 yayını bekliyor.**
+
+- **Repo/ortam gerçeği:** çalışma ağacı temiz; `main`, `origin/main`in 22 commit
+  önünde. Yerel migration head `0134`; staging ve production `0133`te ve iki
+  deploy/release kapısı da kilitli. Remote mutation, push, tag veya release bu
+  turda yapılmadı.
+- **Tam yerel kapı (`python scripts/test_all.py --full`):** 25 kapı · **21
+  geçti · 0 kırmızı · 4 atlandı** · 640 sn. Geçenler arasında tüm Flutter
+  paketi+kapsam, Android JVM, golden, Windows kritik akış entegrasyonu ve iki
+  Windows release smoke'u var. Atlananlar yeşil sayılmıyor: Deno tip/davranış
+  (Deno yok), Android emulator smoke (açık cihaz/emülatör yok), pgTAP local
+  replay (Docker motoru kalkmıyor).
+- **Kapsam:** genel `%76.91`, kritik yollar `%68.80`; ratchet eşikleri
+  `%64.50/%56.99`, geriye gidiş yok. 416 dosyanın 27'si hâlâ sıfır kapsamda.
+- **Kapının bulduğu gerçek dikiş:** `0134` pgTAP testi mevcut `057` numarasını
+  tekrar kullanıyordu ve Dart sözleşmesi eski adı okuyordu. Dosya `061`e
+  tekilleştirildi; yerel/head pinleri `0134`e ilerletildi; hedefli WP-721 turu
+  `17/17` geçti. SQL'in kendisi gerçek PostgreSQL'de **henüz koşmadı**.
+- **WP-709/716:** günlük hedef/ad/kamp hayvanı/sayaç/auth yenilemelerinde
+  tanıtım ekranı flaşı ve tamamlanma bayrağının sessiz düşmesi kapandı.
+- **WP-710/711/714:** Ayarlar sadeleşti; kamp hayvanı Gruplar'a taşındı; kamp
+  ateşi kişi sayfası/profil yolu ve grup ayarlarında üyelerin ilk ekrana
+  alınması tamamlandı.
+- **WP-712/713/724:** profil başlığı-taç düzeni sadeleşti; gizli başarımlar
+  `Bronz` diye etiketlenmiyor; başkasının profilinde büyük XP barı ve altı
+  renkli şerit yok, taç+toplam XP tek erişilebilir satırda.
+- **WP-715/722:** uygulama içi gerçek `Kompakt` sayaç 116 px; grid hücresi de
+  118 px'e iner. Eski `Minimal`, yaptığı işi anlatan `İnce halka` adını aldı.
+- **WP-717/718/719/725/726:** geri sayım üç sınav gösteriyor; ortak renk/bar
+  dili kuruldu; 1x1 sayaç okunur ve tüm yüzey başlat/durdur; ders hafızası ve
+  uygun boyutta ders seçimi var; minimal sayaç Android + uygulama içi katalogda;
+  görev widget'ı içeriğe göre küçülüyor; stats/grup hedefi/sıralama görsel dile
+  geçti; native sabit metinler kayıtlı uygulama dilini izliyor.
+- **WP-721:** `Kadim Üye` + `Metronom` kodu ve geri doldurmalı `0134` hazır.
+  `1337 Elite` aktif/dormant l10n, fixture, katalog ve kanonik başarım
+  belgesinden silindi; canlı DB/XP temizliği tarihsel `0056` ile zaten yapılmıştı.
+  Uygulanmış migration/recovery kanıtları audit/replay bütünlüğü için değişmedi.
+
+**Cihazda doğrulanmalı:** Samsung launcher'da 1x1/2x1/minimal sayaç, ders
+seçimi, TR/EN ve açık/koyu tema; geri sayımda üç sınav; stats/grup hedefi/
+sıralama üç boyut sınıfı; başka üye profili; kompakt sayaç; kamp ateşi ve grup
+ayarları. Bu kabul olmadan kartlar `Tamamlandı`/`Yayınlandı` sayılmaz.
+
+**Sonraki güvenli sıra:** push + CI (özellikle Deno, Android emulator ve Database
+Gates pgTAP) → `0134` staging dry-run/apply/post-check → staging beta gerçek
+cihaz kabulü → production için somut GO → production apply → v69 release.
 
 > 🔴 **PARALEL AJAN MODELİ KAPANDI (2026-07-31, sahip kararı).** Sekizli, ardından
 > dörtlü Codex hattı bırakıldı; iş **tek ajanla** yürüyor. Eski `### Ajan A/B/C/D`
