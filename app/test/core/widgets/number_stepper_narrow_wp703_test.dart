@@ -23,9 +23,11 @@
 // Yalniz (2) yazilsaydi, tasmayi cagri yerinde gizleyen bir yama da yesil
 // yapardi; yalniz (1) yazilsaydi gercek ekranin olculdugu iddia edilemezdi.
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/widgets/number_stepper.dart';
 import 'package:online_study_room/features/profile/widgets/goal_editor_dialog.dart';
+import 'package:online_study_room/features/profile/widgets/manual_session_dialog.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Yaygin telefon genisligi. Sayi burada durur: cagri yerindeki bir sabite
@@ -87,18 +89,133 @@ void main() {
 
       // Cizilen satir kutuyu gercekten asmiyor mu — istisna yutulsa bile bu
       // olcum duser.
-      final row = find.descendant(
+      final control = find.descendant(
         of: find.byType(NumberStepper),
-        matching: find.byType(Row),
+        matching: find.byType(Stack),
       );
       expect(
-        tester.getSize(row).width,
+        tester.getSize(control).width,
         lessThanOrEqualTo(_kStepperSlot),
-        reason: 'Sayac satiri kendisine verilen kutudan genis cizildi.',
+        reason: 'Sayac kontrolu kendisine verilen kutudan genis cizildi.',
       );
     });
 
-    testWidgets('gunluk hedef diyalogu 360 dp telefonda tasmaz', (tester) async {
+    testWidgets('1 ve 2 basamak ayni titleLarge puntosuyla cizilir', (
+      tester,
+    ) async {
+      _phone(tester);
+      var value = 9;
+      await tester.pumpWidget(
+        _app(
+          StatefulBuilder(
+            builder: (context, setState) => Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: _kStepperSlot,
+                  child: NumberStepper(
+                    label: 'Dakika',
+                    value: value,
+                    min: 0,
+                    max: 59,
+                    onChanged: (v) => setState(() => value = v),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      double renderedFontSize(String text) {
+        final paragraph = tester.renderObject<RenderParagraph>(find.text(text));
+        final span = paragraph.text as TextSpan;
+        return span.style?.fontSize ?? 0;
+      }
+
+      final singleDigitSize = renderedFontSize('9');
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      final doubleDigitSize = renderedFontSize('10');
+
+      expect(doubleDigitSize, singleDigitSize);
+      expect(
+        find.descendant(
+          of: find.byType(NumberStepper),
+          matching: find.byType(FittedBox),
+        ),
+        findsNothing,
+        reason:
+            'RenderParagraph puntosu degismese bile FittedBox boyama aninda '
+            'rakami kucultur; dar geometri sayiyi olceklendirmemeli.',
+      );
+      expect(
+        doubleDigitSize,
+        greaterThanOrEqualTo(20),
+        reason:
+            '59a yaklasirken sayi okunamayacak kadar kuculmemeli; '
+            'RenderParagraph gercek puntosu olculuyor.',
+      );
+
+      await tester.pumpWidget(
+        _app(
+          Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: _kStepperSlot,
+                child: NumberStepper(
+                  label: 'Dakika',
+                  value: 59,
+                  min: 0,
+                  max: 59,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final maxValueSize = renderedFontSize('59');
+      expect(maxValueSize, singleDigitSize);
+      expect(maxValueSize, greaterThanOrEqualTo(20));
+    });
+
+    testWidgets('genis alanda kontrol 110 dp geometrisini korur', (
+      tester,
+    ) async {
+      _phone(tester);
+      await tester.pumpWidget(
+        _app(
+          Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 220,
+                child: NumberStepper(
+                  label: 'Dakika',
+                  value: 59,
+                  min: 0,
+                  max: 59,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final control = find.descendant(
+        of: find.byType(NumberStepper),
+        matching: find.byType(Stack),
+      );
+      expect(tester.getSize(control).width, _kStepperSlot);
+    });
+
+    testWidgets('gunluk hedef diyalogu 360 dp telefonda tasmaz', (
+      tester,
+    ) async {
       _phone(tester);
       late BuildContext ctx;
       await tester.pumpWidget(
@@ -126,6 +243,34 @@ void main() {
         reason:
             'ux_quick_wins_wp555_test.dart bu diyalogu 360 dp yerine 800 dp\'de '
             'aciyor cunku burada "RenderFlex overflowed by 8.0 pixels" dusuyor.',
+      );
+    });
+
+    testWidgets('manuel sure diyalogu 360 dp telefonda tasmaz', (tester) async {
+      _phone(tester);
+      late BuildContext ctx;
+      await tester.pumpWidget(
+        _app(
+          Scaffold(
+            body: Builder(
+              builder: (context) {
+                ctx = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      showManualSessionDialog(ctx, initialSeconds: 23 * 3600 + 59 * 60);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('23'), findsOneWidget);
+      expect(find.text('59'), findsOneWidget);
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Manuel sure diyalogundaki iki 110 dp slot tasmamali.',
       );
     });
 
@@ -198,12 +343,21 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
+      expect(value, 6, reason: 'Tasma duzeltmesi dugmenin isini bozmamali.');
+      expect(find.text('6'), findsOneWidget);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byIcon(Icons.add)),
+      );
+      await tester.pump(const Duration(milliseconds: 401));
+      await tester.pump(const Duration(milliseconds: 160));
+      await gesture.up();
+      await tester.pump();
       expect(
         value,
-        6,
-        reason: 'Tasma duzeltmesi dugmenin isini bozmamali.',
+        greaterThan(7),
+        reason: 'Basili tutarak tekrar bozulmamali.',
       );
-      expect(find.text('6'), findsOneWidget);
     });
   });
 }
