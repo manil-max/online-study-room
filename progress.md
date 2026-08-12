@@ -128,13 +128,15 @@
 
 ### 2026-08-12 — v68 sonrası sayaç/widget/profil turu (WP-709…WP-726)
 
-**Durum: Kod, tam yerel kapı, CI ve `0134` staging/production terfisi tamamlandı.
-v69 release commit/tag/paketleme aşamasında; fiziksel cihaz kabulü ayrıca bekler.**
+**Durum: v69 stable tamamen yayında. Kod, tam yerel kapı, CI, `0134`
+staging/production terfisi ve Android/Windows paketleri tamamlandı; fiziksel
+Samsung launcher kabulü ayrıca bekler.**
 
 - **Repo/ortam gerçeği:** yerel, staging ve production migration head `0134`.
   Staging apply `31596633903` (geri doldurma: 1 kullanıcı), production apply
   `31597531629` (7 kullanıcı); iki post-check de `0134|0134|0134`. Deploy
-  kapıları apply sonrasında yeniden kilitlendi. v69 tag/release henüz yok.
+  kapıları apply sonrasında yeniden kilitlendi. v69 tag SHA'sı
+  `2d7a98cfce066bdc853b11e00c933a3b7f7e8239`.
 - **Tam yerel kapı (`python scripts/test_all.py --full`):** 25 kapı · **21
   geçti · 0 kırmızı · 4 atlandı** · 659 sn. Geçenler arasında tüm Flutter
   paketi+kapsam, Android JVM, golden, Windows kritik akış entegrasyonu ve iki
@@ -172,15 +174,21 @@ v69 release commit/tag/paketleme aşamasında; fiziksel cihaz kabulü ayrıca be
   boyut sınıfına bağlı sabit basamak.
 - **CI:** `31597052350` bütün işleriyle yeşil; Android API 30/33 emülatör,
   Windows entegrasyon/golden, Deno ve tam Flutter paketi dahil.
+- **v69 stable:** Release Orchestrator `31599313916` **6/6 yeşil**. GitHub
+  Release'te APK, Play AAB ve Windows ZIP ile SHA dosyaları var. Bağımsız indirme
+  sonrası üç SHA-256 da eşleşti: APK `dc604121…d77d0c20`, AAB
+  `ce8955b3…a55a920b`, Windows ZIP `b4cd5307…3423d024`. Manifest status
+  `complete`, Android/Windows head `0134`; Windows ZIP smoke geçti.
 
 **Cihazda doğrulanmalı:** Samsung launcher'da 1x1/2x1/minimal sayaç, ders
 seçimi, TR/EN ve açık/koyu tema; geri sayımda üç sınav; stats/grup hedefi/
 sıralama üç boyut sınıfı; başka üye profili; kompakt sayaç; kamp ateşi ve grup
 ayarları. Bu kabul olmadan kartlar `Tamamlandı`/`Yayınlandı` sayılmaz.
 
-**Sonraki güvenli sıra:** v69 release-notes kontratı + preflight → release commit
-ve `v69` tag → Android APK/AAB + Windows ZIP paketleme → Play doğrulama/yükleme
-→ fiziksel Samsung launcher kabulü.
+**Sonraki güvenli sıra:** fiziksel Samsung launcher'da 1×1/minimal sayaç,
+`00:00:00`, ders seçimi, üç sınav ve açık/koyu tema kabulü. Store imzasını
+Microsoft attığı için Windows MSIX GitHub Release'e konmadı; Partner Center
+artefaktı release koşumunda ayrı tutuldu.
 
 > 🔴 **PARALEL AJAN MODELİ KAPANDI (2026-07-31, sahip kararı).** Sekizli, ardından
 > dörtlü Codex hattı bırakıldı; iş **tek ajanla** yürüyor. Eski `### Ajan A/B/C/D`
