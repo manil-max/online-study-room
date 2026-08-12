@@ -453,14 +453,20 @@ class AchievementShowcaseState extends State<AchievementShowcase>
         SizedBox(height: 10),
       ],
       _CrownHeader(rank: rank, rankColor: rankColor, xp: xp),
-      SizedBox(height: 12),
-      _XpBar(
-        progress: bar.progress,
-        xp: xp,
-        currentXp: bar.currentXp,
-        nextThreshold: bar.nextThreshold,
-        color: rankColor,
-      ),
+      // WP-724: salt-okunur sosyal profilde rütbe + toplam XP zaten yukarıdaki
+      // tek satırda. Aynı bilgiyi büyük bir ilerleme çubuğu ve altı renkli
+      // kademe şeridiyle tekrar etme. Kendi profil kolunun mevcut ilerleme,
+      // ödül ve keşif akışı aynen korunur.
+      if (widget.isSelf) ...[
+        SizedBox(height: 12),
+        _XpBar(
+          progress: bar.progress,
+          xp: xp,
+          currentXp: bar.currentXp,
+          nextThreshold: bar.nextThreshold,
+          color: rankColor,
+        ),
+      ],
       if (widget.isSelf) ...[
         SizedBox(height: 12),
         _StudyXpNote(),
@@ -789,60 +795,72 @@ class _CrownHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     // WP-512: XP eşikleri sayfasının tek kapısı Profil'deki avatarın tacıydı
     // (`gamification_card.dart`), kullanıcı onu bulamıyordu. Başarımlar
     // ekranındaki bu rütbe satırı ikinci kapı; sağdaki ⓘ ipucu kapıyı görünür
     // kılar.
-    return InkWell(
+    return Semantics(
       key: const ValueKey('crown-header-tiers-gate'),
+      button: true,
       onTap: () => showCrownTiers(context, currentXp: xp),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 48),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: rankColor.withValues(alpha: 0.12),
+      label:
+          '${_crownLabel(l10n, rank)}, ${l10n.commonXpMiktari(xp)}, '
+          '${l10n.profileTumKademeler}',
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: () => showCrownTiers(context, currentXp: xp),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: rankColor.withValues(alpha: 0.35)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.workspace_premium, color: rankColor, size: 22),
-            SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                _crownLabel(AppLocalizations.of(context), rank),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: rankColor,
-                  fontWeight: FontWeight.bold,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: rankColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: rankColor.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.workspace_premium, color: rankColor, size: 22),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    _crownLabel(l10n, rank),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: rankColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: rankColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                // WP-504: birim katalogdan (bkz. `commonXpMiktari`).
-                AppLocalizations.of(context).commonXpMiktari(xp),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: rankColor,
-                  fontWeight: FontWeight.w900,
+                SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: rankColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    // WP-504: birim katalogdan (bkz. `commonXpMiktari`).
+                    l10n.commonXpMiktari(xp),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: rankColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(width: 6),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: rankColor.withValues(alpha: 0.75),
+                ),
+              ],
             ),
-            SizedBox(width: 6),
-            Icon(
-              Icons.info_outline,
-              size: 16,
-              color: rankColor.withValues(alpha: 0.75),
-              semanticLabel: AppLocalizations.of(context).profileTumKademeler,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -869,6 +887,7 @@ class _XpBar extends StatelessWidget {
     final theme = Theme.of(context);
     final atCap = xp >= kCrownXpThresholds.last;
     return Column(
+      key: const ValueKey('crown-xp-progress-section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Semantics(
