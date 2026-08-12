@@ -29,7 +29,7 @@
 -- Backfill `where ... is null` gibi bir kalintiya DEGIL, dogrudan kaynak
 -- tablolara bakar (`group_members`, `goal_progress_events`), yani tazede sifir
 -- satira dokunup yesil yanan bir ifade degildir. Yine de bos bir veritabaninda
--- hicbir sey KANITLAMAZ; davranis kaniti `supabase/tests/057_*_wp721.test.sql`
+-- hicbir sey KANITLAMAZ; davranis kaniti `supabase/tests/061_*_wp721.test.sql`
 -- icindeki DOLU fiksturdedir.
 --
 -- Odul yolu: `process_achievement_event` (0057) ilerlemeyi sabit bir `case

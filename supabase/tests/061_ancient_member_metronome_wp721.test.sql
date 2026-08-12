@@ -1,4 +1,4 @@
--- 057_ancient_member_metronome_wp721.test.sql
+-- 061_ancient_member_metronome_wp721.test.sql
 -- WP-721 — "Kadim Uye" ve "Metronom" basarimlarinin sunucu ucu.
 --
 -- 🔴 Bu dosyanin varlik sebebi geri doldurmadir. Depoda kayitli ders (0124,
