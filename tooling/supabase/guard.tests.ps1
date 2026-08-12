@@ -212,7 +212,7 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
 Assert-Equal $contract.production.migration_head '0134' 'production hedefi 0134: Kadim Uye + Metronom basarimlari'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0134 production apply icin tek seferlik acik; post-check sonrasi yeniden kilitlenecek'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0134 production apply BITTI (run 31597531629, post-check head 0134) -> yeniden kilitli'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin

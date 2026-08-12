@@ -4,6 +4,46 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v69 / 1.0.69+69] - 2026-08-12
+
+> **Sayaç ve ana ekran widget'ları artık gerçekten boyuta göre tasarlanıyor.**
+> Bu tur, beta geri bildirimindeki “kocaman kutuda düz metin”, tek sınav,
+> küçük sayaç rakamı ve uygulama içindeki sözde “minimal” görünüm sorunlarını
+> birlikte kapatıyor.
+
+### Öne çıkanlar
+- Uygulama içindeki yeni **Kompakt sayaç** 116 px; ızgara hücresi de 118 px'e
+  iner. Eski “Minimal” artık yaptığı işi söyleyen **İnce halka** adında.
+- Android ana ekranında yeni minimal sayaç var. En küçük 1×1 boyutta bütün
+  yüzey başlat/durdur; ders hafızası korunuyor, uygun boyutta ders seçilebiliyor.
+- Sınav widget'ı tek sınav yerine üç sınav gösteriyor. Görev, sıralama,
+  istatistik ve grup widget'ları renkli bar/yay diliyle yeniden tasarlandı;
+  boş içerikte gereksiz dev kutu kalmıyor.
+- **Kadim Üye** ve **Metronom** başarımları eklendi. Metronom günlük seriden
+  farklı olarak haftada beş hedef gününü sayıyor; birkaç kaçırılan gün bütün
+  ilerlemeyi sıfırlamıyor.
+
+### Düzeltmeler
+- Manuel süre/hedef seçicide 9→10 veya 59'a geçince rakam artık küçülmüyor;
+  değerler sabit 22sp, düğmeler en az 48×48 dp.
+- Minimal widget'ın testi yalnız `00:00` ölçüyordu; gerçek `00:00:00` çalışma
+  biçimi de kapsandı. Punto içerik uzunluğuna göre oynayan auto-fit değil,
+  kutu boyutuna bağlı sabit basamaklarla belirleniyor.
+- Grup ayarlarında üyeler ilk ekrana taşındı; tanıtım ekranı hedef/ad/hayvan/
+  sayaç yenilemelerinde yeniden parlamıyor; kamp ateşi ve profil yolları düzeldi.
+- Profil başlığı ve taç alanı sadeleşti. Başka birinin profilinde büyük XP barı
+  ve altı renkli şerit kaldırıldı; taç ve toplam XP tek erişilebilir satırda.
+- Widget metinleri cihaz diline takılı kalmak yerine uygulamada seçilen dili
+  izliyor. Gizli başarımlar artık yanlışlıkla “Bronz” yazmıyor.
+- `1337 Elite` aktif katalog, çeviri, fixture ve ürün belgelerinden kaldırıldı.
+
+### Doğrulama
+- Yerel tam kapı: 25 kontrol, 21 geçti, 0 kırmızı, 4 ortam-bağımlı atlama.
+- GitHub CI tüm işleriyle yeşil; veritabanı zinciri 65 dosya / 922 pgTAP
+  assertion ile gerçek PostgreSQL'de geçti.
+- `0134` staging ve production'a sırayla uygulandı; iki post-check de
+  yerel/uzak/uygulanmış head'i `0134` gösterdi.
+
 ## [v68 / 1.0.68+68] - 2026-08-11
 
 > **Ana ekran widget'ları turu.** İki kaynak: beta testçisinin *"Sınav geri

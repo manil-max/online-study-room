@@ -3,6 +3,46 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.69",
+      "buildNumber": 69,
+      "channel": "stable",
+      "date": "2026-08-12",
+      "title": "v69: sayac ve widget kalite turu",
+      "highlights": [
+        "Uygulama icindeki yeni Kompakt sayac gercekten daha az yer kapliyor. Eski Minimal secenegi, karti kucultmedigi icin artik Ince halka adini tasiyor.",
+        "Android ana ekranina minimal sayac eklendi. En kucuk 1x1 boyutta butun yuzeye dokunarak baslatip durdurabilir, uygun boyutta ders secebilirsin.",
+        "Sinav geri sayimi uc sinavi birlikte gosteriyor. Gorev, istatistik, grup hedefi ve siralama widget'lari renkli ve boyuta uyumlu yeni tasarima gecti.",
+        "Kadim Uye ve Metronom basarimlari eklendi. Metronom, birkac gunu kacirdiginda butun ilerlemeyi sifirlamadan duzenli haftalari odullendiriyor."
+      ],
+      "fixes": [
+        "Manuel sure ve hedef seciminde 9'dan 10'a gecince rakam artik kuculmuyor.",
+        "1x1 sayac widget'inda sekiz karakterli calisan sure kirpilmiyor; punto icerik uzadikca oynamiyor.",
+        "Widget metinleri uygulamada sectigin dili izliyor ve bos widget'lar gereksiz buyuk kutu gostermiyor.",
+        "Grup ayarlarinda uyeler yukariya alindi; profil, tac, kamp atesi ve tanitim ekrani duzenleri sadelesti.",
+        "Gizli basarimlar yanlislikla Bronz yazmiyor ve 1337 Elite aktif urun yuzeylerinden kaldirildi."
+      ],
+      "notes": [
+        "Yeni basarimlar mevcut gecmisinle geriye donuk hesaplanir."
+      ],
+      "titleEn": "v69: timer and widget quality update",
+      "highlightsEn": [
+        "The new Compact in-app timer genuinely takes less space. The old Minimal option is now called Thin ring because it changes the stroke, not the card size.",
+        "A minimal Android home-screen timer is available. At 1x1 the whole surface starts or stops it, and larger sizes can select a subject.",
+        "The exam countdown shows three exams. Tasks, statistics, group goal and ranking widgets now use a colorful, size-aware design.",
+        "Ancient Member and Metronome achievements were added. Metronome rewards consistent weeks without wiping all progress after a few missed days."
+      ],
+      "fixesEn": [
+        "Numbers no longer shrink when a manual duration or goal moves from 9 to 10.",
+        "The 1x1 timer fits the eight-character running time without changing its point size as the text grows.",
+        "Widget text follows the language selected in the app, and empty widgets no longer paint an unnecessarily large box.",
+        "Members moved up in group settings, while profile, crown, campfire and intro layouts were simplified.",
+        "Hidden achievements no longer say Bronze incorrectly, and 1337 Elite was removed from active product surfaces."
+      ],
+      "notesEn": [
+        "The new achievements are calculated retroactively from your existing history."
+      ]
+    },
+    {
       "versionName": "1.0.68",
       "buildNumber": 68,
       "channel": "stable",

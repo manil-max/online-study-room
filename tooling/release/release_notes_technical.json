@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.69",
+      "buildNumber": 69,
+      "channel": "stable",
+      "date": "2026-08-12",
+      "title": "v69: WP-709…WP-728 + 0134",
+      "highlights": [
+        "Kompakt timer card 116px, grid cell 118px; minimal was renamed Thin ring and explicitly documented as a stroke style.",
+        "Android widgets: three-exam countdown, minimal timer provider/catalog card, whole-surface 1x1 toggle, subject memory/selection, compact task empty state, shared arc/bar visual language, stored app locale.",
+        "Kadim Uye and Metronom are server-authoritative through 0134 with historical backfill; active 1337 catalog/l10n/fixtures/docs were removed while immutable migration history remains replayable.",
+        "Profile/group/settings/campfire/intro flows were simplified and measured at narrow widths."
+      ],
+      "fixes": [
+        "WP-727: NumberStepper's FittedBox(scaleDown) was the shrink root cause. It is now a deterministic 110x48 Stack with direct 22sp value and two 48x48 hit targets; 9/10/59 and 23h59m are measured.",
+        "WP-728: the old minimal-widget test covered only five-character 00:00. Fixed size-class typography and textScaleX=0.75 now cover eight-character 00:00:00 without content-driven auto-fit; standard timer geometry was measured safe and left unchanged.",
+        "WP-721 pgTAP first failed because a Flutter display-subset count was used as the server catalog total. The server contract was corrected to 27 without weakening the secret count assertion; Database Gates then passed.",
+        "A stale shared l10n base dropped profileCrownSuAnki from committed ARB while generated working files hid it; integration audit restored the key before release."
+      ],
+      "notes": [
+        "Local full gate: 25 total / 21 pass / 0 red / 4 skipped (Deno, emulator and Docker-dependent lanes unavailable locally). CI run 31597052350 closed all remote lanes green.",
+        "Database replay run 31596039569 and apply runs 31596633903 (staging) / 31597531629 (production) passed 65 files and 922 pgTAP assertions. Post-checks show 0134 in local/remote/applied columns; live backfill processed 1 staging user and 7 production users.",
+        "Release gates were re-locked immediately after each apply. Production has no PITR/snapshot under the recorded owner waiver."
+      ],
+      "titleEn": "v69: WP-709 through WP-728 and migration 0134",
+      "highlightsEn": [
+        "Compact timer card, redesigned Android widgets, two new achievements and narrow-screen profile/group/settings fixes.",
+        "Numeric typography is deterministic: no content-driven shrinking in manual steppers or the minimal home-screen timer."
+      ],
+      "fixesEn": [
+        "Removed the hidden FittedBox scale-down path and expanded the Android timer contract from idle five-character text to the real eight-character running value.",
+        "Corrected the pgTAP server-catalog expectation after the first real PostgreSQL run exposed the client/server subset mismatch."
+      ],
+      "notesEn": [
+        "Both protected environments reached migration 0134, and all deployment switches were re-locked before packaging."
+      ]
+    },
+    {
       "versionName": "1.0.68",
       "buildNumber": 68,
       "channel": "stable",

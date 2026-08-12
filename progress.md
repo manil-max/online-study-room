@@ -128,25 +128,25 @@
 
 ### 2026-08-12 — v68 sonrası sayaç/widget/profil turu (WP-709…WP-726)
 
-**Durum: Kod tamamlandı; yerel otomatik kapı kırmızısız. CI, gerçek Android
-cihaz kabulü, `0134` pgTAP/remote terfisi ve v69 yayını bekliyor.**
+**Durum: Kod, tam yerel kapı, CI ve `0134` staging/production terfisi tamamlandı.
+v69 release commit/tag/paketleme aşamasında; fiziksel cihaz kabulü ayrıca bekler.**
 
-- **Repo/ortam gerçeği:** çalışma ağacı temiz; `main`, `origin/main`in 22 commit
-  önünde. Yerel migration head `0134`; staging ve production `0133`te ve iki
-  deploy/release kapısı da kilitli. Remote mutation, push, tag veya release bu
-  turda yapılmadı.
+- **Repo/ortam gerçeği:** yerel, staging ve production migration head `0134`.
+  Staging apply `31596633903` (geri doldurma: 1 kullanıcı), production apply
+  `31597531629` (7 kullanıcı); iki post-check de `0134|0134|0134`. Deploy
+  kapıları apply sonrasında yeniden kilitlendi. v69 tag/release henüz yok.
 - **Tam yerel kapı (`python scripts/test_all.py --full`):** 25 kapı · **21
-  geçti · 0 kırmızı · 4 atlandı** · 640 sn. Geçenler arasında tüm Flutter
+  geçti · 0 kırmızı · 4 atlandı** · 659 sn. Geçenler arasında tüm Flutter
   paketi+kapsam, Android JVM, golden, Windows kritik akış entegrasyonu ve iki
   Windows release smoke'u var. Atlananlar yeşil sayılmıyor: Deno tip/davranış
   (Deno yok), Android emulator smoke (açık cihaz/emülatör yok), pgTAP local
   replay (Docker motoru kalkmıyor).
 - **Kapsam:** genel `%76.91`, kritik yollar `%68.80`; ratchet eşikleri
   `%64.50/%56.99`, geriye gidiş yok. 416 dosyanın 27'si hâlâ sıfır kapsamda.
-- **Kapının bulduğu gerçek dikiş:** `0134` pgTAP testi mevcut `057` numarasını
-  tekrar kullanıyordu ve Dart sözleşmesi eski adı okuyordu. Dosya `061`e
-  tekilleştirildi; yerel/head pinleri `0134`e ilerletildi; hedefli WP-721 turu
-  `17/17` geçti. SQL'in kendisi gerçek PostgreSQL'de **henüz koşmadı**.
+- **Veritabanı kanıtı:** `0134` testi `061`e tekilleştirildi. İlk gerçek
+  PostgreSQL koşumu, istemci görünüm alt kümesinin sayısını sunucu kataloğu
+  toplamı sanan tek yanlış iddiayı kırmızıya çevirdi; sunucu toplamı 27 olarak
+  düzeltildi. Sonraki kapılar **65 dosya / 922 pgTAP** yeşil.
 - **WP-709/716:** günlük hedef/ad/kamp hayvanı/sayaç/auth yenilemelerinde
   tanıtım ekranı flaşı ve tamamlanma bayrağının sessiz düşmesi kapandı.
 - **WP-710/711/714:** Ayarlar sadeleşti; kamp hayvanı Gruplar'a taşındı; kamp
@@ -166,15 +166,21 @@ cihaz kabulü, `0134` pgTAP/remote terfisi ve v69 yayını bekliyor.**
   `1337 Elite` aktif/dormant l10n, fixture, katalog ve kanonik başarım
   belgesinden silindi; canlı DB/XP temizliği tarihsel `0056` ile zaten yapılmıştı.
   Uygulanmış migration/recovery kanıtları audit/replay bütünlüğü için değişmedi.
+- **WP-727/728:** manuel süre/hedef seçicideki gizli `FittedBox(scaleDown)`
+  kaldırıldı; 9/10/59 sabit 22sp. Minimal 1x1 widget sözleşmesi 5 karakterden
+  gerçek 8 karaktere genişletildi; punto içerikle oynayan auto-fit değil,
+  boyut sınıfına bağlı sabit basamak.
+- **CI:** `31597052350` bütün işleriyle yeşil; Android API 30/33 emülatör,
+  Windows entegrasyon/golden, Deno ve tam Flutter paketi dahil.
 
 **Cihazda doğrulanmalı:** Samsung launcher'da 1x1/2x1/minimal sayaç, ders
 seçimi, TR/EN ve açık/koyu tema; geri sayımda üç sınav; stats/grup hedefi/
 sıralama üç boyut sınıfı; başka üye profili; kompakt sayaç; kamp ateşi ve grup
 ayarları. Bu kabul olmadan kartlar `Tamamlandı`/`Yayınlandı` sayılmaz.
 
-**Sonraki güvenli sıra:** push + CI (özellikle Deno, Android emulator ve Database
-Gates pgTAP) → `0134` staging dry-run/apply/post-check → staging beta gerçek
-cihaz kabulü → production için somut GO → production apply → v69 release.
+**Sonraki güvenli sıra:** v69 release-notes kontratı + preflight → release commit
+ve `v69` tag → Android APK/AAB + Windows ZIP paketleme → Play doğrulama/yükleme
+→ fiziksel Samsung launcher kabulü.
 
 > 🔴 **PARALEL AJAN MODELİ KAPANDI (2026-07-31, sahip kararı).** Sekizli, ardından
 > dörtlü Codex hattı bırakıldı; iş **tek ajanla** yürüyor. Eski `### Ajan A/B/C/D`
