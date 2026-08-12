@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.timer.TimerStateStore
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -413,6 +414,18 @@ internal fun leaderboardRow2Visible(height: WidgetHeightClass): Boolean =
 internal fun leaderboardRow3Visible(height: WidgetHeightClass): Boolean =
     height == WidgetHeightClass.TALL
 
+/** Tire/bos placeholder satirlari artik gercek bir siralama satiri gibi cizilmez. */
+internal fun leaderboardRowHasContent(value: String): Boolean =
+    value.trim().let { it.isNotEmpty() && it != "-" && it != "\u2014" }
+
+/** `#2` ya da `#2 (detay)` bicimindeki kendi sira aynasini ilk uce esler. */
+internal fun leaderboardHighlightedPosition(myRank: String): Int? =
+    Regex("^#([1-3])(?:\\b|\\s|\\u00B7)")
+        .find(myRank.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.toIntOrNull()
+
 /**
  * Launcher'ın bildirdiği boyut. `OPTION_APPWIDGET_MIN_*` **bilerek** seçildi:
  * `MAX_*` diğer ekran yönündeki ölçüdür; ona göre çizmek, cihaz döndüğünde
@@ -635,20 +648,30 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        val strings = widgetLocalizedContext(context)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_stats_widget).apply {
+                setContentDescription(
+                    R.id.stats_widget_root,
+                    strings.getString(R.string.cd_stats_widget),
+                )
                 val size = appWidgetManager.sizeClass(WidgetSizeSpecs.stats, widgetId)
                 val percentText = widgetData.text(StudyWidgetKeys.DailyGoalPercent, "0%")
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
                     R.id.stats_widget_title,
-                    context.getString(R.string.widget_daily_goal),
+                    strings.getString(R.string.widget_daily_goal),
                 )
                 setTextViewText(
                     R.id.stats_widget_today,
                     percentText,
                 )
-                setProgressBar(R.id.stats_goal_progress, 100, progress, false)
+                setProgressBar(
+                    R.id.stats_goal_progress,
+                    WidgetDesign.PROGRESS_MAX,
+                    WidgetDesign.barPercent(progress / 100.0),
+                    false,
+                )
                 setOnClickPendingIntent(
                     R.id.stats_widget_root,
                     WidgetDeepLink.pendingIntent(
@@ -661,14 +684,14 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                     R.id.stats_widget_week,
                     widgetData.text(
                         StudyWidgetKeys.DailyGoalDetail,
-                        context.getString(R.string.widget_goal_detail_zero),
+                        strings.getString(R.string.widget_goal_detail_zero),
                     ),
                 )
                 setTextViewText(
                     R.id.stats_widget_streak,
                     widgetData.text(
                         StudyWidgetKeys.StatsStreak,
-                        context.getString(R.string.widget_streak_zero),
+                        strings.getString(R.string.widget_streak_zero),
                     ),
                 )
                 // WP-699: iki satır artık AYRI eşiklerde açılır. Eskiden ikisi
@@ -714,30 +737,53 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        val strings = widgetLocalizedContext(context)
+        val ink = ContextCompat.getColor(context, R.color.widget_design_ink)
+        val accent = ContextCompat.getColor(context, R.color.widget_design_accent)
         appWidgetIds.forEach { widgetId ->
             val views =
                 RemoteViews(context.packageName, R.layout.odak_leaderboard_widget).apply {
+                    setContentDescription(
+                        R.id.leaderboard_widget_root,
+                        strings.getString(R.string.cd_leaderboard_widget),
+                    )
                     val size = appWidgetManager.sizeClass(WidgetSizeSpecs.leaderboard, widgetId)
+                    val myRank = widgetData.text(
+                        StudyWidgetKeys.LeaderboardMyRank,
+                        strings.getString(R.string.widget_no_rank),
+                    )
+                    val short = leaderboardShowsMyRank(size.height)
+                    val row1 = if (short) {
+                        myRank
+                    } else {
+                        widgetData.text(
+                            StudyWidgetKeys.LeaderboardRow1,
+                            strings.getString(R.string.widget_no_records),
+                        )
+                    }
+                    val row1HasRank = short || (
+                        widgetData.contains(StudyWidgetKeys.LeaderboardRow1) &&
+                            leaderboardRowHasContent(row1)
+                        )
+                    val row2 = widgetData.text(StudyWidgetKeys.LeaderboardRow2, "-")
+                    val row3 = widgetData.text(StudyWidgetKeys.LeaderboardRow3, "-")
+                    val highlighted = leaderboardHighlightedPosition(myRank)
+
                     setTextViewText(
                         R.id.leaderboard_widget_title,
                         widgetData.text(
                             StudyWidgetKeys.LeaderboardTitle,
-                            context.getString(R.string.widget_leaderboard_title),
+                            strings.getString(R.string.widget_leaderboard_title),
                         ),
                     )
+                    setTextViewText(R.id.leaderboard_widget_row_1, row1)
                     setTextViewText(
-                        R.id.leaderboard_widget_row_1,
-                        if (leaderboardShowsMyRank(size.height)) {
-                            widgetData.text(
-                                StudyWidgetKeys.LeaderboardMyRank,
-                                context.getString(R.string.widget_no_rank),
-                            )
-                        } else {
-                            widgetData.text(
-                                StudyWidgetKeys.LeaderboardRow1,
-                                context.getString(R.string.widget_no_records),
-                            )
-                        },
+                        R.id.leaderboard_widget_rank_1,
+                        if (short) strings.getString(R.string.widget_you) else "1",
+                    )
+                    setViewVisibility(
+                        R.id.leaderboard_widget_rank_1,
+                        if (row1HasRank) View.VISIBLE else View.GONE,
                     )
                     setOnClickPendingIntent(
                         R.id.leaderboard_widget_root,
@@ -747,24 +793,36 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                             widgetId,
                         ),
                     )
-                    setTextViewText(
-                        R.id.leaderboard_widget_row_2,
-                        widgetData.text(StudyWidgetKeys.LeaderboardRow2, "-"),
+                    setTextViewText(R.id.leaderboard_widget_row_2, row2)
+                    setTextViewText(R.id.leaderboard_widget_row_3, row3)
+                    setTextColor(
+                        R.id.leaderboard_widget_row_1,
+                        if (short || highlighted == 1) accent else ink,
                     )
-                    setTextViewText(
+                    setTextColor(
+                        R.id.leaderboard_widget_row_2,
+                        if (highlighted == 2) accent else ink,
+                    )
+                    setTextColor(
                         R.id.leaderboard_widget_row_3,
-                        widgetData.text(StudyWidgetKeys.LeaderboardRow3, "-"),
+                        if (highlighted == 3) accent else ink,
                     )
                     // WP-699: üçüncü satır ancak gerçekten uzun kutuda gelir.
                     // Eskiden 2. ve 3. satır birlikte açılıyordu; 3×2'de üç
                     // satır + başlık 110dp'ye sığmıyordu.
                     setViewVisibility(
-                        R.id.leaderboard_widget_row_2,
-                        if (leaderboardRow2Visible(size.height)) View.VISIBLE else View.GONE,
+                        R.id.leaderboard_widget_row_container_2,
+                        if (
+                            leaderboardRow2Visible(size.height) &&
+                            leaderboardRowHasContent(row2)
+                        ) View.VISIBLE else View.GONE,
                     )
                     setViewVisibility(
-                        R.id.leaderboard_widget_row_3,
-                        if (leaderboardRow3Visible(size.height)) View.VISIBLE else View.GONE,
+                        R.id.leaderboard_widget_row_container_3,
+                        if (
+                            leaderboardRow3Visible(size.height) &&
+                            leaderboardRowHasContent(row3)
+                        ) View.VISIBLE else View.GONE,
                     )
                     applySp(
                         R.id.leaderboard_widget_title,
@@ -802,22 +860,32 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        val strings = widgetLocalizedContext(context)
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_group_goal_widget).apply {
+                setContentDescription(
+                    R.id.group_goal_widget_root,
+                    strings.getString(R.string.cd_group_goal_widget),
+                )
                 val size = appWidgetManager.sizeClass(WidgetSizeSpecs.groupGoal, widgetId)
                 val percentText = widgetData.text(StudyWidgetKeys.GroupGoalPercent, "0%")
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
                     R.id.group_goal_widget_title,
-                    context.getString(R.string.widget_group_goal),
+                    strings.getString(R.string.widget_group_goal),
                 )
                 setTextViewText(R.id.group_goal_widget_percent, percentText)
-                setProgressBar(R.id.group_goal_widget_progress, 100, progress, false)
+                setProgressBar(
+                    R.id.group_goal_widget_progress,
+                    WidgetDesign.PROGRESS_MAX,
+                    WidgetDesign.barPercent(progress / 100.0),
+                    false,
+                )
                 setTextViewText(
                     R.id.group_goal_widget_detail,
                     widgetData.text(
                         StudyWidgetKeys.GroupGoalDetail,
-                        context.getString(R.string.widget_join_group),
+                        strings.getString(R.string.widget_join_group),
                     ),
                 )
                 setOnClickPendingIntent(

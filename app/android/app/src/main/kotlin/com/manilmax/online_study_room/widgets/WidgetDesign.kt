@@ -1,8 +1,49 @@
 package com.manilmax.online_study_room.widgets
 
+import android.content.Context
+import android.content.res.Configuration
+import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
+
+internal const val WIDGET_FLUTTER_PREFS_NAME = "FlutterSharedPreferences"
+internal const val WIDGET_LANGUAGE_PREFS_KEY = "flutter.app_language_preference"
+
+/**
+ * Widget metinlerinin dili icin tek karar noktasi.
+ *
+ * API 33'ten once Android'in uygulama-bazli dil API'si yoktur. Bu nedenle
+ * `context.getString` dogrudan cagrilirsa widget cihaz diline geri duser.
+ * Flutter tercihi ise `SharedPreferences`ta kalicidir ve uygulama prosesi hic
+ * acilmadan calisan `AppWidgetProvider` tarafindan da okunabilir.
+ */
+internal fun widgetLanguageCode(
+    storedPreference: String?,
+    systemLanguageCode: String?,
+): String = when (storedPreference) {
+    "turkish" -> "tr"
+    "english", "arabic", "german" -> "en"
+    else -> if (systemLanguageCode.equals("tr", ignoreCase = true)) "tr" else "en"
+}
+
+internal fun widgetLocalizedContext(context: Context): Context {
+    val preference = runCatching {
+        context
+            .getSharedPreferences(WIDGET_FLUTTER_PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(WIDGET_LANGUAGE_PREFS_KEY, null)
+    }.getOrNull()
+    val languageCode = widgetLanguageCode(preference, Locale.getDefault().language)
+    val currentCode = context.resources.configuration.locales[0].language
+    if (currentCode == languageCode) return context
+
+    val locale = Locale.forLanguageTag(languageCode)
+    val configuration = Configuration(context.resources.configuration).apply {
+        setLocale(locale)
+        setLayoutDirection(locale)
+    }
+    return context.createConfigurationContext(configuration)
+}
 
 /**
  * WP-717 — ana ekran widget'larinin **paylasilan gorsel dili**nin kod tarafi.

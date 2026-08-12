@@ -292,6 +292,7 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        val strings = widgetLocalizedContext(context)
         val list = runCatching {
             countdownWidgetList(
                 readCountdownJson(
@@ -302,25 +303,29 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
         }.getOrElse { CountdownWidgetList(emptyList(), false) }
 
         val model = list.head
-        val daysLeftLabel = context.getString(R.string.widget_countdown_days_left)
-        val todayLabel = context.getString(R.string.widget_countdown_today)
-        val passedLabel = context.getString(R.string.widget_countdown_passed)
-        val defaultName = context.getString(R.string.widget_countdown_default_name)
+        val daysLeftLabel = strings.getString(R.string.widget_countdown_days_left)
+        val todayLabel = strings.getString(R.string.widget_countdown_today)
+        val passedLabel = strings.getString(R.string.widget_countdown_passed)
+        val defaultName = strings.getString(R.string.widget_countdown_default_name)
         val label = when (model.state) {
-            CountdownState.EMPTY -> context.getString(R.string.widget_countdown_empty)
+            CountdownState.EMPTY -> strings.getString(R.string.widget_countdown_empty)
             CountdownState.FUTURE -> daysLeftLabel
             CountdownState.TODAY -> todayLabel
             CountdownState.PAST -> passedLabel
         }
         val title = when {
             model.state == CountdownState.EMPTY ->
-                context.getString(R.string.widget_countdown_title)
+                strings.getString(R.string.widget_countdown_title)
             model.name.isNotEmpty() -> model.name
             else -> defaultName
         }
 
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_countdown_widget).apply {
+                setContentDescription(
+                    R.id.countdown_widget_root,
+                    strings.getString(R.string.cd_countdown_widget),
+                )
                 // WP-699: geri sayimin tek duzeni vardi; 30sp gun sayisi
                 // `minWidth=110dp` kutuya sigar ama 2 hucreden dar bir kutuda
                 // kirpilirdi ve buyutuldugunde ayni puntoda kalirdi.

@@ -64,6 +64,7 @@
     <string name="widget_streak_preview">Seri: 0 gün</string>
     <string name="widget_minutes_zero">0 dk</string>
     <string name="widget_leaderboard_title">Kamp sıralaması</string>
+    <string name="widget_you">SEN</string>
     <string name="widget_no_records">Henüz kayıt yok</string>
     <string name="widget_no_rank">Henüz sıralaman yok</string>
     <string name="widget_group_goal">Grup hedefi</string>
@@ -75,6 +76,7 @@
     <string name="widget_percent_zero">0%</string>
     <string name="cd_stats_widget">İstatistik widget\'ını yenile</string>
     <string name="cd_leaderboard_widget">Grup sıralaması widget\'ını yenile</string>
+    <string name="cd_group_goal_widget">Grup hedefi widget\'ı</string>
 
     <!-- WP-695: sinav geri sayimi widget'i -->
     <string name="widget_countdown_title">Sınav geri sayımı</string>

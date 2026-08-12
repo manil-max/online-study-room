@@ -369,6 +369,7 @@ class TaskWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        val strings = widgetLocalizedContext(context)
         val model = runCatching {
             parseTaskWidgetMirror(
                 readTaskMirrorJson(
@@ -377,12 +378,12 @@ class TaskWidgetProvider : HomeWidgetProvider() {
             )
         }.getOrElse { EMPTY_TASK_WIDGET_MODEL }
 
-        val heading = model.title.ifEmpty { context.getString(R.string.widget_today) }
+        val heading = model.title.ifEmpty { strings.getString(R.string.widget_today) }
         val emptyLabel = model.emptyLabel.ifEmpty {
-            context.getString(R.string.widget_no_records)
+            strings.getString(R.string.widget_no_records)
         }
-        val doneColor = ContextCompat.getColor(context, R.color.widget_secondary_text)
-        val todoColor = ContextCompat.getColor(context, R.color.widget_primary_text)
+        val doneColor = ContextCompat.getColor(context, R.color.widget_design_ink_muted)
+        val todoColor = ContextCompat.getColor(context, R.color.widget_design_ink)
 
         appWidgetIds.forEach { widgetId ->
             val size = taskWidgetSizeClass(appWidgetManager, widgetId)

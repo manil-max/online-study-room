@@ -73,6 +73,7 @@
     <string name="widget_streak_preview">Streak: 0 days</string>
     <string name="widget_minutes_zero">0 min</string>
     <string name="widget_leaderboard_title">Camp leaderboard</string>
+    <string name="widget_you">YOU</string>
     <string name="widget_no_records">No records yet</string>
     <string name="widget_no_rank">No rank yet</string>
     <string name="widget_group_goal">Group goal</string>
@@ -84,6 +85,7 @@
     <string name="widget_percent_zero">0%</string>
     <string name="cd_stats_widget">Refresh statistics widget</string>
     <string name="cd_leaderboard_widget">Refresh group leaderboard widget</string>
+    <string name="cd_group_goal_widget">Group goal widget</string>
 
     <!-- WP-695: exam countdown widget -->
     <string name="widget_countdown_title">Exam countdown</string>
