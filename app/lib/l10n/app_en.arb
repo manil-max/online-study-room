@@ -136,10 +136,6 @@
   "@profileBasarimSonSaniyeAciklama": {
     "description": "Unlocked secret achievement condition."
   },
-  "profileBasarim1337Aciklama": "Start at 1:37 PM and study for at least 1 hour.",
-  "@profileBasarim1337Aciklama": {
-    "description": "Unlocked secret achievement condition."
-  },
   "profileBasarimSinirTanimazAciklama": "Reach three times your daily goal in one day.",
   "@profileBasarimSinirTanimazAciklama": {
     "description": "Unlocked secret achievement condition."

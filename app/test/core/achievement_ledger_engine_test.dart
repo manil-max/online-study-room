@@ -29,8 +29,6 @@ void main() {
       expect(dict.where((e) => e.isSecret).length, 9);
       expect(dict.any((e) => e.id == 'marathon_total'), isTrue);
       expect(dict.any((e) => e.id == 'secret_404'), isTrue);
-      // secret_1337 (1337 Elite) beta-v42'de tamamen silindi.
-      expect(dict.any((e) => e.id == 'secret_1337'), isFalse);
       // Kademeli başarımlar 6 kademe.
       expect(dict.firstWhere((e) => e.id == 'marathon_total').maxTier, 6);
       final weeklyWolf = dict.firstWhere(
