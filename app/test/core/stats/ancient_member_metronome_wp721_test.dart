@@ -389,7 +389,7 @@ void main() {
 
     test('pgTAP dolu fikstur uzerinde gercek sayi olcer', () {
       final pgtap = File(
-        '../supabase/tests/057_ancient_member_metronome_wp721.test.sql',
+        '../supabase/tests/061_ancient_member_metronome_wp721.test.sql',
       ).readAsStringSync();
       expect(pgtap, contains('interval \'900 days\''));
       expect(pgtap, contains('600'));
