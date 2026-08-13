@@ -101,6 +101,15 @@ void main() {
     await tester.pumpWidget(_host(unresolved));
     // Hem hedef hem raporlayan satırı çözülemiyor: ikisi de boş kalmaz.
     expect(find.textContaining('Silinmiş kullanıcı'), findsNWidgets(2));
+    await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
+    await tester.pumpAndSettle();
+    final sanctionItem = find.widgetWithText(
+      PopupMenuItem<int>,
+      'Yaptırım uygula',
+    );
+    expect(sanctionItem, findsOneWidget);
+    expect(tester.widget<PopupMenuItem<int>>(sanctionItem).enabled, isFalse);
+    expect(find.textContaining('Kullanıcı bulunamadı'), findsOneWidget);
   });
 
   group('WP-440 kabul: yerleşim sıçramaz', () {
@@ -182,9 +191,7 @@ void main() {
       expect(selected, [ModerationCaseStatus.inReview]);
     });
 
-    testWidgets('menü dört durumu da sunar', (
-      tester,
-    ) async {
+    testWidgets('menü dört durumu da sunar', (tester) async {
       await tester.pumpWidget(_host(_case()));
       await tester.tap(find.byKey(const Key('moderation-status-chip')));
       await tester.pumpAndSettle();

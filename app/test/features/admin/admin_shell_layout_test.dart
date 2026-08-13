@@ -23,6 +23,7 @@ import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
+import 'package:online_study_room/features/admin/queue/moderation_review_view.dart';
 import 'package:online_study_room/features/admin/shell/admin_shell.dart';
 import 'package:online_study_room/features/admin/tabs/admin_announcements_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_audit_log_tab.dart';
@@ -52,7 +53,12 @@ ModerationCase _seedCase() => ModerationCase(
   reportIds: const ['report-1'],
 );
 
-Future<void> _pumpAdmin(WidgetTester tester, {required Size window}) async {
+Future<void> _pumpAdmin(
+  WidgetTester tester, {
+  required Size window,
+  bool pushed = false,
+  Locale locale = const Locale('tr'),
+}) async {
   tester.view.physicalSize = window;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -83,15 +89,32 @@ Future<void> _pumpAdmin(WidgetTester tester, {required Size window}) async {
           InMemoryAdminModerationRepository(seed: [_seedCase()]),
         ),
       ],
-      child: const MaterialApp(
-        locale: Locale('tr'),
+      child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: AdminScreen(),
+        home: pushed ? const _AdminLaunchHost() : const AdminScreen(),
       ),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+class _AdminLaunchHost extends StatelessWidget {
+  const _AdminLaunchHost();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: FilledButton(
+        key: const Key('open-admin'),
+        onPressed: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const AdminScreen())),
+        child: const Text('Aç'),
+      ),
+    ),
+  );
 }
 
 /// Yuzeyi degistirir. Genis pencerede `NavigationRail`, telefonda
@@ -219,6 +242,71 @@ void main() {
       3,
     );
     expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+  });
+
+  testWidgets('360x800: alt gezinme ve filtreler taşmadan kompakt kalır', (
+    tester,
+  ) async {
+    await _pumpAdmin(tester, window: const Size(360, 800));
+
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('360x800 EN: uzun üçüncü etiket dengeli ve ortalıdır', (
+    tester,
+  ) async {
+    await _pumpAdmin(
+      tester,
+      window: const Size(360, 800),
+      locale: const Locale('en'),
+    );
+
+    final label = find.text('Records &\nBroadcast');
+    expect(label, findsOneWidget);
+    expect(tester.widget<Text>(label).textAlign, TextAlign.center);
+    expect(tester.widget<Text>(label).maxLines, 2);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final window in const [Size(1366, 768), Size(1920, 1080)]) {
+    testWidgets('${window.width.toInt()}x${window.height.toInt()}: '
+        'rail ve vaka master-detail birlikte görünür', (tester) async {
+      await _pumpAdmin(tester, window: window);
+      await _openSection(tester, 'İçerik Şikayetleri');
+
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byKey(kModerationQueueListKey), findsOneWidget);
+      expect(find.byKey(kModerationEvidenceKey), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('geri önce admin geçmişini, sonra gerçek rotayı geri alır', (
+    tester,
+  ) async {
+    await _pumpAdmin(tester, window: const Size(360, 800), pushed: true);
+    await tester.tap(find.byKey(const Key('open-admin')));
+    await tester.pumpAndSettle();
+
+    await _openSurface(tester, kAdminDirectoryIcon);
+    await _openSection(tester, 'Gruplar');
+    expect(find.byType(AdminGroupsTab), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(AdminUsersTab), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(AdminReportsTab), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byKey(kAdminShellKey), findsNothing);
+    expect(find.byKey(const Key('open-admin')), findsOneWidget);
   });
 
   // --- LIDER SARTI 6: islev kaybi YOK -----------------------------------

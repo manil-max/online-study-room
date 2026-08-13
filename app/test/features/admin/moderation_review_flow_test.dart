@@ -30,6 +30,7 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_mo
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/supabase_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
+import 'package:online_study_room/features/admin/queue/moderation_review_view.dart';
 import 'package:online_study_room/features/admin/sanctions/admin_case_target_link.dart';
 import 'package:online_study_room/features/admin/sanctions/admin_person_dossier.dart';
 import 'package:online_study_room/features/admin/shell/admin_shell.dart';
@@ -71,29 +72,28 @@ ModerationCase _case({
   reportIds: [reportId],
 );
 
-ModerationCaseDetail _detail({required String snapshot, String? attachmentPath}) =>
-    ModerationCaseDetail(
-      snapshot: snapshot,
-      details: 'derste surekli hakaret ediyor',
-      contextMessages: const [
-        ModerationContextMessage(
-          displayName: 'Mehmet',
-          body: 'sen sus',
-          isTarget: true,
-        ),
-      ],
-      reportCount: 2,
-      attachmentPath: attachmentPath,
-      reason: 'hate',
-      createdAt: DateTime(2026, 8, 10, 9),
-      status: 'open',
-      sanctions: const [
-        ModerationSanctionHistoryEntry(
-          action: 'mute_24h',
-          reason: 'onceki uyari',
-        ),
-      ],
-    );
+ModerationCaseDetail _detail({
+  required String snapshot,
+  String? attachmentPath,
+}) => ModerationCaseDetail(
+  snapshot: snapshot,
+  details: 'derste surekli hakaret ediyor',
+  contextMessages: const [
+    ModerationContextMessage(
+      displayName: 'Mehmet',
+      body: 'sen sus',
+      isTarget: true,
+    ),
+  ],
+  reportCount: 2,
+  attachmentPath: attachmentPath,
+  reason: 'hate',
+  createdAt: DateTime(2026, 8, 10, 9),
+  status: 'open',
+  sanctions: const [
+    ModerationSanctionHistoryEntry(action: 'mute_24h', reason: 'onceki uyari'),
+  ],
+);
 
 Future<void> _pump(
   WidgetTester tester,
@@ -159,7 +159,8 @@ void main() {
     expect(
       detail.attachmentPath,
       'uid/evidence.png',
-      reason: 'ADMIN-PANEL-PLAN §2.1: kullanicinin ekledigi ekran goruntusu '
+      reason:
+          'ADMIN-PANEL-PLAN §2.1: kullanicinin ekledigi ekran goruntusu '
           'ayristirilmiyordu.',
     );
     expect(detail.reason, 'hate');
@@ -169,7 +170,8 @@ void main() {
     expect(
       detail.sanctions.single.moderationAction,
       ModerationAction.mute24h,
-      reason: 'history.sanctions[].action atiliyordu; "bu kisiye daha once ne '
+      reason:
+          'history.sanctions[].action atiliyordu; "bu kisiye daha once ne '
           'yapildi" cevapsizdi.',
     );
     // Eski cagri yerleri kirilmadi.
@@ -216,7 +218,8 @@ void main() {
     expect(
       find.byKey(const Key('moderation-attachment-open')),
       findsOneWidget,
-      reason: 'ADMIN-PANEL-PLAN §5 WP-B kabul 2: ekran goruntusu admin e hic '
+      reason:
+          'ADMIN-PANEL-PLAN §5 WP-B kabul 2: ekran goruntusu admin e hic '
           'gosterilmiyordu (0097 attachment_path donduruyor).',
     );
 
@@ -237,11 +240,9 @@ void main() {
   testWidgets('vaka secili iken icerik metni ve "Cozuldu" ayni anda agacta', (
     tester,
   ) async {
-    final repo =
-        InMemoryAdminModerationRepository(
-            seed: [_case(targetId: _targetA, reportId: 'report-a')],
-          )
-          ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
     await _pump(tester, repo);
 
     await tester.tap(_row(_targetA));
@@ -255,7 +256,8 @@ void main() {
     expect(
       find.byKey(const Key('moderation-decision-resolved')),
       findsOneWidget,
-      reason: 'ADMIN-PANEL-PLAN §2.2 kok neden: kanitin gorundugu yuzey ile '
+      reason:
+          'ADMIN-PANEL-PLAN §2.2 kok neden: kanitin gorundugu yuzey ile '
           'kararin verildigi yuzey ayni anda ekranda degildi.',
     );
     // Sikayet edenin yazdigi aciklama ve hedefin gecmisi de ayni ekranda.
@@ -294,7 +296,8 @@ void main() {
     expect(
       find.byKey(const Key('moderation-undo-bar')),
       findsOneWidget,
-      reason: 'PLAN §4.4.2: geri alinabilir karar teyit degil 10 sn serit ister.',
+      reason:
+          'PLAN §4.4.2: geri alinabilir karar teyit degil 10 sn serit ister.',
     );
 
     await tester.tap(find.byKey(const Key('moderation-undo-button')));
@@ -307,7 +310,9 @@ void main() {
   });
 
   // --- KABUL 5: itirazda yaptirim etiketi --------------------------------
-  testWidgets('itiraz detayinda sanctionAction etiketi bulunur', (tester) async {
+  testWidgets('itiraz detayinda sanctionAction etiketi bulunur', (
+    tester,
+  ) async {
     final repo = InMemoryAdminModerationRepository()
       ..appeals.add(
         ModerationAppeal.fromWire(const {
@@ -327,7 +332,8 @@ void main() {
     expect(
       find.textContaining('7 gün askıya al'),
       findsOneWidget,
-      reason: 'ADMIN-PANEL-PLAN §2.1: admin HANGI cezaya itiraz edildigini '
+      reason:
+          'ADMIN-PANEL-PLAN §2.1: admin HANGI cezaya itiraz edildigini '
           'gormeden "koru/kaldir" diyordu.',
     );
   });
@@ -336,11 +342,9 @@ void main() {
   testWidgets('karar seridi uzun kanit kaydirilinca piksel piksel yerinde', (
     tester,
   ) async {
-    final repo =
-        InMemoryAdminModerationRepository(
-            seed: [_case(targetId: _targetA, reportId: 'report-a')],
-          )
-          ..details['report-a'] = _detail(snapshot: _longSnapshot);
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: _longSnapshot);
     await _pump(tester, repo, window: const Size(1280, 620));
 
     await tester.tap(_row(_targetA));
@@ -366,10 +370,38 @@ void main() {
     expect(
       tester.getRect(bar),
       before,
-      reason: 'PLAN §4.6: serit `Column`+`Expanded` ile sabitlenir, '
+      reason:
+          'PLAN §4.6: serit `Column`+`Expanded` ile sabitlenir, '
           '`Scaffold.bottomSheet` ile degil (depoda kayitli tuzak).',
     );
   });
+
+  testWidgets(
+    'vaka karar seridi mevcut yaptırım merdivenini gerçekten uygular',
+    (tester) async {
+      final repo = InMemoryAdminModerationRepository(
+        seed: [_case(targetId: _targetA, reportId: 'report-a')],
+      )..details['report-a'] = _detail(snapshot: 'kanıt');
+      await _pump(tester, repo, window: const Size(1366, 768));
+
+      expect(find.byKey(kModerationDecisionSanctionKey), findsOneWidget);
+      await tester.tap(find.byKey(kModerationDecisionSanctionKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('moderation-sanction-action')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('24 saat yazma kısıtı').last);
+      await tester.enterText(
+        find.byKey(const Key('moderation-sanction-reason')),
+        'kanıtlı ihlal',
+      );
+      await tester.tap(find.byKey(const Key('moderation-sanction-submit')));
+      await tester.pumpAndSettle();
+
+      final sanctions = await repo.fetchSanctions(_targetA);
+      expect(sanctions.single.action, ModerationAction.mute24h);
+      expect(find.byKey(const Key('admin-sanction-undo')), findsOneWidget);
+    },
+  );
 
   // --- LIDER EKI: vakadan hedefin dosyasina KOPRU ------------------------
   // PLAN §2.3 / WP-C olcut 5. WP-C varis noktasini kurdu; kopruyu vaka karti
@@ -386,11 +418,9 @@ void main() {
       superAdminUserIds: const {'admin'},
     );
     addTearDown(adminRepo.dispose);
-    final repo =
-        InMemoryAdminModerationRepository(
-            seed: [_case(targetId: _targetA, reportId: 'report-a')],
-          )
-          ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
 
     await tester.pumpWidget(
       ProviderScope(
@@ -504,7 +534,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('aptal herif diye yazmis'), findsOneWidget);
-    expect(find.byKey(const Key('moderation-decision-resolved')), findsOneWidget);
+    expect(
+      find.byKey(const Key('moderation-decision-resolved')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('moderation-attachment-open')), findsOneWidget);
   });
 }

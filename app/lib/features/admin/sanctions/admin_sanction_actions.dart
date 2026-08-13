@@ -127,6 +127,38 @@ class AdminSanctionActions {
       idempotencyKey:
           'admin-sanction-$targetUserId-${DateTime.now().microsecondsSinceEpoch}',
     );
+    if (!context.mounted) return;
+    await _submit(context, ref, request);
+  }
+
+  /// Inceleme panosunun topladigi gerekce ve vaka kimligini ayni guvenli
+  /// yaptirim hattina sokar. Boylece kalici yasak sert teyidi ve geri
+  /// alinabilir basamaklarin 10 saniyelik seridi kuyrukta da kaybolmaz.
+  static Future<void> applyPrepared(
+    BuildContext context,
+    WidgetRef ref, {
+    required ModerationSanctionRequest request,
+    required String confirmationPhrase,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    if (adminSanctionNeedsHardConfirm(request.action)) {
+      final confirmed = await showAdminHardConfirm(
+        context,
+        title: adminSanctionLabel(l10n, request.action),
+        expected: confirmationPhrase,
+      );
+      if (!confirmed || !context.mounted) return;
+    }
+    await _submit(context, ref, request);
+  }
+
+  static Future<void> _submit(
+    BuildContext context,
+    WidgetRef ref,
+    ModerationSanctionRequest request,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final ModerationSanction sanction;
     try {
       sanction = await ref
@@ -136,9 +168,9 @@ class AdminSanctionActions {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
       return;
     }
-    _refresh(ref, targetUserId);
+    _refresh(ref, request.targetUserId);
 
-    if (adminSanctionNeedsHardConfirm(action)) {
+    if (adminSanctionNeedsHardConfirm(request.action)) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.adminModerationSanctionApplied)),
       );
@@ -163,7 +195,7 @@ class AdminSanctionActions {
               messenger.showSnackBar(SnackBar(content: Text(e.message)));
               return;
             }
-            _refresh(ref, targetUserId);
+            _refresh(ref, request.targetUserId);
             messenger.showSnackBar(
               SnackBar(content: Text(l10n.adminModerationSanctionRevoked)),
             );
@@ -183,7 +215,10 @@ class AdminSanctionActions {
   }) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final raw = await askAdminReason(context, l10n.adminSanctionLiftRestriction);
+    final raw = await askAdminReason(
+      context,
+      l10n.adminSanctionLiftRestriction,
+    );
     if (raw == null) return;
     final reason = raw.trim();
     if (reason.isEmpty) {
@@ -211,6 +246,7 @@ class AdminSanctionActions {
   /// invalidate etmek Riverpod 3'te islemsizdi — PLAN §1.3(b)).
   static void _refresh(WidgetRef ref, String targetUserId) {
     ref.invalidate(adminUsersProvider);
+    ref.invalidate(moderationQueueProvider);
     ref.invalidate(moderationSanctionsProvider(targetUserId));
   }
 }

@@ -95,7 +95,10 @@ Color adminWorkToneAccent(ColorScheme scheme, AdminWorkTone tone) =>
 (Color, Color) adminWorkToneContainer(ColorScheme scheme, AdminWorkTone tone) =>
     switch (tone) {
       AdminWorkTone.urgent => (scheme.errorContainer, scheme.onErrorContainer),
-      AdminWorkTone.open => (scheme.primaryContainer, scheme.onPrimaryContainer),
+      AdminWorkTone.open => (
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+      ),
       AdminWorkTone.waiting => (
         scheme.tertiaryContainer,
         scheme.onTertiaryContainer,
@@ -165,10 +168,18 @@ class AdminWorkAction {
 /// `…` menusundeki satir.
 @immutable
 class AdminWorkMenuItem {
-  const AdminWorkMenuItem({required this.label, required this.onSelected});
+  const AdminWorkMenuItem({
+    required this.label,
+    required this.onSelected,
+    this.disabledReason,
+  });
 
   final String label;
-  final VoidCallback onSelected;
+  final VoidCallback? onSelected;
+
+  /// Hedef cozulemedigi gibi durumlarda eylem kaybolmaz; neden calismadigi
+  /// menu satirinda acikca gorunur ve erisilebilirlik agacina girer.
+  final String? disabledReason;
 }
 
 /// Durum hapinin ortak atasi.
@@ -504,9 +515,7 @@ class _ActionRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = ButtonStyle(
-      minimumSize: WidgetStatePropertyAll(
-        Size(0, kAdminWorkCardTapTarget),
-      ),
+      minimumSize: WidgetStatePropertyAll(Size(0, kAdminWorkCardTapTarget)),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 10),
       ),
@@ -515,7 +524,8 @@ class _ActionRail extends StatelessWidget {
     );
 
     return Wrap(
-      spacing: 2,
+      spacing: 4,
+      runSpacing: 0,
       children: [
         for (final action in actions)
           if (action.primary)
@@ -550,10 +560,30 @@ class _AdminWorkOverflow extends StatelessWidget {
     return PopupMenuButton<int>(
       key: menuKey,
       tooltip: AppLocalizations.of(context).adminWorkCardMoreActions,
-      onSelected: (index) => items[index].onSelected(),
+      onSelected: (index) => items[index].onSelected?.call(),
       itemBuilder: (_) => [
         for (var index = 0; index < items.length; index++)
-          PopupMenuItem<int>(value: index, child: Text(items[index].label)),
+          PopupMenuItem<int>(
+            value: index,
+            enabled: items[index].onSelected != null,
+            child: Semantics(
+              enabled: items[index].onSelected != null,
+              hint: items[index].disabledReason,
+              child: items[index].disabledReason == null
+                  ? Text(items[index].label)
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(items[index].label),
+                        Text(
+                          items[index].disabledReason!,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+            ),
+          ),
       ],
     );
   }

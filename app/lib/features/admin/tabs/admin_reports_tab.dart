@@ -86,7 +86,9 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
                   Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
               data: (items) {
                 final visibleItems = _showArchive
-                    ? items.where((ticket) => ticket.archivedAt != null).toList()
+                    ? items
+                          .where((ticket) => ticket.archivedAt != null)
+                          .toList()
                     : items;
                 if (visibleItems.isEmpty) {
                   return ListView(
@@ -124,28 +126,31 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
   /// Tur cipleri + arsiv gorunumu. Listenin **disinda** durur; bos sonucta da
   /// ekranda kalir (PLAN §2.4).
   Widget _filterBar(AppLocalizations l10n) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        for (final type in FeedbackTicketType.values)
-          FilterChip(
-            label: Text(_typeLabel(l10n, type)),
-            selected: _type == type,
-            onSelected: (selected) =>
-                setState(() => _type = selected ? type : null),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final type in FeedbackTicketType.values) ...[
+            FilterChip(
+              visualDensity: VisualDensity.compact,
+              label: Text(_typeLabel(l10n, type)),
+              selected: _type == type,
+              onSelected: (selected) =>
+                  setState(() => _type = selected ? type : null),
+            ),
+            const SizedBox(width: 6),
+          ],
+          IconButton.outlined(
+            tooltip: _showArchive
+                ? l10n.adminAktifleriGoster
+                : l10n.adminArsiviGoster,
+            icon: Icon(
+              _showArchive ? Icons.inventory_2 : Icons.inventory_2_outlined,
+            ),
+            onPressed: () => setState(() => _showArchive = !_showArchive),
           ),
-        IconButton.outlined(
-          tooltip: _showArchive
-              ? l10n.adminAktifleriGoster
-              : l10n.adminArsiviGoster,
-          icon: Icon(
-            _showArchive ? Icons.inventory_2 : Icons.inventory_2_outlined,
-          ),
-          onPressed: () => setState(() => _showArchive = !_showArchive),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -192,6 +197,22 @@ class _TicketCard extends ConsumerWidget {
         if (ticket.archivedAt != null)
           AdminWorkFlag(l10n.adminWorkCardArchived, tone: AdminWorkTone.done),
       ],
+      overflowKey: Key('feedback-more-${ticket.id}'),
+      overflowItems: [
+        if (ticket.type == FeedbackTicketType.report)
+          AdminWorkMenuItem(
+            label: l10n.adminSanctionApplyRestriction,
+            // Destek bileti semasi yalniz gondereni tasir; sikayet edilen
+            // hedefi tasimaz. Gondereni yanlislikla cezalandirmak yerine yol
+            // gorunur ama acik neden ile devre disidir.
+            onSelected: null,
+            disabledReason: l10n.adminKullaniciBulunamadi,
+          ),
+        AdminWorkMenuItem(
+          label: showArchived ? l10n.adminArsivdenCikar : l10n.adminArsivle,
+          onSelected: () => _setArchived(ref),
+        ),
+      ],
       actions: [
         // Tek vurgulu eylem: kullaniciya giden yol. Ic notlardan **once**.
         AdminWorkAction(
@@ -221,13 +242,6 @@ class _TicketCard extends ConsumerWidget {
                   _AttachmentPreviewDialog(path: ticket.attachmentPath!),
             ),
           ),
-        AdminWorkAction(
-          label: showArchived ? l10n.adminArsivdenCikar : l10n.adminArsivle,
-          icon: showArchived
-              ? Icons.unarchive_outlined
-              : Icons.archive_outlined,
-          onPressed: () => _setArchived(ref),
-        ),
       ],
     );
   }

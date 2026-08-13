@@ -187,9 +187,10 @@ Finder _card(WidgetTester tester, String bodyText) {
 /// Kartta cizilen gercek font boyutlari (ikon glifleri haric).
 Set<double> _fontSizes(Finder card) {
   final sizes = <double>{};
-  for (final element in find
-      .descendant(of: card, matching: find.byType(RichText))
-      .evaluate()) {
+  for (final element
+      in find
+          .descendant(of: card, matching: find.byType(RichText))
+          .evaluate()) {
     final span = (element.widget as RichText).text;
     if (span is! TextSpan || span.style?.fontSize == null) continue;
     if (span.style?.fontFamily == 'MaterialIcons') continue;
@@ -205,19 +206,20 @@ Set<double> _fontSizes(Finder card) {
 /// dokunur. Mureekkep alani (`InkWell`) daha kucuk olabilir.
 List<double> _tapTargetHeights(WidgetTester tester, Finder card) {
   final heights = <double>[];
-  for (final element in find
-      .descendant(
-        of: card,
-        matching: find.byWidgetPredicate(
-          (w) =>
-              w is IconButton ||
-              w is ButtonStyleButton ||
-              w is PopupMenuButton ||
-              w is Chip ||
-              w is RawChip,
-        ),
-      )
-      .evaluate()) {
+  for (final element
+      in find
+          .descendant(
+            of: card,
+            matching: find.byWidgetPredicate(
+              (w) =>
+                  w is IconButton ||
+                  w is ButtonStyleButton ||
+                  w is PopupMenuButton ||
+                  w is Chip ||
+                  w is RawChip,
+            ),
+          )
+          .evaluate()) {
     heights.add(tester.getSize(find.byWidget(element.widget)).height);
   }
   return heights;
@@ -226,9 +228,10 @@ List<double> _tapTargetHeights(WidgetTester tester, Finder card) {
 /// Kullanicinin gordugu en uzun metin satirinin genisligi.
 double _widestTextLine(WidgetTester tester, Finder card) {
   var widest = 0.0;
-  for (final element in find
-      .descendant(of: card, matching: find.byType(RichText))
-      .evaluate()) {
+  for (final element
+      in find
+          .descendant(of: card, matching: find.byType(RichText))
+          .evaluate()) {
     final span = (element.widget as RichText).text;
     if (span is TextSpan && span.style?.fontFamily == 'MaterialIcons') continue;
     final width = tester.getSize(find.byWidget(element.widget)).width;
@@ -404,11 +407,7 @@ void main() {
       testWidgets('$width px + metin olcegi 1.3: bilet karti tasmaz', (
         tester,
       ) async {
-        await _pumpTickets(
-          tester,
-          width: width.toDouble(),
-          textScale: 1.3,
-        );
+        await _pumpTickets(tester, width: width.toDouble(), textScale: 1.3);
         // Govde gercek mi? Kabuk olcmuyoruz.
         expect(find.text('Sayac geri sayimda duruyor'), findsOneWidget);
         expect(
@@ -543,7 +542,7 @@ void main() {
       expect(find.text('Kopyala'), findsOneWidget);
     });
 
-    testWidgets('bilet: yanit, ic notlar, ek, arsiv gorunur kalir', (
+    testWidgets('bilet: ana eylemler kompakt, arsiv uc nokta menusundedir', (
       tester,
     ) async {
       await _pumpTickets(tester, width: 390);
@@ -553,7 +552,7 @@ void main() {
       expect(reply, findsOneWidget);
       expect(notes, findsOneWidget);
       expect(find.text('Ekran Görüntüsü'), findsOneWidget);
-      expect(find.text('Arşivle'), findsOneWidget);
+      expect(find.text('Arşivle'), findsNothing);
       // Durum hapi bilette de tek kontrol.
       expect(find.text('Açık'), findsOneWidget);
       // Gonderen taraf satirinda.
@@ -567,9 +566,19 @@ void main() {
             (replyTop.dy == notesTop.dy && replyTop.dx < notesTop.dx),
         isTrue,
       );
+
+      await tester.tap(find.byKey(const Key('feedback-more-ticket-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Arşivle'), findsOneWidget);
+      final sanctionItem = find.widgetWithText(PopupMenuItem<int>, 'Kısıtla');
+      expect(sanctionItem, findsOneWidget);
+      expect(tester.widget<PopupMenuItem<int>>(sanctionItem).enabled, isFalse);
+      expect(find.textContaining('Kullanıcı bulunamadı'), findsOneWidget);
     });
 
-    testWidgets('arsivlenmis bilet isaret seridinde belli olur', (tester) async {
+    testWidgets('arsivlenmis bilet isaret seridinde belli olur', (
+      tester,
+    ) async {
       await _pumpTickets(
         tester,
         width: 390,

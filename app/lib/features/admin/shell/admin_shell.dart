@@ -65,6 +65,14 @@ const double kAdminContextPaneWidth = 320;
 const double kAdminRailWidth = 52;
 const double kAdminRailExtendedWidth = 248;
 
+/// V70: yatay/masaustu kabugu bu esikte baslar. Telefon ve dar tabletlerde
+/// alt gezinme korunur; 900 dp ve ustunde yonetim araclari rail'e tasinir.
+const double kAdminDesktopRailBreakpoint = 900;
+
+/// Orta genislikte 248 dp'lik acik rail vaka alanini gereksiz daraltiyordu.
+/// Etiketler 1600 dp'ye kadar tooltip'tedir; genis masaustunde acilir.
+const double kAdminExtendedRailBreakpoint = 1600;
+
 /// Bir yuzeyin icindeki tek bolum. [child] eski sekme govdesidir; WP-A
 /// govdelere **dokunmaz**, yalnizca yeni kabuktan cagirir.
 @immutable
@@ -111,6 +119,7 @@ class _AdminShellState extends State<AdminShell> {
   /// Yuzey basina son secilen bolum. Yuzey degisip geri donunce kullanicinin
   /// birakti yer korunur.
   final Map<String, String> _sectionBySurface = {};
+  final List<_AdminSelection> _history = [];
 
   List<AdminSurface> _surfaces(AppLocalizations l10n) => [
     AdminSurface(
@@ -187,9 +196,44 @@ class _AdminShellState extends State<AdminShell> {
     ),
   ];
 
+  _AdminSelection _selection() => _AdminSelection(
+    surfaceIndex: _surfaceIndex,
+    sectionBySurface: Map<String, String>.of(_sectionBySurface),
+  );
+
   void _selectSurface(int index, int count) {
-    if (index < 0 || index >= count) return;
-    setState(() => _surfaceIndex = index);
+    if (index < 0 || index >= count || index == _surfaceIndex) return;
+    setState(() {
+      _history.add(_selection());
+      _surfaceIndex = index;
+    });
+  }
+
+  void _selectSection(AdminSurface surface, String sectionId) {
+    if (_selectedSection(surface).id == sectionId) return;
+    setState(() {
+      _history.add(_selection());
+      _sectionBySurface[surface.id] = sectionId;
+    });
+  }
+
+  void _restorePreviousSelection() {
+    if (_history.isEmpty) return;
+    final previous = _history.removeLast();
+    setState(() {
+      _surfaceIndex = previous.surfaceIndex;
+      _sectionBySurface
+        ..clear()
+        ..addAll(previous.sectionBySurface);
+    });
+  }
+
+  Future<void> _handleBack() async {
+    if (_history.isNotEmpty) {
+      _restorePreviousSelection();
+      return;
+    }
+    await Navigator.of(context).maybePop();
   }
 
   AdminSection _selectedSection(AdminSurface surface) {
@@ -207,52 +251,64 @@ class _AdminShellState extends State<AdminShell> {
     final index = _surfaceIndex.clamp(0, surfaces.length - 1);
     final surface = surfaces[index];
 
-    return CallbackShortcuts(
-      bindings: {
-        for (var i = 0; i < surfaces.length; i++)
-          SingleActivator(_digitKeys[i], control: true): () =>
-              _selectSurface(i, surfaces.length),
+    return PopScope<void>(
+      canPop: _history.isEmpty,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _restorePreviousSelection();
       },
-      child: Focus(
-        key: kAdminShellKey,
-        autofocus: true,
-        skipTraversal: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Kap sonsuzsa (kaydirilabilir bir ata) pencereye duseriz; aksi
-            // halde olculen sey kaptir.
-            final width = constraints.maxWidth.isFinite
-                ? constraints.maxWidth
-                : MediaQuery.sizeOf(context).width;
-            final windowClass = DesktopBreakpoints.windowClass(width);
-            final railed = width >= DesktopBreakpoints.compact;
+      child: CallbackShortcuts(
+        bindings: {
+          for (var i = 0; i < surfaces.length; i++)
+            SingleActivator(_digitKeys[i], control: true): () =>
+                _selectSurface(i, surfaces.length),
+        },
+        child: Focus(
+          key: kAdminShellKey,
+          autofocus: true,
+          skipTraversal: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Kap sonsuzsa (kaydirilabilir bir ata) pencereye duseriz; aksi
+              // halde olculen sey kaptir.
+              final width = constraints.maxWidth.isFinite
+                  ? constraints.maxWidth
+                  : MediaQuery.sizeOf(context).width;
+              final windowClass = DesktopBreakpoints.windowClass(width);
+              final railed = width >= kAdminDesktopRailBreakpoint;
 
-            final body = _surfaceBody(context, surface, windowClass);
-            return Scaffold(
-              appBar: AppBar(title: Text(l10n.adminYonetimPaneli)),
-              body: railed
-                  ? Row(
-                      children: [
-                        _rail(
-                          context,
-                          surfaces,
-                          index,
-                          extended: width >= DesktopBreakpoints.expanded,
-                        ),
-                        VerticalDivider(
-                          width: 1,
-                          thickness: 1,
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        Expanded(child: body),
-                      ],
-                    )
-                  : body,
-              bottomNavigationBar: railed
-                  ? null
-                  : _bar(context, surfaces, index),
-            );
-          },
+              final body = _surfaceBody(context, surface, windowClass);
+              return Scaffold(
+                appBar: AppBar(
+                  automaticallyImplyLeading: false,
+                  leading: _history.isNotEmpty || Navigator.of(context).canPop()
+                      ? BackButton(onPressed: _handleBack)
+                      : null,
+                  title: Text(l10n.adminYonetimPaneli),
+                ),
+                body: railed
+                    ? Row(
+                        children: [
+                          _rail(
+                            context,
+                            surfaces,
+                            index,
+                            extended: width >= kAdminExtendedRailBreakpoint,
+                          ),
+                          VerticalDivider(
+                            width: 1,
+                            thickness: 1,
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                          Expanded(child: body),
+                        ],
+                      )
+                    : body,
+                bottomNavigationBar: railed
+                    ? null
+                    : _bar(context, surfaces, index),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -289,14 +345,21 @@ class _AdminShellState extends State<AdminShell> {
   Widget _bar(BuildContext context, List<AdminSurface> surfaces, int index) {
     return NavigationBar(
       key: kAdminSurfaceNavKey,
+      height: 88,
       selectedIndex: index,
       onDestinationSelected: (i) => _selectSurface(i, surfaces.length),
       destinations: [
-        for (final surface in surfaces)
-          NavigationDestination(
-            icon: Icon(surface.icon),
-            label: surface.label,
-            tooltip: surface.label,
+        for (var i = 0; i < surfaces.length; i++)
+          _AdminMobileDestination(
+            icon: Icon(surfaces[i].icon),
+            // Uzun ucuncu etiket iki dengeli satira zorlanir. Metin yine
+            // mevcut TR/EN l10n degeridir; yalniz sunum satiri eklenir.
+            label: i == surfaces.length - 1
+                ? _balancedMobileLabel(surfaces[i].label)
+                : surfaces[i].label,
+            tooltip: surfaces[i].label,
+            selected: i == index,
+            onTap: () => _selectSurface(i, surfaces.length),
           ),
       ],
     );
@@ -331,12 +394,16 @@ class _AdminShellState extends State<AdminShell> {
       );
     }
 
+    final moderationWorkspace =
+        surface.id == 'queue' && section.id == 'moderation';
     final cappedDetail = Align(
       alignment: Alignment.topLeft,
       child: ConstrainedBox(
         // SPEC §3 A1: detay sutunu "kalan, maks. 760".
-        constraints: const BoxConstraints(
-          maxWidth: DesktopBreakpoints.maxFormWidth,
+        constraints: BoxConstraints(
+          maxWidth: moderationWorkspace
+              ? double.infinity
+              : DesktopBreakpoints.maxFormWidth,
         ),
         child: detail,
       ),
@@ -360,10 +427,10 @@ class _AdminShellState extends State<AdminShell> {
               ),
           ],
           selectedId: section.id,
-          onSelected: (id) =>
-              setState(() => _sectionBySurface[surface.id] = id),
+          onSelected: (id) => _selectSection(surface, id),
         ),
-        detail: windowClass == DesktopNavigationMode.xlarge
+        detail:
+            windowClass == DesktopNavigationMode.xlarge && !moderationWorkspace
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -414,8 +481,7 @@ class _AdminShellState extends State<AdminShell> {
                 avatar: Icon(section.icon, size: 20),
                 label: Text(section.label, maxLines: 1),
                 selected: section.id == selected.id,
-                onSelected: (_) =>
-                    setState(() => _sectionBySurface[surface.id] = section.id),
+                onSelected: (_) => _selectSection(surface, section.id),
               ),
             ),
         ],
@@ -430,3 +496,98 @@ const List<LogicalKeyboardKey> _digitKeys = [
   LogicalKeyboardKey.digit2,
   LogicalKeyboardKey.digit3,
 ];
+
+@immutable
+class _AdminSelection {
+  const _AdminSelection({
+    required this.surfaceIndex,
+    required this.sectionBySurface,
+  });
+
+  final int surfaceIndex;
+  final Map<String, String> sectionBySurface;
+}
+
+class _AdminMobileDestination extends StatelessWidget {
+  const _AdminMobileDestination({
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Widget icon;
+  final String label;
+  final String tooltip;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: tooltip,
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 64,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: selected ? scheme.secondaryContainer : null,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconTheme.merge(
+                    data: IconThemeData(
+                      size: 24,
+                      color: selected
+                          ? scheme.onSecondaryContainer
+                          : scheme.onSurfaceVariant,
+                    ),
+                    child: icon,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: selected
+                        ? scheme.onSurface
+                        : scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _balancedMobileLabel(String label) {
+  if (label.length < 16 || label.contains('\n')) return label;
+  final spaces = <int>[
+    for (var i = 0; i < label.length; i++)
+      if (label.codeUnitAt(i) == 32) i,
+  ];
+  if (spaces.isEmpty) return label;
+  final middle = label.length / 2;
+  spaces.sort((a, b) => (a - middle).abs().compareTo((b - middle).abs()));
+  final split = spaces.first;
+  return '${label.substring(0, split)}\n${label.substring(split + 1)}';
+}

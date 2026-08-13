@@ -83,7 +83,9 @@ class ModerationQueueCard extends StatelessWidget {
           // 🔴 PLAN §2.3 / WP-C olcut 5: vakadan kisiye kopru yoktu. Tek yardim
           // uc noktadaki "Kopyala" idi. Kopru taraf satirinda durur: baslik
           // satiri 280 px'te zaten hap + `…` ile dolu.
-          trailing: moderationCase.targetIdentity == null
+          trailing:
+              moderationCase.targetIdentity == null ||
+                  moderationCase.targetIdentity!.isDeleted
               ? null
               : AdminCaseTargetLink(
                   targetUserId: moderationCase.targetIdentity!.id,
@@ -108,7 +110,10 @@ class ModerationQueueCard extends StatelessWidget {
             tone: AdminWorkTone.urgent,
           ),
         if (overdue)
-          AdminWorkFlag(l10n.adminModerationOverdue, tone: AdminWorkTone.urgent),
+          AdminWorkFlag(
+            l10n.adminModerationOverdue,
+            tone: AdminWorkTone.urgent,
+          ),
         if (moderationCase.quarantined)
           AdminWorkFlag(
             l10n.adminModerationQuarantined,
@@ -117,11 +122,13 @@ class ModerationQueueCard extends StatelessWidget {
       ],
       overflowKey: const Key('moderation-secondary-actions'),
       overflowItems: [
-        if (onSanction != null)
-          AdminWorkMenuItem(
-            label: l10n.adminModerationSanctionTitle,
-            onSelected: () => onSanction!(),
-          ),
+        AdminWorkMenuItem(
+          label: l10n.adminModerationSanctionTitle,
+          onSelected: onSanction,
+          disabledReason: onSanction == null
+              ? l10n.adminKullaniciBulunamadi
+              : null,
+        ),
         // Karantina vaka kimligi ister; `0104` oncesi tarihsel satirlarda
         // secenek hic gosterilmez — olu menu girdisi birakmiyoruz.
         if (onQuarantineToggle != null && moderationCase.supportsCaseActions)
@@ -185,12 +192,13 @@ class ModerationQueueCard extends StatelessWidget {
       ? l10n.adminUgcDeletedUser
       : identity.displayName;
 
-  String _typeLabel(AppLocalizations l10n) => switch (moderationCase.targetType) {
-    ReportTargetType.message => l10n.classroomSohbet,
-    ReportTargetType.profile => l10n.adminUgcTarget,
-    ReportTargetType.group => l10n.classroomGrup,
-    ReportTargetType.groupName => l10n.classroomGrupAdi,
-  };
+  String _typeLabel(AppLocalizations l10n) =>
+      switch (moderationCase.targetType) {
+        ReportTargetType.message => l10n.classroomSohbet,
+        ReportTargetType.profile => l10n.adminUgcTarget,
+        ReportTargetType.group => l10n.classroomGrup,
+        ReportTargetType.groupName => l10n.classroomGrupAdi,
+      };
 
   String _reasons(AppLocalizations l10n) {
     if (moderationCase.reasons.isEmpty) return '—';

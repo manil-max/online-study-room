@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/moderation_case.dart';
@@ -11,6 +10,7 @@ import '../../../data/models/moderation_sanction.dart';
 import '../../../data/models/report_target.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
 import '../../../data/repositories/admin_moderation_repository.dart';
+import '../sanctions/admin_sanction_actions.dart';
 import '../widgets/moderation_queue_card.dart';
 import 'moderation_attachment_preview.dart';
 import 'moderation_dialogs.dart';
@@ -132,7 +132,10 @@ class _ModerationReviewViewState extends ConsumerState<ModerationReviewView> {
         final width = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final split = width >= DesktopBreakpoints.expanded;
+        // Bu widget admin kabugunun kalan alanini olcer. 900 dp, 1366 px
+        // masaustunde 280 dp kuyruk + okunabilir karar panosunu yan yana
+        // tutarken telefona bolmeli duzeni sizdirmaz.
+        final split = width >= 900;
         final selected = _selected(split: split);
 
         final Widget body;
@@ -215,9 +218,7 @@ class _ModerationReviewViewState extends ConsumerState<ModerationReviewView> {
                 setState(() => _selectedKey = moderationCase.caseKey),
             onStatusSelected: (status) =>
                 _applyStatus(moderationCase, status, advance: false),
-            onSanction: moderationCase.targetIdentity == null
-                // Grup hedefinde yaptirim uygulanacak kisi yok; menude olu
-                // secenek birakmiyoruz.
+            onSanction: _resolvedTargetUserId(moderationCase) == null
                 ? null
                 : () => _openSanctionSheet(moderationCase),
             onQuarantineToggle: (quarantined) =>
@@ -233,7 +234,7 @@ class _ModerationReviewViewState extends ConsumerState<ModerationReviewView> {
     reason: _reason,
     onStatus: (status) => _applyStatus(moderationCase, status, advance: true),
     onQuarantine: () => _quarantineFromBar(moderationCase),
-    onSanction: moderationCase.targetIdentity == null
+    onSanction: _resolvedTargetUserId(moderationCase) == null
         ? null
         : () => _openSanctionSheet(moderationCase),
   );
@@ -415,10 +416,8 @@ class _ModerationReviewViewState extends ConsumerState<ModerationReviewView> {
   /// WP-441 yaptirim sayfasi. Agir basamaklarin (kalici yasak) yazili teyidi
   /// **WP-C**'nin isi; burada yalnizca serit gerekcesi sayfaya tasinir.
   Future<void> _openSanctionSheet(ModerationCase moderationCase) async {
-    final targetId = moderationCase.targetIdentity?.id;
+    final targetId = _resolvedTargetUserId(moderationCase);
     if (targetId == null) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context);
     final request = await showModalBottomSheet<ModerationSanctionRequest>(
       context: context,
       isScrollControlled: true,
@@ -428,18 +427,19 @@ class _ModerationReviewViewState extends ConsumerState<ModerationReviewView> {
         initialReason: _reason.text.trim(),
       ),
     );
-    if (request == null) return;
-    try {
-      await ref.read(adminModerationRepositoryProvider).applySanction(request);
-    } on ModerationException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-      return;
-    }
-    ref.invalidate(moderationQueueProvider);
-    ref.invalidate(moderationSanctionsProvider(targetId));
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.adminModerationSanctionApplied)),
+    if (request == null || !mounted) return;
+    await AdminSanctionActions.applyPrepared(
+      context,
+      ref,
+      request: request,
+      confirmationPhrase: targetId,
     );
+  }
+
+  String? _resolvedTargetUserId(ModerationCase moderationCase) {
+    final identity = moderationCase.targetIdentity;
+    if (identity == null || identity.isDeleted) return null;
+    return identity.id;
   }
 }
 
@@ -519,7 +519,8 @@ class _Evidence extends ConsumerWidget {
     final detail = ref.watch(moderationCaseDetailProvider(reportId));
     return detail.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
+      error: (_, _) =>
+          Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
       data: (data) => ListView(
         key: kModerationEvidenceKey,
         padding: const EdgeInsets.all(16),
@@ -562,8 +563,7 @@ class _Evidence extends ConsumerWidget {
           if (data.sanctions.isEmpty)
             Text(l10n.adminIncelemeGecmisYok, style: theme.textTheme.bodySmall)
           else
-            for (final entry in data.sanctions)
-              _historyRow(context, entry),
+            for (final entry in data.sanctions) _historyRow(context, entry),
         ],
       ),
     );
@@ -741,10 +741,15 @@ class _DecisionBar extends StatelessWidget {
                           : l10n.adminModerationQuarantine,
                     ),
                   ),
-                  OutlinedButton(
-                    key: kModerationDecisionSanctionKey,
-                    onPressed: onSanction,
-                    child: Text(l10n.adminModerationSanctionTitle),
+                  Tooltip(
+                    message: onSanction == null
+                        ? l10n.adminKullaniciBulunamadi
+                        : l10n.adminModerationSanctionTitle,
+                    child: OutlinedButton(
+                      key: kModerationDecisionSanctionKey,
+                      onPressed: onSanction,
+                      child: Text(l10n.adminModerationSanctionTitle),
+                    ),
                   ),
                   OutlinedButton(
                     key: kModerationDecisionRejectedKey,
