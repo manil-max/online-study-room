@@ -27,20 +27,22 @@
      `test/features/android_widgets/countdown_widget_wp717_test.dart`.
 -->
 <resources>
-    <!-- Kart zemini: opak, hafif soguk beyaz. -->
-    <color name="widget_design_surface">#F2F5FA</color>
+    <!-- Sicak ama opak kamp karti; duvar kagidindan bagimsizdir. -->
+    <color name="widget_design_surface">#FFF9F3</color>
     <!-- Ana metin (WCAG AA kritik metin). -->
-    <color name="widget_design_ink">#151A21</color>
+    <color name="widget_design_ink">#211A16</color>
     <!-- Yardimci metin / etiket. -->
-    <color name="widget_design_ink_muted">#4C5563</color>
+    <color name="widget_design_ink_muted">#61564D</color>
     <!-- Vurgu: buyuk sayi ve yayin DOLU parcasi. Kamp atesi kehribari. -->
-    <color name="widget_design_accent">#A64B00</color>
+    <color name="widget_design_accent">#9B4300</color>
     <!-- Ilerlemenin BOS parcasi (yay izi / cubuk izi). -->
-    <color name="widget_design_track">#CBD5E3</color>
+    <color name="widget_design_track">#E2D1C0</color>
+    <color name="widget_design_outline">#D5C1AE</color>
+    <color name="widget_design_accent_soft">#F4DFC9</color>
 
     <!-- Olculer: kart kosesi, kok dolgu, yay yuksekligi, satir araligi. -->
-    <dimen name="widget_design_corner">18dp</dimen>
-    <dimen name="widget_design_padding">12dp</dimen>
+    <dimen name="widget_design_corner">22dp</dimen>
+    <dimen name="widget_design_padding">10dp</dimen>
     <dimen name="widget_design_arc_height">26dp</dimen>
     <dimen name="widget_design_row_gap">4dp</dimen>
 </resources>

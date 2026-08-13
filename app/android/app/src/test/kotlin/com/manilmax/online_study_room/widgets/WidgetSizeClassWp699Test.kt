@@ -64,7 +64,7 @@ class WidgetSizeClassWp699Test {
         // satirlari gereksiz gizleniyordu.
         val spec = WidgetSizeSpecs.stats
 
-        val genisAmaKisa = widgetSizeClass(spec, 250, 110)
+        val genisAmaKisa = widgetSizeClass(spec, 250, 40)
         assertEquals(WidgetWidthClass.WIDE, genisAmaKisa.width)
         assertEquals(WidgetHeightClass.SHORT, genisAmaKisa.height)
 
@@ -105,11 +105,11 @@ class WidgetSizeClassWp699Test {
         // olmali; aksi halde en kucuk kutuda buyuk punto secilirdi.
         data class Kose(val ad: String, val spec: WidgetSizeSpec, val w: Int, val h: Int)
         listOf(
-            Kose("timer", WidgetSizeSpecs.timer, 110, 80),
-            Kose("clock", WidgetSizeSpecs.clock, 110, 70),
+            Kose("timer", WidgetSizeSpecs.timer, 40, 40),
+            Kose("clock", WidgetSizeSpecs.clock, 110, 40),
             Kose("countdown", WidgetSizeSpecs.countdown, 110, 80),
-            Kose("stats", WidgetSizeSpecs.stats, 110, 110),
-            Kose("group_goal", WidgetSizeSpecs.groupGoal, 110, 110),
+            Kose("stats", WidgetSizeSpecs.stats, 110, 40),
+            Kose("group_goal", WidgetSizeSpecs.groupGoal, 110, 80),
             Kose("leaderboard", WidgetSizeSpecs.leaderboard, 180, 80),
         ).forEach {
             val size = widgetSizeClass(it.spec, it.w, it.h)
@@ -124,15 +124,15 @@ class WidgetSizeClassWp699Test {
     fun stats_iki_detay_satiri_AYRI_esiklerde_acilir() {
         val spec = WidgetSizeSpecs.stats
 
-        val varsayilan = widgetSizeClass(spec, 110, 110).height
-        assertFalse("2x2'de gun ozeti gorunuyor", statsDetailVisible(varsayilan))
-        assertFalse("2x2'de seri satiri gorunuyor", statsStreakVisible(varsayilan))
+        val varsayilan = widgetSizeClass(spec, 110, 40).height
+        assertFalse("2x1'de gun ozeti gorunuyor", statsDetailVisible(varsayilan))
+        assertFalse("2x1'de seri satiri gorunuyor", statsStreakVisible(varsayilan))
 
-        val orta = widgetSizeClass(spec, 110, 150).height
-        assertTrue("2x3'te gun ozeti hala gizli", statsDetailVisible(orta))
-        assertFalse("2x3'te seri satiri erken geldi", statsStreakVisible(orta))
+        val orta = widgetSizeClass(spec, 110, 80).height
+        assertTrue("2x2'de gun ozeti hala gizli", statsDetailVisible(orta))
+        assertFalse("2x2'de seri satiri erken geldi", statsStreakVisible(orta))
 
-        val uzun = widgetSizeClass(spec, 110, 180).height
+        val uzun = widgetSizeClass(spec, 110, 110).height
         assertTrue(statsDetailVisible(uzun))
         assertTrue("en uzun halde seri satiri hala gizli", statsStreakVisible(uzun))
     }
@@ -157,9 +157,9 @@ class WidgetSizeClassWp699Test {
 
     @Test
     fun clock_ve_countdown_kisa_halde_ikincil_satiri_dusurur() {
-        val clockKisa = widgetSizeClass(WidgetSizeSpecs.clock, 110, 70).height
+        val clockKisa = widgetSizeClass(WidgetSizeSpecs.clock, 110, 40).height
         assertFalse(clockDateVisible(clockKisa))
-        assertTrue(clockDateVisible(widgetSizeClass(WidgetSizeSpecs.clock, 110, 110).height))
+        assertTrue(clockDateVisible(widgetSizeClass(WidgetSizeSpecs.clock, 110, 70).height))
 
         val cdKisa = widgetSizeClass(WidgetSizeSpecs.countdown, 110, 80).height
         assertFalse(countdownNameVisible(cdKisa))
@@ -168,8 +168,8 @@ class WidgetSizeClassWp699Test {
 
     @Test
     fun group_goal_detayi_kisa_halde_dusurulur() {
-        assertFalse(groupGoalDetailVisible(widgetSizeClass(WidgetSizeSpecs.groupGoal, 110, 110).height))
-        assertTrue(groupGoalDetailVisible(widgetSizeClass(WidgetSizeSpecs.groupGoal, 110, 150).height))
+        assertFalse(groupGoalDetailVisible(widgetSizeClass(WidgetSizeSpecs.groupGoal, 110, 80).height))
+        assertTrue(groupGoalDetailVisible(widgetSizeClass(WidgetSizeSpecs.groupGoal, 110, 110).height))
     }
 
     @Test
@@ -225,7 +225,7 @@ class WidgetSizeClassWp699Test {
             assertEquals(sinif, size.width)
             assertFits(
                 "timer/$ad saat",
-                textWidthDp(timerTimeSp(size), karakter),
+                textWidthDp(timerTimeSp(size, kutu), karakter) * WIDGET_TIMER_TEXT_SCALE_X,
                 usableWidthDp(kutu, timerRootPaddingDp(size)),
             )
         }
@@ -234,7 +234,7 @@ class WidgetSizeClassWp699Test {
         val darUzun = widgetSizeClass(spec, 110, spec.tallHeightDp)
         assertFits(
             "timer/NARROW+TALL saat",
-            textWidthDp(timerTimeSp(darUzun), karakter),
+            textWidthDp(timerTimeSp(darUzun, 110), karakter) * WIDGET_TIMER_TEXT_SCALE_X,
             usableWidthDp(110, timerRootPaddingDp(darUzun)),
         )
     }
@@ -242,7 +242,7 @@ class WidgetSizeClassWp699Test {
     @Test
     fun clock_hicbir_boyutta_kirpilmaz() {
         val spec = WidgetSizeSpecs.clock
-        val basePadding = 12
+        val basePadding = 4
         val saatKarakter = 5 // "23:59"
         val tarihKarakter = 11 // "Car 12 Agu"
 
@@ -254,7 +254,7 @@ class WidgetSizeClassWp699Test {
             val dolgu = widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)
             assertFits(
                 "clock/$ad saat",
-                textWidthDp(WidgetTypography.clockTime.of(sinif), saatKarakter),
+                textWidthDp(clockTimeSp(WidgetSizeClass(sinif, WidgetHeightClass.MEDIUM)), saatKarakter),
                 usableWidthDp(kutu, dolgu),
             )
             assertFits(
@@ -267,19 +267,19 @@ class WidgetSizeClassWp699Test {
         // SHORT: tarih gizli, tek satir.
         assertFits(
             "clock/SHORT tek satir",
-            lineHeightDp(WidgetTypography.clockTime.narrow),
-            usableHeightDp(70, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
+            lineHeightDp(clockTimeSp(WidgetSizeClass(WidgetWidthClass.NARROW, WidgetHeightClass.SHORT))),
+            usableHeightDp(40, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
         )
         // MEDIUM: saat + 4dp bosluk + tarih.
         assertFits(
             "clock/MEDIUM iki satir",
-            lineHeightDp(WidgetTypography.clockTime.medium) + 4f +
+            lineHeightDp(clockTimeSp(WidgetSizeClass(WidgetWidthClass.MEDIUM, WidgetHeightClass.MEDIUM))) + 2f +
                 lineHeightDp(WidgetTypography.clockDate.medium),
             usableHeightDp(spec.mediumHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)),
         )
         assertFits(
             "clock/TALL iki satir",
-            lineHeightDp(WidgetTypography.clockTime.wide) + 4f +
+            lineHeightDp(clockTimeSp(WidgetSizeClass(WidgetWidthClass.WIDE, WidgetHeightClass.TALL))) + 2f +
                 lineHeightDp(WidgetTypography.clockDate.wide),
             usableHeightDp(spec.tallHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.TALL)),
         )
@@ -330,8 +330,8 @@ class WidgetSizeClassWp699Test {
     @Test
     fun stats_hicbir_boyutta_kirpilmaz() {
         val spec = WidgetSizeSpecs.stats
-        val basePadding = 14
-        val cubukDp = 6f // ProgressBar layout_height
+        val basePadding = 3
+        val cubukDp = 4f // ProgressBar layout_height
 
         listOf(
             Triple("NARROW", 110, WidgetWidthClass.NARROW),
@@ -340,33 +340,40 @@ class WidgetSizeClassWp699Test {
         ).forEach { (ad, kutu, sinif) ->
             assertFits(
                 "stats/$ad yuzde",
-                textWidthDp(WidgetTypography.statsValue.of(sinif), 4), // "100%"
+                textWidthDp(statsValueSp(WidgetSizeClass(sinif, WidgetHeightClass.MEDIUM)), 4),
                 usableWidthDp(kutu, widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)),
             )
         }
 
-        // SHORT: baslik + 8 + yuzde + 6 + cubuk.
+        // Punto artik ramp'ten degil, gercekten cizilen yardimcilardan okunur;
+        // tavan kaldirilirsa bu kapi kirmizi duser (WP-730).
+        val kisa = WidgetSizeClass(WidgetWidthClass.NARROW, WidgetHeightClass.SHORT)
+        val ortaKutu = WidgetSizeClass(WidgetWidthClass.MEDIUM, WidgetHeightClass.MEDIUM)
+        val uzunKutu = WidgetSizeClass(WidgetWidthClass.WIDE, WidgetHeightClass.TALL)
+        assertFalse("SHORT kutuda baslik ciziliyor", statsTitleVisible(kisa.height))
+        assertFalse("MEDIUM kutuda baslik ciziliyor", statsTitleVisible(ortaKutu.height))
+        assertTrue("TALL kutuda baslik kayboldu", statsTitleVisible(uzunKutu.height))
+
+        // SHORT: baslik gizli; yuzde + 2 + cubuk.
         assertFits(
             "stats/SHORT",
-            lineHeightDp(WidgetTypography.statsTitle.narrow) + 8f +
-                lineHeightDp(WidgetTypography.statsValue.narrow) + 6f + cubukDp,
-            usableHeightDp(110, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
+            lineHeightDp(statsValueSp(kisa)) + 2f + cubukDp,
+            usableHeightDp(40, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
         )
-        // MEDIUM: + 6 + gun ozeti.
+        // MEDIUM: baslik yok; yuzde + cubuk + gun ozeti.
         assertFits(
             "stats/MEDIUM",
-            lineHeightDp(WidgetTypography.statsTitle.medium) + 8f +
-                lineHeightDp(WidgetTypography.statsValue.medium) + 6f + cubukDp +
-                6f + lineHeightDp(WidgetTypography.statsRow.medium),
+            lineHeightDp(statsValueSp(ortaKutu)) + 2f + cubukDp +
+                3f + lineHeightDp(statsRowSp(ortaKutu)),
             usableHeightDp(spec.mediumHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)),
         )
-        // TALL: + 3 + seri.
+        // TALL: baslik + yuzde + cubuk + gun ozeti + seri.
         assertFits(
             "stats/TALL",
-            lineHeightDp(WidgetTypography.statsTitle.wide) + 8f +
-                lineHeightDp(WidgetTypography.statsValue.wide) + 6f + cubukDp +
-                6f + lineHeightDp(WidgetTypography.statsRow.wide) +
-                3f + lineHeightDp(WidgetTypography.statsRow.wide),
+            lineHeightDp(statsTitleSp(uzunKutu)) +
+                lineHeightDp(statsValueSp(uzunKutu)) + 2f + cubukDp +
+                3f + lineHeightDp(statsRowSp(uzunKutu)) +
+                2f + lineHeightDp(statsRowSp(uzunKutu)),
             usableHeightDp(spec.tallHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.TALL)),
         )
     }
@@ -374,27 +381,24 @@ class WidgetSizeClassWp699Test {
     @Test
     fun group_goal_hicbir_boyutta_kirpilmaz() {
         val spec = WidgetSizeSpecs.groupGoal
-        val basePadding = 14
-        val cubukDp = 6f
+        val basePadding = 6
+        val gaugeDp = 42f
 
         assertFits(
             "group_goal/SHORT",
-            lineHeightDp(WidgetTypography.statsTitle.narrow) + 7f +
-                lineHeightDp(WidgetTypography.statsValue.narrow) + 6f + cubukDp,
-            usableHeightDp(110, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
+            lineHeightDp(WidgetTypography.statsTitle.narrow) + 3f + gaugeDp,
+            usableHeightDp(80, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
         )
         assertFits(
             "group_goal/MEDIUM",
-            lineHeightDp(WidgetTypography.statsTitle.medium) + 7f +
-                lineHeightDp(WidgetTypography.statsValue.medium) + 6f + cubukDp +
-                7f + lineHeightDp(WidgetTypography.statsRow.medium),
+            lineHeightDp(WidgetTypography.statsTitle.medium) + 3f + gaugeDp +
+                3f + lineHeightDp(WidgetTypography.statsRow.medium),
             usableHeightDp(spec.mediumHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.MEDIUM)),
         )
         assertFits(
             "group_goal/TALL",
-            lineHeightDp(WidgetTypography.statsTitle.wide) + 7f +
-                lineHeightDp(WidgetTypography.statsValue.wide) + 6f + cubukDp +
-                7f + lineHeightDp(WidgetTypography.statsRow.wide),
+            lineHeightDp(WidgetTypography.statsTitle.wide) + 3f + gaugeDp +
+                3f + lineHeightDp(WidgetTypography.statsRow.wide),
             usableHeightDp(spec.tallHeightDp, widgetRootPaddingDp(basePadding, WidgetHeightClass.TALL)),
         )
     }

@@ -1,133 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-725: okunur satir ritmi + ilk uc/kisisel sira vurgusu.
-
-     RemoteViews dinamik liste yerine uc sabit satir kullanir. Her satirdaki
-     rank hapi metin dosyasi gorunumunu kirar; birinci sira dolu vurgu, ikinci
-     ve ucuncu sira iz rengiyle ayrilir. Kisa boyutta ayni ilk satir "YOU/SEN"
-     hapiyla kullanicinin kendi sirasina doner. -->
+<!-- Dis cerceve launcher alanini doldurur; kart yalniz gercek satirlar kadar
+     yukselir. Bos siralama bu sayede buyuk, karanlik bir blok olmaz. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/leaderboard_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_card_bg"
     android:contentDescription="@string/cd_leaderboard_widget"
     android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:padding="14dp">
-
-    <TextView
-        android:id="@+id/leaderboard_widget_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_leaderboard_title"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+    android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/leaderboard_widget_row_container_1"
+        android:id="@+id/leaderboard_widget_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:gravity="center_vertical"
-        android:minHeight="26dp"
-        android:orientation="horizontal">
+        android:background="@drawable/widget_card_bg"
+        android:orientation="vertical"
+        android:padding="8dp">
 
         <TextView
-            android:id="@+id/leaderboard_widget_rank_1"
-            android:layout_width="30dp"
-            android:layout_height="24dp"
-            android:background="@drawable/widget_rank_first_bg"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="1"
-            android:textColor="@color/widget_design_surface"
-            android:textSize="10sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/leaderboard_widget_row_1"
-            android:layout_width="0dp"
+            android:id="@+id/leaderboard_widget_title"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="@string/widget_no_records"
-            android:textColor="@color/widget_design_ink"
+            android:text="@string/widget_leaderboard_title"
+            android:textColor="@color/widget_design_ink_muted"
             android:textSize="13sp"
             android:textStyle="bold" />
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/leaderboard_widget_row_container_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:gravity="center_vertical"
-        android:minHeight="26dp"
-        android:orientation="horizontal"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/leaderboard_widget_rank_2"
-            android:layout_width="30dp"
-            android:layout_height="24dp"
-            android:background="@drawable/widget_rank_other_bg"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="2"
-            android:textColor="@color/widget_design_accent"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/leaderboard_widget_row_2"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/leaderboard_widget_row_container_1"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/widget_dash"
-            android:textColor="@color/widget_design_ink"
-            android:textSize="12sp" />
-    </LinearLayout>
+            android:layout_marginTop="5dp"
+            android:gravity="center_vertical"
+            android:minHeight="26dp"
+            android:orientation="horizontal">
 
-    <LinearLayout
-        android:id="@+id/leaderboard_widget_row_container_3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:gravity="center_vertical"
-        android:minHeight="26dp"
-        android:orientation="horizontal"
-        android:visibility="gone">
+            <TextView
+                android:id="@+id/leaderboard_widget_rank_1"
+                android:layout_width="28dp"
+                android:layout_height="24dp"
+                android:background="@drawable/widget_rank_first_bg"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="1"
+                android:textColor="@color/widget_design_surface"
+                android:textSize="10sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/leaderboard_widget_rank_3"
-            android:layout_width="30dp"
-            android:layout_height="24dp"
-            android:background="@drawable/widget_rank_other_bg"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="3"
-            android:textColor="@color/widget_design_accent"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/leaderboard_widget_row_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_no_records"
+                android:textColor="@color/widget_design_ink"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/leaderboard_widget_row_3"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/leaderboard_widget_row_container_2"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/widget_dash"
-            android:textColor="@color/widget_design_ink"
-            android:textSize="12sp" />
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:minHeight="26dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/leaderboard_widget_rank_2"
+                android:layout_width="28dp"
+                android:layout_height="24dp"
+                android:background="@drawable/widget_rank_other_bg"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="2"
+                android:textColor="@color/widget_design_accent"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/leaderboard_widget_row_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_dash"
+                android:textColor="@color/widget_design_ink"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/leaderboard_widget_row_container_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:minHeight="26dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/leaderboard_widget_rank_3"
+                android:layout_width="28dp"
+                android:layout_height="24dp"
+                android:background="@drawable/widget_rank_other_bg"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="3"
+                android:textColor="@color/widget_design_accent"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/leaderboard_widget_row_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_dash"
+                android:textColor="@color/widget_design_ink"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

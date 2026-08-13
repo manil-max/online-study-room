@@ -24,7 +24,7 @@
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_leaderboard_widget"
-    android:maxResizeHeight="250dp"
+    android:maxResizeHeight="150dp"
     android:maxResizeWidth="320dp"
     android:minHeight="110dp"
     android:minResizeHeight="80dp"

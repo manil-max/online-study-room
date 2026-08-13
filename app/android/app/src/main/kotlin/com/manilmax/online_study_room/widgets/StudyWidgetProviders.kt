@@ -155,18 +155,18 @@ internal data class WidgetSizeSpec(
 // sınırlarıyla birlikte anlam taşır; ikisinin ayrışmadığını
 // `test/features/android_widgets/widget_sizing_wp699_test.dart` ölçer.
 internal const val WIDGET_TIMER_DEFAULT_WIDTH_DP = 110
-internal const val WIDGET_TIMER_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_TIMER_DEFAULT_HEIGHT_DP = 40
 internal const val WIDGET_TIMER_MEDIUM_WIDTH_DP = 150
 internal const val WIDGET_TIMER_WIDE_WIDTH_DP = 220
 internal const val WIDGET_TIMER_MEDIUM_HEIGHT_DP = 110
 internal const val WIDGET_TIMER_TALL_HEIGHT_DP = 180
 
 internal const val WIDGET_CLOCK_DEFAULT_WIDTH_DP = 110
-internal const val WIDGET_CLOCK_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_CLOCK_DEFAULT_HEIGHT_DP = 40
 internal const val WIDGET_CLOCK_MEDIUM_WIDTH_DP = 150
 internal const val WIDGET_CLOCK_WIDE_WIDTH_DP = 220
-internal const val WIDGET_CLOCK_MEDIUM_HEIGHT_DP = 110
-internal const val WIDGET_CLOCK_TALL_HEIGHT_DP = 180
+internal const val WIDGET_CLOCK_MEDIUM_HEIGHT_DP = 70
+internal const val WIDGET_CLOCK_TALL_HEIGHT_DP = 110
 
 internal const val WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP = 110
 internal const val WIDGET_COUNTDOWN_DEFAULT_HEIGHT_DP = 110
@@ -176,18 +176,18 @@ internal const val WIDGET_COUNTDOWN_MEDIUM_HEIGHT_DP = 110
 internal const val WIDGET_COUNTDOWN_TALL_HEIGHT_DP = 180
 
 internal const val WIDGET_STATS_DEFAULT_WIDTH_DP = 110
-internal const val WIDGET_STATS_DEFAULT_HEIGHT_DP = 110
+internal const val WIDGET_STATS_DEFAULT_HEIGHT_DP = 40
 internal const val WIDGET_STATS_MEDIUM_WIDTH_DP = 150
 internal const val WIDGET_STATS_WIDE_WIDTH_DP = 220
-internal const val WIDGET_STATS_MEDIUM_HEIGHT_DP = 150
-internal const val WIDGET_STATS_TALL_HEIGHT_DP = 180
+internal const val WIDGET_STATS_MEDIUM_HEIGHT_DP = 80
+internal const val WIDGET_STATS_TALL_HEIGHT_DP = 110
 
 internal const val WIDGET_GROUP_GOAL_DEFAULT_WIDTH_DP = 110
 internal const val WIDGET_GROUP_GOAL_DEFAULT_HEIGHT_DP = 110
 internal const val WIDGET_GROUP_GOAL_MEDIUM_WIDTH_DP = 150
 internal const val WIDGET_GROUP_GOAL_WIDE_WIDTH_DP = 220
-internal const val WIDGET_GROUP_GOAL_MEDIUM_HEIGHT_DP = 150
-internal const val WIDGET_GROUP_GOAL_TALL_HEIGHT_DP = 180
+internal const val WIDGET_GROUP_GOAL_MEDIUM_HEIGHT_DP = 110
+internal const val WIDGET_GROUP_GOAL_TALL_HEIGHT_DP = 150
 
 internal const val WIDGET_LEADERBOARD_DEFAULT_WIDTH_DP = 180
 internal const val WIDGET_LEADERBOARD_DEFAULT_HEIGHT_DP = 110
@@ -292,7 +292,7 @@ internal object WidgetTypography {
     //   NARROW 110dp: (110 - 2*7 - 8) / (0.60 * 8) = 18.3 -> 18sp
     //   MEDIUM 150dp: (150 - 2*7 - 8) / (0.60 * 8) = 26.6 -> 26sp
     //   WIDE   220dp: (220 - 2*7 - 8) / (0.60 * 8) = 41.2 -> 40sp
-    val timerTime = SpRamp(18f, 26f, 40f)
+    val timerTime = SpRamp(28f, 34f, 44f)
     val timerAction = SpRamp(13f, 14f, 16f)
 
     /** WP-718: ders hapi. Yalniz genislik >= MEDIUM iken cizilir. */
@@ -302,8 +302,8 @@ internal object WidgetTypography {
     val countdownDays = SpRamp(24f, 30f, 46f)
     val countdownName = SpRamp(12f, 12f, 15f)
     val countdownLabel = SpRamp(11f, 12f, 14f)
-    val statsValue = SpRamp(22f, 28f, 34f)
-    val statsTitle = SpRamp(12f, 14f, 16f)
+    val statsValue = SpRamp(20f, 26f, 32f)
+    val statsTitle = SpRamp(11f, 13f, 15f)
     val statsRow = SpRamp(11f, 12f, 14f)
     val leaderboardTitle = SpRamp(13f, 14f, 16f)
     val leaderboardRow = SpRamp(12f, 13f, 15f)
@@ -337,6 +337,12 @@ internal const val WIDGET_DESIGN_ROW_GAP_DP = 4
 /** Kontrol hapinin yatay dolgusu (`odak_timer_widget.xml`). */
 internal const val WIDGET_TIMER_PILL_H_PADDING_DP = 4
 
+/** Sabit dar glif geometrisi; 8 karakterlik `00:00:00` yeniden akmaz. */
+internal const val WIDGET_TIMER_TEXT_SCALE_X = 0.55f
+
+/** Launcher'in gercek 1x1 kutusunda kullanilan belirgin alt basamak. */
+internal const val WIDGET_TIMER_ONE_CELL_SP = 20f
+
 /**
  * Kontrol satiri (ders hapi + Baslat/Durdur) yalniz 48dp'lik hedefin
  * GERCEKTEN sigdigi yukseklikte cizilir.
@@ -367,9 +373,17 @@ internal fun timerSubjectVisible(size: WidgetSizeClass): Boolean =
  * olmadan bu kutuda ya sayi ya dugme kirpilirdi. `SHORT`ta kontrol satiri
  * olmadigi icin tavana gerek yoktur, `TALL`da ise yer zaten var.
  */
-internal fun timerTimeSp(size: WidgetSizeClass): Float {
-    val base = WidgetTypography.timerTime.of(size.width)
-    return if (size.height == WidgetHeightClass.MEDIUM) minOf(base, 26f) else base
+internal fun timerTimeSp(size: WidgetSizeClass, widthDp: Int = 0): Float {
+    val base = if (widthDp in 1 until WIDGET_TIMER_DEFAULT_WIDTH_DP) {
+        WIDGET_TIMER_ONE_CELL_SP
+    } else {
+        WidgetTypography.timerTime.of(size.width)
+    }
+    return when (size.height) {
+        WidgetHeightClass.SHORT -> minOf(base, 34f)
+        WidgetHeightClass.MEDIUM -> minOf(base, 28f)
+        WidgetHeightClass.TALL -> base
+    }
 }
 
 /**
@@ -385,12 +399,21 @@ internal fun timerTimeSp(size: WidgetSizeClass): Float {
  * bedeli okunabilirlik olurdu.
  */
 internal fun timerRootPaddingDp(size: WidgetSizeClass): Int =
-    if (size.width == WidgetWidthClass.NARROW) 6 else widgetRootPaddingDp(6, size.height)
+    if (size.width == WidgetWidthClass.NARROW) 4 else widgetRootPaddingDp(4, size.height)
 
 // Satır görünürlüğü YÜKSEKLİK sınıfından türer. Saf tutuldu ki JVM testi
 // kullanıcının gerçekten gördüğü dalı ölçebilsin.
 internal fun clockDateVisible(height: WidgetHeightClass): Boolean =
     height != WidgetHeightClass.SHORT
+
+internal fun clockTimeSp(size: WidgetSizeClass): Float {
+    val base = WidgetTypography.clockTime.of(size.width)
+    return when (size.height) {
+        WidgetHeightClass.SHORT -> minOf(base, 18f)
+        WidgetHeightClass.MEDIUM -> minOf(base, 26f)
+        WidgetHeightClass.TALL -> base
+    }
+}
 
 internal fun countdownNameVisible(height: WidgetHeightClass): Boolean =
     height != WidgetHeightClass.SHORT
@@ -400,6 +423,31 @@ internal fun statsDetailVisible(height: WidgetHeightClass): Boolean =
 
 internal fun statsStreakVisible(height: WidgetHeightClass): Boolean =
     height == WidgetHeightClass.TALL
+
+/**
+ * WP-730: baslik yalniz TALL kutuda cizilir. 2x2'lik (MEDIUM) kutunun dikey
+ * butcesi olculdu: yuzde + cubuk + gun ozeti zaten 80dp'nin kullanilabilir
+ * 64dp'sini doldurur. Baslik da eklenirse ya satirlar kirpilir ya da yuzde
+ * okunmaz puntoya duser -- sahibin sikayet ettigi tam sey. Aritmetik
+ * `WidgetSizeClassWp699Test.stats_hicbir_boyutta_kirpilmaz` icinde kurulur.
+ */
+internal fun statsTitleVisible(height: WidgetHeightClass): Boolean =
+    height == WidgetHeightClass.TALL
+
+/** Baslik puntosu: TALL kutuda bile 13sp'yi asmaz (dikey butce). */
+internal fun statsTitleSp(size: WidgetSizeClass): Float =
+    minOf(WidgetTypography.statsTitle.of(size.width), 13f)
+
+/** Satir puntosu: gun ozeti + seri satiri 12sp tavaninda kalir. */
+internal fun statsRowSp(size: WidgetSizeClass): Float =
+    minOf(WidgetTypography.statsRow.of(size.width), 12f)
+
+internal fun statsValueSp(size: WidgetSizeClass): Float =
+    if (size.height == WidgetHeightClass.SHORT) {
+        15f
+    } else {
+        minOf(WidgetTypography.statsValue.of(size.width), 24f)
+    }
 
 internal fun groupGoalDetailVisible(height: WidgetHeightClass): Boolean =
     height != WidgetHeightClass.SHORT
@@ -431,12 +479,23 @@ internal fun leaderboardHighlightedPosition(myRank: String): Int? =
  * `MAX_*` diğer ekran yönündeki ölçüdür; ona göre çizmek, cihaz döndüğünde
  * dar kalan yönde metni kırpardı.
  */
-private fun AppWidgetManager.sizeClass(spec: WidgetSizeSpec, widgetId: Int): WidgetSizeClass {
+internal data class WidgetDimensions(
+    val widthDp: Int,
+    val heightDp: Int,
+    val sizeClass: WidgetSizeClass,
+)
+
+private fun AppWidgetManager.dimensions(spec: WidgetSizeSpec, widgetId: Int): WidgetDimensions {
     val options = runCatching { getAppWidgetOptions(widgetId) }.getOrNull()
-    val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
-    val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
-    return widgetSizeClass(spec, width, height)
+    val reportedWidth = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+    val reportedHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+    val width = reportedWidth.takeIf { it > 0 } ?: spec.defaultWidthDp
+    val height = reportedHeight.takeIf { it > 0 } ?: spec.defaultHeightDp
+    return WidgetDimensions(width, height, widgetSizeClass(spec, width, height))
 }
+
+private fun AppWidgetManager.sizeClass(spec: WidgetSizeSpec, widgetId: Int): WidgetSizeClass =
+    dimensions(spec, widgetId).sizeClass
 
 private fun RemoteViews.applySp(viewId: Int, sp: Float) =
     setTextViewTextSize(viewId, android.util.TypedValue.COMPLEX_UNIT_SP, sp)
@@ -492,7 +551,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
-                val size = appWidgetManager.sizeClass(WidgetSizeSpecs.timer, widgetId)
+                val dimensions = appWidgetManager.dimensions(WidgetSizeSpecs.timer, widgetId)
+                val size = dimensions.sizeClass
                 val widgetPrefs = context.getSharedPreferences(
                     TimerStateStore.PREFS_NAME,
                     Context.MODE_PRIVATE,
@@ -522,11 +582,19 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     if (controlsVisible) View.VISIBLE else View.GONE,
                 )
                 setViewVisibility(
+                    R.id.timer_widget_compact_action,
+                    if (controlsVisible) View.GONE else View.VISIBLE,
+                )
+                setViewVisibility(
                     R.id.timer_widget_subject,
                     if (subjectVisible) View.VISIBLE else View.GONE,
                 )
-                applySp(R.id.timer_widget_elapsed, timerTimeSp(size))
+                applySp(R.id.timer_widget_elapsed, timerTimeSp(size, dimensions.widthDp))
                 applySp(R.id.timer_widget_action, WidgetTypography.timerAction.of(size.width))
+                applySp(
+                    R.id.timer_widget_compact_action,
+                    WidgetTypography.timerAction.of(size.width),
+                )
                 applySp(R.id.timer_widget_subject, WidgetTypography.timerSubject.of(size.width))
                 applyRootPadding(
                     context,
@@ -568,6 +636,14 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                         context.getString(R.string.action_start)
                     },
                 )
+                setTextViewText(
+                    R.id.timer_widget_compact_action,
+                    if (isRunning) {
+                        context.getString(R.string.action_stop)
+                    } else {
+                        context.getString(R.string.action_start)
+                    },
+                )
 
                 // WP-718: ders hapinin metni. Sayac KOSARKEN o kosunun dersi
                 // (`KEY_SUBJECT`), dururken KALICI TERCIH okunur — ikisi ayri
@@ -595,6 +671,7 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     requestCode = 0,
                 )
                 setOnClickPendingIntent(R.id.timer_widget_action, togglePending)
+                setOnClickPendingIntent(R.id.timer_widget_compact_action, togglePending)
                 // WP-718: ders hapi yalniz DURURKEN secim yapar; kosarken
                 // baglanmaz ve kokun derin baglantisini devralir (kullanici o
                 // an dersi degil kosuyu gormek ister). Dart'ta da kural ayni:
@@ -705,14 +782,18 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                     R.id.stats_widget_streak,
                     if (statsStreakVisible(size.height)) View.VISIBLE else View.GONE,
                 )
-                applySp(R.id.stats_widget_title, WidgetTypography.statsTitle.of(size.width))
-                applySp(R.id.stats_widget_today, WidgetTypography.statsValue.of(size.width))
-                applySp(R.id.stats_widget_week, WidgetTypography.statsRow.of(size.width))
-                applySp(R.id.stats_widget_streak, WidgetTypography.statsRow.of(size.width))
+                setViewVisibility(
+                    R.id.stats_widget_title,
+                    if (statsTitleVisible(size.height)) View.VISIBLE else View.GONE,
+                )
+                applySp(R.id.stats_widget_title, statsTitleSp(size))
+                applySp(R.id.stats_widget_today, statsValueSp(size))
+                applySp(R.id.stats_widget_week, statsRowSp(size))
+                applySp(R.id.stats_widget_streak, statsRowSp(size))
                 applyRootPadding(
                     context,
                     R.id.stats_widget_root,
-                    widgetRootPaddingDp(14, size.height),
+                    widgetRootPaddingDp(3, size.height),
                 )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -834,8 +915,8 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     applySp(R.id.leaderboard_widget_row_3, rowSp)
                     applyRootPadding(
                         context,
-                        R.id.leaderboard_widget_root,
-                        widgetRootPaddingDp(14, size.height),
+                        R.id.leaderboard_widget_card,
+                        widgetRootPaddingDp(8, size.height),
                     )
                 }
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -875,10 +956,11 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
                     strings.getString(R.string.widget_group_goal),
                 )
                 setTextViewText(R.id.group_goal_widget_percent, percentText)
+                val normalizedProgress = WidgetDesign.barPercent(progress / 100.0)
                 setProgressBar(
                     R.id.group_goal_widget_progress,
                     WidgetDesign.PROGRESS_MAX,
-                    WidgetDesign.barPercent(progress / 100.0),
+                    WidgetDesign.arcPercent(normalizedProgress / 100.0),
                     false,
                 )
                 setTextViewText(
@@ -906,7 +988,7 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
                 applyRootPadding(
                     context,
                     R.id.group_goal_widget_root,
-                    widgetRootPaddingDp(14, size.height),
+                    widgetRootPaddingDp(6, size.height),
                 )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -938,7 +1020,7 @@ class ClockWidgetProvider : HomeWidgetProvider() {
                 // küçülüyor ne büyüyordu. `minHeight=40dp` ile eklenen bir saat
                 // 12dp dolgu + 36sp satırı taşırıyordu.
                 val size = appWidgetManager.sizeClass(WidgetSizeSpecs.clock, widgetId)
-                applySp(R.id.clock_widget_time, WidgetTypography.clockTime.of(size.width))
+                applySp(R.id.clock_widget_time, clockTimeSp(size))
                 applySp(R.id.clock_widget_date, WidgetTypography.clockDate.of(size.width))
                 setViewVisibility(
                     R.id.clock_widget_date,
@@ -947,7 +1029,7 @@ class ClockWidgetProvider : HomeWidgetProvider() {
                 applyRootPadding(
                     context,
                     R.id.clock_widget_root,
-                    widgetRootPaddingDp(12, size.height),
+                    widgetRootPaddingDp(4, size.height),
                 )
                 // WP-700: bu widget'in daha once HIC tiklama intent'i yoktu.
                 setOnClickPendingIntent(

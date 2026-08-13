@@ -1,41 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-718: sayac widget'i - okunur sayi + 48dp dokunma hedefi + ders secimi.
-
-     ## Olculen "once" durumu (WP-134/699 hali)
-     Kok dolgu 6dp, sayi `timerTime` merdiveninden 15sp (en dar sinif), dugme
-     11sp ve `minHeight=32dp`. Yani sahibin cihazinda gordugu sey gercekten
-     15sp'lik bir "00:00" ve 32dp'lik bir "Basla" idi. Android'in kendi widget
-     kilavuzunun asgari dokunma hedefi 48dp'dir; 32dp onun ucte ikisi.
-
-     ## Neden dugme ayri bir SATIR degil, ayri bir SURFACE
-     48dp'lik bir kontrol + okunur bir sayi 110dp'lik (2 hucre) bir kutuya
-     ancak sigar; 40dp'lik (1 hucre) bir kutuya SIGMAZ. Bu yuzden en kisa
-     sinifta (`SHORT`) kontrol satiri tamamen kalkar ve **kokun kendisi**
-     baslat/durdur olur: 1 hucrelik bir widget launcher'in gercek hucresine
-     cizilir (yaygin telefonlarda ~70-85dp), yani tum yuzey >= 48dp'lik tek
-     bir hedef olur. Kucuk bir hapi 40dp'ye sikistirmak yerine hedefi
-     buyutmenin tek yolu budur.
-
-     ## Gorsel dil
-     Renk/zemin simgeleri WP-717'nin paylasilan dilinden gelir
-     (`widget_card_bg`, `widget_design_*`). Kok DOLGUSU bilerek o dosyanin
-     12dp'lik `widget_design_padding` olcusunu kullanmaz: 110dp'lik bir
-     tile'da 12dp'lik cift yan dolgu genisligin %22'sini yer ve sayiyi tam da
-     sahibin sikayet ettigi yere geri dusurur. WP-717 rengi ile olcuyu ayri
-     simgelerde tuttugu icin bu ayrisma dilin disina cikmaz; dolgu
-     `timerRootPaddingDp` icinde boyuta gore surulur.
-
-     Aritmetik `WidgetSizeClassWp699Test.kt` + `TimerWidgetWp718Test.kt`
-     icinde yeniden kurulur; punto buyutulur ya da dugme kucultulurse kirmizi
-     duser. -->
+<!-- Varsayilan 2x1. Kisa kutuda buyuk sayi + kucuk eylem ipucu gorunur;
+     tum kart 48dp'den buyuk tek Baslat/Durdur hedefidir. Uzun kutuda ayrica
+     48dp tam kontrol satiri ve ders secimi acilir. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/timer_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_card_bg"
     android:gravity="center"
+    android:minHeight="48dp"
+    android:minWidth="48dp"
     android:orientation="vertical"
-    android:padding="6dp">
+    android:padding="4dp">
 
     <Chronometer
         android:id="@+id/timer_widget_elapsed"
@@ -45,20 +21,35 @@
         android:gravity="center"
         android:maxLines="1"
         android:text="00:00"
-        android:textColor="@color/widget_design_accent"
-        android:textSize="18sp"
+        android:textColor="@color/widget_design_ink"
+        android:textScaleX="0.55"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
-    <!-- Kontrol satiri: SHORT boyutta tamamen GONE olur (yukaridaki gerekce).
-         Ders hapi GONE oldugunda LinearLayout onu hic olcmez, yani `weight`
-         payi da harcanmaz ve Baslat/Durdur satirin tamamini kaplar. -->
+    <TextView
+        android:id="@+id/timer_widget_compact_action"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/widget_action_bg"
+        android:gravity="center"
+        android:maxLines="1"
+        android:minWidth="56dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="@string/action_start"
+        android:textColor="@color/widget_design_surface"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
     <LinearLayout
         android:id="@+id/timer_widget_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/widget_design_row_gap"
         android:baselineAligned="false"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/timer_widget_subject"
@@ -66,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/widget_design_row_gap"
             android:layout_weight="1"
-            android:background="@drawable/timer_pill_bg"
+            android:background="@drawable/widget_chip_bg"
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
@@ -81,14 +72,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/timer_pill_bg"
+            android:background="@drawable/widget_action_bg"
             android:gravity="center"
             android:maxLines="1"
             android:minHeight="48dp"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:text="@string/action_start"
-            android:textColor="@color/widget_design_accent"
+            android:textColor="@color/widget_design_surface"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>

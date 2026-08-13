@@ -5,9 +5,11 @@
      hicbir derleme hatasi bunu soylemez (test ad kumelerini karsilastirir).
      Olculer tema ile degismez, yalniz renkler burada tanimlanir. -->
 <resources>
-    <color name="widget_design_surface">#121821</color>
-    <color name="widget_design_ink">#FFFFFF</color>
-    <color name="widget_design_ink_muted">#B4BFCF</color>
-    <color name="widget_design_accent">#FFB15C</color>
-    <color name="widget_design_track">#2E3743</color>
+    <color name="widget_design_surface">#17130F</color>
+    <color name="widget_design_ink">#FFF9F2</color>
+    <color name="widget_design_ink_muted">#CBBDAF</color>
+    <color name="widget_design_accent">#FFB66E</color>
+    <color name="widget_design_track">#514235</color>
+    <color name="widget_design_outline">#4B3C31</color>
+    <color name="widget_design_accent_soft">#472A17</color>
 </resources>

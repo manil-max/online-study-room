@@ -99,7 +99,7 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     summary: l10n.clockAkanSureBaslatdurdurApp,
     route: WidgetRoute.timer,
     cellWidth: 2,
-    cellHeight: 2,
+    cellHeight: 1,
   ),
   HomeWidgetProvider.minimalTimer => HomeWidgetCardSpec(
     icon: Icons.timer_outlined,
@@ -150,7 +150,7 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     summary: l10n.clockWidgetGunlukHedefOzeti,
     route: WidgetRoute.stats,
     cellWidth: 2,
-    cellHeight: 2,
+    cellHeight: 1,
   ),
   HomeWidgetProvider.groupGoal => HomeWidgetCardSpec(
     icon: Icons.flag_outlined,
@@ -174,7 +174,7 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     summary: l10n.clockCanliSaatTextclockPil,
     route: WidgetRoute.clock,
     cellWidth: 2,
-    cellHeight: 2,
+    cellHeight: 1,
   ),
   // Alarm tanımı WP-699 kapsamı dışında bırakıldı: `odak_alarm_widget_info.xml`
   // `targetCell*` beyan etmez, `AlarmWidgetProvider` da hiçbir derin bağlantı

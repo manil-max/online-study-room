@@ -35,11 +35,11 @@ class TimerNumericTypographyWp728Test {
             Box("4x2 wide", 250, 110),
         ).forEach { box ->
             val size = widgetSizeClass(WidgetSizeSpecs.timer, box.widthDp, box.heightDp)
-            val sp = timerTimeSp(size)
+            val sp = timerTimeSp(size, box.widthDp)
             val padding = timerRootPaddingDp(size)
             assertFits(
                 "${box.name}/width",
-                textWidthDp(sp),
+                textWidthDp(sp, WIDGET_TIMER_TEXT_SCALE_X),
                 usableDp(box.widthDp, padding),
             )
             assertFits(

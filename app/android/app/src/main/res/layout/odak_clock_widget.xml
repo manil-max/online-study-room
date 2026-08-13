@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dijital masaüstü saati — TextClock sistem saatiyle akar (Flutter yok). -->
+<!-- 2x1'de yalniz saat; yukseklik arttikca tarih eklenir. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/clock_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B0F0E"
+    android:background="@drawable/widget_card_bg"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="4dp">
 
     <TextClock
         android:id="@+id/clock_widget_time"
@@ -15,23 +15,24 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:format12Hour="h:mm"
+        android:format24Hour="HH:mm"
         android:gravity="center"
         android:maxLines="1"
-        android:format24Hour="HH:mm"
-        android:textColor="#FFFFFF"
-        android:textSize="36sp"
-        android:textStyle="normal" />
+        android:textColor="@color/widget_design_ink"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <TextClock
         android:id="@+id/clock_widget_date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:format12Hour="EEE d MMM"
+        android:format24Hour="EEE d MMM"
         android:gravity="center"
         android:maxLines="1"
-        android:format24Hour="EEE d MMM"
-        android:textColor="#88FFFFFF"
-        android:textSize="12sp" />
+        android:textColor="@color/widget_design_ink_muted"
+        android:textSize="11sp"
+        android:visibility="gone" />
 </LinearLayout>

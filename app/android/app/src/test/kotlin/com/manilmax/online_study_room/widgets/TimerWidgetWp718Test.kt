@@ -102,7 +102,7 @@ class TimerWidgetWp718Test {
             )
         }
         // Sahibin sikayet ettigi tam nokta: en dar sinif.
-        assertEquals(18f, WidgetTypography.timerTime.narrow)
+        assertEquals(28f, WidgetTypography.timerTime.narrow)
     }
 
     @Test
@@ -132,20 +132,20 @@ class TimerWidgetWp718Test {
     @Test
     fun en_kucuk_kutuda_sayi_TEK_BASINA_sigar() {
         val spec = WidgetSizeSpecs.timer
-        // minResize kosesi: 110x80dp.
-        val size = widgetSizeClass(spec, 110, 80)
+        // Launcher'in gercek 1x1 kutusu yaklasik 70x70dp'dir.
+        val size = widgetSizeClass(spec, 70, 70)
         val kisaDolgu = timerRootPaddingDp(size)
         assertEquals(WidgetWidthClass.NARROW, size.width)
         assertEquals(WidgetHeightClass.SHORT, size.height)
         assertFits(
             "timer/SHORT sayi yuksekligi",
-            lineHeightDp(timerTimeSp(size)),
-            usableDp(80, kisaDolgu),
+            lineHeightDp(timerTimeSp(size, 70)),
+            usableDp(70, kisaDolgu),
         )
         assertFits(
             "timer/SHORT sayi genisligi",
-            textWidthDp(timerTimeSp(size), timeChars),
-            usableDp(110, kisaDolgu),
+            textWidthDp(timerTimeSp(size, 70), timeChars) * WIDGET_TIMER_TEXT_SCALE_X,
+            usableDp(70, kisaDolgu),
         )
     }
 
@@ -166,14 +166,14 @@ class TimerWidgetWp718Test {
             val dolgu = timerRootPaddingDp(size)
             assertFits(
                 "timer/${kutu.ad} sayi + 48dp hap",
-                lineHeightDp(timerTimeSp(size)) +
+                lineHeightDp(timerTimeSp(size, kutu.w)) +
                     WIDGET_DESIGN_ROW_GAP_DP +
                     WIDGET_MIN_TOUCH_TARGET_DP,
                 usableDp(kutu.h, dolgu),
             )
             assertFits(
                 "timer/${kutu.ad} sayi genisligi",
-                textWidthDp(timerTimeSp(size), timeChars),
+                textWidthDp(timerTimeSp(size, kutu.w), timeChars) * WIDGET_TIMER_TEXT_SCALE_X,
                 usableDp(kutu.w, dolgu),
             )
         }
@@ -189,12 +189,12 @@ class TimerWidgetWp718Test {
         assertEquals(WidgetWidthClass.WIDE, genisKisa.width)
         assertTrue(
             "kisa kutuda punto tavanlanmiyor",
-            timerTimeSp(genisKisa) < WidgetTypography.timerTime.wide,
+            timerTimeSp(genisKisa, 250) < WidgetTypography.timerTime.wide,
         )
         assertEquals(
             "uzun kutuda tavan uygulanmamali",
             WidgetTypography.timerTime.wide,
-            timerTimeSp(genisUzun),
+            timerTimeSp(genisUzun, 250),
         )
     }
 

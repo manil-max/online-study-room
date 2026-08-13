@@ -64,12 +64,20 @@ void main() {
       () {
         for (final layout in <String>[stats, groupGoal]) {
           expect(layout, contains('@drawable/widget_card_bg'));
-          expect(layout, contains('@color/widget_design_accent'));
           expect(layout, contains('@color/widget_design_ink'));
-          expect(layout, contains('@drawable/widget_progress_bar'));
           expect(layout, isNot(contains('@color/widget_stats_surface')));
           expect(layout, isNot(contains('@color/widget_leaderboard_surface')));
         }
+        expect(stats, contains('@color/widget_design_accent'));
+        expect(stats, contains('@drawable/widget_progress_bar'));
+        expect(groupGoal, contains('@drawable/widget_progress_arc'));
+        // WP-730: grup hedefinde accent artik yuzde METNINDE degil, yayin
+        // dolgu seklinde tasinir; yay icindeki yuzde okunur `ink` tonuna
+        // alindi. Token yine de cizilen zincirde bulunmak ZORUNDA.
+        expect(
+          _read('android/app/src/main/res/drawable/widget_arc_fill_shape.xml'),
+          contains('@color/widget_design_accent'),
+        );
 
         final statsBody = _classBody(
           provider,
@@ -81,10 +89,29 @@ void main() {
           'GroupGoalWidgetProvider',
           'ClockWidgetProvider',
         );
-        for (final body in <String>[statsBody, goalBody]) {
-          expect(body, contains('WidgetDesign.PROGRESS_MAX'));
-          expect(body, contains('WidgetDesign.barPercent('));
-        }
+        expect(statsBody, contains('WidgetDesign.PROGRESS_MAX'));
+        expect(statsBody, contains('WidgetDesign.barPercent('));
+        expect(goalBody, contains('WidgetDesign.PROGRESS_MAX'));
+        expect(goalBody, contains('WidgetDesign.arcPercent('));
+      },
+    );
+
+    test(
+      'grup hedefi yuzdeyi yarim yayin icinde YALNIZ BIR KEZ gosterir',
+      () {
+        expect(groupGoal, contains('group_goal_widget_gauge'));
+        expect(groupGoal, contains('@drawable/widget_progress_arc'));
+        expect(
+          RegExp('android:id="@\\+id/group_goal_widget_percent"')
+              .allMatches(groupGoal)
+              .length,
+          1,
+          reason: 'yuzde widgetta iki kez ciziliyor',
+        );
+        expect(
+          _element(groupGoal, 'group_goal_widget_percent'),
+          contains('android:layout_gravity="center_horizontal|bottom"'),
+        );
       },
     );
 

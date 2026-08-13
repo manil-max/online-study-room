@@ -23,14 +23,14 @@
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_stats_widget"
-    android:maxResizeHeight="250dp"
+    android:maxResizeHeight="110dp"
     android:maxResizeWidth="250dp"
-    android:minHeight="110dp"
-    android:minResizeHeight="110dp"
+    android:minHeight="40dp"
+    android:minResizeHeight="40dp"
     android:minResizeWidth="110dp"
     android:minWidth="110dp"
     android:previewLayout="@layout/odak_stats_widget"
     android:resizeMode="horizontal|vertical"
-    android:targetCellHeight="2"
+    android:targetCellHeight="1"
     android:targetCellWidth="2"
     android:updatePeriodMillis="1800000" />
