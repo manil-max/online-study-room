@@ -214,10 +214,12 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
 Assert-Equal $contract.production.migration_head '0135' 'production hedefi 0135: v70 basarim dengesi ve canli seri'
-# Sahip yayin emrini verdi ve staging post-check'i okundu; production apply
-# kapisi 0135 icin ACIK. Post-check okunur okunmaz yeniden kilitlenir.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0135 production apply sahibin yayin emriyle acildi'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'release_enabled acik degil, confirmation string ile geciliyor'
+# 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
+# canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0135 production apply sonrasi yeniden kilitli'
+# v70 stable icin tek seferlik ACIK; Release Orchestrator kosar kosmaz
+# yeniden kilitlenir ve bu iddia $false'a doner.
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'v70 stable icin release_enabled tek seferlik acildi'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
 # kendisi hangi is icin acildigini ve re-lock taahhudunu yazili tasimalidir;

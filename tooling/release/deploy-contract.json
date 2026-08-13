@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0135",
-    "deploy_enabled": true,
-    "release_enabled": false,
+    "deploy_enabled": false,
+    "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN for the v70 production apply (2026-08-13). Owner gave the explicit release order. Staging applied FIRST and its post-check was READ: 0135|0135|0135 in run 31717110232. Local full gate green (25 gates / 21 passed / 0 red / 4 skipped). No backup: owner accepted the Free plan reality on 2026-07-27. RE-LOCK right after the production post-check."
+    "hold_reason": "APPLY DONE, RELEASE OPEN (2026-08-13). v70 production apply run 31724163402 succeeded: post-check printed 0135|0135|0135 and the live backfill processed 8 users. Staging ran first (31717110232, 1 user). deploy_enabled is re-locked; release_enabled is open for the v70 tag ONLY and is re-locked right after the Release Orchestrator run."
   }
 }
