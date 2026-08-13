@@ -482,8 +482,42 @@ class _SceneLayoutState extends State<_SceneLayout>
             phase: p.phase,
             isNight: widget.sky.isNight,
             controller: _controller,
+            clock: widget.clock,
           ),
         );
+
+        Widget label(_Placement p) {
+          const maxWidth = 110.0;
+          const sceneInset = 8.0;
+          final availableHalfWidth = math.min(
+            p.x - sceneInset,
+            w - sceneInset - p.x,
+          );
+          final width = math.min(maxWidth, availableHalfWidth * 2);
+          return AnimatedPositioned(
+            key: ValueKey('l-${p.camper.member.id}'),
+            duration: settle,
+            curve: Curves.easeOutCubic,
+            // Etiket kutusunun merkezi her zaman hayvanın yerleşim çıpası
+            // [p.x] ile aynıdır. Kenardaki üyede kutuyu yana itmek yerine
+            // simetrik daraltırız; uzun ad ellipsis olur ama yanlış hayvanın
+            // üstüne kaymaz.
+            left: p.x - width / 2,
+            top:
+                (p.y -
+                        _CritterBody.boxFor(p.scale) * _CritterBody.anchor -
+                        (p.camper.studying ? 40 : 24))
+                    .clamp(8, h - 32)
+                    .toDouble(),
+            width: width,
+            child: _MemberLabel(
+              camper: p.camper,
+              back: p.back,
+              fontSize: tuning.labelFontSize,
+              clock: widget.clock,
+            ),
+          );
+        }
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -595,30 +629,7 @@ class _SceneLayoutState extends State<_SceneLayout>
               for (final p in layer(false)) body(p),
 
               // — İsim + süre etiketleri (her zaman en üstte, okunur) —
-              for (final p in placements)
-                AnimatedPositioned(
-                  key: ValueKey('l-${p.camper.member.id}'),
-                  duration: settle,
-                  curve: Curves.easeOutCubic,
-                  left: (p.x - 55).clamp(8, w - 118).toDouble(),
-                  top:
-                      (p.y -
-                              _CritterBody.boxFor(p.scale) *
-                                  _CritterBody.anchor -
-                              // Büyük erişilebilirlik metninde de isim gövdeye
-                              // değmesin; önceki 18 px pay uzun isimlerde
-                              // sınırdaydı.
-                              (p.camper.studying ? 40 : 24))
-                          .clamp(8, h - 32)
-                          .toDouble(),
-                  width: 110,
-                  child: _MemberLabel(
-                    camper: p.camper,
-                    back: p.back,
-                    fontSize: tuning.labelFontSize,
-                    clock: widget.clock,
-                  ),
-                ),
+              for (final p in placements) label(p),
 
               Positioned(
                 left: 14,
@@ -702,6 +713,7 @@ class _CritterBody extends ConsumerWidget {
     required this.phase,
     required this.isNight,
     required this.controller,
+    this.clock,
   });
 
   final _Camper camper;
@@ -711,6 +723,7 @@ class _CritterBody extends ConsumerWidget {
   final double phase;
   final bool isNight;
   final Animation<double> controller;
+  final DateTime Function()? clock;
 
   static const double _base = 72;
 
@@ -754,7 +767,13 @@ class _CritterBody extends ConsumerWidget {
           behavior: HitTestBehavior.opaque,
           onTap: camper.isBlocked
               ? null
-              : () => _showCamperDetails(context, ref, camper, viewerId),
+              : () => _showCamperDetails(
+                  context,
+                  ref,
+                  camper,
+                  viewerId,
+                  clock: clock,
+                ),
           child: ExcludeSemantics(
             child: Stack(
               children: [
@@ -915,8 +934,9 @@ void _showCamperDetails(
   BuildContext context,
   WidgetRef ref,
   _Camper camper,
-  String? viewerId,
-) {
+  String? viewerId, {
+  DateTime Function()? clock,
+}) {
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -933,6 +953,7 @@ void _showCamperDetails(
     builder: (ctx) => _CamperSheet(
       camper: camper,
       viewerId: viewerId,
+      clock: clock,
       onOpenProfile: () {
         Navigator.pop(ctx);
         SocialProfileScreen.open(context, camper.member);
@@ -969,9 +990,9 @@ void _showCamperDetails(
 /// dikey sütundu: her satır kabın tamamını alıyor, içine tek bir kısa metin
 /// koyuyordu.
 ///
-/// Yerleşim artık **iki kolonlu**: solda kimlik (durum rozeti sol üstte, altında
-/// hayvan + ad), sağda sayı rayı. Ray'ın **başlığı yoktur** — sahip açıkça
-/// "stats yazmasın" dedi; sayılar kendi etiketlerini taşır.
+/// Yerleşim **iki kolonlu**: solda hayvan + ad ve hemen altında durum; aktif
+/// çalışmada durumun yerini canlı kronometre alır. Sağdaki sayı rayının
+/// **başlığı yoktur** — sayılar kendi etiketlerini taşır.
 ///
 /// 🔴 Sayıların hiçbiri uydurulmaz. Kaynak matrisi:
 ///
@@ -995,6 +1016,7 @@ class _CamperSheet extends ConsumerWidget {
     required this.onNudgeBeforeAction,
     required this.onReport,
     required this.onBlock,
+    this.clock,
   });
 
   final _Camper camper;
@@ -1003,12 +1025,12 @@ class _CamperSheet extends ConsumerWidget {
   final VoidCallback onNudgeBeforeAction;
   final VoidCallback onReport;
   final VoidCallback onBlock;
+  final DateTime Function()? clock;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final sheetNow = DateTime.now();
-    final live = camper.liveExtra(sheetNow);
+    final sheetNow = clock?.call() ?? DateTime.now();
     final liveToday = camper.liveTodayExtra(sheetNow);
     final isSelf = viewerId != null && camper.member.id == viewerId;
 
@@ -1046,16 +1068,13 @@ class _CamperSheet extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // — Sahip maddesi: durum bilgisi SOL ÜST —
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: _CamperStatusChip(camper: camper),
-              ),
-              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 5, child: _CamperIdentity(camper: camper)),
+                  Expanded(
+                    flex: 5,
+                    child: _CamperIdentity(camper: camper, clock: clock),
+                  ),
                   const SizedBox(width: 12),
                   // — Sahip maddesi: sağda küçük sayı rayı, BAŞLIKSIZ —
                   Expanded(
@@ -1070,23 +1089,13 @@ class _CamperSheet extends ConsumerWidget {
                             camper.recordedToday + liveToday,
                           ),
                         ),
-                        if (camper.studying) ...[
-                          const SizedBox(height: 10),
-                          _CamperStat(
-                            slotKey: const Key('camper-stat-session'),
-                            label: l10n.classroomSuAnkiOturum,
-                            value: formatHms(live),
-                          ),
-                        ],
                         if (isSelf) ...[
                           const SizedBox(height: 10),
                           _CamperStat(
                             slotKey: const Key('camper-stat-streak'),
                             label: l10n.profileStatsGunlukSeri,
                             trailing: GoalStreakBadge(
-                              scope: GoalStreakScope.personal(
-                                camper.member.id,
-                              ),
+                              scope: GoalStreakScope.personal(camper.member.id),
                               size: GoalStreakFlameSize.compact,
                             ),
                           ),
@@ -1175,7 +1184,7 @@ class _CamperSheet extends ConsumerWidget {
   }
 }
 
-/// Kişinin o anki durumu — sayfanın **sol üst** köşesindeki rozet.
+/// Kişinin o anki durumu — kimlik bloğunun altındaki rozet.
 ///
 /// Renk tek kanal değildir: nokta rengiyle birlikte durum **yazısı** da durur
 /// (renk körü kullanıcı için), metin rengi ise zeminden değil temanın
@@ -1234,49 +1243,121 @@ class _CamperStatusChip extends StatelessWidget {
 
 /// Sol kolon: hayvan + ad + tür etiketi.
 class _CamperIdentity extends StatelessWidget {
-  const _CamperIdentity({required this.camper});
+  const _CamperIdentity({required this.camper, this.clock});
 
   final _Camper camper;
+  final DateTime Function()? clock;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomPaint(
-          size: const Size(56, 56),
-          painter: CritterPainter(
-            species: speciesFor(camper.animal.id),
-            pose: CritterPose.idle,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _camperName(l10n, camper),
-                style: theme.textTheme.titleLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+        Row(
+          key: const Key('camper-sheet-identity-header'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomPaint(
+              size: const Size(56, 56),
+              painter: CritterPainter(
+                species: speciesFor(camper.animal.id),
+                pose: CritterPose.idle,
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${camper.animal.label(l10n)} 🏕️',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _camperName(l10n, camper),
+                    style: theme.textTheme.titleLarge,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${camper.animal.label(l10n)} 🏕️',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+        const SizedBox(height: 8),
+        if (camper.studying)
+          _CamperLiveElapsed(camper: camper, clock: clock)
+        else
+          _CamperStatusChip(camper: camper),
       ],
     );
+  }
+}
+
+class _CamperLiveElapsed extends StatelessWidget {
+  const _CamperLiveElapsed({required this.camper, this.clock});
+
+  final _Camper camper;
+  final DateTime Function()? clock;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final color = subjectColor('chart-2');
+
+    Widget elapsed(DateTime now) {
+      final value = formatHms(camper.liveExtra(now));
+      return KeyedSubtree(
+        key: const Key('camper-stat-session'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.classroomSuAnkiOturum,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Semantics(
+              key: const Key('camper-sheet-live-elapsed'),
+              liveRegion: clock == null,
+              label:
+                  '${l10n.classroomCalisiyor}, '
+                  '${l10n.classroomSuAnkiOturum}: $value',
+              child: ExcludeSemantics(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.timer_outlined, size: 17, color: color),
+                    const SizedBox(width: 6),
+                    Text(
+                      value,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final injected = clock;
+    if (injected != null) return elapsed(injected());
+    return SecondTicker(builder: (_, now) => elapsed(now));
   }
 }
 

@@ -8,6 +8,7 @@ import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../../data/models/achievement.dart';
 import '../../data/models/achievement_ledger.dart';
 import '../../data/models/achievement_metric_progress.dart';
 import '../../data/models/achievement_reward.dart';
@@ -212,7 +213,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         showAura: true,
                       ),
                       SizedBox(height: 8),
-                      _displayName(theme),
+                      _identityHeading(const [], isSelf: isSelf),
                       SizedBox(height: 24),
                       Center(child: CircularProgressIndicator()),
                     ],
@@ -239,7 +240,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         // ekran onu avatarın hemen altında çiziyor ve vitrine
                         // `displayName` GEÇMİYOR — iki kolda birden çizilmesin.
                         SizedBox(height: 8),
-                        _displayName(theme),
+                        _identityHeading(achs, isSelf: isSelf),
                         SizedBox(height: 16),
                         if (isSelf) const PrimaryGroupMissingBanner(),
                         AchievementShowcase(
@@ -256,6 +257,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                           gamification: gamification,
                           userAchievements: achs,
                           titleAchievementId: _selectedTitleId,
+                          showTitleRow: false,
                           isSelf: isSelf,
                           compact: false,
                           showCatalog: true,
@@ -302,17 +304,19 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
     );
   }
 
-  /// WP-712 — görünen ad artık ekranın kendi ağacında, avatarın hemen altında.
-  /// Yükleme dalıyla veri dalı aynı yardımcıyı kullanır ki ad, vitrin gelince
-  /// yerinden zıplamasın.
-  Widget _displayName(ThemeData theme) {
-    return Text(
-      widget.profile.displayName,
-      key: const Key('social-profile-display-name'),
-      textAlign: TextAlign.center,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+  /// Ad ve seçili ünvan ekranın kendi ağacında, avatarın hemen altında.
+  /// Yükleme dalıyla veri dalı aynı yardımcıyı kullanır ki kimlik başlığı
+  /// vitrin gelince yerinden zıplamasın.
+  Widget _identityHeading(
+    List<UserAchievement> achievements, {
+    required bool isSelf,
+  }) {
+    return ProfileIdentityHeading(
+      displayName: widget.profile.displayName,
+      userAchievements: achievements,
+      titleAchievementId: _selectedTitleId,
+      onSelectTitle: isSelf ? _setTitle : null,
+      updating: _titleUpdating,
     );
   }
 

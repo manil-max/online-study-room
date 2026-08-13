@@ -220,7 +220,7 @@ void main() {
 
     testWidgets(
       'başkasının profilinde aktif gün/rekor ortak gruptan gelir, '
-      'seri gösterilmez',
+      'güncel seri de aynı görünür kaynaktan gelir',
       (tester) async {
         final member = Profile(
           id: 'other',
@@ -258,16 +258,17 @@ void main() {
 
         expect(find.text('Aktif gün'), findsOneWidget);
         expect(find.text('Rekor seri'), findsOneWidget);
+        expect(find.text('Günlük seri'), findsOneWidget);
         expect(
-          find.text('Günlük seri'),
-          findsNothing,
+          find.byKey(const Key('profile-stat-goal-streak')),
+          findsOneWidget,
           reason:
-              'başkasının anlık serisi `goal_progress_events` RLS\'inde '
-              'self-only; olmayan veriyi uydurma',
+              'güncel seri, ortak gruba açık gün toplamları ve '
+              'üyenin görünür günlük hedefinden hesaplanır',
         );
         expect(
-          find.text('Günlük seri yalnız kendi profilinde görünür.'),
-          findsOneWidget,
+          find.byKey(const Key('profile-stat-streak-unavailable')),
+          findsNothing,
         );
         // 3 gün × 2 saat; başka üyenin 10 saatlik günü karışmadı.
         expect(valueOf(tester, 'profile-stat-active-days'), '3');

@@ -256,6 +256,7 @@ class AchievementShowcase extends StatefulWidget {
     this.onSelectTitle,
     this.titleUpdating = false,
     this.statsPanel,
+    this.showTitleRow = true,
   });
 
   final GamificationProfile gamification;
@@ -293,8 +294,152 @@ class AchievementShowcase extends StatefulWidget {
   /// yerinde, başlığın hemen üstünde kalır.
   final Widget? statsPanel;
 
+  /// Sosyal profil tam ekranı kimlik başlığını avatarın yanında kurar.
+  /// Diğer, bağımsız vitrin kullanımları eski başlık satırını korur.
+  final bool showTitleRow;
+
   @override
   State<AchievementShowcase> createState() => AchievementShowcaseState();
+}
+
+/// Profil adı ile seçili ünvanı tek, uyarlanabilir kimlik başlığında tutar.
+///
+/// Ad ve ünvan doğal genişlikleriyle aynı satıra sığar; sığmadığında
+/// [Wrap] ünvanı adın hemen altındaki ortalanmış satıra taşır. Böylece
+/// 320 dp telefondan geniş masaüstüne kadar ayrı, sola yaslı bir ünvan
+/// bloğu oluşmaz.
+class ProfileIdentityHeading extends StatelessWidget {
+  const ProfileIdentityHeading({
+    super.key,
+    required this.displayName,
+    required this.userAchievements,
+    this.titleAchievementId,
+    this.onSelectTitle,
+    this.updating = false,
+  });
+
+  final String displayName;
+  final List<UserAchievement> userAchievements;
+  final String? titleAchievementId;
+  final Future<void> Function(String? achievementId)? onSelectTitle;
+  final bool updating;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dictionary = kAchievementDictV3(AppLocalizations.of(context));
+    AchievementDictEntry? selected;
+    for (final definition in dictionary) {
+      if (definition.id == titleAchievementId) {
+        selected = definition;
+        break;
+      }
+    }
+    final available = <AchievementDictEntry>[
+      for (final definition in dictionary)
+        if (userAchievements.any(
+          (achievement) =>
+              achievement.achievementId == definition.id &&
+              achievement.isUnlocked,
+        ))
+          definition,
+    ];
+
+    return Semantics(
+      header: true,
+      container: true,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          Text(
+            displayName,
+            key: const Key('social-profile-display-name'),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (selected != null || onSelectTitle != null)
+            _IdentityTitleControl(
+              definition: selected,
+              available: available,
+              selectedId: titleAchievementId,
+              onSelect: onSelectTitle,
+              updating: updating,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IdentityTitleControl extends StatelessWidget {
+  const _IdentityTitleControl({
+    required this.definition,
+    required this.available,
+    required this.selectedId,
+    required this.onSelect,
+    required this.updating,
+  });
+
+  final AchievementDictEntry? definition;
+  final List<AchievementDictEntry> available;
+  final String? selectedId;
+  final Future<void> Function(String? achievementId)? onSelect;
+  final bool updating;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final definition = this.definition;
+    final onSelect = this.onSelect;
+    final label = definition?.name ?? l10n.profileChooseTitle;
+    final avatar = updating
+        ? const SizedBox.square(
+            dimension: 15,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : Icon(
+            definition == null
+                ? Icons.add_circle_outline
+                : achievementIconData(definition.iconKey),
+            size: 17,
+            color: theme.colorScheme.primary,
+          );
+
+    if (onSelect == null) {
+      return Chip(
+        key: const ValueKey('profile-title-chip'),
+        avatar: avatar,
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        visualDensity: VisualDensity.compact,
+      );
+    }
+
+    return Builder(
+      builder: (buttonContext) => ActionChip(
+        key: const ValueKey('profile-identity-title-action'),
+        avatar: avatar,
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        tooltip: l10n.profileChooseTitle,
+        onPressed: updating || available.isEmpty
+            ? null
+            : () => _showProfileTitleMenu(
+                buttonContext: buttonContext,
+                available: available,
+                selectedId: selectedId,
+                onSelect: onSelect,
+              ),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
 }
 
 /// Test / dışarıdan confetti tetiklemek için state tipi public.
@@ -426,8 +571,9 @@ class AchievementShowcaseState extends State<AchievementShowcase>
         ),
         SizedBox(height: 8),
       ],
-      if (titleDefinition != null ||
-          (widget.isSelf && widget.onSelectTitle != null)) ...[
+      if (widget.showTitleRow &&
+          (titleDefinition != null ||
+              (widget.isSelf && widget.onSelectTitle != null))) ...[
         // SPEC §2.3: ünvan chip'i (etiket) + "Ünvan seç" düğmesi (kontrol) bir
         // FORM satırıdır, tavanı 760 px. Tavansızken düğme 2400 px'lik pencerenin
         // sağ kenarına gidiyor, chip solda kalıyordu.
@@ -638,6 +784,70 @@ class AchievementShowcaseState extends State<AchievementShowcase>
   }
 }
 
+const String _profileTitleRemoveValue = '';
+
+/// Ünvan menüsünü basılan kontrolün kutusuna çapalar. Kimlik başlığı
+/// ile eski bağımsız vitrin satırı aynı seçim davranışını kullanır.
+Future<void> _showProfileTitleMenu({
+  required BuildContext buttonContext,
+  required List<AchievementDictEntry> available,
+  required String? selectedId,
+  required Future<void> Function(String? achievementId) onSelect,
+}) async {
+  final l10n = AppLocalizations.of(buttonContext);
+  final theme = Theme.of(buttonContext);
+  final result = await showAnchoredMenu<String>(
+    context: buttonContext,
+    items: [
+      PopupMenuItem<String>(
+        enabled: false,
+        height: 32,
+        child: Text(
+          l10n.profileOnlyEarnedTitles,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      if (selectedId != null)
+        PopupMenuItem<String>(
+          key: const ValueKey('remove-profile-title'),
+          value: _profileTitleRemoveValue,
+          child: Row(
+            children: [
+              const Icon(Icons.remove_circle_outline, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(l10n.profileRemoveTitle)),
+            ],
+          ),
+        ),
+      for (final item in available)
+        PopupMenuItem<String>(
+          key: ValueKey('profile-title-${item.id}'),
+          value: item.id,
+          enabled: item.id != selectedId,
+          child: Row(
+            children: [
+              Icon(achievementIconData(item.iconKey), size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (item.id == selectedId)
+                Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+            ],
+          ),
+        ),
+    ],
+  );
+  if (result == null) return;
+  await onSelect(result == _profileTitleRemoveValue ? null : result);
+}
+
 class _ProfileTitleRow extends StatelessWidget {
   const _ProfileTitleRow({
     required this.definition,
@@ -652,10 +862,6 @@ class _ProfileTitleRow extends StatelessWidget {
   final String? selectedId;
   final Future<void> Function(String? achievementId)? onSelect;
   final bool updating;
-
-  /// "Ünvanı kaldır" seçeneğinin menü değeri. Başarım kimlikleri `String`
-  /// olduğu için `null` dönüşü "kullanıcı menüyü kapattı" ile karışırdı.
-  static const String _removeValue = '';
 
   @override
   Widget build(BuildContext context) {
@@ -726,58 +932,12 @@ class _ProfileTitleRow extends StatelessWidget {
   /// Ders seçimindeki gibi butonun bulunduğu yerde açılan menü kullanılır
   /// (`showAnchoredMenu`, §3.12 "basılan yerde" kalıbı).
   Future<void> _showTitleMenu(BuildContext buttonContext) async {
-    final l10n = AppLocalizations.of(buttonContext);
-    final theme = Theme.of(buttonContext);
-    final result = await showAnchoredMenu<String>(
-      context: buttonContext,
-      items: [
-        PopupMenuItem<String>(
-          enabled: false,
-          height: 32,
-          child: Text(
-            l10n.profileOnlyEarnedTitles,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        if (selectedId != null)
-          PopupMenuItem<String>(
-            key: const ValueKey('remove-profile-title'),
-            value: _removeValue,
-            child: Row(
-              children: [
-                const Icon(Icons.remove_circle_outline, size: 20),
-                const SizedBox(width: 12),
-                Expanded(child: Text(l10n.profileRemoveTitle)),
-              ],
-            ),
-          ),
-        for (final item in available)
-          PopupMenuItem<String>(
-            key: ValueKey('profile-title-${item.id}'),
-            value: item.id,
-            enabled: item.id != selectedId,
-            child: Row(
-              children: [
-                Icon(achievementIconData(item.iconKey), size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (item.id == selectedId)
-                  Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
-              ],
-            ),
-          ),
-      ],
+    await _showProfileTitleMenu(
+      buttonContext: buttonContext,
+      available: available,
+      selectedId: selectedId,
+      onSelect: onSelect!,
     );
-    if (result == null) return;
-    await onSelect!(result == _removeValue ? null : result);
   }
 }
 

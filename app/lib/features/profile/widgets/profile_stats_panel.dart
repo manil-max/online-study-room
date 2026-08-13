@@ -21,7 +21,7 @@ import '../../stats/widgets/goal_streak_flame.dart';
 ///
 /// | alan | kendi profili | başkasının profili |
 /// |---|---|---|
-/// | günlük seri | `goal_streak_projection` RPC (`0112`) | **YOK** — `goal_progress_events` RLS'i `scope_id = auth.uid()` |
+/// | günlük seri | `goal_streak_projection` RPC (`0112`) | ortak gruba açık gün toplamı + o üyenin hedefi |
 /// | aktif gün | `userSessionsProvider` → [dailyTotals] | `group_daily_totals` (`0011`, security invoker → `can_see_user_sessions`) |
 /// | rekor seri | aynı gün haritası + kendi hedefi | aynı harita + O ÜYENİN hedefi (`group_member_directory`, `0115`) |
 /// | en verimli gün / toplam | gün haritası | gün haritası |
@@ -32,10 +32,10 @@ import '../../stats/widgets/goal_streak_flame.dart';
 ///     günlük *hedefi tutturulan* ardışık takvim günü, aktif gün ise *çalışılan*
 ///     gün. Aynı panelde ikisi de göründüğü için her ikisinin de altında kendi
 ///     tanımı yazılıdır; sahip bu ayrımı bir kez karıştırdı.
-///  2. **Başkasının serisi uydurulmaz.** Günlük seri projeksiyonu sunucuda
-///     self-only. Buraya günlük totallerden ikinci bir "seri" hesabı koymak
-///     ekranda başka, sunucuda başka bir sayı üretirdi (WP-373 sınıfı hata).
-///     Onun yerine neden görünmediği yazılır.
+///  2. **Güncel seri ≠ rekor seri.** Başkası için iki değer de aynı, zaten
+///     RLS'ten geçmiş gün toplamları ve üyenin görünür hedefiyle hesaplanır;
+///     güncel seri bugün/dünden geriye, rekor ise tüm tarihteki en uzun aralığa
+///     bakar. Yeni bir veri erişim yolu açılmaz.
 ///
 /// Ortak grup yoksa `group_daily_totals` boş döner ve panel **hiç çizilmez**:
 /// `can_see_user_sessions` kapısının istemcideki doğal yansıması budur.
@@ -44,10 +44,12 @@ class ProfileStatsPanel extends ConsumerWidget {
     super.key,
     required this.userId,
     required this.isSelf,
+    this.clock,
   });
 
   final String userId;
   final bool isSelf;
+  final DateTime Function()? clock;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,6 +82,14 @@ class ProfileStatsPanel extends ConsumerWidget {
     }
 
     final activeDays = activeDayCount(totals);
+    final visibleCurrentStreak = goalSeconds <= 0
+        ? 0
+        : currentStreak(
+            const [],
+            goalSeconds,
+            totals: totals,
+            today: clock?.call(),
+          );
     final recordStreak = goalSeconds <= 0
         ? 0
         : longestStudyStreak(
@@ -123,12 +133,11 @@ class ProfileStatsPanel extends ConsumerWidget {
                 ),
               ),
             ] else ...[
-              Text(
-                l10n.profileStatsSeriYalnizKendinde,
-                key: const Key('profile-stat-streak-unavailable'),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              _StatRow(
+                valueKey: const Key('profile-stat-goal-streak'),
+                label: l10n.profileStatsGunlukSeri,
+                definition: l10n.profileStatsGunlukSeriTanimi,
+                value: l10n.statsStreakGun(visibleCurrentStreak.toString()),
               ),
             ],
             const SizedBox(height: 12),
