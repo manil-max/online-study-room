@@ -126,16 +126,20 @@
 
 ## ⚡ Aktif Çalışma Kaydı
 
-### 2026-08-13 — v70 saha geri bildirimi turu (WP-729…WP-735)
+### 2026-08-13 — v70 saha geri bildirimi turu (WP-729…WP-737)
 
-**Durum: kod ve yerel doğrulama sürüyor; yayın bekliyor.** Stable tag, push,
+**Durum: kod ve tam yerel kapı bitti; yayın bekliyor.** Stable tag, push,
 staging/production apply ve release sahibin `tamam yayınla` komutuna kadar
 kilitli. Repo/local migration head `0135`; uzak ortamlar hâlâ `0134`.
 
 - **WP-729:** widget/bildirim başlatması son seçili dersi koruyor; Genel normal
   ders satırı gibi listelenip hesap bazında gizlenebiliyor/silinebiliyor.
-- **WP-730:** Android ana ekran widget'larında kompakt/responsive görsel tur,
-  2×1 sayaç, büyük 1×1 süre ve tek yüzdeli grup hedef yayı geliştiriliyor.
+- **WP-730:** Android ana ekran widget'ları kompakt/responsive yeniden
+  tasarlandı: 2×1 sayaç, 1×1 kutuda 28sp sabit glif süresi, tek yüzdeli grup
+  hedef yayı, boş satırda büyümeyen sıralama kartı ve sıcak kamp paleti.
+  Hedefli ölçüm bir kusur yakaladı: istatistik widget'ı 2×2 kutuda 75.3dp
+  isterken 64dp yeri vardı; başlık artık yalnız uzun kutuda çizilir, punto
+  tavanları eklendi (`a5dc3a8e`).
 - **WP-731:** sosyal profilde güncel seri ve responsive ünvan; kamp ateşinde
   hayvan-ad merkezleme ve kimlik altında çevrimdışı/canlı kronometre tamamlandı.
 - **WP-732:** Kadim Üye/Metronom altı kademe, Kusursuz Ay 2× XP ve geri
@@ -143,17 +147,33 @@ kilitli. Repo/local migration head `0135`; uzak ortamlar hâlâ `0134`.
 - **WP-733:** admin gerçek iç geçmiş, mobil ortalı üçüncü sekme, kompakt filtre/
   arşiv, UGC yaptırımı ve geniş ekranda rail + master-detail düzeni hazır.
 - **WP-734:** kayıtlı dil yoksa ilk onboarding ekranında Sistem/Türkçe/English
-  seçimi; kayıtlı `system` ile tercih yokluğu ayrı tutuluyor.
+  seçimi; kayıtlı `system` ile tercih yokluğu ayrı tutuluyor. Dar ekran turu
+  ikinci bir kusur açtı: `setLanguage` tercihi yazmadan önce **cevapsız
+  kalabilen** `setApplicationLocales` kanalını bekliyordu, yani seçim hiç
+  kaydedilmiyordu. Tercih artık önce kalıcı yazılır (`085b1873`).
 - **WP-735:** ilk gerçek PostgreSQL replay hesap silmede FK regresyonunu yakaladı;
   eksik auth kullanıcısı koruması eklendi. İkinci temiz replay **66 dosya / 950
   pgTAP** yeşil. Kanıt: `.artifacts/deploy-evidence/
   20260813T135055277Z-local-baseline`.
 
-**Hedefli otomatik kanıt:** başarımlar 53/53, sosyal profil/kamp ateşi 16/16,
-admin düzeltme sonrası 51/51, sayaç Dart 5/5 ve Android JVM hedef testi yeşil.
-Onboarding dar ekran testi ilk turda görünür alan dışı dokunmayı yakaladı ve
-düzeltme turunda. Tam birleşik kapı ile Android/Windows release build'leri son
-kod birleşince lider tarafından koşulacak.
+- **WP-737:** tam kapının ilk turu **kırmızıydı** ve iki gerçek kusur gösterdi:
+  profil istatistik satırının değer tarafı tavansızdı (360 dp + 1.6 yazı
+  ölçeğinde 39 px taşma), kamp ateşi kart sayfasındaki yeni canlı kronometre
+  aynı dar kutuda 32 px taşıyordu. İkisi de düzeltildi. Ayrıca beş sözleşme
+  iddiası davranış bilinçli değiştiği için güncellendi: WP-711/2 rozet
+  konumu (WP-731), admin arşiv kontrolü (WP-733), onboarding dil muafiyeti
+  (WP-734), WP-680 masaüstü testinin eksik `sharedPreferencesProvider`
+  override'ı ve kamp ateşi telefon golden'ları (`d073a2df`).
+
+**Tam yerel kapı (`python scripts/test_all.py --full`, ikinci tur):** 25 kapı ·
+**21 geçti · 0 kırmızı · 4 atlandı** · 801 sn. Kapsam genel `%77.10`, kritik
+yollar `%68.79` — ratchet korundu. Atlananlar yeşil sayılmıyor: Deno tip/
+davranış (Deno yok), Android emulator smoke (açık cihaz yok), pgTAP yerel
+replay (Docker motoru kalkmıyor; WP-735 turunda ayrı bir temiz replay ile
+66 dosya / 950 iddia yeşil ölçülmüştü).
+
+**Kalan yayın zinciri (sahip komutunu bekler):** Android + Windows release
+build, `0135` staging→production apply, tag + push + release.
 
 ### 2026-08-12 — v68 sonrası sayaç/widget/profil turu (WP-709…WP-726)
 
