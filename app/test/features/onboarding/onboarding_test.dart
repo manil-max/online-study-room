@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/l10n/app_locale.dart';
 import 'package:online_study_room/features/onboarding/onboarding_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,4 +38,21 @@ void main() {
     expect(prefs.getBool(onboardingCompletedKeyFor('user-a')), isFalse);
     expect(prefs.getBool(onboardingCompletedKeyFor('user-b')), isTrue);
   });
+
+  test(
+    'stored system choice is distinct from a missing language choice',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      var prefs = await SharedPreferences.getInstance();
+      expect(appLanguageFromPreferences(prefs), AppLanguage.system);
+      expect(hasStoredAppLanguagePreference(prefs), isFalse);
+
+      SharedPreferences.setMockInitialValues({
+        'app_language_preference': AppLanguage.system.name,
+      });
+      prefs = await SharedPreferences.getInstance();
+      expect(appLanguageFromPreferences(prefs), AppLanguage.system);
+      expect(hasStoredAppLanguagePreference(prefs), isTrue);
+    },
+  );
 }

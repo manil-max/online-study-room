@@ -30,6 +30,14 @@ AppLanguage appLanguageFromPreferences(SharedPreferences prefs) {
   };
 }
 
+/// Dil tercihi daha once acikca kaydedildi mi?
+///
+/// `system` hem kayit yokken varsayilandir hem de kullanicinin bilincli bir
+/// secimi olabilir. Ilk acilis deneyimi bu iki durumu degerden degil anahtarin
+/// varligindan ayirir.
+bool hasStoredAppLanguagePreference(SharedPreferences prefs) =>
+    prefs.containsKey(_appLanguagePreferenceKey);
+
 /// Kullanıcı tercihi veya sistem dilini desteklenen dillere indirger.
 Locale resolvePreferredAppLocale(Locale? systemLocale, AppLanguage preference) {
   return switch (preference) {

@@ -4,7 +4,9 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../../core/l10n/app_locale.dart';
 import '../../core/notifications/reminder_notification_service.dart';
+import '../../core/prefs/app_prefs.dart';
 import '../auth/entry_desktop_layout.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import '../classroom/widgets/class_switcher.dart';
@@ -82,10 +84,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
+  Future<void> _selectLanguage(AppLanguage language) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(appLanguageProvider.notifier).setLanguage(language);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = AppLocalizations.of(context).authBeklenmeyenBirHataOlustu;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final language = ref.watch(appLanguageProvider);
+    final showLanguageChoice = !hasStoredAppLanguagePreference(
+      ref.watch(sharedPreferencesProvider),
+    );
 
     // 🔴 WP-680 / SPEC §2.3 — "Atla" dugmesi pencerenin KOSESINE cakiliydi.
     // `Align(centerEnd)` onu her zaman pencerenin en sagina iter; 2560 px
@@ -117,6 +141,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 icon: Icons.local_fire_department_outlined,
                 title: l10n.onboardingWelcomeTitle,
                 body: l10n.onboardingWelcomeBody,
+                extra: showLanguageChoice
+                    ? _LanguageChoice(
+                        language: language,
+                        enabled: !_busy,
+                        onSelected: _selectLanguage,
+                      )
+                    : null,
               ),
               _Step(
                 icon: Icons.notifications_active_outlined,
@@ -301,11 +332,13 @@ class _Step extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
+    this.extra,
   });
 
   final IconData icon;
   final String title;
   final String body;
+  final Widget? extra;
 
   @override
   Widget build(BuildContext context) {
@@ -340,21 +373,95 @@ class _Step extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        if (extra != null) ...[const SizedBox(height: 24), extra!],
       ],
     );
+    final content = isDesktopWindow
+        ? Center(
+            child: ConstrainedBox(
+              key: const ValueKey(kOnboardingProseKey),
+              constraints: const BoxConstraints(
+                maxWidth: DesktopBreakpoints.maxProseWidth,
+              ),
+              child: prose,
+            ),
+          )
+        : prose;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: isDesktopWindow
-          ? Center(
-              child: ConstrainedBox(
-                key: const ValueKey(kOnboardingProseKey),
-                constraints: const BoxConstraints(
-                  maxWidth: DesktopBreakpoints.maxProseWidth,
+      child: extra == null
+          ? content
+          : CustomScrollView(
+              slivers: [
+                SliverFillRemaining(hasScrollBody: false, child: content),
+              ],
+            ),
+    );
+  }
+}
+
+class _LanguageChoice extends StatelessWidget {
+  const _LanguageChoice({
+    required this.language,
+    required this.enabled,
+    required this.onSelected,
+  });
+
+  final AppLanguage language;
+  final bool enabled;
+  final ValueChanged<AppLanguage> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final options = <(AppLanguage, String)>[
+      (AppLanguage.system, l10n.profileDilSistemVarsayilani),
+      (AppLanguage.turkish, l10n.profileDilTurkce),
+      (AppLanguage.english, l10n.profileDilIngilizce),
+    ];
+
+    return Semantics(
+      container: true,
+      label: l10n.profileUygulamaDili,
+      child: Column(
+        key: const ValueKey('onboarding-language-choice'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.profileUygulamaDili,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.profileDilDegisikligiAnindaUygulanir,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final option in options)
+                Semantics(
+                  button: true,
+                  selected: language == option.$1,
+                  label: option.$2,
+                  child: ChoiceChip(
+                    key: ValueKey('onboarding-language-${option.$1.name}'),
+                    label: Text(option.$2),
+                    selected: language == option.$1,
+                    onSelected: enabled ? (_) => onSelected(option.$1) : null,
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                  ),
                 ),
-                child: prose,
-              ),
-            )
-          : prose,
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
