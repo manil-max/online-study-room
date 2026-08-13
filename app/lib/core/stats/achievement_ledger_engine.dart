@@ -124,12 +124,12 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       (l10n?.coreKusursuzAy ?? 'corekusursuzay'),
       (l10n?.coreKusursuzAySayisi ?? 'corekusursuzaysayisi'),
       [
-        (1, 1, 'perfect_months', 2000),
-        (2, 3, 'perfect_months', 4000),
-        (3, 6, 'perfect_months', 8000),
-        (4, 12, 'perfect_months', 16000),
-        (5, 24, 'perfect_months', 32000),
-        (6, 36, 'perfect_months', 64000),
+        (1, 1, 'perfect_months', 4000),
+        (2, 3, 'perfect_months', 8000),
+        (3, 6, 'perfect_months', 16000),
+        (4, 12, 'perfect_months', 32000),
+        (5, 24, 'perfect_months', 64000),
+        (6, 36, 'perfect_months', 128000),
       ],
       icon: 'star',
     ),
@@ -148,6 +148,8 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (2, 12, 'metronome_weeks', 3000),
         (3, 26, 'metronome_weeks', 8000),
         (4, 52, 'metronome_weeks', 20000),
+        (5, 104, 'metronome_weeks', 45000),
+        (6, 156, 'metronome_weeks', 90000),
       ],
       icon: 'graphic_eq',
     ),
@@ -225,6 +227,8 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (2, 100, 'membership_days', 1500),
         (3, 365, 'membership_days', 5000),
         (4, 730, 'membership_days', 12000),
+        (5, 1095, 'membership_days', 25000),
+        (6, 1825, 'membership_days', 50000),
       ],
       icon: 'history',
     ),
@@ -366,7 +370,7 @@ const Map<String, String> kAchievementMetricSourceVersions = {
   'marathon_total': 'metric_v2',
   'steel_will': 'metric_v2',
   'day_hero': 'metric_v2',
-  'fire_streak': 'metric_v2',
+  'fire_streak': 'goal_completion_current_v2',
   'weekend_goal_days': 'metric_v2',
   'perfect_month': 'perfect_month_28_v1',
   // WP-721 (sunucu: 0134). İkisi de `cumulative`: kazanılmış değer düşmez.
@@ -421,7 +425,11 @@ int metronomeWeekChain(
   final daysPerWeek = <DateTime, Set<DateTime>>{};
   for (final day in goalDays) {
     final key = DateTime(day.year, day.month, day.day);
-    final weekStart = DateTime(key.year, key.month, key.day - (key.weekday - 1));
+    final weekStart = DateTime(
+      key.year,
+      key.month,
+      key.day - (key.weekday - 1),
+    );
     daysPerWeek.putIfAbsent(weekStart, () => <DateTime>{}).add(key);
   }
   final qualifying =

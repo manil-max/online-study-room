@@ -29,24 +29,24 @@ select plan(26);
 -- ===========================================================================
 select is(
   (select max_tier from public.achievements_dict where id = 'ancient_member'),
-  4,
-  'Kadim Uye sozlukte 4 kademeli'
+  6,
+  'Kadim Uye sozlukte 6 kademeli'
 );
 select is(
   (select array_agg((t->>'threshold')::int order by (t->>'tier')::int)
    from public.achievements_dict d
    cross join lateral jsonb_array_elements(d.tiers) t
    where d.id = 'ancient_member'),
-  array[30, 100, 365, 730],
-  'Kadim Uye kademeleri 30/100/365/730 gun'
+  array[30, 100, 365, 730, 1095, 1825],
+  'Kadim Uye kademeleri 30/100/365/730/1095/1825 gun'
 );
 select is(
   (select array_agg((t->>'threshold')::int order by (t->>'tier')::int)
    from public.achievements_dict d
    cross join lateral jsonb_array_elements(d.tiers) t
    where d.id = 'metronome'),
-  array[4, 12, 26, 52],
-  'Metronom kademeleri 4/12/26/52 hafta'
+  array[4, 12, 26, 52, 104, 156],
+  'Metronom kademeleri 4/12/26/52/104/156 hafta'
 );
 select is(
   (select count(*)::int from public.achievement_metric_definitions

@@ -210,6 +210,54 @@ void main() {
     );
   });
 
+  test('WP-732 yeni altı kademenin tamamı TR/EN doğal dilde açıklanır', () {
+    for (final id in ['ancient_member', 'metronome']) {
+      final achievement = kAchievementDictV3().firstWhere((e) => e.id == id);
+      expect(achievement.tiers, hasLength(6));
+      for (final tier in achievement.tiers) {
+        for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
+          final condition = achievementTierConditionTr(l10n, achievement, tier);
+          expect(condition, contains('${tier.threshold}'));
+          expect(condition, endsWith('.'));
+        }
+      }
+    }
+  });
+
+  testWidgets('WP-732 dört günlük canlı seri ilk kademe için 4/7 gösterir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AchievementShowcase(
+              gamification: profile(),
+              userAchievements: const [],
+              metricProgress: [
+                AchievementMetricProgress(
+                  userId: 'u1',
+                  achievementId: 'fire_streak',
+                  metricValue: 4,
+                  sourceVersion: 'goal_completion_current_v2',
+                  updatedAt: now,
+                ),
+              ],
+              showCatalog: true,
+              isSelf: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('4/7 · sonraki kademe'), findsNWidgets(2));
+  });
+
   testWidgets('self katalog gerçek metriği ve en yakın başarımı gösterir', (
     tester,
   ) async {
@@ -298,9 +346,9 @@ void main() {
     },
   );
 
-  testWidgets('WP-234: taç kademe sayfası tüm rütbeleri ve XP eşiklerini açar', (
-    tester,
-  ) async {
+  testWidgets(
+    'WP-234: taç kademe sayfası tüm rütbeleri ve XP eşiklerini açar',
+    (tester) async {
       // Bronz kullanıcı "Immortal kaç XP istiyor?" sorusunu buradan yanıtlar.
       await tester.pumpWidget(
         MaterialApp(
@@ -327,7 +375,8 @@ void main() {
       expect(find.text('20000 XP'), findsOneWidget);
       // 5000 XP → bronz erişildi, gümüş ve üstü kilitli.
       expect(find.text('Kilitli'), findsNWidgets(5));
-  });
+    },
+  );
 
   testWidgets('pending ödül yalnız callback çağırır ve gizli adı sızdırmaz', (
     tester,

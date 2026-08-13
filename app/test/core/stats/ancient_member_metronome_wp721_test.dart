@@ -57,19 +57,33 @@ void main() {
   final monday = DateTime(2026, 1, 5); // ISO pazartesi
 
   group('WP-721 · sozluk', () {
-    test('iki basarim da 4 kademeli ve esikleri sahibin sectigi degerler', () {
+    test('iki basarim da 6 kademeli ve esikleri artan degerler', () {
       final dict = kAchievementDictV3();
       final ancient = dict.firstWhere((e) => e.id == 'ancient_member');
       final metronome = dict.firstWhere((e) => e.id == 'metronome');
 
-      expect(ancient.maxTier, 4);
-      expect(ancient.tiers.map((t) => t.threshold), [30, 100, 365, 730]);
+      expect(ancient.maxTier, 6);
+      expect(ancient.tiers.map((t) => t.threshold), [
+        30,
+        100,
+        365,
+        730,
+        1095,
+        1825,
+      ]);
       expect(ancient.tiers.map((t) => t.unit).toSet(), {'membership_days'});
       expect(ancient.category, 'group');
       expect(ancient.isSecret, isFalse);
 
-      expect(metronome.maxTier, 4);
-      expect(metronome.tiers.map((t) => t.threshold), [4, 12, 26, 52]);
+      expect(metronome.maxTier, 6);
+      expect(metronome.tiers.map((t) => t.threshold), [
+        4,
+        12,
+        26,
+        52,
+        104,
+        156,
+      ]);
       expect(metronome.tiers.map((t) => t.unit).toSet(), {'metronome_weeks'});
       expect(metronome.category, 'streak');
       expect(metronome.isSecret, isFalse);
@@ -151,21 +165,24 @@ void main() {
       },
     );
 
-    test('haftada 4 gune dusmek zinciri kirar; olculen sey ARDISIK haftadir', () {
-      // 7 hafta: 4. hafta (indeks 3) yalniz 4 gun. Uygun hafta sayisi 6,
-      // en uzun ARDISIK zincir 3.
-      final sessions = _weekdaySessions(
-        firstMonday: monday,
-        weeks: 7,
-        skipWeeks: {3},
-      );
-      final metrics = AchievementLedgerEngine().computeMetrics(
-        sessions: sessions,
-        dailyGoalMinutes: 60,
-        now: DateTime.utc(2026, 2, 20, 20),
-      );
-      expect(metrics['metronome_weeks'], 3);
-    });
+    test(
+      'haftada 4 gune dusmek zinciri kirar; olculen sey ARDISIK haftadir',
+      () {
+        // 7 hafta: 4. hafta (indeks 3) yalniz 4 gun. Uygun hafta sayisi 6,
+        // en uzun ARDISIK zincir 3.
+        final sessions = _weekdaySessions(
+          firstMonday: monday,
+          weeks: 7,
+          skipWeeks: {3},
+        );
+        final metrics = AchievementLedgerEngine().computeMetrics(
+          sessions: sessions,
+          dailyGoalMinutes: 60,
+          now: DateTime.utc(2026, 2, 20, 20),
+        );
+        expect(metrics['metronome_weeks'], 3);
+      },
+    );
 
     test('hedefin altinda kalan gun sayilmaz', () {
       // 5 gun calisiliyor ama gunluk hedef 120 dk; hicbir gun hedefe ulasmiyor.
@@ -221,14 +238,14 @@ void main() {
             ..sort();
       expect(
         metronomeTiers,
-        [1, 2, 3, 4],
-        reason: 'gecmisi olan kullanici dort kademeyi de geriye donuk alir',
+        [1, 2, 3, 4, 5],
+        reason: '104 haftalik gecmis ilk bes kademeyi geriye donuk alir',
       );
       expect(
         result.awarded
             .where((award) => award.achievementId == 'metronome')
             .fold<int>(0, (sum, award) => sum + award.xp),
-        1000 + 3000 + 8000 + 20000,
+        1000 + 3000 + 8000 + 20000 + 45000,
       );
 
       // Idempotent: ikinci tur ayni kademeleri tekrar odullendirmez.
@@ -317,13 +334,18 @@ void main() {
     final migration = File(
       '../supabase/migrations/0134_ancient_member_and_metronome.sql',
     ).readAsStringSync();
+    final v70 = File(
+      '../supabase/migrations/0135_v70_achievement_tiers_and_live_fire.sql',
+    ).readAsStringSync();
 
     test('ilk satir dosya adi ve geri alma notu var', () {
-      expect(
-        migration,
-        startsWith('-- 0134_ancient_member_and_metronome.sql'),
-      );
+      expect(migration, startsWith('-- 0134_ancient_member_and_metronome.sql'));
       expect(migration, contains('Geri alma (Rollback):'));
+      expect(
+        v70,
+        startsWith('-- 0135_v70_achievement_tiers_and_live_fire.sql'),
+      );
+      expect(v70, contains('Geri alma (Rollback):'));
     });
 
     test('kademe tuple\'lari istemci sozlugu ile birebir', () {
@@ -331,7 +353,7 @@ void main() {
         final achievement = kAchievementDictV3().firstWhere((e) => e.id == id);
         for (final tier in achievement.tiers) {
           expect(
-            migration,
+            v70,
             contains(
               '"tier":${tier.tier},"threshold":${tier.threshold},'
               '"unit":"${tier.unit}","xp":${tier.xp}',
@@ -383,7 +405,11 @@ void main() {
       // Buyuk RPC'nin govdesi bu WP'de degistirilmedi.
       expect(
         migration,
-        isNot(contains('create or replace function public.process_achievement_event')),
+        isNot(
+          contains(
+            'create or replace function public.process_achievement_event',
+          ),
+        ),
       );
     });
 

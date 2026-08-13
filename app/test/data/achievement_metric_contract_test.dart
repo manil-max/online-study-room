@@ -35,4 +35,18 @@ void main() {
     );
     expect(migration, contains("'automatic_repair_applied', false"));
   });
+
+  test('WP-732 fire streak is current and ledger rewards stay intact', () {
+    final v70 = File(
+      '../supabase/migrations/0135_v70_achievement_tiers_and_live_fire.sql',
+    ).readAsStringSync();
+
+    expect(v70, contains("source_version = 'goal_completion_current_v2'"));
+    expect(v70, contains("projection_kind = 'current'"));
+    expect(v70, contains("event_kind = 'goal_completed'"));
+    expect(v70, contains("e.time_zone = 'Europe/Istanbul'"));
+    expect(v70, contains('backfill_v70_achievement_progress'));
+    expect(v70, isNot(contains('delete from public.xp_ledger')));
+    expect(v70, isNot(contains('delete from public.user_achievements')));
+  });
 }

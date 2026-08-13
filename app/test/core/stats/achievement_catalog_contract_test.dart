@@ -58,6 +58,41 @@ void main() {
     }
   });
 
+  test('WP-732 extension achievements expose six increasing tiers', () {
+    for (final id in ['ancient_member', 'metronome']) {
+      final achievement = kAchievementDictV3().firstWhere((e) => e.id == id);
+      expect(achievement.maxTier, 6, reason: '$id maxTier');
+      expect(achievement.tiers, hasLength(6), reason: '$id tiers');
+      for (var index = 1; index < achievement.tiers.length; index++) {
+        expect(
+          achievement.tiers[index].threshold,
+          greaterThan(achievement.tiers[index - 1].threshold),
+          reason: '$id threshold tier ${index + 1}',
+        );
+        expect(
+          achievement.tiers[index].xp,
+          greaterThan(achievement.tiers[index - 1].xp),
+          reason: '$id xp tier ${index + 1}',
+        );
+      }
+    }
+  });
+
+  test('WP-732 Perfect Month keeps thresholds and doubles rewards', () {
+    final perfect = kAchievementDictV3().firstWhere(
+      (entry) => entry.id == 'perfect_month',
+    );
+    expect(perfect.tiers.map((tier) => tier.threshold), [1, 3, 6, 12, 24, 36]);
+    expect(perfect.tiers.map((tier) => tier.xp), [
+      4000,
+      8000,
+      16000,
+      32000,
+      64000,
+      128000,
+    ]);
+  });
+
   group('WP-418 · koşul metni ölçülebilir ve koddan türetilmiş', () {
     test('her kademe metni kendi eşiğini sayıyla yazar (TR/EN)', () {
       for (final achievement in kAchievementDictV3().where(
