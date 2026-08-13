@@ -390,9 +390,19 @@ void main() {
       await tester.tap(find.byKey(const Key('moderation-sanction-action')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('24 saat yazma kısıtı').last);
+      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('moderation-sanction-reason')),
         'kanıtlı ihlal',
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const Key('moderation-sanction-submit')),
+            )
+            .onPressed,
+        isNotNull,
       );
       await tester.tap(find.byKey(const Key('moderation-sanction-submit')));
       await tester.pumpAndSettle();

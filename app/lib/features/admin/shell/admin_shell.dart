@@ -533,9 +533,11 @@ class _AdminMobileDestination extends StatelessWidget {
         button: true,
         selected: selected,
         label: tooltip,
+        onTap: onTap,
         excludeSemantics: true,
         child: InkWell(
           onTap: onTap,
+          excludeFromSemantics: true,
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
