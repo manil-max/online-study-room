@@ -9,7 +9,7 @@ set local search_path = public, extensions;
 \set beta  '10000000-0000-0000-0000-000000000002'
 \set grp   '20000000-0000-0000-0000-000000000001'
 
-select plan(23);
+select plan(25);
 
 select is((select max_tier from public.achievements_dict where id='ancient_member'), 6,
   'Kadim Uye alti kademeli');
@@ -52,6 +52,27 @@ select is((select projection_kind || ':' || source_version
   from public.achievement_metric_definitions where achievement_id='fire_streak'),
   'current:goal_completion_current_v2',
   'Alevli Seri current ve goal-completion kaynaklidir');
+
+-- goal_progress_events kasitli olarak polimorfiktir ve FK tasimaz. Eski
+-- fixture'lar sahipsiz bir personal scope ile ayrim davranisini olcer; hesap
+-- silme akisi da auth.users satiri gittikten sonra olayi temizler. Canli seri
+-- trigger'i bu iki durumda FK'li metric tablosuna yeniden satir yazmamalidir.
+select lives_ok(
+  $$insert into public.goal_progress_events(
+      event_key, scope_type, scope_id, time_zone, event_kind, goal_day, occurred_at
+    ) values (
+      'wp732-orphan-scope', 'personal',
+      '30000000-0000-0000-0000-000000000001', 'Europe/Istanbul',
+      'goal_completed', '1900-01-01', now()
+    )$$,
+  'sahipsiz personal olay canli seri triggerinda FK hatasi uretmez'
+);
+select is(
+  (select count(*)::int from public.achievement_metric_progress
+    where user_id = '30000000-0000-0000-0000-000000000001'),
+  0,
+  'sahipsiz scope icin metric satiri uretilmez'
+);
 
 -- Dort guncel, kesintisiz Istanbul hedef gunu.
 insert into public.goal_progress_events(

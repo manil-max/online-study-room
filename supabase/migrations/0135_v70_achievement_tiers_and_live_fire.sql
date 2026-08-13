@@ -133,7 +133,8 @@ begin
     v_time_zone := new.time_zone;
   end if;
   if v_scope_type = 'personal' and v_event_kind = 'goal_completed'
-     and v_time_zone = 'Europe/Istanbul' then
+     and v_time_zone = 'Europe/Istanbul'
+     and exists (select 1 from auth.users u where u.id = v_scope_id) then
     perform public._project_current_fire_streak(v_scope_id);
   end if;
   return null;
