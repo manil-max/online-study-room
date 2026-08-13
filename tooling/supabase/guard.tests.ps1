@@ -138,7 +138,9 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 056 yazildi ama kosturulmadi; bu OLCEMEDIM'dir, yesil degildir. Ilk gercek
 # replay CI database-gates icindedir.
 Assert-Equal $contract.staging.migration_head '0135' 'staging hedefi 0135: v70 basarim dengesi ve canli seri'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0135 staging apply sahibin yayin komutuna kadar kilitli'
+# 2026-08-13: sahip yayin emrini verdi; staging apply kapisi 0135 icin ACIK.
+# Apply post-check okunur okunmaz yeniden kilitlenir ve bu iddia $false'a doner.
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0135 staging apply sahibin yayin emriyle acildi'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
