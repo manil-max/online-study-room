@@ -84,22 +84,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  Future<void> _selectLanguage(AppLanguage language) async {
-    setState(() {
-      _busy = true;
-      _error = null;
+  void _selectLanguage(AppLanguage language) {
+    setState(() => _error = null);
+    final change = ref.read(appLanguageProvider.notifier).setLanguage(language);
+    change.catchError((_) {
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context).authBeklenmeyenBirHataOlustu;
+      });
     });
-    try {
-      await ref.read(appLanguageProvider.notifier).setLanguage(language);
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _error = AppLocalizations.of(context).authBeklenmeyenBirHataOlustu;
-        });
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   @override
@@ -354,7 +347,9 @@ class _Step extends StatelessWidget {
     // tetiklenmez. `AuthScreen` iki blok tasidigi icin bolunur, burasi
     // bolunmez.
     final prose = Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: extra == null
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.start,
       children: [
         Icon(icon, size: 72, color: theme.colorScheme.primary),
         const SizedBox(height: 24),
@@ -391,11 +386,7 @@ class _Step extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: extra == null
           ? content
-          : CustomScrollView(
-              slivers: [
-                SliverFillRemaining(hasScrollBody: false, child: content),
-              ],
-            ),
+          : SingleChildScrollView(child: content),
     );
   }
 }
@@ -446,17 +437,16 @@ class _LanguageChoice extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (final option in options)
-                Semantics(
-                  button: true,
-                  selected: language == option.$1,
-                  label: option.$2,
-                  child: ChoiceChip(
-                    key: ValueKey('onboarding-language-${option.$1.name}'),
-                    label: Text(option.$2),
-                    selected: language == option.$1,
-                    onSelected: enabled ? (_) => onSelected(option.$1) : null,
-                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                OutlinedButton(
+                  key: ValueKey('onboarding-language-${option.$1.name}'),
+                  onPressed: enabled ? () => onSelected(option.$1) : null,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    backgroundColor: language == option.$1
+                        ? Theme.of(context).colorScheme.secondaryContainer
+                        : null,
                   ),
+                  child: Text(option.$2),
                 ),
             ],
           ),

@@ -176,10 +176,16 @@ class AppLanguageNotifier extends Notifier<AppLanguage> {
   Future<void> setLanguage(AppLanguage preference) async {
     state = preference;
     setActiveAppLocale(resolvePreferredAppLocale(platformLocale(), preference));
-    await applyNativeAppLocale(preference);
+    // WP-734: tercih ONCE kalici yazilir, native override sonra beklenir.
+    // Ters sirada `applyNativeAppLocale` bir yanit donmezse (kanal cevapsiz
+    // kalirsa) kullanicinin sectigi dil hic kaydedilmez ve uygulama bir
+    // sonraki acilista yine dil sorar. Native override en iyi cabadir;
+    // kaliciligin ona bagli olmamasi gerekir.
+    final native = applyNativeAppLocale(preference);
     await ref
         .read(sharedPreferencesProvider)
         .setString(_appLanguagePreferenceKey, preference.name);
+    await native;
   }
 }
 

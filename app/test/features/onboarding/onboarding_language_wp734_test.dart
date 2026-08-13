@@ -38,7 +38,21 @@ void main() {
     expect(find.byKey(const ValueKey('onboarding-language-turkish')), findsOne);
     expect(find.byKey(const ValueKey('onboarding-language-english')), findsOne);
 
-    await tester.tap(find.byKey(const ValueKey('onboarding-language-turkish')));
+    final turkishChoice = find.byKey(
+      const ValueKey('onboarding-language-turkish'),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(turkishChoice),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    final scrollRect = tester.getRect(find.byType(SingleChildScrollView));
+    final choiceRect = tester.getRect(turkishChoice);
+    expect(choiceRect.top, greaterThanOrEqualTo(scrollRect.top));
+    expect(choiceRect.bottom, lessThanOrEqualTo(scrollRect.bottom));
+    final button = tester.widget<OutlinedButton>(turkishChoice);
+    expect(button.onPressed, isNotNull);
+    await tester.tap(turkishChoice);
     await tester.pumpAndSettle();
 
     expect(prefs.getString('app_language_preference'), 'turkish');
