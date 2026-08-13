@@ -37,6 +37,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/desktop/desktop_layout.dart';
+import 'package:online_study_room/core/l10n/app_locale.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/features/auth/auth_screen.dart';
@@ -46,6 +48,7 @@ import 'package:online_study_room/features/auth/reset_with_code_screen.dart';
 import 'package:online_study_room/features/onboarding/onboarding_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:online_study_room/l10n/app_localizations_tr.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// SPEC §2.3 "Form / ayar satiri" — 600 (etiket olcu tavani) + 160 (kontrol).
 const double kFormCapPx = DesktopBreakpoints.maxFormWidth; // 760
@@ -76,10 +79,18 @@ void main() {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = window;
     addTearDown(tester.view.reset);
+    // WP-734: `OnboardingScreen` ilk sayfada dil tercihini okur, yani artik
+    // `sharedPreferencesProvider`a bagimlidir. Override edilmezse provider
+    // hata durumuna duser ve ekran HIC cizilmez -- olculecek kutu da kalmaz.
+    SharedPreferences.setMockInitialValues({
+      'app_language_preference': AppLanguage.turkish.name,
+    });
+    final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: MaterialApp(
           locale: const Locale('tr'),

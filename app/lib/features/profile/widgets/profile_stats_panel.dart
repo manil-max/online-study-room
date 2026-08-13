@@ -244,14 +244,21 @@ class _StatRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
+            // WP-731: deger tarafi TAVANSIZDI. Dar ekran + buyuk yazi
+            // olceginde (360 dp / 1.6) "en verimli gun" satiri tarih + sure
+            // tasiyor ve satir 39 px tasiyordu; kullanici sari-siyah tasma
+            // seridini goruyordu. `Flexible` degeri kirpmak yerine sardirir.
             if (trailing != null)
-              KeyedSubtree(key: valueKey, child: trailing!)
+              Flexible(child: KeyedSubtree(key: valueKey, child: trailing!))
             else
-              Text(
-                value ?? '—',
-                key: valueKey,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  value ?? '—',
+                  key: valueKey,
+                  textAlign: TextAlign.end,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
           ],

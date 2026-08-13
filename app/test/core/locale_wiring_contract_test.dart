@@ -45,6 +45,10 @@ void main() {
       'lib/features/profile/settings_screen.dart',
       'lib/main.dart',
       'lib/core/l10n/system_localizations.dart',
+      // WP-734: ilk acilis dil secimi. Ayarlardaki liste gibi burada da
+      // `AppLanguage.*` bir SECENEK DEGERIDIR; ekran dil karari vermez,
+      // kullanicinin verdigi karari tercihe yazar.
+      'lib/features/onboarding/onboarding_screen.dart',
     };
     final offenders = <String>[];
     for (final file in dartFiles()) {

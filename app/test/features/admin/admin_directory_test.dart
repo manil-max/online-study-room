@@ -339,7 +339,13 @@ void main() {
   });
 
   // --- KABUL 5: arsiv etiketi -------------------------------------------
-  testWidgets('arsiv cipi "Arsivle" yazar, "Tamamlandi" yazmaz', (tester) async {
+  // WP-733: arsiv artik tam satiri yiyen bir cip degil, filtre seridindeki
+  // kompakt bir gecistir (sahip: "arsiv butonu bir satirda tek basina her
+  // yeri kapliyor"). Kabul DEGISMEDI: etiket yalan soylememeli -- "Tamamlandi"
+  // yazmamali ve kontrol dogru adiyla erisilebilir olmali.
+  testWidgets('arsiv gecisi dogru adiyla durur, "Tamamlandi" yazmaz', (
+    tester,
+  ) async {
     await _pump(
       tester,
       const AdminReportsTab(),
@@ -362,9 +368,9 @@ void main() {
           'yaziyor (admin_reports_tab.dart:240) — etiket yalan.',
     );
     expect(
-      find.text('Arşivle'),
+      find.byTooltip('Arşivi göster'),
       findsOneWidget,
-      reason: 'Arsiv cipinin metni "Arsivle" olmali.',
+      reason: 'Arsiv gecisi dogru adiyla (tooltip) erisilebilir olmali.',
     );
   });
 

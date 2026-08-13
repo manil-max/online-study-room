@@ -404,20 +404,33 @@ void main() {
       );
     });
 
-    testWidgets('durum rozeti sayfanin SOL UST kosesinde', (tester) async {
+    // WP-731: rozet artik sayfanin tepesinde degil, kimlik blogunun (hayvan +
+    // ad) HEMEN ALTINDA durur -- sahibin istedigi yer orasi ve o bosluk
+    // calisan uyede canli kronometreyle dolar. Yerlesimin kendisi
+    // `test/features/campfire/campfire_wp731_test.dart` icinde olculur;
+    // burada korunan sey rozetin SOLA yasli kalmasidir.
+    testWidgets('durum rozeti kimligin altinda ve sola yasli', (tester) async {
       await _pumpCampfire(tester);
       await _tapCamper(tester, _peer.id);
 
       final surface = _sheetSurface(tester);
       final rect = _globalRect(surface);
+      final header = _globalRect(
+        tester.renderObject<RenderBox>(
+          find.byKey(const Key('camper-sheet-identity-header')),
+        ),
+      );
       final status = tester.renderObject<RenderBox>(
         find.byKey(const Key('camper-sheet-status')),
       );
       final statusRect = _globalRect(status);
 
-      // Sol yariya yasli ve ilk 120 px'in icinde.
       expect(statusRect.left - rect.left, lessThan(rect.width * 0.25));
-      expect(statusRect.top - rect.top, lessThan(120));
+      expect(
+        statusRect.top,
+        greaterThanOrEqualTo(header.bottom),
+        reason: 'rozet kimlik blogunun altina inmemis',
+      );
     });
   });
 

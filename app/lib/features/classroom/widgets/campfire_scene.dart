@@ -1338,12 +1338,26 @@ class _CamperLiveElapsed extends StatelessWidget {
                   children: [
                     Icon(Icons.timer_outlined, size: 17, color: color),
                     const SizedBox(width: 6),
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w800,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    // Kimlik sutunu 360 dp ekranda ~170 dp'dir; 1.6 yazi
+                    // olceginde "00:00:00" ikonla birlikte o rayi 32 px
+                    // asiyordu. Sure kirpilmaz, sigacak kadar kucultulur.
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          value,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w800,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                        ),
                       ),
                     ),
                   ],
