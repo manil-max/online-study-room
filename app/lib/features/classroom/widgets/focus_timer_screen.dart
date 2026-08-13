@@ -204,6 +204,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
     final notifier = ref.read(studyTimerProvider.notifier);
     final recorded = ref.watch(todayRecordedSecondsProvider);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
+    final generalSubjectVisible = ref.watch(generalSubjectVisibleProvider);
 
     Subject? selected;
     for (final s in subjects) {
@@ -288,7 +289,9 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     const SizedBox(width: 8),
                     Text(
                       selected?.name ??
-                          AppLocalizations.of(context).classroomGenel,
+                          (generalSubjectVisible
+                              ? AppLocalizations.of(context).classroomGenel
+                              : AppLocalizations.of(context).classroomDers),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

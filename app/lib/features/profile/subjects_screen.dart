@@ -8,6 +8,7 @@ import '../../core/desktop/desktop_window.dart';
 import '../../core/theme/subject_colors.dart';
 import '../../data/models/subject.dart';
 import '../../data/providers/auth_providers.dart';
+import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
 // WP-679: ortak masaustu olculeri Ayarlar'da durur.
 import 'settings_screen.dart';
@@ -24,6 +25,7 @@ class SubjectsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final subjectsAsync = ref.watch(userSubjectsProvider);
+    final generalVisible = ref.watch(generalSubjectVisibleProvider);
     final hasUser = ref.watch(authStateProvider).value != null;
 
     return Scaffold(
@@ -67,7 +69,7 @@ class SubjectsScreen extends ConsumerWidget {
           ),
         ),
         data: (subjects) {
-          if (subjects.isEmpty) {
+          if (subjects.isEmpty && !generalVisible) {
             return ProfileDesktopCentered(
               child: Center(
                 child: Padding(
@@ -102,7 +104,10 @@ class SubjectsScreen extends ConsumerWidget {
             children: [
               ProfileFlowColumns(
                 spacing: 0,
-                sections: [for (final s in subjects) _SubjectTile(subject: s)],
+                sections: [
+                  if (generalVisible) _GeneralSubjectTile(subjects: subjects),
+                  for (final s in subjects) _SubjectTile(subject: s),
+                ],
               ),
             ],
           );
@@ -126,6 +131,65 @@ class SubjectsScreen extends ConsumerWidget {
             color: result.color,
           ),
         );
+  }
+}
+
+/// Derssiz oturumların tarihsel etiketi olan "Genel"i, kullanıcının diğer
+/// dersleriyle aynı yönetim yüzeyinde gösterir. Silme veriyi yok etmez; seçeneği
+/// bu hesapta gizler ve varsa ilk gerçek dersi varsayılan yapar.
+class _GeneralSubjectTile extends ConsumerWidget {
+  const _GeneralSubjectTile({required this.subjects});
+
+  final List<Subject> subjects;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const Key('general-subject-tile'),
+      leading: CircleAvatar(
+        radius: 10,
+        backgroundColor: theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(l10n.classroomGenel),
+      trailing: PopupMenuButton<String>(
+        onSelected: (value) {
+          if (value == 'delete') _delete(context, ref);
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'delete', child: Text(l10n.profileSil)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.profileDersiSil),
+        content: Text(
+          '"${l10n.classroomGenel}"\n${l10n.profileBuDerseAitGecmis}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.profileVazgec),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.profileSil),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(generalSubjectVisibleProvider.notifier).hide();
+    ref
+        .read(studyTimerProvider.notifier)
+        .selectSubject(subjects.isEmpty ? null : subjects.first.id);
   }
 }
 

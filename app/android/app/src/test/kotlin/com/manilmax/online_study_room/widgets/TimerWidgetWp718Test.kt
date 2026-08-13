@@ -7,6 +7,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * WP-718 — sayac widget'larinin **native** yarisi.
@@ -20,6 +22,22 @@ import org.junit.Test
  * sinirlarina baglamaktir: biri buyur digeri buyumezse kirmizi duser.
  */
 class TimerWidgetWp718Test {
+
+    @Test
+    fun bildirim_ve_legacy_toggle_son_dersi_kullanir() {
+        val source = String(
+            Files.readAllBytes(
+                Path.of("src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt"),
+            ),
+            Charsets.UTF_8,
+        )
+        assertTrue(source.contains("if (intent.hasExtra(EXTRA_SUBJECT_ID))"))
+        assertTrue(source.contains("rememberedSubjectId(prefs())"))
+        assertFalse(
+            "native toggle yeniden derssiz kosu baslatmamali",
+            source.contains("subjectId = \"\",\n                            startOrigin = \"native_widget\""),
+        )
+    }
 
     // --- olcum modeli ------------------------------------------------------
 

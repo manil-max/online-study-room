@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
+import com.manilmax.online_study_room.widgets.rememberedSubjectId
 
 internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
 
@@ -70,7 +71,14 @@ class StudyTimerService : Service() {
                     val targetSeconds = intent.getIntExtra(EXTRA_TARGET_SECONDS, 0)
                         .takeIf { it > 0 }
                         ?: startPlan.targetSeconds.takeIf { mode == startPlan.mode }
-                    val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
+                    // Bildirimdeki Başlat intent'i ders extra'sı taşımaz. Boş
+                    // yazmak son seçimi her seferinde Genel'e düşürüyordu;
+                    // widget ile aynı hesap-kapsamlı kalıcı tercih kullanılır.
+                    val subjectId = if (intent.hasExtra(EXTRA_SUBJECT_ID)) {
+                        intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
+                    } else {
+                        rememberedSubjectId(prefs())
+                    }
                     val liveRunId = intent.getStringExtra(EXTRA_LIVE_RUN_ID).orEmpty()
                     val liveRunToken = intent.getStringExtra(EXTRA_LIVE_RUN_TOKEN).orEmpty()
                     val startOrigin = intent.getStringExtra(EXTRA_START_ORIGIN)
@@ -109,7 +117,7 @@ class StudyTimerService : Service() {
                             phase = "work",
                             cycle = 1,
                             targetSeconds = plan.targetSeconds,
-                            subjectId = "",
+                            subjectId = rememberedSubjectId(prefs()),
                             startOrigin = "native_widget",
                         )
                     }

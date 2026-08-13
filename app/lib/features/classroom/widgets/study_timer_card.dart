@@ -183,9 +183,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(
-                context,
-              ).classroomStoppedOnOtherDevice(time),
+              AppLocalizations.of(context).classroomStoppedOnOtherDevice(time),
             ),
           ),
         );
@@ -241,6 +239,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     );
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
+    final generalSubjectVisible = ref.watch(generalSubjectVisibleProvider);
 
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
@@ -603,6 +602,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             subjects: subjects,
                             selectedId: timer.subjectId,
                             running: timer.isRunning,
+                            generalVisible: generalSubjectVisible,
                             onSelect: notifier.selectSubject,
                           ),
                           const SizedBox(height: 16),
@@ -629,9 +629,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         },
       ),
     );
-    return compact
-        ? Align(alignment: Alignment.topCenter, child: card)
-        : card;
+    return compact ? Align(alignment: Alignment.topCenter, child: card) : card;
   }
 }
 
@@ -693,9 +691,9 @@ class _StripActions extends StatelessWidget {
       _StripActionSpec(
         icon: Icons.history,
         label: l10n.classroomGecmisOturumlar,
-        onPressed: (ctx) => Navigator.of(ctx).push(
-          MaterialPageRoute(builder: (_) => const SessionHistoryScreen()),
-        ),
+        onPressed: (ctx) => Navigator.of(
+          ctx,
+        ).push(MaterialPageRoute(builder: (_) => const SessionHistoryScreen())),
       ),
       _StripActionSpec(
         icon: Icons.tune,
@@ -770,12 +768,14 @@ class _SubjectSelector extends StatelessWidget {
     required this.subjects,
     required this.selectedId,
     required this.running,
+    required this.generalVisible,
     required this.onSelect,
   });
 
   final List<Subject> subjects;
   final String? selectedId;
   final bool running;
+  final bool generalVisible;
   final ValueChanged<String?> onSelect;
 
   @override
@@ -789,7 +789,11 @@ class _SubjectSelector extends StatelessWidget {
     final dotColor = selected != null
         ? subjectColor(selected.color)
         : theme.colorScheme.onSurfaceVariant;
-    final label = selected?.name ?? AppLocalizations.of(context).classroomGenel;
+    final label =
+        selected?.name ??
+        (generalVisible
+            ? AppLocalizations.of(context).classroomGenel
+            : AppLocalizations.of(context).classroomDers);
 
     final content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -857,15 +861,16 @@ class _SubjectSelector extends StatelessWidget {
             ),
           ),
         ),
-        PopupMenuItem<_SubjectMenuResult>(
-          value: const _SubjectMenuResult.pick(null),
-          child: _subjectMenuRow(
-            theme,
-            AppLocalizations.of(context).classroomGenelDersYok,
-            theme.colorScheme.onSurfaceVariant,
-            selectedId == null,
+        if (generalVisible)
+          PopupMenuItem<_SubjectMenuResult>(
+            value: const _SubjectMenuResult.pick(null),
+            child: _subjectMenuRow(
+              theme,
+              AppLocalizations.of(context).classroomGenelDersYok,
+              theme.colorScheme.onSurfaceVariant,
+              selectedId == null,
+            ),
           ),
-        ),
         for (final s in subjects)
           PopupMenuItem<_SubjectMenuResult>(
             value: _SubjectMenuResult.pick(s.id),

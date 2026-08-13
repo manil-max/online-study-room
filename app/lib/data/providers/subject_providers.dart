@@ -22,6 +22,43 @@ final subjectRepositoryProvider = Provider<SubjectRepository>((ref) {
   return repo;
 });
 
+/// "Genel" gerçek bir `subjects` satırı değil, derssiz oturumların sanal
+/// etiketidir. Kullanıcı bu seçeneği Derslerim ekranından kaldırabilsin diye
+/// görünürlüğü hesap-kapsamlı ve kalıcı tutulur; gerçek dersler/repository
+/// semantiği değişmez.
+String generalSubjectHiddenKey(String userId) =>
+    'general_subject_hidden.$userId';
+
+bool isGeneralSubjectVisible(SharedPreferences prefs, String userId) =>
+    !(prefs.getBool(generalSubjectHiddenKey(userId)) ?? false);
+
+final generalSubjectVisibleProvider =
+    NotifierProvider<GeneralSubjectVisibilityNotifier, bool>(
+      GeneralSubjectVisibilityNotifier.new,
+    );
+
+class GeneralSubjectVisibilityNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final userId = ref.watch(authStateProvider).value?.id;
+    if (userId == null) return true;
+    return isGeneralSubjectVisible(
+      ref.watch(sharedPreferencesProvider),
+      userId,
+    );
+  }
+
+  Future<void> hide() async {
+    state = false;
+    final id = ref.read(authStateProvider).value?.id;
+    if (id != null) {
+      await ref
+          .read(sharedPreferencesProvider)
+          .setBool(generalSubjectHiddenKey(id), true);
+    }
+  }
+}
+
 /// WP-697: ders listesinin cihazdaki aynası (kullanıcı başına ayrı anahtar).
 ///
 /// Dersler kişiye özeldir; başka hesabın satırı bu anahtardan okunmaz

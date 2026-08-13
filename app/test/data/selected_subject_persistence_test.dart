@@ -185,7 +185,10 @@ void main() {
       expect(container.read(studyTimerProvider).subjectId, isNull);
       // WP-468: provider metin değil sinyal taşır; cümleyi gösteren yüzey
       // kendi AppLocalizations'ından okur.
-      expect(container.read(selectedStudySubjectFallbackNoticeProvider), isTrue);
+      expect(
+        container.read(selectedStudySubjectFallbackNoticeProvider),
+        isTrue,
+      );
 
       container
           .read(selectedStudySubjectFallbackNoticeProvider.notifier)
@@ -198,5 +201,15 @@ void main() {
         reason: 'aynı düşüş ikinci kez anlatılmamalı',
       );
     });
+  });
+
+  test('Genel visibility is account scoped and persistent', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    expect(isGeneralSubjectVisible(prefs, 'u-a'), isTrue);
+    await prefs.setBool(generalSubjectHiddenKey('u-a'), true);
+    expect(prefs.getBool(generalSubjectHiddenKey('u-a')), isTrue);
+    expect(isGeneralSubjectVisible(prefs, 'u-a'), isFalse);
+    expect(isGeneralSubjectVisible(prefs, 'u-b'), isTrue);
   });
 }
