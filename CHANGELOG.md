@@ -4,6 +4,36 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v70 / 1.0.70+70] - 2026-08-13
+
+> **Saha geri bildirimindeki sayaç, profil, kamp ateşi, başarım ve yönetim
+> paneli sorunları tek kalite turunda ele alındı.**
+
+### Öne çıkanlar
+- Ana ekran ve bildirim üzerinden başlatılan sayaç artık son seçili dersi
+  koruyor. Genel de ders listesinde normal bir satır ve istenirse silinebiliyor.
+- Başkasının profilinde güncel günlük seri görünüyor; ünvan, yer varsa adın
+  yanında, yoksa hemen altında duruyor.
+- Kamp ateşindeki adlar hayvanlarıyla merkezlendi. Çevrimdışı durumu ve aktif
+  çalışma kronometresi kişi kartındaki boş alana taşındı.
+- Kadim Üye ve Metronom altı kademeye çıktı. Kusursuz Ay ödülleri iki katına
+  yükseldi; Alevli Seri artık güncel seriyi canlı gösterip seri bozulunca sıfırlanıyor.
+- Yönetim paneli masaüstünde yatay rail ve master-detail düzenine geçti;
+  mobil gezinme, filtreler, arşiv ve yaptırım akışları toparlandı.
+- İlk açılışta daha önce dil seçilmemişse Sistem, Türkçe veya English
+  doğrudan tanıtım ekranından seçilebiliyor.
+
+### Düzeltmeler
+- Ana ekran widget'ları daha kompakt, okunur ve yeniden boyutlanabilir hale
+  getirildi. 1×1 sayaç rakamı büyüdü, standart sayaç 2×1'e sığdı ve grup
+  hedefindeki yinelenen yüzde kaldırıldı.
+- Yönetim panelinin geri tuşu ayarlara sıçramak yerine panel içindeki gerçek
+  geçmişi izliyor; uzun alt sekme etiketi ortalanıyor.
+
+### Doğrulama
+- Temiz yerel PostgreSQL kurulumu 66 test dosyasında 950 pgTAP iddiasıyla geçti.
+- Stable yayın, uzak ortam terfisi ve tag sahip komutuna kadar kilitli tutuluyor.
+
 ## [v69 / 1.0.69+69] - 2026-08-12
 
 > **Sayaç ve ana ekran widget'ları artık gerçekten boyuta göre tasarlanıyor.**

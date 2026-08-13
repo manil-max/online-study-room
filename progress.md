@@ -126,6 +126,35 @@
 
 ## ⚡ Aktif Çalışma Kaydı
 
+### 2026-08-13 — v70 saha geri bildirimi turu (WP-729…WP-735)
+
+**Durum: kod ve yerel doğrulama sürüyor; yayın bekliyor.** Stable tag, push,
+staging/production apply ve release sahibin `tamam yayınla` komutuna kadar
+kilitli. Repo/local migration head `0135`; uzak ortamlar hâlâ `0134`.
+
+- **WP-729:** widget/bildirim başlatması son seçili dersi koruyor; Genel normal
+  ders satırı gibi listelenip hesap bazında gizlenebiliyor/silinebiliyor.
+- **WP-730:** Android ana ekran widget'larında kompakt/responsive görsel tur,
+  2×1 sayaç, büyük 1×1 süre ve tek yüzdeli grup hedef yayı geliştiriliyor.
+- **WP-731:** sosyal profilde güncel seri ve responsive ünvan; kamp ateşinde
+  hayvan-ad merkezleme ve kimlik altında çevrimdışı/canlı kronometre tamamlandı.
+- **WP-732:** Kadim Üye/Metronom altı kademe, Kusursuz Ay 2× XP ve geri
+  çekilebilir canlı Alevli Seri `0135` ile hazır.
+- **WP-733:** admin gerçek iç geçmiş, mobil ortalı üçüncü sekme, kompakt filtre/
+  arşiv, UGC yaptırımı ve geniş ekranda rail + master-detail düzeni hazır.
+- **WP-734:** kayıtlı dil yoksa ilk onboarding ekranında Sistem/Türkçe/English
+  seçimi; kayıtlı `system` ile tercih yokluğu ayrı tutuluyor.
+- **WP-735:** ilk gerçek PostgreSQL replay hesap silmede FK regresyonunu yakaladı;
+  eksik auth kullanıcısı koruması eklendi. İkinci temiz replay **66 dosya / 950
+  pgTAP** yeşil. Kanıt: `.artifacts/deploy-evidence/
+  20260813T135055277Z-local-baseline`.
+
+**Hedefli otomatik kanıt:** başarımlar 53/53, sosyal profil/kamp ateşi 16/16,
+admin düzeltme sonrası 51/51, sayaç Dart 5/5 ve Android JVM hedef testi yeşil.
+Onboarding dar ekran testi ilk turda görünür alan dışı dokunmayı yakaladı ve
+düzeltme turunda. Tam birleşik kapı ile Android/Windows release build'leri son
+kod birleşince lider tarafından koşulacak.
+
 ### 2026-08-12 — v68 sonrası sayaç/widget/profil turu (WP-709…WP-726)
 
 **Durum: v69 stable tamamen yayında. Kod, tam yerel kapı, CI, `0134`

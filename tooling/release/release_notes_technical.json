@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.70",
+      "buildNumber": 70,
+      "channel": "stable",
+      "date": "2026-08-13",
+      "title": "v70: WP-729…WP-735 + 0135",
+      "highlights": [
+        "External timer starts preserve the account-scoped selected subject; General becomes a removable virtual subject without deleting historical sessions.",
+        "Social profile streak/title layout and campfire identity/status/timer placement were rebuilt for narrow screens.",
+        "Android widgets use compact size classes, the timer targets 2x1 with a larger 1x1 readout, and group goal uses one radial percentage.",
+        "Admin navigation is stateful and responsive; desktop uses rail plus master-detail, and resolvable UGC targets connect to the existing sanction pipeline.",
+        "Ancient Member and Metronome expand to six tiers, Perfect Month XP doubles, and fire_streak becomes a retractable current projection."
+      ],
+      "fixes": [
+        "The first real 0135 replay caught an account-deletion FK regression in the live streak trigger. The trigger now skips missing auth users and the owner-cleanup tests cover it.",
+        "First-run onboarding distinguishes a stored System choice from a missing preference and applies the selection to both Flutter and Android native surfaces."
+      ],
+      "notes": [
+        "Clean local PostgreSQL replay passed 66 files and 950 pgTAP assertions after the deletion guard repair.",
+        "Targeted Dart suites for achievements and social/campfire passed. Full application and Android widget gates are recorded separately before release.",
+        "0135 remains local-only; staging, production, tag, push and release stay locked until the owner's publication command."
+      ],
+      "titleEn": "v70: WP-729 through WP-735 and migration 0135",
+      "highlightsEn": [
+        "Timer subject memory, social streaks, campfire layout, compact Android widgets, responsive moderation and first-run language choice are integrated.",
+        "Achievement balance and live streak progress are server-authoritative through 0135."
+      ],
+      "fixesEn": [
+        "A real PostgreSQL replay exposed and then verified the account-deletion guard for the new live-streak trigger."
+      ],
+      "notesEn": [
+        "Protected environments and release operations remain locked pending explicit owner approval."
+      ]
+    },
+    {
       "versionName": "1.0.69",
       "buildNumber": 69,
       "channel": "stable",

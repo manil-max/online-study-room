@@ -3,6 +3,44 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.70",
+      "buildNumber": 70,
+      "channel": "stable",
+      "date": "2026-08-13",
+      "title": "v70: saha geri bildirimi kalite turu",
+      "highlights": [
+        "Widget veya bildirimden başlatılan sayaç son seçtiğin dersi koruyor. Genel de artık diğer dersler gibi listeleniyor ve istersen silebiliyorsun.",
+        "Başka kullanıcıların güncel günlük serisi görünür; ünvan adın yanına sığıyorsa yanında, sığmıyorsa hemen altında durur.",
+        "Kadim Üye ve Metronom altı kademeye çıktı. Kusursuz Ay ödülleri iki katına yükseldi; Alevli Seri güncel seriyi canlı izliyor.",
+        "Yönetim paneli geniş ekranda yatay çalışma alanına kavuştu; şikâyet inceleme ve yaptırım akışı aynı yüzeyde toplandı.",
+        "İlk açılışta daha önce dil seçmediysen Sistem, Türkçe veya English seçebilirsin."
+      ],
+      "fixes": [
+        "Ana ekran widget'ları daha kompakt, okunur ve yeniden boyutlanabilir. 1x1 sayaç büyüdü, standart sayaç 2x1'e sığdı ve grup hedefindeki ikinci yüzde kaldırıldı.",
+        "Kamp ateşinde adlar hayvanlarıyla merkezlendi; çevrimdışı bilgisi veya çalışan kronometre kişi kartındaki boş alana taşındı.",
+        "Yönetim panelinde geri tuşu artık panel geçmişini izliyor; uzun alt sekme etiketi ve filtre/arşiv düzeni düzeltildi."
+      ],
+      "notes": [
+        "Yeni başarım kademeleri mevcut geçmişinden güvenli biçimde geriye dönük hesaplanır."
+      ],
+      "titleEn": "v70: field-feedback quality update",
+      "highlightsEn": [
+        "Starting from a widget or notification keeps your last selected subject. General is now listed and removable like other subjects.",
+        "Current daily streaks are visible on social profiles, and titles sit beside the name when space allows or directly below it.",
+        "Ancient Member and Metronome now have six tiers. Perfect Month rewards are doubled, while Blazing Fire tracks the live streak.",
+        "The admin panel uses a wide desktop workspace and keeps report review and sanctions together.",
+        "If no language was chosen before, the first screen offers System, Türkçe and English."
+      ],
+      "fixesEn": [
+        "Home-screen widgets are more compact, readable and resizable. The 1x1 timer is larger, the standard timer fits 2x1, and the duplicate group percentage is gone.",
+        "Campfire names are centered over their animals, with offline state or a live timer placed in the member card's open space.",
+        "Admin back navigation follows panel history, while the long bottom label and filter/archive layout are corrected."
+      ],
+      "notesEn": [
+        "New achievement tiers are calculated safely from existing history."
+      ]
+    },
+    {
       "versionName": "1.0.69",
       "buildNumber": 69,
       "channel": "stable",
