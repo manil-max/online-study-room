@@ -9,6 +9,26 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [ ] **Günlük hedef geriye dönük uygulanıyor: `weekend_goal_days` ve
+  `perfect_months` sömürülebilir (2026-08-19, WP-739 turunda bulundu).**
+  `_achievement_metrics_legacy_v1` (0025 gövdesi) ve `_count_perfect_months_28`
+  (0058) eşiği **profilin BUGÜNKÜ `daily_goal_minutes`** değerinden okuyup TÜM
+  geçmişe uyguluyor. Yani kullanıcı günlük hedefini 1 dakikaya indirirse
+  geçmişteki her gün anında "hedef tutturuldu" sayılır; iki metrik de
+  `cumulative` olduğu için `greatest` ile yükselen değer **kalıcı olur** ve
+  kademeler haksız yere açılır.
+  - Aynı kusur `fire_streak`te WP-739 ile kapandı: seri artık
+    `goal_progress_events` (`goal_completed`) üzerinden sayılıyor, yani "o gün
+    hedef tutturuldu mu" kaydı olayın YAZILDIĞI andaki hedefe göre sabit.
+  - Önerilen yol: bu iki metriği de `goal_progress_events` üzerinden say
+    (`metronome` 0134'te zaten öyle yapıyor). Dikkat: `0120`nin
+    `backfill_goal_completions()` fonksiyonu da geçmişi bugünkü hedefle
+    yeniden kuruyor — düzeltme, geçmiş için gün bazında hedef anlık görüntüsü
+    (snapshot) gerektirir.
+  - Kazanılmış kademe geri alınmaz (`docs/URUN-POLITIKALARI.md §3`), o yüzden
+    düzeltme yalnız ileriye dönük sayımı değiştirir; ölçülen değer düşse bile
+    ödül silinmez.
+
 - [~] **v57 ürün güveni ve mağaza öncesi son büyük tur (2026-07-30).**
   v56 stable saha gözlemleri profesyonel geri bildirim kaydına dönüştürüldü;
   rakip analizi, moderasyon planı ve açık ürün borçlarıyla birleştirildi.
