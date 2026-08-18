@@ -48,10 +48,12 @@ select is(
   'mevcut katalog satirlari korunur; 0135 yalniz uc tanimi ileri gunceller'
 );
 
+-- 🔴 WP-739 (0136) kaynagi duraklamali kurala tasidi; kademe/`current` sinifi
+-- degismedi. Esitligin genis sozlesmesi `063`te.
 select is((select projection_kind || ':' || source_version
   from public.achievement_metric_definitions where achievement_id='fire_streak'),
-  'current:goal_completion_current_v2',
-  'Alevli Seri current ve goal-completion kaynaklidir');
+  'current:goal_completion_grace_v3',
+  'Alevli Seri current ve duraklamali goal-completion kaynaklidir');
 
 -- goal_progress_events kasitli olarak polimorfiktir ve FK tasimaz. Eski
 -- fixture'lar sahipsiz bir personal scope ile ayrim davranisini olcer; hesap
@@ -99,13 +101,15 @@ insert into public.user_achievements(user_id,achievement_id,tier,progress,unlock
 values(:'alpha','fire_streak',1,7,now())
 on conflict(user_id,achievement_id) do update set tier=excluded.tier;
 
+-- 🔴 WP-739: tek kacirma artik affediliyor, seriyi oldurmek icin UC ardisik
+-- bos gun gerek. Silinen aralik bu yuzden bir gun geriye tasindi.
 delete from public.goal_progress_events
  where scope_type='personal' and scope_id=:'alpha'
    and event_kind='goal_completed'
-   and goal_day >= (timezone('Europe/Istanbul', now()))::date - 1;
+   and goal_day >= (timezone('Europe/Istanbul', now()))::date - 2;
 
 select is(public._current_fire_streak_days(:'alpha'), 0,
-  'bugun ve dun bos kalinca guncel seri sifirlanir');
+  'uc gun ust uste bos kalinca guncel seri sifirlanir');
 select is((public._achievement_metrics(:'alpha')->>'streak_days')::int, 0,
   'current metric progress sifira geri cekilir');
 select is((select count(*)::int from public.xp_ledger

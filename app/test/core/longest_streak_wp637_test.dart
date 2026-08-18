@@ -70,22 +70,27 @@ void main() {
   setUpAll(tz_data.initializeTimeZones);
 
   group('WP-637 §1: hedefi TUTTURMAYAN gün seriyi KIRAR', () {
-    test('ortadaki eksik gün 5 günlük seriyi ikiye böler', () {
-      // Beş ARDIŞIK gün; ortadaki gün çalışılmış ama hedefin altında.
-      // Eski kural ("≥ 1 sn") 5 derdi — kırılma noktası tam burasıdır.
-      final totals = _run([_goal, _goal, 600, _goal, _goal]);
+    // 🔴 WP-739: hedefin altında kalan gün sayısı 1'den 2'ye çıkarıldı. Cetvel
+    // değişti — ürünün günlük seri kuralı artık TEK kaçırmayı affediyor
+    // (`goal_streak_rule.dart`), yani tek eksik gün bloğu bölmez. Bu dosyanın
+    // ölçtüğü iddia aynı kaldı: seriye giren gün "≥ 1 sn" değil, "hedefi
+    // tutturan" gündür.
+    test('ortadaki iki eksik gün 6 günlük seriyi ikiye böler', () {
+      // Altı ARDIŞIK gün; ortadaki iki gün çalışılmış ama hedefin altında.
+      // Eski kural ("≥ 1 sn") 6 derdi — kırılma noktası tam burasıdır.
+      final totals = _run([_goal, _goal, 600, 600, _goal, _goal]);
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: _goal),
         2,
-        reason: '3 Mayıs hedefi tutturmadı; 5 günlük blok 2 + 2 olur',
+        reason: '3–4 Mayıs hedefi tutturmadı; 6 günlük blok 2 + 2 olur',
       );
     });
 
     test('🔴 "Aktif gün" AYRI ölçüdür — dokunulmadı', () {
       // Sahibin cümlesi: "aktif gün var zaten ayrı olarak". Aynı veride iki
       // sayı FARKLI olmalı; eşitlerse iki döşeme aynı şeyi anlatıyor demektir.
-      final totals = _run([_goal, _goal, 600, _goal, _goal]);
-      expect(activeDayCount(totals), 5, reason: 'çalışılan gün sayısı 5');
+      final totals = _run([_goal, _goal, 600, 600, _goal, _goal]);
+      expect(activeDayCount(totals), 6, reason: 'çalışılan gün sayısı 6');
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: _goal),
         isNot(activeDayCount(totals)),
@@ -107,7 +112,8 @@ void main() {
         _s(DateTime.utc(2026, 5, 1, 9), _goal),
         _s(DateTime.utc(2026, 5, 2, 9), _goal),
         _s(DateTime.utc(2026, 5, 3, 9), 600), // hedefin altında
-        _s(DateTime.utc(2026, 5, 4, 9), _goal),
+        _s(DateTime.utc(2026, 5, 4, 9), 600), // hedefin altında (WP-739)
+        _s(DateTime.utc(2026, 5, 5, 9), _goal),
       ];
       expect(longestStudyStreak(sessions, goalSeconds: _goal), 2);
     });
@@ -123,8 +129,10 @@ void main() {
     });
 
     test('hedefin ÜSTÜ de sayılır, en uzun blok kazanır (2 / 4 → 4)', () {
+      // 🔴 WP-739: ayırıcı boşluk iki güne çıkarıldı; tek boş gün artık iki
+      // bloğu BİRLEŞTİRİR ve ortada "en uzun blok" diye bir seçim kalmazdı.
       final totals = _run([
-        _goal + 1, _goal * 3, 0, //
+        _goal + 1, _goal * 3, 0, 0, //
         _goal, _goal + 60, _goal * 2, _goal, //
       ]);
       expect(
@@ -157,12 +165,12 @@ void main() {
     });
 
     test('güncel seriyi kıran gün rekoru da kırar', () {
-      final today = DateTime(2026, 5, 5);
-      final totals = _run([_goal, _goal, 600, _goal, _goal]);
+      final today = DateTime(2026, 5, 6);
+      final totals = _run([_goal, _goal, 600, 600, _goal, _goal]);
       expect(
         currentStreak(const [], _goal, today: today, totals: totals),
         2,
-        reason: 'kurulum: günlük seri motoru 3 Mayıs\'ta kırılıyor',
+        reason: 'kurulum: günlük seri motoru 3–4 Mayıs\'ta kırılıyor',
       );
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: _goal),
@@ -173,8 +181,8 @@ void main() {
     test('aynı veri, farklı hedef → farklı rekor (parametre GERÇEKTEN etkili)', () {
       // "Eskisi gibi say" çözümü bu iddiadan geçemez: iki çağrı aynı sayıyı
       // veremez.
-      final totals = _run([_goal, _goal, 600, _goal, _goal]);
-      expect(longestStudyStreak(const [], totals: totals, goalSeconds: 600), 5);
+      final totals = _run([_goal, _goal, 600, 600, _goal, _goal]);
+      expect(longestStudyStreak(const [], totals: totals, goalSeconds: 600), 6);
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: _goal),
         2,
@@ -200,15 +208,19 @@ void main() {
   });
 
   group('WP-637 §5: WP-636 (takvimsel ardışıklık) KORUNUR', () {
-    test('DST: 47 saatlik boşluk hedefli günleri BİRLEŞTİRMEZ', () {
+    test('DST: 71 saatlik boşluk hedefli günleri BİRLEŞTİRMEZ', () {
+      // 🔴 WP-739: takvim farkı 2 artık affediliyor, o yüzden hatayı görünür
+      // kılan boşluk 3 güne taşındı. Geçen SÜREye bakan bir uygulama 71 saati
+      // `inDays = 2` sayıp yanlışlıkla birleştirir; takvim farkına bakan doğru
+      // uygulama 3 der ve birleştirmez.
       final berlin = _berlin();
       final d29 = tz.TZDateTime(berlin, 2026, 3, 29);
-      final d31 = tz.TZDateTime(berlin, 2026, 3, 31);
-      expect(d31.difference(d29).inHours, 47, reason: 'kurulum doğrulaması');
+      final d1 = tz.TZDateTime(berlin, 2026, 4, 1);
+      expect(d1.difference(d29).inHours, 71, reason: 'kurulum doğrulaması');
       expect(
         longestStudyStreak(
           const [],
-          totals: {d29: _goal, d31: _goal},
+          totals: {d29: _goal, d1: _goal},
           goalSeconds: _goal,
         ),
         1,
@@ -246,8 +258,11 @@ void main() {
   });
 
   group('WP-637 §6: WP-561 (0 saniyelik gün) KORUNUR', () {
-    test('sıfırlanmış gün seriyi köprülemez', () {
-      final totals = _run([_goal, 0, _goal]);
+    test('sıfırlanmış günler seriyi köprülemez', () {
+      // 🔴 WP-739: tek sıfır gün artık kuralen affediliyor; iddia iki ardışık
+      // sıfır günle ölçülüyor. Ölçülen şey aynı: sıfır saniye "çalışıldı"
+      // değildir, köprü kurmaz.
+      final totals = _run([_goal, 0, 0, _goal]);
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: _goal),
         1,
@@ -267,8 +282,9 @@ void main() {
         for (final e in const [
           (1, 3600),
           (2, 3600),
+          // 🔴 WP-739: iki ardışık eksik gün — tek eksik gün artık affediliyor.
           (3, 600), // hedefin altında → seriyi kırar, aktif günü kırmaz
-          (4, 3600),
+          (4, 600),
           (5, 3600),
         ])
           _s(DateTime.utc(2026, 5, e.$1, 9), e.$2),

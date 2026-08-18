@@ -43,11 +43,17 @@ void main() {
   });
 
   test('parity: agregadan currentStreak == günlük toplamdan', () {
-    // u1 22-23 ardışık, 24 boş, 25 var → bugün 25 ise seri 1 (25), 24 kırar.
+    // 🔴 WP-739: u1'in günleri 22-23-25; 24 boş. Tek boş gün artık seriyi
+    // KIRMAZ (ürünün duraklamalı seri kuralı, `goal_streak_rule.dart`), yani
+    // 25 Haziran'da seri 3'tür. Bu testin ölçtüğü şey kural değil PARİTE:
+    // agregadan (DailyStat) türetilen harita ile günlük toplam haritası aynı
+    // sayıyı vermeli.
     final u1 = userDayTotals(stats, 'u1');
-    expect(currentStreak(const [], 1, today: DateTime(2026, 6, 25), totals: u1), 1);
-    // bugün 23 olsaydı 22-23 ardışık → 2.
+    expect(currentStreak(const [], 1, today: DateTime(2026, 6, 25), totals: u1), 3);
+    // bugün 23 olsaydı 22-23 → 2.
     expect(currentStreak(const [], 1, today: DateTime(2026, 6, 23), totals: u1), 2);
+    // Ters iddia: üç günlük boşluk (26-28 boş) 29'da seriyi sıfırlar.
+    expect(currentStreak(const [], 1, today: DateTime(2026, 6, 29), totals: u1), 0);
   });
 
   test('parity: lastNDays agregadan beklenen seriyi verir', () {

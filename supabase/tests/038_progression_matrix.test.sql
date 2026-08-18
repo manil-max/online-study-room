@@ -234,13 +234,19 @@ select is(
 reset role;
 
 -- ===========================================================================
--- 6. 🔴 BULGU: `streak_days` ile `goal_streak_projection` ayrisiyor
+-- 6. ✅ KAPANDI (WP-739): `streak_days` ile `goal_streak_projection` ESIT
 -- ===========================================================================
--- Ayni calisma gecmisi, iki farkli "seri" tanimi:
+-- Ayni calisma gecmisi, uzun sure iki farkli "seri" tanimi:
 --   * `goal_streak_projection` (0112, WP-453) tek kacirmayi affeder,
---   * `_achievement_metrics.streak_days` (0025 govdesi) ilk eksik gunde durur.
--- Bu satirlar farkin BUGUN var oldugunu sabitliyor. Kapatilmasi XP esiklerini
--- degistirir; karar sahibindir (docs/qa/V57-PROGRESSION-EVIDENCE.md §4).
+--   * `_achievement_metrics.streak_days` (0025 govdesi, sonra 0135) ilk eksik
+--     gunde durur.
+-- Bu satirlar farkin var oldugunu sabitliyordu; kapatilmasi XP esiklerini
+-- degistirdigi icin karar sahibe birakilmisti
+-- (docs/qa/V57-PROGRESSION-EVIDENCE.md §4).
+--
+-- 🔴 Sahip karari (2026-08-19): "blazing fire basarimini pause hakki olan
+-- gunluk seriye esitle." `0136` iki tanimi tek kurala bagladi; asagidaki
+-- iddialar artik ESITLIK olcer. Genis sozlesme `063`te.
 update public.profiles set daily_goal_minutes = 30 where id = :'beta';
 
 -- beta icin: bugun, bugun-2 ve bugun-4 hedefi asar; bugun-1 ve bugun-3 bos.
@@ -297,18 +303,18 @@ select is(
 
 select is(
   ((public._achievement_metrics(:'beta')->>'streak_days')::integer),
-  1,
-  'basarim metrigi (streak_days) ayni gecmiste 1 sayar: grace tanimiyor'
+  3,
+  'basarim metrigi (streak_days) ayni gecmiste 3 sayar: grace TANIYOR'
 );
 
--- Iddia bos dusmesin: farkin kendisi acikca olculuyor. Ayrisma kapatildiginda
--- bu satir kirmiziya doner ve KASTEN guncellenir.
-select isnt(
+-- Iddia bos dusmesin: esitligin kendisi acikca olculuyor. Ayrisma geri
+-- gelirse bu satir kirmiziya doner.
+select is(
   ((public._achievement_metrics(:'beta')->>'streak_days')::integer),
   (select current_streak from public.goal_streak_projection(
     'personal', :'beta', (now() at time zone 'Europe/Istanbul')::date
   )),
-  '🔴 iki seri tanimi ayni gecmiste ayni sayiyi vermiyor (acik bulgu)'
+  '✅ iki seri tanimi ayni gecmiste ayni sayiyi verir (WP-739)'
 );
 
 select * from finish();

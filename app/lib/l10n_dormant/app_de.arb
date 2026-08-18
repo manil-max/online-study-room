@@ -36,7 +36,7 @@
       }
     }
   },
-  "profileBasarimSeriKosulu": "Erreiche dein Tagesziel an {count, plural, =1 {1 aufeinanderfolgenden Tag} other {{count} aufeinanderfolgenden Tagen}}.",
+  "profileBasarimSeriKosulu": "Erreiche eine Serienflamme von {count, plural, =1 {1 Tag} other {{count} Tagen}} (ein verpasster Tag bricht sie nicht).",
   "@profileBasarimSeriKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {

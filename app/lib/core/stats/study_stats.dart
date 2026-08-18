@@ -1,5 +1,6 @@
 import '../../data/models/daily_stat.dart';
 import '../../data/models/study_session.dart';
+import 'goal_streak_rule.dart';
 import 'istanbul_calendar.dart';
 
 /// Çalışma oturumlarından istatistik üreten saf (yan etkisiz) yardımcılar.
@@ -324,12 +325,18 @@ List<MapEntry<String?, int>> subjectBreakdown(Iterable<StudySession> sessions) {
   return entries;
 }
 
-/// Günlük hedefe bağlı güncel seri (üst üste hedefi tutturulan gün sayısı, §3.7).
+/// Günlük hedefe bağlı güncel seri (§3.7).
 ///
-/// Kural: hedefi (≥ [goalSeconds]) tutturduğun her gün +1; tutturamadığın gün
-/// sıfırlanır. **Bugün** henüz sürdüğü için, bugün hedefe ulaşılmadıysa seri
-/// kırılmaz — dünden geriye sayılır (bugün ulaşıldıysa bugünden geriye sayılır).
-/// [today] verilmezse `DateTime.now()` kullanılır (test için enjekte edilebilir).
+/// 🔴 **WP-739 sahip kararı (2026-08-19): kural tektir.** Bu fonksiyon önce
+/// "tutturamadığın gün sıfırlanır" diyordu; alev rozeti (`GoalStreakFlame` →
+/// `goal_streak_projection`) ise tek kaçırmayı affediyordu. Aynı hesapta iki
+/// sayı görünüyordu: rozet 9, profil "Güncel seri" döşemesi 2. Ölçü artık
+/// [currentGoalStreakDays] — yani rozetin ve sunucunun kuralının ta kendisi.
+///
+/// Kural: hedefi (≥ [goalSeconds]) tutturduğun gün seriye girer; iki
+/// tamamlanan gün arası **tek boş gün affedilir**, iki ardışık boş gün
+/// sıfırlar. **Bugün** henüz sürdüğü için bugün hedefe ulaşılmamış olması
+/// seriyi düşürmez. [today] verilmezse `DateTime.now()` kullanılır.
 int currentStreak(
   Iterable<StudySession> sessions,
   int goalSeconds, {
@@ -338,29 +345,11 @@ int currentStreak(
 }) {
   if (goalSeconds <= 0) return 0;
   final dayMap = totals ?? dailyTotals(sessions);
-  final start = dayOf(today ?? DateTime.now());
-  bool met(DateTime d) => (dayMap[d] ?? 0) >= goalSeconds;
-
-  // Bugün tutturulduysa bugünden, yoksa (gün sürüyor) dünden başla.
-  var cursor = met(start) ? start : start.subtract(const Duration(days: 1));
-  var streak = 0;
-  while (met(cursor)) {
-    streak++;
-    cursor = cursor.subtract(const Duration(days: 1));
-  }
-  return streak;
+  return currentGoalStreakDays(
+    completedDays: goalMetDays(totals: dayMap, goalSeconds: goalSeconds),
+    asOfDay: dayOf(today ?? DateTime.now()),
+  );
 }
-
-/// Bir gün anahtarının **takvim sıra numarası** (epoch'tan beri geçen gün).
-///
-/// 🔴 WP-636: bileşenler UTC'ye sabitlenir. Gün anahtarı `DateTime(y, m, d)`
-/// ile, yani cihazın YEREL gece yarısı olarak kurulur; iki anahtar arasındaki
-/// GEÇEN SÜRE cihazın DST'sine bağlıdır ve 24 saat olmak zorunda değildir.
-/// Takvim farkı ise offset'ten bağımsızdır — karşılaştırma bu sayı üzerinden
-/// yapılırsa cihazın saat dilimi sonucu değiştiremez.
-int _calendarDayIndex(DateTime day) =>
-    DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
-    Duration.millisecondsPerDay;
 
 /// En uzun **hedef serisi** rekoru — "rekor seri" (§3.11).
 ///
@@ -409,29 +398,15 @@ int longestStudyStreak(
   if (goalSeconds <= 0) return 0;
   // Önce takvim gününe indirgenir (aynı günü gösteren iki anahtar TOPLANIR),
   // sonra hedef eşiği uygulanır: eşik günün TOPLAMINA bakar, tek kayda değil.
-  final byDay = <int, int>{};
-  for (final e in (totals ?? dailyTotals(sessions)).entries) {
-    final index = _calendarDayIndex(e.key);
-    byDay[index] = (byDay[index] ?? 0) + e.value;
-  }
-  // WP-561: 0 saniyelik (sıfırlanmış/silinmiş) gün sayılmaz. Hedef ≥ 1 olduğu
-  // için bu kural kendiliğinden de sağlanır; iddiası testte açıkça durur.
-  final days = <int>[
-    for (final e in byDay.entries)
-      if (e.value > 0 && e.value >= goalSeconds) e.key,
-  ]..sort();
-  if (days.isEmpty) return 0;
-  var best = 1;
-  var cur = 1;
-  for (var i = 1; i < days.length; i++) {
-    if (days[i] - days[i - 1] == 1) {
-      cur++;
-      if (cur > best) best = cur;
-    } else {
-      cur = 1;
-    }
-  }
-  return best;
+  // WP-561: 0 saniyelik (sıfırlanmış/silinmiş) gün sayılmaz — [goalMetDays]
+  // hem toplama hem `> 0` süzgecini taşır.
+  //
+  // 🔴 WP-739: ardışıklık ölçüsü [currentStreak] ile AYNI kuraldır. Rekor
+  // "en uzun seri" iken güncel seri ondan büyük çıkabiliyordu: rozet tek
+  // kaçırmayı affediyor, rekor affetmiyordu.
+  return longestGoalStreakDays(
+    goalMetDays(totals: totals ?? dailyTotals(sessions), goalSeconds: goalSeconds),
+  );
 }
 
 /// Çalışma serisi: üst üste (en az 1 sn) çalışılan gün sayısı. Grup üyeleri için

@@ -35,7 +35,7 @@
       }
     }
   },
-  "profileBasarimSeriKosulu": "Meet your daily goal for {count, plural, =1 {1 consecutive day} other {{count} consecutive days}}.",
+  "profileBasarimSeriKosulu": "Reach a {count, plural, =1 {1-day} other {{count}-day}} streak flame (one missed day does not break it).",
   "@profileBasarimSeriKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {

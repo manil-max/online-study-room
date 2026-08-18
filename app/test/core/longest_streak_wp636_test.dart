@@ -46,14 +46,19 @@ void main() {
     // Sahibin hipotezi: "aktif günü baz alıyor". Doğruysa aşağıdaki iki sayı
     // eşit çıkar. Bu test hipotezi ölçer ve aynı zamanda kalıcı bir kapıdır:
     // biri `longestStudyStreak`'i `activeDayCount`e çevirirse kırmızı olur.
+    // 🔴 WP-739: boşluklar 2 günden 3 güne çıkarıldı. Cetvel değişti — tek
+    // boş gün artık affediliyor (`goal_streak_rule.dart`), yani "iki günde
+    // bir çalışmak" GERÇEKTEN kesintisiz bir seridir. Testin ölçtüğü şey
+    // değişmedi: seri hâlâ aktif gün sayısı DEĞİLDİR; onu göstermek için
+    // boşluğun affedilmeyen büyüklükte olması gerekiyor.
     test('boşluklu günlerde seri KIRILIR (aktif gün 5, seri 1)', () {
       final base = DateTime(2026, 5, 1);
       final gapped = [
         base,
-        base.add(const Duration(days: 2)),
-        base.add(const Duration(days: 4)),
+        base.add(const Duration(days: 3)),
         base.add(const Duration(days: 6)),
-        base.add(const Duration(days: 8)),
+        base.add(const Duration(days: 9)),
+        base.add(const Duration(days: 12)),
       ];
       final totals = _totals(gapped);
       expect(activeDayCount(totals), 5, reason: 'ölçüm: 5 aktif gün var');
@@ -64,19 +69,24 @@ void main() {
       );
     });
 
-    test('30 aktif gün + tek boşluk = 30 DEĞİL', () {
-      // Sahibin gördüğü sayıya en yakın kurulum: 30 aktif gün, ama ortada bir
-      // gün eksik. "Aktif gün" 30, "en uzun seri" 30 olamaz.
+    test('29 aktif gün + iki günlük boşluk = 29 DEĞİL', () {
+      // Sahibin gördüğü sayıya en yakın kurulum: uzun bir aktif gün dizisi,
+      // ortasında bir delik. "Aktif gün" 29, "en uzun seri" 29 olamaz.
+      //
+      // 🔴 WP-739: delik TEK gün iken artık affediliyor ve doğru cevap
+      // gerçekten 30 oluyor. Deliği iki güne çıkarmak testin niyetini korur:
+      // ölçülen şey "aktif gün ≠ seri", affetme kuralının kendisi değil.
       final base = DateTime(2026, 5, 1);
       final days = <DateTime>[
         for (var i = 0; i < 31; i++)
-          if (i != 15) base.add(Duration(days: i)),
+          if (i != 15 && i != 16) base.add(Duration(days: i)),
       ];
       final totals = _totals(days);
-      expect(activeDayCount(totals), 30);
+      expect(activeDayCount(totals), 29);
       expect(
         longestStudyStreak(const [], totals: totals, goalSeconds: 3600),
         15,
+        reason: '0–14 arası 15 gün en uzun koşu; 17–30 arası 14 gün',
       );
     });
   });
@@ -113,10 +123,13 @@ void main() {
         _s(DateTime.utc(2026, 5, 1, 9), 1800),
         _s(DateTime.utc(2026, 5, 2, 9), 1800),
         _s(DateTime.utc(2026, 5, 2, 20), 1800), // aynı gün ikinci oturum
-        _s(DateTime.utc(2026, 5, 4, 9), 1800),
+        _s(DateTime.utc(2026, 5, 5, 9), 1800),
       ];
-      // Hedef 1800: 1 ve 2 Mayıs tutturur (2 Mayıs iki oturumla 3600), 4 Mayıs
-      // da tutturur ama 3 Mayıs boştur → en uzun blok 2.
+      // Hedef 1800: 1 ve 2 Mayıs tutturur (2 Mayıs iki oturumla 3600), 5 Mayıs
+      // da tutturur ama 3–4 Mayıs boştur → en uzun blok 2.
+      // 🔴 WP-739: eskiden boşluk tek gündü (3 Mayıs); artık affedildiği için
+      // iki güne çıkarıldı, ölçülen şey (aynı günün iki oturumu TOPLANIR ve
+      // blok kırılmaz) aynı kaldı.
       expect(longestStudyStreak(sessions, goalSeconds: 1800), 2);
     });
   });
@@ -127,26 +140,32 @@ void main() {
     // ile ölçüyordu. Bu iki gün anahtarı arasındaki GEÇEN SÜREdir, takvim
     // farkı değil. DST uygulayan bir cihazda gece yarısıdan gece yarısına
     // 23 ya da 25 saat olabilir; sonuç İKİ YÖNLÜ bozuktur.
-    test('DST atlaması: 2 günlük BOŞLUK seriyi birleştirmez (şişirme)', () {
+    test('DST atlaması: 3 günlük BOŞLUK seriyi birleştirmez (şişirme)', () {
       final berlin = _berlin();
       // Berlin 2026: DST 29 Mart 02:00'da başlar.
-      // 29 Mart 00:00 = 28 Mart 23:00Z, 31 Mart 00:00 = 30 Mart 22:00Z
-      // → aradaki fark 47 saat → eski kodda `inDays == 1` → yanlışlıkla ardışık.
+      // 29 Mart 00:00 = 28 Mart 23:00Z, 1 Nisan 00:00 = 31 Mart 22:00Z
+      // → aradaki fark 71 saat.
+      //
+      // 🔴 WP-739 sonrası hata SINIFI aynı, eşiği kaydı: kural artık "takvim
+      // farkı ≤ 2 ise birleş". Geçen SÜREye bakan bir uygulama 71 saati
+      // `inDays = 2` sayar ve bu iki günü YANLIŞLIKLA birleştirir; takvim
+      // farkına bakan doğru uygulama 3 der ve birleştirmez. Ölçü bu yüzden
+      // 2 günlük boşluktan 3 güne taşındı — 2 gün artık kuralen affedilir.
       final d29 = tz.TZDateTime(berlin, 2026, 3, 29);
-      final d31 = tz.TZDateTime(berlin, 2026, 3, 31);
+      final d1 = tz.TZDateTime(berlin, 2026, 4, 1);
       expect(
-        d31.difference(d29).inHours,
-        47,
-        reason: 'kurulum doğrulaması: gerçekten 47 saat',
+        d1.difference(d29).inHours,
+        71,
+        reason: 'kurulum doğrulaması: gerçekten 71 saat (inDays 2 der)',
       );
       expect(
         longestStudyStreak(
           const [],
-          totals: {d29: 3600, d31: 3600},
+          totals: {d29: 3600, d1: 3600},
           goalSeconds: 3600,
         ),
         1,
-        reason: '30 Mart çalışılmadı — 29 ve 31 ardışık değildir',
+        reason: '30–31 Mart çalışılmadı — takvimde 3 gün fark var',
       );
     });
 
@@ -199,7 +218,10 @@ void main() {
   });
 
   group('WP-636 §4: WP-561 kuralları korunur', () {
-    test('0 saniyelik gün seriyi köprülemez', () {
+    test('0 saniyelik günler seriyi köprülemez', () {
+      // 🔴 WP-739: TEK boş gün artık kuralen affediliyor, o yüzden ölçü iki
+      // ardışık sıfır güne taşındı. İddia değişmedi: sıfır saniyelik gün
+      // "çalışılmış" sayılmaz, yani köprü kurmaz.
       final d = DateTime(2026, 8, 1);
       expect(
         longestStudyStreak(
@@ -207,7 +229,8 @@ void main() {
           totals: {
             d: 3600,
             d.add(const Duration(days: 1)): 0,
-            d.add(const Duration(days: 2)): 3600,
+            d.add(const Duration(days: 2)): 0,
+            d.add(const Duration(days: 3)): 3600,
           },
           goalSeconds: 3600,
         ),

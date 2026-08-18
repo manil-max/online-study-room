@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/achievement_ledger_engine.dart';
 import 'package:online_study_room/core/stats/gamification.dart';
 import 'package:online_study_room/core/stats/goal_streak_projection.dart';
 import 'package:online_study_room/core/stats/istanbul_calendar.dart';
@@ -683,9 +684,25 @@ void main() {
   });
 
   // ==========================================================================
-  // 10. 🔴 Açık bulgu: "seri" kelimesinin üç farklı tanımı
+  // 10. ✅ KAPANDI (WP-739): "seri" kelimesinin TEK tanımı
   // ==========================================================================
-  group('seri kelimesinin üç farklı tanımı', () {
+  //
+  // Bu bölüm uzun süre bir AÇIK BULGU taşıyordu: aynı geçmişe üç ayrı motor
+  // bakıyor ve üç farklı sayı veriyordu (alev 3, başarım ekranı 1, freeze
+  // bakiyesine göre 1 ya da 3). Kapatılması XP eşiklerini değiştirdiği için
+  // karar sahibe bırakılmıştı.
+  //
+  // 🔴 Sahip kararı (2026-08-19): *"blazing fire başarımı full devamlı günlere
+  // bakıyor ama ben onu bizim pause hakkı olan günlük seriye eşitlemek
+  // istiyorum."* Kural artık tek: `goal_streak_rule.dart` (sunucuda
+  // `goal_streak_projection` + `0136`). Aşağıdaki iddialar bu yüzden
+  // "ayrışıyor" değil "eşit" der; ayrışma geri gelirse kırmızıya döner.
+  //
+  // `currentStreakWithFreezes` AYRI bir kavramdır ve bilerek dokunulmadı:
+  // otomatik grace herkese verilir, `streak_freezes` ise TÜKETİLEN bir
+  // bakiyedir. Onun ölçüsü aşağıda kalıyor ki iki kavram bir daha
+  // karışmasın.
+  group('seri kelimesinin tek tanımı', () {
     // Aynı geçmiş: 1, 3 ve 5 Temmuz hedefe ulaşıldı; 2 ve 4 kaçırıldı.
     final completedDays = [_july(1), _july(3), _july(5)];
     const goalSeconds = 3600;
@@ -731,48 +748,65 @@ void main() {
       );
     });
 
-    test('başarım metriği (0025 streak_days) grace tanımıyor', () {
-      // Sunucudaki `fire_streak` XP eşiği bu sayıdan besleniyor. Algoritma
-      // `0025`te gün gün geriye yürüyor ve hedefin altındaki ilk günde
-      // duruyor — yani `availableFreezes: 0` ile birebir aynı davranış.
-      final ledgerEquivalent = currentStreakWithFreezes(
-        totals: totals(),
-        goalSeconds: goalSeconds,
-        availableFreezes: 0,
-        today: DateTime(2026, 7, 5),
+    test('başarım metriği artık grace TANIYOR (WP-739)', () {
+      // Sunucudaki `fire_streak` XP eşiği bu sayıdan besleniyor. Eskiden
+      // `0025` gövdesi gün gün geriye yürüyüp ilk eksik günde duruyordu
+      // (`availableFreezes: 0` ile birebir aynı davranış); `0135` aynı
+      // kesintisiz kuralı olay tablosuna taşımıştı. `0136` ikisini de
+      // projeksiyonun kuralına bağladı.
+      final metrics = AchievementLedgerEngine().computeMetrics(
+        sessions: [
+          for (final day in completedDays)
+            StudySession(
+              id: 'goal-day-${day.toIso8601String()}',
+              userId: 'alpha',
+              start: DateTime.utc(day.year, day.month, day.day, 7),
+              end: DateTime.utc(day.year, day.month, day.day, 8),
+              durationSeconds: goalSeconds,
+              source: StudySource.live,
+            ),
+        ],
+        dailyGoalMinutes: goalSeconds ~/ 60,
+        now: DateTime.utc(2026, 7, 5, 12),
       );
-      expect(ledgerEquivalent.streak, 1);
+      expect(
+        metrics['streak_days'],
+        3,
+        reason: 'tamamla-boş-tamamla-boş-tamamla = 3',
+      );
 
       final migration = File(
-        '../supabase/migrations/0025_achievements_social_metrics.sql',
+        '../supabase/migrations/0136_fire_streak_equals_paused_streak.sql',
       ).readAsStringSync();
       expect(
         migration,
-        contains('exit when day_secs < goal_secs;'),
-        reason: 'streak_days hâlâ ilk eksik günde duruyorsa ayrışma sürüyor',
+        contains('(goal_day - prev_day) > 2'),
+        reason: 'sunucu ucu da aynı koşu bölmesini kullanmalı',
       );
     });
 
-    test('🔴 üç tanım aynı geçmişte aynı sayıyı vermiyor', () {
+    test('✅ alev, başarım ve profil döşemesi aynı sayıyı verir', () {
       final server = _project(completedDays, asOf: _july(5)).currentStreak;
-      final ledger = currentStreakWithFreezes(
+      final panelTile = currentStreak(
+        const [],
+        goalSeconds,
+        totals: totals(),
+        today: DateTime(2026, 7, 5),
+      );
+      final record = longestStudyStreak(
+        const [],
         totals: totals(),
         goalSeconds: goalSeconds,
-        availableFreezes: 0,
-        today: DateTime(2026, 7, 5),
-      ).streak;
+      );
 
-      // Kartın kabul kriteri "UI/server state farkı 0" idi. Bu iddia o farkın
-      // BUGÜN sıfır olmadığını sabitliyor: alev 3, başarım ekranı 1 diyor.
-      // Fark kapandığında bu test kırmızıya döner ve kasten güncellenir —
-      // sessizce doğru hâle gelmesini istemiyoruz, çünkü XP eşiklerini
-      // değiştirmek sahibin kararı (docs/qa/V57-PROGRESSION-EVIDENCE.md §4).
+      // Kartın kabul kriteri "UI/server state farkı 0" idi ve WP-739'a kadar
+      // sağlanmıyordu: alev 3, profil döşemesi 1 diyordu. Artık üçü de aynı.
       expect(server, 3);
-      expect(ledger, 1);
+      expect(panelTile, server);
       expect(
-        server,
-        isNot(ledger),
-        reason: 'ayrışma kapandıysa bu testi ve evidence dosyasını güncelle',
+        record,
+        greaterThanOrEqualTo(server),
+        reason: 'rekor seri güncel seriden küçük olamaz',
       );
     });
   });

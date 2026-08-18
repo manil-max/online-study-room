@@ -28,7 +28,12 @@
   - 🔴 **Bu satır 2026-08-06'da düzeltildi.** Uzun süre "staging ve production
     `0116`, `0117–0119` hiçbir remote ortama uygulanmadı" yazıyordu; v58
     zinciri üçünü de `0119`a çıkarmıştı. Bayat kalan bu satır yeni migration
-    numarasını yanlış seçtirebilirdi. **Sıradaki boş numara `0120`.**
+    numarasını yanlış seçtirebilirdi.
+  - 🔴 **2026-08-19 (WP-739) güncellemesi:** repo/local head **`0136`**;
+    staging ve production **`0135`** (v70 apply'ları, 2026-08-13). `0136`
+    hiçbir uzak ortama uygulanmadı ve iki apply kapısı da fail-closed.
+    **Sıradaki boş numara `0137`.** Bu satır bayatlarsa yanlış migration
+    numarası seçtirir — yeni WP burayı da günceller.
   - **Tarihsel (v57):** staging `0115–0116` apply run `30700266897`, production
     `0101–0116` apply run `30700518285`, v57 release run `30700647563`, tag SHA
     `3d1960f552165a8b8f0101f2ed357c583fd5ebe6`.
@@ -125,6 +130,55 @@
   v56 kaydında `0100`dür.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### 2026-08-19 — "seri" tek tanıma indi (WP-739)
+
+**Durum: kod ve yerel kapı bitti; `0136` uygulanmadı, yayın sahibin komutunu
+bekliyor.** Repo/local migration head `0136`; staging ve production `0135`,
+iki apply kapısı da fail-closed.
+
+**Sahip bildirimi:** *"blazing fire başarımı full devamlı günlere bakıyor ama
+ben onu bizim pause hakkı olan günlük seriye eşitlemek istiyorum…
+'7 gün üst üste ulaş' değil de '7 gün alevine sahip ol' gibi bir şey olmalı.
+Birde buna göre başarımları da sağla: bende 2/7 gösteriyor ama 9 günlük seriye
+sahibim, ilkini almam lazım."*
+
+- **Kök neden.** Aynı geçmişe iki ayrı "seri" motoru bakıyordu. Alev rozeti
+  `goal_streak_projection` (0112) okuyor ve **tek kaçırmayı affediyordu**;
+  Alevli Seri başarımı ise `_current_fire_streak_days` (0135) ile **ilk eksik
+  günde duruyordu**. Ayrışma yeni değil: `038 §6` ve
+  `progression_matrix_wp455_test.dart` bunu "açık bulgu" olarak ölçüyordu ve
+  kapatılması XP eşiklerini değiştirdiği için sahip kararına bırakılmıştı.
+- **WP-739 — tek kural.** `app/lib/core/stats/goal_streak_rule.dart` kuralın
+  tek Dart kaynağı oldu (fark ≤ 2 ise seri sürer; koşu uzunluğu = tamamlanan
+  gün sayısı). Sunucuda `0136` aynı `where` ve aynı koşu ifadesini
+  `goal_streak_projection`'dan birebir alır. Üç uç aynı sayıyı verir: alev,
+  başarım metriği, profil "Güncel seri" döşemesi.
+- **Geriye dönük hak iadesi.** Ödül hakkı artık **anlık** değere değil,
+  geçmişteki en uzun duraklamalı seriye (`_best_fire_streak_days`) bakar.
+  `0136` içindeki idempotent `backfill_wp739_fire_streak()` hak edilmiş
+  kademeleri gelen kutusuna pending ödül olarak düşürür; hiçbir `xp_ledger` /
+  `achievement_rewards` / `user_achievements` satırı silinmez.
+- **Aynı sınıftan iki kusur daha kapandı.** (1) Profil istatistik panelinde
+  "Güncel seri" satırı `currentStreak()` ile, hemen yanındaki alev rozeti ise
+  sunucu projeksiyonuyla çiziliyordu — aynı satırda iki farklı sayı. (2)
+  "Rekor seri" (`longestStudyStreak`) grace tanımadığı için **güncel seriden
+  küçük** çıkabiliyordu. İkisi de artık aynı kuralı okur.
+- **Metin.** `profileBasarimSeriKosulu` artık "7 gün üst üste ulaş" demiyor:
+  *"7 günlük alev serisine ulaş (tek gün kaçırmak seriyi bozmaz)."* Metin
+  kuralı söyler; eski cümle kodun yapmadığı bir şeyi vaat ediyordu.
+- **Kapı gerçeği (`python scripts/test_all.py`):** 20 kapı · **18 geçti ·
+  0 kırmızı · 2 atlandı** (Deno kurulu değil). `--only golden` ayrıca yeşil.
+  🔴 **pgTAP yerel replay ATLANDI** (Docker motoru kalkmıyor): `0136` ve yeni
+  `063` **replay bekliyor**, doğrulaması CI Database Gates'e bağlı.
+- **Not (kapı temizliği):** v70 yayınlandığı (tag `v70`, pubspec `1.0.70+70`)
+  hâlde `production.release_enabled` kontratta `true` unutulmuştu; kontratın
+  kendi taahhüdü "Release Orchestrator koşar koşmaz yeniden kilitlenir"
+  diyordu. Kapı kapatıldı ve `guard.tests.ps1` iddiası `$false`a döndü
+  (89/89 yeşil).
+
+**Kalan zincir (sahip komutunu bekler):** `0136` staging→production apply
+(backfill migration içinde koşar), sonra sürüm/tag/release.
 
 ### 2026-08-13 — v70 saha geri bildirimi turu (WP-729…WP-737)
 

@@ -4,6 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/models/achievement_ledger.dart';
 import '../../data/models/study_session.dart';
+import 'goal_streak_rule.dart';
 import 'istanbul_calendar.dart';
 
 final tz.Location _ledgerIstanbul = () {
@@ -571,16 +572,21 @@ class AchievementLedgerEngine {
       }
     }
 
+    // WP-739 🔴 sahip kararı: Alevli Seri artık "N gün üst üste" değil,
+    // "N günlük ALEVE sahip ol" demektir. Sayı, alev rozetinin okuduğu kuralın
+    // (`goal_streak_rule.dart` = SQL `goal_streak_projection`) ta kendisidir;
+    // tek kaçırma seriyi bozmaz. Buradaki döngü gün gün geriye yürüyüp İLK
+    // eksik günde duruyordu; aynı geçmişte rozet 9, başarım ekranı 2 diyordu
+    // (`progression_matrix_wp455_test.dart`).
     final clock = now != null ? _asIstanbul(now) : istanbulNow();
-    var cursor = DateTime(clock.year, clock.month, clock.day);
-    if ((dayTotals[cursor] ?? 0) < goalSecs) {
-      cursor = cursor.subtract(const Duration(days: 1));
-    }
-    var streak = 0;
-    while ((dayTotals[cursor] ?? 0) >= goalSecs) {
-      streak++;
-      cursor = cursor.subtract(const Duration(days: 1));
-    }
+    final goalDays = goalMetDays(totals: dayTotals, goalSeconds: goalSecs);
+    final streak = currentGoalStreakDays(
+      completedDays: goalDays,
+      asOfDay: DateTime(clock.year, clock.month, clock.day),
+    );
+    // Ödül hakkı ANLIK değere değil, seriye BİR KEZ ulaşılmış olmasına bakar:
+    // kazanılan kademe geri alınmaz (`docs/URUN-POLITIKALARI.md §3`).
+    final bestStreak = longestGoalStreakDays(goalDays);
 
     final byMonth = <String, int>{};
     for (final e in dayTotals.entries) {
@@ -604,6 +610,7 @@ class AchievementLedgerEngine {
       'max_session_minutes': maxSessionMinutes,
       'max_day_hours': maxDayHours,
       'streak_days': streak,
+      'best_streak_days': bestStreak,
       'weekend_goal_days': weekendGoalDays,
       'perfect_months': perfectMonths,
       'metronome_weeks': metronomeWeeks,
@@ -684,6 +691,19 @@ class AchievementLedgerEngine {
     }
   }
 
+  /// Ödül hakkı için okunan ilerleme. Gösterimden (`progressForAchievement`)
+  /// bilerek ayrılır: `fire_streak` `'current'` sınıfı bir metriktir, yani
+  /// ekrandaki sayı DÜŞER; oysa kazanılmış kademe geri alınmaz. Ödül bu yüzden
+  /// seriye BİR KEZ ulaşılmış olmasına bakar (WP-739).
+  int awardProgressForAchievement(String id, Map<String, dynamic> metrics) {
+    if (id == 'fire_streak') {
+      final best = metrics['best_streak_days'] as int? ?? 0;
+      final current = metrics['streak_days'] as int? ?? 0;
+      return best > current ? best : current;
+    }
+    return progressForAchievement(id, metrics);
+  }
+
   /// event_key idempotent: aynı anahtar ikinci kez XP vermez.
   AchievementEventResult processEvent({
     required String userId,
@@ -704,7 +724,7 @@ class AchievementLedgerEngine {
       if (def.id == kStudyHourAchievementId || def.category == 'system') {
         continue;
       }
-      final progress = progressForAchievement(def.id, metrics);
+      final progress = awardProgressForAchievement(def.id, metrics);
       for (final tier in def.tiers) {
         if (progress < tier.threshold) continue;
         final key = ledgerEventKey(userId, def.id, tier.tier);

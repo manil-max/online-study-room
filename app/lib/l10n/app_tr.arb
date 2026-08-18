@@ -5,7 +5,7 @@
   "profileBasarimToplamSaatKosulu": "Toplam {count} saat çalış.",
   "profileBasarimTekOturumKosulu": "En az {count} dakika süren tek bir çalışma oturumu tamamla.",
   "profileBasarimGunlukSaatKosulu": "Bir günde {count} saat çalış.",
-  "profileBasarimSeriKosulu": "Günlük hedefine {count} gün üst üste ulaş.",
+  "profileBasarimSeriKosulu": "{count} günlük alev serisine ulaş (tek gün kaçırmak seriyi bozmaz).",
   "profileBasarimHaftaSonuKosulu": "{count} hafta sonu gününde günlük hedefine ulaş.",
   "profileBasarimKusursuzAyKosulu": "{count} kusursuz ay tamamla.",
   "profileBasarimGrupBirinciligiKosulu": "{count} gün grubunda tek başına birinci ol (beraberlikte kimse saymaz).",

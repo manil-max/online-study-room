@@ -313,12 +313,16 @@ void main() {
   });
 
   group('WP-561 #8: longestStudyStreak 0 saniyelik günü saymaz', () {
-    test('sıfır gün seriyi köprülemez', () {
+    test('sıfır günler seriyi köprülemez', () {
+      // 🔴 WP-739: ürünün seri kuralı artık TEK kaçırmayı affediyor, o yüzden
+      // iddia iki ardışık sıfır günle ölçülüyor. Ölçülen şey değişmedi: sıfır
+      // saniyelik gün "çalışıldı" sayılmaz ve köprü kurmaz.
       final d = DateTime(2026, 8, 1);
       final totals = <DateTime, int>{
         d: 3600,
         d.add(const Duration(days: 1)): 0, // sıfırlanmış/silinmiş gün
-        d.add(const Duration(days: 2)): 3600,
+        d.add(const Duration(days: 2)): 0,
+        d.add(const Duration(days: 3)): 3600,
       };
       expect(longestStudyStreak(const [], totals: totals, goalSeconds: 1), 1);
       expect(activeDayCount(totals), 2);

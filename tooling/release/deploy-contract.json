@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0135",
+  "local_migration_head": "0136",
   "staging": {
     "migration_head": "0135",
     "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED on 2026-08-13 after the v70 staging apply (run 31717110232) succeeded: post-check printed 0135|0135|0135 and the live backfill processed 1 user. Production has its own separate confirmation."
+    "hold_reason": "RE-LOCKED on 2026-08-13 after the v70 staging apply (run 31717110232) succeeded: post-check printed 0135|0135|0135 and the live backfill processed 1 user. WP-739 added 0136 locally on 2026-08-19; staging target stays 0135 until the owner gives a fresh apply GO. Production has its own separate confirmation."
   },
   "production": {
     "migration_head": "0135",
     "deploy_enabled": false,
-    "release_enabled": true,
+    "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "APPLY DONE, RELEASE OPEN (2026-08-13). v70 production apply run 31724163402 succeeded: post-check printed 0135|0135|0135 and the live backfill processed 8 users. Staging ran first (31717110232, 1 user). deploy_enabled is re-locked; release_enabled is open for the v70 tag ONLY and is re-locked right after the Release Orchestrator run."
+    "hold_reason": "RE-LOCKED on 2026-08-19 (WP-739). v70 shipped: tag v70 exists and app/pubspec.yaml is 1.0.70+70, so the one-time release_enabled window opened on 2026-08-13 for that tag was spent and is now closed as the contract promised. History: v70 production apply run 31724163402 printed 0135|0135|0135 and the live backfill processed 8 users; staging ran first (31717110232, 1 user). 0136 (WP-739) is local-only; a new apply/release GO from the owner must reopen both flags explicitly."
   }
 }

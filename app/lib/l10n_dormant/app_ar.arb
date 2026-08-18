@@ -36,7 +36,7 @@
       }
     }
   },
-  "profileBasarimSeriKosulu": "حقق هدفك اليومي لمدة {count, plural, =1 {يوم متتالٍ واحد} other {{count} أيام متتالية}}.",
+  "profileBasarimSeriKosulu": "احصل على شعلة سلسلة من {count, plural, =1 {يوم واحد} other {{count} أيام}} (تفويت يوم واحد لا يكسرها).",
   "@profileBasarimSeriKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {

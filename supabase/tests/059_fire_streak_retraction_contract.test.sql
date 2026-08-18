@@ -18,8 +18,8 @@ select is(
 select is(
   (select source_version from public.achievement_metric_definitions
     where achievement_id = 'fire_streak'),
-  'goal_completion_current_v2',
-  'canli seri kanonik goal-completion v2 kaynagini ilan eder'
+  'goal_completion_grace_v3',
+  'canli seri duraklamali (grace) goal-completion kaynagini ilan eder'
 );
 select is(
   (select projection_kind from public.achievement_metric_definitions
@@ -83,16 +83,22 @@ on conflict (user_id, achievement_id) do update
       progress = excluded.progress,
       unlocked_at = excluded.unlocked_at;
 
--- Bugun ve dun gider. 0129 dayanaksiz goal_completed olaylarini geri ceker;
--- 0128/0135 metrik projeksiyonu current degeri sifira indirir.
+-- Bugun, dun ve onceki gun gider. 0129 dayanaksiz goal_completed olaylarini
+-- geri ceker; 0128/0135 metrik projeksiyonu current degeri sifira indirir.
+--
+-- 🔴 WP-739: eskiden IKI gun silmek yetiyordu. Kural artik tek kacirmayi
+-- affediyor (alev rozetiyle ayni kural), yani seriyi gercekten oldurmek icin
+-- UC ardisik bos gun gerekiyor. Testin konusu degismedi: canli deger
+-- geri cekilir, kazanilmis kademe durur.
 delete from public.study_sessions
  where id in ('30000000-0000-0000-0000-000000000001',
-              '32000000-0000-0000-0000-000000000001');
+              '32000000-0000-0000-0000-000000000001',
+              '32000000-0000-0000-0000-000000000002');
 
 select is(
   public._current_fire_streak_days(:'alpha'),
   0,
-  'bugun ve dun hedef gunu kalmayinca canli seri sifirlanir'
+  'uc gun ust uste hedef gunu kalmayinca canli seri sifirlanir'
 );
 select is(
   (select metric_value from public.achievement_metric_progress

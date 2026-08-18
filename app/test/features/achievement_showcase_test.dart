@@ -170,18 +170,28 @@ void main() {
   });
 
   test(
-    'başarım şartları günlük serinin giriş değil hedef temelli olduğunu söyler',
+    'başarım şartı ALEVİ anlatır: "üst üste" değil, duraklamalı seri',
     () {
+      // 🔴 WP-739 sahip kararı: *"7 gün üst üste ulaş değil de 7 gün alevine
+      // sahip ol gibi bir şey olmalı."* Metin kuralı SÖYLER; kural artık tek
+      // kaçırmayı affeden günlük seridir (`goal_streak_rule.dart`). "Üst üste"
+      // demek, kullanıcıya kodun yapmadığı bir şeyi vaat etmekti.
       final achievement = kAchievementDictV3().firstWhere(
         (entry) => entry.id == 'fire_streak',
       );
+      final condition = achievementTierConditionTr(
+        AppLocalizationsTr(),
+        achievement,
+        achievement.tiers.first,
+      );
       expect(
-        achievementTierConditionTr(
-          AppLocalizationsTr(),
-          achievement,
-          achievement.tiers.first,
-        ),
-        'Günlük hedefine 7 gün üst üste ulaş.',
+        condition,
+        '7 günlük alev serisine ulaş (tek gün kaçırmak seriyi bozmaz).',
+      );
+      expect(
+        condition,
+        isNot(contains('üst üste')),
+        reason: 'eski vaat geri gelirse metin yine koddan sapar',
       );
     },
   );
