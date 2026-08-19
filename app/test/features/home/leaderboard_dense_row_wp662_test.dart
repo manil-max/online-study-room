@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` tipi ana pakette değil (Riverpod 3).
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/istanbul_calendar.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
@@ -70,7 +71,13 @@ const Set<String> _shortWideCells = {
   'geniş telefon|tam 32×16', // 396 × 194
 };
 
-final DateTime _now = DateTime.now();
+/// 🔴 WP-740: burada `DateTime.now()` vardı ve kapı **günün saatine bağlı**
+/// kırmızıya düşüyordu. Kart bugünü `todaySecondsByUser` → `dayOf` →
+/// [istanbulDay] ile buluyor; fixture ise koşucunun YEREL takvim gününü
+/// kuruyordu. CI (UTC) 21:00'den sonra koştuğunda İstanbul çoktan ertesi
+/// gündeydi, hiçbir `DailyStat` "bugün"e düşmüyordu ve kart 0 kişi çiziyordu.
+/// v70 CI'ı 17:12 UTC'de koştuğu için bu hiç görünmedi.
+final DateTime _now = istanbulNow();
 
 final _me = Profile(
   id: 'u1',
@@ -97,7 +104,7 @@ List<Profile> _members() => [
 ];
 
 List<DailyStat> _stats() {
-  final today = DateTime(_now.year, _now.month, _now.day);
+  final today = istanbulDay(_now);
   return [
     for (var d = 0; d < 30; d++)
       for (var i = 1; i <= _memberCount; i++)

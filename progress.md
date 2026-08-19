@@ -180,6 +180,26 @@ sahibim, ilkini almam lazım."*
 **Kalan zincir (sahip komutunu bekler):** `0136` staging→production apply
 (backfill migration içinde koşar), sonra sürüm/tag/release.
 
+### 2026-08-19 — WP-740: saate bağlı kırmızı iki kapı
+
+WP-739 push'unun CI koşumu **kırmızı** düştü ve WP-739 ile ilgisi olmayan bir
+kusur açtı: `leaderboard_dense_row_wp662_test.dart` ve
+`desktop_settings_wp679_test.dart` fixture'larını `DateTime.now()` ile, yani
+**koşucunun yerel takvim günüyle** kuruyordu. Uygulama ise günü her yerde
+`istanbulDay` ile kesiyor.
+
+- CI (UTC) 2026-08-18 **23:02**'de koştu → İstanbul çoktan 19 Ağustos'tu →
+  fixture'ın "bugün"ü uygulamanın "bugün"üne düşmedi. Sıralama kartı **0 kişi**
+  çizdi, oturum geçmişinde **"Bugün" satırı hiç oluşmadı** (14 iddia kırmızı).
+- 🔴 Aynı kod v70'te yeşildi çünkü o koşum **17:12 UTC**'deydi. Yani kapı yeşil
+  değildi, sadece doğru saatte koşuyordu — `docs/TEST-SISTEMI.md §0`daki
+  "yeşil sanılan kapı" sınıfının yeni bir örneği.
+- Onarım: iki fixture da günü `istanbulDay(istanbulNow())` ile kuruyor.
+  `app/test/core/stats/istanbul_day_fixture_wp740_test.dart` kusuru **duvar
+  saatinden bağımsız** sabitliyor: `todaySecondsByUser`a 23:02 UTC ve 17:12 UTC
+  anları enjekte edilip cihaz-günü fixture'ının birincisinde kaybolduğu,
+  ikincisinde göründüğü ölçülüyor.
+
 ### 2026-08-13 — v70 saha geri bildirimi turu (WP-729…WP-737)
 
 **Durum: kod ve tam yerel kapı bitti; yayın bekliyor.** Stable tag, push,

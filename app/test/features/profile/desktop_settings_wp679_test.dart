@@ -53,6 +53,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/core/device_integrations/samsung_modes_service.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/stats/istanbul_calendar.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
@@ -661,7 +662,12 @@ void main() {
   // =========================================================================
 
   List<StudySession> seedSessions() {
-    final today = DateTime.now();
+    // 🔴 WP-740: burada `DateTime.now()` vardı ve kapı **günün saatine bağlı**
+    // kırmızıya düşüyordu. Ekran günleri `istanbulDay` ile grupluyor ve
+    // İstanbul bugününü "Bugün" diye etiketliyor; fixture ise koşucunun YEREL
+    // gününü kuruyordu. CI (UTC) 21:00'den sonra koştuğunda İstanbul ertesi
+    // güne geçmiş oluyor ve "Bugün" satırı hiç çizilmiyordu.
+    final today = istanbulDay(istanbulNow());
     final yesterday = today.subtract(const Duration(days: 1));
     StudySession at(DateTime day, int hour, int seconds, String id) {
       final start = DateTime.utc(day.year, day.month, day.day, hour);
