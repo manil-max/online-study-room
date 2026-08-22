@@ -3,6 +3,54 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.71",
+      "buildNumber": 71,
+      "channel": "stable",
+      "date": "2026-08-22",
+      "title": "v71: WP-741..WP-756 + 0136",
+      "highlights": [
+        "Stats period model: StatsPeriod.today renamed to day, day became navigable, jumpTo(date) added with calendar arithmetic (Duration.inDays rejected - DST days are 23/25h).",
+        "Stats shell split: arrows left the period strip for a dedicated StatsRangeNavigator with four period-specific pickers; group switcher wired to the tab via existing showClassSwitcher.",
+        "Per-period card sets for both tabs; custom range is adaptive by span length.",
+        "Nine widgets redesigned on a shared tier system (K1..K4). Six providers split out of StudyWidgetProviders.kt as a pure move; single dark palette; 15 new shared drawables.",
+        "Live Update contract: the gate that forbade promotion was reversed and the custom RemoteViews were removed from the promoted path."
+      ],
+      "fixes": [
+        "offset was ignored by daily distribution, session scatter, leaderboard history and group trend.",
+        "Session scatter double-clipped: filtered to period then re-clipped to the last 30 days from today.",
+        "Group goal gauge read now instead of the selected day.",
+        "WIDGET_TIMER_TEXT_SCALE_X 0.55 -> 0.85 plus ramp cap, condensed family and a 3-char K1 core.",
+        "authStateWithOfflineFallback claimed offline on a mere latency budget and never retracted.",
+        "supabase_auth_repository._sessionProfiles rethrew, terminating the stream permanently; handleError keeps it alive without a resubscribe loop."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped (deno absent). CI run 32574111587 green 7/7 including Windows goldens and both Android emulator smokes.",
+        "0136 applied to staging (32576114372) and production (32576116205); post-check 0136|0136|0136 on both. No backup exists - free plan, owner waiver.",
+        "setDeleteIntent still absent; dismissal honesty is deferred."
+      ],
+      "titleEn": "v71: WP-741..WP-756 + 0136",
+      "highlightsEn": [
+        "Stats period model: StatsPeriod.today renamed to day, day became navigable, jumpTo(date) added with calendar arithmetic (Duration.inDays rejected - DST days are 23/25h).",
+        "Stats shell split: arrows left the period strip for a dedicated StatsRangeNavigator with four period-specific pickers; group switcher wired to the tab via existing showClassSwitcher.",
+        "Per-period card sets for both tabs; custom range is adaptive by span length.",
+        "Nine widgets redesigned on a shared tier system (K1..K4). Six providers split out of StudyWidgetProviders.kt as a pure move; single dark palette; 15 new shared drawables.",
+        "Live Update contract: the gate that forbade promotion was reversed and the custom RemoteViews were removed from the promoted path."
+      ],
+      "fixesEn": [
+        "offset was ignored by daily distribution, session scatter, leaderboard history and group trend.",
+        "Session scatter double-clipped: filtered to period then re-clipped to the last 30 days from today.",
+        "Group goal gauge read now instead of the selected day.",
+        "WIDGET_TIMER_TEXT_SCALE_X 0.55 -> 0.85 plus ramp cap, condensed family and a 3-char K1 core.",
+        "authStateWithOfflineFallback claimed offline on a mere latency budget and never retracted.",
+        "supabase_auth_repository._sessionProfiles rethrew, terminating the stream permanently; handleError keeps it alive without a resubscribe loop."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped (deno absent). CI run 32574111587 green 7/7 including Windows goldens and both Android emulator smokes.",
+        "0136 applied to staging (32576114372) and production (32576116205); post-check 0136|0136|0136 on both. No backup exists - free plan, owner waiver.",
+        "setDeleteIntent still absent; dismissal honesty is deferred."
+      ]
+    },
+    {
       "versionName": "1.0.70",
       "buildNumber": 70,
       "channel": "stable",

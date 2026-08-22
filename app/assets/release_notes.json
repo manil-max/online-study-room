@@ -3,6 +3,54 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.71",
+      "buildNumber": 71,
+      "channel": "stable",
+      "date": "2026-08-22",
+      "title": "v71: istatistikler dönem dönem yeniden kuruldu, widget'lar baştan tasarlandı",
+      "highlights": [
+        "İstatistiklerde Gün / Hafta / Ay / Yıl / Tümü / Özel artık gerçekten farklı içerik getiriyor; daha önce altısı da aynı kartları seriyordu.",
+        "Zamanda gezinme kendi çubuğuna taşındı: sol ok, başlık, sağ ok ve takvim düğmesi. Takvim her dönemde farklı açılıyor — yılda takvim değil yıl listesi çıkıyor.",
+        "Gün görünümü yeni: o günün oturum çizelgesi, saat profili, oturum sayısı, en uzun oturum ve hedef durumu. Grupta o günün sıralaması en üstte.",
+        "Grup değiştirme üstteki Grup sekmesine taşındı; tarih aralığının altındaki avatar + isim + Değiştir satırı kaldırıldı.",
+        "Dokuz ana ekran widget'ı baştan tasarlandı. İlk kez gerçek görsel taşıyorlar ve 1x1'e kadar iniyorlar; küçük kutuda yalnız çekirdek bilgi kalıyor."
+      ],
+      "fixes": [
+        "Geçmiş bir döneme gidince dört kart seçili dönemi yok sayıyordu: başlık geçen haftayı yazıp grafik bu haftayı çiziyordu. Dördü de düzeltildi.",
+        "\"Geçen ay\" seçilince oturum dağılımı grafiği bomboş çıkıyordu.",
+        "Grup hedef göstergesi hangi güne gidilirse gidilsin bugünü anlatıyordu.",
+        "Sayaç widget'ındaki rakamlar yatay eziliyordu; artık sıkıştırılmıyor, küçük kutuda bilgi düşürülüyor ve rakam büyük kalıyor.",
+        "İnternet bağlıyken açılışta çıkan yanlış \"İnternet yok\" uyarısı kaldırıldı.",
+        "Tek bir geçici ağ hatası oturum akışını kalıcı olarak öldürüyordu; o oturum boyunca giriş durumu bir daha güncellenmiyordu."
+      ],
+      "notes": [
+        "Sayaç bildirimi hâlâ kaydırılarak silinebiliyor. Android 14'ten beri bu bir platform kararı; engellenemiyor. Silinirse sayaç görünmeden çalışmaya devam ediyor, düzgün karşılığı sonraki sürümde.",
+        "Dinamik panel altyapısı hazırlandı ama gerçek telefonda henüz doğrulanmadı.",
+        "Sıradaki alarm widget'ı boyutlandırmayı öğrendi, ama hâlâ yayında değil."
+      ],
+      "titleEn": "v71: statistics rebuilt period by period, widgets redesigned from scratch",
+      "highlightsEn": [
+        "Day / Week / Month / Year / All / Custom now genuinely change what you see; previously all six laid out the same cards.",
+        "Time navigation moved into its own bar: back arrow, title, forward arrow and a calendar button. The picker differs per period — Year shows a year list, not a calendar.",
+        "The Day view is new: that day's session timeline, hour profile, session count, longest session and goal progress. In Groups, that day's ranking sits on top.",
+        "Switching groups moved to the Group tab; the avatar + name + Change row under the date range is gone.",
+        "All nine home screen widgets were redesigned. They carry real graphics for the first time and shrink to 1x1, keeping only the core value."
+      ],
+      "fixesEn": [
+        "Four cards silently ignored the selected period when you navigated back: the title said last week while the chart drew this week. All four fixed.",
+        "The session scatter chart came out completely empty for \"last month\".",
+        "The group goal gauge always described today, whichever day you navigated to.",
+        "Timer widget digits were horizontally squeezed; instead of compressing, small boxes now drop detail and keep the number large.",
+        "Removed the false \"No internet\" banner that appeared at launch while online.",
+        "A single transient network error permanently killed the session stream, so auth state never updated again for that session."
+      ],
+      "notesEn": [
+        "The timer notification can still be swiped away. Since Android 14 this is a platform decision and cannot be blocked. If dismissed, the timer keeps running unseen; a proper answer ships next release.",
+        "Live Update groundwork is in place but has not been verified on a real device yet.",
+        "The next-alarm widget learned to resize but is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.70",
       "buildNumber": 70,
       "channel": "stable",

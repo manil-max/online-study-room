@@ -4,6 +4,58 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v71 / 1.0.71+71] - 2026-08-22
+
+> **İstatistikler artık her dönemde farklı bir ekran; dokuz ana ekran
+> widget'ı baştan tasarlandı; sayaç bildirimi dinamik panele hazırlandı.**
+
+### Öne çıkanlar
+- İstatistiklerde Gün / Hafta / Ay / Yıl / Tümü / Özel seçenekleri artık
+  gerçekten farklı içerik getiriyor. Daha önce altısı da aynı kartları
+  seriyor, yalnız sayılar değişiyordu.
+- Zamanda gezinme dönem şeridinden çıkıp kendi çubuğuna taşındı: sol ok,
+  başlık, sağ ok ve takvim düğmesi. Takvim düğmesi her dönemde farklı
+  açılıyor — yılda takvim değil yalnızca yıl listesi çıkıyor.
+- Gün görünümü yeni: o günün oturum çizelgesi, saat profili, oturum sayısı,
+  en uzun oturum ve hedef durumu. Grup sekmesinde o günün üye sıralaması
+  en üstte.
+- Grup değiştirme üstteki "Grup" sekmesine taşındı; tarih aralığının
+  altındaki avatar + isim + Değiştir satırı kaldırıldı.
+- Dokuz ana ekran widget'ı baştan tasarlandı. İlk kez gerçek görsel
+  taşıyorlar — önceki hâlde dokuz düzende tek bir ikon bile yoktu.
+  Hepsi 1×1'e kadar iniyor; küçük kutuda yalnız o widget'ın çekirdeği kalıyor.
+- Widget seçicisinde beş widget aynı adla görünüyordu, artık her birinin
+  kendi adı var.
+
+### Düzeltmeler
+- Geçmiş bir döneme gidildiğinde dört kart seçili dönemi yok sayıyordu:
+  günlük dağılım, oturum dağılımı, liderlik geçmişi ve grup eğilimi başlıkta
+  geçen haftayı yazıp grafikte bu haftayı çiziyordu. Dördü de düzeltildi.
+- "Geçen ay" seçildiğinde oturum dağılımı grafiği tamamen boş çıkıyordu.
+- Grup hedef göstergesi hangi güne gidilirse gidilsin bugünü anlatıyordu.
+- Sayaç widget'ındaki rakamlar %45 yatay eziliyordu; sıkıştırma yerine
+  küçük kutuda bilgi düşürülüyor, rakam artık büyük ve okunur.
+- İnternet bağlıyken açılışta çıkan yanlış "İnternet yok" uyarısı kaldırıldı.
+- Tek bir geçici ağ hatası oturum akışını kalıcı olarak öldürüyordu; bu
+  olduğunda uygulama o oturum boyunca giriş durumunu bir daha güncellemiyordu.
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- CI: 7 işin 7'si yeşil — Linux tam test paketi, Windows entegrasyon,
+  Windows golden testleri, iki Android emülatör smoke turu, Edge Function
+  tip denetimi ve backend sözleşme kapısı.
+- Migration 0136 staging ve production'a uygulandı, post-check her ikisinde
+  de `0136 | 0136 | 0136` verdi.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Sayaç bildirimi hâlâ kaydırılarak silinebiliyor.** Android 14'ten beri
+  bu bir platform kararı ve engellenemiyor. Şu an bildirim silinirse sayaç
+  görünmeden çalışmaya devam ediyor; bunun düzgün karşılığı sonraki sürümde.
+- **Dinamik panel cihazda doğrulanmadı.** Altyapı bu sürümde hazırlandı
+  (özel görünüm terfi yolundan çıkarıldı) ama gerçek telefonda görülmedi.
+- Sıradaki alarm widget'ı boyutlandırmayı öğrendi ama hâlâ yayında değil.
+- Sınav geri sayımı widget'ı 30 dakikaya kadar bayat kalabiliyor.
+
 ## [v70 / 1.0.70+70] - 2026-08-13
 
 > **Saha geri bildirimindeki sayaç, profil, kamp ateşi, başarım ve yönetim
