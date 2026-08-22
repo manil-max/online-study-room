@@ -9,7 +9,10 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_analytic
 import 'package:online_study_room/features/stats/analytics/analytics_period.dart';
 import 'package:online_study_room/features/stats/widgets/draggable_date_range_picker.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
+import 'package:online_study_room/core/stats/stats_period.dart';
+import 'package:online_study_room/data/providers/stats_period_provider.dart';
 import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
+import 'package:online_study_room/features/stats/widgets/stats_range_navigator.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
@@ -222,40 +225,44 @@ void main() {
       expect(find.byType(PersonalStatsView), findsOneWidget);
     });
 
-    testWidgets('PersonalStatsView uses the single draggable range picker', (
+    // 🔴 WP-745: bu iddia ÖNCEDEN `PersonalStatsView` içindeki S11
+    // `_RangeCard`ın "Seç" düğmesini tıklıyordu. O kart kaldırıldı: üstteki
+    // dönem şeridiyle çelişen İKİNCİ bir dönem kontrolüydü ve başlığı S10 ile
+    // birebir aynıydı ("Seçili tarih aralığı"). Ölçülen sözleşme aynen duruyor
+    // — aralık seçicisi Flutter'ın kendi `DateRangePickerDialog`u DEĞİL,
+    // ürünün sürükle-bırak seçicisidir — yalnız artık YAŞADIĞI yerden,
+    // WP-743'ün gezinme çubuğundan ölçülüyor.
+    testWidgets('custom range picker is the single draggable one', (
       tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-      final session = StudySession(
-        id: 'range-picker-session',
-        userId: 'u1',
-        start: now.subtract(const Duration(hours: 1)),
-        end: now,
-        durationSeconds: 3600,
-        source: StudySource.live,
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
+      addTearDown(container.dispose);
+      // Riverpod 3: dinleyicisiz provider her `read`de yeniden kurulur.
+      container.listen(statsPeriodProvider, (_, _) {});
+      container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.custom);
+
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-          child: MaterialApp(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('tr'),
-            home: Scaffold(body: PersonalStatsView(sessions: [session])),
+            locale: Locale('tr'),
+            home: Scaffold(body: StatsRangeNavigator()),
           ),
         ),
       );
-      await tester.pump();
-
-      await tester.scrollUntilVisible(
-        find.text('Seç'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Seç'));
+
+      await tester.tap(find.byKey(const Key('statsPeriodPickerButton')));
       await tester.pumpAndSettle();
 
       expect(find.byType(DraggableDateRangePickerDialog), findsOneWidget);
