@@ -16,17 +16,28 @@
      `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
      icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
 -->
-<!-- WP-699: icerik dort ogedir (baslik / yuzde / ilerleme cubugu / detay).
-     Detay satiri 150dp yukseklikte acilir; onun altinda baslik + yuzde + cubuk
-     gorunur ve bu 110dp'ye sigar.
+<!-- WP-755: kademe -> icerik (`docs/tasarim/widget-tasarim-sistemi.md` §1.2,
+     karsiligi `GroupGoalWidget.kt`):
+       K1  40x40dp    cekirdek (yuzde; grup yoksa cadir ikonu)
+       K2  110x40dp   cekirdek, 24sp
+       K3  110x110dp  ters U yay + icinde yuzde + detay satiri
+       K4  110x150dp  + baslik satiri + ayrac
+
+     GERCEK esikler `WidgetCommon.kt` icindeki `WIDGET_GROUP_GOAL_*`:
+       genislik : NARROW < 150dp <= MEDIUM < 220dp <= WIDE
+       yukseklik: SHORT  < 110dp <= MEDIUM < 150dp <= TALL
+
+     `minResize*` 110x80 -> 40x40dp: sahip "1x1 gibi kucuk boyutlara
+     sikisabilsinler" dedi; K1/K2 dallari ancak boyle ULASILABILIR olur.
+     Varsayilan boyut DEGISMEDI (2x2 = 110x110dp).
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_group_goal_widget"
     android:maxResizeHeight="150dp"
     android:maxResizeWidth="250dp"
     android:minHeight="110dp"
-    android:minResizeHeight="80dp"
-    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:minResizeWidth="40dp"
     android:minWidth="110dp"
     android:previewLayout="@layout/odak_group_goal_widget"
     android:resizeMode="horizontal|vertical"

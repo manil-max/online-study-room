@@ -16,10 +16,27 @@
      `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
      icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
 -->
-<!-- WP-699: icerik bes ogedir (baslik / yuzde / ilerleme cubugu / gun ozeti /
-     seri). Baslik + yuzde + cubuk en az 110dp yukseklik ister; bu yuzden
-     kucultme siniri 110x110dp - daha kisasinda cubuk taser. Gun ozeti 150dp'de,
-     seri satiri 180dp'de acilir (esikler StudyWidgetProviders.kt icinde).
+<!-- 🔴 WP-755: bu blogun eski hali BAYATTI ve uc ayri seyi yanlis yaziyordu -
+     en kucuk kutuyu, iki detay satirinin acilma esiklerini ve esiklerin
+     hangi dosyada durdugunu. (Ucu de olculdu: kutu 110x40dp'ye kadar
+     iniyordu, esikler 80/110dp'ydi, saglayici dosyasi ise WP-752'de
+     bolunmustu.) Yorum kod degildir ama bir sonraki ajanin OKUDUGU seydir;
+     bayat kalirsa yanlis tasarim kararina yol acar.
+
+     GERCEK esikler `WidgetCommon.kt` icindeki `WIDGET_STATS_*` sabitleridir:
+       genislik : NARROW < 150dp <= MEDIUM < 220dp <= WIDE
+       yukseklik: SHORT  <  80dp <= MEDIUM < 110dp <= TALL
+
+     Kademe -> icerik (`docs/tasarim/widget-tasarim-sistemi.md` §1.2,
+     karsiligi `StatsWidget.kt`):
+       K1  40x40dp    cekirdek (yuzde ya da dolu-hedef alevi)
+       K2  110x40dp   cekirdek, 24sp
+       K3  110x80dp   cekirdek + ilerleme cubugu + gun ozeti
+       K4  110x110dp  + baslik satiri + ayrac + seri satiri
+
+     `minResizeWidth` 110 -> 40dp: sahip "1x1 gibi kucuk boyutlara
+     sikisabilsinler" dedi. Eski deger K1'i ULASILMAZ kiliyordu - kod K1 dalini
+     tasisa bile kullanici widget'i o boyuta getiremiyordu.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_stats_widget"
@@ -27,7 +44,7 @@
     android:maxResizeWidth="250dp"
     android:minHeight="40dp"
     android:minResizeHeight="40dp"
-    android:minResizeWidth="110dp"
+    android:minResizeWidth="40dp"
     android:minWidth="110dp"
     android:previewLayout="@layout/odak_stats_widget"
     android:resizeMode="horizontal|vertical"

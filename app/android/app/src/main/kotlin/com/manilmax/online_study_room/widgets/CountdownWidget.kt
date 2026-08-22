@@ -251,21 +251,45 @@ internal fun countdownRowValueText(
 internal fun readCountdownJson(prefs: SharedPreferences): String? =
     runCatching { prefs.getString(COUNTDOWN_PREFS_KEY, null) }.getOrNull()
 
+// ---------------------------------------------------------------------------
+// WP-755 — kademe kurallari. Aile sozlugu `StatsWidget.kt` basindadir.
+//
+// CEKIRDEK (§1.4): kalan gun. Sayi cekirdegi en fazla UC karakterdir; iki
+// halde sigmaz ve o iki halde cekirdek GLIF olur:
+//   1) bos/gecmis kayit -> gosterilecek sayi yoktur (tire bir sayi degildir)
+//   2) 999 gunden uzak  -> dort karakter, K1'de 15sp'lik bir fisiltiya duser
+// ---------------------------------------------------------------------------
+
+/** Sayi cekirdegi ancak GERCEK bir geri sayim varken anlamlidir. */
+internal fun countdownHasData(state: CountdownState): Boolean =
+    state == CountdownState.FUTURE || state == CountdownState.TODAY
+
 /**
- * Launcher'in bildirdigi kutu -> boyut sinifi. Siniflandirmanin kendisi saf
- * [widgetSizeClass] fonksiyonudur (JVM testi onu olcer); buradaki tek is
- * `Bundle`i okumaktir. `OPTION_APPWIDGET_MIN_*` bilerek secildi: `MAX_*`
- * diger ekran yonundeki olcudur, ona gore cizmek cihaz dondugunde metni
- * kirpardi.
+ * §1.3 sira 2: "gun kaldi" bir YARDIMCI ETIKETtir ve K1'de duser. Kalan tek
+ * oge sayinin kendisidir; 40x40dp kutuda iki metin yan yana zaten 11sp
+ * tabanini kirardi.
  */
-internal fun countdownWidgetSizeClass(
-    appWidgetManager: AppWidgetManager,
-    widgetId: Int,
-): WidgetSizeClass {
-    val options = runCatching { appWidgetManager.getAppWidgetOptions(widgetId) }.getOrNull()
-    val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
-    val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
-    return widgetSizeClass(WidgetSizeSpecs.countdown, width, height)
+internal fun countdownLabelVisible(tier: ProgressWidgetTier): Boolean =
+    tier != ProgressWidgetTier.K1
+
+/** §1.3 sira 1: baslik ilk dusen ogedir; yalniz K4'te cizilir. */
+internal fun countdownHeaderVisible(tier: ProgressWidgetTier): Boolean =
+    progressHeaderVisible(tier)
+
+/**
+ * Cekirdek puntosu. K3/K4'te merdiven degismedi (WP-699 olcumu); yeni olan
+ * K1/K2 dalidir - o iki kademede kutuda cekirdekten baska grafik yoktur, yani
+ * dikey butcenin tamami sayinindir.
+ */
+internal fun countdownDaysSp(
+    size: WidgetSizeClass,
+    widthDp: Int = WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP,
+): Float = when (
+    progressWidgetTier(size, widthDp, WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP)
+) {
+    ProgressWidgetTier.K1 -> PROGRESS_K1_CORE_SP
+    ProgressWidgetTier.K2 -> PROGRESS_K2_CORE_SP
+    else -> WidgetTypography.countdownDays.of(size.width)
 }
 
 class CountdownWidgetProvider : HomeWidgetProvider() {
@@ -329,7 +353,51 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // WP-699: geri sayimin tek duzeni vardi; 30sp gun sayisi
                 // `minWidth=110dp` kutuya sigar ama 2 hucreden dar bir kutuda
                 // kirpilirdi ve buyutuldugunde ayni puntoda kalirdi.
-                val size = countdownWidgetSizeClass(appWidgetManager, widgetId)
+                val dimensions = appWidgetManager.dimensions(
+                    WidgetSizeSpecs.countdown,
+                    widgetId,
+                )
+                val size = dimensions.sizeClass
+                val tier = progressWidgetTier(
+                    size,
+                    dimensions.widthDp,
+                    WIDGET_COUNTDOWN_DEFAULT_WIDTH_DP,
+                )
+                val core = progressCoreKind(
+                    tier,
+                    countdownHasData(model.state),
+                    model.daysText,
+                )
+                // WP-755 (§2.6): kart yaricapi kademeye bagli.
+                setInt(
+                    R.id.countdown_widget_root,
+                    "setBackgroundResource",
+                    if (progressCardIsTight(tier)) {
+                        R.drawable.widget_card_bg_tight
+                    } else {
+                        R.drawable.widget_card_bg
+                    },
+                )
+                setTextViewText(
+                    R.id.countdown_widget_title,
+                    strings.getString(R.string.widget_countdown_title),
+                )
+                setViewVisibility(
+                    R.id.countdown_widget_header,
+                    if (countdownHeaderVisible(tier)) {
+                        android.view.View.VISIBLE
+                    } else {
+                        android.view.View.GONE
+                    },
+                )
+                setViewVisibility(
+                    R.id.countdown_widget_divider,
+                    if (countdownHeaderVisible(tier)) {
+                        android.view.View.VISIBLE
+                    } else {
+                        android.view.View.GONE
+                    },
+                )
                 // WP-717: kahraman mi liste mi? Kural uygulamadaki kartla ayni
                 // (`dday_card.dart` -> `useHero`). Bos durumda kahraman blogu
                 // yine gorunur, cunku "henuz geri sayim eklenmedi" satirini o
@@ -351,18 +419,54 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 setTextViewTextSize(
                     R.id.countdown_widget_days,
                     android.util.TypedValue.COMPLEX_UNIT_SP,
-                    WidgetTypography.countdownDays.of(size.width),
+                    countdownDaysSp(size, dimensions.widthDp),
                 )
                 setTextViewTextSize(
                     R.id.countdown_widget_label,
                     android.util.TypedValue.COMPLEX_UNIT_SP,
                     WidgetTypography.countdownLabel.of(size.width),
                 )
+                // WP-755: cekirdek sayi mi glif mi? Ikisi ayni yerde durur,
+                // ayni anda yalniz biri gorunur. Kum saati hem "kayit yok" hem
+                // "sayi bu kutuya sigmiyor" halini tasir.
+                setViewVisibility(
+                    R.id.countdown_widget_days,
+                    if (core == ProgressCoreKind.NUMBER) {
+                        android.view.View.VISIBLE
+                    } else {
+                        android.view.View.GONE
+                    },
+                )
+                setViewVisibility(
+                    R.id.countdown_widget_core_glyph,
+                    if (core == ProgressCoreKind.NUMBER) {
+                        android.view.View.GONE
+                    } else {
+                        android.view.View.VISIBLE
+                    },
+                )
                 // Kisa kutuda sinav ADI dusulur, gun sayisi ile "gun kaldi"
                 // satiri kalir: widget'in tasidigi bilgi budur.
+                // 🔴 `countdownNameVisible` yalniz YUKSEKLIGE bakar; 1x2
+                // (40x110dp) kutu TALL'dur ama 36dp ic genisliginde sinav adi
+                // uc noktaya iner. Kademe kapisi (§1.2) onunde durur.
+                val nameVisible = heroVisible &&
+                    countdownNameVisible(size.height) &&
+                    !progressOnlyCore(tier)
+                val labelVisible = heroVisible && countdownLabelVisible(tier)
                 setViewVisibility(
                     R.id.countdown_widget_name,
-                    if (heroVisible && countdownNameVisible(size.height)) {
+                    if (nameVisible) android.view.View.VISIBLE else android.view.View.GONE,
+                )
+                setViewVisibility(
+                    R.id.countdown_widget_label,
+                    if (labelVisible) android.view.View.VISIBLE else android.view.View.GONE,
+                )
+                // Yardimci metin sutunu K1'de tamamen duser; `layout_weight`
+                // tasiyan bos bir sutun kalsaydi cekirdek merkezden kayardi.
+                setViewVisibility(
+                    R.id.countdown_widget_hero_text,
+                    if (nameVisible || labelVisible) {
                         android.view.View.VISIBLE
                     } else {
                         android.view.View.GONE
@@ -374,7 +478,9 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // depoda `resizeMode`un dustugu olu-bayrak tuzagidir.
                 setViewVisibility(
                     R.id.countdown_widget_arc,
-                    if (countdownArcVisible(size.height, model.state)) {
+                    if (countdownArcVisible(size.height, model.state) &&
+                        !progressOnlyCore(tier)
+                    ) {
                         android.view.View.VISIBLE
                     } else {
                         android.view.View.GONE
@@ -391,8 +497,13 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // yoksa listenin TAMAMI cizilir (uygulamadaki kartla ayni).
                 val rowSp = COUNTDOWN_ROW_SP.of(size.width)
                 val drawn = if (hero) list.rows.drop(1) else list.rows
-                val visibleRows =
+                // K1 kutusunda (40dp genislik) yardimci satirlar da duser:
+                // ad + gun sayisi iki sutun halinde 36dp'ye girmez.
+                val visibleRows = if (progressOnlyCore(tier)) {
+                    0
+                } else {
                     countdownVisibleRowCount(size.height, list.rows.size, list.hasPriority)
+                }
                 for (slot in 0 until COUNTDOWN_ROW_SLOTS) {
                     val row = drawn.getOrNull(slot).takeIf { slot < visibleRows }
                     setViewVisibility(
@@ -420,9 +531,18 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                     )
                 }
 
+                // WP-755: taban dolgu 12 -> 6. 110dp'lik bir kutuda 13dp'lik
+                // cift yan dolgu, kullanilabilir yuksekligin dortte birini
+                // yiyordu; kahraman + yay + uc satir oraya SIGMIYORDU. K1/K2
+                // 40dp'lik kutularda dolgu 2dp'ye iner (§1.1 ic alan tablosu).
                 val paddingPx = (
-                    widgetRootPaddingDp(12, size.height) *
-                        context.resources.displayMetrics.density
+                    (
+                        if (progressCardIsTight(tier)) {
+                            2
+                        } else {
+                            widgetRootPaddingDp(6, size.height)
+                        }
+                        ) * context.resources.displayMetrics.density
                     ).toInt()
                 setViewPadding(
                     R.id.countdown_widget_root,

@@ -1,30 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Yuzde yayin icinde yalniz bir kez yer alir; altinda ikinci bir kopya yoktur. -->
+<!-- WP-755: GRUP HEDEFI - "ilerleme" ailesinin en grafik uyesi.
+
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md`.
+
+     CEKIRDEK (§1.4): grup hedef yuzdesi. Yuzde duzende YALNIZ BIR KEZ
+     gecer (WP-730 kurali korunuyor) ve yayin agzinda durur.
+
+     Kademe butcesi (§1.2), asagidan yukari:
+       K1 (40x40)     cekirdek                                1 oge, 0 grafik
+       K2 (110x40)    cekirdek (24sp)                         1 oge, 0 grafik
+       K3 (110x110)   yay + icinde yuzde + detay              2 oge, 1 grafik
+       K4 (110x150+)  baslik + ayrac + yay + yuzde + detay    3 oge, 1 grafik
+
+     🔴 Yayin kutusu (`group_goal_widget_gauge`) `wrap_content`tur, sabit
+     48dp DEGIL: yay K1/K2'de GONE olunca kutu yuzdenin boyuna kadar
+     kucululmeli. Sabit birakilirsa 40dp'lik bir kutuda 48dp'lik bos bir
+     cerceve kalir ve cekirdek disari taser. (`setViewLayoutHeight` API 31'dir,
+     minSdk 24'te kullanilamaz - kucultmenin tek dogru yolu budur.)
+
+     Bos durum: yayin yerine hicbir sey, cekirdegin yerine cadir ikonu
+     (`group_goal_widget_core_glyph`). Gerekce `GroupGoalWidget.kt` basinda.
+
+     Renkler `widget_ember_*` paletinden; ham hex ve emoji YOKTUR. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/group_goal_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_card_bg"
-    android:gravity="center_vertical"
+    android:contentDescription="@string/cd_group_goal_widget"
+    android:gravity="center"
     android:orientation="vertical"
     android:padding="6dp">
 
-    <TextView
-        android:id="@+id/group_goal_widget_title"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/group_goal_widget_header"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_group_goal"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/group_goal_widget_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_group_goal" />
+
+        <TextView
+            android:id="@+id/group_goal_widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_group_goal"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/group_goal_widget_divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_design_divider"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@drawable/widget_divider"
+        android:contentDescription="@null"
+        android:visibility="gone" />
 
     <FrameLayout
         android:id="@+id/group_goal_widget_gauge"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="3dp">
+        android:layout_height="wrap_content">
 
         <ProgressBar
             android:id="@+id/group_goal_widget_progress"
@@ -43,12 +92,23 @@
             android:layout_gravity="center_horizontal|bottom"
             android:layout_marginBottom="1dp"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
             android:gravity="center"
             android:maxLines="1"
             android:text="@string/widget_percent_zero"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
+            android:textScaleX="0.85"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/group_goal_widget_core_glyph"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_group_goal"
+            android:visibility="gone" />
     </FrameLayout>
 
     <TextView
@@ -57,9 +117,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
         android:gravity="center"
         android:maxLines="1"
         android:text="@string/widget_join_group"
-        android:textColor="@color/widget_design_ink_muted"
+        android:textColor="@color/widget_ember_ink_dim"
         android:textSize="12sp" />
 </LinearLayout>

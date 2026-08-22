@@ -1,36 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-755: GUNLUK HEDEF - "ilerleme" ailesinin en cok kullanilan uyesi.
+
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md`.
+
+     CEKIRDEK (§1.4): gunluk hedef yuzdesi. K1'de tek basina kalan bilgi
+     budur. `72%` uc karakterdir ve 40x40dp kutuya 20sp ile girer; `100%`
+     DORT karakterdir ve girmez - o durumda cekirdek `widget_flame_peak`
+     glifine doner (`stats_widget_core_glyph`). Yani K1'de ya sayi ya alev
+     vardir, kirpilmis sayi asla.
+
+     Kademe butcesi (§1.2), asagidan yukari:
+       K1 (40x40)    cekirdek                                  1 oge, 0 grafik
+       K2 (110x40)   cekirdek (24sp)                           1 oge, 0 grafik
+       K3 (110x80+)  cekirdek + cubuk + gun ozeti              2 oge, 1 grafik
+       K4 (110x110+) baslik + ayrac + cekirdek + cubuk +
+                     gun ozeti + seri satiri                   4 oge, 1 grafik
+
+     🔴 Cubuk K1/K2'de CIZILMEZ. 40dp dikey butcede 4dp'lik cubuk + arasi,
+     yuzdeyi 15sp'ye dusuruyordu; sahibin "sadece yazi, guzel degil" dedigi
+     hal tam olarak oydu. Kademe kucultunce dusen sey GRAFIKTIR (§1.3 sira 5),
+     cekirdek degil.
+
+     Butun gorsel yuk artik `TextView`da degil: dort `ImageView` var
+     (aile ikonu, ayrac, cekirdek glifi, seri alevi). Renkler `widget_ember_*`
+     paletinden gelir; ham hex ve emoji YOKTUR (§2.2, §4.3). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/stats_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_card_bg"
     android:contentDescription="@string/cd_stats_widget"
-    android:gravity="center_vertical"
+    android:gravity="center"
     android:orientation="vertical"
     android:padding="3dp">
 
-    <TextView
-        android:id="@+id/stats_widget_title"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/stats_widget_header"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_today"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="11sp"
-        android:textStyle="bold"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/stats_widget_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_stats" />
+
+        <TextView
+            android:id="@+id/stats_widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_daily_goal"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/stats_widget_divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_design_divider"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@drawable/widget_divider"
+        android:contentDescription="@null"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/stats_widget_today"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_percent_zero"
-        android:textColor="@color/widget_design_accent"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+    <FrameLayout
+        android:id="@+id/stats_widget_core"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/stats_widget_today"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
+            android:maxLines="1"
+            android:text="@string/widget_percent_zero"
+            android:textColor="@color/widget_ember_flame"
+            android:textScaleX="0.85"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/stats_widget_core_glyph"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_flame_peak"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <ProgressBar
         android:id="@+id/stats_goal_progress"
@@ -49,20 +118,40 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
         android:maxLines="1"
         android:text="@string/widget_week_preview"
-        android:textColor="@color/widget_design_ink"
+        android:textColor="@color/widget_ember_ink"
         android:textSize="11sp" />
 
-    <TextView
-        android:id="@+id/stats_widget_streak"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/stats_widget_streak_row"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_streak_preview"
-        android:textColor="@color/widget_design_accent"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/stats_widget_streak_flame"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_flame_on" />
+
+        <TextView
+            android:id="@+id/stats_widget_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_streak_preview"
+            android:textColor="@color/widget_ember_glow"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 </LinearLayout>

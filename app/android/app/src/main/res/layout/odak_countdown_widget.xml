@@ -1,76 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-695 / WP-717: sinav geri sayimi.
+<!-- WP-755: SINAV GERI SAYIMI - "ilerleme" ailesinin ikinci yay tasiyicisi.
 
-     WP-717'de duzen, uygulamadaki karta (`lib/features/home/widgets/dday_card.dart`)
-     benzetildi ve paylasilan gorsel dile bagli hale getirildi:
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md`.
 
-       kahraman blogu : buyuk kalan gun + "gun kaldi" etiketi + sinav adi
-                        (kartla ayni sira: once sayi, sonra ad)
-       ters U yay     : kalan surenin gorsel karsiligi (sahibin istedigi
-                        "renkli bar, ters U seklinde")
-       UC satir       : diger sinavlar - beta testcisi "uygulamadaki gibi
-                        3'u de gorunse" dedi; widget yalniz 1 kayit
-                        gosteriyordu.
+     CEKIRDEK (§1.4): kalan gun. `12` uc karaktere sigar. Sigmayan iki hal
+     var ve ikisinde de cekirdek GLIFtir (`countdown_widget_core_glyph`,
+     kum saati):
+       1) kayit yok / tarih gecti  -> gosterilecek sayi YOKTUR; tire bir sayi
+          degil, sayinin yokluguydu ve kahraman puntoda okunmuyordu
+       2) 999 gunden uzak sinav    -> dort karakter, K1'e kahraman girmez
 
-     Satirlar STATIKtir (uc tane): RemoteViews `ListView` disinda dinamik satir
-     uretemez. Hangisinin gorunecegini yukseklik sinifi belirler
-     (`countdownVisibleRowCount`), yani buyutunce bilgi ARTAR - eskiden
-     buyutmek yalniz bosluk buyutuyordu.
+     Kademe butcesi (§1.2), asagidan yukari:
+       K1 (40x40)     cekirdek                                1 oge, 0 grafik
+       K2 (110x40)    cekirdek + "gun kaldi"  (YATAY)         2 oge, 0 grafik
+       K3 (110x110)   cekirdek + etiket + sinav adi + yay
+                      + yardimci satirlar                     3 oge, 1 grafik
+       K4 (110x180+)  baslik + ayrac + yukaridakiler          5 oge, 1 grafik
 
-     Renk/olcu simgeleri `values/widget_design.xml`ten gelir ve uygulama
-     temasindan da duvar kagidindan da bagimsizdir; eski `widget_colors.xml`
-     simgeleri Android 12+'ta `values-v31` ile duvar kagidina baglaniyordu.
+     🔴 Kahraman blogu WP-755'te DIKEYden YATAYa dondu. Sebep aritmetik:
+     110dp'lik bir kutuda ust uste gun + etiket + ad ~70dp yer kapliyordu ve
+     geriye yay + uc satir icin yer kalmiyordu (K2'de ise dikey yigma §1.2
+     ile zaten yasak). Yatay dizilim ayni bilgiyi ~39dp'de veriyor.
+
+     Satirlar STATIKtir (uc tane): RemoteViews `ListView` disinda dinamik
+     satir uretemez. Hangisinin gorunecegini yukseklik sinifi belirler
+     (`countdownVisibleRowCount`), yani buyutunce bilgi ARTAR.
 
      Varsayilan metinler bos durumu cizer: launcher onizlemesi ve ilk
-     `onUpdate` bos bir dikdortgen degildir. Yayin onizlemede %35 dolu
-     baslatilir ki widget seciciye grafik kimligiyle girsin. -->
+     `onUpdate` bos bir dikdortgen degildir. Yay onizlemede %35 dolu
+     baslatilir ki widget seciciye grafik kimligiyle girsin.
+
+     Renkler `widget_ember_*` paletinden gelir; ham hex ve emoji YOKTUR. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/countdown_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_card_bg"
     android:contentDescription="@string/cd_countdown_widget"
-    android:gravity="center_vertical"
+    android:gravity="center"
     android:orientation="vertical"
-    android:padding="@dimen/widget_design_padding">
+    android:padding="6dp">
+
+    <LinearLayout
+        android:id="@+id/countdown_widget_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/countdown_widget_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_countdown" />
+
+        <TextView
+            android:id="@+id/countdown_widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_countdown_title"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/countdown_widget_divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_design_divider"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@drawable/widget_divider"
+        android:contentDescription="@null"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/countdown_widget_hero"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/countdown_widget_days"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/widget_em_dash"
-            android:textColor="@color/widget_design_accent"
-            android:textSize="30sp"
-            android:textStyle="bold" />
+        <FrameLayout
+            android:id="@+id/countdown_widget_core"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/countdown_widget_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/widget_countdown_empty"
-            android:textColor="@color/widget_design_ink_muted"
-            android:textSize="12sp" />
+            <TextView
+                android:id="@+id/countdown_widget_days"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-condensed"
+                android:maxLines="1"
+                android:text="@string/widget_em_dash"
+                android:textColor="@color/widget_ember_flame"
+                android:textScaleX="0.85"
+                android:textSize="30sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/countdown_widget_name"
-            android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/countdown_widget_core_glyph"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/widget_ic_countdown"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/countdown_widget_hero_text"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="@string/widget_countdown_title"
-            android:textColor="@color/widget_design_ink"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/countdown_widget_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/widget_countdown_empty"
+                android:textColor="@color/widget_ember_ink_dim"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/countdown_widget_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/widget_countdown_title"
+                android:textColor="@color/widget_ember_ink"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <ProgressBar
@@ -101,8 +176,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="12sp" />
 
         <TextView
@@ -111,8 +187,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
-            android:textColor="@color/widget_design_accent"
+            android:textColor="@color/widget_ember_glow"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -132,8 +209,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="12sp" />
 
         <TextView
@@ -142,8 +220,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
-            android:textColor="@color/widget_design_accent"
+            android:textColor="@color/widget_ember_glow"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -163,8 +242,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="12sp" />
 
         <TextView
@@ -173,8 +253,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
-            android:textColor="@color/widget_design_accent"
+            android:textColor="@color/widget_ember_glow"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>

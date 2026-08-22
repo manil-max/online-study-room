@@ -20,9 +20,13 @@
      geri sayim gun cozunurlugunde oldugu icin daha sik guncelleme pil harcar,
      daha seyrek olan ise gun donumunu gec yakalar.
 
-     WP-699: eski tanimda `targetCell*` hic yoktu, yani Android 12+ varsayilani
-     belirsizdi. Icerik uc satir (sinav adi / gun sayisi / etiket); kisa halde
-     ad dusurulur, geriye iki satir kalir - bu 110x80dp'ye sigar.
+     🔴 WP-755 tespiti (TASARIM ISI DEGIL, BILINEN KUSUR): bu widget'in
+     Dart tarafinda bir TETIKLEYICISI YOK. Kullanici uygulamada sinav ekleyip
+     silince `AppWidgetManager.updateAppWidget` cagrilmiyor; ekran bir sonraki
+     periyodik turu, yani 30 dakikaya kadar, BAYAT kaliyor. Cozum yeri
+     `app/lib/features/android_widgets/android_widget_service.dart` (bu WP'nin
+     sahip yolu degil). Bu tanimdaki sure kisaltilarak duzelmez - Android 30
+     dakikanin altini zaten kabul etmez.
 -->
 <!-- WP-717: `maxResizeHeight` 180dp -> 250dp (3 -> 4 hucre).
      Widget artik tek kayit degil UC sinav tasiyor (kahraman blogu + iki
@@ -30,13 +34,27 @@
      sinir 4 hucreye acildi ki kullanici isterse hepsini rahat gorsun.
      Varsayilan boyut DEGISMEDI (2x2 = 110x110dp): sahip "boyutlari
      kocaman" dedi, buyume yalniz kullanicinin istegiyle olur. -->
+<!-- WP-755: kademe -> icerik (`docs/tasarim/widget-tasarim-sistemi.md` §1.2,
+     karsiligi `CountdownWidget.kt`):
+       K1  40x40dp    cekirdek (kalan gun; kayit yoksa kum saati)
+       K2  110x40dp   cekirdek + "gun kaldi", YATAY
+       K3  110x110dp  + sinav adi + ters U yay + yardimci satirlar
+       K4  110x180dp  + baslik satiri + ayrac
+
+     GERCEK esikler `WidgetCommon.kt` icindeki `WIDGET_COUNTDOWN_*`:
+       genislik : NARROW < 150dp <= MEDIUM < 220dp <= WIDE
+       yukseklik: SHORT  < 110dp <= MEDIUM < 180dp <= TALL
+
+     `minResize*` 110x80 -> 40x40dp: sahip "1x1 gibi kucuk boyutlara
+     sikisabilsinler" dedi; K1/K2 dallari ancak boyle ULASILABILIR olur.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_countdown_widget"
     android:maxResizeHeight="250dp"
     android:maxResizeWidth="250dp"
     android:minHeight="110dp"
-    android:minResizeHeight="80dp"
-    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:minResizeWidth="40dp"
     android:minWidth="110dp"
     android:previewLayout="@layout/odak_countdown_widget"
     android:resizeMode="horizontal|vertical"
