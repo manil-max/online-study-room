@@ -9,6 +9,66 @@ import androidx.core.content.ContextCompat
 import com.manilmax.online_study_room.R
 import es.antonborri.home_widget.HomeWidgetProvider
 
+// ---------------------------------------------------------------------------
+// WP-756 - LISTE ailesinin (siralama / gorev / alarm) ORTAK kademe sozlugu.
+//
+// Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md` §1.1-1.5.
+//
+// 🔴 Bu blok mantiken `WidgetCommon.kt`e aittir; bu turda o dosya baska bir
+// ajanin kilidinde oldugu icin ailenin ilk dosyasinda duruyor. Uc aile de
+// indikten sonra paylasilan zemine tasinmalidir (LIDERE BILDIRILDI). Adi
+// bilerek `List...` ile baslar: bir land-grab degil, aile kapsamli bir sozluk.
+// ---------------------------------------------------------------------------
+
+/** K1 Kor (40x40) · K2 Kutuk (110x40) · K3 Ocak (110x110) · K4 Kamp (180x110+). */
+internal enum class ListWidgetTier { K1, K2, K3, K4 }
+
+/**
+ * §2.6: kart yaricapi KADEMEYE baglidir. 40x40dp'lik bir K1 kutusunda 20dp
+ * yaricap koselerin TAMAMINI yer ve kart karta degil hapa doner.
+ * Secim kodda yapilir: `View.setBackgroundResource` `@RemotableViewMethod`tur.
+ */
+internal fun listCardBackground(tier: ListWidgetTier): Int = when (tier) {
+    ListWidgetTier.K1, ListWidgetTier.K2 -> R.drawable.widget_card_bg_tight
+    ListWidgetTier.K3, ListWidgetTier.K4 -> R.drawable.widget_card_bg
+}
+
+/** Kok dolgu kademeyle buyur; K1'de her dp icerige gider. */
+internal fun listCardPaddingDp(tier: ListWidgetTier): Int = when (tier) {
+    ListWidgetTier.K1 -> 2
+    ListWidgetTier.K2 -> 4
+    ListWidgetTier.K3 -> 8
+    ListWidgetTier.K4 -> 10
+}
+
+/**
+ * K1'in ust siniri. Launcher hucre olcusu `70n - 30` oldugu icin pratikte
+ * yalniz 40 / 110 / 180 / 250dp genislikler olusur; 110dp'nin altindaki tek
+ * deger BIR hucredir. Yani "K1 = bir hucre genisliginde".
+ */
+internal const val WIDGET_LIST_ONE_CELL_MAX_WIDTH_DP = 110
+
+/**
+ * Cekirdek puntosu (§3.4 modeli):
+ *   (40 - 2*2 - 8) / (0.60 * 0.85 * 0.87 * 3) = 21sp  ->  20sp kullanilir.
+ * Uc karakterlik sinirin sayisal karsiligi budur; `ListFamilyRedesignWp756Test`
+ * bunu `widgetMaxSp` ile YENIDEN kurar.
+ */
+internal const val WIDGET_LIST_CORE_SP = 20f
+
+/** Cekirdegin yanindaki yardimci satir. §3.3 tabani: 11sp. */
+internal const val WIDGET_LIST_CORE_HINT_SP = 11f
+
+/** Sayi cekirdegi en fazla UC karakterdir (§1.4 / §7-1). */
+internal const val WIDGET_LIST_CORE_MAX_CHARS = 3
+
+// ---------------------------------------------------------------------------
+// Kamp Siralamasi
+//
+// CEKIRDEK: kullanicinin KENDI sirasi (`#3`). Kod bunu zaten biliyordu
+// (`leaderboardShowsMyRank`); WP-756 o zekayi kademe sistemine oturtur.
+// ---------------------------------------------------------------------------
+
 /** Kısa halde tek satır kalır; o satır listenin başı değil KULLANICININ sırasıdır. */
 internal fun leaderboardShowsMyRank(height: WidgetHeightClass): Boolean =
     height == WidgetHeightClass.SHORT
@@ -31,6 +91,63 @@ internal fun leaderboardHighlightedPosition(myRank: String): Int? =
         ?.get(1)
         ?.toIntOrNull()
 
+/**
+ * K1 CEKIRDEGI. Dart tarafi `#N` yazar (`study_providers.dart` `_rankLabel`);
+ * sirasi yoksa uzun bir cumle gonderir ("Siralama olusunca burada gorunur").
+ *
+ * Donen deger en fazla [WIDGET_LIST_CORE_MAX_CHARS] karakterdir:
+ *   1..99  -> `#7`, `#42`
+ *   >=100  -> `99+`   (dort karakterlik `#100` 40dp kutuda 12sp'ye duserdi)
+ * Sira cozulemezse `null`; o zaman cekirdek GLIFe duser (kupa ikonu). `0`
+ * yazmak yanlis olurdu: sifirinci sira diye bir sey yok.
+ */
+internal fun leaderboardCoreRank(myRank: String): String? {
+    val rank = Regex("^#(\\d{1,6})").find(myRank.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.toIntOrNull()
+        ?: return null
+    if (rank <= 0) return null
+    return if (rank <= 99) "#$rank" else "99+"
+}
+
+/**
+ * Kademe. K1 yalnizca GENISLIKten, K2/K3/K4 yukseklik sinifindan cikar;
+ * yani var olan `leaderboardShowsMyRank` kurali K2'nin TANIMI olur ve ikisi
+ * ayrisamaz.
+ */
+internal fun leaderboardTier(widthDp: Int, heightDp: Int): ListWidgetTier {
+    if (widthDp in 1 until WIDGET_LIST_ONE_CELL_MAX_WIDTH_DP) return ListWidgetTier.K1
+    val height = widgetSizeClass(WidgetSizeSpecs.leaderboard, widthDp, heightDp).height
+    return when {
+        leaderboardShowsMyRank(height) -> ListWidgetTier.K2
+        height == WidgetHeightClass.TALL -> ListWidgetTier.K4
+        else -> ListWidgetTier.K3
+    }
+}
+
+/** K3/K4'te liste cizilir; K1/K2'de cekirdek seridi. */
+internal fun leaderboardListVisible(tier: ListWidgetTier): Boolean =
+    tier == ListWidgetTier.K3 || tier == ListWidgetTier.K4
+
+private val LEADERBOARD_ROW_CONTAINERS = intArrayOf(
+    R.id.leaderboard_widget_row_container_1,
+    R.id.leaderboard_widget_row_container_2,
+    R.id.leaderboard_widget_row_container_3,
+)
+
+private val LEADERBOARD_RANKS = intArrayOf(
+    R.id.leaderboard_widget_rank_1,
+    R.id.leaderboard_widget_rank_2,
+    R.id.leaderboard_widget_rank_3,
+)
+
+private val LEADERBOARD_ROWS = intArrayOf(
+    R.id.leaderboard_widget_row_1,
+    R.id.leaderboard_widget_row_2,
+    R.id.leaderboard_widget_row_3,
+)
+
 class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
     override fun onAppWidgetOptionsChanged(
         context: Context,
@@ -49,8 +166,10 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
         widgetData: SharedPreferences,
     ) {
         val strings = widgetLocalizedContext(context)
-        val ink = ContextCompat.getColor(context, R.color.widget_design_ink)
-        val accent = ContextCompat.getColor(context, R.color.widget_design_accent)
+        val ink = ContextCompat.getColor(context, R.color.widget_ember_ink)
+        val inkDim = ContextCompat.getColor(context, R.color.widget_ember_ink_dim)
+        val flame = ContextCompat.getColor(context, R.color.widget_ember_flame)
+        val night = ContextCompat.getColor(context, R.color.widget_ember_night)
         appWidgetIds.forEach { widgetId ->
             val views =
                 RemoteViews(context.packageName, R.layout.odak_leaderboard_widget).apply {
@@ -58,44 +177,40 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                         R.id.leaderboard_widget_root,
                         strings.getString(R.string.cd_leaderboard_widget),
                     )
-                    val size = appWidgetManager.sizeClass(WidgetSizeSpecs.leaderboard, widgetId)
+                    val dims = appWidgetManager.dimensions(WidgetSizeSpecs.leaderboard, widgetId)
+                    val size = dims.sizeClass
+                    val tier = leaderboardTier(dims.widthDp, dims.heightDp)
+                    val listVisible = leaderboardListVisible(tier)
                     val myRank = widgetData.text(
                         StudyWidgetKeys.LeaderboardMyRank,
                         strings.getString(R.string.widget_no_rank),
                     )
-                    val short = leaderboardShowsMyRank(size.height)
-                    val row1 = if (short) {
-                        myRank
-                    } else {
-                        widgetData.text(
-                            StudyWidgetKeys.LeaderboardRow1,
-                            strings.getString(R.string.widget_no_records),
-                        )
-                    }
-                    val row1HasRank = short || (
-                        widgetData.contains(StudyWidgetKeys.LeaderboardRow1) &&
-                            leaderboardRowHasContent(row1)
-                        )
+                    val coreRank = leaderboardCoreRank(myRank)
+                    val row1 = widgetData.text(
+                        StudyWidgetKeys.LeaderboardRow1,
+                        strings.getString(R.string.widget_no_records),
+                    )
+                    val row1HasRank = widgetData.contains(StudyWidgetKeys.LeaderboardRow1) &&
+                        leaderboardRowHasContent(row1)
                     val row2 = widgetData.text(StudyWidgetKeys.LeaderboardRow2, "-")
                     val row3 = widgetData.text(StudyWidgetKeys.LeaderboardRow3, "-")
                     val highlighted = leaderboardHighlightedPosition(myRank)
 
-                    setTextViewText(
-                        R.id.leaderboard_widget_title,
-                        widgetData.text(
-                            StudyWidgetKeys.LeaderboardTitle,
-                            strings.getString(R.string.widget_leaderboard_title),
-                        ),
+                    // Kart: kademeye gore yaricap + dolgu (§2.6).
+                    setInt(
+                        R.id.leaderboard_widget_card,
+                        "setBackgroundResource",
+                        listCardBackground(tier),
                     )
-                    setTextViewText(R.id.leaderboard_widget_row_1, row1)
-                    setTextViewText(
-                        R.id.leaderboard_widget_rank_1,
-                        if (short) strings.getString(R.string.widget_you) else "1",
+                    applyRootPadding(
+                        context,
+                        R.id.leaderboard_widget_card,
+                        listCardPaddingDp(tier),
                     )
-                    setViewVisibility(
-                        R.id.leaderboard_widget_rank_1,
-                        if (row1HasRank) View.VISIBLE else View.GONE,
-                    )
+                    // §1.5: bu widget'in TEK dokunma hedefi koktur - yani
+                    // widget'in tamami. K1/K2'de ikinci bir hedef yasaktir ve
+                    // K3/K4'te de ikincisine gerek yok: butun satirlar ayni
+                    // ekrani acar.
                     setOnClickPendingIntent(
                         R.id.leaderboard_widget_root,
                         WidgetDeepLink.pendingIntent(
@@ -104,49 +219,131 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                             widgetId,
                         ),
                     )
-                    setTextViewText(R.id.leaderboard_widget_row_2, row2)
-                    setTextViewText(R.id.leaderboard_widget_row_3, row3)
-                    setTextColor(
-                        R.id.leaderboard_widget_row_1,
-                        if (short || highlighted == 1) accent else ink,
-                    )
-                    setTextColor(
-                        R.id.leaderboard_widget_row_2,
-                        if (highlighted == 2) accent else ink,
-                    )
-                    setTextColor(
-                        R.id.leaderboard_widget_row_3,
-                        if (highlighted == 3) accent else ink,
-                    )
-                    // WP-699: üçüncü satır ancak gerçekten uzun kutuda gelir.
-                    // Eskiden 2. ve 3. satır birlikte açılıyordu; 3×2'de üç
-                    // satır + başlık 110dp'ye sığmıyordu.
+
+                    // --- K1/K2: cekirdek seridi -------------------------------
                     setViewVisibility(
-                        R.id.leaderboard_widget_row_container_2,
-                        if (
-                            leaderboardRow2Visible(size.height) &&
-                            leaderboardRowHasContent(row2)
-                        ) View.VISIBLE else View.GONE,
+                        R.id.leaderboard_widget_core,
+                        if (listVisible) View.GONE else View.VISIBLE,
+                    )
+                    // Cekirdek sayi ise sayi, degilse GLIF (§1.4). Ikisi ayni
+                    // anda cizilmez: K1 butcesi TEK ogedir.
+                    setViewVisibility(
+                        R.id.leaderboard_widget_core_rank,
+                        if (!listVisible && coreRank != null) View.VISIBLE else View.GONE,
                     )
                     setViewVisibility(
-                        R.id.leaderboard_widget_row_container_3,
-                        if (
-                            leaderboardRow3Visible(size.height) &&
-                            leaderboardRowHasContent(row3)
-                        ) View.VISIBLE else View.GONE,
+                        R.id.leaderboard_widget_core_icon,
+                        if (!listVisible && coreRank == null) View.VISIBLE else View.GONE,
+                    )
+                    setTextViewText(R.id.leaderboard_widget_core_rank, coreRank ?: "")
+                    setTextColor(R.id.leaderboard_widget_core_rank, flame)
+                    applySp(R.id.leaderboard_widget_core_rank, WIDGET_LIST_CORE_SP)
+                    // K2'nin K1'e gore kazandigi sey BOYUT degil BILGI: lider.
+                    setViewVisibility(
+                        R.id.leaderboard_widget_core_lead,
+                        if (tier == ListWidgetTier.K2 && leaderboardRowHasContent(row1)) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        },
+                    )
+                    setTextViewText(R.id.leaderboard_widget_core_lead, row1)
+                    setTextColor(R.id.leaderboard_widget_core_lead, inkDim)
+                    applySp(R.id.leaderboard_widget_core_lead, WIDGET_LIST_CORE_HINT_SP)
+
+                    // --- K3/K4: baslik + ayrac --------------------------------
+                    // Dusme sirasinda baslik ILK duser (§1.3): kullanici
+                    // widget'i kendi eliyle kurdu, hangisi oldugunu bilir.
+                    setViewVisibility(
+                        R.id.leaderboard_widget_header,
+                        if (listVisible) View.VISIBLE else View.GONE,
+                    )
+                    setTextViewText(
+                        R.id.leaderboard_widget_title,
+                        widgetData.text(
+                            StudyWidgetKeys.LeaderboardTitle,
+                            strings.getString(R.string.widget_leaderboard_title),
+                        ),
                     )
                     applySp(
                         R.id.leaderboard_widget_title,
                         WidgetTypography.leaderboardTitle.of(size.width),
                     )
+                    setViewVisibility(
+                        R.id.leaderboard_widget_divider,
+                        if (tier == ListWidgetTier.K4) View.VISIBLE else View.GONE,
+                    )
+
+                    // --- K3/K4: satirlar --------------------------------------
                     val rowSp = WidgetTypography.leaderboardRow.of(size.width)
-                    applySp(R.id.leaderboard_widget_row_1, rowSp)
-                    applySp(R.id.leaderboard_widget_row_2, rowSp)
-                    applySp(R.id.leaderboard_widget_row_3, rowSp)
-                    applyRootPadding(
-                        context,
-                        R.id.leaderboard_widget_card,
-                        widgetRootPaddingDp(8, size.height),
+                    val rowTexts = arrayOf(row1, row2, row3)
+                    for (index in 0..2) {
+                        val position = index + 1
+                        val isMine = highlighted == position
+                        setTextViewText(LEADERBOARD_ROWS[index], rowTexts[index])
+                        applySp(LEADERBOARD_ROWS[index], rowSp)
+                        setTextColor(LEADERBOARD_ROWS[index], if (isMine) flame else ink)
+                        // 🔴 Rozet metni: 1. sira `night` on `glow` (12.22:1),
+                        // KENDI satirin `flame` on `night` (8.19:1), digerleri
+                        // `ink_dim` on `night` (6.59:1).
+                        //
+                        // Digerleri eskiden `accent` (flame) idi. Ikisi de WCAG
+                        // AA'yi (4.5:1) gecer; karar KONTRAST degil HIYERARSI
+                        // gerekcesiyle verildi: bu ailede `flame` "SEN" demek.
+                        // 2. ve 3. siranin rakamlari da flame olsaydi kisisel
+                        // vurgu bir sinyal olmaktan cikardi.
+                        setTextViewText(
+                            LEADERBOARD_RANKS[index],
+                            if (isMine) {
+                                strings.getString(R.string.widget_you)
+                            } else {
+                                position.toString()
+                            },
+                        )
+                        setTextColor(
+                            LEADERBOARD_RANKS[index],
+                            when {
+                                position == 1 -> night
+                                isMine -> flame
+                                else -> inkDim
+                            },
+                        )
+                        setInt(
+                            LEADERBOARD_RANKS[index],
+                            "setBackgroundResource",
+                            when {
+                                position == 1 -> R.drawable.widget_rank_first_bg
+                                isMine -> R.drawable.widget_rank_self_bg
+                                else -> R.drawable.widget_rank_other_bg
+                            },
+                        )
+                    }
+                    setViewVisibility(
+                        R.id.leaderboard_widget_rank_1,
+                        if (row1HasRank) View.VISIBLE else View.GONE,
+                    )
+                    setViewVisibility(
+                        LEADERBOARD_ROW_CONTAINERS[0],
+                        if (listVisible) View.VISIBLE else View.GONE,
+                    )
+                    // WP-699: üçüncü satır ancak gerçekten uzun kutuda gelir.
+                    // Eskiden 2. ve 3. satır birlikte açılıyordu; 3×2'de üç
+                    // satır + başlık 110dp'ye sığmıyordu.
+                    setViewVisibility(
+                        LEADERBOARD_ROW_CONTAINERS[1],
+                        if (
+                            listVisible &&
+                            leaderboardRow2Visible(size.height) &&
+                            leaderboardRowHasContent(row2)
+                        ) View.VISIBLE else View.GONE,
+                    )
+                    setViewVisibility(
+                        LEADERBOARD_ROW_CONTAINERS[2],
+                        if (
+                            listVisible &&
+                            leaderboardRow3Visible(size.height) &&
+                            leaderboardRowHasContent(row3)
+                        ) View.VISIBLE else View.GONE,
                     )
                 }
             appWidgetManager.updateAppWidget(widgetId, views)

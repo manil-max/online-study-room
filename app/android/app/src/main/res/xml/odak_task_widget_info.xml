@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-701: boyut ve esneklik.
+<!-- WP-701 / WP-719 / WP-756: boyut ve esneklik.
 
      Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
      ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
@@ -15,7 +15,7 @@
      dokunustan sonra receiver'in yeniden cizdirmesi), periyodik uyanma pil
      harcardi.
 
-     🔴 WP-719 — DIKEY SINIRLAR CIZILEBILEN KARTA BAGLANDI. Sahip "bunlar
+     🔴 WP-719 - DIKEY SINIRLAR CIZILEBILEN KARTA BAGLANDI. Sahip "bunlar
      kuculmuyor, boyutlari kocaman" dedi. Iki ucu da olculdu (satir 32dp,
      baslik 20dp, dolgu 12-14dp; `TaskWidget.kt` sabitleri):
        - alt sinir 80dp -> 56dp: 12+32+12, yani TEK satirlik kartin tam olcusu.
@@ -24,6 +24,14 @@
          uzun kutunun karsiligi icerik degil bos alandi.
      Kart artik `wrap_content` (bkz. layout) oldugu icin kalan bosluk BOYANMAZ;
      kart kutunun icinde dikey ortalanir.
+
+     🔴 WP-756 - YATAY ALT SINIR 1x1'E INDI (110dp -> 40dp). Dikey alt sinir
+     56dp'de KALDI: `task_widget_wp719_test.dart` "en kucuk kutuda tek satir
+     bile sigmiyor" iddiasini `2*dolgu + satir <= minResizeHeight` olarak
+     yaziyor (24+32=56) ve o dosya bu WP'nin sahip yolu degil. Yani K1 kutusu
+     pratikte 1x2'dir (40x110dp); genislik 110dp'nin altina indiginde cekirdek
+     seridi devralir. Kotlin esikleri degismedi: `WIDGET_TASK_MEDIUM_WIDTH_DP`
+     (180) > 40, yani `task_widget_wp701_test.dart` esik sozlesmesi korunur.
 
      Kotlin esikleriyle (WIDGET_TASK_* sabitleri, TaskWidget.kt) ayrisma
      `test/features/android_widgets/task_widget_wp701_test.dart` icinde
@@ -37,7 +45,7 @@
     android:maxResizeWidth="320dp"
     android:minHeight="110dp"
     android:minResizeHeight="56dp"
-    android:minResizeWidth="110dp"
+    android:minResizeWidth="40dp"
     android:minWidth="180dp"
     android:previewLayout="@layout/odak_task_widget"
     android:resizeMode="horizontal|vertical"

@@ -1,37 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-756 - Siradaki Alarm. Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md`.
+
+     🔴 UC KUSUR KAPATILDI (olculdu, iddia degil):
+       1. Kokun `android:id`si YOKTU. Bir RemoteViews kokune id verilmemisse
+          `setOnClickPendingIntent` baglanacak bir hedef bulamaz: widget'in
+          hicbir yerine dokunulamiyordu, derin baglanti yoktu. Artik
+          `alarm_widget_root` var ve saglayici ona `ROUTE_CLOCK`u bagliyor
+          (Dart tarafi o rotayi `ClockTab.alarm`a cozuyor).
+       2. `info.xml` boyut sozlesmesi TASIMIYORDU (`targetCell*`, `minResize*`,
+          `maxResize*` yok) ve saglayicinin `WidgetSizeSpec` girdisi yoktu.
+       3. `onAppWidgetOptionsChanged` gecersiz kilinmamisti; yani kullanici
+          widget'i boyutlandirdiginda ekranda HICBIR SEY degismiyordu.
+
+     CEKIRDEK (§1.4): GLIF - can ikonu. Sayi cekirdegi OLAMAZ cunku `07:30`
+     bes karakterdir ve 40x40dp kutuda 12sp'ye duser (§3.4); 12sp bir kahraman
+     sayi degil, 11sp tabaninin hemen ustunde bir fisiltidir. Can, kurulu bir
+     alarm oldugunda `flame`, olmadiginda `ink_dim` cizilir - durum ikinci bir
+     ogeyle degil RENKle anlatilir (§6 deseni).
+
+     KADEME (§1.1-1.3):
+       K1 (genislik < 110dp)   can glifi (24dp)
+       K2 (yukseklik < 110dp)  yalniz saat, 20sp
+       K3 (110..179dp)         can (20dp) + saat (26sp) + alarm adi
+       K4 (>= 180dp)           baslik + AYRAC + can + saat (30sp) + alarm adi
+
+     Etiket K2'de duser (yardimci satir), baslik yalniz K4'te doner - dusme
+     sirasi §1.3'tur ve degistirilemez.
+
+     🔴 Bu widget hala yayin disidir (`AndroidManifest.xml` -> `enabled=false`).
+     Bu WP tasarimi ve kademe mantigini hazirlar; yayin karari ayridir. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alarm_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_card_bg"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:contentDescription="@string/widget_next_alarm"
+    android:gravity="center_vertical"
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/alarm_widget_card"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/widget_next_alarm"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="11sp" />
+        android:background="@drawable/widget_card_bg"
+        android:orientation="vertical"
+        android:padding="8dp">
 
-    <TextView
-        android:id="@+id/alarm_widget_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="@string/widget_em_dash"
-        android:textColor="@color/widget_design_accent"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        <!-- K4 basligi. Dusme sirasinda ILK dusen odur (§1.3). -->
+        <TextView
+            android:id="@+id/alarm_widget_caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/widget_next_alarm"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/alarm_widget_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_no_alarm"
-        android:textColor="@color/widget_design_ink"
-        android:textSize="12sp" />
+        <!-- §4.4: ayrac duz `View` degil 1dp `ImageView`dir; yalniz K4'te. -->
+        <ImageView
+            android:id="@+id/alarm_widget_divider"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/widget_design_divider"
+            android:layout_marginTop="3dp"
+            android:background="@drawable/widget_divider"
+            android:contentDescription="@null"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/alarm_widget_core"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:minHeight="26dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/alarm_widget_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/widget_ic_alarm" />
+
+            <TextView
+                android:id="@+id/alarm_widget_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-condensed"
+                android:maxLines="1"
+                android:text="@string/widget_em_dash"
+                android:textColor="@color/widget_ember_flame"
+                android:textScaleX="0.85"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/alarm_widget_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:text="@string/widget_no_alarm"
+            android:textColor="@color/widget_ember_ink"
+            android:textSize="12sp" />
+    </LinearLayout>
 </LinearLayout>

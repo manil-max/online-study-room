@@ -1,9 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-756: siradaki alarm - BOYUT SOZLESMESI ILK KEZ YAZILDI.
+
+     🔴 Olculen kusur: dokuz widget icinde `targetCell*`, `minResize*` ve
+     `maxResize*` beyani HIC olmayan tek dosya buydu. Sonuc uc katliydi:
+       - Android 12+ varsayilan boyutu belirsizdi (`targetCell*` yok),
+       - ust sinir olmadigi icin widget ekran boyu uzatilabiliyordu,
+       - saglayicinin `WidgetSizeSpec` girdisi de yoktu, yani boyut bilgisi
+         hicbir yerde bir gorunume donusmuyordu.
+
+     Hucre -> dp: `70 * n - 30` (1=40, 2=110, 3=180, 4=250).
+
+     Varsayilan 2x1 hucre = 110x40dp. Bilerek kucuk: alarm tek satirlik bir
+     olgudur ("07:30"). `minWidth` ve `targetCellWidth` AYNI boyutu soylemek
+     zorundadir (110dp = 70*2-30), yoksa widget Android surumune gore farkli
+     buyuklukte acilir.
+
+     Alt sinir 1x1 (40x40dp): orada cekirdek can GLIFidir - `07:30` bes
+     karakterdir ve 40dp kutuda 12sp'ye duser (§3.4).
+     Ust sinir 250x180dp: 180dp'de baslik + ayrac acilir, daha uzunu bos alan
+     olurdu.
+
+     Kotlin esikleri `ALARM_WIDGET_SIZE_SPEC` (AlarmWidget.kt) ile ayni
+     sayilari soyler: medium 180 > minResize 40, wide 250 <= maxResize 250,
+     mediumHeight 110 > minResize 40, tallHeight 180 <= maxResize 180.
+     Ayrisma `ListFamilyRedesignWp756Test.kt` icinde kirmizi duser.
+
+     🔴 `resizeMode` TEK BASINA yetmez: `AlarmWidgetProvider` artik
+     `onAppWidgetOptionsChanged`i gecersiz kiliyor (WP-699'da alti saglayicida
+     bulunan, alarmda kalan kusur).
+
+     🔴 Widget hala YAYIN DISI (`AndroidManifest.xml` -> `enabled=false`).
+     Bu dosya tasarimi ve boyut mantigini hazirlar; yayin karari ayridir.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_alarm_widget"
+    android:maxResizeHeight="180dp"
+    android:maxResizeWidth="250dp"
+    android:minHeight="40dp"
+    android:minResizeHeight="40dp"
+    android:minResizeWidth="40dp"
     android:minWidth="110dp"
-    android:minHeight="80dp"
     android:previewLayout="@layout/odak_alarm_widget"
     android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="1"
+    android:targetCellWidth="2"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

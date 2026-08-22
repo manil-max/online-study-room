@@ -278,9 +278,10 @@ internal fun taskWidgetRowCapacity(
     boxHeightDp: Int,
     titleVisible: Boolean,
     paddingDp: Int,
+    dividerDp: Int = 0,
 ): Int {
     val titleDp = if (titleVisible) TASK_TITLE_HEIGHT_DP else 0
-    val usable = boxHeightDp - 2 * paddingDp - titleDp
+    val usable = boxHeightDp - 2 * paddingDp - titleDp - dividerDp
     if (usable <= 0) return 0
     return (usable / TASK_ROW_HEIGHT_DP).coerceIn(0, TASK_WIDGET_MAX_ROWS)
 }
@@ -290,8 +291,9 @@ internal fun taskWidgetVisibleItems(
     boxHeightDp: Int,
     titleVisible: Boolean,
     paddingDp: Int,
+    dividerDp: Int = 0,
 ): List<TaskWidgetItem> =
-    model.items.take(taskWidgetRowCapacity(boxHeightDp, titleVisible, paddingDp))
+    model.items.take(taskWidgetRowCapacity(boxHeightDp, titleVisible, paddingDp, dividerDp))
 
 internal fun taskWidgetSizeClass(
     appWidgetManager: AppWidgetManager,
@@ -320,6 +322,52 @@ internal fun taskWidgetBoxHeightDp(
     val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
     return if (height <= 0) WIDGET_TASK_DEFAULT_HEIGHT_DP else height
 }
+
+/** Launcher'in bildirdigi kutu GENISLIGI (dp). Kademe K1'i buradan cikar. */
+internal fun taskWidgetBoxWidthDp(
+    appWidgetManager: AppWidgetManager,
+    widgetId: Int,
+): Int {
+    val options = runCatching { appWidgetManager.getAppWidgetOptions(widgetId) }.getOrNull()
+    val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+    return if (width <= 0) WIDGET_TASK_DEFAULT_WIDTH_DP else width
+}
+
+// ---------------------------------------------------------------------------
+// WP-756 - kademe (§1.1-1.4). Sozluk `LeaderboardWidget.kt` icindedir.
+// ---------------------------------------------------------------------------
+
+/** Ayrac blogu: 1dp cizgi + 2dp ust bosluk (`odak_task_widget.xml`). */
+internal const val TASK_DIVIDER_BLOCK_DP = 3
+
+/**
+ * CEKIRDEK: KALAN (tamamlanmamis) gorev sayisi. En fazla uc karakter.
+ *
+ * `null` donerse cekirdek GLIFe duser (onayli kutu ikonu). Iki AYRI durum
+ * bilerek ayrildi:
+ *   - hic gorev yok        -> `null` (glif). `0` yazmak yaniltirdi.
+ *   - hepsi bitti (kalan 0) -> `"0"`. Bu bir BASARIdir ve gosterilir.
+ */
+internal fun taskCoreCount(model: TaskWidgetModel): String? {
+    if (model.items.isEmpty()) return null
+    val remaining = model.items.count { !it.done }
+    return if (remaining <= 99) remaining.toString() else "99+"
+}
+
+/**
+ * Kademe. K1 GENISLIKten (bir hucre), K2/K3/K4 yukseklikten cikar. Esikler
+ * `WIDGET_TASK_*` sabitleridir; yani `res/xml` sinirlariyla ayni sayilar.
+ */
+internal fun taskTier(widthDp: Int, heightDp: Int): ListWidgetTier = when {
+    widthDp in 1 until WIDGET_LIST_ONE_CELL_MAX_WIDTH_DP -> ListWidgetTier.K1
+    heightDp < WIDGET_TASK_MEDIUM_HEIGHT_DP -> ListWidgetTier.K2
+    heightDp >= WIDGET_TASK_TALL_HEIGHT_DP -> ListWidgetTier.K4
+    else -> ListWidgetTier.K3
+}
+
+/** K3/K4'te satirlar cizilir; K1/K2'de cekirdek seridi. */
+internal fun taskListVisible(tier: ListWidgetTier): Boolean =
+    tier == ListWidgetTier.K3 || tier == ListWidgetTier.K4
 
 private val ROW_IDS = intArrayOf(
     R.id.task_widget_row_0,
@@ -382,20 +430,41 @@ class TaskWidgetProvider : HomeWidgetProvider() {
         val emptyLabel = model.emptyLabel.ifEmpty {
             strings.getString(R.string.widget_no_records)
         }
-        val doneColor = ContextCompat.getColor(context, R.color.widget_design_ink_muted)
-        val todoColor = ContextCompat.getColor(context, R.color.widget_design_ink)
+        val doneColor = ContextCompat.getColor(context, R.color.widget_ember_ink_dim)
+        val todoColor = ContextCompat.getColor(context, R.color.widget_ember_ink)
+        val flameColor = ContextCompat.getColor(context, R.color.widget_ember_flame)
+        val glowColor = ContextCompat.getColor(context, R.color.widget_ember_glow)
+        // WP-756 cekirdegi: kalan gorev sayisi + siradaki gorev.
+        val coreCount = taskCoreCount(model)
+        val nextTask = model.items.firstOrNull { !it.done } ?: model.items.firstOrNull()
 
         appWidgetIds.forEach { widgetId ->
             val size = taskWidgetSizeClass(appWidgetManager, widgetId)
-            val titleVisible = taskWidgetTitleVisible(size.height)
-            val paddingDp = widgetRootPaddingDp(12, size.height)
-            val visible = taskWidgetVisibleItems(
-                model,
-                taskWidgetBoxHeightDp(appWidgetManager, widgetId),
-                titleVisible,
-                paddingDp,
-            )
+            val boxHeightDp = taskWidgetBoxHeightDp(appWidgetManager, widgetId)
+            val boxWidthDp = taskWidgetBoxWidthDp(appWidgetManager, widgetId)
+            val tier = taskTier(boxWidthDp, boxHeightDp)
+            val listVisible = taskListVisible(tier)
+            val titleVisible = listVisible && taskWidgetTitleVisible(size.height)
+            // Ayrac YALNIZ K4'te ve kapasite hesabina GIRER; girmeseydi en uzun
+            // kutuda kart 1-2dp tasar ve son satir kirpilirdi.
+            val dividerDp = if (tier == ListWidgetTier.K4) TASK_DIVIDER_BLOCK_DP else 0
+            val paddingDp = if (listVisible) {
+                widgetRootPaddingDp(12, size.height)
+            } else {
+                listCardPaddingDp(tier)
+            }
+            val visible = if (listVisible) {
+                taskWidgetVisibleItems(model, boxHeightDp, titleVisible, paddingDp, dividerDp)
+            } else {
+                emptyList()
+            }
             val views = RemoteViews(context.packageName, R.layout.odak_task_widget).apply {
+                // §2.6: kademeye gore kart yaricapi.
+                setInt(
+                    R.id.task_widget_root,
+                    "setBackgroundResource",
+                    listCardBackground(tier),
+                )
                 setTextViewText(R.id.task_widget_title, heading)
                 setTextViewTextSize(
                     R.id.task_widget_title,
@@ -403,9 +472,50 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                     TASK_TITLE_SP.of(size.width),
                 )
                 setViewVisibility(
+                    R.id.task_widget_header,
+                    if (titleVisible) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
                     R.id.task_widget_title,
                     if (titleVisible) View.VISIBLE else View.GONE,
                 )
+                setViewVisibility(
+                    R.id.task_widget_divider,
+                    if (titleVisible && dividerDp > 0) View.VISIBLE else View.GONE,
+                )
+
+                // --- K1/K2: cekirdek seridi ---------------------------------
+                setViewVisibility(
+                    R.id.task_widget_core,
+                    if (listVisible) View.GONE else View.VISIBLE,
+                )
+                setViewVisibility(
+                    R.id.task_widget_core_count,
+                    if (!listVisible && coreCount != null) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.task_widget_core_icon,
+                    if (!listVisible && coreCount == null) View.VISIBLE else View.GONE,
+                )
+                setTextViewText(R.id.task_widget_core_count, coreCount ?: "")
+                // Durum ikinci bir ogeyle degil RENKle: kalan is varsa `flame`,
+                // hepsi bittiyse `glow` (§6 deseni).
+                setTextColor(
+                    R.id.task_widget_core_count,
+                    if (coreCount == "0") glowColor else flameColor,
+                )
+                applySp(R.id.task_widget_core_count, WIDGET_LIST_CORE_SP)
+                setViewVisibility(
+                    R.id.task_widget_core_next,
+                    if (tier == ListWidgetTier.K2 && nextTask != null) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    },
+                )
+                setTextViewText(R.id.task_widget_core_next, nextTask?.title ?: emptyLabel)
+                setTextColor(R.id.task_widget_core_next, doneColor)
+                applySp(R.id.task_widget_core_next, WIDGET_LIST_CORE_HINT_SP)
 
                 setTextViewText(R.id.task_widget_empty, emptyLabel)
                 setTextViewTextSize(
@@ -415,7 +525,7 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                 )
                 setViewVisibility(
                     R.id.task_widget_empty,
-                    if (visible.isEmpty()) View.VISIBLE else View.GONE,
+                    if (listVisible && visible.isEmpty()) View.VISIBLE else View.GONE,
                 )
 
                 for (index in 0 until TASK_WIDGET_MAX_ROWS) {
@@ -475,6 +585,10 @@ class TaskWidgetProvider : HomeWidgetProvider() {
                 // satirlarin DISINDA kalan her yere baglanir: baslik, bos
                 // durum metni ve kok dolgu alani. RemoteViews'ta cocuk
                 // tiklamasi koke gore oncelikli oldugu icin ikisi carpismaz.
+                //
+                // 🔴 WP-756: K1/K2'de satir CIZILMEZ (§1.5 - o kademelerde
+                // ikinci bir tiklanabilir alan yasaktir), yani orada tek hedef
+                // kok kalir ve isaretleme K3'ten itibaren doner.
                 val openTasks =
                     WidgetDeepLink.pendingIntent(
                         context,

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-756 (§2.3): "SEN" rozeti - kullanicinin listedeki KENDI satiri.
+
+     `widget_rank_first_bg` (glow dolgu) birinciligi anlatir, `widget_rank_other_bg`
+     (night + ash halka) sirayi anlatir. Ucuncu bir anlam gerekiyordu: "bu satir
+     SENSIN". Ayni sekli halka RENGIYLE ayirmak, yeni bir geometri uretmeden
+     ucuncu bir durumu tasimanin en ucuz yoludur.
+
+     Halka `flame`; karta 8.19:1 - WCAG 1.4.11 grafik esiginin (3:1) cok
+     ustunde. Dolgu `night`, yani rozetin ICINDEKI metin kartla ayni zemine
+     yazilir ve `flame` metin orada 8.19:1 okunur.
+
+     🔴 `ash` DOLGU olamaz (3.24:1): grafik icin yeterli, METIN ZEMINI olarak
+     degil. Bu, `widget_rank_other_bg`in WP-752'de duzeltilen kusurunun
+     aynisidir; burada tekrarlanmadi. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_ember_night" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/widget_ember_flame" />
+    <corners android:radius="12dp" />
+</shape>

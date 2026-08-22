@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-701: gorev listesi widget'i. Duzen deseni odak_countdown_widget.xml'den
-     alindi: ayni renk kaynaklari (values/ + values-night/ widget_colors.xml),
-     ayni tek satirlik ellipsize kurallari.
+<!-- WP-701 / WP-719 / WP-756: gorev listesi widget'i.
+
+     WP-756 CEKIRDEK (§1.4): KALAN GOREV SAYISI - `4`. Sayi cekirdegidir ve en
+     fazla 3 karakterdir (`99+` ile kirpilir). Ilk gorevin BASLIGI cekirdek
+     olamazdi: 40x40dp'ye bir baslik girmez, girse de okunmaz. "Kac is kaldi"
+     bakista cevaplanabilen tek sorudur. Hic gorev YOKKEN `0` yazilmaz - `0`
+     hem "hepsi bitti"yi hem "hic yok"u anlatirdi; o durumda cekirdek GLIFe
+     (onayli kutu ikonu) duser.
+
+     KADEME (§1.1-1.3):
+       K1 (genislik < 110dp)   cekirdek: kalan sayisi (ya da onay glifi)
+       K2 (yukseklik < 110dp)  cekirdek + SIRADAKI gorev - tek satir, YATAY
+       K3 (110..179dp)         baslik + kutuya sigan satirlar
+       K4 (>= 180dp)           baslik + AYRAC + kutuya sigan satirlar
+
+     🔴 K2 bir KAZANCtir, kayip degil: 40dp yuksekliginde kapasite bugun de
+     SIFIR satirdir ((40 - 2*12) / 32 = 0), yani 3x1 gorev widget'i bugun
+     yalniz "Bugun / Henuz gorev yok" yaziyor. Cekirdek seridi o kutuya kalan
+     sayiyi ve siradaki gorevi koyar.
 
      Satirlar STATIKTIR (bes tane): RemoteViews `ListView` disinda dinamik
      satir uretemez ve `RemoteViewsService` bu widget icin fazladan bir
@@ -9,18 +25,18 @@
      (`taskWidgetRowCapacity`).
 
      Kutucuk bir CheckBox DEGIL, metin isaretidir: RemoteViews `CheckBox`i
-     yalniz API 31+ kabul eder, bu uygulamanin minSdk'si daha eskidir. Isaret
-     bir SEMBOLdur (U+2610 / U+2611), cevrilecek bir metin degil; satirin
-     yazisi ve baslik Dart tarafindan (l10n) gelir.
+     yalniz API 31+ kabul eder, bu uygulamanin minSdk'si daha eskidir (24).
+     Isaret bir SEMBOLdur (U+2610 / U+2611), cevrilecek bir metin degil;
+     satirin yazisi ve baslik Dart tarafindan (l10n) gelir.
 
      Ilk cizimde ayna henuz yazilmamis olabilir: o durumda satirlar GONE olur
      ve `task_widget_empty` gorunur, yani launcher onizlemesi bos bir
      dikdortgen degildir.
 
-     🔴 WP-719 — IKI KATMAN. Once tek katman vardi ve boyali kok
-     `match_parent` idi: kutuya ne kadar yer ayrilirsa ayrilsin kart o kadarini
-     boyuyordu, yani "Gorevler / Henuz gorev yok" yazan widget kocaman bos bir
-     dikdortgen olarak duruyordu. Simdi:
+     🔴 WP-719 - IKI KATMAN. Once tek katman vardi ve boyali kok `match_parent`
+     idi: kutuya ne kadar yer ayrilirsa ayrilsin kart o kadarini boyuyordu,
+     yani "Gorevler / Henuz gorev yok" yazan widget kocaman bos bir dikdortgen
+     olarak duruyordu. Simdi:
 
        task_widget_frame  -> seffaf, kutunun tamami, icerigi DIKEY ORTALAR
        task_widget_root   -> boyali kart, `wrap_content`
@@ -29,7 +45,14 @@
      ~208dp. Olcum `test/features/android_widgets/task_widget_wp719_test.dart`
      icinde tablo halinde kirmizi duser. Kart artik kutuyu doldurmadigi icin
      kalan seffaf alanin da bir dokunma hedefi olmali; saglayici
-     `task_widget_frame`e de gorev ekranini baglar (WP-706 korunur). -->
+     `task_widget_frame`e de gorev ekranini baglar (WP-706 korunur).
+
+     🔴 SATIR YUKSEKLIGI 32dp'dir ve Material'in 48dp asgarisinin ALTINDADIR.
+     Bu WP'de yukseltilemedi: `TASK_ROW_HEIGHT_DP` kapasite modelinin birimidir
+     ve uc ayri iddia onu 32'ye civiliyor (ornek: `TaskWidgetSizeWp719Test`
+     icindeki `alt_sinirda_en_az_bir_satir_cizilir` 56dp kutuda 1 satir bekler;
+     48dp satirda 0 cikardi). Yukseltmek kapasite modelini AYNI TURDA
+     degistirmeyi gerektirir; ayri bir WP'nin isi. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/task_widget_frame"
     android:layout_width="match_parent"
@@ -45,16 +68,94 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-        android:id="@+id/task_widget_title"
+    <!-- K1/K2 cekirdek seridi. K1'de yalniz kalan sayisi (ya da onay glifi);
+         K2'de yaninda siradaki gorevin basligi acilir. Iki metin, YATAY. -->
+    <LinearLayout
+        android:id="@+id/task_widget_core"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/widget_today"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical|center_horizontal"
+        android:minHeight="26dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/task_widget_core_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_task"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/task_widget_core_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
+            android:maxLines="1"
+            android:text="@string/widget_dash"
+            android:textColor="@color/widget_ember_flame"
+            android:textScaleX="0.85"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/task_widget_core_next"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/widget_no_records"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- K3/K4 baslik: 14dp onayli-kutu ikonu + baslik. Blok yuksekligini METIN
+         belirler (`TASK_TITLE_HEIGHT_DP` = 20dp); ikon 14dp oldugu icin blogu
+         buyutmez ve kapasite hesabi degismez. -->
+    <LinearLayout
+        android:id="@+id/task_widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/task_widget_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_task" />
+
+        <TextView
+            android:id="@+id/task_widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/widget_today"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- §4.4: ayrac yalniz K4'te, yalniz baslik ile liste arasinda. 1dp cizgi
+         + 2dp ust bosluk = 3dp; kapasite hesabina `dividerDp` olarak GIRER,
+         yoksa en uzun kutuda kart 1-2dp tasardi. -->
+    <ImageView
+        android:id="@+id/task_widget_divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_design_divider"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/widget_divider"
+        android:contentDescription="@null"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/task_widget_empty"
@@ -64,7 +165,7 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:text="@string/widget_no_records"
-        android:textColor="@color/widget_design_ink_muted"
+        android:textColor="@color/widget_ember_ink_dim"
         android:textSize="12sp" />
 
     <LinearLayout
@@ -82,7 +183,7 @@
             android:maxLines="1"
             android:paddingEnd="6dp"
             android:text="☐"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
 
         <TextView
@@ -91,7 +192,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
     </LinearLayout>
 
@@ -110,7 +211,7 @@
             android:maxLines="1"
             android:paddingEnd="6dp"
             android:text="☐"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
 
         <TextView
@@ -119,7 +220,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
     </LinearLayout>
 
@@ -138,7 +239,7 @@
             android:maxLines="1"
             android:paddingEnd="6dp"
             android:text="☐"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
 
         <TextView
@@ -147,7 +248,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
     </LinearLayout>
 
@@ -166,7 +267,7 @@
             android:maxLines="1"
             android:paddingEnd="6dp"
             android:text="☐"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
 
         <TextView
@@ -175,7 +276,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
     </LinearLayout>
 
@@ -194,7 +295,7 @@
             android:maxLines="1"
             android:paddingEnd="6dp"
             android:text="☐"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
 
         <TextView
@@ -203,7 +304,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/widget_design_ink"
+            android:textColor="@color/widget_ember_ink"
             android:textSize="13sp" />
     </LinearLayout>
 </LinearLayout>

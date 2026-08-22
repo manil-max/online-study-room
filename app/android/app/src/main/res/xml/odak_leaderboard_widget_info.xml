@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-699: boyut ve esneklik.
+<!-- WP-699 / WP-756: boyut ve esneklik.
 
      Hucre -> dp donusumu Android'in yayimladigi formuldur: `70 * n - 30`.
      ILK hucre 40dp, her EK hucre 70dp ekler; yani 1=40dp, 2=110dp, 3=180dp,
@@ -12,23 +12,32 @@
      acilir. `minResize*` kucultme, `maxResize*` (API 31) BUYUTME sinirdir;
      ust sinir yazilmazsa kullanici widget'i ekran boyu uzatabilir.
 
-     Boyut kararlari icerikten turedi; aritmetik
-     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt`
-     icinde yeniden kurulur ve punto/esik degisirse kirmizi duser.
--->
-<!-- WP-699: eski `minWidth=250dp` varsayilani DORT hucre genisliginde
-     aciyordu - sahibin "cok buyuk olmasin" itirazinin en belirgin ornegi.
-     Uc hucreye (180dp) indi; isim satirlari zaten ellipsize'dir, dar kutuda
-     kirpilmaz kisalir. Yukseklik: kisa halde yalniz KULLANICININ sirasi,
+     Varsayilan 3x2 hucre (180x110dp): kisa halde yalniz KULLANICININ sirasi,
      110dp'de iki satir, 150dp'de uc satir.
+
+     🔴 WP-756 - ALT SINIR 1x1'E INDI (180x80 -> 40x40). Sahip "1x1/1x2/2x2
+     gibi kucuk boyutlara siksinlar" dedi; eski alt sinir bunu BEYAN
+     duzeyinde imkansiz kiliyordu (launcher 180dp'den dar bir kutuya izin
+     vermiyordu, yani kademe sisteminin K1/K2'si ekranda hic olusamazdi).
+     Sinir dusuruldu ve karsiligi cizildi:
+       K1 (40dp genislik)  -> `#3` cekirdegi (ya da kupa glifi)
+       K2 (40dp yukseklik) -> `#3` + lider satiri, tek satir yatay
+     Kotlin esikleri (`WIDGET_LEADERBOARD_*`, WidgetCommon.kt) DEGISMEDI;
+     `mediumWidth=220 > 40` ve `mediumHeight=110 > 40` oldugu icin esik/sinir
+     sozlesmesi (widget_sizing_wp699_test.dart) korunur.
+
+     Boyut kararlari icerikten turedi; aritmetik
+     `app/android/app/src/test/kotlin/.../WidgetSizeClassWp699Test.kt` ve
+     `.../ListFamilyRedesignWp756Test.kt` icinde yeniden kurulur ve
+     punto/esik degisirse kirmizi duser.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_leaderboard_widget"
     android:maxResizeHeight="150dp"
     android:maxResizeWidth="320dp"
     android:minHeight="110dp"
-    android:minResizeHeight="80dp"
-    android:minResizeWidth="180dp"
+    android:minResizeHeight="40dp"
+    android:minResizeWidth="40dp"
     android:minWidth="180dp"
     android:previewLayout="@layout/odak_leaderboard_widget"
     android:resizeMode="horizontal|vertical"
