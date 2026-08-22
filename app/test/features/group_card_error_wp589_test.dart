@@ -346,7 +346,6 @@ void main() {
         stats: stats,
         members: members,
         currentUserId: 'u1',
-        groupName: 'Odak Grubu',
         groupGoalMinutes: 120,
       ),
     );

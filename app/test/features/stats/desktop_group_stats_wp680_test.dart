@@ -34,8 +34,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/desktop/desktop_layout.dart';
+import 'package:online_study_room/core/stats/stats_period.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/data/providers/stats_period_provider.dart';
 import 'package:online_study_room/features/desktop/desktop_page_scaffold.dart';
 import 'package:online_study_room/features/stats/charts/gauge_chart.dart';
 import 'package:online_study_room/features/stats/widgets/class_stats_view.dart';
@@ -77,16 +79,19 @@ void main() {
   /// `stats_screen.dart`'in masaustu dali tam olarak boyle sarar. Bu onemli:
   /// bandi taklit etmeyen bir test, bandin ICINDEKI sutun kararini olcemez
   /// (depo dersi: "kabuk yapisini taklit etmeyen test hatayi kacirir").
+  /// WP-746: kart kumesi artik DONEME bagli, o yuzden harness donemi kurar.
+  /// Saat de enjekte edilir; aksi halde gun siniri kapinin sonucunu degistirir.
   Future<void> pump(
     WidgetTester tester, {
     required Size window,
     required bool desktop,
+    StatsPeriod period = StatsPeriod.week,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = window;
     addTearDown(tester.view.reset);
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final now = DateTime(2026, 8, 20, 14);
+    final today = DateTime(2026, 8, 20);
     final members = [
       member('u1', 'Ada'),
       member('u2', 'Bora'),
@@ -101,15 +106,21 @@ void main() {
         seconds: 2400,
       ),
     ];
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    // 🔴 Riverpod 3: dinleyicisiz provider her `read`de yeniden dogar.
+    container.listen(statsPeriodProvider, (_, _) {});
+    container.read(statsPeriodProvider.notifier).setPeriod(period);
     final view = ClassStatsView(
       stats: stats,
       members: members,
       currentUserId: 'u1',
-      groupName: 'Test Grubu',
       groupGoalMinutes: 120,
+      clock: () => now,
     );
     await tester.pumpWidget(
-      ProviderScope(
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp(
           locale: const Locale('tr'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -134,13 +145,6 @@ void main() {
     for (final element in finder.evaluate())
       tester.getRect(find.byWidget(element.widget)),
   ];
-
-  /// SPEC KURAL 2.2 olcumu: etiketin SOL kenari ile degerin SAG kenari arasi.
-  double labelToValue(WidgetTester tester, Finder label, Finder value) {
-    final l = tester.getRect(label);
-    final v = tester.getRect(value);
-    return v.right - l.left;
-  }
 
   // ===========================================================================
   // 1) 1920 px — tek sutun 1408 px'lik seritler biter
@@ -267,32 +271,26 @@ void main() {
   testWidgets(
     'WP-680 (4) 1920: etiket-deger mesafeleri SERT tavan 600 px altinda',
     (tester) async => onPlatform(TargetPlatform.windows, () async {
-      await pump(tester, window: const Size(1920, 1400), desktop: true);
-
-      // (a) Grup basligi: grup adi (etiket) → "Degistir" dugmesi (deger).
-      final header = find.byKey(const ValueKey(kGroupStatsHeaderKey));
-      expect(header, findsOneWidget, reason: 'Baslik bandi yok.');
-      expect(
-        tester.getSize(header).width,
-        lessThanOrEqualTo(kLabelValueCapPx),
-        reason:
-            'Baslik bandi ${tester.getSize(header).width.toStringAsFixed(0)} '
-            'px. Tavansiz hâlde "Degistir" dugmesi grup adinin ~1300 px '
-            'otesindeydi.',
-      );
-      final headerSpan = labelToValue(
+      // WP-746: "Tum zamanlar" karti artik yalniz `all` doneminde cizilir;
+      // (b) ve (c) iddialarinin olcecek satiri o donemde vardir.
+      await pump(
         tester,
-        find.text('Test Grubu'),
-        find.text(tr.statsDegistir),
+        window: const Size(1920, 1400),
+        desktop: true,
+        period: StatsPeriod.all,
       );
+
+      // (a) 🔴 WP-746: grup basligi satiri (avatar + ad + "Degistir") SILINDI.
+      // Eski iddia "band 600 px'i asmiyor" idi; yerine gecen iddia bandin HIC
+      // olmadigidir — aksi halde silme geri alinsa kapi yesil kalirdi.
       expect(
-        headerSpan,
-        lessThanOrEqualTo(kLabelValueCapPx),
+        find.text(tr.statsDegistir),
+        findsNothing,
         reason:
-            'Grup adindan "Degistir"e ${headerSpan.toStringAsFixed(0)} px; '
-            'SPEC KURAL 2.2 sert tavani ${kLabelValueCapPx.toStringAsFixed(0)}'
-            ' px (80 karakter, WCAG 1.4.8).',
+            'Grup degistirici WP-743\'te sekme basligina tasinmisti; buradaki '
+            'ikinci cagri yeri WP-746\'da kaldirildi.',
       );
+      expect(find.byIcon(Icons.swap_horiz), findsNothing);
 
       // (b) "Tum zamanlar" satiri: "En yogun gun" etiketi → tarih+sure degeri.
       final peakLabel = find.text(tr.statsEnYogunGun);
@@ -311,9 +309,8 @@ void main() {
       // (c) HER etiket-deger bandi — siralama satirlari dahil.
       //
       // Tek tek isim aramak yerine bandlarin TAMAMI olculur: bir uye adini
-      // aramak belirsizdir (ayni isim siralamada, donut acikamasinda ve
-      // karsilastirma tablosunda gecer) ve boyle bir olcum yeni eklenen bir
-      // satiri hic gormezdi.
+      // aramak belirsizdir (ayni isim siralamada ve donut aciklamasinda gecer)
+      // ve boyle bir olcum yeni eklenen bir satiri hic gormezdi.
       final bands = rects(
         tester,
         find.byKey(const ValueKey(kLabelValueBandKey)),
@@ -349,42 +346,80 @@ void main() {
     tester,
   ) async {
     // SPEC §7: "masaustunde gorunen her veri gorunmeye devam eder."
-    final expected = <String>[
+    //
+    // WP-746: "her veri" artik DONEME baglidir — hedef gostergesi yalniz
+    // "Gun"de, tum-zamanlar metrikleri yalniz "Tumu"nde cizilir. Liste tek
+    // parca olsaydi ya kapi kirmizi kalirdi ya da iddia gevsetilirdi; bunun
+    // yerine iki donem AYRI AYRI olculur ve toplamda eski listenin
+    // (karsilastirma tablosu ile grup basligi disinda) tamami korunur.
+    final common = <String>[
       tr.statsSiralama,
       tr.statsGrupToplami,
       tr.statsKisiBasiOrt,
       tr.analyticsCardMemberDonut,
+    ];
+    final dayOnly = <String>[
+      tr.statsBugunKatilim,
+      tr.statsHedefeKalan,
+      tr.statsBugunLider,
+    ];
+    final allOnly = <String>[
       tr.analyticsCardLeaderboardHistory,
       tr.statsTumZamanlar,
       tr.statsAktifGun,
       tr.statsRekorSeri,
       tr.statsEnYogunGun,
       tr.statsEnIstikrarliUye,
+    ];
+    // 🔴 WP-746 ile SILINENLER: hicbir donemde cizilmemeli.
+    final removed = <String>[
       tr.statsKarsilastirmaTablosu,
-      tr.statsBugunKatilim,
-      tr.statsHedefeKalan,
-      tr.statsBugunLider,
       tr.statsDegistir,
-      tr.statsBugun,
-      tr.statsHafta,
-      tr.statsAy,
     ];
 
     await onPlatform(TargetPlatform.windows, () async {
-      await pump(tester, window: const Size(1920, 1400), desktop: true);
-      for (final label in expected) {
+      await pump(
+        tester,
+        window: const Size(1920, 1400),
+        desktop: true,
+        period: StatsPeriod.day,
+      );
+      for (final label in [...common, ...dayOnly]) {
         expect(
           find.text(label),
           findsWidgets,
-          reason: 'Masaustunde "$label" cizilmedi — SPEC §7 islev kaybi.',
+          reason: 'Gun doneminde "$label" cizilmedi — SPEC §7 islev kaybi.',
         );
       }
-      // Grafikler ve uyeler de duruyor.
       expect(find.byType(GaugeChart), findsOneWidget);
+      for (final label in removed) {
+        expect(find.text(label), findsNothing, reason: '"$label" silinmisti.');
+      }
       for (final name in const ['Bora', 'Cem']) {
         expect(find.text(name), findsWidgets, reason: '$name kayboldu.');
       }
       expect(find.textContaining('(sen)'), findsWidgets);
+    });
+
+    await onPlatform(TargetPlatform.windows, () async {
+      await pump(
+        tester,
+        window: const Size(1920, 1400),
+        desktop: true,
+        period: StatsPeriod.all,
+      );
+      for (final label in [...common, ...allOnly]) {
+        expect(
+          find.text(label),
+          findsWidgets,
+          reason: 'Tumu doneminde "$label" cizilmedi — SPEC §7 islev kaybi.',
+        );
+      }
+      for (final label in removed) {
+        expect(find.text(label), findsNothing, reason: '"$label" silinmisti.');
+      }
+      // Hedef gostergesi cok gunlu donemde cizilmez (WP-746 tablosu).
+      expect(find.byType(GaugeChart), findsNothing);
     });
   });
 
@@ -395,7 +430,12 @@ void main() {
   testWidgets(
     'WP-680 (6) 390x844 mobil: masaustu izgarasi ACILMAZ, WP-191 sirasi durur',
     (tester) async => onPlatform(TargetPlatform.android, () async {
-      await pump(tester, window: const Size(390, 3000), desktop: false);
+      await pump(
+        tester,
+        window: const Size(390, 3000),
+        desktop: false,
+        period: StatsPeriod.day,
+      );
 
       expect(
         find.byType(StatsTileGrid),
@@ -404,20 +444,15 @@ void main() {
       );
       expect(find.byType(StatsSectionColumns), findsNothing);
 
-      // WP-191/203 dikey sirasi: siralama → hedef → ozet → egilim → tum
-      // zamanlar → karsilastirma. `class_stats_view_order_test.dart` ile AYNI
-      // iddia; duzen degisikligi o testi de kirmamali.
+      // WP-191/746 dikey sirasi (Gun): siralama → hedef → ozet.
+      // `class_stats_view_order_test.dart` ile AYNI iddia.
       double topOf(Finder f) => tester.getTopLeft(f.first).dy;
       final ranking = topOf(find.text(tr.statsSiralama));
       final goal = topOf(find.byType(GaugeChart));
       final summary = topOf(find.text(tr.statsKisiBasiOrt));
-      final allTime = topOf(find.text(tr.statsTumZamanlar));
-      final comparison = topOf(find.text(tr.statsKarsilastirmaTablosu));
 
       expect(ranking, lessThan(goal), reason: 'siralama hedefin ustunde');
       expect(goal, lessThan(summary), reason: 'hedef ozetin ustunde');
-      expect(summary, lessThan(allTime));
-      expect(allTime, lessThan(comparison));
 
       // En genis kart WP-680 oncesiyle AYNI: 358 px (390 - 2x16 kenar).
       final cards = rects(tester, find.byType(Card));
@@ -430,6 +465,27 @@ void main() {
             'oncesi olculen deger 358 px. 600 px\'lik etiket-deger bandi '
             'mobilde hicbir kutuyu kucultmemeli.',
       );
+    }),
+  );
+
+  testWidgets(
+    'WP-680 (6b) 390x844 mobil, Tumu: siralama → ozet → tum zamanlar',
+    (tester) async => onPlatform(TargetPlatform.android, () async {
+      await pump(
+        tester,
+        window: const Size(390, 4000),
+        desktop: false,
+        period: StatsPeriod.all,
+      );
+      double topOf(Finder f) => tester.getTopLeft(f.first).dy;
+      final ranking = topOf(find.text(tr.statsSiralama));
+      final summary = topOf(find.text(tr.statsKisiBasiOrt));
+      final history = topOf(find.text(tr.analyticsCardLeaderboardHistory));
+      final allTime = topOf(find.text(tr.statsTumZamanlar));
+
+      expect(ranking, lessThan(summary));
+      expect(summary, lessThan(history));
+      expect(history, lessThan(allTime));
     }),
   );
 }

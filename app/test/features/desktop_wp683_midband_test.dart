@@ -164,7 +164,6 @@ void main() {
       ],
       members: [member('u1', 'Ada'), member('u2', 'Bora'), member('u3', 'Cem')],
       currentUserId: 'u1',
-      groupName: 'Test Grubu',
       groupGoalMinutes: 120,
     );
     await tester.pumpWidget(

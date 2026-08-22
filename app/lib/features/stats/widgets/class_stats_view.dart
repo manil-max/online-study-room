@@ -18,18 +18,95 @@ import '../../../data/models/profile.dart';
 import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/stats_period_provider.dart';
-import '../../classroom/widgets/class_switcher.dart';
-import '../../classroom/widgets/group_avatar.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../analytics/analytics_period.dart';
 import '../charts/gauge_chart.dart';
 import 'daily_line_chart.dart';
 import 'leaderboard_rank_chart.dart';
 import 'member_chart_colors.dart';
-import 'stat_heat_table.dart';
 import 'stats_desktop_layout.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
+
+/// WP-746: bir dönemin çizeceği kart kümesi.
+///
+/// 🔴 Kusur: altı dönem düğmesi de aşağıya AYNI kartları seriyordu. Tek güne
+/// bakarken "son 30 gün eğilimi", yıla bakarken "bugünün lideri" çiziliyordu;
+/// "Tüm zamanlar" ise dönemden bağımsız olduğu hâlde her dönemin altında
+/// duruyordu (dönem şeridinin altında olması onu dönemin sonucu gibi gösterir).
+///
+/// Sıralama (G2), grup toplamı (G4), kişi başı ortalama (G5) ve üye katkı payı
+/// (G6) HER dönemde çizilir; bu yüzden kümede bayrakları yoktur.
+class GroupCardSet {
+  const GroupCardSet({
+    required this.goalGauge,
+    required this.leaderboardHistory,
+    required this.trend,
+    required this.allTime,
+  });
+
+  /// G3 — hedef göstergesi + gün özeti. Yalnız tek güne bakarken anlamlı.
+  final bool goalGauge;
+
+  /// G7 — liderlik geçmişi. Tek günde tek sütun olurdu.
+  final bool leaderboardHistory;
+
+  /// G8 — grup eğilimi (günlük çizgi). Tek günde tek nokta olurdu.
+  final bool trend;
+
+  /// G9 — tüm zamanlar. Dönemden bağımsız; yalnız "Tümü"de.
+  final bool allTime;
+}
+
+/// [sel] için kart kümesi.
+///
+/// Özel aralık UYARLANABİLİR: aralık tek günse gün kümesi, daha uzunsa çok
+/// günlü küme. Şartname 2–31 gün için "ay", 32+ gün için "yıl" kümesi diyor;
+/// ikisi bugün BİREBİR aynı küme olduğu için ayrı bir dal yazılmadı (ölü dal
+/// olurdu). Ayrışırlarsa bölünecek yer burasıdır.
+GroupCardSet groupCardSet(StatsPeriodSelection sel, {DateTime? now}) {
+  final period = sel.period == StatsPeriod.custom
+      ? (_customSpanDays(sel, now: now) <= 1
+            ? StatsPeriod.day
+            : StatsPeriod.month)
+      : sel.period;
+  return switch (period) {
+    StatsPeriod.day => const GroupCardSet(
+      goalGauge: true,
+      leaderboardHistory: false,
+      trend: false,
+      allTime: false,
+    ),
+    StatsPeriod.all => const GroupCardSet(
+      goalGauge: false,
+      leaderboardHistory: true,
+      trend: true,
+      allTime: true,
+    ),
+    _ => const GroupCardSet(
+      goalGauge: false,
+      leaderboardHistory: true,
+      trend: true,
+      allTime: false,
+    ),
+  };
+}
+
+/// Özel aralığın gün sayısı (iki uç dâhil).
+///
+/// 🔴 Fark `difference().inDays` ile ham alınmaz: [dayOf] cihazın YEREL gece
+/// yarısını üretir, yaz saati uygulayan bölgede iki gece yarısının arası 23/25
+/// saattir ve tam bölme 23 saati 0 güne yuvarlar (aynı tuzağın tanığı
+/// `stats_period_provider.dart` `_dayNumber`). UTC'de her gün tam 24 saattir.
+int _customSpanDays(StatsPeriodSelection sel, {DateTime? now}) {
+  final (from, to) = sel.range(now: now);
+  final a = dayOf(from);
+  final b = dayOf(to);
+  return DateTime.utc(b.year, b.month, b.day)
+          .difference(DateTime.utc(a.year, a.month, a.day))
+          .inDays +
+      1;
+}
 
 /// Sınıf (ortak) istatistikleri: ortak dönem + sıralama + özet.
 /// Dönem üst [StatsPeriodBar] / [statsPeriodProvider] ile gelir; yerel seçici yok.
@@ -39,20 +116,20 @@ class ClassStatsView extends ConsumerStatefulWidget {
     required this.stats,
     required this.members,
     required this.currentUserId,
-    required this.groupName,
     required this.groupGoalMinutes,
-    this.groupAvatarPath,
-    this.groupAvatarUpdatedAt,
+    this.clock,
   });
 
   /// Sınıfın per-user-per-gün toplamları (F1: ham oturum yerine sunucu agregası).
   final List<DailyStat> stats;
   final List<Profile> members;
   final String currentUserId;
-  final String groupName;
   final int groupGoalMinutes;
-  final String? groupAvatarPath;
-  final DateTime? groupAvatarUpdatedAt;
+
+  /// Yalnız test enjeksiyonu (desen: `StatsRangeNavigator.clock`); üretimde
+  /// `DateTime.now` kullanılır. Kart kümesi ve hedef göstergesi seçili döneme
+  /// bağlı olduğu için testin saati sabitleyebilmesi şarttır.
+  final DateTime Function()? clock;
 
   @override
   ConsumerState<ClassStatsView> createState() => _ClassStatsViewState();
@@ -85,15 +162,14 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final stats = widget.stats;
     final members = widget.members;
     final currentUserId = widget.currentUserId;
-    final groupName = widget.groupName;
     final groupGoalMinutes = widget.groupGoalMinutes;
-    final groupAvatarPath = widget.groupAvatarPath;
-    final groupAvatarUpdatedAt = widget.groupAvatarUpdatedAt;
     final theme = Theme.of(context);
-    final now = DateTime.now();
+    final now = (widget.clock ?? DateTime.now)();
     final sel = ref.watch(statsPeriodProvider);
     final period = sel.period;
     final (from, to) = sel.range(now: now);
+    // WP-746: hangi kartların serileceği tek karar noktasından gelir.
+    final cards = groupCardSet(sel, now: now);
     final analyticsPeriod = analyticsPeriodFromSelection(sel);
     final contribAsync = ref.watch(
       analyticsGroupContributionProvider(analyticsPeriod),
@@ -136,48 +212,31 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     // tarafında hedef serisi hesaplanamaz (herkesin günlük hedefi bilinmez,
     // gerekçe `study_stats.dart:245-246`), o yüzden rozet düzeltilmedi,
     // kaldırıldı.
-    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay].
-    final todayTotals = userTotalsInRange(stats, dayOf(now), now);
-    final weekTotals = userTotalsInRange(stats, startOfWeek(now), now);
-    final monthTotals = userTotalsInRange(stats, startOfMonth(now), now);
-    final heatRows = [
-      for (final m in members)
-        HeatRow(
-          label: !m.isActive
-              ? AppLocalizations.of(context).statsEskiGrupUyesi
-              : (m.displayName.isEmpty
-                    ? AppLocalizations.of(context).statsIsimsiz
-                    : m.displayName),
-          avatarUrl: m.avatarUrl,
-          userId: m.id,
-          highlight: m.id == currentUserId,
-          values: [
-            todayTotals[m.id] ?? 0,
-            weekTotals[m.id] ?? 0,
-            monthTotals[m.id] ?? 0,
-          ],
-        ),
-    ]..sort((a, b) => b.values[2].compareTo(a.values[2]));
-
-    // Grup günlük hedefi: bugünkü grup toplamı + gruba göre seri.
+    // 🔴 WP-746: hedef göstergesi ve yanındaki özet artık SEÇİLİ günü anlatır.
+    // Önceden üç yerde birden "bugün" sabitti (`userTotalsInRange(dayOf(now),
+    // now)`, `groupDay[dayOf(now)]`, "bugünün lideri"): "Dün"e gidildiğinde
+    // başlık dünü, gösterge bugünü yazıyor ve ikisi çelişiyordu. Kart yalnız
+    // `day` döneminde çizildiği için dönem aralığı = seçili gündür, yani
+    // [totals] doğrudan o günün üye toplamlarıdır.
+    final selectedDay = dayOf(from);
     final goalSeconds = groupGoalMinutes * 60;
     final groupDay = groupDayTotals(stats);
-    final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
-    // WP-204: gauge yanı özeti — bugünün en çok katkı veren üyesi.
+    final dayGroupTotal = groupDay[selectedDay] ?? 0;
+    // WP-204: gauge yanı özeti — seçili günün en çok katkı veren üyesi.
     final nameById = {for (final m in members) m.id: m.displayName};
-    MapEntry<String, int>? topTodayEntry;
-    for (final e in todayTotals.entries) {
+    MapEntry<String, int>? topDayEntry;
+    for (final e in totals.entries) {
       if (e.value <= 0) continue;
-      if (topTodayEntry == null || e.value > topTodayEntry.value) {
-        topTodayEntry = e;
+      if (topDayEntry == null || e.value > topDayEntry.value) {
+        topDayEntry = e;
       }
     }
-    final topTodaySeconds = topTodayEntry?.value ?? 0;
-    final String? topTodayName = topTodayEntry == null
+    final topDaySeconds = topDayEntry?.value ?? 0;
+    final String? topDayName = topDayEntry == null
         ? null
-        : ((nameById[topTodayEntry.key] ?? '').isEmpty
+        : ((nameById[topDayEntry.key] ?? '').isEmpty
               ? AppLocalizations.of(context).statsIsimsiz
-              : nameById[topTodayEntry.key]);
+              : nameById[topDayEntry.key]);
 
     // Tüm-zamanlar metrikleri (§WP-10) — dönem seçiminden bağımsız.
     final allTimeTotal = totalOfDayTotals(groupDay);
@@ -230,35 +289,10 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     // pencere sinifindan, kart genisligi icerik tavanindan gelir. Hicbir
     // metrik, grafik ya da satir kaldirilmadi — yalniz yerleri degisti
     // (SPEC §7). Mobil dal asagida BIREBIR eski hâlinde durur.
-    final header =
-    // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
-    Row(
-      children: [
-        GroupAvatar(
-          name: groupName,
-          avatarPath: groupAvatarPath,
-          avatarUpdatedAt: groupAvatarUpdatedAt,
-          radius: 20,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            groupName,
-            style: theme.textTheme.titleMedium,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Builder(
-          builder: (iconContext) => TextButton.icon(
-            onPressed: () =>
-                showClassSwitcher(iconContext, ref, switchOnly: true),
-            icon: const Icon(Icons.swap_horiz, size: 18),
-            label: Text(AppLocalizations.of(context).statsDegistir),
-          ),
-        ),
-      ],
-    );
-
+    // 🔴 WP-746: grup başlığı satırı (avatar + grup adı + "Değiştir") SİLİNDİ.
+    // Aynı grup değiştirici WP-743'te sekme başlığına taşınmıştı; ekranda iki
+    // çağrı yeri kalmıştı ve alttaki, tarih aralığı seçicisinin hemen altında
+    // duruyordu. Sahip kararı: alttaki kalkar.
     final periodHeading =
     Text(
       statsPeriodLabel(AppLocalizations.of(context), period),
@@ -313,26 +347,20 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           SizedBox(
             width: 150,
             child: _GroupGaugeCard(
-              progress: goalSeconds <= 0
-                  ? 0
-                  : todayGroupTotal / goalSeconds,
-              todaySeconds: todayGroupTotal,
+              progress: goalSeconds <= 0 ? 0 : dayGroupTotal / goalSeconds,
+              daySeconds: dayGroupTotal,
               goalSeconds: goalSeconds,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: _GroupTodaySummaryCard(
-              participants: todayTotals.values.where((v) => v > 0).length,
+              participants: totals.values.where((v) => v > 0).length,
               totalMembers: members.length,
-              remainingSeconds: (goalSeconds - todayGroupTotal).clamp(
-                0,
-                1 << 30,
-              ),
-              goalReached:
-                  goalSeconds > 0 && todayGroupTotal >= goalSeconds,
-              topName: topTodayName,
-              topSeconds: topTodaySeconds,
+              remainingSeconds: (goalSeconds - dayGroupTotal).clamp(0, 1 << 30),
+              goalReached: goalSeconds > 0 && dayGroupTotal >= goalSeconds,
+              topName: topDayName,
+              topSeconds: topDaySeconds,
             ),
           ),
         ],
@@ -479,18 +507,28 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
+              // 🔴 WP-746: başlık üç şeyi aynı anda iddia ediyordu — "son 30
+              // gün", "7 gün" ve dönem adı. Pencerenin uzunluğu TEK sayıdır;
+              // hangi dönemde olunduğunu üstteki gezinme çubuğu yazar.
               child: Text(
-                '${AppLocalizations.of(context).statsGrupEgilimiSon30} · '
-                '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())} · '
-                '${statsPeriodLabel(AppLocalizations.of(context), period)}',
+                '${AppLocalizations.of(context).homeGrupGunlukTrendi} · '
+                '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())}',
                 style: theme.textTheme.titleSmall,
               ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               height: 160,
+              // 🔴 WP-746: pencerenin SONU dönemin sonuna bağlandı. `lastNDays`
+              // varsayılanı `DateTime.now()`tur: "Geçen ay"da başlık geçen ayı
+              // yazarken grafik bu ayı çiziyordu.
               child: DailyLineChart(
-                days: lastNDays(const [], trendDays, totals: groupDay),
+                days: lastNDays(
+                  const [],
+                  trendDays,
+                  today: to,
+                  totals: groupDay,
+                ),
               ),
             ),
           ],
@@ -508,36 +546,15 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       consistentStreak: consistentStreak,
     );
 
-    final comparisonCard =
-    Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: heatRows.isEmpty
-            ? Text(
-                AppLocalizations.of(context).statsUyeYok,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              )
-            : StatHeatTable(
-                columns: [
-                  AppLocalizations.of(context).statsBugun,
-                  AppLocalizations.of(context).statsHafta,
-                  AppLocalizations.of(context).statsAy,
-                ],
-                rows: heatRows,
-              ),
-      ),
-    );
-
+    // 🔴 WP-746: karşılaştırma tablosu (üye × [Bugün, Hafta, Ay]) SİLİNDİ.
+    // Sütunları sabitti; dönem şeridinin hemen altında durduğu hâlde dönem
+    // seçimine hiç tepki vermiyordu. Aynı soruyu ("kim ne kadar çalıştı")
+    // sıralama kartı artık her dönem için doğrudan cevaplıyor.
     final rankingTitle = AppLocalizations.of(context).statsSiralama;
     final donutTitle = AppLocalizations.of(context).analyticsCardMemberDonut;
     final historyTitle = AppLocalizations.of(
       context,
     ).analyticsCardLeaderboardHistory;
-    final comparisonTitle = AppLocalizations.of(
-      context,
-    ).statsKarsilastirmaTablosu;
 
     if (isDesktopWindow) {
       // SPEC §4: masaustu sayfa kenar boslugu 24 (≥1440 bandi) — kisisel
@@ -546,14 +563,6 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
         controller: _scrollController,
         padding: getSafeVerticalPadding(context, horizontal: 24),
         children: [
-          // SPEC KURAL 2.2: grup adi (etiket) ile "Degistir" dugmesi (deger)
-          // arasindaki mesafe sert tavan 600 px. Tavansiz hâlde dugme bandin
-          // en sagina, adin ~1300 px otesine itiliyordu.
-          _LabelValueBand(
-            bandKey: const ValueKey(kGroupStatsHeaderKey),
-            child: header,
-          ),
-          const SizedBox(height: 8),
           periodHeading,
           const SizedBox(height: 12),
           StatsTileGrid(tiles: summaryTiles),
@@ -567,12 +576,12 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                   children: leaderboard,
                 ),
               ),
-              StatsSection(child: gaugeRow),
+              if (cards.goalGauge) StatsSection(child: gaugeRow),
               StatsSection(title: donutTitle, child: donutCard),
-              StatsSection(title: historyTitle, child: historyCard),
-              StatsSection(child: trendCard),
-              StatsSection(child: allTimeCard),
-              StatsSection(title: comparisonTitle, child: comparisonCard),
+              if (cards.leaderboardHistory)
+                StatsSection(title: historyTitle, child: historyCard),
+              if (cards.trend) StatsSection(child: trendCard),
+              if (cards.allTime) StatsSection(child: allTimeCard),
             ],
           ),
         ],
@@ -583,16 +592,15 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       controller: _scrollController,
       padding: getSafeVerticalPadding(context),
       children: [
-        header,
-        const SizedBox(height: 8),
         periodHeading,
         const SizedBox(height: 12),
-        // WP-191: sıralama EN ÜSTE — gauge/donut'tan önce.
+        // WP-191: sıralama EN ÜSTE — gauge/donut'tan önce. WP-746: `day`
+        // döneminin ANA kartı da budur (sahip kararı: "gün içi çalışma
+        // ranking list").
         Text(rankingTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: 4),
         ...leaderboard,
-        const SizedBox(height: 16),
-        gaugeRow,
+        if (cards.goalGauge) ...[const SizedBox(height: 16), gaugeRow],
         const SizedBox(height: 16),
         Row(
           children: [
@@ -605,31 +613,28 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
         Text(donutTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         donutCard,
-        const SizedBox(height: 16),
-        Text(historyTitle, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        historyCard,
-        const SizedBox(height: 16),
-        trendCard,
-        const SizedBox(height: 16),
-        allTimeCard,
-        const SizedBox(height: 16),
-        Text(comparisonTitle, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        comparisonCard,
+        if (cards.leaderboardHistory) ...[
+          const SizedBox(height: 16),
+          Text(historyTitle, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          historyCard,
+        ],
+        if (cards.trend) ...[const SizedBox(height: 16), trendCard],
+        if (cards.allTime) ...[const SizedBox(height: 16), allTimeCard],
       ],
     );
   }
 }
 
-/// [_LabelValueBand] test tutamaklari (WP-680).
+/// [_LabelValueBand] test tutamagi (WP-680).
 ///
-/// [kLabelValueBandKey] HER banda takilir; [kGroupStatsHeaderKey] yalniz grup
-/// basligina. Ayni `ValueKey`in cok kez kullanilmasi guvenlidir cunku anahtar
-/// `Align`in ICINDEKI kutuya takilir: iki band birbirinin KARDESI degildir,
-/// dolayisiyla "Duplicate keys" hatasi olusmaz.
+/// HER banda takilir. Ayni `ValueKey`in cok kez kullanilmasi guvenlidir cunku
+/// anahtar `Align`in ICINDEKI kutuya takilir: iki band birbirinin KARDESI
+/// degildir, dolayisiyla "Duplicate keys" hatasi olusmaz.
+///
+/// WP-746: `kGroupStatsHeaderKey` grup basligi satiriyla birlikte kaldirildi —
+/// tek kullanicisi o satirdi.
 const String kLabelValueBandKey = 'label-value-band';
-const String kGroupStatsHeaderKey = 'group-stats-header';
 
 /// SPEC KURAL 2.2 — etiket–deger satiri sert tavani **600 px** (80 karakter,
 /// WCAG 2.1 SC 1.4.8). `Expanded` / `Spacer` ile sinirsiz yayilma yasaktir:
@@ -639,24 +644,18 @@ const String kGroupStatsHeaderKey = 'group-stats-header';
 /// Mobilde ETKISIZ: 390 px pencerede kullanilabilir genislik 358 px, yani
 /// tavan hicbir kutuyu kucultmez (WP-680 testinde olculdu).
 class _LabelValueBand extends StatelessWidget {
-  const _LabelValueBand({required this.child, this.bandKey});
+  const _LabelValueBand({required this.child});
 
   final Widget child;
 
   /// 🔴 Anahtar `Align`a DEGIL, tavani uygulayan kutuya takilir: `Align` kabini
   /// doldurur (1408 px), olculmesi gereken ise ic kutudur. Widget anahtari
   /// olarak verilseydi test 1408 px olcup yesil kalirdi.
-  ///
-  /// Ayrica bu band kardes olarak COK kez cizilir (siralama satirlari); sabit
-  /// bir anahtar verilseydi `Column` "Duplicate keys" ile coker. Bu yuzden
-  /// anahtar opsiyoneldir ve yalniz TEK ornekte (baslik) kullanilir.
-  final Key? bandKey;
-
   @override
   Widget build(BuildContext context) => Align(
     alignment: AlignmentDirectional.topStart,
     child: ConstrainedBox(
-      key: bandKey ?? const ValueKey(kLabelValueBandKey),
+      key: const ValueKey(kLabelValueBandKey),
       constraints: const BoxConstraints(
         maxWidth: DesktopBreakpoints.maxLabelValueWidth,
       ),
@@ -669,19 +668,21 @@ class _LabelValueBand extends StatelessWidget {
 class _GroupGaugeCard extends StatelessWidget {
   const _GroupGaugeCard({
     required this.progress,
-    required this.todaySeconds,
+    required this.daySeconds,
     required this.goalSeconds,
   });
 
   final double progress;
-  final int todaySeconds;
+
+  /// WP-746: SEÇİLİ günün grup toplamı ("bugün" değil).
+  final int daySeconds;
   final int goalSeconds;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final remaining = (goalSeconds - todaySeconds).clamp(0, 1 << 30);
+    final remaining = (goalSeconds - daySeconds).clamp(0, 1 << 30);
     final pct = (progress * 100).clamp(0, 999).round();
 
     return Card(
@@ -707,8 +708,8 @@ class _GroupGaugeCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               goalSeconds <= 0
-                  ? formatHuman(todaySeconds)
-                  : '${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
+                  ? formatHuman(daySeconds)
+                  : '${formatHuman(daySeconds)} / ${formatHuman(goalSeconds)}',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
