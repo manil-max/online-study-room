@@ -257,14 +257,41 @@ void main() {
     });
   });
 
+  // 🔴 ANLAR UTC ILE KURULUR, DUZ YEREL `DateTime` ILE DEGIL.
+  //
+  // Bu grup CI'da (UTC) kirmizi dustu, bu makinede (UTC+3) yesildi. Sebep
+  // testin olctugu sey degil, olcum ANININ kendisiydi: `istanbul_calendar`
+  // gun anahtari uretirken gece yarisi OLMAYAN bir `DateTime`i cihazin yerel
+  // saatinden Istanbul'a CEVIRIR (`_dayKeyIn` -> `TZDateTime.from`). Yani
+  // duz `DateTime(2026, 3, 10, 22)` UTC+3'te 10 Mart, UTC'de 11 Mart demek.
+  //
+  // `DateTime.utc(...)` mutlak bir andir; hangi makinede kosarsa kossun ayni
+  // Istanbul gunune duser. Yorumlarda yazan saatler ISTANBUL saatidir
+  // (Istanbul 2016'dan beri yil boyu UTC+3), UTC karsiligi yaninda verilir.
+  //
+  // Ayni sinif WP-612'de de yakalanmisti ve orada da yalnizca UTC+3'un
+  // batisindaki makinelerde gorunuyordu.
   group('WP-742 #4: Duration.inDays tuzağı', () {
-    final now = DateTime(2026, 3, 11, 15, 30);
+    // Istanbul 11 Mart 15:30
+    final now = DateTime.utc(2026, 3, 11, 12, 30);
+
+    // Nobetci: bu grubun anlari MUTLAK olmali. Biri duz yerel `DateTime`a
+    // dondurulurse test yine bu makinede yesil kalir ve YALNIZ CI'da kirmizi
+    // duser -- yani kusur gorunmez olur. Bu iddia onu ayni turda yakalar.
+    test('olcum anlari saat diliminden BAGIMSIZ kurulmus', () {
+      expect(now.isUtc, isTrue, reason: 'now duz yerel DateTime olmamali');
+      expect(
+        DateTime.utc(2026, 3, 10, 19).isUtc,
+        isTrue,
+        reason: 'gun ortasi an UTC ile kurulur',
+      );
+    });
 
     test('gün ORTASI bir an verilince inDays 0 der, doğrusu -1', () {
       // 🔴 Naif uygulama: `date.difference(now).inDays`.
       //    10 Mart 22:00 ile 11 Mart 15:30 arası -17sa 30dk; `inDays` sıfıra
       //    doğru kırptığı için 0 döner → kullanıcı "dün"e basıp BUGÜNde kalır.
-      final date = DateTime(2026, 3, 10, 22);
+      final date = DateTime.utc(2026, 3, 10, 19); // Istanbul 10 Mart 22:00
       expect(
         date.difference(now).inDays,
         0,
@@ -280,7 +307,7 @@ void main() {
     test('hafta: gün ortası an + hafta sınırı → inDays yine yanlış', () {
       // 8 Mart Pazar 20:00 → önceki hafta. Naif: (-2gün 19sa).inDays = -2,
       // `-2 ~/ 7 == 0` → kullanıcı bu haftada kalırdı.
-      final date = DateTime(2026, 3, 8, 20);
+      final date = DateTime.utc(2026, 3, 8, 17); // Istanbul 8 Mart 20:00
       expect(date.difference(now).inDays ~/ 7, 0, reason: 'naif hesap');
       expect(offsetAfterJump(StatsPeriod.week, date, now: now), -1);
     });
@@ -288,7 +315,7 @@ void main() {
     test('Avrupa yaz saati geçiş günü (29 Mart 2026) doğru sayılır', () {
       // 29 Mart 2026 AB'de saatler ileri alınır: o gün YEREL olarak 23 saat
       // sürer. Gün farkını süreden türeten her hesap burada kayar.
-      final dstNow = DateTime(2026, 3, 30, 12);
+      final dstNow = DateTime.utc(2026, 3, 30, 9); // Istanbul 30 Mart 12:00
       expect(
         offsetAfterJump(StatsPeriod.day, DateTime(2026, 3, 29), now: dstNow),
         -1,
@@ -298,7 +325,7 @@ void main() {
         -2,
       );
       // Sonbahar geçişi (25 Ekim 2026, 25 saatlik gün) de aynı sözleşmede.
-      final fallNow = DateTime(2026, 10, 26, 12);
+      final fallNow = DateTime.utc(2026, 10, 26, 9); // Istanbul 26 Ekim 12:00
       expect(
         offsetAfterJump(StatsPeriod.day, DateTime(2026, 10, 25), now: fallNow),
         -1,
