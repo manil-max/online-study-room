@@ -215,10 +215,10 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
-Assert-Equal $contract.production.migration_head '0135' 'production hedefi 0135: v70 basarim dengesi ve canli seri'
+Assert-Equal $contract.production.migration_head '0136' 'production hedefi 0136: WP-739 duraklamali Alevli Seri'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0135 production apply sonrasi yeniden kilitli'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0136 production apply sahibin yayin emriyle acildi'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a
