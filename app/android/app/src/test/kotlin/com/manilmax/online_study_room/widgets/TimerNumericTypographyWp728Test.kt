@@ -2,6 +2,7 @@ package com.manilmax.online_study_room.widgets
 
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -50,11 +51,15 @@ class TimerNumericTypographyWp728Test {
         }
     }
 
+    // 🔴 WP-754: 1x1 kutusu bu listeden CIKTI, gevsetildigi icin degil
+    // SOZLESME DEGISTIGI icin. O kutuda artik sekiz karakterlik sayi
+    // cizilmiyor; cekirdek glife dondu (`minimalTimerCoreIsGlyph`). Sayinin
+    // orada "16sp ile okunur" olmasini istemek, cizilmeyen bir seyi olcmek
+    // olurdu. 1x1 sozlesmesi asagida kendi testinde, glif olarak duruyor.
     @Test
-    fun minimal_sayac_1x1_2x1_2x2_kutuda_8_karakteri_ayni_puntoyla_tasir() {
+    fun minimal_sayac_2x1_2x2_kutuda_8_karakteri_ayni_puntoyla_tasir() {
         data class Box(val name: String, val widthDp: Int, val heightDp: Int, val expectedSp: Float)
         listOf(
-            Box("1x1", 70, 70, 16f),
             Box("2x1", 110, 40, 21f),
             Box("2x2", 110, 110, 21f),
         ).forEach { box ->
@@ -78,7 +83,21 @@ class TimerNumericTypographyWp728Test {
         val idleSp = minimalTimerTimeSp(70, 70) // 00:00
         val runningSp = minimalTimerTimeSp(70, 70) // 00:00:00
         assertEquals(idleSp, runningSp)
-        assertTrue("1x1 rakami okunur alt sinirin altinda", idleSp >= 16f)
+        assertTrue("punto tabanin altina dusmez", idleSp >= WIDGET_MIN_TEXT_SP)
+    }
+
+    // 🔴 WP-754: 1x1'in YENI sozlesmesi. Eski test orada 16sp'lik sekiz
+    // karakter istiyordu; olculdu ki sigmiyor (`widgetMaxSp(70, 2, 8, 0.85)`
+    // tabanin altina duser) ve eski kod bunu `textScaleX="0.75"` ile, yani
+    // rakamlari %25 yatay ezerek "cozuyordu". Yeni cozum ezmek degil
+    // DUSURMEK: cekirdek glife doner.
+    @Test
+    fun bir_hucrede_cekirdek_GLIFTIR_ve_daha_genis_kutuda_sayiya_doner() {
+        assertTrue("1x1 cekirdegi glif olmali", minimalTimerCoreIsGlyph(70))
+        assertEquals("glif cekirdek karakter tasimaz", 0, minimalTimerCoreChars(70))
+
+        assertFalse("2x1 cekirdegi sayi olmali", minimalTimerCoreIsGlyph(110))
+        assertEquals("sayi cekirdegi sekiz karakter", 8, minimalTimerCoreChars(110))
     }
 
     @Test
@@ -97,7 +116,13 @@ class TimerNumericTypographyWp728Test {
             .firstOrNull(File::isFile)
             ?: error("minimal timer layout bulunamadi; test calisma dizini beklenmeyen yerde")
         val xml = layout.readText()
-        assertTrue(xml.contains("android:textScaleX=\"0.75\""))
+        // 🔴 WP-754: 0.75 -> 0.85. Eski deger rakamlari %25 yatay eziyordu;
+        // sahibin gordugu bozuk goruntu oydu. 0.85 tabandir, altina inilmez.
+        assertTrue(xml.contains("android:textScaleX=\"0.85\""))
         assertTrue(xml.contains("android:textSize=\"21sp\""))
+        assertTrue(
+            "daraltma ezmeyle degil condensed aile ile yapilir",
+            xml.contains("android:fontFamily=\"sans-serif-condensed\""),
+        )
     }
 }
