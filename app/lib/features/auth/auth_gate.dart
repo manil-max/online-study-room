@@ -15,6 +15,32 @@ import '../updater/updater_dialog.dart';
 import 'auth_screen.dart';
 import 'recovery_screen.dart';
 
+/// 🔴 WP-741: cevrimdisilik iddiasinin ZARIF BEKLEME suresi.
+///
+/// Sahip (2026-08-22, gercek cihaz): "internet bagli olmasina ragmen bazen
+/// uygulamayi acinca altta 'internet yok' uyarisi geciyor, ama internet var ve
+/// uygulamayi normal kullaniyorum."
+///
+/// Kok neden: `kAuthColdStartBudget` (2 sn) bir **GECIKME** olcusudur,
+/// baglanti olcusu degil. Soguk acilista saglikli agda da dolabilir
+/// (DNS isinmasi, hucresel el sikismasi, ilk TLS turu). Butce dolar dolmaz
+/// "Internet yok" demek, olculmemis bir iddiayi kullaniciya gercek diye
+/// sunmaktir.
+///
+/// Cozum butceyi BUYUTMEK degil: butce uygulamanin ne zaman ACILDIGINI
+/// belirler ve WP-603'un kazanimidir (cemberde takilmama) — buyutmek dogrudan
+/// o kazanimi geri alirdi. Bunun yerine **acilis** ile **iddia** ayrilir:
+/// uygulama yine 2 sn'de acilir, iddia bu kadar daha beklenir ve bu sure
+/// icinde akis konusursa hic soylenmez.
+///
+/// 4 saniye secildi: iddiayi 2 + 4 = 6 sn'ye tasir. Gercekten cevrimdisi
+/// cihaz o pencerede cevap veremez (olculen zincir 10 sn token tazeleme + 10
+/// sn istek tavani, bkz. `kAuthColdStartBudget`), yani gercek cevrimdisi
+/// kullanici uyariyi almaya devam eder; yalnizca YAVAS ama VAR olan ag sessiz
+/// kalir.
+@visibleForTesting
+const Duration kOfflineNoticeGrace = Duration(seconds: 4);
+
 /// Oturum durumuna göre giriş ekranını veya ana uygulamayı gösterir.
 class AuthGate extends ConsumerStatefulWidget {
   const AuthGate({super.key});
@@ -27,7 +53,14 @@ class _AuthGateState extends ConsumerState<AuthGate> {
   late final StreamSubscription<void> _recoverySub;
 
   /// WP-603: çevrimdışı açılış şeridi oturumda bir kez gösterilir.
+  ///
+  /// WP-741: artık "şunu şu an ekranda tutuyoruz" demektir. Şerit kendiliğinden
+  /// kapanınca veya iddia geri alınınca düşer; durum GERÇEKTEN tekrarlarsa
+  /// (bayrak `false` → `true`) yeniden söylenebilsin diye.
   bool _offlineNoticeShown = false;
+
+  /// WP-741: iddiayı geciktiren zamanlayıcı ([kOfflineNoticeGrace]).
+  Timer? _offlineNoticeTimer;
 
   @override
   void initState() {
@@ -54,29 +87,67 @@ class _AuthGateState extends ConsumerState<AuthGate> {
 
   @override
   void dispose() {
+    _offlineNoticeTimer?.cancel();
     _recoverySub.cancel();
     super.dispose();
   }
 
+  /// WP-741: iddiayı hemen değil, [kOfflineNoticeGrace] sonra kurar.
+  ///
+  /// Bekleme dolmadan bayrak düşerse ([_withdrawOfflineNotice]) kullanıcı
+  /// hiçbir şey görmez — yavaş ama çalışan ağda doğru davranış budur.
+  void _scheduleOfflineNotice() {
+    if (_offlineNoticeShown || _offlineNoticeTimer != null) return;
+    _offlineNoticeTimer = Timer(kOfflineNoticeGrace, () {
+      _offlineNoticeTimer = null;
+      if (!mounted) return;
+      // Bekleme sonunda durum hâlâ geçerli mi? Zamanlayıcı ile bayrağın
+      // düşmesi arasındaki yarışı bu okuma kapatır.
+      if (!ref.read(authOpenedOfflineProvider)) return;
+      _announceOfflineOpen();
+    });
+  }
+
+  /// WP-741: iddiayı GERİ ALIR.
+  ///
+  /// Gerçek profil geldiğinde `onRemoteProfile` → `clear()` bayrağı `false`
+  /// yapıyordu, ama asılmış şerit kendi 6 saniyesini doldurmaya devam
+  /// ediyordu: kullanıcı çevrimiçiyken ekranda "İnternet yok" okumaya devam
+  /// ediyordu. Geri alma olmadan gecikme tek başına yetmez.
+  void _withdrawOfflineNotice() {
+    _offlineNoticeTimer?.cancel();
+    _offlineNoticeTimer = null;
+    if (!_offlineNoticeShown) return;
+    _offlineNoticeShown = false;
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+  }
+
   /// Çevrimdışı açılışı tek bir şeritte duyurur.
   ///
-  /// Kare sonuna erteleniyor: bayrak `authStateProvider` akışından kalkar ve
-  /// o an ekranda henüz `Scaffold` olmayabilir; `ScaffoldMessenger` mesajı
-  /// asacak bir yüzey ister.
+  /// 🔴 WP-741: kare sonuna erteleme KALDIRILDI. Eski gerekçe bayrağın
+  /// `authStateProvider` akışından, henüz `Scaffold` yokken kalkabilmesiydi;
+  /// çağrı artık [kOfflineNoticeGrace] zamanlayıcısından, yani kare dışından ve
+  /// ağacın oturduğu bir anda geliyor. Erteleme burada **zararlıydı**:
+  /// `addPostFrameCallback` kendiliğinden kare planlamaz, ekran durgunsa
+  /// (kimse `setState` çağırmıyorsa) geri çağırım hiç çalışmaz ve şerit hiç
+  /// asılmazdı. Ölçüldü: `serit asildiktan sonra ... INDIRILIR` testi.
   void _announceOfflineOpen() {
     if (_offlineNoticeShown) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
     _offlineNoticeShown = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      if (messenger == null) return;
-      messenger.showSnackBar(
-        SnackBar(
-          key: const Key('auth-gate-offline-notice'),
-          content: Text(AppLocalizations.of(context).authCevrimdisiAcildi),
-          duration: const Duration(seconds: 6),
-        ),
-      );
+    final notice = messenger.showSnackBar(
+      SnackBar(
+        key: const Key('auth-gate-offline-notice'),
+        content: Text(AppLocalizations.of(context).authCevrimdisiAcildi),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+    // Şerit kendiliğinden kapandığında bayrağı bırak: aksi hâlde çok sonra gelen
+    // bir geri alma, o an ekranda olan BAŞKA bir şeridi indirirdi.
+    notice.closed.then((_) {
+      if (mounted) _offlineNoticeShown = false;
     });
   }
 
@@ -89,9 +160,17 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     // Açılış yerel oturumla tamamlandığında bunu BİR KEZ söyle; engelleme,
     // yalnız bildir. `ref.listen` kullanılıyor çünkü olay bir DEĞİŞİM: bayrak
     // açılıştan ~2 sn sonra kalkar, `build` içinde okunan anlık değer değil.
+    //
+    // 🔴 WP-741: bayrak iki yönlü dinlenir. Kalkması iddiayı hemen kurmaz
+    // ([kOfflineNoticeGrace] beklenir); düşmesi ise iddiayı GERİ ALIR. Eski
+    // gövde yalnız `true`ya bakıyordu, bu yüzden `clear()` ekranda hiçbir
+    // karşılık üretmiyordu.
     ref.listen<bool>(authOpenedOfflineProvider, (previous, next) {
-      if (!next || previous == true) return;
-      _announceOfflineOpen();
+      if (next) {
+        _scheduleOfflineNotice();
+      } else {
+        _withdrawOfflineNotice();
+      }
     });
     final authState = ref.watch(authStateProvider);
     final l10n = AppLocalizations.of(context);

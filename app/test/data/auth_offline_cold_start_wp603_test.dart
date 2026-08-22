@@ -287,6 +287,20 @@ void main() {
             'oturumu olan kullanici ag olmadan da iceri girmeli; onceki davranis '
             '~20 sn donen cember + cikissiz hata ekraniydi',
       );
+      // 🔴 WP-741: ACILIS ile IDDIA ayrildi. Uygulama yine 2 sn'de acilir
+      // ama "internet yok" cumlesi butce dolar dolmaz kurulmaz; butce bir
+      // GECIKME olcusudur, baglanti olcusu degil.
+      expect(
+        find.byKey(const Key('auth-gate-offline-notice')),
+        findsNothing,
+        reason: 'iddia zarif bekleme dolmadan kurulmamali',
+      );
+
+      await tester.pump(kOfflineNoticeGrace);
+      await tester.pump();
+
+      // Ag GERCEKTEN sessiz kaldi: bekleme dolunca WP-603'un kazanimi aynen
+      // durur, cevrimdisi acilis SESSIZ olmaz.
       expect(
         find.byKey(const Key('auth-gate-offline-notice')),
         findsOneWidget,
@@ -328,5 +342,142 @@ void main() {
 
       expect(find.byKey(const Key('auth-gate-offline-notice')), findsNothing);
     });
+
+    // -----------------------------------------------------------------------
+    // 🔴 WP-741 — ARADAKI durum: ag YAVAS ama VAR.
+    //
+    // Sahip (2026-08-22, gercek cihaz): "internet bagli olmasina ragmen bazen
+    // uygulamayi acinca altta 'internet yok' uyarisi geciyor, ama internet var
+    // ve uygulamayi normal kullaniyorum."
+    //
+    // Yukaridaki iki test agin yalniz IKI UCUNU olcuyor: tamamen sessiz ag ve
+    // tamamen saglikli ag. Sahibin gordugu durum ORTADA: butceyi dolduracak
+    // kadar yavas ama VAR olan ag. `kAuthColdStartBudget` bir GECIKME
+    // olcusudur, baglanti olcusu degil — soguk acilista saglikli agda da
+    // dolar. Bu yuzden bayrak kalkar kalkmaz "internet yok" demek SAHTE bir
+    // iddiadir; once zarif bir bekleme, sonra gerekiyorsa konusma.
+    // -----------------------------------------------------------------------
+    testWidgets(
+      'ag yavas ama VAR: butce dolar ama akis hemen ardindan konusur -> '
+      'serit HIC gorunmez',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final repo = _SilentAuthRepository();
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: <Override>[
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              authRepositoryProvider.overrideWithValue(repo),
+              pushLifecycleListenerProvider.overrideWithValue(null),
+              localSessionProfileProvider.overrideWithValue(
+                () async => _profile('u1'),
+              ),
+            ],
+            child: MaterialApp(
+              locale: const Locale('tr'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const AuthGate(),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        // Butce dolar -> yerel oturum yayinlanir -> `authOpenedOfflineProvider`
+        // TRUE olur. Uygulamanin ACILMASI degismez (WP-603 kazanimi).
+        await tester.pump(kAuthColdStartBudget);
+        await tester.pump();
+
+        // Iddia HENUZ kurulmadi: bu satir zarif beklemeyi TEK BASINA olcer.
+        // (Olmazsa test yalniz "geri alma"yi olcerdi ve kullanicinin gordugu
+        // ANLIK PARLAMAYI kacirirdi.)
+        expect(
+          find.byKey(const Key('auth-gate-offline-notice')),
+          findsNothing,
+          reason: 'butce dolar dolmaz "internet yok" denmemeli',
+        );
+
+        // ...ama ag VARDI, sadece yavasti: gercek profil butcenin hemen
+        // ardindan gelir ve `onRemoteProfile` bayragi FALSE'a cevirir.
+        repo.emit(_profile('u1', name: 'Sunucudan'));
+        await tester.pump();
+
+        // Zarif bekleme dolar. Iddia geri alindigi icin serit HIC asilmamali.
+        await tester.pump(kOfflineNoticeGrace);
+        await tester.pump();
+
+        expect(
+          find.byKey(const Key('auth-gate-offline-notice')),
+          findsNothing,
+          reason:
+              'akis butcenin hemen ardindan konustuysa cihaz CEVRIMICIDIR; '
+              'kullaniciya "internet yok" denmemeli',
+        );
+      },
+    );
+
+    // 🔴 WP-741 — geri alma. Serit asildiktan sonra gercek profil
+    // gelirse `onRemoteProfile` -> `clear()` bayragi FALSE yapiyordu, ama
+    // asilmis SnackBar kendi 6 saniyesini doldurmaya devam ediyordu: kullanici
+    // cevrimiciyken ekranda "Internet yok" yazisini okumaya devam ediyordu.
+    testWidgets('serit asildiktan sonra gercek profil gelirse serit INDIRILIR', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final repo = _SilentAuthRepository();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: <Override>[
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            authRepositoryProvider.overrideWithValue(repo),
+            pushLifecycleListenerProvider.overrideWithValue(null),
+            localSessionProfileProvider.overrideWithValue(
+              () async => _profile('u1'),
+            ),
+          ],
+          child: MaterialApp(
+            locale: const Locale('tr'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const AuthGate(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Ag GERCEKTEN sessiz: butce + zarif bekleme dolar, serit asilir.
+      await tester.pump(kAuthColdStartBudget);
+      await tester.pump();
+      await tester.pump(kOfflineNoticeGrace);
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('auth-gate-offline-notice')),
+        findsOneWidget,
+        reason: 'gercekten sessiz agda serit hala asilmali (WP-603 kazanimi)',
+      );
+
+      // Ag geri geldi: gec de olsa gercek profil dustu.
+      repo.emit(_profile('u1', name: 'Sunucudan'));
+      await tester.pump();
+      // Serit kendi 6 sn'sini DOLDURMADAN inmeli; asagidaki pump'lar yalniz
+      // cikis animasyonunu kapsar (toplam < 1 sn), zaman asimini DEGIL.
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const Key('auth-gate-offline-notice')),
+        findsNothing,
+        reason:
+            'iddia geri alinmali: kullanici cevrimiciyken ekranda "Internet '
+            'yok" yazisi durmamali',
+      );
+    });
+
   });
 }
