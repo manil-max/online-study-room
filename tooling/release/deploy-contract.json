@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0136",
   "staging": {
-    "migration_head": "0135",
-    "deploy_enabled": false,
+    "migration_head": "0136",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED on 2026-08-13 after the v70 staging apply (run 31717110232) succeeded: post-check printed 0135|0135|0135 and the live backfill processed 1 user. WP-739 added 0136 locally on 2026-08-19; staging target stays 0135 until the owner gives a fresh apply GO. Production has its own separate confirmation."
+    "hold_reason": "OPEN for v71 (2026-08-19): exactly ONE staging apply of migration 0136 (WP-739). The owner gave the explicit publish order. Local head 0136; full local gate green (20 gates / 18 passed / 0 red / 2 skipped - deno absent on this host) and CI is green on de8ec238 (analyze + full test suite, Windows integration, Windows goldens, both Android emulator smokes). Database Gates already replayed 0136 from scratch on real Postgres: run 32193790140, 67 files / 967 pgTAP assertions, PASS - that run includes the new supabase/tests/063. WHAT 0136 DOES: the Blazing Fire achievement counted strictly consecutive goal days while the streak flame the user actually sees forgives a single miss (goal_streak_projection, 0112). Same history, two numbers - the owner saw a 9-day flame and 2/7 on the achievement. 0136 gives _current_fire_streak_days the projection's exact where-clause and run split, adds _best_fire_streak_days so reward eligibility follows the longest paused streak ever instead of the live value, and runs an idempotent backfill_wp739_fire_streak() that drops earned tiers into the reward inbox as pending. NOTHING IS DELETED OR REPRICED: no xp_ledger, achievement_rewards or user_achievements row is removed, and XP is still only banked when the user taps claim. RE-LOCK right after the staging apply post-check is read; production has its own separate confirmation. PREVIOUS SCOPE (spent, SUCCEEDED): RE-LOCKED on 2026-08-13 after the v70 staging apply (run 31717110232) succeeded: post-check printed 0135|0135|0135 and the live backfill processed 1 user."
   },
   "production": {
     "migration_head": "0135",
