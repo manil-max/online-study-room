@@ -22,6 +22,136 @@ import com.manilmax.online_study_room.widgets.rememberedSubjectId
 internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
 
 /**
+ * WP-753: Zengin özel panelin prefs anahtarı.
+ *
+ * 🔴 Varsayılan `false` — yani anahtar **yoksa Live Update yolu** koşar. Eskiden
+ * varsayılan `true`ydu ve anahtarı yazan tek bir satır bile repoda yoktu
+ * (`docs/analiz/WP-751-dinamik-panel-kok-neden.md §8`), yani standart dal
+ * **ulaşılamazdı**. Valf artık gerçekten valf: `true` yazılırsa v43 paneli geri
+ * gelir, hiçbir şey yazılmazsa Android'in canlı yüzeyi kullanılır.
+ */
+internal const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
+
+/** Geri dönüş valfi: `true` yazılmışsa v43 zengin panel, aksi hâlde Live Update. */
+internal fun useV43CustomPanel(prefs: SharedPreferences): Boolean =
+    prefs.getBoolean(KEY_PANEL_EXPANDED, false)
+
+/**
+ * WP-753: durum çubuğu / Live Update çipi ikonu.
+ *
+ * Monokrom vektör olmak **zorunda**; renkli adaptif launcher ikonu
+ * (`R.mipmap.ic_launcher`) yanlış türdür. Sabit olarak durur ki cihazsız JVM
+ * testi türü ölçebilsin — `baseBuilder()` bir `Context` istediği için o yol
+ * cihazsız ölçülemez.
+ */
+internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_timer
+
+/** Koşan sayaç bildiriminin sunum yolu. */
+internal enum class TimerNotificationStyle {
+    /**
+     * v43 zengin özel panel. `RemoteViews` taşır, bu yüzden Android **terfi
+     * ettiremez**: *"Must NOT have any customContentView set (no RemoteViews)"*.
+     * Geri dönüş valfi olarak durur, terfi istemez.
+     */
+    CUSTOM_PANEL,
+
+    /** Açık uçlu kronometre (stopwatch): standart stil, terfi edilebilir. */
+    STANDARD,
+
+    /** Hedefi olan mod (pomodoro/geri sayım): `ProgressStyle`, terfi edilebilir. */
+    PROGRESS,
+}
+
+/**
+ * Koşan bildirimin **saf** sunum kararı — cihazsız JVM'de ölçülebilsin diye
+ * `Context`/`Notification` dokunmadan hesaplanır (WP-622'deki `endBreakPlan`
+ * deseni). Bu kararın nöbetçisi `TimerLiveUpdateWp753Test`tir.
+ */
+internal data class TimerNotificationPlan(
+    val style: TimerNotificationStyle,
+    /** 0 = başlık yok (yalnız özel panel yolunda). */
+    val titleRes: Int,
+    val bodyRes: Int,
+    /** 0 = kısa kritik metin yazılmaz; çip metnini `when` kronometresi taşır. */
+    val shortCriticalTextRes: Int,
+    val whenMs: Long,
+    val countDown: Boolean,
+    val progressSeconds: Int,
+    val totalSeconds: Int,
+) {
+    val usesCustomView: Boolean get() = style == TimerNotificationStyle.CUSTOM_PANEL
+
+    /**
+     * Terfi yalnız özel görünüm **taşımayan** yolda istenir. Altı denemenin
+     * kök nedeni tam olarak buydu: zengin panel ile Live Update birbirini
+     * dışlar, ikisi aynı bildirimde tutulamaz.
+     */
+    val requestPromotedOngoing: Boolean get() = !usesCustomView
+}
+
+/**
+ * WP-753: sunum yolunu seçer.
+ *
+ * Çip metni kararı resmî belgeden çıkar
+ * (<https://developer.android.com/develop/ui/views/notifications/live-update>):
+ * *"The when time is in the past: The text isn't shown"* ve *"The Chronometer
+ * timer is shown in the chip as long as it is positive"*.
+ * - **Açık uçlu kronometre**: `when` başlangıç anıdır, yani GEÇMİŞTE kalır →
+ *   çip süreyi çizemez; kısa kritik metin (Odak/Mola) şart.
+ * - **Hedefli mod**: `when` bitiş anıdır, yani GELECEKTEDİR → çipte canlı geri
+ *   sayım akar; sabit kısa metin o canlı sayıyı gölgelemesin diye yazılmaz.
+ */
+internal fun runningTimerNotificationPlan(
+    richPanel: Boolean,
+    isBreak: Boolean,
+    targetSeconds: Int?,
+    startedAtMs: Long,
+    nowMs: Long,
+): TimerNotificationPlan {
+    if (richPanel) {
+        return TimerNotificationPlan(
+            style = TimerNotificationStyle.CUSTOM_PANEL,
+            titleRes = 0,
+            bodyRes = 0,
+            shortCriticalTextRes = 0,
+            whenMs = startedAtMs,
+            countDown = false,
+            progressSeconds = 0,
+            totalSeconds = 0,
+        )
+    }
+    val titleRes = if (isBreak) R.string.timer_break_title else R.string.timer_focusing_title
+    val bodyRes = if (isBreak) R.string.timer_break_body else R.string.timer_focusing_body
+    val total = targetSeconds?.takeIf { it > 0 }
+        ?: return TimerNotificationPlan(
+            style = TimerNotificationStyle.STANDARD,
+            titleRes = titleRes,
+            bodyRes = bodyRes,
+            shortCriticalTextRes = if (isBreak) {
+                R.string.timer_subtext_break
+            } else {
+                R.string.timer_subtext_focus
+            },
+            whenMs = startedAtMs,
+            countDown = false,
+            progressSeconds = 0,
+            totalSeconds = 0,
+        )
+    return TimerNotificationPlan(
+        style = TimerNotificationStyle.PROGRESS,
+        titleRes = titleRes,
+        bodyRes = bodyRes,
+        shortCriticalTextRes = 0,
+        whenMs = startedAtMs + total * 1000L,
+        countDown = true,
+        progressSeconds = ((nowMs - startedAtMs) / 1000L)
+            .coerceIn(0L, total.toLong())
+            .toInt(),
+        totalSeconds = total,
+    )
+}
+
+/**
  * Çalışma sayacının **native** foreground servisi (V8-A · WP-42/51 birleşik).
  *
  * Neden native: Kullanıcı uygulamayı tamamen kapatmışken bile widget/bildirim
@@ -370,19 +500,32 @@ class StudyTimerService : Service() {
     }
 
     /**
-     * v43 ürün kontratı: One UI'da tek satır HH:MM:SS ve doğrudan eylem.
-     * `timer_panel_expanded` yalnız OEM/custom-layout sorunu için kaçış valfidir;
-     * varsayılanı değiştirmez ve timer durum motoruna dokunmaz.
+     * WP-753: varsayılan yol artık **Android Live Update sözleşmesi**dir —
+     * özel görünüm yok, dolu `contentTitle`, standart/`ProgressStyle` stil,
+     * `setRequestPromotedOngoing(true)`. Terfi eden bildirim durum çubuğunda
+     * çip, kilit ekranında ve (Samsung'da) Now Bar'da çizilir.
+     *
+     * v43 zengin özel panel yalnız `timer_panel_expanded=true` yazılmışsa
+     * koşar ve terfi **istemez** (özel görünüm ile terfi birbirini dışlar).
      */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
         val p = prefs()
         val isBreak = p.getString(TimerStateStore.KEY_PHASE, "work") == "rest"
+        val plan = runningTimerNotificationPlan(
+            richPanel = useV43CustomPanel(),
+            isBreak = isBreak,
+            targetSeconds = TimerStateStore
+                .readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
+                .takeIf { it > 0 },
+            startedAtMs = startedAtMs,
+            nowMs = System.currentTimeMillis(),
+        )
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-        if (useV43CustomPanel()) {
+        if (plan.usesCustomView) {
             val custom = buildRunningRemoteViews(startedAtMs, isBreak)
             builder
                 .setContentTitle("")
@@ -392,27 +535,33 @@ class StudyTimerService : Service() {
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
                 .setCustomBigContentView(custom)
-        } else {
-            // v43 fallback: custom layout desteklenmeyen OEM'de sayaç ve eylem kaybolmaz.
-            builder
-                .setContentTitle(
-                    if (isBreak) getString(R.string.timer_break_title)
-                    else getString(R.string.timer_focusing_title),
-                )
-                .setContentText(
-                    if (isBreak) getString(R.string.timer_break_body)
-                    else getString(R.string.timer_focusing_body),
-                )
-                .setUsesChronometer(true)
-                .setWhen(startedAtMs)
-                .setShowWhen(true)
-                .setChronometerCountDown(false)
-                .addAction(
-                    0,
-                    if (isBreak) getString(R.string.action_return_to_work)
-                    else getString(R.string.action_stop),
-                    if (isBreak) endBreakActionPending() else stopActionPending(),
-                )
+            return builder.build()
+        }
+        builder
+            .setContentTitle(getString(plan.titleRes))
+            .setContentText(getString(plan.bodyRes))
+            .setUsesChronometer(true)
+            .setWhen(plan.whenMs)
+            .setShowWhen(true)
+            .setChronometerCountDown(plan.countDown)
+            .setRequestPromotedOngoing(plan.requestPromotedOngoing)
+            .addAction(
+                0,
+                if (isBreak) getString(R.string.action_return_to_work)
+                else getString(R.string.action_stop),
+                if (isBreak) endBreakActionPending() else stopActionPending(),
+            )
+        if (plan.shortCriticalTextRes != 0) {
+            builder.setShortCriticalText(getString(plan.shortCriticalTextRes))
+        }
+        if (plan.style == TimerNotificationStyle.PROGRESS) {
+            builder.setStyle(
+                NotificationCompat.ProgressStyle()
+                    .addProgressSegment(
+                        NotificationCompat.ProgressStyle.Segment(plan.totalSeconds),
+                    )
+                    .setProgress(plan.progressSeconds),
+            )
         }
         return builder.build()
     }
@@ -444,9 +593,16 @@ class StudyTimerService : Service() {
         return builder.build()
     }
 
-    /** v43'teki kaçış valfi: true ana ürün paneli, false işlevsel standart bildirim. */
-    private fun useV43CustomPanel(): Boolean =
-        prefs().getBoolean(KEY_PANEL_EXPANDED, true)
+    /**
+     * WP-753 geri dönüş valfi: `true` = v43 zengin özel panel, yazılmamış/`false`
+     * = Live Update yolu. Varsayılan artık **Live Update**; sahip beğenmezse tek
+     * bayrakla eski panele dönülür. (Ayarlar arayüzü ayrı WP — Dart l10n
+     * katalogları bu turda başka bir lane'de.)
+     *
+     * Karar dosya düzeyindeki saf [useV43CustomPanel] içindedir; cihazsız JVM
+     * testi anahtarın yokluğunu da ölçebilsin diye.
+     */
+    private fun useV43CustomPanel(): Boolean = useV43CustomPanel(prefs())
 
     private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
@@ -485,7 +641,7 @@ class StudyTimerService : Service() {
 
     private fun baseBuilder(): NotificationCompat.Builder =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(TIMER_NOTIFICATION_SMALL_ICON)
             .setContentText("")
             .setOnlyAlertOnce(true)
             .setSound(null)
@@ -586,8 +742,7 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
-        /** v43 custom panel varsayılandır; false yalnız cihaz sorununda fallback'tir. */
-        private const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
+
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
             context: Context,

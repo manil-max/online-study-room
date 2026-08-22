@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Samsung One UI'da doğrulanan tek satır sayaç: solda HH:MM:SS,
      sağda doğrudan Başlat/Durdur. Sistem aksiyonları kullanılmaz; One UI bunları
-     ikinci satırda Break/Stop olarak çizdiği için ürün tasarımını bozuyordu. -->
+     ikinci satırda Break/Stop olarak çizdiği için ürün tasarımını bozuyordu.
+
+     WP-753: bu panel artık VARSAYILAN değil, `timer_panel_expanded=true` ile
+     seçilen geri dönüş yoludur (özel görünüm taşıdığı için Live Update terfisi
+     alamaz). Geri dönüş yolu olarak durduğuna göre okunabilir durmalı:
+     🔴 ham `#FFFFFFFF` / `#FFFFD8A6` literalleri KALDIRILDI. Bildirim gölgesinin
+     teması cihazın/OEM'in kararıdır; açık temada beyaz metin görünmez oluyordu.
+     WP-205 (1d9db60d) bunu bir kez düzeltmiş, WP-206 (5792d759) 26 dakika sonra
+     geri almıştı. Renk artık sistem bildirim TextAppearance'ından ve tema
+     niteliklerinden gelir (light/dark uyumlu). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -21,7 +30,7 @@
         android:gravity="start|center_vertical"
         android:maxLines="1"
         android:text="00:00:00"
-        android:textColor="#FFFFFFFF"
+        android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
         android:textSize="26sp"
         android:textStyle="bold" />
 
@@ -37,7 +46,7 @@
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:text="@string/action_stop"
-        android:textColor="#FFFFD8A6"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="15sp"
         android:textStyle="bold" />
 </LinearLayout>

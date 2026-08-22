@@ -3,6 +3,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ kalıcı sayaç bildirimi için kullanıcı izni gerekir. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- WP-753: Android 16 Live Update. Kullanıcının kendi başlattığı, belirli bir
+         başı ve sonu olan sayaç bildirimi terfi (promoted ongoing) isteyebilsin
+         diye ZORUNLU olan çalışma-zamanı-dışı izin. Eski platform revizyonlarında
+         sabit tanımlı değildir; tanınmayan uses-permission yok sayılır, derlemeyi
+         kırmaz. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- WP-110: REQUEST_INSTALL_PACKAGES main'de YOK.
          Yalnız GitHub sideload source set (stable/beta) ekler; play flavor almaz. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

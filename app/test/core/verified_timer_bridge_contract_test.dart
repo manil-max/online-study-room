@@ -101,7 +101,24 @@ void main() {
     );
   });
 
-  test('running timer uses the stable custom One UI notification panel', () {
+  // 🔴 WP-753 — KARAR İPTALİ, kapı yön değiştirdi.
+  //
+  // Bu test eskiden Live Update kodunun YAZILMASINI yasaklıyordu:
+  //   :115  expect(manifest, isNot(contains('POST_PROMOTED_NOTIFICATIONS')));
+  //   :140  expect(service, isNot(contains('.setRequestPromotedOngoing(true)')));
+  //   :141  expect(service, isNot(contains('hasPromotableCharacteristics')));
+  //
+  // Üçünü de `3bdf8bb8` (2026-07-22 23:50) yazdı — yani terfi denemesini
+  // (`c6110404`, aynı gün 19:52) geri alan commit'in KENDİSİ. Deneme cihazda
+  // hiç ölçülmeden 3 saat 58 dakika sonra silindi ve silinme bir kapıya
+  // çevrildi. O günden sonra doğru yazılmış bir uygulama bile kırmızı düşerdi;
+  // `docs/analiz/WP-751-dinamik-panel-kok-neden.md` bunu K2 kök nedeni olarak
+  // ölçtü. (Belge bu satırları WP-558/`29b37d7c`'ye atfediyor; `git log -S`
+  // düzeltiyor — WP-558 onlara dokunmadı, yalnız komşu iddiaları temizledi.)
+  //
+  // İddia silinmedi, TERSİNE çevrildi: aşağısı artık "terfi isteniyor ve
+  // istendiği yolda özel görünüm yok" sözleşmesini ölçer.
+  test('running timer follows the Android Live Update contract', () {
     final service = File(
       'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
       'StudyTimerService.kt',
@@ -111,20 +128,61 @@ void main() {
     ).readAsStringSync();
     final gradle = File('android/app/build.gradle.kts').readAsStringSync();
 
+    // Compat yolu şart: minSdk 24, ham platform API'sine inilmez.
     expect(gradle, contains('androidx.core:core-ktx:1.18.0'));
-    expect(manifest, isNot(contains('POST_PROMOTED_NOTIFICATIONS')));
+
+    // Resmî şart 5: terfi izni manifestte bildirilmeli.
+    expect(manifest, contains('android.permission.POST_PROMOTED_NOTIFICATIONS'));
+
+    // Resmî şart 6: terfi açıkça istenmeli.
+    expect(
+      service,
+      contains('.setRequestPromotedOngoing(plan.requestPromotedOngoing)'),
+    );
+
+    // 🔴 Resmî şart 2 (ANA BLOKAJ): terfi istenen bildirim `customContentView`
+    // TAŞIYAMAZ. Karşılıklı dışlama kodda tek satırda yazılı olmalı ki bir
+    // sonraki tur ikisini yeniden aynı bildirime yüklemeye çalışmasın.
+    expect(
+      service,
+      contains('get() = !usesCustomView'),
+      reason:
+          'Terfi ile ozel gorunum birbirini disliyor; bu kural kodda tek '
+          'yerde yazili olmali (WP-751 K1).',
+    );
+
+    // Resmî şart 3: `contentTitle` dolu olmalı — eskiden `setContentTitle("")`.
+    expect(service, contains('.setContentTitle(getString(plan.titleRes))'));
+
+    // Resmî şart 1: stil Standard veya ProgressStyle.
+    expect(service, contains('NotificationCompat.ProgressStyle()'));
+    expect(service, contains('TimerNotificationStyle.STANDARD'));
+
+    // Çip metni: açık uçlu kronometrede `when` geçmişte kalır, çip süreyi
+    // çizemez → kısa kritik metin şart.
+    expect(service, contains('.setShortCriticalText('));
+
+    // Durum çubuğu ikonu monokrom vektör; renkli launcher ikonu değil.
+    expect(service, contains('R.drawable.ic_stat_focus_timer'));
+    expect(
+      service,
+      isNot(contains('setSmallIcon(R.mipmap.ic_launcher)')),
+      reason:
+          'Durum cubugu/cip ikonu monokrom vektor olmali; adaptif launcher '
+          'ikonu yanlis turdur.',
+    );
+
+    // Geri dönüş valfi: v43 zengin panel hâlâ derlenir ve `true` yazılırsa
+    // koşar; ama artık varsayılan DEĞİL (eskiden default true idi ve anahtarı
+    // yazan kod olmadığı için standart dal ulaşılamazdı).
     expect(
       service,
       contains('RemoteViews(packageName, R.layout.timer_notification)'),
     );
     expect(service, contains('.setCustomContentView(custom)'));
     expect(service, contains('.setCustomBigContentView(custom)'));
-    expect(service, contains('KEY_PANEL_EXPANDED'));
-    expect(service, contains('prefs().getBoolean(KEY_PANEL_EXPANDED, true)'));
-    // WP-558: v43 ayrimi artik OLU tani sabitleriyle degil, iki yolun
-    // kendi cagrilariyla korunur; `PRESENTATION_*` yalnizca okunmayan bir
-    // Bundle ekstrasina yaziliyordu.
-    expect(service, contains('if (useV43CustomPanel()) {'));
+    expect(service, contains('prefs.getBoolean(KEY_PANEL_EXPANDED, false)'));
+    expect(service, contains('if (plan.usesCustomView) {'));
     expect(
       service,
       contains(
@@ -136,9 +194,6 @@ void main() {
       service,
       contains('views.setChronometer(\n            R.id.notif_timer_elapsed,\n            base,\n            null,\n            true,'),
     );
-    expect(service, contains('R.mipmap.ic_launcher'));
-    expect(service, isNot(contains('.setRequestPromotedOngoing(true)')));
-    expect(service, isNot(contains('hasPromotableCharacteristics')));
     expect(
       File(
         'android/app/src/main/res/layout/timer_notification.xml',
@@ -147,7 +202,41 @@ void main() {
     );
   });
 
-  test('v43 fixture keeps the custom main path and standard fallback separate', () {
+  // WP-753: geri dönüş paneli okunabilir kalmalı. WP-205 (1d9db60d) bunu bir
+  // kez düzeltmiş, WP-206 (5792d759) 26 dakika sonra geri almıştı; bugün geri
+  // alınmış hâl canlıydı. Ham beyaz literal, açık temalı bildirim gölgesinde
+  // beyaz üstüne beyaz demektir.
+  test('fallback timer panel takes its colors from the theme, not literals', () {
+    final layout = File(
+      'android/app/src/main/res/layout/timer_notification.xml',
+    ).readAsStringSync();
+    final pill = File(
+      'android/app/src/main/res/drawable/timer_pill_bg.xml',
+    ).readAsStringSync();
+
+    expect(
+      layout,
+      contains('@style/TextAppearance.Compat.Notification.Title'),
+      reason: 'Kronometre rengi sistem bildirim TextAppearance\'indan gelmeli.',
+    );
+    expect(layout, contains('?android:attr/textColorPrimary'));
+    expect(pill, contains('?android:attr/colorControlHighlight'));
+
+    // Renk NİTELİĞİ ham hex taşıyamaz. (Yorum metni tarihi anlatmak için
+    // eski literalleri anabilir; ölçülen şey gerçekten çizilen değerdir.)
+    final hardCodedColor = RegExp(r'android:(textColor|color)="#');
+    for (final entry in {'timer_notification.xml': layout, 'timer_pill_bg.xml': pill}.entries) {
+      expect(
+        hardCodedColor.hasMatch(entry.value),
+        isFalse,
+        reason:
+            '${entry.key} ham renk literali tasiyor: acik temada '
+            'gorunmezlik hatasi geri gelir (WP-205 -> WP-206 sarkaci).',
+      );
+    }
+  });
+
+  test('fixture records the live update main path and the v43 fallback', () {
     final fixture = File(
       'test/fixtures/timer_notification_v43_contract.json',
     ).readAsStringSync();
@@ -156,16 +245,19 @@ void main() {
       'StudyTimerService.kt',
     ).readAsStringSync();
 
-    expect(fixture, contains('"defaultPresentation": "v43_custom_panel"'));
-    expect(fixture, contains('"fallbackPresentation": "standard_fallback"'));
-    expect(fixture, contains('"promotedNowBar": "not_requested"'));
+    // WP-753: iki yolun rolleri YER DEĞİŞTİRDİ. `"promotedNowBar":
+    // "not_requested"` satırını `a2884611` (WP-272) yazmış ve kararı
+    // fixture'a çakmıştı; terfi artık isteniyor.
+    expect(fixture, contains('"defaultPresentation": "live_update"'));
+    expect(fixture, contains('"fallbackPresentation": "v43_custom_panel"'));
+    expect(fixture, contains('"promotedOngoing": "requested"'));
     expect(fixture, contains('"hourBoundaryFormat"'));
     expect(service, isNot(contains('"00:%s"')));
     expect(service, isNot(contains('chronometerFormatHandler')));
     expect(service, contains('.setUsesChronometer(true)'));
-    expect(service, contains('.setChronometerCountDown(false)'));
+    // Geri sayımda `when` GELECEKTEDİR; çip canlı sayıyı oradan çizer.
+    expect(service, contains('.setChronometerCountDown(plan.countDown)'));
     // WP-558: tani ekstralari her bildirime yaziliyordu, okuyucusu yoktu.
-    // Fixture v43 kararini belgelemeye devam eder; kod artik tasimaz.
     expect(service, isNot(contains('EXTRA_PROMOTED_NOW_BAR')));
     expect(service, isNot(contains('EXTRA_TIMER_PRESENTATION')));
   });

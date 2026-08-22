@@ -1,12 +1,28 @@
 {
-  "schemaVersion": 1,
-  "defaultPresentation": "v43_custom_panel",
+  "schemaVersion": 2,
+  "wp": "WP-753",
+  "defaultPresentation": "live_update",
+  "liveUpdateContract": [
+    "no_custom_remote_view",
+    "non_empty_content_title",
+    "standard_style_for_stopwatch",
+    "progress_style_for_targeted_mode",
+    "ongoing",
+    "channel_importance_at_least_default",
+    "manifest_post_promoted_notifications",
+    "monochrome_status_icon"
+  ],
+  "chipText": {
+    "stopwatch": "short_critical_text",
+    "targeted": "chronometer_countdown_from_future_when"
+  },
   "layout": "timer_notification",
   "runningHierarchy": ["elapsed_chronometer", "direct_stop_or_return_action"],
   "hourBoundaryFormat": ["MM:SS below one hour", "H:MM:SS at and above one hour", "no clipped duplicate hour prefix"],
   "idleHierarchy": ["00:00:00", "direct_start_action"],
-  "fallbackPresentation": "standard_fallback",
-  "fallbackContract": ["ongoing_chronometer", "native_action", "no_custom_remote_view"],
-  "promotedNowBar": "not_requested",
+  "fallbackPresentation": "v43_custom_panel",
+  "fallbackSwitch": "flutter.timer_panel_expanded=true",
+  "fallbackContract": ["custom_remote_view", "theme_attribute_colors_only", "not_promotable"],
+  "promotedOngoing": "requested",
   "deviceScreenshot": "required_in_samsung_device_qa"
 }
