@@ -7,14 +7,20 @@ import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/tab_action_bar.dart';
 import '../../core/widgets/app_pull_to_refresh.dart';
 
+import '../../data/models/study_group.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import '../classroom/widgets/class_switcher.dart';
 import '../classroom/widgets/group_discovery_screen.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
+import 'widgets/stats_range_navigator.dart';
+
+/// Sekme sırası: 0 Kişisel, 1 Grup.
+const int kStatsGroupTabIndex = 1;
 
 /// İstatistik sekmesi: Kişisel + Grup (klasik ListView — WP-170).
 /// Özelleştirilebilir ızgara kaldırıldı; zenginleştirme WP-175 planında.
@@ -43,7 +49,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final desktop = isDesktopWindow;
     final tabs = <Widget>[
       Tab(text: l10n.statsKisisel),
-      Tab(text: l10n.statsGrup),
+      // WP-743: grup sekmesi aynı zamanda grup değiştiricidir; "Değiştir"
+      // düğmesini kartın içinde aramak yerine sekmenin okuna dokunulur.
+      // Yükseklik 48'e çıkıyor çünkü ok gerçek bir dokunma hedefi.
+      Tab(height: 48, child: _GroupTabLabel(label: l10n.statsGrup)),
     ];
     const body = AppPullToRefresh(
       child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
@@ -78,6 +87,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         tabs: tabs,
                       ),
                       const StatsPeriodBar(),
+                      // Tek gezinme çubuğu iki sekmenin ORTAK'ıdır: dönem
+                      // seçimi zaten paylaşılıyor, kopyası sekme başına
+                      // ayrı bir "nerede olduğun" doğurur.
+                      const StatsRangeNavigator(),
                       const Expanded(child: body),
                     ],
                   ),
@@ -87,6 +100,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const StatsPeriodBar(),
+                  const StatsRangeNavigator(),
                   // 🔴 WP-550: sarmalayıcı dönem şeridinin **altında** durur,
                   // böylece spinner şeridi örtmez. `AppPullToRefresh` yalnız
                   // dikey eksen bildirimlerini dinlediği için sekmeler arası
@@ -99,6 +113,79 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
     // 🔴 WP-417: dönem tanıtım turu kaldırıldı (sahip isteğini geri aldı).
     return page;
+  }
+}
+
+/// "Grup" sekmesi: metin + aşağı ok. Ok, katılınan grupları **basılan yerde**
+/// listeler (`showClassSwitcher(..., switchOnly: true)` — §3.12; yeni bir menü
+/// yazılmadı, Sınıflar sekmesindeki menünün ta kendisi kullanılıyor, o yüzden
+/// seçim `activeGroupIdProvider` üzerinden iki sekmede de aynı grubu gösterir).
+///
+/// Sekme seçili DEĞİLKEN metne dokunmak normal sekme geçişidir; menü açılmaz.
+/// Seçiliyken metin de menüyü açar (kullanıcı zaten oradadır).
+class _GroupTabLabel extends ConsumerWidget {
+  const _GroupTabLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = DefaultTabController.of(context);
+    // 🔴 Bu `watch` süs değil, çubuğun ÇALIŞMA koşulu. `TabBarView` yalnız
+    // görünen sekmeyi kurar; Kişisel sekmesindeyken `_ClassTab` hiç
+    // build edilmez ve `userGroupsProvider`ı dinleyen kimse kalmaz. Riverpod 3
+    // dinleyicisiz provider'ı ayakta tutmadığı için `showClassSwitcher`
+    // içindeki `ref.read` taze bir `AsyncLoading` görüp menüyü BOŞ açıyordu
+    // (ölçüldü: `statsGroupTabCaret` → "Henüz grup yok").
+    final groups = ref.watch(userGroupsProvider).value ?? const <StudyGroup>[];
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final selected = controller.index == kStatsGroupTabIndex;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Builder(
+                builder: (textContext) => GestureDetector(
+                  onTap: selected && groups.isNotEmpty
+                      ? () => showClassSwitcher(
+                          textContext,
+                          ref,
+                          switchOnly: true,
+                        )
+                      : null,
+                  child: Text(label, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ),
+            // Menü basılan düğmeye göre konumlanır, bu yüzden
+            // `showClassSwitcher` düğmenin **kendi** context'ini almalı
+            // (`class_switcher.dart`, `classroom_screen.dart` deseni).
+            //
+            // Grubu olmayan kullanıcıya ok çizilmez: geçilecek grup yokken
+            // açılan bir "grup değiştirici" ölü anahtardır.
+            if (groups.isNotEmpty)
+              Builder(
+                builder: (caretContext) => IconButton(
+                  key: const Key('statsGroupTabCaret'),
+                  icon: const Icon(Icons.arrow_drop_down),
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  visualDensity: VisualDensity.standard,
+                  tooltip: AppLocalizations.of(context).classroomGrupDegistir,
+                  onPressed: () =>
+                      showClassSwitcher(caretContext, ref, switchOnly: true),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }
 

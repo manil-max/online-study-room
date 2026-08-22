@@ -28,6 +28,7 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 import 'package:online_study_room/features/classroom/widgets/clock_style.dart';
 import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
+import 'package:online_study_room/features/stats/widgets/stats_range_navigator.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 Widget _app({required Widget child, String locale = 'tr'}) => MaterialApp(
@@ -39,6 +40,11 @@ Widget _app({required Widget child, String locale = 'tr'}) => MaterialApp(
 
 /// Kamp ateşi sahnesi: enjekte saat + sabit `startedAt` → deterministik süre.
 final _sceneNow = DateTime(2026, 7, 28, 12);
+
+/// Gezinme çubuğunun saati: 11 Mart 2026, Çarşamba. Düz bir GÜN ANAHTARI
+/// olduğu için `istanbul_calendar` onu çevirmeden döndürür — iddialar
+/// koşucunun saat diliminden bağımsız kalır.
+final _navNow = DateTime(2026, 3, 11);
 final _studyStart = DateTime(2026, 7, 28, 11, 30); // → 00:30:00
 
 Widget _campfireHarness() {
@@ -274,12 +280,19 @@ void main() {
     });
   });
 
-  group('WP-554 (2) dönem seridinde ileri/geri gezinme', () {
+  group('WP-554 (2) ileri/geri gezinme (kabuk: WP-743)', () {
     late ProviderContainer container;
 
+    /// 🔴 WP-743: okların ve başlığın yeri değişti — artık dönem şeridinin
+    /// İÇİNDE değil, altındaki [StatsRangeNavigator] içindeler (şerit yalnız
+    /// dönem TÜRÜNÜ seçer). Bu grubun DAVRANIŞ iddiaları aynen korunuyor;
+    /// yalnız montaj yeri güncellendi. Okların şeritte OLMADIĞI ayrıca
+    /// `stats_range_navigator_wp743_test.dart`te ölçülür.
     Future<void> pumpBar(WidgetTester tester) async {
       container = ProviderContainer();
       addTearDown(container.dispose);
+      // Dinleyicisiz provider Riverpod 3'te her `read`de yeniden kurulur.
+      container.listen(statsPeriodProvider, (_, _) {});
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -287,7 +300,14 @@ void main() {
             locale: const Locale('tr'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(body: StatsPeriodBar()),
+            home: Scaffold(
+              body: Column(
+                children: [
+                  const StatsPeriodBar(),
+                  StatsRangeNavigator(clock: () => _navNow),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -296,8 +316,8 @@ void main() {
     IconButton nextButton(WidgetTester tester) =>
         tester.widget<IconButton>(find.byKey(const Key('statsPeriodNav_next')));
 
-    /// Seçili chip metni = dönem başlığı. Gezinildiğinde "Hafta" yerine
-    /// "Geçen hafta" yazar; kullanıcı nerede olduğunu buradan bilir.
+    /// Gezinme çubuğunun başlık düğmesindeki metin: kullanıcı nerede olduğunu
+    /// buradan bilir ("Bu hafta" / "Geçen hafta" / "3 Ağu – 9 Ağu").
     String title(WidgetTester tester) =>
         tester.widget<Text>(find.byKey(const Key('statsPeriodNavTitle'))).data!;
 
@@ -308,8 +328,16 @@ void main() {
       final now = DateTime(2026, 3, 11, 15, 30); // Çarşamba
 
       expect(container.read(statsPeriodProvider).period, StatsPeriod.week);
-      // Bugündeyken seçili chip kendi adını taşır (WP-190 sözleşmesi).
-      expect(title(tester), 'Hafta');
+      // İçinde bulunulan dönemde başlık konuşma dilindedir.
+      expect(title(tester), 'Bu hafta');
+      // Şerit chip'i ise HER ZAMAN düz dönem adını yazar (WP-743).
+      expect(
+        find.descendant(
+          of: find.byType(StatsPeriodBar),
+          matching: find.text('Hafta'),
+        ),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byKey(const Key('statsPeriodNav_prev')));
       await tester.pump();
@@ -355,7 +383,7 @@ void main() {
       await tester.pump();
       expect(container.read(statsPeriodProvider).offset, 0);
       expect(nextButton(tester).onPressed, isNull, reason: 'sınıra döndük');
-      expect(title(tester), 'Hafta');
+      expect(title(tester), 'Bu hafta');
     });
 
     test('geleceğe taşma 0da kırpılır', () {
@@ -406,7 +434,7 @@ void main() {
       container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.month);
       await tester.pump();
       expect(container.read(statsPeriodProvider).offset, 0);
-      expect(title(tester), 'Ay');
+      expect(title(tester), 'Bu ay');
     });
 
     testWidgets('gezinme okları Tümü/Özel modunda çizilmez', (tester) async {
@@ -443,10 +471,11 @@ void main() {
       await tester.pump();
       // "Bu ay/Geçen ay" dışına çıkınca ay adı + yıl yazar (yerelin CLDR
       // biçimi); kullanıcı nerede olduğunu bilir.
-      final now = DateTime.now();
-      final target = DateTime(now.year, now.month - 2, 1);
-      expect(title(tester), contains(target.year.toString()));
-      expect(title(tester), isNot('Geçen ay'));
+      //
+      // 🔴 WP-743: beklenti eskiden `DateTime.now()`dan türetiliyordu —
+      // koşum saatine bağlı ve "uygulama = uygulama" bir iddia. Saat artık
+      // enjekte: [_navNow] 11 Mart 2026, iki geri = Ocak 2026.
+      expect(title(tester), 'Ocak 2026');
     });
   });
 }
