@@ -3958,6 +3958,14 @@
   "@statsBugunLider": {
     "description": "Group stats: top-contributing member today (WP-204)"
   },
+  "statsGunAktif": "Active",
+  "@statsGunAktif": {
+    "description": "Group stats: how many members studied on the SELECTED day; period-neutral replacement for statsBugunKatilim, which claimed \"today\" while the card already showed the navigated day (WP-747)"
+  },
+  "statsGunLider": "Leader",
+  "@statsGunLider": {
+    "description": "Group stats: top-contributing member on the SELECTED day; period-neutral replacement for statsBugunLider (WP-747)"
+  },
   "statsBugunkuGrupHedefi": "Today's group goal",
   "@statsBugunkuGrupHedefi": {
     "description": "Stats user-facing text. Source: Bugünkü grup hedefi"

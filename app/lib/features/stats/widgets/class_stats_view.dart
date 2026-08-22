@@ -488,6 +488,12 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           memberColors: memberColors,
           stats: stats,
           days: trendDays,
+          // 🔴 WP-747: pencerenin SONU dönemin sonuna bağlandı. Grafik kendi
+          // içinde `DateTime.now()` kullanıyordu: "Geçen ay"da başlık geçen
+          // ayı yazarken grafik BU ayın sıralama yarışını çiziyordu. Aynı
+          // kusur eğilim grafiğinde WP-746'da (`today: to`) kapanmıştı;
+          // buradaki kapanamamıştı çünkü widget dışarıdan gün almıyordu.
+          endDay: to,
           currentUserId: currentUserId,
           emptyLabel: AppLocalizations.of(
             context,
@@ -731,7 +737,13 @@ class _GroupGaugeCard extends StatelessWidget {
   }
 }
 
-/// WP-204: gauge'un yanındaki boşluğu dolduran bugün-odaklı özet kartı.
+/// WP-204: gauge'un yanındaki boşluğu dolduran gün özeti kartı.
+///
+/// 🔴 WP-747: etiketler "Bugün aktif" / "Bugün lider" idi. WP-746 kartın
+/// VERİSİNİ seçili güne bağlamıştı ama etiketler kalmıştı: "Dün"e gidilince
+/// doğru veri yanlış başlıkla çıkıyordu. Kart yalnız `day` döneminde çizildiği
+/// için hangi güne bakıldığını üstteki gezinme çubuğu yazar; etiketin "bugün"
+/// iddiasında bulunmaması yeterlidir.
 class _GroupTodaySummaryCard extends StatelessWidget {
   const _GroupTodaySummaryCard({
     required this.participants,
@@ -761,7 +773,7 @@ class _GroupTodaySummaryCard extends StatelessWidget {
           children: [
             _MiniStatRow(
               icon: Icons.groups_outlined,
-              label: l10n.statsBugunKatilim,
+              label: l10n.statsGunAktif,
               value: '$participants/$totalMembers',
             ),
             const SizedBox(height: 12),
@@ -777,7 +789,7 @@ class _GroupTodaySummaryCard extends StatelessWidget {
             const SizedBox(height: 12),
             _MiniStatRow(
               icon: Icons.emoji_events_outlined,
-              label: l10n.statsBugunLider,
+              label: l10n.statsGunLider,
               value: topName == null
                   ? '—'
                   : '$topName · ${formatHuman(topSeconds)}',

@@ -18,6 +18,7 @@ class LeaderboardRankChart extends StatelessWidget {
     required this.memberColors,
     required this.stats,
     required this.days,
+    this.endDay,
     required this.currentUserId,
     required this.emptyLabel,
     required this.namelessLabel,
@@ -27,6 +28,17 @@ class LeaderboardRankChart extends StatelessWidget {
   final Map<String, Color> memberColors;
   final List<DailyStat> stats;
   final int days;
+
+  /// Pencerenin SON günü. Saat bileşeni [dayOf] ile düşer.
+  ///
+  /// 🔴 WP-747: pencerenin sonu eskiden widget'ın İÇİNDE `DateTime.now()` ile
+  /// sabitlenmişti, dışarıdan verilemiyordu. "Geçen ay"a gidildiğinde başlık
+  /// geçen ayı yazarken grafik BU ayın sıralama yarışını çiziyordu (aynı
+  /// kusurun grup eğilimi grafiğindeki hâli WP-746'da düzeltildi).
+  ///
+  /// Opsiyoneldir: verilmezse eski davranış (`DateTime.now()`) korunur.
+  final DateTime? endDay;
+
   final String currentUserId;
   final String emptyLabel;
   final String namelessLabel;
@@ -42,8 +54,9 @@ class LeaderboardRankChart extends StatelessWidget {
       return _empty(theme);
     }
 
-    // Pencere: bugüne kadar [days] gün (eski → yeni).
-    final end = dayOf(DateTime.now());
+    // Pencere: [endDay] gününde biten [days] gün (eski → yeni). [endDay]
+    // yoksa bugünde biter.
+    final end = dayOf(endDay ?? DateTime.now());
     final window = [
       for (var i = days - 1; i >= 0; i--) end.subtract(Duration(days: i)),
     ];

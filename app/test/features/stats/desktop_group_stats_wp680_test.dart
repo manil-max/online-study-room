@@ -359,9 +359,9 @@ void main() {
       tr.analyticsCardMemberDonut,
     ];
     final dayOnly = <String>[
-      tr.statsBugunKatilim,
+      tr.statsGunAktif,
       tr.statsHedefeKalan,
-      tr.statsBugunLider,
+      tr.statsGunLider,
     ];
     final allOnly = <String>[
       tr.analyticsCardLeaderboardHistory,

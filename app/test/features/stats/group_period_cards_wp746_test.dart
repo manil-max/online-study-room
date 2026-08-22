@@ -165,7 +165,7 @@ void main() {
       reason: '$label: G3 hedef gostergesi yalniz gun kumesinde.',
     );
     expect(
-      find.text(tr.statsBugunKatilim),
+      find.text(tr.statsGunAktif),
       gauge ? findsOneWidget : findsNothing,
       reason: '$label: G3 gun ozeti gauge ile birlikte gelir/gider.',
     );
