@@ -5,9 +5,9 @@
 // (`lib/data/providers/study_providers.dart:3027` ve `:3046`). Her snapshot
 // 17 anahtarin HEPSINI yazar; ikinci yazim birincinin gercek degerlerini
 // placeholder ile ezer. Sonuc: `StudyStatsWidgetProvider` (daily_goal_percent,
-// `StudyWidgetProviders.kt:227`) ve `GroupGoalWidgetProvider`
-// (group_goal_percent, `:326`) yayina alinirsa kullanici SONSUZA KADAR %0
-// gorur.
+// `StatsWidget.kt`) ve `GroupGoalWidgetProvider`
+// (group_goal_percent, `GroupGoalWidget.kt`) yayina alinirsa kullanici
+// SONSUZA KADAR %0 gorur.
 //
 // Bu dosya kapali bayraga bagimli degildir: olcum, prefs'e dusen son degeri
 // simule eden saf bir birlestirmedir.
@@ -39,12 +39,14 @@ Map<String, Object> _prefsAfterOneStatsSync(
 
 /// Kotlin saglayicilarinin KOSAN satirlarindaki anahtar sabitleri.
 ///
+/// WP-752: tablo (`StudyWidgetKeys`) paylasilan zemine tasindi.
+///
 /// Yorum satirlari disarida birakilir (WP-640 tuzagi): yalniz
 /// `const val Ad = "deger"` biciminde kod satirlari okunur.
 Map<String, String> _kotlinWidgetKeys() {
   final file = File(
     'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/'
-    'StudyWidgetProviders.kt',
+    'WidgetCommon.kt',
   );
   expect(file.existsSync(), isTrue, reason: '${file.path} yok');
   final pattern = RegExp(r'^\s*const val (\w+) = "([^"]+)"');

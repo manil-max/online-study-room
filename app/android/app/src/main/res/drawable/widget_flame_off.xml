@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 (§4.2): seri alevi - seri yok / bugun kirik.
+
+     🔴 UC AYRI DOSYA, tek dosya + renk filtresi DEGIL. Boylece secim saf bir
+     fonksiyon olur (`flameResFor(streak, goalMet) -> Int`) ve JVM testinde
+     olculur; `setColorFilter` yolu hem kirilgan hem test edilemezdi. Ayni
+     gerekce `WidgetDesign.kt`teki doktrinin aynisidir.
+     Kullanim: `setImageViewResource`. Boyutlar 12dp (K2 satir ici), 16dp (K3),
+     20dp (K4). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/widget_ember_ash"
+        android:pathData="M12,2.8 C15.6,7 17.6,10 17.6,13.2 A5.6,5.6 0 0,1 6.4,13.2 C6.4,10 8.4,7 12,2.8 Z" />
+</vector>

@@ -8,11 +8,22 @@
 // Bu dosya izlenimi SAYIYA cevirir. Olculen sey iki katman:
 //
 //   A) Paylasilan gorsel dil (WP-718/719 de kullanacak):
-//      `values/widget_design.xml` + `values-night/widget_design.xml` renk/olcu
-//      simgeleri ve `res/drawable/widget_*` cizimleri. Renkler UYGULAMA temasindan
-//      da DUVAR KAGIDINDAN da bagimsiz sabit degerlerdir (bu depoda "kirmizi rozet
-//      kirmizi temada kayboluyor" kusuru yasandi); okunurluk WCAG kontrast orani
-//      hesaplanarak dogrulanir - "guzel gorunuyor" bir iddia degildir.
+//      `values/widget_design.xml` renk/olcu simgeleri ve `res/drawable/widget_*`
+//      cizimleri. Renkler UYGULAMA temasindan da DUVAR KAGIDINDAN da bagimsiz
+//      sabit degerlerdir (bu depoda "kirmizi rozet kirmizi temada kayboluyor"
+//      kusuru yasandi); okunurluk WCAG kontrast orani hesaplanarak dogrulanir -
+//      "guzel gorunuyor" bir iddia degildir.
+//
+//      🔴 WP-752 - SOZLESME DEGISTI: palet TEKtir ve KOYUdur.
+//      `values-night/widget_design.xml` KALDIRILDI; widget her sistem
+//      temasinda koyu cizilir. Gerekce (tasarim sistemi §2.1): uygulamanin
+//      kendi varsayilan temasi `campfire_night`, yani acik temada krem bir
+//      kart cizmek widget'i uygulamanin degil launcher'in parcasi yapiyordu;
+//      ayrica iki palet her kontrast iddiasinin iki kez kanitlanmasini
+//      gerektiriyordu ve bir simgenin bir temada unutulmasi HICBIR DERLEME
+//      HATASI uretmiyordu. Bu dosyadaki "iki tema ayni ad kumesini tasir"
+//      iddiasi bu yuzden "ikinci bir palet dosyasi ACILAMAZ" ile degistirildi -
+//      ayni sinif regresyonu daha ucuza yakalar.
 //
 //   B) Geri sayim widget'i: uc sinav birden, uygulamadaki `dday_card.dart` ile
 //      ayni siralama/oncelik sozlesmesi, ve gercekten CIZILEN bir yay.
@@ -72,6 +83,19 @@ double _luminance(String hex) {
   return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
 }
 
+/// `@color/widget_ember_x` alias'ini ayni dosyadaki hex degere cozer.
+/// Cozulemeyen deger oldugu gibi doner (iddia orada kirmizi duser).
+String _resolve(Map<String, String> palette, String value) {
+  var current = value;
+  for (var hop = 0; hop < 4; hop++) {
+    if (!current.startsWith('@color/')) return current;
+    final next = palette[current.substring('@color/'.length)];
+    if (next == null) return current;
+    current = next;
+  }
+  return current;
+}
+
 double _contrast(String a, String b) {
   final la = _luminance(a);
   final lb = _luminance(b);
@@ -80,8 +104,21 @@ double _contrast(String a, String b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/// Gorsel dilin **paylasilan** simgeleri. WP-718/719 bu adlari kullanacak;
+/// WP-752 paleti: **alti opak simge** (tasarim sistemi §2.2). Tum widget
+/// renkleri buradan turer; yeni renk uretilmez.
+const Map<String, String> _emberPalette = <String, String>{
+  'widget_ember_night': 'kart zemini (opak) — kontrast referansi',
+  'widget_ember_ash': 'YALNIZ grafik: yay izi, ayrac, kenar, halka',
+  'widget_ember_flame': 'birincil vurgu: kahraman sayi, dolu yay, eylem hapi',
+  'widget_ember_glow': 'ikincil vurgu: seri alevi, 1. sira',
+  'widget_ember_ink': 'ana metin',
+  'widget_ember_ink_dim': 'yardimci metin / etiket',
+};
+
+/// Gorsel dilin **paylasilan** simgeleri. WP-718/719 bu adlari kullanir;
 /// listeden bir ad dusurulurse iki widget birden sessizce eski duz metne doner.
+/// WP-752'de bunlar palete ALIAS oldu: deger tek kaynaktan gelir, ayni hex iki
+/// yerde yazilmaz.
 const List<String> _designColors = <String>[
   'widget_design_surface',
   'widget_design_ink',
@@ -107,23 +144,59 @@ const List<String> _designDrawables = <String>[
 
 void main() {
   group('WP-717 A · paylasilan gorsel dil kaynaklari', () {
-    test('acik ve koyu tema AYNI simge kumesini tanimlar', () {
-      final light = _colors(_read('$_resDir/values/widget_design.xml'));
-      final dark = _colors(_read('$_resDir/values-night/widget_design.xml'));
-
-      for (final name in _designColors) {
-        expect(light.containsKey(name), isTrue, reason: 'acik temada $name yok');
-        expect(dark.containsKey(name), isTrue, reason: 'koyu temada $name yok');
+    test('🔴 palet TEKtir: ikinci bir tema dosyasi ACILAMAZ', () {
+      // Eski iddia `values` ile `values-night` ad kumelerini karsilastiriyordu.
+      // WP-752'de `values-night/widget_design.xml` KALDIRILDI (§2.1), yani o
+      // karsilastirma konusuz kaldi. Ayni sinif regresyonu -- bir simgenin bir
+      // temada eksik kalmasi ve HICBIR DERLEME HATASI uretmemesi -- artik
+      // "ikinci palet dosyasi yok" ile yakalanir.
+      for (final path in const <String>[
+        '$_resDir/values-night/widget_design.xml',
+        '$_resDir/values-v31/widget_design.xml',
+        '$_resDir/values/widget_colors.xml',
+        '$_resDir/values-night/widget_colors.xml',
+        '$_resDir/values-v31/widget_colors.xml',
+      ]) {
+        expect(
+          File(path).existsSync(),
+          isFalse,
+          reason: '$path geri geldi: tek koyu kimlik sozlesmesi kirildi',
+        );
       }
-      // Bir tarafta tanimlanip digerinde unutulan simge, gece modunda okunmaz
-      // metin uretir; iki dosya birebir ayni ad kumesini tasimali.
-      expect(dark.keys.toSet(), light.keys.toSet());
+
+      final palette = _colors(_read('$_resDir/values/widget_design.xml'));
+      for (final name in _emberPalette.keys) {
+        expect(
+          palette.containsKey(name),
+          isTrue,
+          reason: '$name paletten dusmus (${_emberPalette[name]})',
+        );
+        expect(
+          RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(palette[name]!),
+          isTrue,
+          reason: '$name sabit #RRGGBB degil: ${palette[name]}',
+        );
+      }
+      // WP-717 adlari korunur; dokuz duzen ve mevcut cizimler onlari kullanir.
+      for (final name in _designColors) {
+        expect(palette.containsKey(name), isTrue, reason: '$name yok');
+        expect(
+          RegExp(r'^#[0-9A-Fa-f]{6}$')
+              .hasMatch(_resolve(palette, palette[name]!)),
+          isTrue,
+          reason: '$name palete cozulemiyor: ${palette[name]}',
+        );
+      }
 
       final dimens = _dimens(_read('$_resDir/values/widget_design.xml'));
       for (final name in _designDimens) {
         expect(dimens.containsKey(name), isTrue, reason: 'olcu $name yok');
         expect(dimens[name], endsWith('dp'), reason: '$name dp olmali');
       }
+      // §2.6: kart yaricapi KADEMEYE baglidir. K1'de kart 40x40dp'dir; tek
+      // deger (22dp) koselerin TAMAMINI yiyordu.
+      expect(dimens['widget_design_corner'], '20dp');
+      expect(dimens['widget_design_corner_tight'], '12dp');
     });
 
     test('🔴 renkler TEMA PALETINDEN bagimsiz sabit degerdir', () {
@@ -132,71 +205,116 @@ void main() {
       // Ayni tuzagin Android tarafindaki hali `@android:color/system_*`
       // (Material You) referanslaridir: duvar kagidi renk verir, kontrasti
       // kimse olcmez. Gorsel dil bu yuzden SABIT hex tasir.
-      for (final dir in const ['values', 'values-night']) {
-        // Yorumlar elenir: bu dosyalarin yorumu tuzagi ANLATIYOR, uygulamiyor.
-        final raw = _stripComments(_read('$_resDir/$dir/widget_design.xml'));
+      //
+      // Yorumlar elenir: bu dosyanin yorumu tuzagi ANLATIYOR, uygulamiyor.
+      final raw = _stripComments(_read('$_resDir/values/widget_design.xml'));
+      expect(
+        raw.contains('@android:color/'),
+        isFalse,
+        reason: 'values/widget_design.xml sistem paletine bagli',
+      );
+      final palette = _colors(raw);
+      for (final entry in palette.entries) {
+        final resolved = _resolve(palette, entry.value);
         expect(
-          raw.contains('@android:color/'),
-          isFalse,
-          reason: '$dir/widget_design.xml sistem paletine bagli',
-        );
-        for (final entry in _colors(raw).entries) {
-          expect(
-            RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(entry.value),
-            isTrue,
-            reason: '${entry.key} sabit #RRGGBB degil: ${entry.value}',
-          );
-        }
-      }
-      // values-v31 (Android 12+ dinamik renk) gorsel dili EZMEMELI.
-      final v31 = File('$_resDir/values-v31/widget_design.xml');
-      if (v31.existsSync()) {
-        final overridden = _colors(v31.readAsStringSync()).keys;
-        expect(
-          overridden.where(_designColors.contains),
-          isEmpty,
-          reason: 'dinamik renk gorsel dil simgesini eziyor',
+          RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(resolved),
+          isTrue,
+          reason: '${entry.key} sabit #RRGGBB degil: ${entry.value}',
         );
       }
     });
 
-    test('🔴 kontrast OLCULDU: her iki temada da okunur', () {
-      for (final dir in const ['values', 'values-night']) {
-        final c = _colors(_read('$_resDir/$dir/widget_design.xml'));
-        final surface = c['widget_design_surface']!;
+    test('🔴 kontrast OLCULDU: tek koyu palet, alti simge', () {
+      final palette = _colors(_read('$_resDir/values/widget_design.xml'));
+      String hex(String name) => _resolve(palette, palette[name]!);
 
-        // Kritik metin: WCAG AA = 4.5.
-        expect(
-          _contrast(c['widget_design_ink']!, surface),
-          greaterThanOrEqualTo(4.5),
-          reason: '$dir: ana metin yuzeyde okunmuyor',
-        );
-        expect(
-          _contrast(c['widget_design_ink_muted']!, surface),
-          greaterThanOrEqualTo(4.5),
-          reason: '$dir: ikincil metin yuzeyde okunmuyor',
-        );
-        // Vurgu rengi hem buyuk sayiyi hem yayin dolu kismini cizer:
-        // metin olarak 4.5, grafik olarak (WCAG 1.4.11) 3.0 gerekir.
-        expect(
-          _contrast(c['widget_design_accent']!, surface),
-          greaterThanOrEqualTo(4.5),
-          reason: '$dir: vurgu rengi yuzeyde kayboluyor',
-        );
-        // Yayin DOLU ve BOS parcasi birbirinden ayirt edilebilmeli; yoksa
-        // ilerleme gostergesi tek renk bir yay olur ve hicbir sey soylemez.
-        expect(
-          _contrast(c['widget_design_accent']!, c['widget_design_track']!),
-          greaterThanOrEqualTo(3.0),
-          reason: '$dir: yayin dolusu ile bosu ayirt edilemiyor',
-        );
-        // Iz de yuzeyden ayrilmali, yoksa yay yariya kadar hic yokmus gibi durur.
-        expect(
-          _contrast(c['widget_design_track']!, surface),
-          greaterThanOrEqualTo(1.3),
-          reason: '$dir: yay izi yuzeyde gorunmuyor',
-        );
-      }
+      final night = hex('widget_ember_night');
+      final ash = hex('widget_ember_ash');
+      final flame = hex('widget_ember_flame');
+      final glow = hex('widget_ember_glow');
+      final ink = hex('widget_ember_ink');
+      final inkDim = hex('widget_ember_ink_dim');
+
+      // Kritik metin: WCAG AA = 4.5.
+      expect(
+        _contrast(ink, night),
+        greaterThanOrEqualTo(4.5),
+        reason: 'ana metin kartta okunmuyor',
+      );
+      expect(
+        _contrast(inkDim, night),
+        greaterThanOrEqualTo(4.5),
+        reason: 'yardimci metin kartta okunmuyor',
+      );
+      // Vurgu rengi hem buyuk sayiyi hem yayin dolu kismini cizer:
+      // metin olarak 4.5, grafik olarak (WCAG 1.4.11) 3.0 gerekir.
+      expect(
+        _contrast(flame, night),
+        greaterThanOrEqualTo(4.5),
+        reason: 'birincil vurgu kartta kayboluyor',
+      );
+      expect(
+        _contrast(glow, night),
+        greaterThanOrEqualTo(4.5),
+        reason: 'ikincil vurgu kartta kayboluyor',
+      );
+
+      // 🔴 IKI YONLU: `ash` grafik icin yeterli (1.4.11 -> 3.0) ama METIN
+      // rengi/zemini DEGILDIR (1.4.3 -> 4.5). Ikinci iddia olmadan biri
+      // `ash`i metin rengi yapar ve hicbir test bunu soylemezdi.
+      expect(
+        _contrast(ash, night),
+        greaterThanOrEqualTo(3.0),
+        reason: 'yay izi / kenar kartta gorunmuyor',
+      );
+      expect(
+        _contrast(ash, night),
+        lessThan(4.5),
+        reason:
+            '`ash` metin esigini gecti: palet degismis, §2.3 kurali yeniden '
+            'okunmali (bugun `ash` bilerek metin rengi DEGIL)',
+      );
+
+      // 🔴 SERT KURAL (§2.3): `flame`/`glow` uzerindeki metin DAIMA `night`.
+      expect(
+        _contrast(ink, flame),
+        lessThan(4.5),
+        reason: '`ink` on `flame` okunur cikti: sert kuralin gerekcesi dustu',
+      );
+      expect(
+        _contrast(ink, glow),
+        lessThan(4.5),
+        reason: '`ink` on `glow` okunur cikti: sert kuralin gerekcesi dustu',
+      );
+      expect(
+        _contrast(night, flame),
+        greaterThanOrEqualTo(4.5),
+        reason: 'eylem hapinin metni okunmuyor',
+      );
+      expect(
+        _contrast(night, glow),
+        greaterThanOrEqualTo(4.5),
+        reason: '1. sira rozetinin rakami okunmuyor',
+      );
+
+      // Yayin DOLU ve BOS parcasi birbirinden ayirt edilebilmeli.
+      // 🔴 OLCULDU ve ESIK DUSTU: yeni palette `flame` / `ash` ayrismasi
+      // 2.53:1'dir (eski krem palette 3.0'in ustundeydi). WCAG 1.4.11'in
+      // istedigi 3:1 grafik nesnenin ZEMINE karsi oranidir ve iki parca da
+      // onu gecer (flame 8.19, ash 3.24); mutual oran ayri bir olcudur ve
+      // burada bilincli olarak 2.5 tabanina baglandi. Palet degisirse bu
+      // sayinin yeniden olculmesi gerekir.
+      expect(
+        _contrast(flame, ash),
+        greaterThanOrEqualTo(2.5),
+        reason: 'yayin dolusu ile bosu ayirt edilemiyor',
+      );
+      // Iz de yuzeyden ayrilmali, yoksa yay yariya kadar hic yokmus gibi durur.
+      expect(
+        _contrast(ash, night),
+        greaterThanOrEqualTo(1.3),
+        reason: 'yay izi yuzeyde gorunmuyor',
+      );
     });
 
     test('cizim kaynaklari var ve gorsel dil simgelerini kullanir', () {

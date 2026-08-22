@@ -2,14 +2,24 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _providerPath =
-    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/StudyWidgetProviders.kt';
-const _designPath =
-    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/WidgetDesign.kt';
-const _countdownPath =
-    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/CountdownWidget.kt';
-const _taskPath =
-    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/TaskWidget.kt';
+const _kotlinDir =
+    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets';
+
+/// 🔴 WP-752: alti saglayici tek dosyadan (`StudyWidgetProviders.kt`) alti ayri
+/// dosyaya bolundu. Bolme SAF TASIMAdir: sinif adlari ve paket degismedi
+/// (`AndroidManifest.xml` onlara tam nitelikli adla referans verir ve bir ad
+/// degisikligi DERLEME HATASI URETMEDEN widget'i oldururdu). Bu dosyanin isi
+/// degismedi; yalnizca hangi metni nerede aradigi degisti.
+const _commonPath = '$_kotlinDir/WidgetCommon.kt';
+const _timerPath = '$_kotlinDir/TimerWidget.kt';
+const _statsPath = '$_kotlinDir/StatsWidget.kt';
+const _leaderboardPath = '$_kotlinDir/LeaderboardWidget.kt';
+const _groupGoalPath = '$_kotlinDir/GroupGoalWidget.kt';
+const _designPath = '$_kotlinDir/WidgetDesign.kt';
+const _countdownPath = '$_kotlinDir/CountdownWidget.kt';
+const _taskPath = '$_kotlinDir/TaskWidget.kt';
+
+const _resDir = 'android/app/src/main/res';
 
 String _read(String path) {
   final file = File(path);
@@ -43,20 +53,22 @@ int _dp(String element, String attribute) {
 
 void main() {
   group('WP-725 · WP-717 gorsel dili', () {
-    late String provider;
+    late String timer;
+    late String statsProvider;
+    late String groupGoalProvider;
+    late String leaderboardProvider;
     late String stats;
     late String groupGoal;
     late String leaderboard;
 
     setUpAll(() {
-      provider = _read(_providerPath);
-      stats = _read('android/app/src/main/res/layout/odak_stats_widget.xml');
-      groupGoal = _read(
-        'android/app/src/main/res/layout/odak_group_goal_widget.xml',
-      );
-      leaderboard = _read(
-        'android/app/src/main/res/layout/odak_leaderboard_widget.xml',
-      );
+      timer = _read(_timerPath);
+      statsProvider = _read(_statsPath);
+      groupGoalProvider = _read(_groupGoalPath);
+      leaderboardProvider = _read(_leaderboardPath);
+      stats = _read('$_resDir/layout/odak_stats_widget.xml');
+      groupGoal = _read('$_resDir/layout/odak_group_goal_widget.xml');
+      leaderboard = _read('$_resDir/layout/odak_leaderboard_widget.xml');
     });
 
     test(
@@ -65,8 +77,6 @@ void main() {
         for (final layout in <String>[stats, groupGoal]) {
           expect(layout, contains('@drawable/widget_card_bg'));
           expect(layout, contains('@color/widget_design_ink'));
-          expect(layout, isNot(contains('@color/widget_stats_surface')));
-          expect(layout, isNot(contains('@color/widget_leaderboard_surface')));
         }
         expect(stats, contains('@color/widget_design_accent'));
         expect(stats, contains('@drawable/widget_progress_bar'));
@@ -75,19 +85,14 @@ void main() {
         // dolgu seklinde tasinir; yay icindeki yuzde okunur `ink` tonuna
         // alindi. Token yine de cizilen zincirde bulunmak ZORUNDA.
         expect(
-          _read('android/app/src/main/res/drawable/widget_arc_fill_shape.xml'),
+          _read('$_resDir/drawable/widget_arc_fill_shape.xml'),
           contains('@color/widget_design_accent'),
         );
 
-        final statsBody = _classBody(
-          provider,
-          'StudyStatsWidgetProvider',
-          'GroupLeaderboardWidgetProvider',
-        );
+        final statsBody = _classBody(statsProvider, 'StudyStatsWidgetProvider');
         final goalBody = _classBody(
-          provider,
+          groupGoalProvider,
           'GroupGoalWidgetProvider',
-          'ClockWidgetProvider',
         );
         expect(statsBody, contains('WidgetDesign.PROGRESS_MAX'));
         expect(statsBody, contains('WidgetDesign.barPercent('));
@@ -116,12 +121,13 @@ void main() {
     );
 
     test('boyut buyudukce bilgi artar; satirlar ayni anda acilmaz', () {
-      expect(provider, contains('fun statsDetailVisible('));
-      expect(provider, contains('fun statsStreakVisible('));
-      expect(provider, contains('fun groupGoalDetailVisible('));
-      expect(provider, contains('fun leaderboardRow2Visible('));
-      expect(provider, contains('fun leaderboardRow3Visible('));
-      expect(provider, contains('height == WidgetHeightClass.TALL'));
+      expect(statsProvider, contains('fun statsDetailVisible('));
+      expect(statsProvider, contains('fun statsStreakVisible('));
+      expect(groupGoalProvider, contains('fun groupGoalDetailVisible('));
+      expect(leaderboardProvider, contains('fun leaderboardRow2Visible('));
+      expect(leaderboardProvider, contains('fun leaderboardRow3Visible('));
+      expect(statsProvider, contains('height == WidgetHeightClass.TALL'));
+      expect(leaderboardProvider, contains('height == WidgetHeightClass.TALL'));
     });
 
     test('siralama duz metin degil: rank hapi, ritim ve kisisel vurgu var', () {
@@ -132,14 +138,17 @@ void main() {
       expect(leaderboard, contains('@drawable/widget_rank_first_bg'));
       expect(leaderboard, contains('@drawable/widget_rank_other_bg'));
       expect(leaderboard, contains('@drawable/widget_card_bg'));
-      expect(provider, contains('leaderboardHighlightedPosition(myRank)'));
-      expect(provider, contains('R.string.widget_you'));
       expect(
-        provider,
+        leaderboardProvider,
+        contains('leaderboardHighlightedPosition(myRank)'),
+      );
+      expect(leaderboardProvider, contains('R.string.widget_you'));
+      expect(
+        leaderboardProvider,
         contains('if (row1HasRank) View.VISIBLE else View.GONE'),
       );
-      expect(provider, contains('leaderboardRowHasContent(row2)'));
-      expect(provider, contains('leaderboardRowHasContent(row3)'));
+      expect(leaderboardProvider, contains('leaderboardRowHasContent(row2)'));
+      expect(leaderboardProvider, contains('leaderboardRowHasContent(row3)'));
     });
 
     test('siralama 80/110/150 dp siniflarinda kirpilmaz', () {
@@ -175,6 +184,88 @@ void main() {
         );
       }
     });
+
+    test('sayac kontrol yolu bolme sonrasi ayni dosyada duruyor', () {
+      // Bolme SAF TASIMA olmali: govdeler degismedi.
+      expect(timer, contains('TimerActionReceiver.ACTION_TOGGLE_TIMER'));
+      expect(timer, contains('timerSubjectVisible(size)'));
+      expect(timer, contains('class TimerWidgetProvider : HomeWidgetProvider()'));
+    });
+  });
+
+  // ==========================================================================
+  // 🔴 WP-752 — OLU PALET SILINDI (bu iddia yeniden yazildi, silinmedi)
+  //
+  // Eski hali "duzenler `@color/widget_stats_surface` KULLANMASIN" diyordu.
+  // Olculdu: o simgeleri tanimlayan uc dosya (`values`, `values-night`,
+  // `values-v31` / `widget_colors.xml`) tamamen OLUydu -- hicbir duzen, cizim
+  // ya da Kotlin satiri okumuyordu. Dosyalar silindi, dolayisiyla "kullanma"
+  // iddiasi konusuz kaldi.
+  //
+  // Yerine gecen iddia daha genis: o palet HICBIR YERDE geri gelmemeli ve
+  // widget yigininda tek bir Material You (`@android:color/system_*`)
+  // referansi kalmamali -- silinen `values-v31/widget_colors.xml` yigindaki
+  // TEK dinamik renk referansiydi.
+  // ==========================================================================
+  group('WP-752 · olu palet geri gelmedi', () {
+    const deadSymbols = <String>[
+      'widget_stats_surface',
+      'widget_leaderboard_surface',
+      'widget_heading',
+      'widget_primary_text',
+      'widget_secondary_text',
+    ];
+
+    test('olu kaynak dosyalari yok', () {
+      for (final path in const <String>[
+        '$_resDir/values/widget_colors.xml',
+        '$_resDir/values-night/widget_colors.xml',
+        '$_resDir/values-v31/widget_colors.xml',
+      ]) {
+        expect(
+          File(path).existsSync(),
+          isFalse,
+          reason: '$path geri geldi: olu palet dirildi',
+        );
+      }
+    });
+
+    test('olu simgeler res/ ve kotlin/ agacinda hic gecmiyor', () {
+      final roots = <Directory>[
+        Directory(_resDir),
+        Directory('android/app/src/main/kotlin'),
+      ];
+      final hits = <String>[];
+      for (final root in roots) {
+        for (final entity in root.listSync(recursive: true)) {
+          if (entity is! File) continue;
+          if (!entity.path.endsWith('.xml') && !entity.path.endsWith('.kt')) {
+            continue;
+          }
+          final text = entity.readAsStringSync();
+          for (final symbol in deadSymbols) {
+            if (text.contains(symbol)) hits.add('${entity.path} -> $symbol');
+          }
+        }
+      }
+      expect(hits, isEmpty, reason: 'olu simge geri sizdi: $hits');
+    });
+
+    test('widget yigininda Material You referansi yok', () {
+      // `values/widget_design.xml:17-27` gerekcesi: rengi duvar kagidi secer,
+      // kontrasti kimse olcmez. Silinen `values-v31/widget_colors.xml` bu
+      // yigindaki TEK `@android:color/system_*` referansiydi.
+      final hits = <String>[];
+      for (final entity in Directory(_resDir).listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.xml')) continue;
+        if (!entity.path.contains('widget')) continue;
+        final text = entity
+            .readAsStringSync()
+            .replaceAll(RegExp(r'<!--[\s\S]*?-->'), '');
+        if (text.contains('@android:color/system_')) hits.add(entity.path);
+      }
+      expect(hits, isEmpty, reason: 'dinamik renk widget yiginina girdi: $hits');
+    });
   });
 
   group('WP-725 · native widget metni uygulama dilini izler', () {
@@ -190,23 +281,10 @@ void main() {
     test(
       'tum sabit metin ureten providerlar yerellestirilmis context kullanir',
       () {
-        final provider = _read(_providerPath);
         for (final body in <String>[
-          _classBody(
-            provider,
-            'StudyStatsWidgetProvider',
-            'GroupLeaderboardWidgetProvider',
-          ),
-          _classBody(
-            provider,
-            'GroupLeaderboardWidgetProvider',
-            'GroupGoalWidgetProvider',
-          ),
-          _classBody(
-            provider,
-            'GroupGoalWidgetProvider',
-            'ClockWidgetProvider',
-          ),
+          _classBody(_read(_statsPath), 'StudyStatsWidgetProvider'),
+          _classBody(_read(_leaderboardPath), 'GroupLeaderboardWidgetProvider'),
+          _classBody(_read(_groupGoalPath), 'GroupGoalWidgetProvider'),
           _classBody(_read(_countdownPath), 'CountdownWidgetProvider', null),
           _classBody(_read(_taskPath), 'TaskWidgetProvider', null),
         ]) {
@@ -222,24 +300,35 @@ void main() {
     );
 
     test('TR ve EN sabit rozet metinleri birlikte vardir', () {
-      final en = _read('android/app/src/main/res/values/strings.xml');
-      final tr = _read('android/app/src/main/res/values-tr/strings.xml');
+      final en = _read('$_resDir/values/strings.xml');
+      final tr = _read('$_resDir/values-tr/strings.xml');
       expect(en, contains('<string name="widget_you">YOU</string>'));
       expect(tr, contains('<string name="widget_you">SEN</string>'));
     });
   });
 
   test('WP-717/718/719 davranis sozlesmeleri korunur', () {
-    final countdown = _read(
-      'android/app/src/main/res/layout/odak_countdown_widget.xml',
-    );
-    final task = _read('android/app/src/main/res/layout/odak_task_widget.xml');
-    final provider = _read(_providerPath);
+    final countdown = _read('$_resDir/layout/odak_countdown_widget.xml');
+    final task = _read('$_resDir/layout/odak_task_widget.xml');
+    final timer = _read(_timerPath);
     expect(countdown, contains('@drawable/widget_progress_arc'));
     expect(countdown, contains('countdown_widget_row_3'));
     expect(task, contains('android:layout_height="wrap_content"'));
     expect(task, contains('@drawable/widget_card_bg'));
-    expect(provider, contains('TimerActionReceiver.ACTION_TOGGLE_TIMER'));
-    expect(provider, contains('timerSubjectVisible(size)'));
+    expect(timer, contains('TimerActionReceiver.ACTION_TOGGLE_TIMER'));
+    expect(timer, contains('timerSubjectVisible(size)'));
+  });
+
+  test('paylasilan zemin saglayici TASIMAZ', () {
+    // WP-752'nin bolme gerekcesi: uc ajan ayni dosyaya yazamaz. Zemin dosyasi
+    // yeniden saglayici toplamaya baslarsa bolme sessizce geri alinmis olur.
+    final common = _read(_commonPath);
+    expect(
+      RegExp(r'\nclass \w+Provider').hasMatch(common),
+      isFalse,
+      reason: 'paylasilan zemine saglayici geri tasindi',
+    );
+    expect(common, contains('internal object StudyWidgetKeys'));
+    expect(common, contains('internal fun widgetSizeClass('));
   });
 }

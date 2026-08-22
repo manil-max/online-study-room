@@ -1,48 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-717: ana ekran widget'larinin PAYLASILAN gorsel dili (acik tema).
+<!-- WP-752: ana ekran widget'larinin PAYLASILAN gorsel dili - TEK KOYU KIMLIK.
 
-     Kullanim (WP-718 / WP-719 dahil, tek desen):
-       kok gorunum : android:background="@drawable/widget_card_bg"
-                     android:padding="@dimen/widget_design_padding"
-       ana metin   : android:textColor="@color/widget_design_ink"
-       yardimci    : android:textColor="@color/widget_design_ink_muted"
-       vurgu/sayi  : android:textColor="@color/widget_design_accent"
-       ilerleme    : <ProgressBar ... android:progressDrawable=
-                       "@drawable/widget_progress_arc"   (ters U)
-                       "@drawable/widget_progress_bar"   (duz pill)
-                     ve Kotlin'de RemoteViews.setProgressBar(
-                       id, WidgetDesign.PROGRESS_MAX,
-                       WidgetDesign.arcPercent(f) / barPercent(f), false)
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md` (§2). Bu dosya o
+     belgenin kod tarafidir; olculer ve alti opak simge burada donar.
 
-     🔴 Renkler UYGULAMA temasindan da DUVAR KAGIDINDAN da bagimsizdir.
-     Iki ders birlestirildi:
+     🔴 `values-night/` KALDIRILDI. Widget her sistem temasinda koyudur.
+     Gerekce, onem sirasiyla:
+       1. Kimlik. Uygulamanin varsayilan temasi `campfire_night`
+          (`theme_presets.dart:93`). Acik temada krem bir kart cizmek widget'i
+          uygulamanin degil launcher'in parcasi yapiyordu.
+       2. Kanit maliyeti. Iki palet, her kontrast iddiasinin iki kez
+          kanitlanmasi demekti; ve bir simgenin bir temada unutulmasi HICBIR
+          DERLEME HATASI uretmeden o yuzeyi okunmaz birakiyordu.
+       3. Okunabilirlik zaten OPAKLIKtan gelir (asagi), sistem temasindan degil.
+
+     🔴 Renkler UYGULAMA temasindan da DUVAR KAGIDINDAN da bagimsizdir:
        - Bu depoda kirmizi uyari rozeti kirmizi temada kayboldu: rengini
          uzerine cizildigi paletten alan bir isaret, o palet degisince
          gorunmez olur. Widget simgeleri o yuzden SABIT hex tasir.
-       - Android tarafinin ayni tuzagi `@android:color/system_*` (Material
-         You) referanslaridir: rengi duvar kagidi secer, kontrasti kimse
-         olcmez. `values-v31` bu dosyayi bilerek EZMEZ.
-     Zemin OPAKtir; duvar kagidi arkadan sizmaz, yani kontrast orani her
-     duvar kagidinda ayni kalir. Oranlar olculur:
-     `test/features/android_widgets/countdown_widget_wp717_test.dart`.
+       - Ayni tuzagin Android tarafi `@android:color/system_*` (Material You)
+         referanslaridir: rengi duvar kagidi secer, kontrasti kimse olcmez.
+         `values-v31/widget_colors.xml` bu yuzden SILINDI; widget yigininda
+         tek bir `@android:color/system_*` referansi kalmadi.
+
+     Zemin OPAKtir; duvar kagidi arkadan sizmaz, yani kart ICI kontrast orani
+     her duvar kagidinda ayni kalir. Oranlar hesaplanarak olculur:
+       `test/features/android_widgets/countdown_widget_wp717_test.dart`
+       `android/app/src/test/.../widgets/WidgetPaletteWp752Test.kt`
+
+     Iki sert kural (§2.3):
+       - `ash` bir METIN rengi DEGILDIR ve METIN ZEMINI degildir (karta 3.24:1;
+         grafik icin yeterli, metin icin degil). Yalniz cizgi/iz/kenar/halka.
+       - `flame` veya `glow` UZERINDEKI metin DAIMA `night`tir
+         (`ink` on `flame` = 2.06:1 - basarisiz).
 -->
 <resources>
-    <!-- Sicak ama opak kamp karti; duvar kagidindan bagimsizdir. -->
-    <color name="widget_design_surface">#FFF9F3</color>
-    <!-- Ana metin (WCAG AA kritik metin). -->
-    <color name="widget_design_ink">#211A16</color>
-    <!-- Yardimci metin / etiket. -->
-    <color name="widget_design_ink_muted">#61564D</color>
-    <!-- Vurgu: buyuk sayi ve yayin DOLU parcasi. Kamp atesi kehribari. -->
-    <color name="widget_design_accent">#9B4300</color>
-    <!-- Ilerlemenin BOS parcasi (yay izi / cubuk izi). -->
-    <color name="widget_design_track">#E2D1C0</color>
-    <color name="widget_design_outline">#D5C1AE</color>
-    <color name="widget_design_accent_soft">#F4DFC9</color>
+    <!-- ================= Palet: alti opak simge (§2.2) ================= -->
+    <!-- Kart zemini (opak). Kontrast referansi. -->
+    <color name="widget_ember_night">#120E0A</color>
+    <!-- YALNIZ grafik: yay izi, ayrac, kenar, halka. Karta 3.24:1. -->
+    <color name="widget_ember_ash">#75604D</color>
+    <!-- Birincil vurgu: kahraman sayi, dolu yay, eylem hapi. Karta 8.19:1. -->
+    <color name="widget_ember_flame">#FF8A3D</color>
+    <!-- Ikincil vurgu: seri alevi, 1. sira, "bugun" isareti. Karta 12.22:1. -->
+    <color name="widget_ember_glow">#FFC46B</color>
+    <!-- Ana metin. Karta 16.84:1. -->
+    <color name="widget_ember_ink">#F6EFE6</color>
+    <!-- Yardimci metin / etiket. Karta 6.59:1. -->
+    <color name="widget_ember_ink_dim">#A79483</color>
 
-    <!-- Olculer: kart kosesi, kok dolgu, yay yuksekligi, satir araligi. -->
-    <dimen name="widget_design_corner">22dp</dimen>
+    <!-- ============ WP-717 adlarinin paletteki karsiligi ============
+         Dokuz duzen ve mevcut cizimler bu adlari kullaniyor. Ad kumesi
+         korunur, DEGER tek kaynaktan (yukaridaki alti simge) gelir; boylece
+         ayni hex iki yerde yazilmaz ve ayrisamaz. Widget yeniden tasarimi
+         ilerledikce duzenler dogrudan `widget_ember_*` adlarina gecer. -->
+    <color name="widget_design_surface">@color/widget_ember_night</color>
+    <color name="widget_design_ink">@color/widget_ember_ink</color>
+    <color name="widget_design_ink_muted">@color/widget_ember_ink_dim</color>
+    <color name="widget_design_accent">@color/widget_ember_flame</color>
+    <color name="widget_design_track">@color/widget_ember_ash</color>
+    <color name="widget_design_outline">@color/widget_ember_ash</color>
+    <!-- Chip zemini: dolu bir ton degil, `night` + 1dp `ash` halka (§4/5). -->
+    <color name="widget_design_accent_soft">@color/widget_ember_night</color>
+
+    <!-- ===================== Olculer (§2.6) =====================
+         Kart yaricapi KADEMEYE baglidir. Eski tek deger 22dp idi; K1'de kart
+         40x40dp'dir ve 22dp yaricap koselerin TAMAMINI yer - kart karta degil
+         hapa donerdi. -->
+    <!-- K3/K4 (110dp ve ustu kutu). -->
+    <dimen name="widget_design_corner">20dp</dimen>
+    <!-- K1/K2 (40dp yukseklikteki kutu). -->
+    <dimen name="widget_design_corner_tight">12dp</dimen>
     <dimen name="widget_design_padding">10dp</dimen>
     <dimen name="widget_design_arc_height">26dp</dimen>
     <dimen name="widget_design_row_gap">4dp</dimen>
+    <!-- Ayrac kalinligi (§4.4): RemoteViews'ta duz `View` yoktur, ayrac 1dp
+         yukseklikte bir `ImageView`dir. -->
+    <dimen name="widget_design_divider">1dp</dimen>
 </resources>

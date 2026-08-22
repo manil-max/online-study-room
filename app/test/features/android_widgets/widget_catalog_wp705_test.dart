@@ -59,14 +59,18 @@ const Map<HomeWidgetProvider, String> _infoXmlName = {
 };
 
 /// Saglayici sinifinin yasadigi Kotlin dosyasi.
+///
+/// WP-752: her saglayici KENDI dosyasinda. Bu tablo artik ayni zamanda
+/// "dokuz widget, dokuz dosya" sozlesmesini de olcer: bir saglayici baska
+/// bir dosyaya geri toplanirsa burasi kirmizi duser.
 const Map<HomeWidgetProvider, String> _kotlinFile = {
-  HomeWidgetProvider.timer: 'StudyWidgetProviders.kt',
+  HomeWidgetProvider.timer: 'TimerWidget.kt',
   HomeWidgetProvider.minimalTimer: 'MinimalTimerWidget.kt',
-  HomeWidgetProvider.studyStats: 'StudyWidgetProviders.kt',
-  HomeWidgetProvider.groupGoal: 'StudyWidgetProviders.kt',
-  HomeWidgetProvider.groupLeaderboard: 'StudyWidgetProviders.kt',
-  HomeWidgetProvider.clock: 'StudyWidgetProviders.kt',
-  HomeWidgetProvider.alarm: 'StudyWidgetProviders.kt',
+  HomeWidgetProvider.studyStats: 'StatsWidget.kt',
+  HomeWidgetProvider.groupGoal: 'GroupGoalWidget.kt',
+  HomeWidgetProvider.groupLeaderboard: 'LeaderboardWidget.kt',
+  HomeWidgetProvider.clock: 'ClockWidget.kt',
+  HomeWidgetProvider.alarm: 'AlarmWidget.kt',
   HomeWidgetProvider.countdown: 'CountdownWidget.kt',
   HomeWidgetProvider.task: 'TaskWidget.kt',
 };

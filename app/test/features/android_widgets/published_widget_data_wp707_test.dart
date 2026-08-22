@@ -47,9 +47,20 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 const String _kotlinDir =
     'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets';
 
+/// WP-752: alti saglayici alti ayri dosyada; anahtar TABLOSU paylasilan
+/// zeminde. Tek dosya okuyan eski hali bolme sonrasi sessizce bos donerdi.
+const List<String> _providerFiles = <String>[
+  'TimerWidget.kt',
+  'StatsWidget.kt',
+  'LeaderboardWidget.kt',
+  'GroupGoalWidget.kt',
+  'ClockWidget.kt',
+  'AlarmWidget.kt',
+];
+
 /// `const val Ad = "deger"` tablosu (yorum satirlari elenir — WP-640 tuzagi).
 Map<String, String> _kotlinKeyTable() {
-  final file = File('$_kotlinDir/StudyWidgetProviders.kt');
+  final file = File('$_kotlinDir/WidgetCommon.kt');
   expect(file.existsSync(), isTrue, reason: '${file.path} yok');
   final pattern = RegExp(r'^\s*const val (\w+) = "([^"]+)"');
   final table = <String, String>{};
@@ -63,14 +74,18 @@ Map<String, String> _kotlinKeyTable() {
 }
 
 /// Bir saglayici sinifinin govdesi (bir sonraki ust duzey `class`a kadar).
+/// Sinif hangi dosyada olursa olsun bulunur.
 String _kotlinClassBody(String className) {
-  final source = File(
-    '$_kotlinDir/StudyWidgetProviders.kt',
-  ).readAsStringSync().replaceAll('\r\n', '\n');
-  final start = source.indexOf('class $className ');
-  expect(start, greaterThan(-1), reason: '$className yok');
-  final next = source.indexOf('\nclass ', start + 1);
-  return next == -1 ? source.substring(start) : source.substring(start, next);
+  for (final name in _providerFiles) {
+    final file = File('$_kotlinDir/$name');
+    expect(file.existsSync(), isTrue, reason: '${file.path} yok');
+    final source = file.readAsStringSync().replaceAll('\r\n', '\n');
+    final start = source.indexOf('class $className ');
+    if (start < 0) continue;
+    final next = source.indexOf('\nclass ', start + 1);
+    return next == -1 ? source.substring(start) : source.substring(start, next);
+  }
+  fail('$className hicbir saglayici dosyasinda yok');
 }
 
 /// Saglayicinin `widgetData`dan GERCEKTEN okudugu anahtarlar.

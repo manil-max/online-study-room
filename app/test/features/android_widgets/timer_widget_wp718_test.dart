@@ -98,7 +98,8 @@ void main() {
       // cizilir; XML'deki punto orada gorunen seydir. Kotlin ile ayrisirsa
       // kullanici secicide baska, ana ekranda baska bir sey gorur.
       final layout = _read('$_layoutDir/odak_timer_widget.xml');
-      final kotlin = _read('$_kotlinDir/StudyWidgetProviders.kt');
+      // WP-752: punto merdiveni paylasilan zeminde.
+      final kotlin = _read('$_kotlinDir/WidgetCommon.kt');
       final narrow = RegExp(
         r'val timerTime = SpRamp\((\d+)f',
       ).firstMatch(kotlin);
@@ -118,7 +119,7 @@ void main() {
     test('en kucuk boyutta kok baslat/durdur olur, derin baglanti degil', () {
       // Kontrol satiri o boyutta cizilmedigi icin kok tek aksiyondur; aksi
       // halde widget'in en kucuk halinde HICBIR aksiyonu kalmazdi.
-      final kotlin = _read('$_kotlinDir/StudyWidgetProviders.kt');
+      final kotlin = _read('$_kotlinDir/TimerWidget.kt');
       expect(
         kotlin.contains('if (controlsVisible) {'),
         isTrue,
@@ -375,7 +376,7 @@ void main() {
   // =========================================================================
   group('WP-718 · koruma', () {
     late String providers;
-    setUpAll(() => providers = _read('$_kotlinDir/StudyWidgetProviders.kt'));
+    setUpAll(() => providers = _read('$_kotlinDir/TimerWidget.kt'));
 
     test('WP-700/706 derin baglantisi duruyor', () {
       expect(providers.contains('WidgetDeepLink.ROUTE_TIMER'), isTrue);

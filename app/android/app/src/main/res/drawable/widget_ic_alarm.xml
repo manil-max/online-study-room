@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 ikon ailesi (§4.3): Can - alarm. Ayni zamanda alarm widgetinin K1 GLIF cekirdegi (§1.4).
+
+     24dp izgara, 2dp cizgi, yuvarlak uc, TEK renk, dolu degil CIZGISEL.
+     Pasif ton `ink_dim`; aktif hale gecirmek isteyen saglayici
+     `setInt(id, "setColorFilter", flame)` kullanir.
+     🔴 Emoji YASAK: emoji cihaz yazi tipine baglidir, OEM'e gore degisir,
+     rengi paletten bagimsizdir ve tema degisince kaybolabilir. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M8,17.4 L8,11.6 A4,4 0 0,1 16,11.6 L16,17.4"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M6.4,17.4 L17.6,17.4"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M10.4,19.8 A1.6,1.6 0 0,0 13.6,19.8"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M12,7.6 L12,5.4"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+</vector>

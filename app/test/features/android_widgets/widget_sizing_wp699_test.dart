@@ -46,13 +46,17 @@ const List<String> _widgets = <String>[
 
 /// Saglayici sinifinin adi -> kaynak dosyasi.
 const Map<String, String> _providerFiles = <String, String>{
-  'TimerWidgetProvider': 'StudyWidgetProviders.kt',
-  'ClockWidgetProvider': 'StudyWidgetProviders.kt',
-  'StudyStatsWidgetProvider': 'StudyWidgetProviders.kt',
-  'GroupGoalWidgetProvider': 'StudyWidgetProviders.kt',
-  'GroupLeaderboardWidgetProvider': 'StudyWidgetProviders.kt',
+  'TimerWidgetProvider': 'TimerWidget.kt',
+  'ClockWidgetProvider': 'ClockWidget.kt',
+  'StudyStatsWidgetProvider': 'StatsWidget.kt',
+  'GroupGoalWidgetProvider': 'GroupGoalWidget.kt',
+  'GroupLeaderboardWidgetProvider': 'LeaderboardWidget.kt',
   'CountdownWidgetProvider': 'CountdownWidget.kt',
 };
+
+/// WP-752: boyut ESIKLERI paylasilan zeminde durur (saglayicilar bolundu,
+/// esikler tek yerde kaldi ki dokuz widget ayni merdiveni konussun).
+const String _thresholdFile = 'WidgetCommon.kt';
 
 String _read(String path) {
   final file = File(path);
@@ -219,7 +223,7 @@ void main() {
         final maxWidth = _dp(xml, 'maxResizeWidth');
         final maxHeight = _dp(xml, 'maxResizeHeight');
 
-        final constants = _kotlinInts('StudyWidgetProviders.kt');
+        final constants = _kotlinInts(_thresholdFile);
         final prefix = 'WIDGET_${widget.toUpperCase()}';
         for (final suffix in <String>[
           'MEDIUM_WIDTH_DP',
@@ -264,7 +268,7 @@ void main() {
     });
 
     test('AlarmWidgetProvider boyut mantigi almadi', () {
-      final source = _read('$_kotlinDir/StudyWidgetProviders.kt');
+      final source = _read('$_kotlinDir/AlarmWidget.kt');
       final start = source.indexOf('class AlarmWidgetProvider ');
       expect(start, greaterThan(-1));
       final body = source.substring(start);

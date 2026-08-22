@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 (§2.3): 2. ve sonraki siralar.
+
+     🔴 Eski hali `widget_design_track`i (yeni palette `ash`) DOLGU yapiyordu.
+     `ash` karta 3.24:1'dir: grafik icin yeterli, METIN ZEMINI olarak degil -
+     rozetin icindeki rakam okunmaz hale gelirdi. Dogru bicim `night` dolgu +
+     1dp `ash` halkadir; boylece rakam kartla ayni zemine yazilir ve birinci
+     sira (`glow` dolgu) gercekten one cikar. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/widget_design_track" />
+    <solid android:color="@color/widget_ember_night" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/widget_ember_ash" />
     <corners android:radius="12dp" />
 </shape>

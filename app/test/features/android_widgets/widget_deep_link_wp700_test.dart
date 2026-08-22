@@ -257,7 +257,16 @@ void main() {
     });
 
     test('her widget kendi rotasini tasir', () {
-      final providers = _kotlin('widgets/StudyWidgetProviders.kt');
+      // WP-752: her saglayici kendi dosyasinda.
+      final sources = <String, String>{
+        'TimerWidgetProvider': _kotlin('widgets/TimerWidget.kt'),
+        'StudyStatsWidgetProvider': _kotlin('widgets/StatsWidget.kt'),
+        'GroupGoalWidgetProvider': _kotlin('widgets/GroupGoalWidget.kt'),
+        'GroupLeaderboardWidgetProvider': _kotlin(
+          'widgets/LeaderboardWidget.kt',
+        ),
+        'ClockWidgetProvider': _kotlin('widgets/ClockWidget.kt'),
+      };
       final countdown = _kotlin('widgets/CountdownWidget.kt');
       final expected = <String, String>{
         'TimerWidgetProvider': 'ROUTE_TIMER',
@@ -267,7 +276,7 @@ void main() {
         'ClockWidgetProvider': 'ROUTE_CLOCK',
       };
       expected.forEach((className, route) {
-        final body = _providerBody(providers, className);
+        final body = _providerBody(sources[className]!, className);
         expect(
           body,
           contains('WidgetDeepLink.$route'),
@@ -280,7 +289,9 @@ void main() {
       );
 
       // Rota tasimayan eski cagri hicbir widget'ta kalmadi.
-      expect(providers, isNot(contains('getLaunchIntentForPackage')));
+      for (final source in sources.values) {
+        expect(source, isNot(contains('getLaunchIntentForPackage')));
+      }
       expect(countdown, isNot(contains('getLaunchIntentForPackage')));
     });
 

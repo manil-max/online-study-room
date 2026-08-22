@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 ikon ailesi (§4.3): Yukselen cubuklar - istatistik.
+
+     24dp izgara, 2dp cizgi, yuvarlak uc, TEK renk, dolu degil CIZGISEL.
+     Pasif ton `ink_dim`; aktif hale gecirmek isteyen saglayici
+     `setInt(id, "setColorFilter", flame)` kullanir.
+     🔴 Emoji YASAK: emoji cihaz yazi tipine baglidir, OEM'e gore degisir,
+     rengi paletten bagimsizdir ve tema degisince kaybolabilir. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M4,20 L20,20"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M7.5,20 L7.5,15"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M12,20 L12,10.5"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M16.5,20 L16.5,5.5"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+</vector>

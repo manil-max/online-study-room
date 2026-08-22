@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 (§4.4): ayrac.
+
+     🔴 RemoteViews'in izin verdigi gorunum listesinde duz `View` YOKTUR.
+     Ayrac bu yuzden 1dp yukseklikte bir `ImageView`in ZEMINIDIR:
+
+       <ImageView
+           android:layout_width="match_parent"
+           android:layout_height="@dimen/widget_design_divider"
+           android:background="@drawable/widget_divider"
+           android:contentDescription="@null" />
+
+     Yalniz K4'te ve yalniz baslik ile liste ARASINDA cizilir; liste satirlari
+     arasinda ayrimi bosluk yapar. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_ember_ash" />
+</shape>

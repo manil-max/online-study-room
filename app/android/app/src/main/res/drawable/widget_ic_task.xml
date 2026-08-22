@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-752 ikon ailesi (§4.3): Onayli kutu - gorev.
+
+     24dp izgara, 2dp cizgi, yuvarlak uc, TEK renk, dolu degil CIZGISEL.
+     Pasif ton `ink_dim`; aktif hale gecirmek isteyen saglayici
+     `setInt(id, "setColorFilter", flame)` kullanir.
+     🔴 Emoji YASAK: emoji cihaz yazi tipine baglidir, OEM'e gore degisir,
+     rengi paletten bagimsizdir ve tema degisince kaybolabilir. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M5.5,4 L18.5,4 A1.5,1.5 0 0,1 20,5.5 L20,18.5 A1.5,1.5 0 0,1 18.5,20 L5.5,20 A1.5,1.5 0 0,1 4,18.5 L4,5.5 A1.5,1.5 0 0,1 5.5,4 Z"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M8,12.2 L10.9,15.1 L16.2,9.2"
+        android:strokeColor="@color/widget_ember_ink_dim"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+</vector>

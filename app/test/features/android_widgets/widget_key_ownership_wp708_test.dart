@@ -16,17 +16,37 @@
 // yazilir cunku YAYINDAKI BIR SAGLAYICI ONU OKUR -- yayinda genel olarak
 // okuyan biri oldugu icin degil.
 //
-// Bu dosya Dart tarafindaki sahiplik beyanini `StudyWidgetProviders.kt`nin
+// Bu dosya Dart tarafindaki sahiplik beyanini KOTLIN SAGLAYICILARIN
 // KENDISINDEN turetilen gercekle karsilastirir. Elle yazilan bir liste bir
 // sure sonra bayatlar; turetilen liste bayatlayamaz.
+//
+// 🔴 WP-752: alti saglayici tek dosyadan (`StudyWidgetProviders.kt`) alti
+// ayri dosyaya bolundu ve anahtar TABLOSU paylasilan zemine tasindi. Tek
+// dosya okuyan eski ayristirici bolme sonrasi sessizce BOS donerdi -- yani
+// butun iddialar "hicbir saglayici hicbir anahtar okumuyor" diye yesil
+// gecerdi. `probe:` testi tam olarak bunu yakalar.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 
-const _kotlinPath =
-    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/'
-    'StudyWidgetProviders.kt';
+const _kotlinDir =
+    'android/app/src/main/kotlin/com/manilmax/online_study_room/widgets';
+
+/// Anahtar tablosu (`StudyWidgetKeys`) paylasilan zemindedir.
+const _keyTablePath = '$_kotlinDir/WidgetCommon.kt';
+
+/// WP-708 kapsamindaki alti saglayici; her biri kendi dosyasinda.
+/// (`countdown`/`task` bilerek disarida -- ayri dosyalarda ve
+/// `StudyWidgetKeys` kullanmiyorlar.)
+const _providerPaths = <String>[
+  '$_kotlinDir/TimerWidget.kt',
+  '$_kotlinDir/StatsWidget.kt',
+  '$_kotlinDir/LeaderboardWidget.kt',
+  '$_kotlinDir/GroupGoalWidget.kt',
+  '$_kotlinDir/ClockWidget.kt',
+  '$_kotlinDir/AlarmWidget.kt',
+];
 
 /// `const val Ad = "anahtar"` -> {Ad: anahtar}
 Map<String, String> _keyConstants(String source) {
@@ -40,32 +60,41 @@ Map<String, String> _keyConstants(String source) {
 
 /// Her `class X ... { }` govdesinde gecen `StudyWidgetKeys.Ad` sabitlerini
 /// anahtar adlarina cevirir.
-Map<String, Set<String>> _keysReadPerProvider(String source) {
-  final constants = _keyConstants(source);
-  final parts = source.split(RegExp(r'\nclass (\w+)'));
-  final names = RegExp(r'\nclass (\w+)')
-      .allMatches(source)
-      .map((match) => match.group(1)!)
-      .toList();
+Map<String, Set<String>> _keysReadPerProvider(
+  Map<String, String> constants,
+  List<String> sources,
+) {
   final result = <String, Set<String>>{};
-  for (var index = 0; index < names.length; index++) {
-    final body = parts[index + 1];
-    result[names[index]] = {
-      for (final match in RegExp(r'StudyWidgetKeys\.(\w+)').allMatches(body))
-        if (constants.containsKey(match.group(1))) constants[match.group(1)]!,
-    };
+  for (final source in sources) {
+    final parts = source.split(RegExp(r'\nclass (\w+)'));
+    final names = RegExp(r'\nclass (\w+)')
+        .allMatches(source)
+        .map((match) => match.group(1)!)
+        .toList();
+    for (var index = 0; index < names.length; index++) {
+      final body = parts[index + 1];
+      result[names[index]] = {
+        for (final match in RegExp(r'StudyWidgetKeys\.(\w+)').allMatches(body))
+          if (constants.containsKey(match.group(1)))
+            constants[match.group(1)]!,
+      };
+    }
   }
   return result;
 }
 
 void main() {
-  final source = File(_kotlinPath).readAsStringSync();
-  final readPerProvider = _keysReadPerProvider(source);
+  final constants = _keyConstants(File(_keyTablePath).readAsStringSync());
+  final readPerProvider = _keysReadPerProvider(
+    constants,
+    _providerPaths.map((path) => File(path).readAsStringSync()).toList(),
+  );
 
   group('WP-708 · anahtar sahipligi Kotlin ile ayni', () {
     test('probe: Kotlin gercekten ayristirildi', () {
       // Ayristirici sessizce bos donerse butun iddialar "hicbir sey okumuyor"
       // diye YESIL gecerdi -- olcum aracinin kendisini once sina.
+      expect(constants, isNotEmpty, reason: 'anahtar tablosu okunamadi');
       expect(readPerProvider, isNotEmpty);
       expect(
         readPerProvider['StudyStatsWidgetProvider'],
