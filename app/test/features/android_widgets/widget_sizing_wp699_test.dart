@@ -254,26 +254,40 @@ void main() {
     }
   });
 
-  group('WP-699 · kapsam disi', () {
-    // WP-696 `alarm` widget'ini bilerek yayin disinda birakti (tazeleme yolu
-    // yok, 30 dk bayat kaliyor). Boyut duzeltmesi onu yayina almazdi; bu
-    // iddia dosyanin WP-699 turunda DEGISMEDIGINI sabitler.
-    test('alarm widget tanimi WP-699 ile degismedi', () {
+  // 🔴 WP-756: bu grup eskiden alarm widget'inin DISARIDA BIRAKILDIGINI
+  // sabitliyordu. O karar geri alindi, cunku disarida birakilmasi bir tercih
+  // degil bir KUSURDU: `info.xml` hicbir boyut beyani tasimadigi ve saglayici
+  // `onAppWidgetOptionsChanged`i gecersiz kilmadigi icin kullanici widget'i
+  // boyutlandirdiginda ekranda hicbir sey degismiyordu. Iddialar silinmedi,
+  // YON DEGISTIRDI: artik eksikligi degil VARLIGI olcuyorlar.
+  group('WP-756 - alarm kademe sistemine alindi', () {
+    test('alarm widget tanimi tam boyut sozlesmesi tasir', () {
       final xml = _infoXml('alarm');
-      expect(xml.contains('targetCellWidth'), isFalse);
-      expect(xml.contains('maxResizeWidth'), isFalse);
-      expect(xml.contains('minResizeWidth'), isFalse);
-      expect(_dp(xml, 'minWidth'), 110);
-      expect(_dp(xml, 'minHeight'), 80);
+      expect(xml.contains('targetCellWidth'), isTrue);
+      expect(xml.contains('targetCellHeight'), isTrue);
+      expect(xml.contains('maxResizeWidth'), isTrue);
+      expect(xml.contains('minResizeWidth'), isTrue);
+      expect(_dp(xml, 'minResizeWidth'), lessThanOrEqualTo(_dp(xml, 'minWidth')));
+      expect(_dp(xml, 'minResizeHeight'), lessThanOrEqualTo(_dp(xml, 'minHeight')));
     });
 
-    test('AlarmWidgetProvider boyut mantigi almadi', () {
+    test('AlarmWidgetProvider boyut degisimine tepki verir', () {
       final source = _read('$_kotlinDir/AlarmWidget.kt');
       final start = source.indexOf('class AlarmWidgetProvider ');
       expect(start, greaterThan(-1));
       final body = source.substring(start);
-      expect(body.contains('onAppWidgetOptionsChanged'), isFalse);
-      expect(body.contains('widgetSizeClass'), isFalse);
+      expect(body.contains('onAppWidgetOptionsChanged'), isTrue);
+    });
+
+    // Yayin karari AYRI: boyut kusuru kapandi ama widget hala yayin disinda
+    // (tazeleme yolu yok, 30 dk bayat kaliyor). Bu iddia onu sabitler ki
+    // "duzelttik" ile "yayina aldik" birbirine karismasin.
+    test('alarm hala yayin disinda', () {
+      final manifest = _read('android/app/src/main/AndroidManifest.xml');
+      final at = manifest.indexOf('AlarmWidgetProvider');
+      expect(at, greaterThan(-1));
+      final around = manifest.substring(at - 400, at + 400);
+      expect(around.contains('android:enabled="false"'), isTrue);
     });
   });
 }

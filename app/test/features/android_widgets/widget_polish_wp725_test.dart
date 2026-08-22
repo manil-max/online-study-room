@@ -76,9 +76,9 @@ void main() {
       () {
         for (final layout in <String>[stats, groupGoal]) {
           expect(layout, contains('@drawable/widget_card_bg'));
-          expect(layout, contains('@color/widget_design_ink'));
+          expect(layout, contains('@color/widget_ember_ink'));
         }
-        expect(stats, contains('@color/widget_design_accent'));
+        expect(stats, contains('@color/widget_ember_flame'));
         expect(stats, contains('@drawable/widget_progress_bar'));
         expect(groupGoal, contains('@drawable/widget_progress_arc'));
         // WP-730: grup hedefinde accent artik yuzde METNINDE degil, yayin

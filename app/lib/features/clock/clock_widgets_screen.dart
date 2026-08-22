@@ -176,16 +176,17 @@ HomeWidgetCardSpec homeWidgetCardSpec(
     cellWidth: 2,
     cellHeight: 1,
   ),
-  // Alarm tanımı WP-699 kapsamı dışında bırakıldı: `odak_alarm_widget_info.xml`
-  // `targetCell*` beyan etmez, `AlarmWidgetProvider` da hiçbir derin bağlantı
-  // kurmaz. İkisi de burada `null` — kart olmayan bir şeyi vaat etmez.
+  // WP-756: alarm artık kademe sisteminin içinde. Eskiden `odak_alarm_widget_info.xml`
+  // hiç `targetCell*` beyan etmiyor, sağlayıcı da derin bağlantı kurmuyordu — yani
+  // kullanıcı widget'ı boyutlandırdığında ekranda hiçbir şey değişmiyor, dokunmak da
+  // bir yere gitmiyordu. İkisi de kapandı; kart artık gerçek bir vaatte bulunuyor.
   HomeWidgetProvider.alarm => HomeWidgetCardSpec(
     icon: Icons.alarm,
     title: l10n.clockSiradakiAlarm,
     summary: l10n.clockBirSonrakiAlarmSaati,
-    route: null,
-    cellWidth: null,
-    cellHeight: null,
+    route: WidgetRoute.clock,
+    cellWidth: 2,
+    cellHeight: 1,
   ),
 };
 
