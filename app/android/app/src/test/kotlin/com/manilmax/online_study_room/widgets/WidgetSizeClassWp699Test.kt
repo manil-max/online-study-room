@@ -354,11 +354,39 @@ class WidgetSizeClassWp699Test {
         assertFalse("MEDIUM kutuda baslik ciziliyor", statsTitleVisible(ortaKutu.height))
         assertTrue("TALL kutuda baslik kayboldu", statsTitleVisible(uzunKutu.height))
 
-        // SHORT: baslik gizli; yuzde + 2 + cubuk.
+        // 🔴 WP-755: bu iddia "SHORT kutuda cubuk cizilir" VARSAYIMI uzerine
+        // kuruluydu ve o varsayim artik yanlis. §1.2: K1/K2'de GRAFIK YOKTUR.
+        // Gerekce olculdu: 4dp'lik bir cubuk bile 40dp'lik dikey butcede
+        // cekirdegin puntosunu yer -- sahibin sikayet ettigi 15sp'lik yuzde
+        // tam olarak o takasin sonucuydu.
+        //
+        // Varsayim IDDIAYA cevrildi: once grafigin cizilmedigi olculuyor,
+        // sonra yalniz cekirdegin sigdigi. Boylece grafik sessizce geri
+        // gelirse bu kapi kirmizi duser.
+        val kisaTier = progressWidgetTier(kisa, 70, 110)
+        assertFalse(
+            "K1/K2'de grafik cizilmemeli (§1.2)",
+            progressGaugeVisible(kisaTier),
+        )
+        // Dolgu UYDURULMUYOR, uretimin kendi kuralindan okunuyor
+        // (`StatsWidget.kt` applyRootPadding cagrisinin AYNASI): dar kartta
+        // 2dp, digerlerinde eski yardimci. Sayi yazsaydik uretim degisince
+        // test sessizce yalan soylerdi.
+        // Dar kartin DIKEY butcesi: kutu eksi iki dolgu, emniyet payi YOK.
+        // Bu bir gevsetme degil, tasarim sisteminin yazili kurali (§6): 40dp
+        // yuksekligin tamami cekirdege ayrilir, cunku orada cekirdekten baska
+        // hicbir sey cizilmez (yukaridaki `progressGaugeVisible` iddiasi bunu
+        // olcuyor). `usableHeightDp` 8dp'lik pay dusuyor ve o pay COK OGELI
+        // kutular icin konmustu; tek ogeli kutuda payin karsiligi yok.
+        // Dolgu uydurulmuyor, uretimin kendi kuralindan okunuyor
+        // (`StatsWidget.kt:364` applyRootPadding cagrisinin aynasi).
+        val kisaPadding =
+            if (progressCardIsTight(kisaTier)) 2
+            else widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)
         assertFits(
             "stats/SHORT",
-            lineHeightDp(statsValueSp(kisa)) + 2f + cubukDp,
-            usableHeightDp(40, widgetRootPaddingDp(basePadding, WidgetHeightClass.SHORT)),
+            lineHeightDp(statsValueSp(kisa)),
+            40f - 2f * kisaPadding,
         )
         // MEDIUM: baslik yok; yuzde + cubuk + gun ozeti.
         assertFits(
