@@ -95,6 +95,14 @@ typedef LocalSessionProfileReader = Future<Profile?> Function();
 /// yeniden denemek yine ağ ister, çıkmak ise çevrimdışı geri girilemeyen bir
 /// kapıdır. Yerel oturum varken doğru cevap kullanıcıyı içeri almaktır.
 /// Yerel oturum **yoksa** hata aynen iletilir (gerçek arıza gizlenmez).
+///
+/// 🔴 WP-748: hata dalı kullanıcıyı **içeri alır ama İDDİA KURMAZ.** Bir hata,
+/// "internet yok"un kanıtı değildir. Çevrimdışılığın bu depoda ölçülen imzası
+/// **sessizliktir** ([kAuthColdStartBudget] belgesindeki zincir: 10 sn token
+/// tazeleme + 10 sn istek tavanı ≈ 20 sn cevapsızlık) — 200 ms'de dönen,
+/// sınıflandırılmamış bir hata değil. Eskiden hata dalı da `onOfflineOpen`
+/// tetikliyordu, yani çevrimiçi bir cihazdaki tek bir başarısız istek
+/// kullanıcıya "İnternet yok" dedirtiyordu.
 @visibleForTesting
 Stream<Profile?> authStateWithOfflineFallback({
   required Stream<Profile?> source,
@@ -115,7 +123,10 @@ Stream<Profile?> authStateWithOfflineFallback({
   // yarışı bayrak kapatır.
   var cancelled = false;
 
-  Future<bool> emitLocal() async {
+  // WP-748: AÇILIŞ ile İDDİA ayrıdır. [claimOffline] yalnız sessizlik
+  // ölçüldüğünde (bütçe doldu) true'dur; hata dalı kullanıcıyı içeri alır ama
+  // çevrimdışılık iddia etmez.
+  Future<bool> emitLocal({required bool claimOffline}) async {
     if (sourceSpoke || cancelled || out.isClosed) return false;
     Profile? local;
     try {
@@ -125,12 +136,12 @@ Stream<Profile?> authStateWithOfflineFallback({
     }
     if (sourceSpoke || cancelled || out.isClosed || local == null) return false;
     out.add(local);
-    onOfflineOpen?.call();
+    if (claimOffline) onOfflineOpen?.call();
     return true;
   }
 
   out.onListen = () {
-    timer = Timer(budget, emitLocal);
+    timer = Timer(budget, () => emitLocal(claimOffline: true));
     sub = source.listen(
       (profile) {
         sourceSpoke = true;
@@ -140,14 +151,14 @@ Stream<Profile?> authStateWithOfflineFallback({
       },
       onError: (Object error, StackTrace stack) async {
         timer?.cancel();
-        final rescued = await emitLocal();
+        final rescued = await emitLocal(claimOffline: false);
         sourceSpoke = true;
         if (out.isClosed) return;
         if (!rescued) out.addError(error, stack);
       },
       onDone: () async {
         timer?.cancel();
-        await emitLocal();
+        await emitLocal(claimOffline: true);
         if (!out.isClosed) await out.close();
       },
     );

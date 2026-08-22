@@ -119,12 +119,27 @@ class SupabaseAuthRepository implements AuthRepository {
     StreamSubscription<Profile?>? mutations;
     merged
       ..onListen = () {
-        sessions = _sessionProfiles().listen(
-          merged.add,
-          onError: merged.addError,
-          onDone: merged.close,
+        // WP-748: yan kanal ÖNCE bağlanır — oturum akışının ilk turunda düşen
+        // bir hata da bu kanaldan gelir ve dinleyicisiz yayın kaybolur.
+        mutations = _profileMutations.stream.listen(
+          (profile) {
+            if (!merged.isClosed) merged.add(profile);
+          },
+          onError: (Object error, StackTrace stack) {
+            if (!merged.isClosed) merged.addError(error, stack);
+          },
         );
-        mutations = _profileMutations.stream.listen(merged.add);
+        sessions = _sessionProfiles().listen(
+          (profile) {
+            if (!merged.isClosed) merged.add(profile);
+          },
+          onError: (Object error, StackTrace stack) {
+            if (!merged.isClosed) merged.addError(error, stack);
+          },
+          onDone: () {
+            if (!merged.isClosed) merged.close();
+          },
+        );
       }
       ..onCancel = () {
         // 🔴 `_sessionProfiles()` `await for` içinde askıdayken `cancel()`
@@ -139,46 +154,77 @@ class SupabaseAuthRepository implements AuthRepository {
     return merged.stream;
   }
 
+  /// 🔴 WP-748: bu üretici TEK bir geçici hatada **kalıcı olarak ölüyordu.**
+  ///
+  /// `async*` bir hata fırlattığında üretici SONLANIR; abonelik `onError` →
+  /// `onDone` → `close` sırasını izler. Yani geçici bir ağ hatasından sonra
+  /// (gotrue, token tazelemesi 5xx/bağlantı hatası alınca `notifyException`
+  /// ile hatayı `onAuthStateChange`e KOYAR ve oturumu silmez) akış bir daha
+  /// hiç konuşmuyordu: o oturum boyunca giriş, çıkış ve token tazeleme
+  /// olaylarının hiçbiri ekrana ulaşmıyordu. WP-741'in kapattığı sahte
+  /// "İnternet yok" şeridi bunun yalnız görünen yüzüydü — şeridi geri alacak
+  /// gerçek profil de aynı ölü akışın arkasında kalıyordu.
+  ///
+  /// Düzeltme iki parçalı: hata **yutulmaz** ([_emitSessionError] ile yan
+  /// kanaldan iletilir) ama akış **sonlanmaz**.
+  ///
+  /// Kaynağa `handleError` ile bakılır; "yakala + yeniden abone ol" DEĞİL:
+  /// gotrue'nun `onAuthStateChange`i bir `BehaviorSubject`tir ve son olayı —
+  /// yani aynı hatayı — yeni aboneye TEKRAR OYNATIR, yeniden abonelik sıkı bir
+  /// döngüye girerdi. Ölçüldü: `test/data/auth_error_stream_death_wp748_test.dart`.
   Stream<Profile?> _sessionProfiles() async* {
     // Açılışta mevcut oturum (varsa) yayınlanır.
     try {
       _current = await _profileFor(_client.auth.currentSession);
       yield _current;
-    } catch (error) {
+    } catch (error, stack) {
       if (await _recoverFromStaleRefreshToken(error)) {
         yield null;
       } else {
-        rethrow;
+        _emitSessionError(error, stack);
       }
     }
 
-    while (true) {
+    await for (final state in _client.auth.onAuthStateChange.handleError(
+      _onSessionSourceError,
+    )) {
+      if (state.event == supa.AuthChangeEvent.passwordRecovery) {
+        _recoveryController.add(null);
+      }
       try {
-        await for (final state in _client.auth.onAuthStateChange) {
-          if (state.event == supa.AuthChangeEvent.passwordRecovery) {
-            _recoveryController.add(null);
-          }
-          try {
-            _current = await _profileFor(state.session);
-            yield _current;
-          } catch (error) {
-            if (await _recoverFromStaleRefreshToken(error)) {
-              yield null;
-            } else {
-              rethrow;
-            }
-          }
-        }
-        return;
-      } catch (error) {
+        _current = await _profileFor(state.session);
+        yield _current;
+      } catch (error, stack) {
         if (await _recoverFromStaleRefreshToken(error)) {
           yield null;
-          continue;
         } else {
-          rethrow;
+          _emitSessionError(error, stack);
         }
       }
     }
+  }
+
+  /// Kaynak oturum akışının hatası: bayat token'ı temizle, aksi hâlde hatayı
+  /// bildir — ama iki durumda da akışı ÖLDÜRME (WP-748).
+  void _onSessionSourceError(Object error, StackTrace stack) {
+    unawaited(() async {
+      if (await _recoverFromStaleRefreshToken(error)) {
+        // `_current` artık null; kullanıcı giriş ekranına döner.
+        _emitProfile();
+      } else {
+        _emitSessionError(error, stack);
+      }
+    }());
+  }
+
+  /// Oturum akışının HATA yan kanalı.
+  ///
+  /// Bir `async*` üreticisi hatayı ancak **sonlanarak** yayabilir; hatayı
+  /// gizlemeden akışı canlı tutmanın tek yolu onu üreticinin dışından
+  /// göndermektir. `authStateChanges()` bu kanalı zaten birleştiriyor.
+  void _emitSessionError(Object error, StackTrace stack) {
+    if (_profileMutations.isClosed) return;
+    _profileMutations.addError(error, stack);
   }
 
   Future<bool> _recoverFromStaleRefreshToken(Object error) async {
