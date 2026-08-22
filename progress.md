@@ -11154,3 +11154,129 @@ akisini kosturmak gerekiyordu. Uye listesi bu deploy'a kadar uretimde oludu.
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 
 > Her worker önce Aktif Çalışma Kaydı'nı okur, kendi lane'ini claim eder ve SAHİP yolları çakışıyorsa başlamaz. Production/stable hiçbir WP'nin örtük parçası değildir.
+
+---
+
+## 2026-08-22 — Istatistik donem kurgusu + widget yeniden tasarimi + dinamik panel
+
+Sahip uc is verdi: (1) istatistik ekraninda her donem kendi icerigini getirsin,
+(2) dokuz Android widget'i bastan tasarla, kucuk boyutlara sikissin, (3) alti
+turdur yapilamayan dinamik panele ve silinemeyen bildirime **kokten** bak.
+
+### Istatistik — BITTI (bes WP)
+
+Kusur olculdu: alti donem dugmesi de asagiya **ayni 25 karti** seriyordu, yalniz
+sayilar degisiyordu. Kart envanteri (alt ajan, dosya:satir) her karti
+DONEM-BAGLI / DONEM-KOR / KARISIK diye ayirdi; tasarim onizleme olarak sahibe
+gosterildi ve onaylandi.
+
+| commit | is |
+|---|---|
+| `d1f9926f` | WP-742 model: `StatsPeriod.today` -> `day`, `day` gezinilebilir, `jumpTo(tarih)` |
+| `60dba363` | WP-743 kabuk: oklar seritten indi, `StatsRangeNavigator` + doneme ozel dort secici, "Grup" sekmesine acilir menu |
+| `be90cac8` | WP-745 kisisel kart kumeleri + uc hata |
+| `853ff81f` | WP-746 grup kart kumeleri, baslik satiri + karsilastirma tablosu silindi |
+| `699a3e63` | WP-747 dikis: liderlik gecmisi offset'i, "Bugun" etiketleri |
+| `51280b12` | (lider) `ClassStatsView` cagri yeri dikisi |
+
+Yolda kapanan, yeni istekten BAGIMSIZ dort gercek hata:
+- Gunluk dagilim, oturum dagilimi, liderlik gecmisi, grup egilimi **`offset`i
+  sessizce yok sayiyordu**: "Gecen hafta"da baslik gecen haftayi yazip grafik bu
+  haftayi ciziyordu. Dordu de kapandi.
+- Oturum dagiliminda **cift kirpma** vardi (once doneme suzuluyor, sonra yine
+  bugunden geriye 30 gune kirpiliyor) -> "Gecen ay"da grafik bombostu.
+- Hedef gostergesi daima BUGUNU anlatiyordu; artik secili gunu anlatiyor.
+- `jumpTo` takvim aritmetigi `Duration.inDays` KULLANMIYOR: yaz saati geciste
+  23/25 saatlik gunler var, tam bolme yanlis cevap veriyor. Testle sabitlendi.
+
+🔴 Iki ajan **kendi testinin olcum gucunu** sinayip zayif buldu ve sikilastirdi:
+WP-745'in ilk (6) iddiasi sabotaj altinda yesil kaliyordu (ayin ilk gunlerinde
+"gecen ay" tesadufen son 30 gunun icinde); WP-747'nin ilk nobetcisinde lider her
+iki pencerede de ayni kisiydi. Ikisi de duzeltildi. Bu, §5 sabotaj kontrolunun
+neden zorunlu oldugunun bu turdaki iki kaniti.
+
+### Dinamik panel — KOK NEDEN BULUNDU, ilk adim indi
+
+`docs/analiz/WP-751-dinamik-panel-kok-neden.md` (521 satir). Alti deneme
+bulundu (WP-76, WP-80, v23, WP-137, WP-205, WP-266/267). Kok neden ikili:
+
+1. Sayac bildirimi ozel `RemoteViews` tasiyor; Android ozel gorunum tasiyan
+   bildirimi **terfi ettirmeyi reddediyor**. Alti tur birbirini dislayan iki
+   hedefi ayni bildirimde tutmaya calismis.
+2. Repo bu kodun yazilmasini **testle yasakliyordu**
+   (`verified_timer_bridge_contract_test.dart` negatif iddialari + fixture
+   `"promotedNowBar": "not_requested"`). Dogru yazilmis bir uygulama bile kapida
+   kirmizi duserdi.
+
+Zemin bastan beri uygundu: compileSdk/targetSdk **36**, minSdk 24,
+`androidx.core:core-ktx:1.18.0` zaten bagimlilik. WP-266/267 (`c6110404`) tam
+bir uygulama yazmis, **cihazda hic olculmeden** 4 saat sonra `3bdf8bb8` ile geri
+alinmis.
+
+`984da08d` (WP-753) kapiyi ters cevirdi ve ozel gorunumu terfi yolundan cikardi;
+ozel panel `timer_panel_expanded` arkasinda geri dusus olarak duruyor. Ayni
+dosyada duran tema regresyonu da kapandi (ham `#FFFFFFFF` literalleri).
+
+🔴 **Silinemeyen bildirim: IMKANSIZ.** Android 14 davranis degisikligi
+`FLAG_ONGOING_EVENT`i kullanici tarafindan silinebilir yapti; istisnalar
+(CallStyle, medya, DPC) calisma sayacini kapsamiyor. Bes turdur olmayan bir
+kapi zorlanmis. Dahasi `setDeleteIntent` HIC yok: kullanici silince sayac
+gorunmez calisiyor ve geri gelmiyor. Dogru tasarim "silinmesin" degil,
+"silinirse sayac durmasin + geri getirme yolu olsun" -- HENUZ YAPILMADI.
+
+### Widget yeniden tasarimi — zemin indi, uc aile devam ediyor
+
+Olculdu: dokuz layout, **sifir `ImageView`**. Sahibin "sadece yazi" sikayeti
+birebir dogru. `docs/tasarim/widget-tasarim-sistemi.md` ortak dili kurdu.
+
+`ba507d15` (WP-752) zemin: alti saglayici `StudyWidgetProviders.kt`'den ayri
+dosyalara bolundu (saf tasima; 1089 satirin yalniz 7'si degisti, hepsi
+`private`->`internal`), tek koyu palete gecildi, 15 yeni ortak cizim uretildi,
+uc olu kaynak dosyasi silindi. Kanit: 126 Kotlin testi yesil + APK'nin **dex ve
+resources.arsc'i okundu**, dokuz saglayicinin da icinde oldugu dogrulandi.
+
+WP-754/755/756 (sayac / ilerleme / liste aileleri) bu kayit yazilirken devam
+ediyor.
+
+### 🔴 ODENMEMIS BORCLAR
+
+- **Paylasilan 12 widget testi henuz uyarlanmadi.** Kaynak metnini birebir
+  kilitliyorlar; uc aile ajani da onlari kiracak. Bilerek kimseye verilmedi,
+  lider tek elden kapatacak. **Tam kapi bu yapilmadan yesil olamaz.**
+- **`SessionScatterChart` `endDay` parametresi yok**: pencere hala *bugunde*
+  bitmek zorunda, "3 ay once"de eksen ~120 gun cizilip sagi bos kaliyor.
+  WP-745 telafi etti, tam cozmedi.
+- **S9 radar `tempo` ekseni** hala `secondsOnDay(sessions, now)` okuyor: "Gecen
+  ay"da bile BUGUNUN hedef yuzdesini ciziyor.
+- **`study_stats.startOfWeek` yaz saati kusuru**: `subtract(Duration(days:))`
+  kullaniyor, DST haftasinda Pazartesi anahtari kayabilir. WP-742 kendi
+  yolunda kacindi, dosyayi duzeltmedi.
+- **Sinav geri sayimi widget'inin Dart tetikleyicisi yok**: kullanici sinav
+  ekleyince widget 30 dakikaya kadar bayat kaliyor.
+- **Oksuz l10n anahtarlari**: `statsUyeYok`, `statsGrupEgilimiSon30`,
+  `statsBugunkuGrupHedefi`, `statsBuHaftaVsGecen`, `statsSec`, `statsGunlukOrt`,
+  `statsGrafikIcin45Gunden` + WP-747 sonrasi `statsBugunKatilim`/`statsBugunLider`.
+  `l10n_audit.py` oksuz anahtar denetimi YAPMIYOR, o yuzden kapi kirmizi degil.
+- **`0136` hicbir ortama uygulanmadi.** Sozlesme `staging.migration_head=0136`
+  diyor ama staging de production da `0135`'te. Surum preflight'i bu haliyle
+  duser.
+
+### 🔴 LIDERIN HATASI — kayda geciyor
+
+`7229f3a3` commit'i kirli: `docs/` belgelerini commit ederken `git commit` yol
+kisiti olmadan cagrildi, git index'in TAMAMINI aldi ve WP-752'nin o an
+stage'lenmis bes silmesi (`StudyWidgetProviders.kt` -1089 dahil) bir "docs"
+commit'ine girdi. Yerine gecen dosyalar untracked oldugu icin **HEAD bir sure
+derlenmez kaldi**. Push edilmemisti, ileri dogru duzeltildi.
+
+Kalici kural: paylasilan agacta commit **daima** `git commit --only -- <yollar>`
+ile atilir ve sonrasinda `git show --stat` ile dosya listesi dogrulanir. Bu tur
+bundan sonraki butun commit'lerde uygulandi; uc widget ajanina da kural olarak
+verildi.
+
+### Sahibe kalan cihaz dogrulamalari (S23 / One UI 8)
+
+- Dinamik panel: sayaci baslat, durum cubugu cipi + kilit ekrani + Now Bar
+  goruntusu al. Gelistirici secenekleri "Live notifications for all apps".
+- Grup sekmesi "Ay" -> geri ok -> liderlik gecmisi gecen ayin yarisini ciziyor mu.
+- "Gun" -> geri ok -> gosterge kartinda "Bugun" yazmiyor mu.
