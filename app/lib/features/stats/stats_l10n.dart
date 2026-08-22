@@ -3,7 +3,8 @@ import '../../l10n/app_localizations.dart';
 
 String statsPeriodLabel(AppLocalizations l10n, StatsPeriod period) =>
     switch (period) {
-      StatsPeriod.today => l10n.statsBugun,
+      // WP-742: dönem artık gezinilebildiği için etiket "Bugün" değil "Gün".
+      StatsPeriod.day => l10n.statsGun,
       StatsPeriod.week => l10n.statsHafta,
       StatsPeriod.month => l10n.statsAy,
       StatsPeriod.year => l10n.analyticsYear,

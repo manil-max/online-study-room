@@ -206,7 +206,7 @@ String statsPeriodNavTitle(
       if (sel.offset == 0) return l10n.statsBuYil;
       if (sel.offset == -1) return l10n.statsPeriodLastYear;
       return from.year.toString();
-    case StatsPeriod.today:
+    case StatsPeriod.day:
     case StatsPeriod.all:
     case StatsPeriod.custom:
       // Gezinme bu modlarda kapalı (`supportsNavigation`), şerit çizilmez.

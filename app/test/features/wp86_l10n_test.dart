@@ -57,11 +57,12 @@ void main() {
             expect(find.text('Bugün özeti'), findsOneWidget);
             expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
             expect(find.text('Kişisel'), findsNothing);
-            expect(find.text('Bugün'), findsOneWidget);
+            // WP-742: dönem chip'i "Bugün" değil "Gün" (`StatsPeriod.day`).
+            expect(find.text('Gün'), findsOneWidget);
           } else {
             expect(find.text("Today's summary"), findsOneWidget);
             expect(find.text("You're not in a group yet"), findsOneWidget);
-            expect(find.text('Today'), findsOneWidget);
+            expect(find.text('Day'), findsOneWidget);
           }
           expect(
             errors.where(

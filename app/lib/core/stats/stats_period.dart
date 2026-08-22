@@ -2,7 +2,11 @@ import 'study_stats.dart';
 
 /// İstatistik / grup ortak dönem filtresi.
 /// WP-178: +year +custom.
-enum StatsPeriod { today, week, month, year, all, custom }
+///
+/// WP-742: `today` → `day`. Değer artık yalnız "bugün"ü değil,
+/// `StatsPeriodSelection.offset` ile gezinilen HERHANGİ bir günü temsil
+/// ediyor; eski ad yanlış hâle gelmişti.
+enum StatsPeriod { day, week, month, year, all, custom }
 
 /// Üst bar + özel aralık state (WP-178).
 ///
@@ -42,9 +46,11 @@ class StatsPeriodSelection {
   }
 
   /// İleri/geri gezinme yalnız sabit uzunluklu takvim dönemlerinde anlamlı.
-  /// `today` günün canlı toplamı, `all` başlangıçtan bugüne, `custom` zaten
-  /// kullanıcının çizdiği aralıktır — hiçbirinde "bir önceki" tanımlı değil.
+  /// WP-742: `day` de sabit uzunluklu bir takvim dönemidir (tam bir gün), o
+  /// yüzden artık gezinilebilir. `all` başlangıçtan bugüne, `custom` zaten
+  /// kullanıcının çizdiği aralıktır — ikisinde de "bir önceki" tanımlı değil.
   bool get supportsNavigation =>
+      period == StatsPeriod.day ||
       period == StatsPeriod.week ||
       period == StatsPeriod.month ||
       period == StatsPeriod.year;
@@ -93,7 +99,10 @@ class StatsPeriodSelection {
       );
     }
     return switch (period) {
-      StatsPeriod.today => (dayOf(n), n),
+      // WP-742: `offset == 0` iken gün CANLIDIR — üst uç "şimdi"dir, dönemin
+      // kapanış günü değil. Kapalı (geçmiş) gün yukarıdaki kaydırılmış daldan
+      // döner.
+      StatsPeriod.day => (dayOf(n), n),
       StatsPeriod.week => (startOfWeek(n), n),
       StatsPeriod.month => (startOfMonth(n), n),
       StatsPeriod.year => (startOfYear(n), n),
@@ -110,6 +119,12 @@ class StatsPeriodSelection {
   /// `DateTime` taşma normalleştirmesiyle yapılır (Aralık + 1 → Ocak).
   (DateTime from, DateTime endExclusive) _shiftedBounds(DateTime n) {
     switch (period) {
+      case StatsPeriod.day:
+        // WP-742: taban İstanbul günüdür; `+ offset` gün taşması `DateTime`
+        // tarafından normalleştirilir (1 Mart - 1 → 28/29 Şubat).
+        final base = dayOf(n);
+        final from = DateTime(base.year, base.month, base.day + offset);
+        return (from, DateTime(from.year, from.month, from.day + 1));
       case StatsPeriod.week:
         final s = startOfWeek(n);
         final from = DateTime(s.year, s.month, s.day + 7 * offset);
@@ -123,7 +138,6 @@ class StatsPeriodSelection {
         final base = startOfYear(n);
         final from = DateTime(base.year + offset, 1, 1);
         return (from, DateTime(from.year + 1, 1, 1));
-      case StatsPeriod.today:
       case StatsPeriod.all:
       case StatsPeriod.custom:
         // `supportsNavigation` bu dalları zaten eler; savunma amaçlı.
@@ -143,7 +157,7 @@ extension StatsPeriodX on StatsPeriod {
   /// 7 / 14 / 30 gün seçicilere eşleme (varsa en yakın).
   int chartDays({List<int> options = const [7, 14, 30]}) {
     final preferred = switch (this) {
-      StatsPeriod.today => 7,
+      StatsPeriod.day => 7,
       StatsPeriod.week => 7,
       StatsPeriod.month => 30,
       StatsPeriod.year => 30,

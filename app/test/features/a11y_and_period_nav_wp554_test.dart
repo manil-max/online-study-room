@@ -384,13 +384,11 @@ void main() {
       expect(yTo, DateTime(2024, 12, 31));
     });
 
-    test('gezinme Bugün/Tümü/Özel için kapalı; offset aralığı bozmaz', () {
+    // WP-742: "Gün" bu listeden ÇIKTI — artık gezinilebilir dönem.
+    // Gün gezinmesinin sözleşmesi `stats_period_day_nav_wp742_test.dart`te.
+    test('gezinme Tümü/Özel için kapalı; offset aralığı bozmaz', () {
       final now = DateTime(2026, 3, 11, 15, 30);
-      for (final p in [
-        StatsPeriod.today,
-        StatsPeriod.all,
-        StatsPeriod.custom,
-      ]) {
+      for (final p in [StatsPeriod.all, StatsPeriod.custom]) {
         final sel = StatsPeriodSelection(period: p);
         expect(sel.supportsNavigation, isFalse, reason: p.name);
         expect(sel.canGoForward, isFalse, reason: p.name);
@@ -411,13 +409,12 @@ void main() {
       expect(title(tester), 'Ay');
     });
 
-    testWidgets('gezinme okları Bugün/Tümü/Özel modunda çizilmez', (
-      tester,
-    ) async {
+    testWidgets('gezinme okları Tümü/Özel modunda çizilmez', (tester) async {
       await pumpBar(tester);
       expect(find.byKey(const Key('statsPeriodNav_prev')), findsOneWidget);
 
-      container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.today);
+      // WP-742: tanık "Bugün" değil "Tümü" — Gün artık gezinilebilir.
+      container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.all);
       await tester.pump();
       expect(find.byKey(const Key('statsPeriodNav_prev')), findsNothing);
       expect(find.byKey(const Key('statsPeriodNav_next')), findsNothing);

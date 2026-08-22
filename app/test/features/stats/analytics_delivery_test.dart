@@ -192,7 +192,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(StatsPeriodBar), findsOneWidget);
-      expect(find.text('Bugün'), findsOneWidget);
+      // WP-742: `StatsPeriod.today` → `day`, chip etiketi "Bugün" → "Gün".
+      expect(find.text('Gün'), findsOneWidget);
       expect(find.text('Hafta'), findsOneWidget);
       expect(find.text('Ay'), findsOneWidget);
       expect(find.text('Tümü'), findsOneWidget);

@@ -265,10 +265,12 @@ void main() {
         period: StatsPeriod.month,
       ).shifted(-2);
       expect(analyticsPeriodFromSelection(sel).offset, -2);
-      final today = const StatsPeriodSelection(
-        period: StatsPeriod.today,
+      // WP-742: `today` → `day` ve `day` ARTIK gezinilebilir; bu iddianın
+      // ölçtüğü şey "gezinilemeyen dönem" olduğu için tanık `all` oldu.
+      final nonNav = const StatsPeriodSelection(
+        period: StatsPeriod.all,
       ).copyWith(offset: -3);
-      expect(analyticsPeriodFromSelection(today).offset, 0);
+      expect(analyticsPeriodFromSelection(nonNav).offset, 0);
     });
   });
 

@@ -4030,6 +4030,10 @@
   "@statsGrupToplami": {
     "description": "Stats user-facing text. Source: Grup toplamı"
   },
+  "statsGun": "Day",
+  "@statsGun": {
+    "description": "Stats user-facing text. Source: Gün"
+  },
   "statsGunlukDagilim": "Daily distribution",
   "@statsGunlukDagilim": {
     "description": "Stats user-facing text. Source: Günlük dağılım"

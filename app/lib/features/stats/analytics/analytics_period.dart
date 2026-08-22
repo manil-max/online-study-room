@@ -2,7 +2,9 @@ import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/stats/stats_period.dart';
 
 /// WP-163: genişletilmiş dönem (year + custom + kıyas).
-enum AnalyticsPeriodKind { today, week, month, year, all, custom }
+/// WP-742: `today` → `day` — StatsPeriod ile aynı gerekçe: değer artık
+/// gezinilen HERHANGİ bir günü temsil ediyor.
+enum AnalyticsPeriodKind { day, week, month, year, all, custom }
 
 class AnalyticsPeriod {
   const AnalyticsPeriod(
@@ -38,7 +40,7 @@ class AnalyticsPeriod {
   (DateTime from, DateTime to) range({DateTime? now}) {
     final n = now ?? DateTime.now();
     return switch (kind) {
-      AnalyticsPeriodKind.today => _stats(StatsPeriod.today).range(now: n),
+      AnalyticsPeriodKind.day => _stats(StatsPeriod.day).range(now: n),
       AnalyticsPeriodKind.week => _stats(StatsPeriod.week).range(now: n),
       AnalyticsPeriodKind.month => _stats(StatsPeriod.month).range(now: n),
       AnalyticsPeriodKind.year => _stats(StatsPeriod.year).range(now: n),
@@ -57,7 +59,7 @@ class AnalyticsPeriod {
 /// StatsPeriod → AnalyticsPeriod köprüsü.
 AnalyticsPeriod analyticsPeriodFromStats(StatsPeriod p) {
   return switch (p) {
-    StatsPeriod.today => const AnalyticsPeriod(AnalyticsPeriodKind.today),
+    StatsPeriod.day => const AnalyticsPeriod(AnalyticsPeriodKind.day),
     StatsPeriod.week => const AnalyticsPeriod(AnalyticsPeriodKind.week),
     StatsPeriod.month => const AnalyticsPeriod(AnalyticsPeriodKind.month),
     StatsPeriod.year => const AnalyticsPeriod(AnalyticsPeriodKind.year),

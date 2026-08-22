@@ -49,7 +49,8 @@ void main() {
     expect(find.byType(SwitchListTile), findsNothing);
     expect(find.byIcon(Icons.compare_arrows), findsNothing);
 
-    expect(find.text('Today'), findsOneWidget);
+    // WP-742: `StatsPeriod.today` → `day`, etiketi de "Today" → "Day".
+    expect(find.text('Day'), findsOneWidget);
     expect(find.text('Week'), findsOneWidget);
     expect(find.text('Month'), findsOneWidget);
     expect(find.text('Year'), findsOneWidget);
