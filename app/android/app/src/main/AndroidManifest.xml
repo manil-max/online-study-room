@@ -143,7 +143,8 @@
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
         <receiver
             android:name=".widgets.TimerWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_label_timer">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -162,7 +163,8 @@
              ki sessizce unutulmasin (WP-705 kusuru tam olarak buydu). -->
         <receiver
             android:name=".widgets.MinimalTimerWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_label_minimal_timer">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -199,7 +201,8 @@
              Ayrisirsa published_home_widgets sozlesme testi kirmizi duser. -->
         <receiver
             android:name=".widgets.TaskWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_label_task">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -215,7 +218,8 @@
              updatePeriodMillis), yayina alinsa bayat veri gosterirdi. -->
         <receiver
             android:name=".widgets.StudyStatsWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_label_stats">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -236,7 +240,8 @@
         </receiver>
         <receiver
             android:name=".widgets.GroupLeaderboardWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_label_leaderboard">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

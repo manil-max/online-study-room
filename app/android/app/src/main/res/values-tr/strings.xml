@@ -29,6 +29,12 @@
     <string name="widget_label_group_goal">Grup hedefi</string>
     <string name="widget_label_clock">Odak dijital saat</string>
     <string name="widget_label_next_alarm">Odak sıradaki alarm</string>
+    <!-- WP-754: widget secici etiketleri (manifest `android:label`). -->
+    <string name="widget_label_timer">Odak sayacı</string>
+    <string name="widget_label_minimal_timer">Odak minimal sayaç</string>
+    <string name="widget_label_task">Odak görev listesi</string>
+    <string name="widget_label_stats">Odak günlük hedef</string>
+    <string name="widget_label_leaderboard">Odak kamp sıralaması</string>
 
     <string name="action_start">Başlat</string>
     <string name="action_stop">Durdur</string>

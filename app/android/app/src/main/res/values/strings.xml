@@ -35,6 +35,15 @@
     <string name="widget_label_group_goal">Group goal</string>
     <string name="widget_label_clock">Odak digital clock</string>
     <string name="widget_label_next_alarm">Odak next alarm</string>
+    <!-- WP-754: bes saglayicinin `android:label`i YOKTU; Android widget
+         secicisinde besi de uygulama adiyla ("Focus Camp") gorunuyor ve
+         birbirinden ayirt edilemiyordu. Desen mevcut adlarla ayni: marka
+         oneki + widget'in isi. -->
+    <string name="widget_label_timer">Odak focus timer</string>
+    <string name="widget_label_minimal_timer">Odak minimal timer</string>
+    <string name="widget_label_task">Odak task list</string>
+    <string name="widget_label_stats">Odak daily goal</string>
+    <string name="widget_label_leaderboard">Odak camp leaderboard</string>
 
     <!-- Timer widget / actions -->
     <string name="action_start">Start</string>

@@ -1,38 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2x1'de yalniz saat; yukseklik arttikca tarih eklenir. -->
+<!-- WP-754 - Odak dijital saat, yeniden tasarlandi.
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md` (§1.4 glif cekirdek).
+
+     CEKIRDEK: K1'de ay+yildiz GLIFI, K2 ve ustunde saat.
+
+     🔴 K1'de sayi TASINAMAZ - aritmetik, gorus degil. `HH:MM` bes karakterdir;
+     40dp kutuda 4dp dolgu ve taban sikistirmayla tavani
+     `widgetMaxSp(40, 4, 5, 0.85) = 9sp`. Anlam tasiyan metnin tabani 11sp
+     (§3.3), yani bes karakter o kutuya OKUNUR bicimde girmiyor. Sistemin
+     verdigi cikis §1.4'te yazili: cekirdek glif olur. Bu bir kayip degil
+     durust bir karar - 1x1 bir saat widget'i zaten sistem saatinin
+     kopyasidir; oradaki deger MARKAdir, sayi degil. Bu yuzden glif pasif
+     `ink_dim` degil `flame` tonundadir (`ClockWidget.kt`).
+
+     Kademeler:
+       K1 Kor    40-109dp genis : ay+yildiz glifi (24dp)
+       K2 Kutuk  110dp+ / kisa  : yalniz saat
+       K3/K4     110dp+ / orta+ : saat + [12dp ay-yildiz isareti | tarih]
+
+     Isaret tarih satirinin ICINDE, yatay olarak durur: dikey butceye hicbir
+     sey eklemez (12dp isaret, 11-14sp tarih satirinin cizgi yuksekliginden
+     kucuktur), yani WP-699'un olctugu iki satirlik yukseklik butcesi
+     degismeden gecerlidir. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/clock_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_card_bg"
+    android:background="@drawable/widget_card_bg_tight"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="4dp">
+
+    <ImageView
+        android:id="@+id/clock_widget_glyph"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_ic_clock"
+        android:visibility="gone" />
 
     <TextClock
         android:id="@+id/clock_widget_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-condensed"
         android:format12Hour="h:mm"
         android:format24Hour="HH:mm"
         android:gravity="center"
         android:maxLines="1"
-        android:textColor="@color/widget_design_ink"
+        android:textColor="@color/widget_ember_ink"
+        android:textScaleX="0.85"
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    <TextClock
-        android:id="@+id/clock_widget_date"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/clock_widget_date_row"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:format12Hour="EEE d MMM"
-        android:format24Hour="EEE d MMM"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_design_ink_muted"
-        android:textSize="11sp"
-        android:visibility="gone" />
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/clock_widget_mark"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_marginEnd="3dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_ic_clock" />
+
+        <TextClock
+            android:id="@+id/clock_widget_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:format12Hour="EEE d MMM"
+            android:format24Hour="EEE d MMM"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="@color/widget_ember_ink_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
 </LinearLayout>

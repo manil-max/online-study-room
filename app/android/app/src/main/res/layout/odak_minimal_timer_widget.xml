@@ -1,42 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-718: "minimal sayac" ana ekran widget'i.
+<!-- WP-754 - "minimal sayac" ana ekran widget'i, yeniden tasarlandi.
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md` (§1.2 kademe butcesi).
 
-     Tek gorunur oge sayidir; tum yuzey Baslat/Durdur'dur. Ayri bir dugme
-     YOKTUR ve bu bir eksiklik degil, 48dp kuralinin tek cozumudur: 1-2
-     hucrelik bir kutuda 48dp'lik bir hapi ayri cizmek geriye okunur bir sayi
-     icin yer birakmaz (olcum `TimerWidgetWp718Test.kt`). Yuzeyin tamami hedef
-     olunca hedef, launcher'in gercek hucresi kadar buyuk olur.
+     Bu widget sistemin EN SAF kademe ornegidir: her boyutta TAM OLARAK BIR
+     oge cizer. Sayac widget'iyla akrabadir (ayni `widget_ic_timer` ocagi, ayni
+     `sans-serif-condensed` + 0.85 tipografisi, ayni flame/ink_dim durum
+     rengi) ama IKIZI degildir: burada hicbir kademede yay, hap, ders chip'i,
+     yuzde ya da ayrac yoktur. Sessiz olan bu.
 
-     WP-728: 0.75 yatay glif olcegi auto-fit DEGILDIR; sure 00:00'dan
-     00:00:00'a gecince degismez. Bu sabit geometri 1x1'de 16sp rakami
-     korurken sekiz karakteri de kirpmadan tasir. 2x1 varsayilan punto 21sp'dir.
+     CEKIRDEK (§1.4): gecen sure. K2 ve ustunde akan `Chronometer`; K1'de ocak
+     GLIFI. Gerekcesi `odak_timer_widget.xml` basliginda madde madde yazili ve
+     burada birebir aynidir - ozeti: 40dp kutuda sekiz karakterin tavani
+     `widgetMaxSp(40, 2, 8, 0.85) = 6sp` (11sp tabaninin altinda), sayiyi 3
+     karaktere indirmek ise CANLILIGI oldururdu (`Chronometer`in en kisa bicimi
+     `MM:SS`, `updatePeriodMillis=0`).
+
+     WP-728'den devralinan ve DEGISEN sey: yatay geometri artik `textScaleX`
+     0.75 degil 0.85 + `sans-serif-condensed`. 0.75 bir daraltma degil
+     deformasyondu; daraltmayi yazi tipinin kendi glif formu yapar (§3.1).
+     Punto hala icerikten DEGIL yalniz kutudan turer; sure 00:00'dan
+     00:00:00'a gecince degismez (`minimalTimerTimeSp`).
 
      Dolgu 2dp: varsayilan yukseklik 1 hucre (40dp) ve o kutuda dolgunun her
-     dp'si dogrudan puntodan dusuyor. Renkler WP-717'nin paylasilan dilinden
-     (`widget_card_bg`, `widget_design_ink`, `widget_design_accent`); calisan
-     ve duran hali metin RENGIYLE ayrilir, cunku ikinci bir satir eklemek
-     widget'i "minimal" olmaktan cikarirdi. -->
+     dp'si dogrudan puntodan duser. Zemin `widget_card_bg_tight` (§2.6): K1/K2
+     kutusunda 20dp yaricap koselerin tamamini yer, 12dp yemez. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/minimal_timer_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_card_bg"
+    android:background="@drawable/widget_card_bg_tight"
     android:gravity="center"
     android:minHeight="48dp"
     android:minWidth="48dp"
     android:orientation="vertical"
     android:padding="2dp">
 
+    <ImageView
+        android:id="@+id/minimal_timer_widget_glyph"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_ic_timer"
+        android:visibility="gone" />
+
     <Chronometer
         android:id="@+id/minimal_timer_widget_elapsed"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-condensed"
         android:gravity="center"
         android:maxLines="1"
         android:text="00:00"
-        android:textColor="@color/widget_design_ink"
-        android:textScaleX="0.75"
+        android:textColor="@color/widget_ember_ink"
+        android:textScaleX="0.85"
         android:textSize="21sp"
         android:textStyle="bold" />
 </LinearLayout>

@@ -37,6 +37,12 @@
      `TimerWidgetWp718Test.kt`. Gercek 1x1 isteyen kullanicinin yolu bu widget
      degil `odak_minimal_timer_widget_info.xml`dir (alt sinir 40x40dp).
 -->
+<!-- WP-754: `android:widgetCategory="home_screen"` beyani eklendi. Beyan
+     eksik oldugunda Android varsayilana duser ve bazi OEM launcherlari
+     widget'i kilit ekrani kategorisinde de listeler; hicbir derleme hatasi
+     uretmeden. Ayrica saglayicinin manifest `android:label`i de bu turda
+     eklendi - onsuz secicideki bes widget da "Focus Camp" diye gorunuyor ve
+     ayirt edilemiyordu. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/odak_timer_widget"
     android:maxResizeHeight="180dp"
@@ -49,4 +55,5 @@
     android:resizeMode="horizontal|vertical"
     android:targetCellHeight="1"
     android:targetCellWidth="2"
-    android:updatePeriodMillis="0" />
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

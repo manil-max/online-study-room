@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
+import android.view.View
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.timer.TimerStateStore
 
@@ -22,20 +24,19 @@ import com.manilmax.online_study_room.timer.TimerStateStore
  * vardir.
  *
  * ## Neden ayri dugme yok
- * Tek gorunur oge sayidir; **tum yuzey** baslat/durdur'dur. 48dp'lik ayri bir
- * hap 1-2 hucrelik bir kutuda geriye okunur bir sayi icin yer birakmiyor
+ * Tek gorunur oge cekirdektir; **tum yuzey** baslat/durdur'dur. 48dp'lik ayri
+ * bir hap 1-2 hucrelik bir kutuda geriye okunur bir sayi icin yer birakmiyor
  * (olcum: `TimerWidgetWp718Test`). Hedefi kucultmek yerine yuzeyin tamamini
  * hedef yapmak, launcher'in gercek hucresi kadar (~70-85dp) buyuk bir dokunma
  * alani verir. Ayni karar sayac widget'inin en kucuk sinifinda da gecerlidir
  * (`timerControlsVisible`).
  *
- * ## Neden `AppWidgetProvider`, `HomeWidgetProvider` degil
- * Bu widget `widgetData`ya hic bakmaz — durumu `TimerStateStore` prefs'inden
- * ve kendi kendine tiklayan `Chronometer`dan alir. `HomeWidgetProvider`
- * turemek WP-708'in anahtar sahipligi sozlesmesine okuyucusu olmayan bir uye
- * eklerdi. Tazeleme `TimerWidgets.updateAll` ile dogrudan
- * `ACTION_APPWIDGET_UPDATE` yayinindan gelir; bu duz `AppWidgetProvider` ile
- * de calisir.
+ * ## WP-754 — akraba, ikiz degil
+ * Sayac widget'iyla PAYLASILAN sey kimliktir: ayni ocak glifi
+ * (`widget_ic_timer`), ayni `sans-serif-condensed` + `textScaleX` 0.85
+ * tipografisi, ayni flame/ink_dim durum rengi. AYRISAN sey susmasidir: burada
+ * hicbir kademede isaret, ayrac, hap, ders chip'i ya da yuzde yoktur - her
+ * boyutta TAM OLARAK BIR oge cizilir (§1.2 kademe butcesinin en saf hali).
  *
  * ## `onAppWidgetOptionsChanged` (WP-699 dersi)
  * `AppWidgetProvider.onAppWidgetOptionsChanged` govdesi BOSTUR. Gecersiz
@@ -84,23 +85,47 @@ class MinimalTimerWidgetProvider : AppWidgetProvider() {
                 nowWallClockMs = System.currentTimeMillis(),
                 nowElapsedRealtimeMs = SystemClock.elapsedRealtime(),
             )
+            val coreIsGlyph = minimalTimerCoreIsGlyph(widthDp)
+            val size = widgetSizeClass(minimalTimerSizeSpec, widthDp, heightDp)
+            val accent = ContextCompat.getColor(context, R.color.widget_ember_flame)
+            val muted = ContextCompat.getColor(context, R.color.widget_ember_ink_dim)
+            val ink = ContextCompat.getColor(context, R.color.widget_ember_ink)
 
             val views = RemoteViews(context.packageName, R.layout.odak_minimal_timer_widget).apply {
+                setInt(
+                    R.id.minimal_timer_widget_root,
+                    "setBackgroundResource",
+                    widgetCardBackground(size.height),
+                )
+                // WP-754: K1'de sayinin YERINE ocak glifi cizilir. Gerekce
+                // `minimalTimerCoreIsGlyph` - ozeti: 40dp kutuda sekiz karakter
+                // 11sp tabaninin altina duser, uc karaktere inmek ise canli
+                // sayaci oldururdu (`Chronometer`in en kisa bicimi `MM:SS`).
+                setViewVisibility(
+                    R.id.minimal_timer_widget_glyph,
+                    if (coreIsGlyph) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.minimal_timer_widget_elapsed,
+                    if (coreIsGlyph) View.GONE else View.VISIBLE,
+                )
                 setTextViewTextSize(
                     R.id.minimal_timer_widget_elapsed,
                     android.util.TypedValue.COMPLEX_UNIT_SP,
                     minimalTimerTimeSp(widthDp, heightDp),
                 )
                 // Calisiyor/duruyor ayrimi RENKLE yapilir: ikinci bir satir
-                // eklemek widget'i "minimal" olmaktan cikarirdi. Simgeler
-                // WP-717'nin paylasilan dilinden gelir ve gece/gunduz karsiligi
-                // `values-night` icindedir.
+                // eklemek widget'i "minimal" olmaktan cikarirdi. Cekirdek
+                // hangi kademede olursa olsun ayni iki tonu kullanir; renk her
+                // turda ACIKCA yazilir, yoksa onceki cizimden sizar.
                 setTextColor(
                     R.id.minimal_timer_widget_elapsed,
-                    androidx.core.content.ContextCompat.getColor(
-                        context,
-                        if (isRunning) R.color.widget_design_accent else R.color.widget_design_ink,
-                    ),
+                    if (isRunning) accent else ink,
+                )
+                setInt(
+                    R.id.minimal_timer_widget_glyph,
+                    "setColorFilter",
+                    if (isRunning) accent else muted,
                 )
                 if (projection.direction != TimerChronometerDirection.IDLE) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -129,7 +154,7 @@ class MinimalTimerWidgetProvider : AppWidgetProvider() {
                 }
                 // Tum yuzey tek hedef. Metin `strings.xml`den okunur (bu WP
                 // yeni dize eklemez); erisilebilirlik icin ekran okuyucu bunu
-                // duyurur.
+                // duyurur — glif kademesinde ekranda okunacak metin YOKTUR.
                 setContentDescription(
                     R.id.minimal_timer_widget_root,
                     context.getString(
@@ -171,8 +196,19 @@ internal const val WIDGET_MINIMAL_TIMER_TALL_HEIGHT_DP = 110
 /** Kok dolgu 2dp: 40dp'lik varsayilan yukseklikte her dp puntodan duser. */
 internal const val WIDGET_MINIMAL_TIMER_PADDING_DP = 2
 
-/** Sabit yatay glif olcegi; sure uzayinca punto/olcek degismez. */
-internal const val WIDGET_MINIMAL_TIMER_TEXT_SCALE_X = 0.75f
+/**
+ * Rakamlarin `textScaleX` degeri.
+ *
+ * 🔴 WP-754: 0.75 -> 0.85. Sayac widget'iyla AYNI kural (gerekce
+ * [WIDGET_TIMER_TEXT_SCALE_X] KDoc'unda): 0.85 tasarim sisteminin tabanidir
+ * (§7 madde 6) ve daraltmayi `sans-serif-condensed`in kendi glif formu yapar.
+ * Bu sabit `odak_minimal_timer_widget.xml`deki `android:textScaleX` ile AYNI
+ * SEYI soyler.
+ */
+internal const val WIDGET_MINIMAL_TIMER_TEXT_SCALE_X = 0.85f
+
+/** K1 cekirdek glifi - sayac widget'iyla AYNI ocak (`widget_ic_timer`). */
+internal const val WIDGET_MINIMAL_TIMER_GLYPH_DP = 24
 
 internal val minimalTimerSizeSpec = WidgetSizeSpec(
     WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP,
@@ -185,20 +221,28 @@ internal val minimalTimerSizeSpec = WidgetSizeSpec(
 
 /**
  * Genislik merdiveni. Kirpma modeli WP-699 ile ayni: karakter genisligi
- * `0.60 x punto`, 8dp emniyet payi.
+ * `0.60 x punto`, 8dp emniyet payi, sonra §3.4 genislik butcesi.
  *
- * `NARROW` sinifi 40dp'den 149dp'ye uzandigi icin tek basina yeterli degildir:
- * 1x1 ve 2x1 ayni puntoyu alir. WP-728 bu araligi gercek kutu genisligiyle
- * iki sabit basamaga ayirir. Minimal layout'un 0.75 yatay glif olcegiyle:
- *   1x1  70dp / 8 karakter: 16sp -> 57.6dp (kullanilabilir 58dp)
- *   2x1 110dp / 8 karakter: 21sp -> 75.6dp (kullanilabilir 98dp)
- *   3x2 150dp / 8 karakter: 28sp -> 100.8dp (kullanilabilir 138dp)
- *   4x2 220dp / 8 karakter: 38sp -> 136.8dp (kullanilabilir 208dp)
+ * `NARROW` sinifi 40dp'den 149dp'ye uzandigi icin merdiven tek basina yeterli
+ * degildir; kutu genisligi butce uzerinden ikinci bir kelime soyler
+ * ([minimalTimerTimeSp]).
  */
 internal val minimalTimerTypography = SpRamp(21f, 28f, 38f)
 
-/** Gercek 1x1 genisligi icin ayri ve okunur alt basamak. */
-internal const val WIDGET_MINIMAL_TIMER_ONE_CELL_SP = 16f
+/**
+ * K1 (Kor): cekirdek SAYI degil GLIFtir - sayac widget'iyla ayni karar ve ayni
+ * gerekce ([timerCoreIsGlyph]). Ozeti: 40dp kutuda 2dp dolguyla sekiz
+ * karakterin tavani `widgetMaxSp(40, 2, 8, 0.85) = 6sp` ve [WIDGET_MIN_TEXT_SP]
+ * 11sp'dir; uc karaktere inmek ise genisligi cozup CANLILIGI oldururdu, cunku
+ * RemoteViews'ta kendi kendine tiklayan tek gorunum `Chronometer`dir ve onun en
+ * kisa bicimi `MM:SS`tir (`updatePeriodMillis=0`).
+ */
+internal fun minimalTimerCoreIsGlyph(widthDp: Int): Boolean =
+    widthDp in 1 until WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP
+
+/** O kutuda cizilen cekirdegin KARAKTER sayisi; glif cekirdek 0 dondurur. */
+internal fun minimalTimerCoreChars(widthDp: Int): Int =
+    if (minimalTimerCoreIsGlyph(widthDp)) 0 else WIDGET_TIMER_TIME_CHARS
 
 /**
  * Yukseklik tavani. Genislik merdiveni tek basina yetmez: 4x1 gibi genis ama
@@ -214,20 +258,29 @@ internal fun minimalTimerHeightCapSp(height: WidgetHeightClass): Float = when (h
 }
 
 /**
- * Boyuta bagli ama icerikten bagimsiz punto merdiveni.
+ * Boyuta bagli ama ICERIKTEN bagimsiz punto: sure 00:00'dan 00:00:00'a gecince
+ * punto degismez (WP-728 kurali korunuyor).
  *
- * Onceki merdiven 40..149dp araligini tek sinif sayiyordu: 1x1 ve 2x1 ayni
- * 19sp'yi aliyordu. Ustelik 1x1 testi yalniz 5 karakteri olcuyor, calisan
- * sayacin 8 karakterlik `00:00:00` halini disarida birakiyordu. Sabit 0.75
- * yatay geometriyle 1x1'de 16sp'nin sekiz karakteri 57.6dp yer kaplar; yaygin
- * 70dp hucrede 2dp dolgu ve 8dp emniyet sonrasi kalan alan 58dp'dir.
+ * 🔴 WP-754: merdiven ve yukseklik tavaninin yanina §3.4 GENISLIK butcesi
+ * geldi. Yatay sikistirma tabana (0.85) cikinca eski sabit basamaklar bazi
+ * kutularda kutuyu asiyordu; butce hangi kutuda neyin sigdigini tek yerden
+ * soyler. Taban [WIDGET_MIN_TEXT_SP]'dir - K1'de sayi zaten cizilmez
+ * ([minimalTimerCoreIsGlyph]) ama fonksiyon "cizilseydi ne olurdu" sorusuna
+ * durust cevap verir.
  */
 internal fun minimalTimerTimeSp(widthDp: Int, heightDp: Int): Float {
+    val box = if (widthDp > 0) widthDp else WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP
     val size = widgetSizeClass(minimalTimerSizeSpec, widthDp, heightDp)
-    val widthSp = if (widthDp in 1 until WIDGET_MINIMAL_TIMER_DEFAULT_WIDTH_DP) {
-        WIDGET_MINIMAL_TIMER_ONE_CELL_SP
-    } else {
-        minimalTimerTypography.of(size.width)
-    }
-    return minOf(widthSp, minimalTimerHeightCapSp(size.height))
+    val budget = widgetMaxSp(
+        widthDp = box,
+        paddingDp = WIDGET_MINIMAL_TIMER_PADDING_DP,
+        chars = WIDGET_TIMER_TIME_CHARS,
+        advanceScale = WIDGET_MINIMAL_TIMER_TEXT_SCALE_X,
+    )
+    val capped = minOf(
+        minimalTimerTypography.of(size.width),
+        minimalTimerHeightCapSp(size.height),
+        budget,
+    )
+    return maxOf(capped, WIDGET_MIN_TEXT_SP)
 }

@@ -1,28 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Varsayilan 2x1. Kisa kutuda buyuk sayi + kucuk eylem ipucu gorunur;
-     tum kart 48dp'den buyuk tek Baslat/Durdur hedefidir. Uzun kutuda ayrica
-     48dp tam kontrol satiri ve ders secimi acilir. -->
+<!-- WP-754 - Odak Sayaci, dort kademede yeniden tasarlandi.
+     Sozlesme: `docs/tasarim/widget-tasarim-sistemi.md` (§6 referans widget).
+
+     CEKIRDEK (§1.4): gecen sure. K2 ve ustunde akan `Chronometer`; K1'de
+     ocak GLIFI.
+
+     🔴 K1 neden sayi degil GLIF - sahibin gordugu iki kusurun ikisi de burada
+     bitiyor:
+       1. Genislik. 40dp kutuda 2dp dolgu ve taban sikistirmayla sekiz
+          karakterin en fazla puntosu `widgetMaxSp(40, 2, 8, 0.85) = 6sp`;
+          11sp tabaninin (§3.3) coook altinda. Bugun o kutuda 20sp'lik bir
+          "00:00:00" ciziliyor ve `textScaleX="0.55"` ile %45 yatay eziliyor.
+       2. Dogruluk. Sayiyi 3 karaktere ("47" dakika) indirmek genisligi cozer
+          ama CANLILIGI oldururdu: RemoteViews'ta kendi kendine tiklayan tek
+          gorunum `Chronometer`dir ve onun en kisa bicimi `MM:SS`tir.
+          `updatePeriodMillis=0` (info xml) ve `TimerWidgets.updateAll` yalniz
+          baslat/durdur/boot aninda yayin yapar; dakika yazan bir `TextView`
+          iki saatlik bir oturum boyunca "0" gosterirdi. Glif ise yalniz
+          DURUM degisince degisir - yani tam olarak bir yayinin dustugu anda.
+     §1.4 bu cikisi acikca veriyor: "sayi 3 karaktere sigmiyorsa cekirdek
+     gliftir". Durum (calisiyor/duruyor) ikinci bir ogeyle degil GLIFIN
+     RENGIYLE anlatilir (§6): flame / ink_dim.
+
+     Kademeler (gorunurluk `TimerWidget.kt` icindeki saf fonksiyonlardan):
+       K1 Kor    40-109dp genis : glif                       (kok = Baslat/Durdur)
+       K2 Kutuk  110dp+ / kisa  : sayi                       (kok = Baslat/Durdur)
+       K3 Ocak   110dp+ / orta  : ocak isareti + sayi + 48dp hap
+       K4 Kamp   150dp+ / orta  : + ders hapi
+       K4-uzun   TALL           : + 1dp ayrac (§4.4: duz `View` yok, ImageView)
+     Isaret ve ayrac GRAFIKtir; §1.3 dusme sirasinda cekirdekten ONCE duser -
+     karari `timerMarkVisible` aritmetigi verir, gozle degil. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/timer_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_card_bg"
+    android:background="@drawable/widget_card_bg_tight"
     android:gravity="center"
     android:minHeight="48dp"
     android:minWidth="48dp"
     android:orientation="vertical"
     android:padding="4dp">
 
+    <ImageView
+        android:id="@+id/timer_widget_glyph"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_ic_timer"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/timer_widget_mark"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginBottom="2dp"
+        android:contentDescription="@null"
+        android:src="@drawable/widget_ic_timer"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/timer_widget_rule"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_design_divider"
+        android:layout_marginBottom="@dimen/widget_design_row_gap"
+        android:background="@drawable/widget_divider"
+        android:contentDescription="@null"
+        android:visibility="gone" />
+
     <Chronometer
         android:id="@+id/timer_widget_elapsed"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-condensed"
         android:gravity="center"
         android:maxLines="1"
         android:text="00:00"
-        android:textColor="@color/widget_design_ink"
-        android:textScaleX="0.55"
+        android:textColor="@color/widget_ember_ink"
+        android:textScaleX="0.85"
         android:textSize="28sp"
         android:textStyle="bold" />
 
@@ -38,9 +93,10 @@
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
         android:text="@string/action_start"
-        android:textColor="@color/widget_design_surface"
+        android:textColor="@color/widget_ember_night"
         android:textSize="11sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/timer_widget_controls"
@@ -64,7 +120,7 @@
             android:minHeight="48dp"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:textColor="@color/widget_design_ink_muted"
+            android:textColor="@color/widget_ember_ink_dim"
             android:textSize="11sp" />
 
         <TextView
@@ -79,7 +135,7 @@
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:text="@string/action_start"
-            android:textColor="@color/widget_design_surface"
+            android:textColor="@color/widget_ember_night"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
