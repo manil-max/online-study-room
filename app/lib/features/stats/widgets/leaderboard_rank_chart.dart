@@ -19,6 +19,7 @@ class LeaderboardRankChart extends StatelessWidget {
     required this.stats,
     required this.days,
     this.endDay,
+    this.startDay,
     required this.currentUserId,
     required this.emptyLabel,
     required this.namelessLabel,
@@ -39,6 +40,25 @@ class LeaderboardRankChart extends StatelessWidget {
   /// Opsiyoneldir: verilmezse eski davranış (`DateTime.now()`) korunur.
   final DateTime? endDay;
 
+  /// Donemin ILK gunu. Saat bileseni [dayOf] ile duser.
+  ///
+  /// 🔴 WP-758: [days] pencerenin uzunlugunu tek basina belirliyordu ve
+  /// secili donemle hicbir iliskisi yoktu. Iki yonlu bozuluyordu:
+  ///
+  ///   * **Tasma.** "Hafta" Carsamba gunu UC gunluk bir donemdir; grafik yine 7
+  ///     gun ciziyor, GECEN haftanin dort gununu yarisa katiyordu. Hemen
+  ///     ustteki "Siralama" listesi o gunleri saymadigi icin iki widget ayni
+  ///     soruya farkli cevap veriyordu ("Ozel aralik"ta pencere aralik ne
+  ///     olursa olsun sabit 30 gundu — ayni kusurun en gorunur hâli).
+  ///   * **Kirpilma.** "Yil" / "Tumu" 30 gunluk bir KUYRUK cizer; kumulatif o
+  ///     kuyrugun basinda sifirlandigi icin donemin ilk aylari yok sayiliyordu.
+  ///
+  /// Verilirse pencere donemin ONUNE tasmaz ve donemden kisa kaldiginda
+  /// kumulatif toplam donem basi ile pencere basi arasindaki sureyle
+  /// **tohumlanir** — cizilen sira, donemin gercek siralamasidir. Verilmezse
+  /// eski davranis (yalnizca [days] gun) korunur.
+  final DateTime? startDay;
+
   final String currentUserId;
   final String emptyLabel;
   final String namelessLabel;
@@ -54,11 +74,23 @@ class LeaderboardRankChart extends StatelessWidget {
       return _empty(theme);
     }
 
-    // Pencere: [endDay] gününde biten [days] gün (eski → yeni). [endDay]
-    // yoksa bugünde biter.
+    // Pencere: [endDay] gününde biten en fazla [days] gün (eski → yeni).
+    // [endDay] yoksa bugünde biter; [startDay] varsa pencere onun ÖNÜNE taşmaz.
     final end = dayOf(endDay ?? DateTime.now());
+    final start = startDay == null ? null : dayOf(startDay!);
+    var count = days;
+    if (start != null) {
+      final span = _daySpanInclusive(start, end);
+      if (span < count) count = span;
+    }
+    if (count < 1) count = 1;
+    // 🔴 Gün anahtarı takvim aritmetiğiyle kurulur (`day - i`), `subtract` ile
+    // değil: `Duration` mutlak süredir ve yaz saati uygulayan bir cihazda
+    // 23/25 saatlik günde gece yarısını ıskalar. Harita anahtarları ise her
+    // zaman YEREL gece yarısıdır — kaçan gün sessizce 0 okunurdu.
     final window = [
-      for (var i = days - 1; i >= 0; i--) end.subtract(Duration(days: i)),
+      for (var i = count - 1; i >= 0; i--)
+        DateTime(end.year, end.month, end.day - i),
     ];
 
     final perMember = {
@@ -69,9 +101,15 @@ class LeaderboardRankChart extends StatelessWidget {
     };
 
     // Kümülatif toplam → her gün sıralama; çizgi noktaları (plottedY: rank1 üstte).
-    final cumulative = {for (final id in memberIds) id: 0};
+    // Pencere dönemden kısaysa dönem başı ile pencere başı arası TOHUMLANIR.
+    final cumulative = {
+      for (final id in memberIds)
+        id: start == null
+            ? 0
+            : _sumBetween(perMember[id]!, start, window.first),
+    };
     final spotsByMember = {for (final id in memberIds) id: <FlSpot>[]};
-    var anyData = false;
+    var anyData = cumulative.values.any((v) => v > 0);
     for (var di = 0; di < window.length; di++) {
       final day = window[di];
       for (final id in memberIds) {
@@ -245,6 +283,32 @@ class LeaderboardRankChart extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// [from, to] (iki uç dâhil) arasındaki gün sayısı.
+  ///
+  /// 🔴 Fark `difference().inDays` ile ham alınmaz: gün anahtarı cihazın YEREL
+  /// gece yarısıdır, yaz saati uygulayan bölgede iki gece yarısının arası 23/25
+  /// saattir ve tam bölme 23 saati 0 güne yuvarlar. UTC'de her gün 24 saattir
+  /// (aynı tuzağın tanığı `stats_period_provider.dart` `_dayNumber`).
+  static int _daySpanInclusive(DateTime from, DateTime to) =>
+      DateTime.utc(to.year, to.month, to.day)
+          .difference(DateTime.utc(from.year, from.month, from.day))
+          .inDays +
+      1;
+
+  /// `[from, before)` yarı açık aralığındaki toplam saniye (pencere tohumu).
+  static int _sumBetween(
+    Map<DateTime, int> dayTotals,
+    DateTime from,
+    DateTime before,
+  ) {
+    var sum = 0;
+    for (final e in dayTotals.entries) {
+      if (e.key.isBefore(from) || !e.key.isBefore(before)) continue;
+      sum += e.value;
+    }
+    return sum;
   }
 
   Widget _empty(ThemeData theme) => Padding(

@@ -494,6 +494,13 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           // kusur eğilim grafiğinde WP-746'da (`today: to`) kapanmıştı;
           // buradaki kapanamamıştı çünkü widget dışarıdan gün almıyordu.
           endDay: to,
+          // 🔴 WP-758: pencerenin UZUNLUGU da doneme baglandi. Sonu
+          // baglanmisti ama uzunluk `trendDays`ti (7 / sabit 30): Carsamba
+          // gunu "Hafta" UC gunluk bir donemdir, grafik yine 7 gun cizip
+          // GECEN haftayi yarisa katiyordu — hemen ustteki "Siralama"
+          // listesiyle celisiyordu. "Yil"/"Tumu"da ise tersi: 30 gunluk
+          // kuyruk donemin ilk aylarini yok sayiyordu.
+          startDay: from,
           currentUserId: currentUserId,
           emptyLabel: AppLocalizations.of(
             context,
