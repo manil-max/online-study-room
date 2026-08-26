@@ -3,6 +3,52 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.72",
+      "buildNumber": 72,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v72: bildirim ve widget'lar cihazda ölçülüp düzeltildi",
+      "highlights": [
+        "Sayaç bildirimi yeniden çalışıyor: sayaç akıyor, Başlat/Durdur düğmesi yerinde. v71'de bildirimde 00:00 görünüyor ve düğme hiç çizilmiyordu.",
+        "Dokuz ana ekran widget'ı gerçek bir ekranda ölçüldü. Geri sayım widget'ı 1x1'de tamamen boş çiziliyordu; üç sınavı olan kullanıcıda hem sayı hem satırlar birden gizleniyordu.",
+        "Sıralamada kırpılan şey artık süre değil isim. Widget'ın tek işi kimin ne kadar çalıştığını göstermekti; kırpılan sayının kendisiydi.",
+        "Liderlik geçmişi grafiği seçili dönemin dışına taşmıyor; üstteki sıralama listesiyle farklı lider gösterebilmesi bitti."
+      ],
+      "fixes": [
+        "Boştaki bildirimin başlığı sabit \"00:00\" metniydi; gerçek bir durum cümlesine bağlandı.",
+        "Bildirim eylemleri ikonsuz ekleniyordu ve bazı yüzeylerde hiç çizilmiyordu.",
+        "Bildirim paneli açık temada metni, koyu temada düğmeyi kaybediyordu; renk kuralı ölçülerek iki yönlü düzeltildi.",
+        "1x1 widget'ın köşe yarıçapı kutunun tamamını yiyordu.",
+        "Saat widget'ı 2x2'de yerin beşte birini boş bırakıyordu.",
+        "\"Yıl\" veya \"Tümü\" seçiliyken liderlik geçmişi, dönem doluyken bile \"kayıt yok\" diyebiliyordu."
+      ],
+      "notes": [
+        "Dinamik panel hâlâ çalışmıyor ve sebebi ölçüldü: uygulamanın isteği eksiksiz, ama test edilen Android 16 görüntüsünde terfiyi çizen arayüz bileşeni yok. Uygulama artık bunu fark edip çalışan panele düşüyor.",
+        "Sayaç bildirimi hâlâ kaydırılarak silinebiliyor (Android 14 platform kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.",
+        "Sıradaki alarm widget'ı yayında değil."
+      ],
+      "titleEn": "v72: notification and widgets measured on a real screen",
+      "highlightsEn": [
+        "The timer notification works again: the clock ticks and Start/Stop is there. In v71 it showed 00:00 and the button was never drawn.",
+        "All nine home screen widgets were measured on a real screen. The countdown widget drew completely empty at 1x1 for anyone with three exams.",
+        "In the leaderboard the truncated part is now the name, not the duration. The widget's only job is showing who studied how long.",
+        "Leaderboard history no longer draws outside the selected period, so it can no longer disagree with the ranking list above it."
+      ],
+      "fixesEn": [
+        "The idle notification title was the literal text \"00:00\"; it now carries a real status line.",
+        "Notification actions were added without an icon and went undrawn on some surfaces.",
+        "The notification panel lost its text in light mode and its button in dark mode; the colour rule was measured and fixed in both directions.",
+        "The 1x1 card's corner radius ate the whole box.",
+        "The clock widget wasted a fifth of its space at 2x2.",
+        "Leaderboard history could say \"no records\" for a period that was not empty."
+      ],
+      "notesEn": [
+        "The live status panel still does not appear, and the reason was measured: the app's request is complete, but the Android 16 image under test has no component that draws the promotion. The app now detects this and falls back to the working panel.",
+        "The timer notification can still be swiped away (an Android 14 platform decision). If dismissed, the timer keeps running unseen.",
+        "The next-alarm widget is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.71",
       "buildNumber": 71,
       "channel": "stable",

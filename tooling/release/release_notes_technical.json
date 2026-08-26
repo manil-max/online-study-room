@@ -3,6 +3,50 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.72",
+      "buildNumber": 72,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v72: WP-753 rollback + WP-757/758/759",
+      "highlights": [
+        "WP-753 default reverted to the v43 rich panel; Live Update became opt-in after shipping unverified and breaking the notification.",
+        "WP-757 measured all nine widgets through a real AppWidgetHost at 40/110/110x110/180x110 dp with Turkish fixture data; 13 defective boxes closed, ellipsis counted per TextView.",
+        "WP-758 bound the leaderboard window's LENGTH to the period (WP-747 had bound only its END), seeding cumulative totals from the period start.",
+        "WP-759 measured promotion on an Android 16 emulator: POST_PROMOTED_NOTIFICATIONS is undefined on that image and the drawing flag is absent, so no app can be promoted there."
+      ],
+      "fixes": [
+        "IDLE_NOTIFICATION_TIMER_TEXT literal replaced by idleTimerNotificationPlan.",
+        "addAction(0, ...) replaced by real drawables.",
+        "Notification colour rule made two-directional and documented with contrast measurements.",
+        "TimerPromotion three-layer gate wired into StudyTimerService and stamped with Build.FINGERPRINT so a DENIED verdict cannot become a permanent ceiling.",
+        "Dead timer_panel_expanded key wired to a real setting."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped; CI green. No migration change, head stays 0136.",
+        "Promotion unverified on the owner's Galaxy S23; measured impossible only on the emulator image.",
+        "timer_background_reconcile_test.dart flake diagnosed, fix attempted and reverted; see backlog.md."
+      ],
+      "titleEn": "v72: WP-753 rollback + WP-757/758/759",
+      "highlightsEn": [
+        "WP-753 default reverted to the v43 rich panel; Live Update became opt-in after shipping unverified and breaking the notification.",
+        "WP-757 measured all nine widgets through a real AppWidgetHost at 40/110/110x110/180x110 dp with Turkish fixture data; 13 defective boxes closed, ellipsis counted per TextView.",
+        "WP-758 bound the leaderboard window's LENGTH to the period (WP-747 had bound only its END), seeding cumulative totals from the period start.",
+        "WP-759 measured promotion on an Android 16 emulator: POST_PROMOTED_NOTIFICATIONS is undefined on that image and the drawing flag is absent, so no app can be promoted there."
+      ],
+      "fixesEn": [
+        "IDLE_NOTIFICATION_TIMER_TEXT literal replaced by idleTimerNotificationPlan.",
+        "addAction(0, ...) replaced by real drawables.",
+        "Notification colour rule made two-directional and documented with contrast measurements.",
+        "TimerPromotion three-layer gate wired into StudyTimerService and stamped with Build.FINGERPRINT so a DENIED verdict cannot become a permanent ceiling.",
+        "Dead timer_panel_expanded key wired to a real setting."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped; CI green. No migration change, head stays 0136.",
+        "Promotion unverified on the owner's Galaxy S23; measured impossible only on the emulator image.",
+        "timer_background_reconcile_test.dart flake diagnosed, fix attempted and reverted; see backlog.md."
+      ]
+    },
+    {
       "versionName": "1.0.71",
       "buildNumber": 71,
       "channel": "stable",

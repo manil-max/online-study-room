@@ -4,6 +4,52 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v72 / 1.0.72+72] - 2026-08-27
+
+> **v71 saha geri bildirimi tek turda kapatildi: bildirim paneli calisir
+> haline dondu, dokuz widget ilk kez EKRANDA olculdu, liderlik gecmisi
+> secili donemi cizmeye basladi.**
+
+### Öne çıkanlar
+- Sayaç bildirimi yeniden çalışıyor: sayaç akıyor ve Başlat/Durdur düğmesi
+  yerinde. v71'de bildirimde "00:00" görünüyor, düğme hiç çizilmiyordu.
+- Dokuz ana ekran widget'ı gerçek bir cihaz ekranında ölçüldü. Geri sayım
+  widget'ı 1x1 boyutunda **tamamen boş** çiziliyordu — üç sınavı olan bir
+  kullanıcıda hem kahraman sayı hem satırlar birden gizleniyordu.
+- Sıralamada kırpılan şey artık **süre değil isim**. Widget'ın tek işi kimin
+  ne kadar çalıştığını göstermek; v71'de kırpılan sayının kendisiydi.
+- Liderlik geçmişi grafiği seçili dönemin dışına taşmıyor. Çarşamba günü
+  "Hafta" seçiliyken grafik geçen haftanın günlerini de yarışa katıyor, bu
+  yüzden üstteki sıralama listesiyle **farklı bir lider** gösterebiliyordu.
+
+### Düzeltmeler
+- Boştaki bildirimin başlığı sabit "00:00" metniydi; gerçek bir durum
+  cümlesine bağlandı.
+- Bildirim eylemleri ikonsuz ekleniyordu ve bazı yüzeylerde hiç çizilmiyordu.
+- Açık/koyu tema: bildirim panelinin rengi ölçülerek düzeltildi. Sabit beyaz
+  yazmak açık gölgede metni, tema niteliği yazmak koyu gölgede düğmeyi
+  kaybettiriyordu.
+- 1x1 kartın köşe yarıçapı kutunun tamamını yiyordu.
+- Saat widget'ı 2x2'de yerin beşte birini boş bırakıyordu.
+- "Yıl" veya "Tümü" seçiliyken liderlik geçmişi, dönem doluyken bile
+  "kayıt yok" diyebiliyordu.
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- CI yeşil.
+- Widget'lar gerçek `AppWidgetHost` ile 1x1 / 2x1 / 2x2 / 3x2 boyutlarında
+  çizdirilip ölçüldü — kırpılan karakter sayısı tek tek sayıldı.
+- Veritabanı değişmedi; migration head `0136` olarak kalıyor.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Dinamik panel hâlâ çalışmıyor** ve sebebi ölçüldü: uygulamanın isteği
+  eksiksiz, ancak test edilen Android 16 sistem görüntüsünde terfiyi çizen
+  arayüz bileşeni bulunmuyor. Uygulama artık bunu fark edip çalışan panele
+  düşüyor — v71'de fark etmediği için arada kalıyordu.
+- **Sayaç bildirimi hâlâ kaydırılarak silinebiliyor** (Android 14 platform
+  kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.
+- Sıradaki alarm widget'ı yayında değil.
+
 ## [v71 / 1.0.71+71] - 2026-08-22
 
 > **İstatistikler artık her dönemde farklı bir ekran; dokuz ana ekran
