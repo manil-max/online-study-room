@@ -535,6 +535,8 @@ PLAY_ALLOWED_PERMISSIONS: dict[str, str] = {
         "`com.google.firebase:firebase-messaging:25.1.0` — FCM mesaj alimi; imza korumali, Play beyani yok.",
     "com.manilmax.online_study_room.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION":
         "`androidx.core:core:1.18.0` `<applicationId>.` onekiyle uretir; ContextCompat.registerReceiver icin signature korumali, Play beyani yok.",
+    "android.permission.POST_PROMOTED_NOTIFICATIONS":
+        "src/main — WP-753 Live Update (dinamik panel): kalici sayac bildiriminin durum cubugu cipine / kilit ekranina / Samsung Now Bar'a TERFI etmesi bunu ister (setRequestPromotedOngoing). Android 16 (API 36) izni; API 36 altinda sessizce yok sayilir. Normal izin, Play beyani yok.",
 }
 
 # Olculdu: birlestirilmis playRelease manifestinde HIC `uses-feature` yok. Bos
