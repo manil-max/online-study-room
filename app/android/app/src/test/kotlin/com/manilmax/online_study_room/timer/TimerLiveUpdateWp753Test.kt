@@ -151,7 +151,10 @@ class TimerLiveUpdateWp753Test {
     @Test
     fun missing_flag_means_live_update_and_true_means_the_old_panel() {
         val fresh = Wp753Prefs()
-        assertFalse("Anahtar yokken Live Update yolu kosmali", useV43CustomPanel(fresh))
+        // 🔴 v71 saha geri bildirimi: varsayilan v43 zengin panele DONDU.
+        // Live Update cihazda dogrulanmadan varsayilan yapilmisti; S23'te
+        // bildirim "00:00" gosterip Start/Stop dugmesini hic cizmedi.
+        assertTrue("Anahtar yokken v43 zengin panel kosmali", useV43CustomPanel(fresh))
 
         val optedOut = Wp753Prefs()
         optedOut.edit().putBoolean(KEY_PANEL_EXPANDED, true).commit()

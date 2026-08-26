@@ -24,17 +24,29 @@ internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
 /**
  * WP-753: Zengin özel panelin prefs anahtarı.
  *
- * 🔴 Varsayılan `false` — yani anahtar **yoksa Live Update yolu** koşar. Eskiden
- * varsayılan `true`ydu ve anahtarı yazan tek bir satır bile repoda yoktu
- * (`docs/analiz/WP-751-dinamik-panel-kok-neden.md §8`), yani standart dal
- * **ulaşılamazdı**. Valf artık gerçekten valf: `true` yazılırsa v43 paneli geri
- * gelir, hiçbir şey yazılmazsa Android'in canlı yüzeyi kullanılır.
+ * 🔴 v71 SAHA GERI BILDIRIMI (2026-08-26) ILE VARSAYILAN `true`'YA DONDU.
+ *
+ * WP-753 varsayilani `false` (Live Update) yapmisti ve o karar CIHAZDA HIC
+ * DOGRULANMADAN yayina cikti. Sahibin Galaxy S23'unde sonuc: bildirimde sayac
+ * `00:00` gorunuyor ve Start/Stop dugmesi hic cizilmiyor -- yani uygulamanin
+ * cekirdek islevi bildirimden kullanilamaz hale geldi.
+ *
+ * Iki ayri kusur birlestiler:
+ *  - Bosta duran bildirimin basligi sabit `IDLE_NOTIFICATION_TIMER_TEXT`
+ *    ("00:00") -- kullanici bunu "sayac sifirlanmis" diye okuyor.
+ *  - Eylem `addAction(0, ...)` ile, yani IKONSUZ ekleniyor. Eski panelde dugme
+ *    cizilen gorunumun icinde bir metin kutusuydu ve her zaman gorunurdu;
+ *    standart bildirim eyleminde ikonsuz eylem modern Android'de cizilmeyebilir.
+ *
+ * Bu yuzden varsayilan, sahibin v43'te KABUL ETTIGI zengin panele geri alindi.
+ * Live Update yolu silinmedi: `timer_panel_expanded=false` yazilirsa kosar.
+ * Once gercek cihazda dogrulanacak, sonra varsayilan olmayi tekrar hak edecek.
  */
 internal const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
 
-/** Geri dönüş valfi: `true` yazılmışsa v43 zengin panel, aksi hâlde Live Update. */
+/** Valf: `false` YAZILMISSA Live Update, aksi halde (varsayilan) v43 zengin panel. */
 internal fun useV43CustomPanel(prefs: SharedPreferences): Boolean =
-    prefs.getBoolean(KEY_PANEL_EXPANDED, false)
+    prefs.getBoolean(KEY_PANEL_EXPANDED, true)
 
 /**
  * WP-753: durum çubuğu / Live Update çipi ikonu.

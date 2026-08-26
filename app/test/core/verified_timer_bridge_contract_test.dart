@@ -181,7 +181,10 @@ void main() {
     );
     expect(service, contains('.setCustomContentView(custom)'));
     expect(service, contains('.setCustomBigContentView(custom)'));
-    expect(service, contains('prefs.getBoolean(KEY_PANEL_EXPANDED, false)'));
+    // 🔴 v71: varsayilan true (v43 zengin panel). Live Update yolu duruyor
+    // ama artik OPT-IN: cihazda dogrulanmadan varsayilan yapilmasi
+    // bildirimin sayacini 00:00'a dusurup Start/Stop'u yok etmisti.
+    expect(service, contains('prefs.getBoolean(KEY_PANEL_EXPANDED, true)'));
     expect(service, contains('if (plan.usesCustomView) {'));
     expect(
       service,
