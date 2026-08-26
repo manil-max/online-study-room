@@ -270,3 +270,40 @@
 - Çoklu sınıf özelliği aktif kullanılıyor mu, yoksa tek sınıfa mı odaklanılmalı? Karar gelince ayrı WP açılır.
 - WP-69 aylık rapor: DNS + Resend API key ile canlıya alınacak mı? Karar/ops preflight: WP-279.
 - Windows release boşta RAM (300–400 MB iddiası): WP-70 tabanı p95 85.9 MB ölçtü, iddia temiz release'te üretilmedi; bulgu çıkarsa ayrı düzeltme WP'si.
+
+## timer_background_reconcile_test.dart — KARARSIZ (flake), tesihs var, duzeltme yok
+
+**Belirti:** tek basina KOSULUNCA yesil, `python scripts/test_all.py` tam
+paketinde bazen kirmizi. 2026-08-26 turunda bir kez dustu, sonraki tam kapida
+gecti. Yani yayin zincirini rastgele kilitleyebilir.
+
+**Kok neden (olculdu):** dosyada 16 adet `await Future.delayed(20 ms)` var ve
+testler arka planda tetiklenen uzlastirmanin BITTIGINI bu sabit sureyle
+VARSAYIYOR. Sabit bekleme bir SURE olcer; testin ihtiyaci olan sey bir KOSUL.
+Bos makinede 20 ms yetiyor, tam pakette onlarca dosya CPU paylasinca yetmiyor.
+
+**Repo bunu zaten cozmus, ama bu dosya bagli degil:** `test/support/async_wait.dart`
+icindeki `waitUntil` tam bu kusur icin yazilmis (dokumaninda v49 surumunu
+kiran uc sayac testi anlatiliyor). Bu dosya o yardimciyi **import ediyor ama
+hic cagirmiyor** -- "yazilmis ama cagiran yok" deseninin bir ornegi daha.
+
+**DENENDI VE GERI ALINDI (2026-08-26):** 6 bekleme `waitUntil`e cevrildi.
+Iki ayri sey ogrenildi, ikisi de sonraki denemeye girdi:
+1. Kosul "oturum yazildi" DEGIL "uzlastirma BITTI" olmali; ilki erken donuyor
+   ve kuyruk hala dolu bulunuyor. Bitmis uzlastirmanin imzasi
+   `timer_pending_intervals` anahtarinin bosalmasidir.
+2. Kosul duzeltildikten sonra bile test 30 sn'de zaman asimina dustu:
+   `waitUntil` icindeki `pumpEventQueue`, bu dosya `testWidgets` DEGIL duz
+   `test` oldugu icin beklenen sekilde donmuyor. Yani `waitUntil` oldugu gibi
+   bu dosyaya UYMUYOR; once duz `test` baglaminda calisan bir varyant gerekiyor
+   (ornegin `Future.delayed(Duration.zero)` ile donen bir dongu).
+Aralikli bir kararsizligi kesin bir kirmiziya cevirdigi icin degisiklik geri
+alindi. Yarim duzeltme mevcut durumdan kotudur.
+
+**Ayri, KAPATILMAMIS gozlem:** ayni dosyadaki UC bekleme "bir sey OLMADI"
+iddiasinin parcasi (gec yanki durdurulmus sayaci diriltmemeli, ms-esit yanki
+no-op olmali). Onlar kosul beklemesine CEVRILMEMELI -- beklenen kosul zaten
+bastan dogru, test hic beklemeden gecer ve olcmek istedigi seyi olcmez. Ama
+onlar da ters yonde kirilgan: yavas makinede istenmeyen olay gerceklesmeden
+20 ms dolabilir ve test BOS YERE yesil gecer. Bu bir kirmizi degil, sessiz bir
+kor nokta.
