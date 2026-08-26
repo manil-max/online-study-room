@@ -186,16 +186,61 @@ void main() {
     // bildirimin sayacini 00:00'a dusurup Start/Stop'u yok etmisti.
     expect(service, contains('prefs.getBoolean(KEY_PANEL_EXPANDED, true)'));
     expect(service, contains('if (plan.usesCustomView) {'));
+    // 🔴 WP-759: eylem ikonu artik `0` DEGIL, gercek bir cizim.
+    //
+    // Eski iddia ikonsuz `addAction(0, ...)` cagrisini kilitliyordu. Bildirim
+    // golgesi Android 7'den beri eylem ikonunu zaten cizmez -- ama Wear/Auto,
+    // eski surumler ve terfi cipi icin ikon eylemin TEK gorsel karsiligidir.
+    // Sahibin S23'te "Start/Stop tusu gitmis" demesinin sebeplerinden biri buydu.
     expect(
       service,
-      contains(
-        'addAction(0, getString(R.string.action_start), '
-        'startActionPending())',
-      ),
+      contains('R.drawable.ic_notif_action_start'),
+      reason: 'Baslat eylemi gercek bir ikon tasimali.',
     );
     expect(
       service,
-      contains('views.setChronometer(\n            R.id.notif_timer_elapsed,\n            base,\n            null,\n            true,'),
+      contains('R.drawable.ic_notif_action_stop'),
+      reason: 'Durdur eylemi gercek bir ikon tasimali.',
+    );
+    // Yorum metni tarihi anlatmak icin eski cagriyi ANABILIR; olculen sey
+    // gercekten derlenen koddur. Bu yuzden yorum satirlari once atilir --
+    // aksi halde kusurun ANLATIMI kusurun KENDISI sanilir.
+    final serviceCode = service
+        .split('\n')
+        .where((line) {
+          final s = line.trimLeft();
+          return !s.startsWith('//') && !s.startsWith('*') && !s.startsWith('/*');
+        })
+        .join('\n');
+    expect(
+      serviceCode,
+      isNot(contains('addAction(0,')),
+      reason: 'Ikonsuz eylem geri gelmemeli; kusur tam olarak oydu.',
+    );
+    // 🔴 WP-759: `base` yerel degiskeni yerini `panelChronometerBaseMs(...)`
+    // adli SAF fonksiyona birakti -- sayacin tabani artik cihazsiz olculebiliyor.
+    // Eski iddia degiskenin ADINI kilitliyordu; olculmesi gereken ad degil
+    // SOZLESME: dogru gorunume, hesaplanmis bir tabanla, bicimsiz ve calisir
+    // kurulur. Ustelik SIRA onemli -- `setBase` metni yeniden cizdigi icin
+    // geri sayim bayragi ONCE gelmeli (uretim kodundaki yorum da bunu soyler).
+    final countDownAt = service.indexOf('views.setChronometerCountDown(');
+    final chronometerAt = service.indexOf('views.setChronometer(');
+    expect(countDownAt, greaterThan(-1));
+    expect(chronometerAt, greaterThan(-1));
+    expect(
+      countDownAt,
+      lessThan(chronometerAt),
+      reason: 'Geri sayim bayragi tabandan ONCE kurulmali.',
+    );
+    expect(
+      service.substring(chronometerAt, chronometerAt + 400),
+      allOf(
+        contains('R.id.notif_timer_elapsed'),
+        contains('panelChronometerBaseMs('),
+        contains('null,'),
+        contains('true,'),
+      ),
+      reason: 'Sayac hesaplanmis tabanla, bicimsiz ve calisir kurulmali.',
     );
     expect(
       File(
@@ -222,7 +267,21 @@ void main() {
       contains('@style/TextAppearance.Compat.Notification.Title'),
       reason: 'Kronometre rengi sistem bildirim TextAppearance\'indan gelmeli.',
     );
-    expect(layout, contains('?android:attr/textColorPrimary'));
+    // 🔴 WP-759: bu iddia TERS CEVRILDI, cunku olculerek yanlislandi.
+    //
+    // Renk kurali IKI YONLUDUR (`timer_notification.xml` basligi, emulator
+    // olcumleri):
+    //   WP-205 ham `#FFFFFF` yazdi -> ACIK golgede metin kayboldu.
+    //   WP-753 tema NITELIGI yazdi -> KOYU golgede dugme kayboldu (1.08:1).
+    // `RemoteViews` uygulamanin `ApplicationInfo` temasiyla sisirilir, yani
+    // `?android:attr/...` HOST'un koyu/acik ayarini izlemez. Golge zemini
+    // ustundeki metin bildirim `TextAppearance`ini kullanmali; onun rengi
+    // yapilandirmaya bagli bir KAYNAKTIR ve host'u izler.
+    expect(
+      layout,
+      isNot(contains('?android:attr/textColor')),
+      reason: 'Golge ustundeki metin tema niteligi kullanamaz; koyu golgede kaybolur.',
+    );
     expect(pill, contains('?android:attr/colorControlHighlight'));
 
     // Renk NİTELİĞİ ham hex taşıyamaz. (Yorum metni tarihi anlatmak için

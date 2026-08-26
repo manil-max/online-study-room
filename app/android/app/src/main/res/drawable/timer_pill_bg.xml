@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sayaç bildirimi/widget'ındaki Başlat/Durdur düğmesinin yumuşak (pill) arka planı.
+<!-- Sayac bildirimi panelindeki Baslat/Durdur dugmesinin hap (pill) zemini.
 
-     WP-753: ham `#26FFFFFF` (%15 beyaz) literali KALDIRILDI — beyaz üstüne beyaz
-     kalıyor, yani açık temalı bildirim gölgesinde pill hiç görünmüyordu.
-     `colorControlHighlight` tema ile birlikte döner: koyu temada açık, açık
-     temada koyu bir yarı saydam katman verir. -->
+     🔴 WP-759 - EMULATORDE OLCULDU (API 33 ve API 36, koyu golge): dugme YOK
+     gibi gorunuyordu, olculen oran 1.08:1. Bosta kartta bu TEK etkilesim
+     noktasiydi; kullanici golgede yalniz "00:00" goruyor ve basacak bir sey
+     bulamiyordu (`.artifacts/wp759-goruntu/12b-api36-KOYU-BOSTA-YAKIN.png`).
+
+     Kok neden: `?android:attr/colorControlHighlight` bir tema NITELIGIDIR.
+     Bildirim `RemoteViews`ini SystemUI, uygulamanin `ApplicationInfo` temasiyla
+     sisirir; o tema platformun ACIK varsayilanidir. Yani nitelik golgenin
+     temasini degil, HER ZAMAN acik temayi izliyordu: koyu kartin ustune
+     yari saydam siyah hap. "Tema uyumlu" degil, yanlis temaya bagliydi.
+
+     Cozum: OPAK dolgu + sabit on renk. Kontrast artik cizildigi evin degil,
+     CIFTIN ozelligi. Degerler ve tam gerekce:
+     `res/values/timer_notification_colors.xml` (bildirim panelinin kendi
+     paleti; oradaki `_ink` bu hapin uzerindeki etiketi boyar, oran 8.19:1).
+
+     Bosta kart WP-759'dan sonra bu hapi HIC cizmez: standart bildirim eylemine
+     gecti, dugmeyi SystemUI cizer (`StudyTimerService.buildIdleNotification`).
+     Bu dosya kosan panelin yuzeyidir. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="?android:attr/colorControlHighlight" />
+    <solid android:color="@color/timer_notification_action_fill" />
     <corners android:radius="22dp" />
 </shape>

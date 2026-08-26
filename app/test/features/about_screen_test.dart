@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/config/app_build_manifest.dart';
+import 'package:online_study_room/core/notifications/timer_panel_preference.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/features/profile/developer_mode.dart';
@@ -313,6 +314,47 @@ void main() {
     expect(find.text('Geliştirici modu kapatıldı.'), findsOneWidget);
     expect(find.byKey(const ValueKey('timer-journal-entry')), findsNothing);
     expect(prefs.getBool(kDeveloperModeKey), isFalse);
+  });
+
+  // 🔴 WP-759 KUSUR 4 nobetcisi (kullanici tarafi).
+  //
+  // `flutter.timer_panel_expanded` native tarafta sayac bildiriminin YUZEYINI
+  // seciyordu ama `app/lib` icinde onu yazan hicbir sey yoktu. Anahtar bu
+  // yuzden ne kullanicinin ne de bir cihaz testinin acabilecegi olu bir daldi;
+  // WP-753 Live Update yolunu tam olarak bu yuzden CIHAZDA HIC GORULMEDEN
+  // varsayilan yapip v71 ile yayina cikarabildi.
+  //
+  // Test "kod var mi"yi degil "dokununca DISKE ne yazildi"yi olcer: native
+  // taraf yalniz diski okur.
+  testWidgets('Live Update anahtari native tarafin okudugu degeri yazar', (
+    tester,
+  ) async {
+    final prefs = await pumpAbout(
+      tester,
+      initialPrefs: const {kDeveloperModeKey: true},
+    );
+
+    // Varsayilan: anahtar hic yazilmamis -> v43 zengin panel.
+    expect(prefs.getBool(kTimerPanelExpandedKey), isNull);
+
+    final toggle = find.byKey(const Key('developer-live-update-panel'));
+    expect(toggle, findsOneWidget);
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+
+    // 🔴 Live Update ACIK = diskte `false`. Ters yazilirsa anahtar kullaniciya
+    // "acik" gorunur ama native taraf zengin paneli cizmeye devam eder --
+    // yani anahtar yine yalan soyler.
+    expect(prefs.getBool(kTimerPanelExpandedKey), isFalse);
+    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(prefs.getBool(kTimerPanelExpandedKey), isTrue);
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
   });
 
   group('DeveloperGateCounter', () {

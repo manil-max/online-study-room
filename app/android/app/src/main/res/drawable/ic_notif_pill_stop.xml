@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-759: bildirim panelindeki eylem hapinin "Durdur" simgesi.
+     Rengi hapin dolgusuna gore SABITTIR (bkz. values/timer_notification_colors.xml). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/timer_notification_action_ink"
+        android:pathData="M7,7 L17,7 L17,17 L7,17 Z" />
+</vector>

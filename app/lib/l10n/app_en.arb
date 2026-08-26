@@ -7211,5 +7211,9 @@
   "statsSeciliHaftaVsOnceki": "Selected week vs previous",
   "@statsSeciliHaftaVsOnceki": {"description": "WP-745/746: compares the navigated week with the one before it; statsBuHaftaVsGecen was only correct at offset 0."},
   "statsIlkCalismaGunu": "First study day",
-  "@statsIlkCalismaGunu": {"description": "WP-745/746: earliest day that has a recorded study session."}
+  "@statsIlkCalismaGunu": {"description": "WP-745/746: earliest day that has a recorded study session."},
+  "devLiveUpdatePanelTitle": "Live Update timer notification",
+  "@devLiveUpdatePanelTitle": {"description": "WP-759: hidden developer toggle that finally gives the dead flutter.timer_panel_expanded key a writer."},
+  "devLiveUpdatePanelSubtitle": "Experimental. Needs Android 16 and system approval; ignored where the timer cannot be promoted.",
+  "@devLiveUpdatePanelSubtitle": {"description": "WP-759: says out loud that turning this on does not guarantee the Live Update surface."}
 }

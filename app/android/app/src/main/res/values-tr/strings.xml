@@ -43,6 +43,7 @@
     <string name="action_dismiss">Kapat</string>
     <string name="action_snooze">Ertele</string>
     <string name="timer_ready">Çalışmaya hazır</string>
+    <string name="timer_idle_body">Odak turu için Başlat\'a dokun</string>
     <string name="timer_focusing_title">Odaklanıyorsun</string>
     <string name="timer_break_title">Mola sürüyor</string>
     <string name="timer_focusing_body">Canlı sayaç çalışıyor</string>

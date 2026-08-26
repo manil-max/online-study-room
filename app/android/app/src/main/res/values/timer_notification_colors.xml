@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-759: sayac bildirimi PANELININ kendi cizdigi yuzeylerin renkleri.
+
+     🔴 NEDEN TEMA NITELIGI DEGIL DE SABIT HEX:
+     Bildirimin `RemoteViews`i SystemUI surecinde, uygulamanin
+     `ApplicationInfo` temasiyla sisirilir. `AndroidManifest.xml`in
+     `<application>` etiketinde `android:theme` YOKTUR, dolayisiyla platformun
+     ACIK varsayilan temasi kullanilir. Sonuc:
+       - `?android:attr/textColorPrimary`      -> her zaman ~siyah
+       - `?android:attr/colorControlHighlight` -> her zaman ~yari saydam siyah
+     Bildirim GOLGESININ zemini ise cihazin/OEM'in temasini izler. Koyu golgede
+     siyah ustune siyah kalir: emulatorde olculdu, API36 koyu 1.08:1, API33 koyu
+     1.04:1 (`.artifacts/wp759-goruntu/50-OZET-dugme-acik-vs-koyu.png`).
+     `values-night/styles.xml` bunu kurtarmaz; oradaki temalar Activity
+     temalaridir, `RemoteViews`e degmezler.
+
+     Tarih: WP-205 (1d9db60d) ham `#FFFFFF` yazdi -> ACIK temada kayboldu.
+     WP-753 (7fee3d80) onu tema niteligiyle degistirdi -> KOYU temada kayboldu.
+     Ayni hatanin iki yuzu. Ucuncu kez donmemesi icin kural iki yonludur ve
+     `TimerNotificationPanelWp759Test` ile olculur:
+
+       1. GOLGE ZEMINI ustundeki metin (sayac rakamlari, faz etiketi) rengini
+          ASLA sabit yazmaz; bildirim `TextAppearance`i kullanir. O renkler
+          yapilandirmaya bagli kaynaklardir (`@color/notification_*_text_color`)
+          ve HOST'un koyu/acik ayarini izler — tema niteliklerinin aksine.
+       2. KENDI CIZDIGIMIZ hap ustundeki metin rengini DAIMA sabit yazar;
+          cunku hapin zeminini de biz cizeriz, yani kontrast olculebilir.
+
+     Degerler uygulamanin "ember" kimligiyle ayni tonlardir (widget eylem
+     hapi da `flame` uzerine `night` cizer). Kasten bu dosyada, bu yuzeye ait
+     adlarla durur: bildirim paneli widget paletinin yayin takvimine bagli
+     olmamalidir. -->
+<resources>
+    <!-- Eylem hapinin OPAK dolgusu. Bir DOKUNMA VURGUSU degil, dolu bir dugme. -->
+    <color name="timer_notification_action_fill">#FF8A3D</color>
+    <!-- Hap ustundeki etiket + simge. Dolguya 8.19:1. -->
+    <color name="timer_notification_action_ink">#120E0A</color>
+</resources>

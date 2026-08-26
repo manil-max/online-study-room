@@ -19,8 +19,6 @@ import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
 import com.manilmax.online_study_room.widgets.rememberedSubjectId
 
-internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
-
 /**
  * WP-753: Zengin özel panelin prefs anahtarı.
  *
@@ -31,16 +29,32 @@ internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
  * `00:00` gorunuyor ve Start/Stop dugmesi hic cizilmiyor -- yani uygulamanin
  * cekirdek islevi bildirimden kullanilamaz hale geldi.
  *
- * Iki ayri kusur birlestiler:
- *  - Bosta duran bildirimin basligi sabit `IDLE_NOTIFICATION_TIMER_TEXT`
- *    ("00:00") -- kullanici bunu "sayac sifirlanmis" diye okuyor.
- *  - Eylem `addAction(0, ...)` ile, yani IKONSUZ ekleniyor. Eski panelde dugme
- *    cizilen gorunumun icinde bir metin kutusuydu ve her zaman gorunurdu;
- *    standart bildirim eyleminde ikonsuz eylem modern Android'de cizilmeyebilir.
+ * Iki ayri kusur birlestiler (IKISI DE WP-759'da KAPANDI, asagi bak):
+ *  - Bosta duran bildirimin TUM icerigi sabit "00:00" idi -- kullanici bunu
+ *    "sayac sifirlanmis" diye okuyor. Artik [idleTimerNotificationPlan]
+ *    gercek durum metni tasiyor ve sabit saat metni YAZILMIYOR.
+ *  - Dugme "gitmis" gorunuyordu. Bunun sebebi ikon degil KONTRASTTI (asagi).
  *
- * Bu yuzden varsayilan, sahibin v43'te KABUL ETTIGI zengin panele geri alindi.
+ * 🔴 WP-759 — GERI ALINAN TESHIS. Buraya bir kez "ikonsuz `addAction(0, ...)`
+ * modern Android'de cizilmeyebilir" yazildi. Emulatorde YANLISLANDI:
+ * API 36 GENISLETILMIS bildirimde ikonsuz eylem mavi metin dugmesi olarak
+ * sorunsuz cizildi (`.artifacts/wp759-goruntu/36c-api36-LIVEUPDATE-BOSTA-TAMKART.png`).
+ * Dugmenin gorunmedigi hal DARALMIS bildirimdir ve Android daralmis bildirimde
+ * eylemleri ZATEN gostermez (`37b-api36-LIVEUPDATE-BOSTA-DARALMIS-YAKIN.png`) --
+ * ikon eklemek bunu degistirmez.
+ *
+ * SAHIBIN "tus gitmis" SIKAYETININ GERCEK SEBEBI: zengin panelin hap dugmesi
+ * rengini TEMA NITELIKLERINDEN aliyordu. `RemoteViews` uygulamanin
+ * `ApplicationInfo` temasiyla sisirilir, `<application>` etiketinde
+ * `android:theme` yoktur, yani nitelikler platformun ACIK varsayilanindan
+ * cozulur; bildirim golgesi koyu oldugunda siyah ustune siyah kalir.
+ * Olculen kontrast: API 36 koyu 1.08:1, API 33 koyu 1.04:1
+ * (`50-OZET-dugme-acik-vs-koyu.png`). Duzeltme
+ * `res/values/timer_notification_colors.xml` icindedir; nobetci
+ * `TimerNotificationPanelWp759Test`.
+ *
+ * Varsayilan, sahibin v43'te KABUL ETTIGI zengin panele geri alindi.
  * Live Update yolu silinmedi: `timer_panel_expanded=false` yazilirsa kosar.
- * Once gercek cihazda dogrulanacak, sonra varsayilan olmayi tekrar hak edecek.
  */
 internal const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
 
@@ -57,6 +71,62 @@ internal fun useV43CustomPanel(prefs: SharedPreferences): Boolean =
  * cihazsız ölçülemez.
  */
 internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_timer
+
+/**
+ * Bosta duran sayac bildiriminin **saf** sunum karari.
+ *
+ * 🔴 WP-759, EMULATORDE OLCULDU (API 33 + API 36, acik ve koyu golge):
+ * eskiden boyle bir karar yoktu. `buildIdleRemoteViews` kartin TEK metin
+ * alanina `IDLE_NOTIFICATION_TIMER_TEXT = "00:00"` yaziyor, ustelik ayni
+ * metni Chronometer'in `format`ina da veriyordu. Kartta baska hicbir sey
+ * yoktu: ne durum cumlesi, ne "hazir", ne ders adi. Sahip bunu "sayac
+ * sifirlandi/bozuldu" diye okudu ve haksiz degildi -- SIFIRLANMIS BIR SAAT,
+ * "hicbir sey kosmuyor"un gorsel karsiligi degildir; kosan ama donmus bir
+ * sayacin gorsel karsiligidir.
+ *
+ * Karar `Notification` nesnesinden ayri, saf veri olarak durur ki cihazsiz
+ * JVM olcebilsin (WP-622 `endBreakPlan` / WP-753 `runningTimerNotificationPlan`
+ * deseni). Nobetci: `IdleNotificationWp759Test`.
+ */
+internal data class IdleTimerNotificationPlan(
+    /** 0 OLAMAZ: kart bir durum cumlesi tasimak ZORUNDA. */
+    val titleRes: Int,
+    /** 0 OLAMAZ: baslik tek basina ne yapilacagini soylemiyor. */
+    val bodyRes: Int,
+    val actionLabelRes: Int,
+    /**
+     * 0 OLAMAZ: ikon, eylemin bildirim golgesi DISINDAKI yuzeylerde (Wear,
+     * Auto, eski surumler, terfi cipi) tek gorsel karsiligidir.
+     *
+     * 🔴 WP-759 duzeltmesi: bu alanin gerekcesi "ikonsuz eylem cizilmeyebilir"
+     * DEGILDIR -- o teshis emulatorde yanlislandi (bkz. [KEY_PANEL_EXPANDED]).
+     * Golgede ikon zaten cizilmez; bosta kartta dokunulacak sey kalmamasinin
+     * sebebi eylemin degil, DARALMIS bildirimin davranisiydi.
+     */
+    val actionIconRes: Int,
+    /**
+     * Bosta kart ozel `RemoteViews` TASIMAZ. Dugmeyi sistem cizer, yani rengi
+     * golgenin GERCEK temasindan gelir. Ozel panelin dugmesi uygulama tema
+     * niteliklerinden renk aliyordu ve koyu golgede 1.08:1 ile kayboluyordu.
+     */
+    val usesCustomView: Boolean,
+    /**
+     * Karta yazilan SABIT saat metni. `null` OLMAK ZORUNDA; bu alan yalniz
+     * kusurun geri gelisini olcebilmek icin duruyor.
+     */
+    val frozenClockText: String?,
+)
+
+/** Bosta kartin tek kaynagi. */
+internal fun idleTimerNotificationPlan(): IdleTimerNotificationPlan =
+    IdleTimerNotificationPlan(
+        titleRes = R.string.timer_ready,
+        bodyRes = R.string.timer_idle_body,
+        actionLabelRes = R.string.action_start,
+        actionIconRes = TIMER_NOTIFICATION_SMALL_ICON,
+        usesCustomView = false,
+        frozenClockText = null,
+    )
 
 /** Koşan sayaç bildiriminin sunum yolu. */
 internal enum class TimerNotificationStyle {
@@ -81,10 +151,20 @@ internal enum class TimerNotificationStyle {
  */
 internal data class TimerNotificationPlan(
     val style: TimerNotificationStyle,
-    /** 0 = başlık yok (yalnız özel panel yolunda). */
+    /**
+     * Kisa durum cumlesi. 🔴 WP-759: ozel panel yolunda da 0 OLAMAZ.
+     * `DecoratedCustomViewStyle` basligi cizmez, ama bildirim gecmisi/TalkBack/
+     * `NotificationListenerService` onu okur.
+     */
     val titleRes: Int,
     val bodyRes: Int,
-    /** 0 = kısa kritik metin yazılmaz; çip metnini `when` kronometresi taşır. */
+    /**
+     * KISA faz etiketi (Odak/Mola). Iki yuzeyi birden besler:
+     *  - Live Update yolunda `setShortCriticalText` (0 = yazilmaz; cip metnini
+     *    `when` kronometresi tasir),
+     *  - zengin panel yolunda panelin GORUNEN faz isareti (0 OLAMAZ; WP-759
+     *    kusur 3'te mola ile odak bildirimde ayirt edilemiyordu).
+     */
     val shortCriticalTextRes: Int,
     val whenMs: Long,
     val countDown: Boolean,
@@ -120,30 +200,47 @@ internal fun runningTimerNotificationPlan(
     startedAtMs: Long,
     nowMs: Long,
 ): TimerNotificationPlan {
-    if (richPanel) {
-        return TimerNotificationPlan(
-            style = TimerNotificationStyle.CUSTOM_PANEL,
-            titleRes = 0,
-            bodyRes = 0,
-            shortCriticalTextRes = 0,
-            whenMs = startedAtMs,
-            countDown = false,
-            progressSeconds = 0,
-            totalSeconds = 0,
-        )
-    }
     val titleRes = if (isBreak) R.string.timer_break_title else R.string.timer_focusing_title
     val bodyRes = if (isBreak) R.string.timer_break_body else R.string.timer_focusing_body
+    val phaseLabelRes = if (isBreak) {
+        R.string.timer_subtext_break
+    } else {
+        R.string.timer_subtext_focus
+    }
+    if (richPanel) {
+        // 🔴 WP-759 kusur 2: bu dal `targetSeconds`i TAMAMEN atiyordu
+        // (`countDown = false`, `totalSeconds = 0`). Emulatorde olculdu:
+        // mode=pomodoro / targetSeconds=300 / phase=rest ile baslatilan sayac
+        // uygulamada 5:00'dan GERIYE sayarken bildirimde 00:07'den ILERI
+        // sayiyordu (`.artifacts/wp759-goruntu/28b-api36-MOLA-YAKIN.png`).
+        // Hedef, sunum yolundan bagimsizdir: zengin panel de geri saymali.
+        val richTotal = targetSeconds?.takeIf { it > 0 }
+        return TimerNotificationPlan(
+            style = TimerNotificationStyle.CUSTOM_PANEL,
+            // 🔴 WP-759 kusur 3: ikisi de 0'di ve builder `setContentTitle("")`
+            // yaziyordu. `DecoratedCustomViewStyle` basligi CIZMEZ ama bildirim
+            // gecmisi, TalkBack ve NotificationListener onu okur; bos birakmak
+            // sayaci o yuzeylerde isimsiz birakiyordu. Panelin GORUNEN faz
+            // isareti ayrica `shortCriticalTextRes` ile cizilir.
+            titleRes = titleRes,
+            bodyRes = bodyRes,
+            shortCriticalTextRes = phaseLabelRes,
+            whenMs = if (richTotal != null) startedAtMs + richTotal * 1000L else startedAtMs,
+            countDown = richTotal != null,
+            progressSeconds = if (richTotal == null) {
+                0
+            } else {
+                ((nowMs - startedAtMs) / 1000L).coerceIn(0L, richTotal.toLong()).toInt()
+            },
+            totalSeconds = richTotal ?: 0,
+        )
+    }
     val total = targetSeconds?.takeIf { it > 0 }
         ?: return TimerNotificationPlan(
             style = TimerNotificationStyle.STANDARD,
             titleRes = titleRes,
             bodyRes = bodyRes,
-            shortCriticalTextRes = if (isBreak) {
-                R.string.timer_subtext_break
-            } else {
-                R.string.timer_subtext_focus
-            },
+            shortCriticalTextRes = phaseLabelRes,
             whenMs = startedAtMs,
             countDown = false,
             progressSeconds = 0,
@@ -161,6 +258,32 @@ internal fun runningTimerNotificationPlan(
             .toInt(),
         totalSeconds = total,
     )
+}
+
+/**
+ * Zengin panelin `Chronometer` **tabani** (`elapsedRealtime` ekseninde).
+ *
+ * 🔴 WP-759 kusur 2'nin ikinci yarisi. `Chronometer` iki yonu AYNI alandan
+ * cizer ama TERS okur:
+ *  - yukari sayarken `now - base` -> taban BASLANGIC anidir,
+ *  - geri sayarken `base - now`   -> taban BITIS anidir.
+ * Eski kod her iki halde de baslangic anini yaziyor ve
+ * `setChronometerCountDown`u hic cagirmiyordu; sonuc, pomodoro molasinin
+ * bildirimde yukari saymasiydi. Hesap burada SAF durur ki cihazsiz JVM
+ * olcebilsin -- `RemoteViews` uzerinden olculemez.
+ */
+internal fun panelChronometerBaseMs(
+    plan: TimerNotificationPlan,
+    startedAtMs: Long,
+    nowMs: Long,
+    nowElapsedMs: Long,
+): Long {
+    val startedElapsedMs = nowElapsedMs - (nowMs - startedAtMs)
+    return if (plan.countDown) {
+        startedElapsedMs + plan.totalSeconds * 1000L
+    } else {
+        startedElapsedMs
+    }
 }
 
 /**
@@ -325,6 +448,10 @@ class StudyTimerService : Service() {
             NOTIFICATION_ID,
             buildRunningNotification(startedAtMs),
         )
+        // Gonderimden SONRA olc: sistem terfiyi gercekten verdi mi? Onkosullar
+        // "olur" dese de vermeyebiliyor; tek gercek kanit gonderilen bildirimin
+        // kendi bayragidir. Sonuc kalici yazilir, sonraki Baslat'ta okunur.
+        TimerPromotion.recordOutcome(prefs(), notificationManager(), NOTIFICATION_ID)
         // Deterministik sıra: store → UI yüzeyler → Dart broadcast.
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -435,7 +562,7 @@ class StudyTimerService : Service() {
         // WP-135: idle + sıfır — senkron commit (apply asimetri kapatıldı).
         TimerStateStore.writeIdle(p)
 
-        detachForegroundKeepNotification()
+        exitForegroundRemovingNotification()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
         stopSelf()
@@ -453,8 +580,7 @@ class StudyTimerService : Service() {
     private fun handleDiscardProjection() {
         startForegroundCompat(buildIdleNotification())
         TimerStateStore.writeIdle(prefs())
-        detachForegroundKeepNotification()
-        notificationManager().cancel(NOTIFICATION_ID)
+        exitForegroundRemovingNotification()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
         stopSelf()
@@ -462,8 +588,27 @@ class StudyTimerService : Service() {
 
     /** Beklenmedik/boş komutta güvenli kapanış: kısa foreground + tam kaldırma. */
     private fun safeStopEverything() {
-        // Foreground borcu olabilir; kısa bir bildirimle kapat ve tamamen kaldır.
+        // Foreground borcu olabilir; kisa bir bildirimle kapat ve tamamen kaldir.
         runCatching { startForegroundCompat(buildIdleNotification()) }
+        exitForegroundRemovingNotification()
+        stopSelf()
+    }
+
+    /**
+     * 🔴 WP-759: HER durdurma yolu bildirimi GOTURUR.
+     *
+     * Eskiden burasi `detachForegroundKeepNotification` idi ve adi ne yaptigini
+     * durustce soyluyordu: `STOP_FOREGROUND_DETACH` foreground bagini koparir,
+     * bildirimi BILEREK birakir. `handleStop` bunu cagirdigi icin her
+     * Durdur'dan sonra golgede bir "00:00" karti kaliyor ve kendiliginden
+     * gitmiyordu.
+     *
+     * Emulatorde olculdu: taze kurulumda sayac HIC baslatilmadan golgede
+     * bildirim YOKTUR (`dumpsys notification` icinde id=7040 sifir kayit).
+     * Yani bosta bildirim bir urun gereksinimi degil, FGS borcunun artigiydi.
+     * Borc odenir, artik birakilmaz.
+     */
+    private fun exitForegroundRemovingNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             runCatching { stopForeground(Service.STOP_FOREGROUND_REMOVE) }
         } else {
@@ -471,17 +616,6 @@ class StudyTimerService : Service() {
             runCatching { stopForeground(true) }
         }
         runCatching { notificationManager().cancel(NOTIFICATION_ID) }
-        stopSelf()
-    }
-
-    private fun detachForegroundKeepNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // DETACH: bildirimi bırakma, yalnız foreground bağını kopar.
-            runCatching { stopForeground(Service.STOP_FOREGROUND_DETACH) }
-        } else {
-            @Suppress("DEPRECATION")
-            runCatching { stopForeground(false) }
-        }
     }
 
     /**
@@ -525,7 +659,15 @@ class StudyTimerService : Service() {
         val p = prefs()
         val isBreak = p.getString(TimerStateStore.KEY_PHASE, "work") == "rest"
         val plan = runningTimerNotificationPlan(
-            richPanel = useV43CustomPanel(),
+            // 🔴 WP-759 dikisi: zengin panel yalniz kullanici istedigi icin degil,
+            // sistem terfiyi VERMEDIGI icin de secilir. Olculdu (odak_api36,
+            // Android 16): API yarisi acik, cizen arayuz imajda yok -- uygulama
+            // terfi istiyor, sistem FLAG_PROMOTED_ONGOING yazmiyor ve kullanici
+            // dugmesiz gri bir satirda kaliyordu. Sahibin S23'te gordugu buydu.
+            richPanel = useV43CustomPanel() ||
+                !TimerPromotion.mayRequestPromotion(
+                    TimerPromotion.currentVerdict(p, notificationManager()),
+                ),
             isBreak = isBreak,
             targetSeconds = TimerStateStore
                 .readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
@@ -538,10 +680,14 @@ class StudyTimerService : Service() {
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
         if (plan.usesCustomView) {
-            val custom = buildRunningRemoteViews(startedAtMs, isBreak)
+            val custom = buildRunningRemoteViews(startedAtMs, isBreak, plan)
             builder
-                .setContentTitle("")
-                .setContentText("")
+                // 🔴 WP-759 kusur 3: burasi `""` yaziyordu. Panel kendi metnini
+                // cizdigi icin gorunurde fark etmiyordu, ama bildirim gecmisi,
+                // TalkBack ve NotificationListener yuzeylerinde sayac ISIMSIZ
+                // kaliyordu. Baslik/govde artik planla birlikte gelir.
+                .setContentTitle(getString(plan.titleRes))
+                .setContentText(getString(plan.bodyRes))
                 .setUsesChronometer(false)
                 .setShowWhen(false)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -557,8 +703,12 @@ class StudyTimerService : Service() {
             .setShowWhen(true)
             .setChronometerCountDown(plan.countDown)
             .setRequestPromotedOngoing(plan.requestPromotedOngoing)
+            // 🔴 WP-759 kusur 5: ikon `0` idi. Bildirim golgesi Android 7'den
+            // beri eylem ikonunu ZATEN cizmez, ama Wear/Auto, eski surumler ve
+            // terfi cipi icin ikon eylemin TEK gorsel karsiligidir.
             .addAction(
-                0,
+                if (isBreak) R.drawable.ic_notif_action_start
+                else R.drawable.ic_notif_action_stop,
                 if (isBreak) getString(R.string.action_return_to_work)
                 else getString(R.string.action_stop),
                 if (isBreak) endBreakActionPending() else stopActionPending(),
@@ -578,31 +728,36 @@ class StudyTimerService : Service() {
         return builder.build()
     }
 
+    /**
+     * Bosta kart: **standart** bildirim, gercek metin, IKONLU sistem eylemi.
+     *
+     * 🔴 WP-759 oncesi iki dal vardi ve IKISI DE ayni sonucu veriyordu:
+     *  - ozel panel dali kartin tek metnine "00:00" yaziyordu;
+     *  - standart dalda `contentTitle` YINE "00:00", eylem ise `addAction(0, ...)`
+     *    yani ikonsuzdu.
+     * Golgede gorunen sey her iki halde de sifirlanmis bir saat ve dokunulacak
+     * hicbir sey oluyordu. Artik tek dal var: karar [idleTimerNotificationPlan]
+     * icinde saf durur, valf (`KEY_PANEL_EXPANDED`) yalniz KOSAN bildirimi
+     * yonetir. Bosta kart kisa omurludur (yalniz FGS borcunu oder, hemen
+     * kaldirilir) -- ozel gorunum tasimasinin bedeli var, faydasi yok.
+     */
     private fun buildIdleNotification(): Notification {
         ensureChannel()
-        val builder = baseBuilder()
+        val plan = idleTimerNotificationPlan()
+        return baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-        if (useV43CustomPanel()) {
-            val custom = buildIdleRemoteViews()
-            builder
-                .setUsesChronometer(false)
-                .setShowWhen(false)
-                .setContentTitle("")
-                .setContentText("")
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(custom)
-                .setCustomBigContentView(custom)
-        } else {
-            builder
-                .setUsesChronometer(false)
-                .setShowWhen(false)
-                .setContentTitle(IDLE_NOTIFICATION_TIMER_TEXT)
-                .setContentText(getString(R.string.timer_ready))
-                .addAction(0, getString(R.string.action_start), startActionPending())
-        }
-        return builder.build()
+            .setUsesChronometer(false)
+            .setShowWhen(false)
+            .setContentTitle(getString(plan.titleRes))
+            .setContentText(getString(plan.bodyRes))
+            .addAction(
+                plan.actionIconRes,
+                getString(plan.actionLabelRes),
+                startActionPending(),
+            )
+            .build()
     }
 
     /**
@@ -616,38 +771,56 @@ class StudyTimerService : Service() {
      */
     private fun useV43CustomPanel(): Boolean = useV43CustomPanel(prefs())
 
-    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
+    /**
+     * Zengin panelin `RemoteViews`i.
+     *
+     * 🔴 WP-759: HER alan HER cagrida yazilir. SystemUI ayni sisirilmis
+     * gorunumu yeniden kullanir; yazilmayan alan ONCEKI degeriyle kalir. Bir
+     * geri sayimdan sonra yazilmayan `countDown` bayragi, acik uclu kronometreyi
+     * de geri saydirirdi.
+     */
+    private fun buildRunningRemoteViews(
+        startedAtMs: Long,
+        isBreak: Boolean,
+        plan: TimerNotificationPlan,
+    ): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
-        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
+        // Sira onemli: bayrak once, taban sonra. `setBase` metni yeniden cizer.
+        views.setChronometerCountDown(R.id.notif_timer_elapsed, plan.countDown)
         views.setChronometer(
             R.id.notif_timer_elapsed,
-            base,
+            panelChronometerBaseMs(
+                plan = plan,
+                startedAtMs = startedAtMs,
+                nowMs = System.currentTimeMillis(),
+                nowElapsedMs = SystemClock.elapsedRealtime(),
+            ),
             null,
             true,
+        )
+        // Mola ile odak bildirimde ayirt edilebilsin diye (kusur 3): tek isaret
+        // dugme etiketi olamaz, cunku dugme etiketi de kaybolabiliyordu.
+        views.setTextViewText(
+            R.id.notif_timer_label,
+            getString(plan.shortCriticalTextRes),
         )
         views.setTextViewText(
             R.id.notif_timer_action,
             if (isBreak) getString(R.string.action_return_to_work)
             else getString(R.string.action_stop),
         )
+        // Hap bir DUGMEdir: dolu zemin + etiket + simge (kusur 4).
+        views.setTextViewCompoundDrawablesRelative(
+            R.id.notif_timer_action,
+            if (isBreak) R.drawable.ic_notif_pill_start else R.drawable.ic_notif_pill_stop,
+            0,
+            0,
+            0,
+        )
         views.setOnClickPendingIntent(
             R.id.notif_timer_action,
             if (isBreak) endBreakActionPending() else stopActionPending(),
         )
-        return views
-    }
-
-    private fun buildIdleRemoteViews(): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification)
-        views.setChronometer(
-            R.id.notif_timer_elapsed,
-            SystemClock.elapsedRealtime(),
-            IDLE_NOTIFICATION_TIMER_TEXT,
-            false,
-        )
-        views.setTextViewText(R.id.notif_timer_elapsed, IDLE_NOTIFICATION_TIMER_TEXT)
-        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
-        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
         return views
     }
 

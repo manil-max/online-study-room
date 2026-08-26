@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_build_manifest.dart';
 import '../../core/config/build_identity_card.dart';
 import '../../core/config/distribution_channel.dart';
+import '../../core/notifications/timer_panel_preference.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import '../updater/release_notes_screen.dart';
@@ -275,6 +276,26 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                                 builder: (_) => const TimerJournalScreen(),
                               ),
                             ),
+                          ),
+                          const Divider(height: 1),
+                          // 🔴 WP-759 KUSUR 4: `flutter.timer_panel_expanded`
+                          // native tarafta OKUNUYOR ama `app/lib` icinde YAZAN
+                          // yoktu. Live Update yolu bu yuzden ne kullanicinin
+                          // ne de bir cihaz testinin acabilecegi OLU bir dalda
+                          // duruyordu; v71'de varsayilan yapilinca da kimse
+                          // once denememisti. Anahtar burada -- gizli
+                          // gelistirici bolumunde -- cunku deneyseldir ve
+                          // sistem terfiyi vermezse native taraf zaten zengin
+                          // panele duser (bkz. `PromotionCapability`).
+                          SwitchListTile(
+                            key: const Key('developer-live-update-panel'),
+                            secondary: const Icon(Icons.bolt_outlined),
+                            title: Text(l10n.devLiveUpdatePanelTitle),
+                            subtitle: Text(l10n.devLiveUpdatePanelSubtitle),
+                            value: !ref.watch(timerPanelExpandedProvider),
+                            onChanged: (value) => ref
+                                .read(timerPanelExpandedProvider.notifier)
+                                .setUseLiveUpdate(value),
                           ),
                           const Divider(height: 1),
                           ListTile(

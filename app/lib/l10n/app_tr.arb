@@ -2300,5 +2300,9 @@
   "statsSeciliHaftaVsOnceki": "Seçili hafta vs önceki",
   "@statsSeciliHaftaVsOnceki": {"description": "WP-745/746: gezinilen hafta ile bir onceki haftanin karsilastirmasi; statsBuHaftaVsGecen yalniz offset 0 icin dogruydu."},
   "statsIlkCalismaGunu": "İlk çalışma günü",
-  "@statsIlkCalismaGunu": {"description": "WP-745/746: kaydi bulunan en eski calisma gunu."}
+  "@statsIlkCalismaGunu": {"description": "WP-745/746: kaydi bulunan en eski calisma gunu."},
+  "devLiveUpdatePanelTitle": "Live Update sayaç bildirimi",
+  "@devLiveUpdatePanelTitle": {"description": "WP-759: olu flutter.timer_panel_expanded anahtarina nihayet bir yazici veren gizli gelistirici anahtari."},
+  "devLiveUpdatePanelSubtitle": "Deneysel. Android 16 ve sistem onayı ister; sayaç terfi edemiyorsa yok sayılır.",
+  "@devLiveUpdatePanelSubtitle": {"description": "WP-759: bunu acmanin Live Update yuzeyini garanti ETMEDIGINI acikca soyler."}
 }

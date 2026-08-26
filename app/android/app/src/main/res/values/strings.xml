@@ -53,6 +53,7 @@
     <string name="action_dismiss">Dismiss</string>
     <string name="action_snooze">Snooze</string>
     <string name="timer_ready">Ready to focus</string>
+    <string name="timer_idle_body">Tap Start to begin a focus session</string>
     <string name="timer_focusing_title">You\'re focusing</string>
     <string name="timer_break_title">Break in progress</string>
     <string name="timer_focusing_body">Live timer is running</string>
