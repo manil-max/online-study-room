@@ -302,6 +302,24 @@ internal fun widgetSizeClass(
 /** Roboto rakam ilerlemesi / punto. Bilerek comert; asagi cekilmez. */
 internal const val WIDGET_GLYPH_ADVANCE = 0.60f
 
+/**
+ * WP-757 - DUZ METIN (prose) ilerlemesi / punto.
+ *
+ * [WIDGET_GLYPH_ADVANCE] RAKAM icindir: Roboto'nun rakamlari tabulardir ve
+ * kucuk harflerden belirgin genistir. Ayni 0.60'i Turkce yardimci satirlara
+ * uygulamak butceyi ~%30 sisiriyor, yani sigan satirlari da "sigmiyor"
+ * sayardi.
+ *
+ * Bu sayi TAHMIN DEGIL, olcumdur (API 33 emulatoru, `AppWidgetHost`,
+ * `TextView.getLayout()`):
+ *   `Gunluk hedef serisi: 12 gun` (27 karakter, 12sp) -> 149.8dp
+ *      => 149.8 / (12 x 27) = 0.462
+ *   `6 sa 24 dk / 13 sa 20 dk`   (19 karakter cizildi, 11sp) -> 96.4dp
+ *      => 96.4 / (11 x 19)  = 0.461
+ * Emniyet payiyla yukari yuvarlanir.
+ */
+internal const val WIDGET_PROSE_ADVANCE = 0.47f
+
 /** Her kutuda birakilan yatay emniyet payi (dp). */
 internal const val WIDGET_TEXT_SAFETY_DP = 8f
 
@@ -375,7 +393,14 @@ internal object WidgetTypography {
 
     /** WP-718: ders hapi. Yalniz genislik >= MEDIUM iken cizilir. */
     val timerSubject = SpRamp(11f, 11f, 13f)
-    val clockTime = SpRamp(24f, 36f, 52f)
+    // 🔴 WP-757 NARROW 24f -> 29f. Olculen kusur (emulator, API 33): 110x110dp
+    // kutuda `5:17` 24sp ile ciziliyordu, yani genislik butcesinin ancak
+    // %80'i. Merdiven yalniz GENISLIK sinifina bakiyor ve 110dp hem 2x1 hem
+    // 2x2 kutusunda NARROW; uzun kutu kisa kutunun puntosunu aliyordu.
+    // Tavan `widgetMaxSp` degil `clockTimeSp`in yukseklik kapisiyla birlikte
+    // olculur: 29 x 0.60 x 5 = 87dp <= 90dp (110 - 2x6 dolgu - 8 emniyet).
+    // 2x1 kutusunda deger degismez: orada yukseklik kapisi 18sp'dir.
+    val clockTime = SpRamp(29f, 36f, 52f)
     val clockDate = SpRamp(11f, 12f, 14f)
     val countdownDays = SpRamp(24f, 30f, 46f)
     val countdownName = SpRamp(12f, 12f, 15f)

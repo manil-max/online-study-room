@@ -130,6 +130,100 @@ internal fun leaderboardTier(widthDp: Int, heightDp: Int): ListWidgetTier {
 internal fun leaderboardListVisible(tier: ListWidgetTier): Boolean =
     tier == ListWidgetTier.K3 || tier == ListWidgetTier.K4
 
+// ---------------------------------------------------------------------------
+// WP-757 - EKRANDA OLCULEN uc kusurun kapisi (emulator, API 33, AppWidgetHost)
+//
+// 1. Kart kutuyu DOLDURMUYORDU: 110x110dp kutuda kart 93.8dp (%85), 40x40'ta
+//    30.5dp (%76). `leaderboard_widget_card` `wrap_content` idi ve kok
+//    `center_vertical` ile onu ortaliyordu; ana ekranda widget kendi
+//    hucresinden kucuk gorunuyor, komsu widget'larla hizalanmiyordu.
+// 2. SATIRIN SURESI kirpiliyordu: `Muhammed Muhlis - 4 sa 12 dk` TEK bir
+//    `TextView`di; uc noktaya ilk giden sey her zaman SAG uctaki SURE oluyordu.
+//    Bir siralama widget'inda kirpilacak en son sey suredir.
+// 3. Baslik 110dp genislikte kirpiliyordu (`Kamp siral...`, 5 karakter) ve
+//    ustelik ucuncu siranin yerini yiyordu.
+// ---------------------------------------------------------------------------
+
+/** Dart tarafinin urettigi satir bicimi: ad + orta nokta + sure. */
+internal const val LEADERBOARD_ROW_SEPARATOR = " \u00B7 "
+
+/** Rozet genisligi (dp) - `odak_leaderboard_widget.xml` ile ayni sayi. */
+internal const val LEADERBOARD_RANK_DP = 22
+
+/** Rozet ile ad, ad ile sure arasindaki bosluk (dp). */
+internal const val LEADERBOARD_ROW_GAP_DP = 6
+
+/** Sure sutununun puntosu; `sans-serif-condensed` + 0.85 ile cizilir. */
+internal const val LEADERBOARD_VALUE_SP = 11f
+
+/** `12 sa 30 dk` - Turkce en uzun makul sure dizisi. */
+internal const val LEADERBOARD_VALUE_MAX_CHARS = 11
+
+/** Sure gorunurken addan geriye kalmasi gereken en az karakter. */
+internal const val LEADERBOARD_NAME_MIN_CHARS = 6
+
+/** Satirin ad kismi. Ayirici yoksa satirin tamami addir. */
+internal fun leaderboardRowName(raw: String): String =
+    raw.substringBefore(LEADERBOARD_ROW_SEPARATOR).trim()
+
+/** Satirin sure kismi. Ayirici yoksa `null` (yer tutucu satirlar). */
+internal fun leaderboardRowValue(raw: String): String? =
+    if (raw.contains(LEADERBOARD_ROW_SEPARATOR)) {
+        raw.substringAfter(LEADERBOARD_ROW_SEPARATOR).trim().takeIf { it.isNotEmpty() }
+    } else {
+        null
+    }
+
+/**
+ * Sure sutunu SIGIYOR mu? (§3.4 butcesi, `widgetMaxSp` ile ayni model.)
+ *
+ * Sure kirpilmaz - ya tam cizilir ya hic cizilmez. Sigmasi icin addan da en
+ * az [LEADERBOARD_NAME_MIN_CHARS] karakter kalmalidir; yoksa satir "sure ve
+ * bir harf" olurdu.
+ */
+internal fun leaderboardValueVisible(
+    tier: ListWidgetTier,
+    widthDp: Int,
+    rowSp: Float,
+): Boolean {
+    if (!leaderboardListVisible(tier)) return false
+    val usable = widthDp - 2f * listCardPaddingDp(tier) -
+        LEADERBOARD_RANK_DP - 2f * LEADERBOARD_ROW_GAP_DP
+    val valueDp = WIDGET_GLYPH_ADVANCE * WIDGET_TEXT_SCALE_X_MIN * WIDGET_CONDENSED_ADVANCE *
+        LEADERBOARD_VALUE_SP * LEADERBOARD_VALUE_MAX_CHARS
+    val nameDp = WIDGET_PROSE_ADVANCE * rowSp * LEADERBOARD_NAME_MIN_CHARS
+    return usable >= valueDp + nameDp
+}
+
+/**
+ * §1.3: baslik ILK duser. 110dp genislikte `Kamp siralamasi` (15 karakter)
+ * 13sp ile 117dp ister, kutuda 74dp vardir - yani baslik ORADA ZATEN
+ * kirpiliyordu. Dusurulunce yerine UCUNCU SIRA gelir: bilgi kaybi degil takas.
+ */
+internal fun leaderboardHeaderVisible(tier: ListWidgetTier, widthDp: Int): Boolean =
+    leaderboardListVisible(tier) && widthDp >= LEADERBOARD_HEADER_MIN_WIDTH_DP
+
+/**
+ * Basligin sigdigi en kucuk kutu.
+ *
+ * `Kamp siralamasi` 15 karakter, K3 basligi 13sp. Duz metin ilerlemesiyle
+ * (bkz. [WIDGET_PROSE_ADVANCE], cihazda olculdu): 0.47 x 13 x 15 = 92dp.
+ * Yaninda 14dp ikon, 6dp bosluk ve 2 x 8dp kart dolgusu durur:
+ *   92 + 14 + 6 + 16 = 128dp.
+ *
+ * Cihaz olcumu ayni yeri gosteriyor: 110dp kutuda baslik 5 karakter kirpildi,
+ * 180dp kutuda kirpilmadi. Launcher hucre olculeri `70n - 30` oldugu icin bu
+ * esik pratikte "2 hucre genislikte baslik YOK, 3 hucrede VAR" demektir.
+ */
+internal const val LEADERBOARD_HEADER_MIN_WIDTH_DP = 128
+
+/** Baslik dustugunde acilan ucuncu satir. */
+internal fun leaderboardRow3Drawn(
+    height: WidgetHeightClass,
+    headerVisible: Boolean,
+): Boolean = leaderboardRow3Visible(height) ||
+    (!headerVisible && height != WidgetHeightClass.SHORT)
+
 private val LEADERBOARD_ROW_CONTAINERS = intArrayOf(
     R.id.leaderboard_widget_row_container_1,
     R.id.leaderboard_widget_row_container_2,
@@ -146,6 +240,12 @@ private val LEADERBOARD_ROWS = intArrayOf(
     R.id.leaderboard_widget_row_1,
     R.id.leaderboard_widget_row_2,
     R.id.leaderboard_widget_row_3,
+)
+
+private val LEADERBOARD_VALUES = intArrayOf(
+    R.id.leaderboard_widget_value_1,
+    R.id.leaderboard_widget_value_2,
+    R.id.leaderboard_widget_value_3,
 )
 
 class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
@@ -254,9 +354,10 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     // --- K3/K4: baslik + ayrac --------------------------------
                     // Dusme sirasinda baslik ILK duser (§1.3): kullanici
                     // widget'i kendi eliyle kurdu, hangisi oldugunu bilir.
+                    val headerVisible = leaderboardHeaderVisible(tier, dims.widthDp)
                     setViewVisibility(
                         R.id.leaderboard_widget_header,
-                        if (listVisible) View.VISIBLE else View.GONE,
+                        if (headerVisible) View.VISIBLE else View.GONE,
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_title,
@@ -271,17 +372,46 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     )
                     setViewVisibility(
                         R.id.leaderboard_widget_divider,
-                        if (tier == ListWidgetTier.K4) View.VISIBLE else View.GONE,
+                        if (headerVisible && tier == ListWidgetTier.K4) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        },
                     )
 
                     // --- K3/K4: satirlar --------------------------------------
                     val rowSp = WidgetTypography.leaderboardRow.of(size.width)
+                    val valueColumnFits = leaderboardValueVisible(tier, dims.widthDp, rowSp)
                     val rowTexts = arrayOf(row1, row2, row3)
                     for (index in 0..2) {
                         val position = index + 1
                         val isMine = highlighted == position
-                        setTextViewText(LEADERBOARD_ROWS[index], rowTexts[index])
+                        // WP-757: ad ve sure IKI SUTUNA ayrilir. Tek metin
+                        // oldugunda uc noktaya ilk giden sey SURE oluyordu.
+                        val value = leaderboardRowValue(rowTexts[index])
+                        val showValue = value != null && valueColumnFits
+                        // 🔴 Sure sutunu SIGMASA DA satir yalniz ADdir. Ilk
+                        // deneme burada tam metne geri dusuyordu ve olcum bunu
+                        // yakaladi: 110x110dp kutuda `Muhammed Muhlis - 4 sa
+                        // 12 dk` yine 22 karakter kirpildi, yani sure zaten
+                        // gorunmuyordu. Adi tek basina cizmek ayni yere iki
+                        // kat daha fazla AD karakteri sigdirir.
+                        setTextViewText(
+                            LEADERBOARD_ROWS[index],
+                            if (value != null) {
+                                leaderboardRowName(rowTexts[index])
+                            } else {
+                                rowTexts[index]
+                            },
+                        )
                         applySp(LEADERBOARD_ROWS[index], rowSp)
+                        setViewVisibility(
+                            LEADERBOARD_VALUES[index],
+                            if (showValue) View.VISIBLE else View.GONE,
+                        )
+                        setTextViewText(LEADERBOARD_VALUES[index], value ?: "")
+                        setTextColor(LEADERBOARD_VALUES[index], if (isMine) flame else inkDim)
+                        applySp(LEADERBOARD_VALUES[index], LEADERBOARD_VALUE_SP)
                         setTextColor(LEADERBOARD_ROWS[index], if (isMine) flame else ink)
                         // 🔴 Rozet metni: 1. sira `night` on `glow` (12.22:1),
                         // KENDI satirin `flame` on `night` (8.19:1), digerleri
@@ -341,7 +471,7 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                         LEADERBOARD_ROW_CONTAINERS[2],
                         if (
                             listVisible &&
-                            leaderboardRow3Visible(size.height) &&
+                            leaderboardRow3Drawn(size.height, headerVisible) &&
                             leaderboardRowHasContent(row3)
                         ) View.VISIBLE else View.GONE,
                     )

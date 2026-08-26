@@ -111,6 +111,12 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <!-- 🔴 WP-757 (emulatorde olculdu, API 33): `maxLines="1"` idi ve
+         110x110dp kutuda `6 sa 24 dk / 13 sa 20 dk` satirinin 5 karakteri uc
+         noktaya iniyordu. Metin bosluk tasiyor, yani SARILABILIYOR; dikey
+         butce de musait (yay 48dp + iki satir 29dp + dolgu 14dp = 91dp,
+         kutuda 110dp var). Iki satir bilgiyi KORUR - satiri dusurmek ya da
+         puntoyu 11sp tabaninin altina indirmek ikisi de kayiptir. -->
     <TextView
         android:id="@+id/group_goal_widget_detail"
         android:layout_width="match_parent"
@@ -119,7 +125,7 @@
         android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
         android:gravity="center"
-        android:maxLines="1"
+        android:maxLines="2"
         android:text="@string/widget_join_group"
         android:textColor="@color/widget_ember_ink_dim"
         android:textSize="12sp" />

@@ -168,6 +168,18 @@ internal fun statsStreakVisible(height: WidgetHeightClass): Boolean =
     height == WidgetHeightClass.TALL
 
 /**
+ * WP-757 - seri satirinin GENISLIK kapisi.
+ *
+ * Olculen kusur (emulator, API 33, 110x110dp kutu): `Gunluk hedef serisi:
+ * 12 gun` satirinin 13 karakteri uc noktaya indi. Yukseklik kurali tek
+ * basina yetmiyor - o kutu TALL'dir ama 110dp genislikte 26 karakterlik bir
+ * satir 11sp tabaninda bile sigmaz (§3.4: (110-2*5-8)/(0.60*26) = 5.9sp).
+ * §1.3 bu durumda ne yapilacagini soyluyor: yardimci satir DUSER.
+ */
+internal fun statsStreakFitsWidth(width: WidgetWidthClass): Boolean =
+    width != WidgetWidthClass.NARROW
+
+/**
  * WP-730: baslik yalniz TALL kutuda cizilir. 2x2'lik (MEDIUM) kutunun dikey
  * butcesi olculdu: yuzde + cubuk + gun ozeti zaten 80dp'nin kullanilabilir
  * 64dp'sini doldurur. Baslik da eklenirse ya satirlar kirpilir ya da yuzde
@@ -332,7 +344,10 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                 )
                 setViewVisibility(
                     R.id.stats_widget_streak_row,
-                    if (statsStreakVisible(size.height) && !progressOnlyCore(tier)) {
+                    if (statsStreakVisible(size.height) &&
+                        statsStreakFitsWidth(size.width) &&
+                        !progressOnlyCore(tier)
+                    ) {
                         View.VISIBLE
                     } else {
                         View.GONE
@@ -357,7 +372,12 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                 applySp(R.id.stats_widget_title, statsTitleSp(size))
                 applySp(R.id.stats_widget_today, statsValueSp(size, dimensions.widthDp))
                 applySp(R.id.stats_widget_week, statsRowSp(size))
-                applySp(R.id.stats_widget_streak, statsRowSp(size))
+                // 🔴 Seri satiri ailenin EN AZ onemli satiridir ve en uzunudur
+                // (`Gunluk hedef serisi: 12 gun`, 27 karakter). 12sp ile 180dp
+                // kutuda 167dp isterken 158dp yer var - yani ORADA da kirpma
+                // sinirindaydi. §3.3 tabani (11sp) ile 155dp'ye iner ve satir
+                // 3x2'de KORUNUR; 2x2'de zaten `statsStreakFitsWidth` duser.
+                applySp(R.id.stats_widget_streak, WIDGET_MIN_TEXT_SP)
                 applyRootPadding(
                     context,
                     R.id.stats_widget_root,

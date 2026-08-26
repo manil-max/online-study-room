@@ -209,6 +209,65 @@ internal fun countdownVisibleRowCount(
     minOf(rowCount, countdownRowCapacity(height), COUNTDOWN_ROW_SLOTS)
 }
 
+// ---------------------------------------------------------------------------
+// WP-757 - EKRANDA OLCULEN kusurun kapisi.
+//
+// `countdownUsesHero` yalniz YUKSEKLIGE ve kayit sayisina bakar; kademeyi
+// (§1.1) hic gormez. Kademe ise K1/K2'de yardimci satirlarin TAMAMINI
+// dusurur. Iki kural birbirini gormeden calisinca 40x40dp kutuda hem
+// kahraman hem satirlar gizlenir ve kart BOS kalir - emulatorde olculdu
+// (API 33, `AppWidgetHost`, uc sinav + one cikarilan kayit): kokun altinda
+// cizilen tek bir yaprak yok.
+//
+// Bu iki fonksiyon o kararin TEK yeridir; saglayici artik kendi icinde
+// `countdownUsesHero` cagirmaz. Ayrisma `WidgetOnScreenWp757Test` icinde
+// kirmizi duser.
+// ---------------------------------------------------------------------------
+
+/**
+ * Kahraman blogu (cekirdek + etiket + ad) cizilecek mi?
+ *
+ * 🔴 SON KOSUL BU KUSURUN DUZELTMESIDIR ve bilerek KADEME ADI TASIMAZ:
+ * "hicbir yardimci satir cizilmiyorsa kahraman cizilir". Kademe adlarini
+ * sayan bir liste (K1 || K2) yazilsaydi, [countdownVisibleRows]a eklenecek
+ * HER YENI KAPI kutuyu yeniden bosaltabilirdi - nitekim bu turda genislik
+ * kapisi eklenince 110x110dp / iki kayit / one cikarilan kayit YOK halinde
+ * tam olarak o oldu (kendi nobetcimiz yakaladi). Kural artik satir sayisinin
+ * KENDISINE bagli, yani her yeni kapiyi otomatik karsilar.
+ */
+internal fun countdownHeroVisible(
+    tier: ProgressWidgetTier,
+    width: WidgetWidthClass,
+    height: WidgetHeightClass,
+    rowCount: Int,
+    hasPriority: Boolean,
+): Boolean = rowCount == 0 ||
+    countdownUsesHero(height, rowCount, hasPriority) ||
+    countdownVisibleRows(tier, width, height, rowCount, hasPriority) == 0
+
+/**
+ * Kahramanin altinda GERCEKTEN cizilen yardimci satir sayisi.
+ *
+ * Uc kapi vardir ve ucu de OLCULEN bir kirpmadan geliyor:
+ *  - K1 (40dp genislik): kutuda cekirdekten baska hicbir sey yok (§1.2).
+ *  - K2 (110x40dp): eski hal iki mini satir ciziyordu ve sinav adlari 3 ve 11
+ *    karakter kirpiliyordu; aile sozlugu K2'de yalniz cekirdek der.
+ *  - NARROW (110dp genislik): satir `ad + sayi` iki sutundur. 110dp kutuda
+ *    kullanilabilir 90dp'ye 17 karakterlik bir sinav adi (122dp) sigmaz.
+ *    §1.3 sirasi bu durumda "liste kuyrugu duser" der - cekirdek kalir.
+ */
+internal fun countdownVisibleRows(
+    tier: ProgressWidgetTier,
+    width: WidgetWidthClass,
+    height: WidgetHeightClass,
+    rowCount: Int,
+    hasPriority: Boolean,
+): Int = when {
+    tier == ProgressWidgetTier.K1 || tier == ProgressWidgetTier.K2 -> 0
+    width == WidgetWidthClass.NARROW -> 0
+    else -> countdownVisibleRowCount(height, rowCount, hasPriority)
+}
+
 /**
  * Yayin doluluk kesiri. Kayitta baslangic tarihi YOKTUR, o yuzden olcek bir
  * ufuktur: bir yil. 365 gun ve otesi bos yay, sinav gunu tam dolu yay.
@@ -240,8 +299,9 @@ internal fun countdownRowValueText(
     daysLeftLabel: String,
     todayLabel: String,
     passedLabel: String,
+    compact: Boolean = false,
 ): String = when (row.state) {
-    CountdownState.FUTURE -> "${row.daysText} $daysLeftLabel"
+    CountdownState.FUTURE -> if (compact) row.daysText else "${row.daysText} $daysLeftLabel"
     CountdownState.TODAY -> todayLabel
     CountdownState.PAST -> passedLabel
     CountdownState.EMPTY -> COUNTDOWN_DASH
@@ -402,8 +462,13 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // (`dday_card.dart` -> `useHero`). Bos durumda kahraman blogu
                 // yine gorunur, cunku "henuz geri sayim eklenmedi" satirini o
                 // tasir.
-                val hero = countdownUsesHero(size.height, list.rows.size, list.hasPriority)
-                val heroVisible = hero || list.rows.isEmpty()
+                val heroVisible = countdownHeroVisible(
+                    tier,
+                    size.width,
+                    size.height,
+                    list.rows.size,
+                    list.hasPriority,
+                )
                 setViewVisibility(
                     R.id.countdown_widget_hero,
                     if (heroVisible) android.view.View.VISIBLE else android.view.View.GONE,
@@ -496,14 +561,15 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                 // WP-717 — diger sinavlar. Kahraman varsa listenin GERISI,
                 // yoksa listenin TAMAMI cizilir (uygulamadaki kartla ayni).
                 val rowSp = COUNTDOWN_ROW_SP.of(size.width)
-                val drawn = if (hero) list.rows.drop(1) else list.rows
-                // K1 kutusunda (40dp genislik) yardimci satirlar da duser:
-                // ad + gun sayisi iki sutun halinde 36dp'ye girmez.
-                val visibleRows = if (progressOnlyCore(tier)) {
-                    0
-                } else {
-                    countdownVisibleRowCount(size.height, list.rows.size, list.hasPriority)
-                }
+                val drawn = if (heroVisible) list.rows.drop(1) else list.rows
+                // Kademe kapisi: karari `countdownVisibleRows` verir (WP-757).
+                val visibleRows = countdownVisibleRows(
+                    tier,
+                    size.width,
+                    size.height,
+                    list.rows.size,
+                    list.hasPriority,
+                )
                 for (slot in 0 until COUNTDOWN_ROW_SLOTS) {
                     val row = drawn.getOrNull(slot).takeIf { slot < visibleRows }
                     setViewVisibility(
@@ -517,7 +583,21 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
                     )
                     setTextViewText(
                         COUNTDOWN_ROW_DAYS_IDS[slot],
-                        countdownRowValueText(row, daysLeftLabel, todayLabel, passedLabel),
+                        countdownRowValueText(
+                            row,
+                            daysLeftLabel,
+                            todayLabel,
+                            passedLabel,
+                            // 🔴 KOMPAKT (yalniz sayi) - olculen kusur: sag
+                            // ucta `297 gun kaldi` 12sp ile ~94dp yiyor,
+                            // geriye kalan ~62dp'ye 17 karakterlik sinav adi
+                            // sigmiyor ve ISIM uc noktaya iniyordu. Bu
+                            // widget'in en genis kutusu 250dp (`maxResizeWidth`)
+                            // ve orada bile tam cumle 229.6dp isterken 228dp
+                            // var. "gun kaldi" sozcugu kahraman blogunda zaten
+                            // bir kez yazilidir.
+                            compact = true,
+                        ),
                     )
                     setTextViewTextSize(
                         COUNTDOWN_ROW_NAME_IDS[slot],
@@ -570,7 +650,7 @@ class CountdownWidgetProvider : HomeWidgetProvider() {
 }
 
 /** Satir puntosu; kahraman sayisindan kucuk kalmali ki hiyerarsi bozulmasin. */
-private val COUNTDOWN_ROW_SP = SpRamp(11f, 12f, 14f)
+internal val COUNTDOWN_ROW_SP = SpRamp(11f, 12f, 14f)
 
 private val COUNTDOWN_ROW_CONTAINER_IDS = intArrayOf(
     R.id.countdown_widget_row_1,

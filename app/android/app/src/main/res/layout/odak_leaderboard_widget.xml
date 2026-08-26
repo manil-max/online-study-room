@@ -38,11 +38,19 @@
     android:gravity="center_vertical"
     android:orientation="vertical">
 
+    <!-- 🔴 WP-757 (emulatorde olculdu, API 33): burasi `wrap_content` idi ve
+         kok `center_vertical` ile onu ortaliyordu. Sonuc: 110x110dp kutuda
+         kart 93.8dp (%85), 40x40dp kutuda 30.5dp (%76). Ana ekranda widget
+         kendi hucresinden kucuk gorunuyor, ustune komsu widget'larla
+         hizalanmiyordu. Dokuz widget'in yedisi kartla kutuyu DOLDURUYOR; bu
+         ikisi doldurmuyordu ve fark "ozensiz" olarak okunuyordu.
+         `gravity` icerigi dikeyde ortalar, kart artik kutunun kendisidir. -->
     <LinearLayout
         android:id="@+id/leaderboard_widget_card"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="@drawable/widget_card_bg"
+        android:gravity="center_vertical"
         android:orientation="vertical"
         android:padding="8dp">
 
@@ -147,8 +155,8 @@
 
             <TextView
                 android:id="@+id/leaderboard_widget_rank_1"
-                android:layout_width="28dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:background="@drawable/widget_rank_first_bg"
                 android:gravity="center"
                 android:maxLines="1"
@@ -161,7 +169,7 @@
                 android:id="@+id/leaderboard_widget_row_1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -169,6 +177,24 @@
                 android:textColor="@color/widget_ember_ink"
                 android:textSize="13sp"
                 android:textStyle="bold" />
+            <!-- WP-757: sure AYRI sutundur ve `ellipsize` TASIMAZ.
+                 Olculen kusur: ad ve sure tek `TextView`de birlestigi icin uc
+                 noktaya ilk giden sey hep sag uctaki SURE oluyordu (180x110dp
+                 kutuda 9 karakter, 110x110'da 23). Bir siralama widget'inda
+                 kirpilacak en son sey suredir; sigmadigi kutuda hic cizilmez
+                 (`leaderboardValueVisible`). -->
+            <TextView
+                android:id="@+id/leaderboard_widget_value_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-condensed"
+                android:maxLines="1"
+                android:textColor="@color/widget_ember_ink_dim"
+                android:textScaleX="0.85"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -183,8 +209,8 @@
 
             <TextView
                 android:id="@+id/leaderboard_widget_rank_2"
-                android:layout_width="28dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:background="@drawable/widget_rank_other_bg"
                 android:gravity="center"
                 android:maxLines="1"
@@ -197,13 +223,31 @@
                 android:id="@+id/leaderboard_widget_row_2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/widget_dash"
                 android:textColor="@color/widget_ember_ink"
                 android:textSize="12sp" />
+            <!-- WP-757: sure AYRI sutundur ve `ellipsize` TASIMAZ.
+                 Olculen kusur: ad ve sure tek `TextView`de birlestigi icin uc
+                 noktaya ilk giden sey hep sag uctaki SURE oluyordu (180x110dp
+                 kutuda 9 karakter, 110x110'da 23). Bir siralama widget'inda
+                 kirpilacak en son sey suredir; sigmadigi kutuda hic cizilmez
+                 (`leaderboardValueVisible`). -->
+            <TextView
+                android:id="@+id/leaderboard_widget_value_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-condensed"
+                android:maxLines="1"
+                android:textColor="@color/widget_ember_ink_dim"
+                android:textScaleX="0.85"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -218,8 +262,8 @@
 
             <TextView
                 android:id="@+id/leaderboard_widget_rank_3"
-                android:layout_width="28dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:background="@drawable/widget_rank_other_bg"
                 android:gravity="center"
                 android:maxLines="1"
@@ -232,13 +276,31 @@
                 android:id="@+id/leaderboard_widget_row_3"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/widget_dash"
                 android:textColor="@color/widget_ember_ink"
                 android:textSize="12sp" />
+            <!-- WP-757: sure AYRI sutundur ve `ellipsize` TASIMAZ.
+                 Olculen kusur: ad ve sure tek `TextView`de birlestigi icin uc
+                 noktaya ilk giden sey hep sag uctaki SURE oluyordu (180x110dp
+                 kutuda 9 karakter, 110x110'da 23). Bir siralama widget'inda
+                 kirpilacak en son sey suredir; sigmadigi kutuda hic cizilmez
+                 (`leaderboardValueVisible`). -->
+            <TextView
+                android:id="@+id/leaderboard_widget_value_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-condensed"
+                android:maxLines="1"
+                android:textColor="@color/widget_ember_ink_dim"
+                android:textScaleX="0.85"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

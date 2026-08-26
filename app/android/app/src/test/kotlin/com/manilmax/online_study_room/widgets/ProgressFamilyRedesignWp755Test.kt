@@ -359,7 +359,19 @@ class ProgressFamilyRedesignWp755Test {
                 val govde = it.value
                 val id = Regex("@\\+id/([A-Za-z0-9_]+)").find(govde)?.groupValues?.get(1)
                 assertTrue("$path/$id: ellipsize yok", govde.contains("android:ellipsize=\"end\""))
-                assertTrue("$path/$id: maxLines yok", govde.contains("android:maxLines=\"1\""))
+                // 🔴 WP-757: iddia "maxLines=1" idi; olculdugunde bu KURAL
+                // DEGIL kural sanilan bir SAYI cikti. `group_goal_widget_detail`
+                // 110dp kutuda tek satira kilitliyken 5 karakter kirpiliyordu
+                // (emulator, `getEllipsisCount`); metin bosluk tasidigi icin
+                // IKI satira sarilabiliyor ve dikey butce de musait. Korunan
+                // sey satir SAYISI degil "yarim glifle kesilmesin"di: onu
+                // `ellipsize=end` + SINIRLI `maxLines` birlikte saglar.
+                val maxLines = Regex("android:maxLines=\"(\\d+)\"").find(govde)
+                assertTrue("$path/$id: maxLines yok", maxLines != null)
+                assertTrue(
+                    "$path/$id: maxLines cok yuksek (${maxLines!!.groupValues[1]})",
+                    maxLines.groupValues[1].toInt() in 1..2,
+                )
             }
         }
     }
