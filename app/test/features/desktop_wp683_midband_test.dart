@@ -38,6 +38,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
@@ -149,7 +150,11 @@ void main() {
     tester.view.physicalSize = window;
     addTearDown(tester.view.reset);
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    // 🔴 Yerel gun DEGIL Istanbul gunu: `DailyStat.day` uretim tarafinda
+    // `dayOf` (= Istanbul) ile suzulur, `isSameDay` iki tarafi normalize
+    // etmez. Yerel `DateTime.now()` ile kurulan fikstur, UTC bir makinede
+    // 21:00-24:00 arasi kartin aradigi gunu HIC uretmez -> kart bos cizer.
+    final today = dayOf(now);
     Profile member(String id, String name) =>
         Profile(id: id, displayName: name, createdAt: DateTime(2026, 1, 1));
     final view = ClassStatsView(

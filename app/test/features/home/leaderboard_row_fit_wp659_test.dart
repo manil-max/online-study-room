@@ -30,6 +30,7 @@ import 'package:online_study_room/data/providers/analytics_query_providers.dart'
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/features/home/dashboard_card.dart';
 import 'package:online_study_room/features/home/widgets/leaderboard_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -89,7 +90,15 @@ List<Profile> _members() => [
 ];
 
 List<DailyStat> _stats() {
-  final today = DateTime(_now.year, _now.month, _now.day);
+  // 🔴 Takvim gunu CIHAZIN yerel saatinden TURETILEMEZ. Kart satirlari
+  // `todaySecondsByUser` ile suzulur ve o `dayOf` (= Istanbul) kullanir;
+  // `isSameDay` iki tarafi da normalize ETMEZ, ham y/a/g karsilastirir.
+  // Fikstur `DateTime.now()`un yerel gunuyle kurulunca UTC bir makinede
+  // 21:00-24:00 arasi Istanbul zaten ERTESI GUNE gecmis olur: uretilen 30
+  // gunun hicbiri kartin aradigi gun degildir, kart BOS cizer ve test her
+  // gece ayni uc saatte kirmizi yanar. (Olculdu: CI 20:24Z yesil,
+  // 21:06Z kirmizi, arada yalniz surum meta commit'i vardi.)
+  final today = dayOf(DateTime.now());
   return [
     for (var d = 0; d < 30; d++)
       for (var i = 1; i <= _memberCount; i++)

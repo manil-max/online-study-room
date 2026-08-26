@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` tipi ana pakette değil (Riverpod 3).
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/presence.dart';
@@ -164,7 +165,11 @@ List<Presence> _presences() => [
 ];
 
 List<DailyStat> _groupStats() {
-  final today = DateTime(_now.year, _now.month, _now.day);
+  // 🔴 Yerel gun DEGIL Istanbul gunu: `DailyStat.day` uretim tarafinda
+  // `dayOf` (= Istanbul) ile suzulur, `isSameDay` iki tarafi normalize
+  // etmez. Yerel `DateTime.now()` ile kurulan fikstur, UTC bir makinede
+  // 21:00-24:00 arasi kartin aradigi gunu HIC uretmez -> kart bos cizer.
+  final today = dayOf(_now);
   return [
     for (var d = 0; d < 30; d++)
       for (var i = 1; i <= _memberCount; i++)

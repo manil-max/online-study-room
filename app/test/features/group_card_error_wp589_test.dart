@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/core/widgets/error_retry_view.dart';
 import 'package:online_study_room/data/models/analytics_query_models.dart';
@@ -326,7 +327,11 @@ void main() {
 
   group('class_stats_view (uye katki karti)', () {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    // 🔴 Yerel gun DEGIL Istanbul gunu: `DailyStat.day` uretim tarafinda
+    // `dayOf` (= Istanbul) ile suzulur, `isSameDay` iki tarafi normalize
+    // etmez. Yerel `DateTime.now()` ile kurulan fikstur, UTC bir makinede
+    // 21:00-24:00 arasi kartin aradigi gunu HIC uretmez -> kart bos cizer.
+    final today = dayOf(now);
     final yesterday = today.subtract(const Duration(days: 1));
     final members = [
       Profile(id: 'u1', displayName: 'Ada', createdAt: DateTime(2026, 1, 1)),
