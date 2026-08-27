@@ -86,6 +86,15 @@ internal fun shouldRepostAfterProbe(
 /** Yoklamanin sistem gonderimini beklemesi gereken sure. */
 internal const val PROMOTION_PROBE_DELAY_MS = 400L
 
+/**
+ * Zengin panelde faz etiketi olarak NE yazilir. **Saf.**
+ *
+ * `0` = hic yazilmaz. Odakta bilerek bostur: panel yalniz calisirken vardir,
+ * "FOCUS" yazmak tekrardir. Etiket yalniz ISTISNA durumu (mola) isaretler.
+ */
+internal fun panelPhaseLabelRes(isBreak: Boolean, shortCriticalTextRes: Int): Int =
+    if (isBreak) shortCriticalTextRes else 0
+
 internal fun panelOverride(prefs: SharedPreferences): Boolean? =
     if (prefs.contains(KEY_PANEL_EXPANDED)) {
         prefs.getBoolean(KEY_PANEL_EXPANDED, true)
@@ -931,25 +940,31 @@ class StudyTimerService : Service() {
             null,
             true,
         )
-        // Mola ile odak bildirimde ayirt edilebilsin diye (kusur 3): tek isaret
-        // dugme etiketi olamaz, cunku dugme etiketi de kaybolabiliyordu.
+        // 🔴 WP-761 (sahip, cihazda): "buradaki FOCUS yazisi ne alaka".
+        // Hakliydi. Etiket, mola ile odagi ayirt etsin diye eklenmisti ama
+        // ODAKTA hicbir sey soylemiyordu: panel zaten yalniz calisirken
+        // vardir, "FOCUS" yazmak tekrardi ve 26sp sayacin yanina gurultu
+        // koyuyordu. Isaret, durum ISTISNA oldugunda hak eder: mola.
+        // Ayirt etme kaybolmaz -- molada etiket yazar, odakta bosluk kalir ve
+        // dugme etiketi de zaten farklidir.
         views.setTextViewText(
             R.id.notif_timer_label,
-            getString(plan.shortCriticalTextRes),
+            panelPhaseLabelRes(isBreak, plan.shortCriticalTextRes)
+                .takeIf { it != 0 }
+                ?.let { getString(it) }
+                .orEmpty(),
         )
         views.setTextViewText(
             R.id.notif_timer_action,
             if (isBreak) getString(R.string.action_return_to_work)
             else getString(R.string.action_stop),
         )
-        // Hap bir DUGMEdir: dolu zemin + etiket + simge (kusur 4).
-        views.setTextViewCompoundDrawablesRelative(
-            R.id.notif_timer_action,
-            if (isBreak) R.drawable.ic_notif_pill_start else R.drawable.ic_notif_pill_stop,
-            0,
-            0,
-            0,
-        )
+        // 🔴 WP-761 (sahip, cihazda): "butondaki kare isaret ne alaka".
+        // Hap simgesi kaldirildi. Dolu kare, 15sp kalin "Durdur" yazisinin
+        // yaninda bir DURDURMA simgesi olarak degil, rastgele bir leke olarak
+        // okunuyordu -- taninmayan bir simge simge degildir. Anlami etiketin
+        // kendisi tasiyor; hap dolu zemin + net etiketle zaten dugme gibi
+        // duruyor (dokunma hedefi 44dp korunur).
         views.setOnClickPendingIntent(
             R.id.notif_timer_action,
             if (isBreak) endBreakActionPending() else stopActionPending(),

@@ -179,10 +179,13 @@ class TimerNotificationPanelWp759Test {
             Regex("<solid\\s+android:color=\"@color/timer_notification_action_fill\"\\s*/>")
                 .containsMatchIn(body),
         )
-        // Dokunma hedefi + affordance: etiket tek basina birakilmaz.
+        // Dokunma hedefi korunur.
         val action = element("notif_timer_action")
         assertEquals("44dp", action["android:minHeight"])
-        assertNotEquals(null, action["android:drawablePadding"])
+        // 🔴 WP-761: `drawablePadding` iddiasi KALDIRILDI. Bir simgenin VARLIGINI
+        // sart kosuyordu; simge cihazda olculdu ve kaldirildi. Affordance'i
+        // tasiyan sey dolu zemin + 44dp hedef + net etiket; bir leke degil.
+        assertEquals("84dp", action["android:minWidth"])
     }
 
     /**
@@ -329,6 +332,30 @@ class TimerNotificationPanelWp759Test {
         assertNotEquals(work.bodyRes, rest.bodyRes)
     }
 
+    /**
+     * 🔴 WP-761 — faz isareti yalniz ISTISNA durumu isaretler.
+     *
+     * Sahip cihazda gordu: odak panelinde 26sp sayacin yaninda "FOCUS"
+     * yaziyordu ve hicbir sey soylemiyordu -- panel zaten yalniz calisirken
+     * var. Tekrar bilgi degildir; gurultudur.
+     *
+     * Ayirt etme KAYBOLMAZ ve olculen sey budur: molada etiket yazar, odakta
+     * bosluk kalir. Iki panel hala farkli gorunur.
+     */
+    @Test
+    fun faz_etiketi_yalniz_MOLADA_yazar() {
+        assertEquals(
+            "Odakta etiket bos kalmali: 'FOCUS' tekrardi",
+            0,
+            panelPhaseLabelRes(isBreak = false, shortCriticalTextRes = R.string.timer_subtext_focus),
+        )
+        assertEquals(
+            "Molada etiket YAZMALI: ayirt edici tek gorsel isaret o",
+            R.string.timer_subtext_break,
+            panelPhaseLabelRes(isBreak = true, shortCriticalTextRes = R.string.timer_subtext_break),
+        )
+    }
+
     @Test
     fun panel_faz_isaretini_GERCEKTEN_cizer() {
         assertTrue(
@@ -368,8 +395,13 @@ class TimerNotificationPanelWp759Test {
         )
         assertNotEquals(0, R.drawable.ic_notif_action_stop)
         assertNotEquals(0, R.drawable.ic_notif_action_start)
-        assertNotEquals(0, R.drawable.ic_notif_pill_stop)
-        assertNotEquals(0, R.drawable.ic_notif_pill_start)
+        // 🔴 WP-761: `ic_notif_pill_*` iddialari KALDIRILDI, zayiflatilmadi.
+        // Onlar SISTEM eylem ikonlari degil, kendi cizdigimiz hapin ICINDEKI
+        // simgelerdi. Sahip cihazda gordu ve "butondaki kare isaret ne alaka"
+        // dedi: dolu kare, kalin "Durdur" yazisinin yaninda bir durdurma
+        // simgesi olarak degil rastgele bir leke olarak okunuyordu. Cizimler
+        // silindi. Bu testin konusu olan iddia -- SISTEM eylemleri ikonsuz
+        // eklenmesin -- oldugu gibi duruyor ve o iki kaynak hala olculuyor.
     }
 
     /**

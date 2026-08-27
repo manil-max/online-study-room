@@ -68,7 +68,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:background="@drawable/timer_pill_bg"
-        android:drawablePadding="8dp"
         android:gravity="center"
         android:minWidth="84dp"
         android:minHeight="44dp"
