@@ -527,6 +527,12 @@ PLAY_ALLOWED_PERMISSIONS: dict[str, str] = {
         "src/main:19 — alarm calisi ve bildirim titresimi; normal izin, Play beyani yok.",
     "android.permission.USE_FULL_SCREEN_INTENT":
         "src/main:20 — AlarmRingActivity kilit ekraninda calar (ExactAlarmHelper.kt:157,213); Play 'Tam ekran amaci' beyani: alarm gerekcesi.",
+    "android.permission.SYSTEM_ALERT_WINDOW":
+        "src/main — WP-764 yuzen sayac seridi; VARSAYILAN KAPALI, yalniz gizli "
+        "gelistirici bolumunden acilir ve izni kullanici Ayarlar'da ELLE verir "
+        "(calisma zamani penceresi yok). Play hassas kullanim gerekcesi ister: "
+        "OEM bildirim yuzeyi terfiyi cizmedigi icin (WP-763 olcumu) kalici sayaci "
+        "gosteren tek yol.",
     "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS":
         "src/main:22 — OEM'in sayac servisini oldurmesine karsi muafiyet ekrani (ExactAlarmHelper.kt:151,174); Play hassas kullanim gerekcesi ister.",
     "android.permission.ACCESS_NETWORK_STATE":

@@ -411,6 +411,118 @@ void main() {
     );
   });
 
+  test('WP-767: silinen sayac bildirimi GORUNMEZ kosmaya devam etmez', () {
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+
+    final serviceCode = service
+        .split('\n')
+        .where((line) {
+          final s = line.trimLeft();
+          return !s.startsWith('//') && !s.startsWith('*') && !s.startsWith('/*');
+        })
+        .join('\n');
+
+    // 🔴 Android 14'ten beri on plan bildirimi SILINEBILIR ve bu engellenemez;
+    // istisnalar (CallStyle, medya, cihaz yoneticisi) bir calisma sayacini
+    // kapsamiyor. Sahibin defalarca bildirdigi sikayet buydu.
+    //
+    // Engellenemeyen sey silinmesi; cozulebilen sey silindikten SONRA sayacin
+    // GORUNMEDEN kosmaya devam etmesi. `setDeleteIntent` olmadan silinmeden
+    // haberimiz bile olmuyordu.
+    expect(
+      serviceCode,
+      contains('setDeleteIntent(actionPending(ACTION_NOTIFICATION_DISMISSED'),
+      reason:
+          'Silme haberi alinmazsa sayac gorunmeden kosar; kullanici ne kadar '
+          'calistigini goremez ve durduracak dugmeyi bulamaz.',
+    );
+    expect(
+      serviceCode,
+      contains('ACTION_NOTIFICATION_DISMISSED -> handleNotificationDismissed()'),
+      reason: 'Niyet tanimlandi ama DAGITILMADIYSA hicbir sey olmaz.',
+    );
+
+    // 🔴 Silme ile geri cagri arasinda Durdur'a basilmis olabilir. Kor bir
+    // geri getirme, durmus sayac icin kosan kart gonderir -- yani sayaci
+    // dirilmis gibi gosterir. Ayni kosul gecikmeli terfi yoklamasinda da var.
+    final handlerAt = serviceCode.indexOf('fun handleNotificationDismissed(');
+    expect(handlerAt, greaterThan(-1));
+    final handlerBody = serviceCode.substring(handlerAt, handlerAt + 600);
+    expect(
+      handlerBody,
+      contains('TimerStateStore.isRunning'),
+      reason: 'Durmus sayac icin kosan kart gonderilemez.',
+    );
+  });
+
+  test('WP-764: yuzen serit GERCEKTEN bagli ve KAPALI dogar', () {
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+    final overlay = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/overlay/'
+      'TimerOverlay.kt',
+    ).readAsStringSync();
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+
+    String code(String source) => source
+        .split('\n')
+        .where((line) {
+          final s = line.trimLeft();
+          return !s.startsWith('//') && !s.startsWith('*') && !s.startsWith('/*');
+        })
+        .join('\n');
+
+    final serviceCode = code(service);
+    final overlayCode = code(overlay);
+
+    // 🔴 Bu deponun tekrar eden kusuru: "bitmis arka uc, baglanmamis on uc".
+    // WP-759'da terfi kapisi eksiksiz yazilmis ama HICBIR YERDEN
+    // CAGRILMIYORDU; kusur ancak grep'le yakalandi. Serit ayni sekilde
+    // yazilip baglanmadan kalabilirdi.
+    expect(
+      serviceCode,
+      contains('syncOverlay(startedAtMs)'),
+      reason: 'Serit yazildi ama sayac baslarken CAGRILMIYOR: hic cizilmez.',
+    );
+    expect(
+      serviceCode,
+      contains('TimerOverlay.hide(this)'),
+      reason:
+          'Sayac durunca serit KALDIRILMALI; aksi halde ekranin ustunde '
+          'durmus bir sayac asili kalir.',
+    );
+
+    // 🔴 Bu turda UC KEZ deneysel bir yol varsayilan yapildi ve calisan
+    // bildirimi bozdu (v71, v74). Sahibin kurali: "test ederken sadece biz
+    // gorelim, digerlerinde normal olsun". Serit KAPALI dogar.
+    expect(
+      overlayCode,
+      contains('getBoolean(KEY_ENABLED, false)'),
+      reason: 'Serit varsayilan ACIK dogarsa ayni hata dorduncu kez tekrarlanir.',
+    );
+    expect(
+      overlayCode,
+      contains('KEY_ENABLED = "flutter.timer_overlay_enabled"'),
+      reason:
+          'Onek dusersse Dart ayni anahtari goremez; anahtar iki tarafta '
+          'ayrisir ve kullanicinin actigi serit hic acilmaz.',
+    );
+
+    // Izin ilan edilmemisse `canDrawOverlays` her zaman false doner ve serit
+    // sessizce hic cizilmez.
+    expect(
+      manifest,
+      contains('android.permission.SYSTEM_ALERT_WINDOW'),
+      reason: 'Izin ilan edilmemisse serit hicbir cihazda cizilemez.',
+    );
+  });
+
   test('WP-558: widget gereksiz uyandirmaz, boot sonrasi tazelenir', () {
     final boot = File(
       'android/app/src/main/kotlin/com/manilmax/online_study_room/'

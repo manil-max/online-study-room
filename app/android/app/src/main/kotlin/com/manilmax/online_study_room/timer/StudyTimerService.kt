@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.os.HandlerCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
+import com.manilmax.online_study_room.overlay.TimerOverlay
 import com.manilmax.online_study_room.widgets.TimerWidgets
 import com.manilmax.online_study_room.widgets.rememberedSubjectId
 
@@ -471,6 +472,7 @@ class StudyTimerService : Service() {
                 )
                 ACTION_DISCARD_PROJECTION -> handleDiscardProjection()
                 ACTION_END_BREAK -> handleEndBreak()
+                ACTION_NOTIFICATION_DISMISSED -> handleNotificationDismissed()
                 ACTION_TOGGLE -> {
                     // WP-135: idle→start; running→stop + 00:00 (writeIdle).
                     if (TimerStateStore.isRunning(prefs())) {
@@ -571,6 +573,10 @@ class StudyTimerService : Service() {
         // turda `richPanel` her zaman `true` idi: olcum zaten hicbir seyi
         // degistirmiyordu. Kablo takilinca yaris gorunur oldu.
         schedulePromotionProbe(startedAtMs)
+        // WP-764: yuzen serit. Uc kosul birden ([TimerOverlay.shouldShow]):
+        // kullanici acmis, izin var, sayac kosuyor. Ucu de saglanmazsa hicbir
+        // sey cizilmez -- serit KAPALI dogar.
+        syncOverlay(startedAtMs)
         // Deterministik sıra: store → UI yüzeyler → Dart broadcast.
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -586,6 +592,27 @@ class StudyTimerService : Service() {
      * testiyle ölçülebilsin diye. Eskiden karar burada gömülüydü ve döngüyü
      * aynen yeniden yazıyordu.
      */
+    /**
+     * Silinen bildirimi geri getirir -- ama YALNIZ sayac hala kosuyorsa.
+     *
+     * 🔴 Kosul sart: silme ile bu geri cagri arasinda Durdur'a basilmis
+     * olabilir. Kor davranan bir geri getirme, durmus bir sayac icin kosan
+     * kart gonderirdi -- yani sayaci DIRILTMIS gibi gorunurdu.
+     *
+     * 🔴 Bu bir "silmeyi engelleme" DEGILDIR ve oyle oldugu iddia edilmiyor.
+     * Kullanici yine silebilir, yine silebilir. Kapatilan sey, silme ile
+     * gorunmez kosma arasindaki bosluk: on plan hizmetinin gorunur olmasi
+     * zaten sozlesmesidir, bildirim o sozlesmenin kendisidir.
+     */
+    private fun handleNotificationDismissed() {
+        val p = prefs()
+        if (!TimerStateStore.isRunning(p)) return
+        val startedAtMs = TimerStateStore.startedAtMs(p).takeIf { it > 0L } ?: return
+        runCatching {
+            notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
+        }
+    }
+
     private fun handleEndBreak() {
         val p = prefs()
         val plan = TimerStateStore.endBreakPlan(p) ?: return
@@ -617,6 +644,7 @@ class StudyTimerService : Service() {
         // "durmussa gonderme" der; bu satir isin bosuna kuyrukta
         // beklemesini de onler.
         mainHandler.removeCallbacksAndMessages(PROMOTION_PROBE_TOKEN)
+        TimerOverlay.hide(this)
         // ÖNEMLİ: 5 sn içinde startForeground (Android 12+ FGS borcu).
         startForegroundCompat(buildIdleNotification())
 
@@ -760,6 +788,37 @@ class StudyTimerService : Service() {
      */
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
+    /**
+     * Yuzen seridi kosan sayacla esitler.
+     *
+     * 🔴 Izin HER SEFERINDE sorulur, onbelleklenmez: kullanici izni Ayarlar'dan
+     * istedigi an geri alabilir ve bundan haberdar olmayiz. Bayat bir "izin
+     * var" degeri `addView` sirasinda coker.
+     */
+    private fun syncOverlay(startedAtMs: Long) {
+        val p = prefs()
+        val show = TimerOverlay.shouldShow(
+            enabled = TimerOverlay.isEnabled(p),
+            permitted = TimerOverlay.isPermitted(this),
+            running = TimerStateStore.isRunning(p),
+        )
+        if (!show) {
+            TimerOverlay.hide(this)
+            return
+        }
+        val target = TimerStateStore
+            .readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
+            .takeIf { it > 0 } ?: 0
+        TimerOverlay.show(
+            context = this,
+            startedAtMs = startedAtMs,
+            countDown = target > 0,
+            totalSeconds = target,
+            onTap = { startActivity(openAppIntent()) },
+            onStop = { sendCommand(this, ACTION_STOP) },
+        )
+    }
+
     private fun schedulePromotionProbe(startedAtMs: Long) {
         // 🔴 WP-763: terfi ISTENMEDIYSE olculecek bir sey yoktur. Zengin panel
         // gonderilmisken bayragi aramak, bulamamak ve bunu RED diye yazmak
@@ -871,6 +930,10 @@ class StudyTimerService : Service() {
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
+            // 🔴 Silinirse HABERIMIZ OLSUN. Bu satir olmadan kullanici karti
+            // kaydirip siliyor, sayac gorunmeden kosmaya devam ediyor ve
+            // durduracak dugme hicbir yerde kalmiyordu.
+            .setDeleteIntent(actionPending(ACTION_NOTIFICATION_DISMISSED, 5))
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
         if (plan.usesCustomView) {
             val custom = buildRunningRemoteViews(startedAtMs, isBreak, plan)
@@ -1061,12 +1124,15 @@ class StudyTimerService : Service() {
         }
     }
 
-    private fun openAppPending(): PendingIntent {
-        val intent = Intent(this, MainActivity::class.java).apply {
+    /** Uygulamayi acan niyet; hem bildirim hem yuzen serit ayni yeri acar. */
+    private fun openAppIntent(): Intent =
+        Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+
+    private fun openAppPending(): PendingIntent {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getActivity(this, 0, intent, flags)
+        return PendingIntent.getActivity(this, 0, openAppIntent(), flags)
     }
 
     /** Uygulama önplandaysa Dart'ın hemen uzlaşması için (yalnız kendi paketimize)
@@ -1116,6 +1182,23 @@ class StudyTimerService : Service() {
         const val ACTION_DISCARD_PROJECTION =
             "com.manilmax.online_study_room.timer.DISCARD_PROJECTION"
         const val ACTION_END_BREAK = "com.manilmax.online_study_room.timer.END_BREAK"
+
+        /**
+         * Kullanici KOSAN sayac bildirimini kaydirip sildi.
+         *
+         * 🔴 Android 14'ten beri on plan hizmeti bildirimleri KULLANICI
+         * TARAFINDAN SILINEBILIR ve bunu engellemenin yolu yok; istisnalar
+         * (CallStyle, medya, cihaz yoneticisi) bir calisma sayacini
+         * kapsamiyor. Sahibin defalarca bildirdigi sikayet buydu ve
+         * "silinemez yapalim" diye cozulemez, cunku platform karari.
+         *
+         * Ama silinmenin BEDELI cozulebilir: silinen bildirimden sonra sayac
+         * GORUNMEDEN kosmaya devam ediyordu. Kullanici ne kadar calistigini
+         * goremiyor, durduracak dugmeyi bulamiyor ve cogu zaman sayacin
+         * durdugunu saniyor. Bu niyet o bosluga baglanir.
+         */
+        const val ACTION_NOTIFICATION_DISMISSED =
+            "com.manilmax.online_study_room.timer.NOTIFICATION_DISMISSED"
 
         const val EXTRA_STARTED_AT_MS = "startedAtMs"
         const val EXTRA_MODE = "mode"

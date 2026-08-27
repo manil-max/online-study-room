@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-764: yuzen sayac seridinin paleti.
+
+     🔴 Neden tema niteligi DEGIL de sabit hex: serit rastgele bir uygulamanin
+     ustunde durur. Altindaki zemini bilmiyoruz ve cihazin koyu/acik ayari
+     altindaki uygulamanin cizdigi rengi soylemiyor. Kontrast ancak ZEMINI DE
+     BIZ cizersek olculebilir olur.
+
+     Ayni ders bildirim panelinde iki kez ogrenildi: WP-205 ham beyaz yazdi,
+     acik golgede kayboldu; WP-753 tema niteligi yazdi, koyu golgede kayboldu.
+     Burada o sarkac hic baslamasin diye cift bastan sabit.
+
+     Tonlar uygulamanin "ember" kimligiyle ayni ailede. Olculen oranlar:
+       ink / fill              = 13.4:1
+       action_ink / action_fill = 8.19:1 (bildirim hapiyla ayni cift) -->
+<resources>
+    <!-- Seridin OPAK zemini. -->
+    <color name="timer_overlay_fill">#120E0A</color>
+    <!-- Sayac rakamlari. -->
+    <color name="timer_overlay_ink">#FFF3E6</color>
+    <!-- Durdur dugmesinin dolgusu ve uzerindeki simge. -->
+    <color name="timer_overlay_action_fill">#FF8A3D</color>
+    <color name="timer_overlay_action_ink">#120E0A</color>
+</resources>

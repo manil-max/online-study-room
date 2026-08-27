@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-764: ekranin ustunde yuzen sayac seridi.
+
+     🔴 BU BIR `RemoteViews` DEGILDIR ve fark buyuktur. Bildirim paneli baska
+     bir surecte (SystemUI) sisirildigi icin orada ConstraintLayout, ozel View,
+     `autoSizeTextType` ve animasyon KULLANILAMIYOR. Bu pencere BIZIM
+     surecimizde yasar: normal bir View agacidir, hicbir kisit yoktur.
+
+     Serit bilerek KUCUK dogar. Ekranin ustunde duran bir sey, ne kadar guzel
+     olursa olsun, yolda duruyorsa rahatsiz eder; kullanici onu suruklemek
+     zorunda kalmadan calismayabilmeli. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/timer_overlay_bg"
+    android:elevation="6dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="14dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
+
+    <Chronometer
+        android:id="@+id/overlay_timer_elapsed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="00:00"
+        android:textColor="@color/timer_overlay_ink"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Dokunma hedefi 44dp; serit kucuk olsa da dugme parmakla vurulabilir
+         olmali. Etiket yerine simge: serit dar, "Durdur" kelimesi genisligi
+         iki katina cikarirdi. -->
+    <ImageView
+        android:id="@+id/overlay_timer_stop"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/timer_overlay_stop_bg"
+        android:contentDescription="@string/action_stop"
+        android:padding="13dp"
+        android:src="@drawable/ic_overlay_stop" />
+</LinearLayout>

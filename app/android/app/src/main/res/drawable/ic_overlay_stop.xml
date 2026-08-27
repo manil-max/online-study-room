@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Yuvarlak koseli durdurma karesi.
+
+     🔴 WP-761'de bildirim hapindan SIVRI koseli bir kare kaldirilmisti; sahip
+     onu "rastgele leke" olarak okumustu. Buradaki fark: o kare kalin bir
+     "Durdur" YAZISININ yanindaydi ve gereksizdi. Burada simge TEK basina
+     dugmedir — serit dar, kelime sigmiyor — o yuzden taninmak zorunda:
+     koseler yuvarlatildi ve kendi dolu hapinin ortasinda duruyor. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/timer_overlay_action_ink"
+        android:pathData="M9,6 L15,6 A3,3 0 0 1 18,9 L18,15 A3,3 0 0 1 15,18 L9,18 A3,3 0 0 1 6,15 L6,9 A3,3 0 0 1 9,6 Z" />
+</vector>

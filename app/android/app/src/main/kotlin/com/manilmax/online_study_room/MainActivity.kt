@@ -5,10 +5,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.LocaleList
+import android.provider.Settings
 import androidx.annotation.RequiresApi
+import com.manilmax.online_study_room.overlay.TimerOverlay
 import com.manilmax.online_study_room.timer.StudyTimerService
 import com.manilmax.online_study_room.widgets.WidgetDeepLink
 import io.flutter.embedding.android.FlutterActivity
@@ -115,6 +118,26 @@ class MainActivity : FlutterActivity() {
                             StudyTimerService.ACTION_DISCARD_PROJECTION,
                         )
                         result.success(null)
+                    }
+                    // WP-764: yuzen serit izni.
+                    //
+                    // 🔴 Bu izin calisma-zamani penceresiyle ISTENEMEZ.
+                    // `SYSTEM_ALERT_WINDOW` bir "ozel" izindir: kullanici
+                    // Ayarlar'da elle acar. Bu yuzden iki ayri cagri var --
+                    // biri durumu SORAR, oteki kullaniciyi dogru ekrana
+                    // GOTURUR. Dart tarafi ikisini de gormeden dogru satiri
+                    // cizemez.
+                    "canDrawOverlays" -> result.success(TimerOverlay.isPermitted(this))
+                    "requestOverlayPermission" -> {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + packageName),
+                        )
+                        // Ekran bulunamazsa (bazi OEM derlemeleri) uygulama
+                        // cokmez; Dart `false` gorur ve kullaniciya elle
+                        // gitmesi gerektigini soyler.
+                        val opened = runCatching { startActivity(intent) }.isSuccess
+                        result.success(opened)
                     }
                     else -> result.notImplemented()
                 }

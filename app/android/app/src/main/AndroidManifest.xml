@@ -25,6 +25,19 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- Saat P1: pil optimizasyonu muafiyeti iste (OEM kill engeli) -->
+    <!-- WP-764: ekranin ustunde yuzen sayac seridi.
+
+         🔴 KAPALI DOGAR. Izin manifestte ilan edilir ama serit varsayilan
+         olarak KAPALIDIR ve yalniz Hakkinda > gizli gelistirici bolumunden
+         acilir. Ustelik bu izin calisma-zamani penceresiyle ISTENEMEZ:
+         kullanici Ayarlar'da elle acar. Yani izin ilan edilmis olsa bile,
+         kullanici iki ayri adimi bilerek atmadikca hicbir sey cizilmez.
+
+         Neden gerekli: alti tur boyunca "dinamik panel" bildirim yuzeyinden
+         istendi ve cikmadi. Sebep olculdu (WP-763): sistem terfiyi VERIYOR
+         ama OEM (One UI 8) ortada hicbir sey CIZMIYOR. Bagimliligi kaldiran
+         tek yol kendi penceremizi acmak. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- WP-559: per-app locale. `localeConfig` olmadan Android 13+
          `LocaleManager.setApplicationLocales` cagrisini yok sayar; native
