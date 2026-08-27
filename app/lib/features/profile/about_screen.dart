@@ -54,10 +54,14 @@ class AboutScreen extends ConsumerStatefulWidget {
   ConsumerState<AboutScreen> createState() => _AboutScreenState();
 }
 
-class _AboutScreenState extends ConsumerState<AboutScreen> {
-  bool _checking = false;
-  UpdateCheckOutcome? _updateOutcome;
-
+class _AboutScreenState extends ConsumerState<AboutScreen> {
+
+  bool _checking = false;
+
+  UpdateCheckOutcome? _updateOutcome;
+
+
+
   @override
   void initState() {
     super.initState();
