@@ -104,7 +104,20 @@ internal object TimerPromotion {
      * etmeyen bir cihazda kullanici her Baslat'ta once bozuk karti gorur.
      * Bir kez olculur, yazilir, o yola bir daha girilmez.
      */
-    const val KEY_VERDICT = "timer_promotion_verdict_v1"
+    /**
+     * 🔴 WP-760: ad `flutter.` onekiyle yazilir ve bu KASITLIDIR.
+     *
+     * `shared_preferences` Android'de her anahtari `flutter.` ile onekler; bu
+     * servis zaten ayni dosyayi (`FlutterSharedPreferences`) kullaniyor. Onek
+     * sayesinde olcum sonucu Dart'tan `timer_promotion_verdict_v1` adiyla
+     * OKUNABILIR hale gelir.
+     *
+     * Neden onemli: bu olcum alti tur boyunca yapildi ama sonucunu **kimse
+     * goremiyordu** -- ne sahip, ne biz. "Cihazda ne oldu?" sorusu her turda
+     * tahminle cevaplandi. Anahtar artik Hakkinda ekraninda gorunur; sahip
+     * bakar, okur, doner dongu biter.
+     */
+    const val KEY_VERDICT = "flutter.timer_promotion_verdict_v1"
 
     /** Sistemin terfi karari. */
     enum class Verdict {

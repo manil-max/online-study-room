@@ -31,35 +31,69 @@ const kTimerPanelExpandedKey = 'timer_panel_expanded';
 /// Native tarafın gördüğü tam anahtar (`shared_preferences` öneki dahil).
 const kTimerPanelExpandedNativeKey = 'flutter.$kTimerPanelExpandedKey';
 
-/// Sayaç bildiriminin sunum yüzeyi tercihi.
+/// Sayaç bildiriminin sunum yüzeyi tercihi — **üç durumlu**.
 ///
-/// `true`  = v43 zengin özel panel (VARSAYILAN — 26sp kalın sayaç + gömülü
-///           Başlat/Durdur düğmesi; sahip bu görünümü v43'te kabul etti).
-/// `false` = Android 16 Live Update yolu (deneysel).
+/// 🔴 WP-760: burası iki durumluydu ve o yüzden bir tuzak taşıyordu.
+/// `build()` `?? true` diyordu, yani "anahtar yazılmamış" ile "kullanıcı zengin
+/// panel istedi" aynı sayılıyordu. Native taraf da aynı varsayımla okuyunca
+/// sonuç şu oluyordu: anahtarı bir kez açıp kapatan kullanıcı diske `true`
+/// yazdırıyor ve **dinamik paneli kalıcı olarak kapatıyordu** — üstelik geri
+/// dönüşü yok, çünkü "otomatik"i ifade eden bir değer kalmamıştı.
 ///
-/// 🔴 `false` yazmak Live Update'i **garanti etmez**. Native taraf ayrıca
-/// sistemin terfiyi gerçekten verip vermediğine bakar
-/// (`NotificationManager.canPostPromotedNotifications()` +
-/// `Notification.hasPromotableCharacteristics()`); vermiyorsa zengin panele
-/// düşer. Kullanıcıya sunulan metin bu yüzden "yok sayılabilir" der.
-class TimerPanelPreferenceNotifier extends Notifier<bool> {
-  @override
-  bool build() =>
-      ref.watch(sharedPreferencesProvider).getBool(kTimerPanelExpandedKey) ??
-      true;
+/// Üç durum artık diskte de ayrıdır:
+/// - anahtar **yok**  → [TimerPanelChoice.auto]: cihaz terfiyi veriyorsa Live
+///   Update, vermiyorsa zengin panel. Varsayılan budur.
+/// - `true`           → [TimerPanelChoice.richPanel]: terfi eden cihazda bile
+///   v43 zengin paneli zorla.
+/// - `false`          → [TimerPanelChoice.liveUpdate]: terfiyi zorla iste.
+///
+/// 🔴 Zorlamak **garanti etmez**. Sistem terfiyi vermezse native taraf yine
+/// zengin panele düşer; sonucu [timerPromotionVerdictProvider] söyler.
+enum TimerPanelChoice {
+  /// Kullanıcı seçmedi; cihaz ne yapabiliyorsa o. (Anahtar diskte YOK.)
+  auto,
 
-  /// Kullanıcının gördüğü anahtar "Live Update kullan" yönündedir; diskteki
-  /// anahtar ise "zengin paneli kullan" yönünde. Çeviri tek yerde yapılır.
-  Future<void> setUseLiveUpdate(bool useLiveUpdate) async {
-    await ref
-        .read(sharedPreferencesProvider)
-        .setBool(kTimerPanelExpandedKey, !useLiveUpdate);
-    state = !useLiveUpdate;
+  /// v43 zengin özel panel zorlanır. (Diskte `true`.)
+  richPanel,
+
+  /// Android 16 Live Update yolu zorlanır. (Diskte `false`.)
+  liveUpdate,
+}
+
+/// Diskteki ham değeri seçime çevirir. **Saf.**
+///
+/// `null` (anahtar yok) [TimerPanelChoice.auto] demektir — "zengin panel"
+/// DEĞİL. Bu ayrımı kaybetmek WP-760'ın kök nedeniydi.
+TimerPanelChoice timerPanelChoiceFrom(bool? stored) => switch (stored) {
+  null => TimerPanelChoice.auto,
+  true => TimerPanelChoice.richPanel,
+  false => TimerPanelChoice.liveUpdate,
+};
+
+class TimerPanelPreferenceNotifier extends Notifier<TimerPanelChoice> {
+  @override
+  TimerPanelChoice build() => timerPanelChoiceFrom(
+    ref.watch(sharedPreferencesProvider).getBool(kTimerPanelExpandedKey),
+  );
+
+  Future<void> choose(TimerPanelChoice choice) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    switch (choice) {
+      // 🔴 `auto` anahtarı SİLER, `false` yazmaz. Bir değer yazmak üçüncü
+      // durumu yok eder ve tuzağı geri getirir.
+      case TimerPanelChoice.auto:
+        await prefs.remove(kTimerPanelExpandedKey);
+      case TimerPanelChoice.richPanel:
+        await prefs.setBool(kTimerPanelExpandedKey, true);
+      case TimerPanelChoice.liveUpdate:
+        await prefs.setBool(kTimerPanelExpandedKey, false);
+    }
+    state = choice;
   }
 }
 
-/// `true` = zengin panel, `false` = Live Update.
-final timerPanelExpandedProvider =
-    NotifierProvider<TimerPanelPreferenceNotifier, bool>(
+/// Kullanıcının sunum yüzeyi seçimi; varsayılan [TimerPanelChoice.auto].
+final timerPanelChoiceProvider =
+    NotifierProvider<TimerPanelPreferenceNotifier, TimerPanelChoice>(
       TimerPanelPreferenceNotifier.new,
     );

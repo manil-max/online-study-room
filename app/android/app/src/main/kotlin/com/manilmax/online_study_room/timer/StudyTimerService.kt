@@ -10,10 +10,13 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.SystemClock
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.os.HandlerCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
@@ -58,9 +61,69 @@ import com.manilmax.online_study_room.widgets.rememberedSubjectId
  */
 internal const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
 
-/** Valf: `false` YAZILMISSA Live Update, aksi halde (varsayilan) v43 zengin panel. */
-internal fun useV43CustomPanel(prefs: SharedPreferences): Boolean =
-    prefs.getBoolean(KEY_PANEL_EXPANDED, true)
+/**
+ * Kullanicinin ACIK tercihi; **yazilmamissa `null` = OTOMATIK**.
+ *
+ * 🔴 WP-760: burasi eskiden `getBoolean(KEY, true)` idi, yani "yazilmamis"
+ * ile "kullanici zengin panel istedi" ayni sey sayiliyordu. Sonucu olculdu ve
+ * agirdi: bkz. [useRichPanel]. Uc durum uc ayri seydir ve ayri kalmalidir.
+ */
+/**
+ * Yoklama sonrasi yeniden gonderim karari. **Saf.**
+ *
+ * Ayrintili gerekce cagri yerindedir; ozet: RED olmali, sayac hala kosmali ve
+ * kosan sey AYNI kosu olmali.
+ */
+internal fun shouldRepostAfterProbe(
+    verdict: TimerPromotion.Verdict?,
+    isRunning: Boolean,
+    probedStartedAtMs: Long,
+    currentStartedAtMs: Long,
+): Boolean = verdict == TimerPromotion.Verdict.DENIED &&
+    isRunning &&
+    probedStartedAtMs == currentStartedAtMs
+
+/** Yoklamanin sistem gonderimini beklemesi gereken sure. */
+internal const val PROMOTION_PROBE_DELAY_MS = 400L
+
+internal fun panelOverride(prefs: SharedPreferences): Boolean? =
+    if (prefs.contains(KEY_PANEL_EXPANDED)) {
+        prefs.getBoolean(KEY_PANEL_EXPANDED, true)
+    } else {
+        null
+    }
+
+/**
+ * Sunum yolu karari. **Saf** — cihazsiz JVM'de olculur.
+ *
+ * 🔴 WP-760 KOK NEDEN. Bu karar v72'ye kadar soyle yaziliyordu:
+ *
+ *     richPanel = useV43CustomPanel() || !mayRequestPromotion(...)
+ *     useV43CustomPanel = prefs.getBoolean(KEY_PANEL_EXPANDED, true)   // <- true
+ *
+ * Sol taraf her zaman `true` oldugu icin `||` kisa devre yapiyordu: sag taraf
+ * -- yani sistemin terfiyi verip vermedigi -- **hic sorulmuyordu**. Zincirin
+ * devami `requestPromotedOngoing = !usesCustomView`, yani uygulama
+ * `setRequestPromotedOngoing(true)`i HICBIR cihazda HIC cagirmiyordu.
+ *
+ * Bunun anlami: terfiyi destekleyen bir telefonda bile dinamik panel
+ * cikamazdi. Terfi kapisi (`TimerPromotion`) eksiksiz yazilmis ama devreye
+ * hic girmemisti -- bu deponun tekrar eden kusuru: "bitmis arka uc,
+ * baglanmamis on uc". Alti tur boyunca aranan sey buydu.
+ *
+ * Yeni kural, oncelik SIRASI degismis halidir:
+ *  - Kullanici acik tercih yazmissa **o kazanir** (iki yonde de).
+ *  - Yazmamissa **otomatik**: sistem terfi ediyorsa terfi, etmiyorsa zengin panel.
+ *
+ * Yani varsayilan artik "her zaman zengin panel" degil, "cihaz ne yapabiliyorsa
+ * o". Terfi etmeyen cihazda gorunen sey degismez; terfi eden cihazda ilk kez
+ * dinamik panel cikar.
+ *
+ * @param override kullanicinin acik tercihi; `null` = yazmamis (otomatik)
+ * @param mayPromote sistem terfiyi veriyor mu ([TimerPromotion.mayRequestPromotion])
+ */
+internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
+    override ?: !mayPromote
 
 /**
  * WP-753: durum çubuğu / Live Update çipi ikonu.
@@ -448,10 +511,21 @@ class StudyTimerService : Service() {
             NOTIFICATION_ID,
             buildRunningNotification(startedAtMs),
         )
-        // Gonderimden SONRA olc: sistem terfiyi gercekten verdi mi? Onkosullar
-        // "olur" dese de vermeyebiliyor; tek gercek kanit gonderilen bildirimin
-        // kendi bayragidir. Sonuc kalici yazilir, sonraki Baslat'ta okunur.
-        TimerPromotion.recordOutcome(prefs(), notificationManager(), NOTIFICATION_ID)
+        // 🔴 WP-760 YARIS: olcumu BURADA yapmak ERKENDIR.
+        //
+        // `NotificationManager.notify()` bildirimi sisteme KUYRUKLAR;
+        // `NotificationManagerService` gercek gonderimi kendi handler'inda
+        // yapar. `activeNotifications` ise gonderilmis listeyi okur. Yani
+        // notify'in hemen ardindan bakinca bildirim cogu zaman HENUZ ORADA
+        // DEGILDIR: `postedFlags` null doner, `observedVerdict` "olcum yok"
+        // der (dogru olarak -- gorememek red degildir) ve verdict HIC
+        // yazilmaz. Sonuc: terfi etmeyen cihaz her Baslat'ta yeniden denenir
+        // ve kullanici surekli duz kartta kalir.
+        //
+        // WP-759 bu cagriyi buraya koymustu ve kimse fark etmedi, cunku o
+        // turda `richPanel` her zaman `true` idi: olcum zaten hicbir seyi
+        // degistirmiyordu. Kablo takilinca yaris gorunur oldu.
+        schedulePromotionProbe(startedAtMs)
         // Deterministik sıra: store → UI yüzeyler → Dart broadcast.
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -494,6 +568,10 @@ class StudyTimerService : Service() {
         recordInterval: Boolean,
         commandOrigin: String = "native_notification",
     ) {
+        // Bekleyen terfi yoklamasi iptal edilir. Saf karar zaten
+        // "durmussa gonderme" der; bu satir isin bosuna kuyrukta
+        // beklemesini de onler.
+        mainHandler.removeCallbacksAndMessages(PROMOTION_PROBE_TOKEN)
         // ÖNEMLİ: 5 sn içinde startForeground (Android 12+ FGS borcu).
         startForegroundCompat(buildIdleNotification())
 
@@ -624,6 +702,51 @@ class StudyTimerService : Service() {
      * - API 29–33: DATA_SYNC (önceki yalnız-specialUse manifest ile uyumsuzdu → çökme)
      * - API ≤28: tip parametresiz
      */
+    /**
+     * Gecikmeli terfi yoklamasi.
+     *
+     * Yalniz **hic olculmemis** cihazda kosar; olculmus cihazda tek fazladan
+     * is bile yapilmaz. Sonuc RED ise dogru kart hemen yeniden gonderilir,
+     * boylece kullanici o oturumu yanlis kartla gecirmez.
+     */
+    /**
+     * Yoklama icin tek handler. Servis komut guduludur ve baska hicbir yerde
+     * zamanlayici YOKTUR; bu handler yalniz terfi yoklamasi icin vardir.
+     */
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    private fun schedulePromotionProbe(startedAtMs: Long) {
+        if (TimerPromotion.readVerdict(prefs()) != null) return
+        mainHandler.removeCallbacksAndMessages(PROMOTION_PROBE_TOKEN)
+        HandlerCompat.postDelayed(
+            mainHandler,
+            { runPromotionProbe(startedAtMs) },
+            PROMOTION_PROBE_TOKEN,
+            PROMOTION_PROBE_DELAY_MS,
+        )
+    }
+
+    private fun runPromotionProbe(startedAtMs: Long) {
+        val p = prefs()
+        val verdict =
+            TimerPromotion.recordOutcome(p, notificationManager(), NOTIFICATION_ID)
+        if (!shouldRepostAfterProbe(
+                verdict = verdict,
+                isRunning = TimerStateStore.isRunning(p),
+                probedStartedAtMs = startedAtMs,
+                currentStartedAtMs = TimerStateStore.startedAtMs(p),
+            )
+        ) {
+            return
+        }
+        runCatching {
+            notificationManager().notify(
+                NOTIFICATION_ID,
+                buildRunningNotification(startedAtMs),
+            )
+        }
+    }
+
     private fun startForegroundCompat(notification: Notification) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // dataSync Android 15'te toplam 6 saat ile sınırlı. Kullanıcı açıkça
@@ -664,10 +787,12 @@ class StudyTimerService : Service() {
             // Android 16): API yarisi acik, cizen arayuz imajda yok -- uygulama
             // terfi istiyor, sistem FLAG_PROMOTED_ONGOING yazmiyor ve kullanici
             // dugmesiz gri bir satirda kaliyordu. Sahibin S23'te gordugu buydu.
-            richPanel = useV43CustomPanel() ||
-                !TimerPromotion.mayRequestPromotion(
+            richPanel = useRichPanel(
+                override = panelOverride(p),
+                mayPromote = TimerPromotion.mayRequestPromotion(
                     TimerPromotion.currentVerdict(p, notificationManager()),
                 ),
+            ),
             isBreak = isBreak,
             targetSeconds = TimerStateStore
                 .readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
@@ -759,17 +884,6 @@ class StudyTimerService : Service() {
             )
             .build()
     }
-
-    /**
-     * WP-753 geri dönüş valfi: `true` = v43 zengin özel panel, yazılmamış/`false`
-     * = Live Update yolu. Varsayılan artık **Live Update**; sahip beğenmezse tek
-     * bayrakla eski panele dönülür. (Ayarlar arayüzü ayrı WP — Dart l10n
-     * katalogları bu turda başka bir lane'de.)
-     *
-     * Karar dosya düzeyindeki saf [useV43CustomPanel] içindedir; cihazsız JVM
-     * testi anahtarın yokluğunu da ölçebilsin diye.
-     */
-    private fun useV43CustomPanel(): Boolean = useV43CustomPanel(prefs())
 
     /**
      * Zengin panelin `RemoteViews`i.
@@ -925,6 +1039,9 @@ class StudyTimerService : Service() {
         const val BROADCAST_STATE_CHANGED = "com.manilmax.online_study_room.timer.STATE_CHANGED"
 
         private const val CHANNEL_ID = "study_timer_live_fg"
+        /** Gecikmeli yoklamayi iptal edilebilir kilan isaret. */
+        private val PROMOTION_PROBE_TOKEN = Any()
+
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
 

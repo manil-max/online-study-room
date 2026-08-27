@@ -307,3 +307,30 @@ bastan dogru, test hic beklemeden gecer ve olcmek istedigi seyi olcmez. Ama
 onlar da ters yonde kirilgan: yavas makinede istenmeyen olay gerceklesmeden
 20 ms dolabilir ve test BOS YERE yesil gecer. Bu bir kirmizi degil, sessiz bir
 kor nokta.
+
+---
+
+## WP-760 artigi: `_refreshPromotionVerdict` OLCULMEDI (2026-08-27)
+
+**Durum:** kod dogru sanilyor, KANIT YOK. Yesil sanilmasin.
+
+Terfi kararini (`timer_promotion_verdict_v1`) **native yazar**. Dart'in
+`SharedPreferences` ornegi `getInstance()` anindaki bir anlik goruntudur:
+sayac bu oturumda calisip olcum diske yazilsa bile bellekteki kopya bayat
+kalir. `about_screen.dart` bu yuzden acilirken `prefs.reload()` cagirip
+saglayiciyi gecersiz kiliyor.
+
+**Neden olculemedi:** `SharedPreferences.setMockInitialValues` oturum
+ORTASINDA yapilan bir native yazimi taklit edemiyor. Mock magaza test basinda
+kuruluyor; `reload()` ayni degeri geri getiriyor. Yani `reload()` cagrisini
+silsem de testler YESIL kalir -- sabotaj kontrolu bu satirda calismiyor.
+
+**Bedeli somut:** reload dususe, sahip sayaci baslatip Hakkinda'ya donduğunde
+sonsuza kadar "henuz olculmedi" gorur. Yani teshis ekrani kendi teshisini
+kaybeder ve alti turdur kapatmaya calistigimiz doner dongu geri gelir.
+
+**Sonraki denemeye giren yol:** mock magazayi ortada degistirebilen bir
+sarmalayici (ornegin `SharedPreferencesStorePlatform.instance`i test icinde
+degistirip `reload()`in GERCEKTEN yeni degeri getirdigini olcmek). Once
+`reload()` cagrisini silip testin KIRMIZI dustugunu gormek sart; dusmuyorsa
+yazilan sey nobetci degildir.

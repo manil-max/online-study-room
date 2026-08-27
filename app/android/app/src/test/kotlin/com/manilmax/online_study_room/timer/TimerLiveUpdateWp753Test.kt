@@ -5,6 +5,7 @@ import com.manilmax.online_study_room.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -142,27 +143,191 @@ class TimerLiveUpdateWp753Test {
     }
 
     /**
-     * Geri dönüş valfi gerçek bir valf olmalı.
+     * Valf UC durumludur ve ucu de ayri anlam tasir.
      *
-     * 🔴 Bugüne kadar değildi: varsayılan `true`ydu ve `timer_panel_expanded`
-     * anahtarını yazan tek bir satır bile repoda yoktu, yani standart dal
-     * ULAŞILAMAZDI (`docs/analiz/WP-751-dinamik-panel-kok-neden.md §8`).
+     * 🔴 IDDIA YON DEGISTIRDI (WP-760) -- zayiflatilmadi, TERSINE CEVRILDI.
+     *
+     * Eski iddia "anahtar yokken v43 zengin panel kosmali" idi ve dogru
+     * gorunuyordu: v71'de Live Update varsayilan yapilmis, cihazda hic
+     * dogrulanmamis, sahibin S23'unde bildirim "00:00" gosterip Start/Stop'u
+     * hic cizmemisti. Varsayilani geri almak o kanamayi durdurdu.
+     *
+     * Ama olculdu ki ilac hastaligi gecmisti: `richPanel` cagri yerinde
+     *
+     *     useV43CustomPanel() || !mayRequestPromotion(...)
+     *
+     * seklinde yaziliyordu. Sol taraf her zaman `true` oldugundan `||` kisa
+     * devre yapiyor, sistemin terfiyi verip vermedigi **hic sorulmuyordu**.
+     * Zincirin devami `requestPromotedOngoing = !usesCustomView`, yani
+     * `setRequestPromotedOngoing(true)` HICBIR cihazda HIC cagrilmiyordu.
+     * Terfiyi destekleyen bir telefon bile dinamik paneli gosteremezdi.
+     *
+     * Yani "anahtar yokken zengin panel" bir varsayilan degil, TERFININ
+     * TAMAMEN KAPATILMASIYDI. Iki soru ayristirildi:
+     *   - Kullanici acik tercih yazdi mi?            -> [panelOverride]
+     *   - Yazmadiysa cihaz ne yapabiliyor?           -> [useRichPanel]
+     *
+     * Terfi etmeyen cihazda gorunen sey ayni kalir; degisen tek sey, terfi
+     * EDEN cihazin artik sorulmasidir.
      */
     @Test
-    fun missing_flag_means_live_update_and_true_means_the_old_panel() {
+    fun panel_override_distinguishes_unset_from_explicit_choice() {
         val fresh = Wp753Prefs()
-        // 🔴 v71 saha geri bildirimi: varsayilan v43 zengin panele DONDU.
-        // Live Update cihazda dogrulanmadan varsayilan yapilmisti; S23'te
-        // bildirim "00:00" gosterip Start/Stop dugmesini hic cizmedi.
-        assertTrue("Anahtar yokken v43 zengin panel kosmali", useV43CustomPanel(fresh))
+        assertNull("Anahtar yazilmamissa tercih YOKTUR (otomatik)", panelOverride(fresh))
 
         val optedOut = Wp753Prefs()
         optedOut.edit().putBoolean(KEY_PANEL_EXPANDED, true).commit()
-        assertTrue("true yazilinca eski zengin panel geri gelmeli", useV43CustomPanel(optedOut))
+        assertEquals("true = kullanici zengin paneli acikca istedi", true, panelOverride(optedOut))
 
         val optedIn = Wp753Prefs()
         optedIn.edit().putBoolean(KEY_PANEL_EXPANDED, false).commit()
-        assertFalse(useV43CustomPanel(optedIn))
+        assertEquals("false = kullanici Live Update'i acikca istedi", false, panelOverride(optedIn))
+    }
+
+    /**
+     * Karar tablosu. Sozlesme tek cumle: **acik tercih varsa o kazanir, yoksa
+     * cihaz ne yapabiliyorsa o.**
+     */
+    @Test
+    fun rich_panel_decision_asks_the_system_when_the_user_has_not_chosen() {
+        // Tercih yok -> cihaz karar verir. Kok neden tam olarak burasiydi:
+        // eski kod bu satirda KOSULSUZ `true` donuyordu.
+        assertFalse(
+            "Tercih yokken terfi VEREN cihazda dinamik panel kosmali",
+            useRichPanel(override = null, mayPromote = true),
+        )
+        assertTrue(
+            "Tercih yokken terfi VERMEYEN cihazda zengin panel kosmali",
+            useRichPanel(override = null, mayPromote = false),
+        )
+
+        // Acik tercih her iki yonde de sistemi EZER.
+        assertTrue(
+            "Kullanici zengin panel dediyse terfi eden cihazda bile zengin panel",
+            useRichPanel(override = true, mayPromote = true),
+        )
+        assertFalse(
+            "Kullanici Live Update dediyse terfi vermeyen cihazda bile denenir",
+            useRichPanel(override = false, mayPromote = false),
+        )
+    }
+
+    /**
+     * 🔴 ASIL NOBETCI: iki parcanin BILESIMI.
+     *
+     * Yukaridaki iki test tek baslarina kusuru KACIRIR ve bu bilerek yaziliyor:
+     * [useRichPanel] saf tabloyla dogru cevabi verir, [panelOverride] uc durumu
+     * dogru ayirir -- ama v72'ye kadar kusur ikisinde de DEGILDI. Kusur
+     * ikisinin nasil BAGLANDIGINDAYDI: taze prefs "tercih yok" demeli iken
+     * "zengin panel istiyorum" diyordu ve terfi sorusu hic sorulmuyordu.
+     *
+     * Bu deponun tekrar eden kusuru tam olarak budur: parcalar yesil, dikis
+     * yok. Bu yuzden iddia parcalari degil, TAZE BIR KULLANICININ ILK
+     * BASLAT'INI olcer.
+     */
+    @Test
+    fun a_fresh_install_on_a_promoting_device_actually_gets_the_dynamic_panel() {
+        val fresh = Wp753Prefs()
+
+        assertFalse(
+            "Hic ayar yapmamis kullanici + terfi VEREN cihaz = dinamik panel. " +
+                "Alti tur boyunca aranan davranis budur.",
+            useRichPanel(panelOverride(fresh), mayPromote = true),
+        )
+
+        // Ayni taze kurulum, terfi VERMEYEN cihazda: gorunen sey degismez.
+        assertTrue(
+            "Terfi vermeyen cihazda taze kurulum hala zengin paneli gormeli",
+            useRichPanel(panelOverride(fresh), mayPromote = false),
+        )
+    }
+
+    /**
+     * Karsilikli dislama zincirinin SONU: terfi yolunda ozel gorunum olamaz.
+     *
+     * `richPanel` yanlis hesaplanirsa plan `CUSTOM_PANEL` uretir ve
+     * `requestPromotedOngoing` sessizce `false` olur -- yani terfi
+     * ISTENMEDEN kaybedilir. Kusurun gorunur tek izi buydu.
+     */
+    @Test
+    fun the_decision_actually_reaches_the_promotion_request() {
+        val fresh = Wp753Prefs()
+        val plan = runningTimerNotificationPlan(
+            richPanel = useRichPanel(panelOverride(fresh), mayPromote = true),
+            isBreak = false,
+            targetSeconds = null,
+            startedAtMs = startedAt,
+            nowMs = startedAt,
+        )
+        assertTrue(
+            "Taze kurulum + terfi veren cihaz `setRequestPromotedOngoing(true)` cagirmali",
+            plan.requestPromotedOngoing,
+        )
+    }
+
+    /**
+     * Gecikmeli yoklamanin geri cagrisi UC kosulu birden aramali.
+     *
+     * 🔴 Yoklama neden gecikmeli: `notify()` bildirimi sisteme KUYRUKLAR,
+     * `activeNotifications` ise GONDERILMIS listeyi okur. Hemen bakinca
+     * bildirim cogu zaman henuz orada degildir; `postedFlags` null doner ve
+     * verdict HIC yazilmaz. Terfi etmeyen cihaz o zaman her Baslat'ta yeniden
+     * denenir ve kullanici surekli duz kartta kalir.
+     *
+     * Gecikme kendi riskini getirir: 400 ms icinde Durdur'a ya da
+     * Durdur+Baslat'a basilabilir. Geri cagri kor davranirsa durmus sayaci
+     * dirilten ya da sayaci geriye atlatan bir kart gonderir.
+     */
+    @Test
+    fun the_delayed_probe_never_reposts_over_a_stopped_or_restarted_run() {
+        val started = 1_700_000_000_000L
+
+        assertTrue(
+            "Kosan ayni kosuda RED olcumu dogru karti yeniden gondermeli",
+            shouldRepostAfterProbe(
+                verdict = TimerPromotion.Verdict.DENIED,
+                isRunning = true,
+                probedStartedAtMs = started,
+                currentStartedAtMs = started,
+            ),
+        )
+
+        assertFalse(
+            "Olculemedi RED DEGILDIR; kart degistirilmez, sonra yeniden denenir",
+            shouldRepostAfterProbe(
+                verdict = null,
+                isRunning = true,
+                probedStartedAtMs = started,
+                currentStartedAtMs = started,
+            ),
+        )
+        assertFalse(
+            "Terfi VERILDIYSE duz kart dogrudur, uzerine yazilmaz",
+            shouldRepostAfterProbe(
+                verdict = TimerPromotion.Verdict.GRANTED,
+                isRunning = true,
+                probedStartedAtMs = started,
+                currentStartedAtMs = started,
+            ),
+        )
+        assertFalse(
+            "Sayac gecikme icinde DURDURULDUYSA kosan kart gonderilmez",
+            shouldRepostAfterProbe(
+                verdict = TimerPromotion.Verdict.DENIED,
+                isRunning = false,
+                probedStartedAtMs = started,
+                currentStartedAtMs = 0L,
+            ),
+        )
+        assertFalse(
+            "Gecikme icinde YENIDEN baslatildiysa eski baslangic geri yazilmaz",
+            shouldRepostAfterProbe(
+                verdict = TimerPromotion.Verdict.DENIED,
+                isRunning = true,
+                probedStartedAtMs = started,
+                currentStartedAtMs = started + 5_000L,
+            ),
+        )
     }
 
     /**

@@ -326,7 +326,7 @@ void main() {
   //
   // Test "kod var mi"yi degil "dokununca DISKE ne yazildi"yi olcer: native
   // taraf yalniz diski okur.
-  testWidgets('Live Update anahtari native tarafin okudugu degeri yazar', (
+  testWidgets('panel secimi native tarafin okudugu degeri yazar', (
     tester,
   ) async {
     final prefs = await pumpAbout(
@@ -334,27 +334,38 @@ void main() {
       initialPrefs: const {kDeveloperModeKey: true},
     );
 
-    // Varsayilan: anahtar hic yazilmamis -> v43 zengin panel.
+    // Varsayilan: anahtar hic yazilmamis = OTOMATIK.
     expect(prefs.getBool(kTimerPanelExpandedKey), isNull);
 
-    final toggle = find.byKey(const Key('developer-live-update-panel'));
-    expect(toggle, findsOneWidget);
-    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    final strip = find.byKey(const Key('developer-panel-choice'));
+    expect(strip, findsOneWidget);
+    await tester.ensureVisible(strip);
+    expect(
+      tester.widget<SegmentedButton<TimerPanelChoice>>(strip).selected,
+      {TimerPanelChoice.auto},
+    );
 
-    await tester.ensureVisible(toggle);
-    await tester.tap(toggle);
+    final l10n = await AppLocalizations.delegate.load(const Locale('tr'));
+
+    // 🔴 Live Update = diskte `false`. Ters yazilirsa secim kullaniciya "acik"
+    // gorunur ama native taraf zengin paneli cizmeye devam eder.
+    await tester.tap(find.text(l10n.devPanelChoiceLiveUpdate));
     await tester.pumpAndSettle();
-
-    // 🔴 Live Update ACIK = diskte `false`. Ters yazilirsa anahtar kullaniciya
-    // "acik" gorunur ama native taraf zengin paneli cizmeye devam eder --
-    // yani anahtar yine yalan soyler.
     expect(prefs.getBool(kTimerPanelExpandedKey), isFalse);
-    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
 
-    await tester.tap(toggle);
+    await tester.tap(find.text(l10n.devPanelChoiceRichPanel));
     await tester.pumpAndSettle();
     expect(prefs.getBool(kTimerPanelExpandedKey), isTrue);
-    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+
+    // 🔴 IDDIA YON DEGISTIRDI (WP-760). Eskiden bu satir "kapatinca `true`
+    // yazilir" diyordu ve o davranis bir TUZAKTI: `true` native tarafta
+    // "zengin paneli ZORLA" demektir, yani secimi bir kez acip kapatan
+    // kullanici dinamik paneli KALICI kapatiyordu. Ustelik geri donus yoktu --
+    // iki durumlu anahtarda "otomatik"i ifade eden bir deger kalmiyordu.
+    // Ucuncu durum artik var ve degerin YOKLUGU ile ifade edilir.
+    await tester.tap(find.text(l10n.devPanelChoiceAuto));
+    await tester.pumpAndSettle();
+    expect(prefs.containsKey(kTimerPanelExpandedKey), isFalse);
   });
 
   group('DeveloperGateCounter', () {

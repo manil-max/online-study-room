@@ -324,6 +324,79 @@ void main() {
     expect(service, isNot(contains('EXTRA_TIMER_PRESENTATION')));
   });
 
+  test('WP-760: terfi karari GERCEKTEN soruluyor ve sonucu okunabiliyor', () {
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+    final capability = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'TimerPromotionCapability.kt',
+    ).readAsStringSync();
+
+    // 🔴 Yorumlar once atilir: bu turda yazilan aciklamalar kok nedeni
+    // ANLATMAK icin eski ifadeyi kelimesi kelimesine aliyor. Kusurun
+    // anlatimi kusurun kendisi degildir.
+    String code(String source) => source
+        .split('\n')
+        .where((line) {
+          final s = line.trimLeft();
+          return !s.startsWith('//') && !s.startsWith('*') && !s.startsWith('/*');
+        })
+        .join('\n');
+
+    final serviceCode = code(service);
+
+    // KOK NEDEN (v72'ye kadar): sol taraf her zaman `true` oldugundan `||`
+    // kisa devre yapiyor, sistemin terfiyi verip vermedigi HIC sorulmuyordu.
+    // Zincirin devami `requestPromotedOngoing = !usesCustomView` oldugu icin
+    // `setRequestPromotedOngoing(true)` hicbir cihazda hic cagrilmadi.
+    expect(
+      serviceCode,
+      isNot(contains('useV43CustomPanel()')),
+      reason:
+          'Kosulsuz `true` donen valf geri geldi: terfi sorusu yine hic '
+          'sorulmaz ve dinamik panel destekleyen cihazda bile cikmaz.',
+    );
+    expect(
+      serviceCode,
+      contains('richPanel = useRichPanel('),
+      reason: 'Sunum karari saf `useRichPanel` uzerinden verilmeli.',
+    );
+    expect(serviceCode, contains('override = panelOverride(p)'));
+
+    // Yoklama kendini duzeltmeli: RED olcumunden sonra dogru kart hemen
+    // yeniden gonderilir, yoksa kullanici o oturumun TAMAMINI yanlis kartla
+    // gecirir (kalici karar ancak bir sonraki Baslat'ta ise yarardi).
+    // 🔴 Olcum GECIKMELI olmali. `notify()` bildirimi KUYRUKLAR;
+    // `activeNotifications` gonderilmis listeyi okur. Senkron okuma cogu
+    // zaman bildirimi bulamaz, verdict hic yazilmaz ve terfi etmeyen cihaz
+    // her Baslat'ta duz kartta kalir.
+    expect(
+      serviceCode,
+      contains('schedulePromotionProbe(startedAtMs)'),
+      reason: 'Senkron olcum geri geldi: yoklama bildirimi bulamadan biter.',
+    );
+    expect(
+      serviceCode,
+      contains('TimerPromotion.Verdict.DENIED'),
+      reason:
+          'Olcum sonucu okunmuyorsa `recordOutcome` yalniz diske yazar; '
+          'ekrandaki kart bu oturum boyunca yanlis kalir.',
+    );
+
+    // Sonucun Dart tarafindan OKUNABILIR olmasi sozlesmenin parcasi:
+    // `shared_preferences` yalniz `flutter.` onekli anahtarlari gorur.
+    // Onek dusersen olcum yine yapilir ama kimse goremez -- alti tur boyunca
+    // yasanan tam olarak buydu.
+    expect(
+      code(capability),
+      contains('KEY_VERDICT = "flutter.timer_promotion_verdict_v1"'),
+      reason:
+          'Onek kalkarsa teshis ekrani sonsuza kadar "henuz olculmedi" der.',
+    );
+  });
+
   test('WP-558: widget gereksiz uyandirmaz, boot sonrasi tazelenir', () {
     final boot = File(
       'android/app/src/main/kotlin/com/manilmax/online_study_room/'

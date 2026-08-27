@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_build_manifest.dart';
 import '../../core/config/build_identity_card.dart';
 import '../../core/config/distribution_channel.dart';
+import '../../core/prefs/app_prefs.dart';
 import '../../core/notifications/timer_panel_preference.dart';
+import '../../core/notifications/timer_promotion_verdict.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import '../updater/release_notes_screen.dart';
@@ -52,9 +54,26 @@ class AboutScreen extends ConsumerStatefulWidget {
   ConsumerState<AboutScreen> createState() => _AboutScreenState();
 }
 
-class _AboutScreenState extends ConsumerState<AboutScreen> {
-  bool _checking = false;
-  UpdateCheckOutcome? _updateOutcome;
+class _AboutScreenState extends ConsumerState<AboutScreen> {
+  bool _checking = false;
+  UpdateCheckOutcome? _updateOutcome;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshPromotionVerdict();
+  }
+
+  /// 🔴 Verdict'i **native yazar**. Dart'ın `SharedPreferences` örneği
+  /// `getInstance()` anında okunmuş bir anlık görüntüdür: sayaç bu oturumda
+  /// çalışıp ölçüm diske yazılsa bile bellekteki kopya bayat kalır ve ekran
+  /// sonsuza kadar "henüz ölçülmedi" gösterir. Yani teşhis ekranı kendi
+  /// teşhisini kaybeder — bu turda kapatılan döngünün aynısı.
+  Future<void> _refreshPromotionVerdict() async {
+    await ref.read(sharedPreferencesProvider).reload();
+    if (!mounted) return;
+    ref.invalidate(timerPromotionVerdictProvider);
+  }
 
   final _developerGate = DeveloperGateCounter();
 
@@ -87,6 +106,47 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ),
         );
     }
+  }
+
+  /// Sistemin terfi karari — **uc durum, ucu de ayri cumle.**
+  ///
+  /// 🔴 "Henuz olculmedi" bir RED DEGILDIR ve ayri durmalidir. Ikisini
+  /// birlestirmek "cihazin desteklemiyor" diye yanlis teshis uretir; oysa
+  /// sayac bir kez baslatilmamis olabilir.
+  Widget _promotionVerdictTile(BuildContext context, AppLocalizations l10n) {
+    final verdict = ref.watch(timerPromotionVerdictProvider);
+    final scheme = Theme.of(context).colorScheme;
+
+    // 🔴 Renk `error` DEGIL. Reddedilme bir uygulama hatasi degil, platform
+    // gercegidir; kirmizi yazmak hem yalan soyler hem de kirmizi temada
+    // rozeti kaybettirir (bu depoda yasanmis kusur).
+    final (icon, color, title, subtitle) = switch (verdict) {
+      TimerPromotionVerdict.granted => (
+        Icons.check_circle_outline,
+        scheme.primary,
+        l10n.devPromotionVerdictGrantedTitle,
+        l10n.devPromotionVerdictGrantedSubtitle,
+      ),
+      TimerPromotionVerdict.denied => (
+        Icons.block_outlined,
+        scheme.onSurfaceVariant,
+        l10n.devPromotionVerdictDeniedTitle,
+        l10n.devPromotionVerdictDeniedSubtitle,
+      ),
+      null => (
+        Icons.help_outline,
+        scheme.onSurfaceVariant,
+        l10n.devPromotionVerdictUnknownTitle,
+        l10n.devPromotionVerdictUnknownSubtitle,
+      ),
+    };
+
+    return ListTile(
+      key: const Key('developer-promotion-verdict'),
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      subtitle: Text(subtitle),
+    );
   }
 
   Future<void> _disableDeveloperMode() async {
@@ -287,16 +347,48 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                           // gelistirici bolumunde -- cunku deneyseldir ve
                           // sistem terfiyi vermezse native taraf zaten zengin
                           // panele duser (bkz. `PromotionCapability`).
-                          SwitchListTile(
+                          // 🔴 WP-760: iki durumlu anahtar UC durumlu secime
+                          // dondu. Eskisi "otomatik"i ifade edemiyordu; bir
+                          // kez acip kapatan kullanici diske `true` yazdirip
+                          // dinamik paneli KALICI kapatiyordu ve geri donusu
+                          // yoktu. Ucuncu durum (anahtar yok = otomatik)
+                          // varsayilandir ve secilebilir kalmalidir.
+                          ListTile(
                             key: const Key('developer-live-update-panel'),
-                            secondary: const Icon(Icons.bolt_outlined),
+                            leading: const Icon(Icons.bolt_outlined),
                             title: Text(l10n.devLiveUpdatePanelTitle),
                             subtitle: Text(l10n.devLiveUpdatePanelSubtitle),
-                            value: !ref.watch(timerPanelExpandedProvider),
-                            onChanged: (value) => ref
-                                .read(timerPanelExpandedProvider.notifier)
-                                .setUseLiveUpdate(value),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: SegmentedButton<TimerPanelChoice>(
+                              key: const Key('developer-panel-choice'),
+                              segments: [
+                                ButtonSegment(
+                                  value: TimerPanelChoice.auto,
+                                  label: Text(l10n.devPanelChoiceAuto),
+                                ),
+                                ButtonSegment(
+                                  value: TimerPanelChoice.richPanel,
+                                  label: Text(l10n.devPanelChoiceRichPanel),
+                                ),
+                                ButtonSegment(
+                                  value: TimerPanelChoice.liveUpdate,
+                                  label: Text(l10n.devPanelChoiceLiveUpdate),
+                                ),
+                              ],
+                              selected: {ref.watch(timerPanelChoiceProvider)},
+                              onSelectionChanged: (selection) => ref
+                                  .read(timerPanelChoiceProvider.notifier)
+                                  .choose(selection.first),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          // 🔴 Alti turdur cevaplanamayan soru: "cihaz terfiyi
+                          // VERDI MI?" Olcum her Baslat'ta yapiliyordu ama
+                          // sonucunu kimse GOREMIYORDU; bu satir onu gorunur
+                          // kilar.
+                          _promotionVerdictTile(context, l10n),
                           const Divider(height: 1),
                           ListTile(
                             key: const Key('developer-mode-disable'),

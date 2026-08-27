@@ -69,12 +69,33 @@ void main() {
     );
   });
 
+  test('ucuncu durum (otomatik) diske YAZILAMAZ, SILINIR', () {
+    // 🔴 WP-760: "otomatik" bir deger degil, degerin YOKLUGUdur. Herhangi bir
+    // bool yazmak ucuncu durumu yok eder; `true` yazmak ise dinamik paneli
+    // kalici kapatir. Bu yuzden anahtari SILEN bir yazici bulunmak zorunda.
+    final removers = <String>[];
+    for (final file in dartSourcesUnderLib()) {
+      if (file.readAsStringSync().contains('remove(kTimerPanelExpandedKey')) {
+        removers.add(file.path);
+      }
+    }
+
+    expect(
+      removers,
+      isNotEmpty,
+      reason:
+          'Anahtari silen kod yok. "Otomatik"e donus `true` yazmaya cevrilmis '
+          'demektir; kullanici secimi bir kez acip kapatinca dinamik panel '
+          'KALICI kapanir ve geri donus kalmaz.',
+    );
+  });
+
   test('anahtar kullanicinin gorebilecegi bir ekrana bagli', () {
     final screens = <String>[];
     for (final file in dartSourcesUnderLib()) {
       final path = file.path.replaceAll(r'\', '/');
       if (!path.contains('/features/')) continue;
-      if (file.readAsStringSync().contains('timerPanelExpandedProvider')) {
+      if (file.readAsStringSync().contains('timerPanelChoiceProvider')) {
         screens.add(path);
       }
     }
