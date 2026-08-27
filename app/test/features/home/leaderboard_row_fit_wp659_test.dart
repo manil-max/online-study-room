@@ -98,7 +98,7 @@ List<DailyStat> _stats() {
   // gunun hicbiri kartin aradigi gun degildir, kart BOS cizer ve test her
   // gece ayni uc saatte kirmizi yanar. (Olculdu: CI 20:24Z yesil,
   // 21:06Z kirmizi, arada yalniz surum meta commit'i vardi.)
-  final today = dayOf(DateTime.now());
+  final today = dayOf(_now);
   return [
     for (var d = 0; d < 30; d++)
       for (var i = 1; i <= _memberCount; i++)
