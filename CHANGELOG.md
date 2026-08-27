@@ -4,6 +4,41 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v74 / 1.0.74+74] - 2026-08-27
+
+> **Sahibin cihazinda gorulen iki gorsel gurultu kalkti; dinamik panelin
+> gorunmemesi icin en olasi eksik parca eklendi.**
+
+### Öne çıkanlar
+- **Sayaç bildirimi sadeleşti.** Sayacın yanındaki "FOCUS" yazısı kalktı —
+  panel zaten yalnızca çalışırken var, o etiket tekrardı. Etiket artık
+  sadece **molada** görünüyor, çünkü asıl ayırt edilmesi gereken durum o.
+- **Durdur düğmesindeki kare işaret kalktı.** Bir "durdur" simgesi olması
+  gerekiyordu ama öyle okunmuyordu; anlamı "Durdur" yazısı zaten taşıyor.
+- **Dinamik panel için eksik parça eklendi.** Sayaç bildirimi artık Android
+  16'nın canlı güncelleme yüzeylerinin beklediği ilerleme biçiminde
+  gönderiliyor. Önceki sürümde sistem terfiyi veriyor ama ekranda çizecek
+  bir şey bulamıyordu.
+
+### Düzeltmeler
+- Hedefi olan modlarda (pomodoro / geri sayım) durum çubuğu çipinin yazısı
+  hiç gönderilmiyordu.
+- Açık uçlu kronometre ilerleme bilgisi taşımıyordu; artık belirsiz ilerleme
+  ile gönderiliyor (uydurma bir hedef süre yazılmıyor).
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- Veritabanı değişmedi; migration head `0136` olarak kalıyor.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Dinamik panelin görünüp görünmeyeceği hâlâ ölçülmedi.** Bu sürümdeki
+  değişiklik bir hipoteze dayanıyor: sistem terfiyi veriyordu ama bildirim,
+  terfi yüzeyinin beklediği biçimde değildi. Doğrulanabileceği tek yer
+  gerçek bir Android 16 telefon.
+- **Sayaç bildirimi hâlâ kaydırılarak silinebiliyor** (Android 14 platform
+  kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.
+- Sıradaki alarm widget'ı yayında değil.
+
 ## [v73 / 1.0.73+73] - 2026-08-27
 
 > **Dinamik panelin alti turdur cikmamasinin sebebi bulundu ve sebep

@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.74",
+      "buildNumber": 74,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v74: WP-761 panel noise + WP-762 ProgressStyle on every promotable path",
+      "highlights": [
+        "WP-762: `STANDARD` (open-ended stopwatch) carried `requestPromotedOngoing` but no `ProgressStyle`; the system set FLAG_PROMOTED_ONGOING and had nothing to draw. It now uses `ProgressStyle().setProgressIndeterminate(true)`.",
+        "WP-762: `PROGRESS` (targeted) had `shortCriticalTextRes = 0`, so the chip's text was never sent. It now carries the phase label.",
+        "WP-761: `panelPhaseLabelRes(isBreak, res)` returns 0 in focus; the label only marks the exception (break). Distinguishability is preserved and measured.",
+        "WP-761: pill compound drawables removed and `ic_notif_pill_*` deleted; a hard 10x10 square did not read as a stop glyph."
+      ],
+      "fixes": [
+        "The builder's `if` became an exhaustive `when` over TimerNotificationStyle, so a future style cannot silently ship without a notification style.",
+        "The open-ended plan's `totalSeconds` is locked at 0 by a sentinel so no fake target can slip in."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "Assertions reversed by intent, not weakened: `assertEquals(0, shortCriticalTextRes)` -> `assertNotEquals`, plus two `ic_notif_pill_*` and one `drawablePadding` assertion removed with recorded reasons.",
+        "Sabotage: emptying the chip text -> 2 Kotlin red; removing the indeterminate style -> contract red; restoring the FOCUS label -> 1 Kotlin red. All green after revert.",
+        "WP-762 IS A HYPOTHESIS, not a measurement. The promotion-drawing UI is absent from the emulator image (WP-759), so the only place it can be verified is the owner's Galaxy S23. If the chip still does not appear, the remaining explanation is that Samsung does not surface third-party live updates at all."
+      ],
+      "titleEn": "v74: WP-761 panel noise + WP-762 ProgressStyle on every promotable path",
+      "highlightsEn": [
+        "WP-762: `STANDARD` (open-ended stopwatch) carried `requestPromotedOngoing` but no `ProgressStyle`; the system set FLAG_PROMOTED_ONGOING and had nothing to draw. It now uses `ProgressStyle().setProgressIndeterminate(true)`.",
+        "WP-762: `PROGRESS` (targeted) had `shortCriticalTextRes = 0`, so the chip's text was never sent. It now carries the phase label.",
+        "WP-761: `panelPhaseLabelRes(isBreak, res)` returns 0 in focus; the label only marks the exception (break). Distinguishability is preserved and measured.",
+        "WP-761: pill compound drawables removed and `ic_notif_pill_*` deleted; a hard 10x10 square did not read as a stop glyph."
+      ],
+      "fixesEn": [
+        "The builder's `if` became an exhaustive `when` over TimerNotificationStyle, so a future style cannot silently ship without a notification style.",
+        "The open-ended plan's `totalSeconds` is locked at 0 by a sentinel so no fake target can slip in."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "Assertions reversed by intent, not weakened: `assertEquals(0, shortCriticalTextRes)` -> `assertNotEquals`, plus two `ic_notif_pill_*` and one `drawablePadding` assertion removed with recorded reasons.",
+        "Sabotage: emptying the chip text -> 2 Kotlin red; removing the indeterminate style -> contract red; restoring the FOCUS label -> 1 Kotlin red. All green after revert.",
+        "WP-762 IS A HYPOTHESIS, not a measurement. The promotion-drawing UI is absent from the emulator image (WP-759), so the only place it can be verified is the owner's Galaxy S23. If the chip still does not appear, the remaining explanation is that Samsung does not surface third-party live updates at all."
+      ]
+    },
+    {
       "versionName": "1.0.73",
       "buildNumber": 73,
       "channel": "stable",

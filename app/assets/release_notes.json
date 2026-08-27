@@ -3,6 +3,42 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.74",
+      "buildNumber": 74,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v74: bildirim sadeleşti, dinamik panele eksik parça eklendi",
+      "highlights": [
+        "Sayacın yanındaki \"FOCUS\" yazısı kalktı; panel zaten yalnızca çalışırken var, o etiket tekrardı. Artık sadece molada görünüyor.",
+        "Durdur düğmesindeki kare işaret kalktı. Bir durdur simgesi olması gerekiyordu ama öyle okunmuyordu; anlamı \"Durdur\" yazısı zaten taşıyor.",
+        "Dinamik panel için eksik parça eklendi: sayaç bildirimi artık Android 16'nın canlı güncelleme yüzeylerinin beklediği ilerleme biçiminde gönderiliyor."
+      ],
+      "fixes": [
+        "Hedefi olan modlarda (pomodoro / geri sayım) durum çubuğu çipinin yazısı hiç gönderilmiyordu.",
+        "Açık uçlu kronometre ilerleme bilgisi taşımıyordu; artık belirsiz ilerleme ile gönderiliyor, uydurma bir hedef süre yazılmıyor."
+      ],
+      "notes": [
+        "Dinamik panelin görünüp görünmeyeceği HÂLÂ ÖLÇÜLMEDİ. Bu sürümdeki değişiklik bir hipoteze dayanıyor: sistem terfiyi veriyordu ama bildirim, terfi yüzeyinin beklediği biçimde değildi.",
+        "Sayaç bildirimi hâlâ kaydırılarak silinebiliyor (Android 14 platform kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.",
+        "Sıradaki alarm widget'ı yayında değil."
+      ],
+      "titleEn": "v74: a calmer notification and the missing piece for the live panel",
+      "highlightsEn": [
+        "The \"FOCUS\" label next to the timer is gone; the panel only exists while you are focusing, so the label was a repetition. It now appears only during a break.",
+        "The square mark on the Stop button is gone. It was meant to read as a stop icon and did not; the word \"Stop\" already carries the meaning.",
+        "The missing piece for the live panel: the timer notification is now sent in the progress form that Android 16's live update surfaces expect."
+      ],
+      "fixesEn": [
+        "In targeted modes (pomodoro / countdown) the status bar chip's text was never sent.",
+        "The open-ended stopwatch carried no progress information; it now uses indeterminate progress rather than inventing a target duration."
+      ],
+      "notesEn": [
+        "Whether the live panel appears is STILL NOT MEASURED. This release rests on a hypothesis: the system was granting promotion but the notification was not in the form the promotion surface expects.",
+        "The timer notification can still be swiped away (an Android 14 platform decision). If dismissed, the timer keeps running unseen.",
+        "The next-alarm widget is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.73",
       "buildNumber": 73,
       "channel": "stable",
