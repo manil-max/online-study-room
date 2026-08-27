@@ -372,6 +372,17 @@ void main() {
     // `activeNotifications` gonderilmis listeyi okur. Senkron okuma cogu
     // zaman bildirimi bulamaz, verdict hic yazilmaz ve terfi etmeyen cihaz
     // her Baslat'ta duz kartta kalir.
+    // 🔴 WP-762: terfi isteyen HER dal `ProgressStyle` tasimali. Android 16'nin
+    // Live Update yuzeyleri o stil etrafinda kurulu; `requestPromotedOngoing`
+    // tek basina yalniz BAYRAGI aldirir. Sahibin S23'unde olculen tam olarak
+    // buydu: bayrak yazildi, ekranda hicbir sey cizilmedi.
+    expect(
+      serviceCode,
+      contains('setProgressIndeterminate(true)'),
+      reason:
+          'Acik uclu kronometre ProgressStyle tasimazsa sistemin cizecek bir '
+          'Live Update ogesi olmaz: terfi verilir, cip yine gorunmez.',
+    );
     expect(
       serviceCode,
       contains('schedulePromotionProbe(startedAtMs)'),

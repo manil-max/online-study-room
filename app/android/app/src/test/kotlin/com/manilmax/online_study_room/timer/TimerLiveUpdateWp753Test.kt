@@ -65,7 +65,16 @@ class TimerLiveUpdateWp753Test {
         assertEquals(startedAt + 1_500_000L, plan.whenMs)
         assertTrue(plan.countDown)
         // Sabit kısa metin canlı geri sayımı gölgelemesin diye yazılmaz.
-        assertEquals(0, plan.shortCriticalTextRes)
+        // 🔴 IDDIA YON DEGISTIRDI (WP-762). Eskiden hedefi olan modda cip
+        // yazisinin BOS olmasini kilitliyordu. Sahibin S23'unde olculdu:
+        // terfi VERILDI (FLAG_PROMOTED_ONGOING yazildi) ama ekranda hicbir sey
+        // cizilmedi. Cip once `shortCriticalText`i cizer; bos birakmak terfi
+        // edilmis bildirimi icerik olarak sessiz birakir.
+        assertNotEquals(
+            "Hedefi olan modda da cipin yazisi gonderilmeli",
+            0,
+            plan.shortCriticalTextRes,
+        )
     }
 
     /**
@@ -328,6 +337,61 @@ class TimerLiveUpdateWp753Test {
                 currentStartedAtMs = started + 5_000L,
             ),
         )
+    }
+
+    /**
+     * 🔴 WP-762 — TERFI EDILEBILIR HER DAL `ProgressStyle` TASIR.
+     *
+     * Sahibin Galaxy S23'unde olculdu: verdict GRANTED, yani sistem
+     * `FLAG_PROMOTED_ONGOING` bayragini GERCEKTEN yazdi -- ama durum
+     * cubugunda cip, Now Bar'da satir CIKMADI.
+     *
+     * En olasi sebep: Android 16'nin Live Update yuzeyleri `ProgressStyle`
+     * etrafinda kuruludur. `setRequestPromotedOngoing(true)` tek basina yalniz
+     * bayragi aldirir; cizilecek bir Live Update ogesi vermez. Acik uclu
+     * kronometre STANDARD stille terfi istiyordu, yani sistemin elinde
+     * cizecek bir sey yoktu.
+     *
+     * 🔴 BU BIR HIPOTEZDIR, olcum DEGIL. Cihazda dogrulanmadi. Ama sozlesme
+     * her iki yonde de dogru: terfi isteyen bir bildirim, terfi yuzeyinin
+     * bekledigi stille gelmelidir.
+     */
+    @Test
+    fun every_promotable_path_carries_a_progress_style() {
+        val openEnded = runningTimerNotificationPlan(
+            richPanel = false,
+            isBreak = false,
+            targetSeconds = null,
+            startedAtMs = startedAt,
+            nowMs = startedAt,
+        )
+        val targeted = runningTimerNotificationPlan(
+            richPanel = false,
+            isBreak = false,
+            targetSeconds = 1500,
+            startedAtMs = startedAt,
+            nowMs = startedAt,
+        )
+
+        for (plan in listOf(openEnded, targeted)) {
+            assertTrue(
+                "terfi isteyen dal terfi yuzeyinin bekledigi stille gelmeli",
+                plan.requestPromotedOngoing,
+            )
+            assertNotEquals(
+                "terfi edilen bildirimin cip yazisi bos birakilamaz",
+                0,
+                plan.shortCriticalTextRes,
+            )
+        }
+
+        // Acik uclu kosunun toplami YOKTUR: uydurma bir toplam yazilmaz.
+        assertEquals(
+            "acik uclu kosuya sahte bir toplam verilmemeli",
+            0,
+            openEnded.totalSeconds,
+        )
+        assertTrue("hedefi olan mod gercek toplamini tasir", targeted.totalSeconds > 0)
     }
 
     /**

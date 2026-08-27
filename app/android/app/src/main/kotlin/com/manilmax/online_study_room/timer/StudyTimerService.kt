@@ -209,7 +209,19 @@ internal enum class TimerNotificationStyle {
      */
     CUSTOM_PANEL,
 
-    /** Açık uçlu kronometre (stopwatch): standart stil, terfi edilebilir. */
+    /**
+     * Açık uçlu kronometre (stopwatch).
+     *
+     * 🔴 WP-762: bu dal `ProgressStyle` TAŞIMIYORDU ve terfinin görünmemesinin
+     * en olası sebebi bu. Android 16'nın Live Update yüzeyleri (durum çubuğu
+     * çipi, Now Bar) `ProgressStyle` etrafında kuruludur; `requestPromotedOngoing`
+     * tek başına yalnız BAYRAĞI aldırır. Sahibin S23'ünde ölçülen tam olarak
+     * buydu: `FLAG_PROMOTED_ONGOING` yazıldı, ekranda hiçbir şey çizilmedi.
+     *
+     * Açık uçlu koşunun toplamı yoktur, o yüzden ilerleme **belirsizdir**
+     * (`setProgressIndeterminate`). Uydurma bir toplam yazmak yerine API'nin
+     * bunun için var olan yolu kullanılır.
+     */
     STANDARD,
 
     /** Hedefi olan mod (pomodoro/geri sayım): `ProgressStyle`, terfi edilebilir. */
@@ -322,7 +334,10 @@ internal fun runningTimerNotificationPlan(
         style = TimerNotificationStyle.PROGRESS,
         titleRes = titleRes,
         bodyRes = bodyRes,
-        shortCriticalTextRes = 0,
+        // 🔴 WP-762: burasi `0` idi -- yani hedefi olan modda cipin YAZISI hic
+        // gonderilmiyordu. Cip once `shortCriticalText`i cizer; bos birakmak
+        // terfi edilmis bildirimi icerik olarak SESSIZ birakir.
+        shortCriticalTextRes = phaseLabelRes,
         whenMs = startedAtMs + total * 1000L,
         countDown = true,
         progressSeconds = ((nowMs - startedAtMs) / 1000L)
@@ -869,14 +884,23 @@ class StudyTimerService : Service() {
         if (plan.shortCriticalTextRes != 0) {
             builder.setShortCriticalText(getString(plan.shortCriticalTextRes))
         }
-        if (plan.style == TimerNotificationStyle.PROGRESS) {
-            builder.setStyle(
+        // 🔴 WP-762: terfi edilebilir HER iki dal da `ProgressStyle` tasir.
+        // Eskiden yalniz hedefi olan mod tasiyordu; acik uclu kronometre
+        // standart stille terfi istiyordu ve sistem bayragi yazsa bile cizecek
+        // bir Live Update ogesi bulamiyordu.
+        when (plan.style) {
+            TimerNotificationStyle.PROGRESS -> builder.setStyle(
                 NotificationCompat.ProgressStyle()
                     .addProgressSegment(
                         NotificationCompat.ProgressStyle.Segment(plan.totalSeconds),
                     )
                     .setProgress(plan.progressSeconds),
             )
+            // Toplami olmayan kosu: uydurma bir toplam yerine BELIRSIZ ilerleme.
+            TimerNotificationStyle.STANDARD -> builder.setStyle(
+                NotificationCompat.ProgressStyle().setProgressIndeterminate(true),
+            )
+            TimerNotificationStyle.CUSTOM_PANEL -> Unit
         }
         return builder.build()
     }
