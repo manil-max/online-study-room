@@ -199,14 +199,21 @@ class TimerLiveUpdateWp753Test {
      */
     @Test
     fun rich_panel_decision_asks_the_system_when_the_user_has_not_chosen() {
-        // Tercih yok -> cihaz karar verir. Kok neden tam olarak burasiydi:
-        // eski kod bu satirda KOSULSUZ `true` donuyordu.
-        assertFalse(
-            "Tercih yokken terfi VEREN cihazda dinamik panel kosmali",
+        // 🔴 IDDIA YON DEGISTIRDI (WP-763) -- olcume dayanarak.
+        //
+        // WP-760'ta buraya "tercih yokken terfi VEREN cihazda dinamik panel
+        // kosmali" yazmistim. Kagitta dogruydu, cihazda YANLISLANDI: sahibin
+        // S23'unde sistem terfiyi veriyor (bayrak yaziliyor) ama Samsung
+        // ortada hicbir sey cizmiyor. Bedel odeniyor, karsilik alinmiyor.
+        //
+        // Elimizde "cip gercekten cizilecek mi" sorusunu onceden cevaplayan
+        // bir sinyal yok; o yuzden otomatik akilli davranamaz, CALISANI secer.
+        assertTrue(
+            "Tercih yokken calisan panel kosmali: terfi VERILSE bile cizilmiyor",
             useRichPanel(override = null, mayPromote = true),
         )
         assertTrue(
-            "Tercih yokken terfi VERMEYEN cihazda zengin panel kosmali",
+            "Tercih yokken terfi VERMEYEN cihazda da zengin panel kosmali",
             useRichPanel(override = null, mayPromote = false),
         )
 
@@ -215,9 +222,16 @@ class TimerLiveUpdateWp753Test {
             "Kullanici zengin panel dediyse terfi eden cihazda bile zengin panel",
             useRichPanel(override = true, mayPromote = true),
         )
-        assertFalse(
-            "Kullanici Live Update dediyse terfi vermeyen cihazda bile denenir",
+        // 🔴 Bu iddia da yon degistirdi: sistem terfi VERMIYORSA sade karta
+        // dusup hicbir sey kazanmamanin anlami yok. Kullanici Live Update
+        // dediyse bile, terfi imkansizken zengin panel korunur.
+        assertTrue(
+            "Terfi IMKANSIZKEN sade karta dusmek net kayiptir",
             useRichPanel(override = false, mayPromote = false),
+        )
+        assertFalse(
+            "Kullanici Live Update dedi ve sistem izin veriyor: DENENIR",
+            useRichPanel(override = false, mayPromote = true),
         )
     }
 
@@ -235,19 +249,30 @@ class TimerLiveUpdateWp753Test {
      * BASLAT'INI olcer.
      */
     @Test
-    fun a_fresh_install_on_a_promoting_device_actually_gets_the_dynamic_panel() {
+    fun a_fresh_install_gets_the_panel_that_actually_draws() {
         val fresh = Wp753Prefs()
 
-        assertFalse(
-            "Hic ayar yapmamis kullanici + terfi VEREN cihaz = dinamik panel. " +
-                "Alti tur boyunca aranan davranis budur.",
+        // 🔴 WP-763: iddia YON DEGISTIRDI. WP-760'ta "taze kurulum + terfi
+        // veren cihaz = dinamik panel" diyordu. Cihazda olculdu: terfi
+        // VERILIYOR, panel yine CIKMIYOR. Taze kurulum artik calisan paneli
+        // gorur.
+        assertTrue(
+            "Taze kurulum calisan paneli gormeli",
             useRichPanel(panelOverride(fresh), mayPromote = true),
         )
-
-        // Ayni taze kurulum, terfi VERMEYEN cihazda: gorunen sey degismez.
         assertTrue(
-            "Terfi vermeyen cihazda taze kurulum hala zengin paneli gormeli",
+            "Terfi vermeyen cihazda da ayni",
             useRichPanel(panelOverride(fresh), mayPromote = false),
+        )
+
+        // 🔴 DIKIS HALA OLCULUR: acik tercih sisteme ULASMALI. WP-760'in kok
+        // nedeni kisa devre yuzunden sistemin HIC sorulmamasiydi; burasi o
+        // kisa devre geri gelirse duser.
+        val optedIn = Wp753Prefs()
+        optedIn.edit().putBoolean(KEY_PANEL_EXPANDED, false).commit()
+        assertFalse(
+            "Live Update secen kullanici + izin veren sistem = terfi ISTENIR",
+            useRichPanel(panelOverride(optedIn), mayPromote = true),
         )
     }
 
@@ -260,7 +285,12 @@ class TimerLiveUpdateWp753Test {
      */
     @Test
     fun the_decision_actually_reaches_the_promotion_request() {
+        // 🔴 WP-763: ACIK tercihle olculur. Otomatik artik zengin paneli
+        // sectigi icin, terfi isteginin sisteme ULASTIGINI ancak kullanici
+        // Live Update dediginde olcebiliriz -- ve olculmesi gereken sey de
+        // budur: secim ile gonderilen bildirim ayrismamali.
         val fresh = Wp753Prefs()
+        fresh.edit().putBoolean(KEY_PANEL_EXPANDED, false).commit()
         val plan = runningTimerNotificationPlan(
             richPanel = useRichPanel(panelOverride(fresh), mayPromote = true),
             isBreak = false,
@@ -269,7 +299,7 @@ class TimerLiveUpdateWp753Test {
             nowMs = startedAt,
         )
         assertTrue(
-            "Taze kurulum + terfi veren cihaz `setRequestPromotedOngoing(true)` cagirmali",
+            "Live Update secimi `setRequestPromotedOngoing(true)`e ULASMALI",
             plan.requestPromotedOngoing,
         )
     }
@@ -357,7 +387,7 @@ class TimerLiveUpdateWp753Test {
      * bekledigi stille gelmelidir.
      */
     @Test
-    fun every_promotable_path_carries_a_progress_style() {
+    fun every_promotable_path_carries_the_chip_text_it_can_actually_use() {
         val openEnded = runningTimerNotificationPlan(
             richPanel = false,
             isBreak = false,
@@ -392,6 +422,14 @@ class TimerLiveUpdateWp753Test {
             openEnded.totalSeconds,
         )
         assertTrue("hedefi olan mod gercek toplamini tasir", targeted.totalSeconds > 0)
+
+        // 🔴 WP-763: acik uclu dal `ProgressStyle` TASIMAZ ve bu bilerek boyle.
+        // WP-762 ona `setProgressIndeterminate(true)` vermisti; cihazda
+        // olculdu ve BOZDU (soldan saga suzulen cubuk, sayac 00:00, dugme
+        // kayboldu) -- ustelik cip yine cikmadi. Stil, hedefi olan modda
+        // gercek bir ilerleme oldugu icin durur.
+        assertEquals(TimerNotificationStyle.STANDARD, openEnded.style)
+        assertEquals(TimerNotificationStyle.PROGRESS, targeted.style)
     }
 
     /**

@@ -132,7 +132,28 @@ internal fun panelOverride(prefs: SharedPreferences): Boolean? =
  * @param mayPromote sistem terfiyi veriyor mu ([TimerPromotion.mayRequestPromotion])
  */
 internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
-    override ?: !mayPromote
+    when (override) {
+        // 🔴 WP-763: OTOMATIK artik CALISAN paneli secer.
+        //
+        // WP-760'ta otomatik "sistem terfi veriyorsa terfi et" demekti ve o
+        // kural KAGITTA dogruydu. Cihazda olculdu ve yanlislandi: sahibin
+        // S23'unde sistem terfiyi VERIYOR (FLAG_PROMOTED_ONGOING yaziliyor)
+        // ama Samsung ortada hicbir sey CIZMIYOR -- ne durum cubugu cipi ne
+        // Now Bar satiri. Yani bedeli oduyoruz, karsiligini almiyoruz:
+        // terfi eden bildirim ozel gorunum tasiyamadigi icin sahibin v43'te
+        // kabul ettigi zengin panel gidiyor, yerine sade bir kart geliyor.
+        //
+        // Elimizde "cip GERCEKTEN cizilecek mi" sorusunu onceden cevaplayan
+        // bir sinyal YOK; bayrak yalniz "sistem kabul etti" der. O yuzden
+        // otomatik akilli davranamaz ve calisani secer.
+        null -> true
+        // Kullanici acikca zengin panel dedi.
+        true -> true
+        // Kullanici acikca Live Update dedi: sistem izin veriyorsa DENE.
+        // Vermiyorsa (API < 36 ya da izin yok) sade karta dusup hicbir sey
+        // kazanmamanin anlami yok -- zengin panel korunur.
+        false -> !mayPromote
+    }
 
 /**
  * WP-753: durum çubuğu / Live Update çipi ikonu.
@@ -740,6 +761,10 @@ class StudyTimerService : Service() {
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
     private fun schedulePromotionProbe(startedAtMs: Long) {
+        // 🔴 WP-763: terfi ISTENMEDIYSE olculecek bir sey yoktur. Zengin panel
+        // gonderilmisken bayragi aramak, bulamamak ve bunu RED diye yazmak
+        // cihaza YANLIS bir karar damgalardi.
+        if (useRichPanel(panelOverride(prefs()), mayPromote = true)) return
         if (TimerPromotion.readVerdict(prefs()) != null) return
         mainHandler.removeCallbacksAndMessages(PROMOTION_PROBE_TOKEN)
         HandlerCompat.postDelayed(
@@ -896,10 +921,18 @@ class StudyTimerService : Service() {
                     )
                     .setProgress(plan.progressSeconds),
             )
-            // Toplami olmayan kosu: uydurma bir toplam yerine BELIRSIZ ilerleme.
-            TimerNotificationStyle.STANDARD -> builder.setStyle(
-                NotificationCompat.ProgressStyle().setProgressIndeterminate(true),
-            )
+            // 🔴 WP-763 GERI ALMA. WP-762 buraya
+            // `ProgressStyle().setProgressIndeterminate(true)` koymustu ve o
+            // karar CIHAZDA DOGRULANMADAN yayina cikti (v74). Sahip aninda
+            // olctu: bildirimde soldan saga suzulen belirsiz cubuk belirdi,
+            // sayac 00:00'a dustu ve dugme kayboldu -- yani calisan bildirim
+            // BOZULDU, ustelik cip yine cikmadi.
+            //
+            // Ayni hatanin ucuncu tekrariydi (WP-753, WP-762, ve bu):
+            // "muhtemelen boyle olmali" diyip cihazsiz yayina cikarmak.
+            // Hipotez bir sonraki turda cihazda olculur; varsayilan yol
+            // hipoteze baglanmaz.
+            TimerNotificationStyle.STANDARD -> Unit
             TimerNotificationStyle.CUSTOM_PANEL -> Unit
         }
         return builder.build()
