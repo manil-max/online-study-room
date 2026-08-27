@@ -554,12 +554,19 @@ void main() {
     final scatter = tester.widget<SessionScatterChart>(
       find.byType(SessionScatterChart),
     );
-    // Grafigin KENDI kirpmasi (`session_scatter_chart.dart:49-51`): bugunden
-    // geriye `days` gun. Veri ZATEN doneme suzulmustu; ikinci pencere donemin
-    // basini disarida birakirsa grafik bombos cizilir.
-    final startDay = istanbulDay(
-      DateTime.now(),
-    ).subtract(Duration(days: scatter.days - 1));
+    // Grafigin KENDI kirpmasi: penceresinin SONUNDAN geriye `days` gun. Veri
+    // ZATEN doneme suzulmustu; ikinci pencere donemin basini disarida
+    // birakirsa grafik bombos cizilir.
+    //
+    // 🔴 WP-765: pencerenin ucunu artik GRAFIK soyluyor (`endDay`); once daima
+    // bugundu ve bu satir o varsayimi tekrar ediyordu. Iddia degismedi
+    // (pencere donemin basini kesmemeli), yalnizca tureti guncellendi.
+    final scatterEnd = istanbulDay(scatter.endDay ?? DateTime.now());
+    final startDay = DateTime(
+      scatterEnd.year,
+      scatterEnd.month,
+      scatterEnd.day - (scatter.days - 1),
+    );
     expect(
       startDay.isAfter(dayOf(periodFrom)),
       isFalse,
@@ -568,7 +575,7 @@ void main() {
           'tarihinde basliyor: ikinci kirpma donemi kesiyor (days=${scatter.days}).',
     );
     final visible = scatter.sessions
-        .where((s) => !s.day.isBefore(startDay))
+        .where((s) => !s.day.isBefore(startDay) && !s.day.isAfter(scatterEnd))
         .toList();
     expect(
       visible,

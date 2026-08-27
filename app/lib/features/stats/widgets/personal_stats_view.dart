@@ -88,7 +88,6 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
 
-    final today = secondsOnDay(sessions, now);
     // Ömür: özetten (period == all Toplam kartı için).
     final lifetime = summary?.lifetimeSeconds;
 
@@ -202,13 +201,15 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // haftayı çiziyordu. Uç artık dönemin `to`suna bağlı.
     final chartEnd = dayOf(to);
 
-    // 🔴 WP-745 (2): `SessionScatterChart` veriyi KENDİSİ bugünden geriye
-    // `days` güne kırpar (`session_scatter_chart.dart:49-51`). Veri zaten
-    // döneme süzülmüştü (`periodSessions`), yani "Geçen ay"da iki pencere hiç
-    // kesişmiyor ve grafik BOMBOŞ çıkıyordu. Pencere artık dönemin
-    // başlangıcından bugüne uzanır: dönemin hiçbir oturumu ikinci kırpmaya
-    // takılmaz.
-    final scatterDays = statsDaySpan(from, now);
+    // 🔴 WP-765 (1): oturum dağılımının penceresi artık dönemin KENDİSİ.
+    //
+    // WP-745 grafiğin bugünden geriye ikinci kez kırpmasını `days`i "dönemin
+    // başından BUGÜNE" uzatarak telafi etmişti; grafik boş çıkmıyordu ama
+    // pencerenin SONU hâlâ bugündü ([SessionScatterChart] `endDay` almıyordu).
+    // Ölçülen hâl (bugün 27 Ağustos, "Ay" offset -1 = Temmuz): eksen 31 değil
+    // 58 gün, alt eksende "10 Ağu" gibi **dönem dışı** tarih yazıyor, noktalar
+    // sol yarıya sıkışıyordu. İki uç da tek kaynaktan gelir: `sel.range()`.
+    final scatterDays = statsDaySpan(from, chartEnd);
 
     // 🔴 WP-745 (3): radar "tutarlılık" ekseninin paydası SABİT 14 gündü, yani
     // "Hafta"da en iyi ihtimalle 7/14 = 0.5 çıkıyordu — kısa dönem hep dipte.
@@ -340,6 +341,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                 : SessionScatterChart(
                     sessions: periodSessions,
                     days: scatterDays,
+                    endDay: chartEnd,
                   ),
           ),
         ),
@@ -519,7 +521,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                 height: 200,
                 child: _PersonalRadar(
                   sessions: periodSessions,
-                  today: today,
+                  paceSeconds: avgPeriod.round(),
                   goalSeconds: goalSeconds,
                   split: split,
                   consistencyDays: consistencyDays,
@@ -678,14 +680,24 @@ class _CollapsibleSectionState extends State<_CollapsibleSection> {
 class _PersonalRadar extends StatelessWidget {
   const _PersonalRadar({
     required this.sessions,
-    required this.today,
+    required this.paceSeconds,
     required this.goalSeconds,
     required this.split,
     required this.consistencyDays,
   });
 
   final List<StudySession> sessions;
-  final int today;
+
+  /// 🔴 WP-765 (2): "Günlük hedef" ekseninin PAYI.
+  ///
+  /// Önceden `secondsOnDay(sessions, DateTime.now())` idi — dönem ne olursa
+  /// olsun **bugünün** saniyesi. "Geçen ay" seçiliyken radarın bu köşesi geçen
+  /// ayı değil bugünü anlatıyordu: bugün hiç çalışılmadıysa köşe tabana
+  /// yapışıyordu (`RadarEntry` alt kırpması 0.05), oysa o ay hedefin üstünde
+  /// kapanmış olabilirdi. Pay artık dönemin **günlük ortalamasıdır**: ekrandaki
+  /// "Günlük ortalama" döşemesiyle aynı sayı, aynı payda ([averageWindow]).
+  final int paceSeconds;
+
   final int goalSeconds;
   final ({int weekday, int weekend}) split;
 
@@ -710,7 +722,7 @@ class _PersonalRadar extends StatelessWidget {
     final total = totalSeconds(sessions).toDouble();
     final tempo = goalSeconds <= 0
         ? 0.5
-        : (today / goalSeconds).clamp(0.0, 1.0);
+        : (paceSeconds / goalSeconds).clamp(0.0, 1.0);
     final days = dailyTotals(sessions).values.where((s) => s > 0).length;
     final consistency = consistencyDays <= 0
         ? 0.0
