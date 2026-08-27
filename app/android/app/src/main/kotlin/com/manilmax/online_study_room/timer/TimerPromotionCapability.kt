@@ -215,6 +215,54 @@ internal object TimerPromotion {
             .commit()
     }
 
+    /**
+     * Sonuclanmayan yoklama denemelerinin sayaci.
+     *
+     * 🔴 WP-760/2: "gorememek red degildir" dogru bir kural ama TEK BASINA
+     * birakilirsa bedeli kullaniciya cikar. Gozlem hic sonuclanmazsa verdict
+     * hic yazilmaz, `effectiveVerdict` her seferinde "deneyebilirsin" der ve
+     * cihaz HER Baslat'ta terfi edilebilir (duz) kartta kalir -- yani sahibin
+     * v43'te kabul ettigi zengin panel bir daha hic gorunmez.
+     *
+     * Bu yuzden deneme sayilir. [MAX_PROBE_ATTEMPTS] kez arka arkaya hicbir
+     * sey gozlenemediyse karar RED yazilir: "olcemedik" ile "vermedi"yi
+     * bilerek birlestiriyoruz, cunku kullanici acisindan ikisi ayni sonucu
+     * dogurur ve suphede kullanicinin gordugu sey korunur.
+     *
+     * Damga sayaci da kapsar: sistem guncellemesi sayaci sifirlar, yani karar
+     * kalici bir tavana donmez.
+     */
+    const val KEY_PROBE_ATTEMPTS = "flutter.timer_promotion_probe_attempts_v1"
+
+    /** Bu kadar sonucsuz denemeden sonra pes edilir. */
+    const val MAX_PROBE_ATTEMPTS = 3
+
+    /** Bu yapida kac kez sonucsuz denendi. Damga tutmuyorsa sifirdan sayilir. */
+    fun readProbeAttempts(
+        prefs: SharedPreferences,
+        fingerprint: String = currentFingerprint(),
+    ): Int {
+        val raw = prefs.getString(KEY_PROBE_ATTEMPTS, null) ?: return 0
+        val parts = raw.split(VERDICT_SEPARATOR, limit = 2)
+        if (parts.size != 2 || parts[1] != fingerprint) return 0
+        return parts[0].toIntOrNull()?.coerceAtLeast(0) ?: 0
+    }
+
+    /** Sonucsuz bir denemeyi yazar ve yeni sayiyi doner. */
+    fun recordUnobservedAttempt(
+        prefs: SharedPreferences,
+        fingerprint: String = currentFingerprint(),
+    ): Int {
+        val next = readProbeAttempts(prefs, fingerprint) + 1
+        prefs.edit()
+            .putString(KEY_PROBE_ATTEMPTS, next.toString() + VERDICT_SEPARATOR + fingerprint)
+            .commit()
+        return next
+    }
+
+    /** Pes etme esigi. **Saf.** */
+    fun shouldGiveUpProbing(attempts: Int): Boolean = attempts >= MAX_PROBE_ATTEMPTS
+
     /** Verdict ile yapi damgasini ayiran isaret; `FINGERPRINT` icinde gecmez. */
     private const val VERDICT_SEPARATOR = "|"
 

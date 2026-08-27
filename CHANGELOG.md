@@ -4,6 +4,47 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v73 / 1.0.73+73] - 2026-08-27
+
+> **Dinamik panelin alti turdur cikmamasinin sebebi bulundu ve sebep
+> platformda degil, bizim kodumuzdaydi: uygulama terfiyi hicbir cihazda
+> hic istemiyordu.**
+
+### Öne çıkanlar
+- **Sayaç bildirimi artık dinamik panel isteyebiliyor.** Altı tur boyunca
+  istemiyordu: bir mantık kısa devresi yüzünden "sistem bu bildirimi öne
+  çıkarır mı?" sorusu hiç sorulmuyordu. Destekleyen bir telefonda bile panel
+  çıkamazdı.
+- **Cihazın verdiği kararı artık okuyabiliyorsunuz.** Hakkında ekranında,
+  geliştirici bölümünde tek satır: *verdi* / *vermedi* / *henüz ölçülmedi*.
+  Ölçüm her Başlat'ta yapılıyordu ama sonucunu kimse göremiyordu — dönüp
+  duran döngünün asıl sebebi buydu.
+- **Bildirim görünümü artık üç seçenekli:** Otomatik / Zengin panel /
+  Live Update. Varsayılan **Otomatik**: telefonunuz ne yapabiliyorsa o.
+
+### Düzeltmeler
+- Geliştirici anahtarını bir kez açıp kapatmak dinamik paneli **kalıcı**
+  kapatıyordu ve geri dönüşü yoktu. Üçüncü bir durum ("otomatik") yoktu;
+  artık var ve varsayılan o.
+- Ölçüm, bildirim sisteme ulaşmadan yapılıyordu ve bu yüzden hiçbir zaman
+  sonuçlanmıyordu. Artık bildirim gönderildikten sonra ölçülüyor.
+- Ölçüm hiç sonuçlanmazsa sayaç sade bildirimde takılı kalabilirdi; üç
+  denemeden sonra bilinen çalışan panele dönülüyor.
+- Liderlik kartının bazı testleri cihazın saatine bağlıydı ve gece belirli
+  saatlerde yanlış gün için çiziyordu.
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- CI yeşil (Android emülatör smoke dahil).
+- Veritabanı değişmedi; migration head `0136` olarak kalıyor.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Dinamik panelin Galaxy S23'te gerçekten çıkıp çıkmadığı ÖLÇÜLMEDİ.**
+  Değişen şey artık soruluyor olması ve cevabı ekrandan okuyabilmeniz.
+- **Sayaç bildirimi hâlâ kaydırılarak silinebiliyor** (Android 14 platform
+  kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.
+- Sıradaki alarm widget'ı yayında değil.
+
 ## [v72 / 1.0.72+72] - 2026-08-27
 
 > **v71 saha geri bildirimi tek turda kapatildi: bildirim paneli calisir

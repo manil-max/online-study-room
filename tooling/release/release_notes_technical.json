@@ -3,6 +3,50 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.73",
+      "buildNumber": 73,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v73: WP-760 -- promotion was never requested",
+      "highlights": [
+        "Root cause: `richPanel = useV43CustomPanel() || !mayRequestPromotion(...)` short-circuited because the left side was always true, so `setRequestPromotedOngoing(true)` was never called on any device. The TimerPromotion gate was complete but unreachable.",
+        "Precedence inverted into two pure functions: `panelOverride` (tri-state) and `useRichPanel(override, mayPromote) = override ?: !mayPromote`.",
+        "Verdict key moved to `flutter.timer_promotion_verdict_v1` so Dart can read it; About screen renders granted/denied/unmeasured as three distinct sentences.",
+        "Probe made asynchronous (400 ms) because `notify()` enqueues while `activeNotifications` reads the posted list; the synchronous read never found the notification."
+      ],
+      "fixes": [
+        "Dart preference was two-state (`getBool ?? true`), conflating 'unset' with 'force rich panel'; a single toggle round-trip pinned the device off promotion forever. Now 'auto' REMOVES the key.",
+        "`shouldRepostAfterProbe` guards the delayed callback against a stopped run and against a restart with a different startedAtMs.",
+        "Bounded probing: `MAX_PROBE_ATTEMPTS = 3` unobserved attempts write DENIED, stamped with Build.FINGERPRINT so a system update reopens the path.",
+        "Four test fixtures built calendar days from device-local `DateTime.now()` while production filters through `dayOf` (Istanbul); red for three hours every night on UTC CI."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped (deno absent); CI green including Android emulator smoke. No migration change, head stays 0136.",
+        "Sabotage checks: Kotlin 3 red + 2 red, Dart 7 red, contract 3 red -- all green after revert. One misplaced sentinel was caught landing in a private helper class instead of the test class (JUnit would never have run it) and moved.",
+        "`_refreshPromotionVerdict` (disk reload on screen open) is NOT covered: the SharedPreferences mock cannot simulate a mid-session native write. Recorded in backlog.md.",
+        "Promotion still unverified on the owner's Galaxy S23."
+      ],
+      "titleEn": "v73: WP-760 -- promotion was never requested",
+      "highlightsEn": [
+        "Root cause: `richPanel = useV43CustomPanel() || !mayRequestPromotion(...)` short-circuited because the left side was always true, so `setRequestPromotedOngoing(true)` was never called on any device. The TimerPromotion gate was complete but unreachable.",
+        "Precedence inverted into two pure functions: `panelOverride` (tri-state) and `useRichPanel(override, mayPromote) = override ?: !mayPromote`.",
+        "Verdict key moved to `flutter.timer_promotion_verdict_v1` so Dart can read it; About screen renders granted/denied/unmeasured as three distinct sentences.",
+        "Probe made asynchronous (400 ms) because `notify()` enqueues while `activeNotifications` reads the posted list; the synchronous read never found the notification."
+      ],
+      "fixesEn": [
+        "Dart preference was two-state (`getBool ?? true`), conflating 'unset' with 'force rich panel'; a single toggle round-trip pinned the device off promotion forever. Now 'auto' REMOVES the key.",
+        "`shouldRepostAfterProbe` guards the delayed callback against a stopped run and against a restart with a different startedAtMs.",
+        "Bounded probing: `MAX_PROBE_ATTEMPTS = 3` unobserved attempts write DENIED, stamped with Build.FINGERPRINT so a system update reopens the path.",
+        "Four test fixtures built calendar days from device-local `DateTime.now()` while production filters through `dayOf` (Istanbul); red for three hours every night on UTC CI."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped (deno absent); CI green including Android emulator smoke. No migration change, head stays 0136.",
+        "Sabotage checks: Kotlin 3 red + 2 red, Dart 7 red, contract 3 red -- all green after revert. One misplaced sentinel was caught landing in a private helper class instead of the test class (JUnit would never have run it) and moved.",
+        "`_refreshPromotionVerdict` (disk reload on screen open) is NOT covered: the SharedPreferences mock cannot simulate a mid-session native write. Recorded in backlog.md.",
+        "Promotion still unverified on the owner's Galaxy S23."
+      ]
+    },
+    {
       "versionName": "1.0.72",
       "buildNumber": 72,
       "channel": "stable",

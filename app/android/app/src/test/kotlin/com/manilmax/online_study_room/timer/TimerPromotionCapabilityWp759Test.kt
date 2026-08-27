@@ -297,6 +297,72 @@ class TimerPromotionCapabilityWp759Test {
         TimerPromotion.writeVerdict(prefs, Verdict.GRANTED)
         assertEquals(Verdict.GRANTED, TimerPromotion.readVerdict(prefs))
     }
+
+    // -----------------------------------------------------------------------
+    // WP-760/2: sonucsuz yoklama kullaniciyi cezalandirmamali.
+    // -----------------------------------------------------------------------
+
+    /**
+     * 🔴 "Gorememek red degildir" dogru bir kural ama TEK BASINA birakilirsa
+     * bedeli kullaniciya cikar.
+     *
+     * Gozlem hic sonuclanmazsa verdict hic yazilmaz, `effectiveVerdict` her
+     * seferinde "deneyebilirsin" der ve cihaz HER Baslat'ta terfi edilebilir
+     * (duz) kartta kalir -- yani sahibin v43'te KABUL ETTIGI zengin panel bir
+     * daha hic gorunmez. Supheli durumda kullanicinin GORDUGU sey korunur.
+     */
+    @Test
+    fun an_unobservable_device_stops_degrading_the_card_after_three_tries() {
+        val prefs = Wp759PromotionPrefs()
+        val build = "olculebilir/yapi:16/AAA"
+
+        assertEquals(0, TimerPromotion.readProbeAttempts(prefs, build))
+        assertFalse(TimerPromotion.shouldGiveUpProbing(0))
+
+        assertEquals(1, TimerPromotion.recordUnobservedAttempt(prefs, build))
+        assertFalse(
+            "Tek sonucsuz deneme pes etmek icin yeterli DEGIL",
+            TimerPromotion.shouldGiveUpProbing(1),
+        )
+
+        assertEquals(2, TimerPromotion.recordUnobservedAttempt(prefs, build))
+        assertFalse(TimerPromotion.shouldGiveUpProbing(2))
+
+        assertEquals(3, TimerPromotion.recordUnobservedAttempt(prefs, build))
+        assertTrue(
+            "Uc sonucsuz denemeden sonra pes edilmeli",
+            TimerPromotion.shouldGiveUpProbing(
+                TimerPromotion.readProbeAttempts(prefs, build),
+            ),
+        )
+    }
+
+    /**
+     * Sayac da damgalidir: pes etme karari KALICI BIR TAVANA donmemeli.
+     *
+     * Damgasiz bir sayac, terfiyi acan bir sistem guncellemesinden sonra bile
+     * "zaten uc kez denedik" deyip yolu sonsuza kadar kapali tutardi.
+     */
+    @Test
+    fun a_system_update_reopens_the_probe_by_resetting_the_counter() {
+        val prefs = Wp759PromotionPrefs()
+        val oldBuild = "eski/yapi:16/AAA"
+        repeat(TimerPromotion.MAX_PROBE_ATTEMPTS) {
+            TimerPromotion.recordUnobservedAttempt(prefs, oldBuild)
+        }
+        assertTrue(
+            TimerPromotion.shouldGiveUpProbing(
+                TimerPromotion.readProbeAttempts(prefs, oldBuild),
+            ),
+        )
+
+        assertEquals(
+            "Baska bir yapida sayilan denemeler bu yapiyi baglamaz",
+            0,
+            TimerPromotion.readProbeAttempts(prefs, "yeni/yapi:17/BBB"),
+        )
+    }
+
 }
 
 /** Yalniz bu testin ihtiyaci kadar `SharedPreferences`. */
@@ -378,5 +444,6 @@ private class Wp759PromotionEditor(
 
     override fun apply() {
         commit()
-    }
+    
+}
 }

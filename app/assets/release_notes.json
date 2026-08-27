@@ -3,6 +3,46 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.73",
+      "buildNumber": 73,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v73: dinamik panelin kök nedeni bulundu",
+      "highlights": [
+        "Sayaç bildirimi artık dinamik panel isteyebiliyor. Altı tur boyunca istemiyordu: bir mantık kısa devresi yüzünden \"sistem bu bildirimi öne çıkarır mı?\" sorusu hiç sorulmuyordu; destekleyen bir telefonda bile panel çıkamazdı.",
+        "Cihazın verdiği kararı artık okuyabiliyorsunuz: Hakkında > geliştirici bölümünde tek satır — verdi / vermedi / henüz ölçülmedi.",
+        "Bildirim görünümü üç seçenekli oldu: Otomatik / Zengin panel / Live Update. Varsayılan Otomatik, yani telefonunuz ne yapabiliyorsa o."
+      ],
+      "fixes": [
+        "Geliştirici anahtarını bir kez açıp kapatmak dinamik paneli kalıcı kapatıyordu ve geri dönüşü yoktu.",
+        "Ölçüm, bildirim sisteme ulaşmadan yapılıyordu ve hiçbir zaman sonuçlanmıyordu.",
+        "Ölçüm hiç sonuçlanmazsa sayaç sade bildirimde takılı kalabilirdi; üç denemeden sonra bilinen çalışan panele dönülüyor.",
+        "Liderlik kartının bazı testleri cihazın saatine bağlıydı ve gece belirli saatlerde yanlış günü çiziyordu."
+      ],
+      "notes": [
+        "Dinamik panelin Galaxy S23'te gerçekten çıkıp çıkmadığı ÖLÇÜLMEDİ. Değişen şey artık soruluyor olması ve cevabı ekrandan okuyabilmeniz.",
+        "Sayaç bildirimi hâlâ kaydırılarak silinebiliyor (Android 14 platform kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.",
+        "Sıradaki alarm widget'ı yayında değil."
+      ],
+      "titleEn": "v73: the root cause of the missing live panel",
+      "highlightsEn": [
+        "The timer notification can finally ask to be promoted. For six rounds it never did: a logic short-circuit meant the question \"will the system promote this?\" was never asked, so the panel could not appear even on a phone that supports it.",
+        "You can now read the device's answer: About > developer section shows one line — granted / denied / not measured yet.",
+        "The notification surface is now a three-way choice: Automatic / Rich panel / Live Update. Automatic is the default."
+      ],
+      "fixesEn": [
+        "Toggling the developer switch once on and off disabled the live panel permanently, with no way back.",
+        "The measurement ran before the notification reached the system, so it never resolved.",
+        "If the measurement never resolved, the timer could stay stuck on the plain notification; after three tries it falls back to the known working panel.",
+        "Some leaderboard card tests depended on the device clock and drew the wrong day at certain hours of the night."
+      ],
+      "notesEn": [
+        "Whether the live panel actually appears on the Galaxy S23 is STILL NOT MEASURED. What changed is that the question is now asked and the answer is readable on screen.",
+        "The timer notification can still be swiped away (an Android 14 platform decision). If dismissed, the timer keeps running unseen.",
+        "The next-alarm widget is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.72",
       "buildNumber": 72,
       "channel": "stable",

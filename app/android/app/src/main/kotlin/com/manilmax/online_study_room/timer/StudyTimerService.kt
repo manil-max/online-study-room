@@ -726,10 +726,29 @@ class StudyTimerService : Service() {
         )
     }
 
+    /**
+     * Sonucsuz denemeyi sayar; esik asilirsa RED yazip doner, aksi halde `null`.
+     */
+    private fun giveUpProbingIfExhausted(
+        p: SharedPreferences,
+    ): TimerPromotion.Verdict? {
+        val attempts = TimerPromotion.recordUnobservedAttempt(p)
+        if (!TimerPromotion.shouldGiveUpProbing(attempts)) return null
+        TimerPromotion.writeVerdict(p, TimerPromotion.Verdict.DENIED)
+        return TimerPromotion.Verdict.DENIED
+    }
+
     private fun runPromotionProbe(startedAtMs: Long) {
         val p = prefs()
+        // 🔴 Sonucsuz yoklama SESSIZCE surunmemeli. `observedVerdict` bildirimi
+        // goremezse dogru olarak "olcum yok" der; ama bu her Baslat'ta
+        // tekrarlanirsa cihaz SUREKLI terfi edilebilir (duz) kartta kalir ve
+        // sahibin v43'te kabul ettigi zengin panel bir daha hic gorunmez.
+        // Uc sonucsuz denemeden sonra RED yazilir; yapi damgasi degisince
+        // (sistem guncellemesi) sayac sifirlanir, yani kalici tavan olmaz.
         val verdict =
             TimerPromotion.recordOutcome(p, notificationManager(), NOTIFICATION_ID)
+                ?: giveUpProbingIfExhausted(p)
         if (!shouldRepostAfterProbe(
                 verdict = verdict,
                 isRunning = TimerStateStore.isRunning(p),
