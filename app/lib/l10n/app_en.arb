@@ -7233,5 +7233,19 @@
   "devPanelChoiceRichPanel": "Rich panel",
   "@devPanelChoiceRichPanel": {"description": "WP-760: force the v43 custom panel even on a device that would promote."},
   "devPanelChoiceLiveUpdate": "Live Update",
-  "@devPanelChoiceLiveUpdate": {"description": "WP-760: force the promotion request. Forcing does not guarantee it; the system may still refuse."}
+  "@devPanelChoiceLiveUpdate": {"description": "WP-760: force the promotion request. Forcing does not guarantee it; the system may still refuse."},
+  "devOverlayStripTitle": "Floating timer strip",
+  "@devOverlayStripTitle": {"description": "WP-764: hidden developer switch for our OWN overlay window, built because Samsung draws nothing even when the system promotion is granted."},
+  "devOverlayStripSubtitle": "Experimental. Draws the timer on top of other apps.",
+  "@devOverlayStripSubtitle": {"description": "WP-764: says the strip is ours rather than a system surface, and that it starts off."},
+  "devOverlayPermissionGrantedTitle": "Draw-over permission granted",
+  "@devOverlayPermissionGrantedTitle": {"description": "WP-764: SYSTEM_ALERT_WINDOW is granted right now. Asked again on every resume, never cached."},
+  "devOverlayPermissionGrantedSubtitle": "With the strip on, it appears as soon as the timer starts.",
+  "@devOverlayPermissionGrantedSubtitle": {"description": "WP-764: tells the owner what to expect once the permission is in place."},
+  "devOverlayPermissionMissingTitle": "Draw-over permission missing",
+  "@devOverlayPermissionMissingTitle": {"description": "WP-764: not an app bug - SYSTEM_ALERT_WINDOW cannot be asked with a dialog, the user grants it in Settings."},
+  "devOverlayPermissionMissingSubtitle": "Tap to allow it in Settings.",
+  "@devOverlayPermissionMissingSubtitle": {"description": "WP-764: the tap opens the system screen and the row is re-measured on resume, so it never says no after a yes."},
+  "devOverlayPermissionMissingWhileEnabled": "Strip is on, but nothing is drawn without the permission. Tap to allow it.",
+  "@devOverlayPermissionMissingWhileEnabled": {"description": "WP-764: a switch that is on and silently does nothing is a dead switch; this says it out loud."}
 }

@@ -2322,5 +2322,19 @@
   "devPanelChoiceRichPanel": "Zengin panel",
   "@devPanelChoiceRichPanel": {"description": "WP-760: terfi edebilecek bir cihazda bile v43 ozel panelini zorlar."},
   "devPanelChoiceLiveUpdate": "Live Update",
-  "@devPanelChoiceLiveUpdate": {"description": "WP-760: terfi istegini zorlar. Zorlamak garanti etmez; sistem yine reddedebilir."}
+  "@devPanelChoiceLiveUpdate": {"description": "WP-760: terfi istegini zorlar. Zorlamak garanti etmez; sistem yine reddedebilir."},
+  "devOverlayStripTitle": "Yüzen sayaç şeridi",
+  "@devOverlayStripTitle": {"description": "WP-764: KENDI ustteki pencere seridimizin gizli gelistirici anahtari; sistem terfiyi verse bile Samsung hicbir sey cizmedigi icin yazildi."},
+  "devOverlayStripSubtitle": "Deneysel. Sayacı diğer uygulamaların üzerinde çizer.",
+  "@devOverlayStripSubtitle": {"description": "WP-764: seridin sistem yuzeyi degil BIZIM oldugumuzu ve kapali dogdugunu soyler."},
+  "devOverlayPermissionGrantedTitle": "Üstte gösterme izni verildi",
+  "@devOverlayPermissionGrantedTitle": {"description": "WP-764: SYSTEM_ALERT_WINDOW su an verilmis. One her donuste yeniden sorulur, ONBELLEKLENMEZ."},
+  "devOverlayPermissionGrantedSubtitle": "Şerit açıkken sayaç başlar başlamaz görünür.",
+  "@devOverlayPermissionGrantedSubtitle": {"description": "WP-764: izin yerindeyken sahibin ne bekleyecegini soyler."},
+  "devOverlayPermissionMissingTitle": "Üstte gösterme izni yok",
+  "@devOverlayPermissionMissingTitle": {"description": "WP-764: uygulama hatasi degil - SYSTEM_ALERT_WINDOW bir pencereyle istenemez, kullanici Ayarlar'da verir."},
+  "devOverlayPermissionMissingSubtitle": "Dokun, Ayarlar'da izni ver.",
+  "@devOverlayPermissionMissingSubtitle": {"description": "WP-764: dokunus sistem ekranini acar, satir one donuste yeniden olculur; boylece izin verildikten sonra hala 'yok' demez."},
+  "devOverlayPermissionMissingWhileEnabled": "Şerit açık ama izin yok; hiçbir şey çizilmez. Dokun ve izni ver.",
+  "@devOverlayPermissionMissingWhileEnabled": {"description": "WP-764: acik olup sessizce hicbir sey yapmayan anahtar olu anahtardir; bu cumle onu acikca soyler."}
 }

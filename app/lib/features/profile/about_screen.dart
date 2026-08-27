@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/background/timer_foreground_service.dart';
 import '../../core/config/app_build_manifest.dart';
 import '../../core/config/build_identity_card.dart';
 import '../../core/config/distribution_channel.dart';
 import '../../core/prefs/app_prefs.dart';
+import '../../core/notifications/timer_overlay_preference.dart';
 import '../../core/notifications/timer_panel_preference.dart';
 import '../../core/notifications/timer_promotion_verdict.dart';
+import '../../core/theme/warning_tokens.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import '../updater/release_notes_screen.dart';
@@ -54,18 +57,57 @@ class AboutScreen extends ConsumerStatefulWidget {
   ConsumerState<AboutScreen> createState() => _AboutScreenState();
 }
 
-class _AboutScreenState extends ConsumerState<AboutScreen> {
+class _AboutScreenState extends ConsumerState<AboutScreen>
+    with WidgetsBindingObserver {
 
   bool _checking = false;
 
   UpdateCheckOutcome? _updateOutcome;
 
-
+  /// 🔴 WP-764 — yüzen şeridin izin durumu. Bu bir **önbellek değil**, son
+  /// ölçümün kopyasıdır: kullanıcı `SYSTEM_ALERT_WINDOW` iznini Ayarlar'dan
+  /// istediği an geri alabilir ve bundan haberimiz olmaz.
+  ///
+  /// Başlangıç `false`: daha sormadan "izin var" demek, izni olmayan
+  /// kullanıcıya çalışmayan bir anahtarı çalışıyormuş gibi gösterirdi.
+  bool _canDrawOverlays = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refreshPromotionVerdict();
+    _refreshOverlayPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// 🔴 Tazeleme burada olmazsa somut kusur şu olur: kullanıcı "İzin ver"e
+  /// basar, Ayarlar'a gider, izni verir, geri döner — ve satır hâlâ "izin yok"
+  /// der. İzni verdiği hâlde uygulamayı bozuk sanır.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshOverlayPermission();
+  }
+
+  Future<void> _refreshOverlayPermission() async {
+    final granted = await TimerForegroundService.canDrawOverlays();
+    if (!mounted || granted == _canDrawOverlays) return;
+    setState(() => _canDrawOverlays = granted);
+  }
+
+  /// Sistemin "diğer uygulamaların üzerinde göster" ekranını açar.
+  ///
+  /// 🔴 Dönen değer izin VERİLDİĞİNİ göstermez — yalnız ekranın
+  /// açılabildiğini. Gerçek durum kullanıcı geri döndüğünde
+  /// [didChangeAppLifecycleState] üzerinden yeniden sorulur; bu ayrımı
+  /// kaybetmek "açtım sandım ama açılmamış" durumunu görünmez yapar.
+  Future<void> _requestOverlayPermission() async {
+    await TimerForegroundService.requestOverlayPermission();
   }
 
   /// 🔴 Verdict'i **native yazar**. Dart'ın `SharedPreferences` örneği
@@ -150,6 +192,45 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       leading: Icon(icon, color: color),
       title: Text(title),
       subtitle: Text(subtitle),
+    );
+  }
+
+  /// Yüzen şeridin izin satırı — **her durumu ayrı cümleyle** söyler.
+  ///
+  /// 🔴 Renk `error` DEĞİL. Verilmemiş bir izin uygulama hatası değildir;
+  /// kırmızı yazmak hem yalan söyler hem de kırmızı temada rozeti kaybettirir
+  /// (bu depoda yaşanmış kusur). Uyarı rengi tema paletinden değil, üstünde
+  /// durduğu yüzeyden türetilir — `warningColorsOn`, WP-358.
+  Widget _overlayPermissionTile(BuildContext context, AppLocalizations l10n) {
+    final scheme = Theme.of(context).colorScheme;
+
+    if (_canDrawOverlays) {
+      return ListTile(
+        key: const Key('developer-overlay-permission'),
+        leading: Icon(Icons.check_circle_outline, color: scheme.primary),
+        title: Text(l10n.devOverlayPermissionGrantedTitle),
+        subtitle: Text(l10n.devOverlayPermissionGrantedSubtitle),
+      );
+    }
+
+    // 🔴 Anahtar AÇIK ama izin YOKSA bunu açıkça söyle. Sessizce hiçbir şey
+    // yapmayan bir anahtar ölü anahtardır: kullanıcı açtığını sanır, sayaç
+    // çalışır, ekranda hiçbir şey çizilmez ve kusur bize "yine olmadı" diye
+    // döner.
+    final subtitle = ref.watch(timerOverlayEnabledProvider)
+        ? l10n.devOverlayPermissionMissingWhileEnabled
+        : l10n.devOverlayPermissionMissingSubtitle;
+
+    return ListTile(
+      key: const Key('developer-overlay-permission'),
+      leading: Icon(
+        Icons.warning_amber_outlined,
+        color: warningColorsOn(scheme.surface).container,
+      ),
+      title: Text(l10n.devOverlayPermissionMissingTitle),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.open_in_new),
+      onTap: _requestOverlayPermission,
     );
   }
 
@@ -393,6 +474,30 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                           // sonucunu kimse GOREMIYORDU; bu satir onu gorunur
                           // kilar.
                           _promotionVerdictTile(context, l10n),
+                          const Divider(height: 1),
+                          // 🔴 WP-764 — sistem yüzeyinden VAZGEÇİLDİ. Terfi
+                          // sahibin Galaxy S23'ünde veriliyor (üstteki satır
+                          // `GRANTED` diyor) ama Samsung ortada hiçbir şey
+                          // çizmiyor; altı turdur beklenen panel bu yüzden
+                          // gelmedi. Şerit artık bizim penceremiz.
+                          //
+                          // 🔴 Varsayılan KAPALI. Bu turda üç kez deneysel bir
+                          // yol varsayılan yapıldı ve çalışan bildirimi bozdu
+                          // (v71, v74). Sahip kuralı: "test ederken sadece biz
+                          // görelim, diğerlerinde normal olsun".
+                          SwitchListTile(
+                            key: const Key('developer-overlay-enabled'),
+                            secondary: const Icon(
+                              Icons.picture_in_picture_alt_outlined,
+                            ),
+                            title: Text(l10n.devOverlayStripTitle),
+                            subtitle: Text(l10n.devOverlayStripSubtitle),
+                            value: ref.watch(timerOverlayEnabledProvider),
+                            onChanged: (value) => ref
+                                .read(timerOverlayEnabledProvider.notifier)
+                                .setEnabled(value),
+                          ),
+                          _overlayPermissionTile(context, l10n),
                           const Divider(height: 1),
                           ListTile(
                             key: const Key('developer-mode-disable'),
