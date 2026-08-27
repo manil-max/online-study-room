@@ -4,6 +4,40 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v75 / 1.0.75+75] - 2026-08-27
+
+> **v74'teki bildirim bozulmasi geri alindi. Deneysel dinamik panel artik
+> yalniz gizli gelistirici bolumunden acilir; normal kullanici onu hic
+> gormez.**
+
+### Öne çıkanlar
+- **Sayaç bildirimi yeniden normal.** v74'te bildirimde soldan sağa süzülen
+  bir çubuk beliriyor, sayaç `00:00`'a düşüyor ve düğme kayboluyordu. O
+  değişiklik geri alındı.
+- **Deneysel yol artık varsayılan değil.** Dinamik panel (Android 16 canlı
+  güncelleme) denemesi yalnızca Hakkında ekranındaki gizli geliştirici
+  bölümünden açılabiliyor. Hiçbir şey seçmeyen kullanıcı çalışan paneli
+  görür.
+
+### Düzeltmeler
+- Açık uçlu kronometreye eklenen belirsiz ilerleme çubuğu kaldırıldı.
+- Terfi ölçümü artık yalnızca terfi gerçekten istendiğinde çalışıyor;
+  istenmediği hâlde ölçüm yapıp cihaza yanlış bir karar yazma ihtimali
+  kapandı.
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- Veritabanı değişmedi; migration head `0136` olarak kalıyor.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Dinamik panel Galaxy S23'te görünmüyor ve sebebi artık ölçüldü:** sistem
+  terfiyi *veriyor* (bayrak gerçekten yazılıyor) ama Samsung ortada hiçbir
+  şey *çizmiyor* — ne durum çubuğu çipi ne Now Bar satırı. Hiçbir API
+  sinyali bunu önceden söylemiyor. Bu yol şimdilik kapalı sayılıyor.
+- **Sayaç bildirimi hâlâ kaydırılarak silinebiliyor** (Android 14 platform
+  kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.
+- Sıradaki alarm widget'ı yayında değil.
+
 ## [v74 / 1.0.74+74] - 2026-08-27
 
 > **Sahibin cihazinda gorulen iki gorsel gurultu kalkti; dinamik panelin

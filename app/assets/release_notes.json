@@ -3,6 +3,40 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.75",
+      "buildNumber": 75,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v75: bildirim normale döndü, deneysel panel gizli kaldı",
+      "highlights": [
+        "Sayaç bildirimi yeniden normal. v74'te bildirimde soldan sağa süzülen bir çubuk beliriyor, sayaç 00:00'a düşüyor ve düğme kayboluyordu; o değişiklik geri alındı.",
+        "Deneysel dinamik panel artık varsayılan değil. Yalnızca Hakkında ekranındaki gizli geliştirici bölümünden açılabiliyor; hiçbir şey seçmeyen kullanıcı çalışan paneli görür."
+      ],
+      "fixes": [
+        "Açık uçlu kronometreye eklenen belirsiz ilerleme çubuğu kaldırıldı.",
+        "Terfi ölçümü artık yalnızca terfi gerçekten istendiğinde çalışıyor; istenmediği hâlde ölçüm yapıp cihaza yanlış bir karar yazma ihtimali kapandı."
+      ],
+      "notes": [
+        "Dinamik panel Galaxy S23'te görünmüyor ve sebebi ölçüldü: sistem terfiyi veriyor (bayrak gerçekten yazılıyor) ama Samsung ortada hiçbir şey çizmiyor. Hiçbir API sinyali bunu önceden söylemiyor; bu yol şimdilik kapalı sayılıyor.",
+        "Sayaç bildirimi hâlâ kaydırılarak silinebiliyor (Android 14 platform kararı). Silinirse sayaç görünmeden çalışmaya devam ediyor.",
+        "Sıradaki alarm widget'ı yayında değil."
+      ],
+      "titleEn": "v75: the notification is back to normal, the experiment stays hidden",
+      "highlightsEn": [
+        "The timer notification works normally again. In v74 a bar swept across it, the timer dropped to 00:00 and the button disappeared; that change has been reverted.",
+        "The experimental live panel is no longer the default. It can only be turned on from the hidden developer section in About, so a user who chooses nothing sees the working panel."
+      ],
+      "fixesEn": [
+        "The indeterminate progress bar added to the open-ended stopwatch has been removed.",
+        "The promotion measurement now runs only when promotion was actually requested, closing the chance of stamping a wrong verdict on the device."
+      ],
+      "notesEn": [
+        "The live panel does not appear on the Galaxy S23 and the reason was measured: the system grants the promotion (the flag really is set) but Samsung draws nothing. No API signal tells us this in advance, so this path is treated as closed for now.",
+        "The timer notification can still be swiped away (an Android 14 platform decision). If dismissed, the timer keeps running unseen.",
+        "The next-alarm widget is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.74",
       "buildNumber": 74,
       "channel": "stable",

@@ -3,6 +3,44 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.75",
+      "buildNumber": 75,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v75: WP-763 -- revert WP-762, automatic now picks what actually draws",
+      "highlights": [
+        "Reverted `ProgressStyle().setProgressIndeterminate(true)` on the STANDARD path. Measured on the owner's S23: it broke the working notification (sweeping bar, chronometer at 00:00, action gone) and produced no chip.",
+        "`useRichPanel(override, mayPromote)`: null -> true (automatic picks the panel that draws), true -> true, false -> !mayPromote (explicit Live Update is attempted only where the system allows it).",
+        "The promotion probe now returns early unless promotion was actually requested, so a rich-panel post can no longer be stamped DENIED."
+      ],
+      "fixes": [
+        "Assertions reversed by measurement, not weakened: `useRichPanel(null, true)` now expects the rich panel; the contract now asserts `isNot(contains('setProgressIndeterminate'))`.",
+        "The seam sentinel was preserved, moved onto the explicit choice: Live Update + permitting system must still reach `requestPromotedOngoing`."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "MEASURED AND DECISIVE: verdict GRANTED on the S23 (FLAG_PROMOTED_ONGOING really is written) yet Samsung draws neither a status bar chip nor a Now Bar row, with Now Bar enabled. Pomodoro (the ProgressStyle path) behaves the same. No API signal predicts whether the chip will be drawn.",
+        "Recorded failure mode, third occurrence: shipping a hypothesis on the DEFAULT path. WP-753 did it in v71, WP-762 did it in v74. Writing 'this is a hypothesis' in the release notes is not enough; the experimental branch already existed and the hypothesis belonged there.",
+        "Next option if the live panel is still wanted: an overlay window (SYSTEM_ALERT_WINDOW), which does not depend on the OEM notification surface."
+      ],
+      "titleEn": "v75: WP-763 -- revert WP-762, automatic now picks what actually draws",
+      "highlightsEn": [
+        "Reverted `ProgressStyle().setProgressIndeterminate(true)` on the STANDARD path. Measured on the owner's S23: it broke the working notification (sweeping bar, chronometer at 00:00, action gone) and produced no chip.",
+        "`useRichPanel(override, mayPromote)`: null -> true (automatic picks the panel that draws), true -> true, false -> !mayPromote (explicit Live Update is attempted only where the system allows it).",
+        "The promotion probe now returns early unless promotion was actually requested, so a rich-panel post can no longer be stamped DENIED."
+      ],
+      "fixesEn": [
+        "Assertions reversed by measurement, not weakened: `useRichPanel(null, true)` now expects the rich panel; the contract now asserts `isNot(contains('setProgressIndeterminate'))`.",
+        "The seam sentinel was preserved, moved onto the explicit choice: Live Update + permitting system must still reach `requestPromotedOngoing`."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "MEASURED AND DECISIVE: verdict GRANTED on the S23 (FLAG_PROMOTED_ONGOING really is written) yet Samsung draws neither a status bar chip nor a Now Bar row, with Now Bar enabled. Pomodoro (the ProgressStyle path) behaves the same. No API signal predicts whether the chip will be drawn.",
+        "Recorded failure mode, third occurrence: shipping a hypothesis on the DEFAULT path. WP-753 did it in v71, WP-762 did it in v74. Writing 'this is a hypothesis' in the release notes is not enough; the experimental branch already existed and the hypothesis belonged there.",
+        "Next option if the live panel is still wanted: an overlay window (SYSTEM_ALERT_WINDOW), which does not depend on the OEM notification surface."
+      ]
+    },
+    {
       "versionName": "1.0.74",
       "buildNumber": 74,
       "channel": "stable",
