@@ -67,3 +67,49 @@ Future<void> pumpUntilFound(
     await tester.pump(const Duration(milliseconds: 16));
   }
 }
+
+/// [condition] doğru olana kadar olay kuyruğunu döndürür — **düz `test`** için.
+///
+/// [waitUntil] ile aynı işi yapmaz: o, `pumpEventQueue` üzerinden çalışır ve
+/// widget testleri için yazılmıştır. Bu varyant olay kuyruğunu doğrudan
+/// `Future.delayed(Duration.zero)` ile döndürür, yani `testWidgets` dışında
+/// kalan düz `test` gövdelerinde de aynı davranır. Zaman aşımı mesajı kaç TUR
+/// harcandığını da yazar: "yavaş makine" ile "koşul hiç sağlanmıyor" ancak
+/// böyle ayırt edilir (0'a yakın tur = koşul yanlış, binlerce tur = gerçekten
+/// olmuyor).
+Future<void> waitForCondition(
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 15),
+  String? reason,
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  var turns = 0;
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail(
+        'waitForCondition zaman aşımına uğradı '
+        '(${timeout.inSeconds} sn, $turns tur)'
+        '${reason == null ? '' : ': $reason'}',
+      );
+    }
+    await Future<void>.delayed(Duration.zero);
+    turns++;
+  }
+}
+
+/// Olay kuyruğunu tam [turns] **tur** döndürür — **olumsuz** iddialar için.
+///
+/// "Şu olay OLMAMALI" diyen bir testte koşul beklenemez: beklenen durum baştan
+/// doğrudur, koşul beklemesi hiç beklemeden döner ve test ölçmek istediği şeyi
+/// **ölçmez**. Sabit süre (`Future.delayed(20 ms)`) de yanlıştır ama ters
+/// yönde: yük altında o süre içinde istenmeyen olay henüz işlenmemiş olabilir,
+/// test **boş yere** yeşil geçer.
+///
+/// Tur sayısı makinenin hızından bağımsızdır — her tur, olay kuyruğunun bir kez
+/// işlenmesidir. Bekleyen bir benimseme/kayıt varsa bu turların içinde mutlaka
+/// gerçekleşir; hâlâ gerçekleşmiyorsa iddia gerçekten doğrudur.
+Future<void> drainEventQueue({int turns = 256}) async {
+  for (var i = 0; i < turns; i++) {
+    await Future<void>.delayed(Duration.zero);
+  }
+}

@@ -271,42 +271,51 @@
 - WP-69 aylık rapor: DNS + Resend API key ile canlıya alınacak mı? Karar/ops preflight: WP-279.
 - Windows release boşta RAM (300–400 MB iddiası): WP-70 tabanı p95 85.9 MB ölçtü, iddia temiz release'te üretilmedi; bulgu çıkarsa ayrı düzeltme WP'si.
 
-## timer_background_reconcile_test.dart — KARARSIZ (flake), tesihs var, duzeltme yok
+## timer_background_reconcile_test.dart — KARARSIZLIK KAPANDI (WP-766, 2026-08-27)
 
-**Belirti:** tek basina KOSULUNCA yesil, `python scripts/test_all.py` tam
-paketinde bazen kirmizi. 2026-08-26 turunda bir kez dustu, sonraki tam kapida
-gecti. Yani yayin zincirini rastgele kilitleyebilir.
+**Durum:** duzeltildi ve YENIDEN URETILEBILIR bir kanitla dogrulandi. Uretim
+kodu degismedi; is tamamen test tarafinda.
 
-**Kok neden (olculdu):** dosyada 16 adet `await Future.delayed(20 ms)` var ve
-testler arka planda tetiklenen uzlastirmanin BITTIGINI bu sabit sureyle
-VARSAYIYOR. Sabit bekleme bir SURE olcer; testin ihtiyaci olan sey bir KOSUL.
-Bos makinede 20 ms yetiyor, tam pakette onlarca dosya CPU paylasinca yetmiyor.
+**Yeniden uretici (asil teslim bu):** kusur "tek basina" gorunmez. 48 adet CPU
+yakici surec acip dosyayi tek basina kosturunca gorunur hale geliyor.
+- **ONCE:** 3 turun 2'si KIRMIZI.
+- **SONRA:** 6 turun 6'si yesil.
+Kirmizinin dustugu satir her seferinde ayni:
+`expect(prefs.getString('timer_pending_intervals'), isNull)`.
 
-**Repo bunu zaten cozmus, ama bu dosya bagli degil:** `test/support/async_wait.dart`
-icindeki `waitUntil` tam bu kusur icin yazilmis (dokumaninda v49 surumunu
-kiran uc sayac testi anlatiliyor). Bu dosya o yardimciyi **import ediyor ama
-hic cagirmiyor** -- "yazilmis ama cagiran yok" deseninin bir ornegi daha.
+**Kok neden (olculdu, tahmin degil):** 20 ms, oturumu yazmaya yetiyor ama
+kuyruktan dusurmeye (`_dropProcessedPendingEntries`) yetmiyordu. Yani onceki
+turda yazilan tesihs dogruydu: dogru kosul "oturum yazildi" DEGIL,
+`timer_pending_intervals` anahtarinin BOSALMASI.
 
-**DENENDI VE GERI ALINDI (2026-08-26):** 6 bekleme `waitUntil`e cevrildi.
-Iki ayri sey ogrenildi, ikisi de sonraki denemeye girdi:
-1. Kosul "oturum yazildi" DEGIL "uzlastirma BITTI" olmali; ilki erken donuyor
-   ve kuyruk hala dolu bulunuyor. Bitmis uzlastirmanin imzasi
-   `timer_pending_intervals` anahtarinin bosalmasidir.
-2. Kosul duzeltildikten sonra bile test 30 sn'de zaman asimina dustu:
-   `waitUntil` icindeki `pumpEventQueue`, bu dosya `testWidgets` DEGIL duz
-   `test` oldugu icin beklenen sekilde donmuyor. Yani `waitUntil` oldugu gibi
-   bu dosyaya UYMUYOR; once duz `test` baglaminda calisan bir varyant gerekiyor
-   (ornegin `Future.delayed(Duration.zero)` ile donen bir dongu).
-Aralikli bir kararsizligi kesin bir kirmiziya cevirdigi icin degisiklik geri
-alindi. Yarim duzeltme mevcut durumdan kotudur.
+**Yapilan:**
+1. `app/test/support/async_wait.dart`'a duz `test` govdesi icin iki yardimci
+   eklendi (mevcut `waitUntil` BOZULMADI, `testWidgets` tarafi ona bagli):
+   - `waitForCondition` — kosul saglanana kadar `Future.delayed(Duration.zero)`
+     ile tur dondurur; zaman asimi mesajinda kac TUR harcandigini yazar
+     ("yavas makine" ile "kosul yanlis" ancak boyle ayrilir).
+   - `drainEventQueue({turns = 256})` — sabit sayida event-loop TURU.
+2. **7 bekleme** kosul beklemesine cevrildi. Olculen gercek maliyet: 1 aralik
+   **3 tur**, 5 aralik **11 tur**, kismi hata senaryosu **3 tur**. Yani 20 ms
+   bos makinede fazlasiyla yetiyor, yuk altinda yetmiyordu.
+3. **9 bekleme** sabit TUR'a cevrildi (kurulum turlari + uc olumsuz iddia). Tur
+   sayisi makinenin hizindan BAGIMSIZDIR; 20 ms degildi. Kararin kurali:
+   *degisiklik bekleniyorsa kosul, beklenmiyorsa tur.*
 
-**Ayri, KAPATILMAMIS gozlem:** ayni dosyadaki UC bekleme "bir sey OLMADI"
-iddiasinin parcasi (gec yanki durdurulmus sayaci diriltmemeli, ms-esit yanki
-no-op olmali). Onlar kosul beklemesine CEVRILMEMELI -- beklenen kosul zaten
-bastan dogru, test hic beklemeden gecer ve olcmek istedigi seyi olcmez. Ama
-onlar da ters yonde kirilgan: yavas makinede istenmeyen olay gerceklesmeden
-20 ms dolabilir ve test BOS YERE yesil gecer. Bu bir kirmizi degil, sessiz bir
-kor nokta.
+**Onceki turun "KAPATILMAMIS gozlem"u de kapandi (olumsuz iddialar):** olculdu
+ki `await fireReconcile()` platform mesajini ve dolayisiyla
+`_syncBackgroundTimerState()`in TAMAMINI bekliyor — pozitif ikiz test (farkli
+ms → benimseme olmali) **0 turda** geciyor. Yani olumsuz iddialar zaten
+uzlastirma bittikten SONRA olculuyor; ustune 256 tur daha donduruluyor.
+Sabotaj kontrolu yapildi: gec yankinin ms'i gercekten degistirilince test
+KIRMIZI dustu (`Expected: false / Actual: <true>`), sabotaj geri alindi. Yani
+`drainEventQueue` bir nobetci, sus payi degil.
+
+**Kanit:** `flutter analyze` 0 issue · yuk altinda 6/6 yesil · tam paket
+(`flutter test --exclude-tags=golden`) dort turda da bu dosyanin 14 testi
+yesil (turlarin kendisi yesil DEGIL: `group_cards_wp690`,
+`timer_overlay_preference_wp764`, `about_screen_test` kirmizilari baska
+lane'lerin commit'lenmemis isinden geliyor, bu WP'nin yollarina dokunmuyor).
 
 ---
 

@@ -138,6 +138,13 @@ Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
   return (container, studyRepo, profile!);
 }
 
+/// Native FGS kuyruğunun ham hâli. Uzlaştırmanın BİTTİĞİNİN imzası bu
+/// anahtardır: oturum yazımı ile kuyruktan düşürme ayrı adımlardır ve yalnız
+/// ikincisi "tur bitti" demektir (WP-766).
+String? _pendingQueue(ProviderContainer container) => container
+    .read(sharedPreferencesProvider)
+    .getString('timer_pending_intervals');
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -160,8 +167,13 @@ void main() {
         // build() sayacı durur restore eder (started_at yok).
         expect(container.read(studyTimerProvider).isRunning, isFalse);
 
-        // build() microtask'ı reconcile'i çalıştırana kadar bekle.
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // build() microtask'ı reconcile'i BİTİRENE kadar bekle. Sabit süre
+        // yerine koşul: yük altında 20 ms oturumu yazmaya yetip kuyruktan
+        // düşürmeye yetmiyordu (WP-766 kararsızlığının tam noktası).
+        await waitForCondition(
+          () => _pendingQueue(container) == null,
+          reason: 'kuyruk işlenip anahtar silinmeli',
+        );
 
         // Aralık oturum olarak kaydedildi.
         final sessions = await studyRepo.watchUserSessions(profile.id).first;
@@ -200,7 +212,11 @@ void main() {
         expect(container.read(studyTimerProvider).isRunning, isTrue);
         expect(container.read(studyTimerProvider).startedAt, newStart);
 
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Uzlaştırma bitmeden okursak eski aralık henüz yazılmamış olur.
+        await waitForCondition(
+          () => _pendingQueue(container) == null,
+          reason: 'eski aralık işlenip kuyruk boşalmalı',
+        );
 
         // Eski aralık kaydedildi; yeni oturum hâlâ çalışıyor (kaydedilmedi).
         final sessions = await studyRepo.watchUserSessions(profile.id).first;
@@ -261,7 +277,11 @@ void main() {
 
         // Notifier'ı kur → build() microtask'ı reconcile'i tetikler.
         expect(container.read(studyTimerProvider).isRunning, isTrue);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Beş aralığın tamamı işlenene kadar bekle (sabit süre yükte yetmiyordu).
+        await waitForCondition(
+          () => _pendingQueue(container) == null,
+          reason: 'beş aralık da işlenip kuyruk boşalmalı',
+        );
 
         final sessions = await studyRepo.watchUserSessions(profile.id).first;
         expect(sessions, hasLength(5));
@@ -285,7 +305,8 @@ void main() {
         final (container, studyRepo, profile) = await _buildContainer({});
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
         expect(container.read(studyTimerProvider).isRunning, isFalse);
 
         // Kullanıcı bildirim panelinden Başlat'a bastı: native SSOT'a yazdı ama
@@ -352,7 +373,8 @@ void main() {
         });
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
 
         // Sayaç çalışır benimsendi; "" token verified sanılmamalı.
         final adopted = container.read(studyTimerProvider);
@@ -400,7 +422,8 @@ void main() {
         });
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
         expect(container.read(studyTimerProvider).isRunning, isTrue);
 
         // Kullanıcı Durdur'a ard arda 4 kez basar; state ilk stop'un `await`'i
@@ -455,7 +478,8 @@ void main() {
         });
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
         expect(container.read(studyTimerProvider).startedAt, startMicro);
 
         // Native'in yazdığı ms-yuvarlanmış (µs'siz) echo gelir.
@@ -466,7 +490,11 @@ void main() {
         );
         await prefs.setInt('timer_active_started_at_ms', baseMs);
         await fireReconcile2();
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // 🔴 OLUMSUZ iddia — koşul beklenemez: beklenen durum baştan doğru,
+        // koşul hiç beklemeden döner ve test ölçmek istediğini ÖLÇMEZ. Sabit
+        // TUR döndürülür; istenmeyen benimseme olacak olsaydı burada olurdu
+        // (sabotaj kontrolüyle doğrulandı — WP-766).
+        await drainEventQueue();
 
         // ms eşit → adoption yok → startedAt (µs dahil) DEĞİŞMEZ. Ham != ile
         // adoption tetiklenip µs kırpılıyordu.
@@ -509,7 +537,8 @@ void main() {
         });
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
         expect(container.read(studyTimerProvider).isRunning, isTrue);
 
         // Kullanıcı uygulama içinden Durdur'a bastı → oturum yazılır, durur.
@@ -531,7 +560,11 @@ void main() {
         );
         await prefs.setString('timer_fg_mode', 'running');
         await fireReconcile();
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // 🔴 OLUMSUZ iddia — koşul beklenemez: beklenen durum baştan doğru,
+        // koşul hiç beklemeden döner ve test ölçmek istediğini ÖLÇMEZ. Sabit
+        // TUR döndürülür; istenmeyen benimseme olacak olsaydı burada olurdu
+        // (sabotaj kontrolüyle doğrulandı — WP-766).
+        await drainEventQueue();
 
         // Durdurma geri ALINMAMALI (fix'ten önce echo sayacı diriltiyordu) ve
         // ikinci bir oturum YAZILMAMALI.
@@ -561,7 +594,8 @@ void main() {
         });
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // Kurulum: sabit süre değil sabit TUR (WP-766).
+        await drainEventQueue();
         expect(container.read(studyTimerProvider).isRunning, isTrue);
 
         await container.read(studyTimerProvider.notifier).stop();
@@ -580,7 +614,10 @@ void main() {
         );
         await prefs.setString('timer_fg_mode', 'running');
         await fireReconcile();
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await waitForCondition(
+          () => container.read(studyTimerProvider).startedAt == secondStart,
+          reason: 'farklı ms gerçek yeni başlatmadır, benimsenmeli',
+        );
 
         // Yeni ms echo değil → benimsenmeli (aşırı bastırma yok).
         expect(
@@ -710,11 +747,10 @@ void main() {
           fireImmediately: true,
         );
         addTearDown(sessionsSub.close);
-        // ⚠️ Burada bilerek **koşul beklenmiyor**: olay kuyruğunu sonuna kadar
-        // döndürmek uzlaştırmayı erken çalıştırır ve aşağıda kurulacak
-        // "app-kapalı Durdur" senaryosunu bozar (kuyruk daha yazılmadan
-        // temizlenir). Kısa bir tur yeterli; asıl bekleme durdurmadan sonra.
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        // ⚠️ Burada bilerek **koşul beklenmiyor**: beklenecek bir değişiklik
+        // yok (kuyruk henüz yazılmadı, sayaç zaten çalışır kuruldu). Sabit
+        // süre yerine sabit TUR döndürülür — asıl bekleme durdurmadan sonra.
+        await drainEventQueue();
 
         // Native Durdur'u taklit et: start anahtarları silinir, kuyruğa aralık.
         final prefs = container.read(sharedPreferencesProvider);
@@ -804,7 +840,13 @@ void main() {
         }, repository: flaky);
         final timerSub = container.listen(studyTimerProvider, (_, _) {});
         addTearDown(timerSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 40));
+        await waitForCondition(
+          () {
+            final queue = _pendingQueue(container);
+            return queue != null && !queue.contains(idA) && queue.contains(idB);
+          },
+          reason: 'A yazılıp kuyruktan düşmeli, hatalı B kuyrukta kalmalı',
+        );
 
         // 1. tur: yalnız A yazıldı, B kuyrukta kaldı.
         var sessions = await studyRepo.watchUserSessions(profile.id).first;
@@ -824,7 +866,10 @@ void main() {
         // 2. tur: ağ düzeldi.
         flaky.failIds.clear();
         await fireReconcile4();
-        await Future<void>.delayed(const Duration(milliseconds: 40));
+        await waitForCondition(
+          () => _pendingQueue(container) == null,
+          reason: 'ağ düzeldi, kuyruk tamamen boşalmalı',
+        );
 
         sessions = await studyRepo.watchUserSessions(profile.id).first;
         expect(
@@ -849,7 +894,10 @@ void main() {
       });
       final timerSub = container.listen(studyTimerProvider, (_, _) {});
       addTearDown(timerSub.close);
-      await Future<void>.delayed(const Duration(milliseconds: 40));
+      await waitForCondition(
+        () => _pendingQueue(container) == null,
+        reason: 'kuyruk işlenip anahtar silinmeli',
+      );
 
       final sessions = await studyRepo.watchUserSessions(profile.id).first;
       expect(
