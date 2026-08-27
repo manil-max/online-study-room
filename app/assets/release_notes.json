@@ -3,6 +3,46 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.76",
+      "buildNumber": 76,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v76: silinen bildirim geri geliyor, iki grafik düzeldi",
+      "highlights": [
+        "Sayaç bildirimini kaydırıp silerseniz geri geliyor. Silmeyi engellemek Android 14'ten beri mümkün değil; ama bugüne kadar silindiğinden haberimiz bile olmuyordu ve sayaç görünmeden çalışmaya devam ediyordu.",
+        "\"Oturum dağılımı\" grafiği seçili dönemin dışına taşmıyor. Geçen ay seçiliyken eksen bugüne kadar uzuyor, grafiğin sağ yarısı kalıcı boş kalıyordu.",
+        "Radar grafiğinin tempo köşesi artık seçili dönemi okuyor; hangi dönemi seçerseniz seçin bugüne bakıyordu.",
+        "YENİ (deneysel, kapalı gelir): ekranın üstünde yüzen sayaç şeridi. Yalnızca gizli geliştirici bölümünden açılır ve sistem izni elle verilir."
+      ],
+      "fixes": [
+        "Silinen bildirimden sonra durduracak düğme hiçbir yerde kalmıyordu.",
+        "Oturum dağılımı grafiğinin alt ekseninde dönemin dışında bir tarih yazabiliyordu.",
+        "Radar tempo köşesi, seçili dönem doluyken bile bugün boşsa dibe yapışıyordu."
+      ],
+      "notes": [
+        "Yüzen şerit kilit ekranında görünmez: Android bu tür pencereleri kilit ekranının, bildirim gölgesinin ve güvenli ekranların üstüne çizmez. Kilit ekranındaki sayaç kartı değişmedi.",
+        "Dinamik panel (durum çubuğu çipi) hâlâ görünmüyor; sebebi ölçüldü, sistem terfiyi veriyor ama cihaz üreticisi çizmiyor.",
+        "Sıradaki alarm widget'ı yayında değil."
+      ],
+      "titleEn": "v76: a dismissed notification comes back, two charts fixed",
+      "highlightsEn": [
+        "Swiping the timer notification away brings it back. Preventing dismissal has not been possible since Android 14, but until now we did not even know it had happened and the timer kept running unseen.",
+        "The session scatter chart no longer runs past the selected period. With last month selected the axis stretched to today and the right half of the chart stayed permanently empty.",
+        "The radar chart's pace corner now reads the selected period; it used to look at today no matter what you picked.",
+        "NEW (experimental, ships off): a floating timer strip on top of the screen. It is only enabled from the hidden developer section and the system permission is granted by hand."
+      ],
+      "fixesEn": [
+        "After the notification was dismissed there was no stop button left anywhere.",
+        "The scatter chart's bottom axis could print a date outside the selected period.",
+        "The radar pace corner sank to the floor whenever today was empty, even for a period that was not."
+      ],
+      "notesEn": [
+        "The floating strip does not appear on the lock screen: Android does not draw such windows over the keyguard, the notification shade, or secure screens. The lock screen timer card is unchanged.",
+        "The live status chip still does not appear; the reason was measured — the system grants the promotion but the device maker draws nothing.",
+        "The next-alarm widget is still unpublished."
+      ]
+    },
+    {
       "versionName": "1.0.75",
       "buildNumber": 75,
       "channel": "stable",

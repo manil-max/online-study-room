@@ -4,6 +4,46 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v76 / 1.0.76+76] - 2026-08-27
+
+> **Silinen sayac bildirimi artik gorunmeden kosmuyor. Istatistiklerde iki
+> grafik nihayet secili donemi ciziyor. Ekranin ustunde yuzen sayac seridi
+> geldi -- KAPALI olarak.**
+
+### Öne çıkanlar
+- **Sayaç bildirimini kaydırıp silerseniz geri geliyor.** Silmeyi engellemek
+  Android 14'ten beri mümkün değil; ama bugüne kadar silindiğinden
+  **haberimiz bile olmuyordu**: sayaç görünmeden çalışmaya devam ediyor,
+  durduracak düğme hiçbir yerde kalmıyordu. Artık sayaç hâlâ çalışıyorsa
+  kart geri geliyor.
+- **"Oturum dağılımı" grafiği seçili dönemin dışına taşmıyor.** Geçen ay
+  seçiliyken eksen bugüne kadar uzuyordu: grafiğin sağ yarısı kalıcı boş
+  kalıyor ve alt etiketlerden biri dönemin tamamen dışında bir tarih
+  gösteriyordu.
+- **Radar grafiğinin tempo köşesi artık seçili dönemi okuyor.** Hangi dönemi
+  seçerseniz seçin bugüne bakıyordu; geçen ay seçiliyken bugün boşsa köşe
+  dibe yapışıyordu.
+
+### Yeni (deneysel, KAPALI gelir)
+- **Ekranın üstünde yüzen sayaç şeridi.** Hangi uygulamayı kullanırsanız
+  kullanın sayaç önünüzde durur; sürüklenebilir, konumunu hatırlar,
+  dokununca uygulama açılır. Varsayılan olarak **kapalıdır** ve yalnızca
+  Hakkında ekranındaki gizli geliştirici bölümünden açılır; ayrıca sistemin
+  "diğer uygulamaların üzerinde göster" iznini elle vermeniz gerekir.
+  Hiçbir şey yapmayan kullanıcı için hiçbir şey değişmez.
+
+### Doğrulama
+- Yerel tam kalite kapısı: 20 kapı, 0 kırmızı.
+- Veritabanı değişmedi; migration head `0136` olarak kalıyor.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Yüzen şerit kilit ekranında görünmez.** Android bu tür pencereleri kilit
+  ekranının üstüne çizmez; bildirim gölgesi ve güvenli ekranlar için de aynı
+  kural geçerli. Kilit ekranındaki sayaç kartı değişmedi.
+- **Dinamik panel (durum çubuğu çipi) hâlâ görünmüyor**; sebebi ölçüldü,
+  sistem terfiyi veriyor ama cihaz üreticisi çizmiyor.
+- Sıradaki alarm widget'ı yayında değil.
+
 ## [v75 / 1.0.75+75] - 2026-08-27
 
 > **v74'teki bildirim bozulmasi geri alindi. Deneysel dinamik panel artik

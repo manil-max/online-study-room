@@ -3,6 +3,50 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.76",
+      "buildNumber": 76,
+      "channel": "stable",
+      "date": "2026-08-27",
+      "title": "v76: WP-764 overlay + WP-765 stats windows + WP-766 flake + WP-767 deleteIntent",
+      "highlights": [
+        "WP-764: `TimerOverlay` draws our own window (TYPE_APPLICATION_OVERLAY, TYPE_PHONE below API 26). Not RemoteViews, so no SystemUI inflation limits. Default OFF and locked off by a JVM sentinel plus a source-level contract assertion.",
+        "WP-767: `setDeleteIntent` was absent, so a dismissed foreground-service notification was invisible to us. It now re-posts, guarded by `TimerStateStore.isRunning` so a stopped run is never resurrected.",
+        "WP-765: `SessionScatterChart` gained `endDay`; the window used to be anchored to today with only its LENGTH parameterised. The radar pace axis read `secondsOnDay(sessions, now)` regardless of the selected period.",
+        "WP-766: 16 fixed `Future.delayed(20ms)` waits measured a DURATION where the test needed a CONDITION. Reproducer: 48 CPU burners made it 2-of-3 red; after the fix 12/12 green."
+      ],
+      "fixes": [
+        "Overlay position is clamped to the screen: a persisted off-screen position would have made the strip invisible forever with no way back.",
+        "Touch slop distinguishes drag from tap; without it a few pixels of finger wobble made the strip untappable.",
+        "Overlay permission is never cached — the user can revoke it in Settings and a stale grant crashes `addView`.",
+        "The About developer card exceeded its height budget with the new rows; strings were shortened and a `developer-mode-disable` bottom-edge sentinel added."
+      ],
+      "notes": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "Sabotage: overlay 4 red, Dart surface 6 red across 6 separate sabotages, deleteIntent 2 red (each half isolated), stats 2 red (independent), flake negative-assertion 1 red. All green after revert.",
+        "NOT DEVICE-VERIFIED: that the overlay window actually draws, survives app swipe-away and screen off/on; and that a dismissed notification really re-posts. The strip ships off, so the overlay uncertainty reaches nobody. The deleteIntent behaviour DOES reach everyone.",
+        "The manifest now declares SYSTEM_ALERT_WINDOW (whitelisted with a justification in PLAY_ALLOWED_PERMISSIONS). It is unused while the strip is off, but it is visible in app info and will need a Play declaration."
+      ],
+      "titleEn": "v76: WP-764 overlay + WP-765 stats windows + WP-766 flake + WP-767 deleteIntent",
+      "highlightsEn": [
+        "WP-764: `TimerOverlay` draws our own window (TYPE_APPLICATION_OVERLAY, TYPE_PHONE below API 26). Not RemoteViews, so no SystemUI inflation limits. Default OFF and locked off by a JVM sentinel plus a source-level contract assertion.",
+        "WP-767: `setDeleteIntent` was absent, so a dismissed foreground-service notification was invisible to us. It now re-posts, guarded by `TimerStateStore.isRunning` so a stopped run is never resurrected.",
+        "WP-765: `SessionScatterChart` gained `endDay`; the window used to be anchored to today with only its LENGTH parameterised. The radar pace axis read `secondsOnDay(sessions, now)` regardless of the selected period.",
+        "WP-766: 16 fixed `Future.delayed(20ms)` waits measured a DURATION where the test needed a CONDITION. Reproducer: 48 CPU burners made it 2-of-3 red; after the fix 12/12 green."
+      ],
+      "fixesEn": [
+        "Overlay position is clamped to the screen: a persisted off-screen position would have made the strip invisible forever with no way back.",
+        "Touch slop distinguishes drag from tap; without it a few pixels of finger wobble made the strip untappable.",
+        "Overlay permission is never cached — the user can revoke it in Settings and a stale grant crashes `addView`.",
+        "The About developer card exceeded its height budget with the new rows; strings were shortened and a `developer-mode-disable` bottom-edge sentinel added."
+      ],
+      "notesEn": [
+        "Local gate 20/0 red/2 skipped (deno absent). No migration change, head stays 0136.",
+        "Sabotage: overlay 4 red, Dart surface 6 red across 6 separate sabotages, deleteIntent 2 red (each half isolated), stats 2 red (independent), flake negative-assertion 1 red. All green after revert.",
+        "NOT DEVICE-VERIFIED: that the overlay window actually draws, survives app swipe-away and screen off/on; and that a dismissed notification really re-posts. The strip ships off, so the overlay uncertainty reaches nobody. The deleteIntent behaviour DOES reach everyone.",
+        "The manifest now declares SYSTEM_ALERT_WINDOW (whitelisted with a justification in PLAY_ALLOWED_PERMISSIONS). It is unused while the strip is off, but it is visible in app info and will need a Play declaration."
+      ]
+    },
+    {
       "versionName": "1.0.75",
       "buildNumber": 75,
       "channel": "stable",
