@@ -706,7 +706,11 @@ void main() {
     const files = <String, int>{
       'lib/data/providers/moderation_providers.dart': 4,
       'lib/data/providers/analytics_query_providers.dart': 5,
-      'lib/data/providers/admin_moderation_providers.dart': 4,
+      // WP-777: +1 = `adminUserInsightProvider` (politikasi var, ustteki
+      // esitlik iddiasi onu dogruladi). Sayi TRIPWIRE'dir: yeni bir okuma
+      // saglayicisi eklendiginde bilerek kirmizi dusup buraya bakilmasini
+      // saglar.
+      'lib/data/providers/admin_moderation_providers.dart': 5,
     };
 
     for (final entry in files.entries) {

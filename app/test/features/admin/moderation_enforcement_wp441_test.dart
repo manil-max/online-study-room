@@ -9,6 +9,9 @@ import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/repositories/admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
+import 'package:online_study_room/features/admin/detail/admin_case_detail_page.dart';
+import 'package:online_study_room/features/admin/sanctions/admin_sanction_actions.dart';
+import 'package:online_study_room/features/admin/detail/admin_user_profile_page.dart';
 import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -306,28 +309,76 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('yaptırım sayfası gerekçesiz gönderilemez', (tester) async {
+    // 🔴 UC IDDIA DA YON DEGISTIRDI (WP-775) ve bunu MERKEZI KAPI yakaladi.
+    //
+    // WP-775 karar seridini yeniden yazdi -- sahip cihazda gorup "cok yer
+    // kapliyor" dedi, olculdu ki serit 196 dp ve kalici gerekce alani dort
+    // eylemden yalniz BIRI tarafindan okunuyor. Serit tek satira indi:
+    //   `moderation-decision-sanction`  -> KALKTI (yaptirim KISIYE ait,
+    //                                      profil panelinde)
+    //   `moderation-decision-reason`    -> KALKTI (gerekce artik diyalogda)
+    //   `moderation-decision-quarantine`-> tasma menusunun ICINDE
+    //
+    // O lane iddialari YALNIZ kendi test dosyasinda cevirdi; bu dosya
+    // kirmizi kaldi ve ancak tam kapi tek merkezden kosunca gorundu.
+    // Depodaki ders: lane kendi dosyasini yesil gorup "bitti" der.
+    //
+    // Iddialarin AMACI korundu, yuzeyi degisti: yaptirim gerekcesiz
+    // yazilamaz, karantina gerekce ister, tarihsel kayitta karantina
+    // yazilamaz.
+
+    testWidgets('yaptirim GEREKCESIZ yazilamaz (artik profil panelinde)', (
+      tester,
+    ) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
       await openCase(tester);
 
-      await tester.tap(find.byKey(const Key('moderation-decision-sanction')));
+      // Yaptirim KISIYE uygulanir: yol artik Kullanicilar satiri -> profil.
+      final row = find.byKey(adminCaseUserRowKey(_targetId));
+      expect(row, findsOneWidget);
+      await tester.ensureVisible(row);
+      await tester.tap(row);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Uyar').last);
+      expect(find.byKey(kAdminUserProfileKey), findsOneWidget);
+
+      await tester.tap(find.byKey(kAdminUserSanctionApplyKey));
       await tester.pumpAndSettle();
-      // Gerekçe boşken onay hiçbir şey yazmaz.
+
+      // 🔴 WP-775 GERCEK BIR KAYIP ACMISTI ve bu iddia onu kilitler.
+      // Yaptirim serit yerine bu panele tasinirken `ladder` gecilmedi;
+      // varsayilan `kAdminAccountRestrictionLadder` yalniz `requiresAuthBan`
+      // basamaklarini sunar, yani `Uyar` / `Sustur` / `Isim sifirla` HICBIR
+      // YERDEN uygulanamaz olmustu -- en yumusak ve en cok kullanilan uc
+      // basamak. Vaka sayfasi bunlari hep sunuyordu (`650bcd5f~1`).
+      expect(
+        find.byKey(adminSanctionLadderKey(ModerationAction.warn)),
+        findsOneWidget,
+        reason: 'Tam katalog sunulmuyor: uyari basamagi kayboldu.',
+      );
+      expect(
+        find.byKey(adminSanctionLadderKey(ModerationAction.mute24h)),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(adminSanctionLadderKey(ModerationAction.warn)),
+      );
+      await tester.pumpAndSettle();
+
+      // Gerekce bosken onay hicbir sey yazmaz.
       await tester.tap(find.byKey(const Key('admin-user-reason-confirm')));
       await tester.pumpAndSettle();
       expect(await repo.fetchSanctions(_targetId), isEmpty);
       expect(find.text('Gerekçe belirtilmelidir.'), findsOneWidget);
-      // Uyari snackbar'i kaybolsun; yoksa basari mesaji kuyrukta bekler.
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('moderation-decision-sanction')));
+      await tester.tap(find.byKey(kAdminUserSanctionApplyKey));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Uyar').last);
+      await tester.tap(
+        find.byKey(adminSanctionLadderKey(ModerationAction.warn)),
+      );
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('admin-user-reason-field')),
@@ -340,10 +391,9 @@ void main() {
       final sanctions = await repo.fetchSanctions(_targetId);
       expect(sanctions, hasLength(1));
       expect(sanctions.single.action, ModerationAction.warn);
-      expect(find.text('Yaptırım uygulandı'), findsOneWidget);
     });
 
-    testWidgets('karantina karar şeridinden açılır ve gerekçe ister', (
+    testWidgets('karantina tasma menusunden acilir ve gerekce ISTER', (
       tester,
     ) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
@@ -351,24 +401,35 @@ void main() {
       await tester.pumpAndSettle();
       await openCase(tester);
 
-      // Gerekçe boşken düğme devre dışıdır: hiçbir şey yazılmaz.
-      final quarantine = find.byKey(const Key('moderation-decision-quarantine'));
-      expect(tester.widget<OutlinedButton>(quarantine).onPressed, isNull);
+      await tester.tap(find.byKey(kModerationDecisionMoreKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(kModerationDecisionQuarantineKey));
+      await tester.pumpAndSettle();
+
+      // Gerekce BOS onaylanirsa hicbir sey yazilmaz. Eski yuzeyde bunu
+      // "dugme devre disi" saglardi; simdi diyalog saglar. Olculen sey ayni:
+      // gerekcesiz karantina YOK.
+      expect(find.byKey(const Key('moderation-reason-field')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('moderation-reason-confirm')));
+      await tester.pumpAndSettle();
       expect(repo.quarantineWrites, isEmpty);
 
+      await tester.tap(find.byKey(kModerationDecisionMoreKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(kModerationDecisionQuarantineKey));
+      await tester.pumpAndSettle();
       await tester.enterText(
-        find.byKey(const Key('moderation-decision-reason')),
+        find.byKey(const Key('moderation-reason-field')),
         'inceleme bitene kadar',
       );
       await tester.pumpAndSettle();
-      expect(tester.widget<OutlinedButton>(quarantine).onPressed, isNotNull);
-      await tester.tap(quarantine);
+      await tester.tap(find.byKey(const Key('moderation-reason-confirm')));
       await tester.pumpAndSettle();
 
       expect(repo.quarantineWrites.single, endsWith('=true'));
     });
 
-    testWidgets('tarihsel kayıtta karantina seçeneği hiç etkinleşmez', (
+    testWidgets('tarihsel kayitta karantina SECENEGI hic acilmaz', (
       tester,
     ) async {
       final repo = InMemoryAdminModerationRepository(
@@ -378,26 +439,28 @@ void main() {
       await tester.pumpAndSettle();
       await openCase(tester);
 
-      await tester.enterText(
-        find.byKey(const Key('moderation-decision-reason')),
-        'inceleme bitene kadar',
-      );
+      // 🔴 Bayragi degil DAVRANISI olcuyoruz: menu turu ozel bir enum'la
+      // parametreli oldugu icin `tester.widget<...>` ile okunamaz, ama
+      // asil soru zaten "yonetici karantinaya ULASABILIYOR MU".
+      await tester.tap(find.byKey(kModerationDecisionMoreKey));
       await tester.pumpAndSettle();
-      // Vaka kimliği olmayan satırda karantina yazılamaz; düğme söz vermez.
       expect(
-        tester
-            .widget<OutlinedButton>(
-              find.byKey(const Key('moderation-decision-quarantine')),
-            )
-            .onPressed,
-        isNull,
+        find.byKey(kModerationDecisionQuarantineKey),
+        findsNothing,
+        reason:
+            'Vaka kimligi olmayan satirda karantina yazilamaz; menu acilirsa '
+            'yonetici sozu tutulamayacak bir eylem gorur.',
       );
-      // Yaptırım yolu ise açıktır.
+
+      // Yaptirim yolu ise ACIKTIR: kisi hala kayitli, profil panelinden
+      // yaptirim uygulanabilir.
+      final row = find.byKey(adminCaseUserRowKey(_targetId));
+      await tester.ensureVisible(row);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
       expect(
         tester
-            .widget<OutlinedButton>(
-              find.byKey(const Key('moderation-decision-sanction')),
-            )
+            .widget<FilledButton>(find.byKey(kAdminUserSanctionApplyKey))
             .onPressed,
         isNotNull,
       );

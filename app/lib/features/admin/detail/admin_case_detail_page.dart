@@ -364,6 +364,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
             ? l10n.adminUgcDeletedUser
             : identity.displayName,
         role: l10n.adminUgcTarget,
+        caseId: _case.caseId,
       ),
       for (final reporter in _case.reporters)
         _CaseUserRow(
@@ -373,6 +374,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
               ? l10n.adminUgcDeletedUser
               : reporter.displayName,
           role: l10n.adminUgcReporter,
+          caseId: _case.caseId,
         ),
       const SizedBox(height: 4),
       Text(
@@ -772,12 +774,16 @@ class _CaseUserRow extends ConsumerWidget {
     required this.userId,
     required this.name,
     required this.role,
+    this.caseId,
   });
 
   /// `null` = silinmis hesap; profil acilamaz.
   final String? userId;
   final String name;
   final String role;
+
+  /// Yaptirimi doguran vaka; denetim kaydinda gorunsun diye tasinir.
+  final String? caseId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -806,7 +812,12 @@ class _CaseUserRow extends ConsumerWidget {
     // isidir ve `verified_admin_case_contract_test` ile kilitlenir —
     // "iki ajan birbirinin yoluna saygi gosterip ozelligi baglamadan birakir"
     // tuzagi bu depoda yasandi.
-    openAdminUserProfile(context, userId: id, displayName: name);
+    openAdminUserProfile(
+      context,
+      userId: id,
+      displayName: name,
+      caseId: caseId,
+    );
   }
 
   static String _initials(String name) {

@@ -56,11 +56,15 @@ Future<void> openAdminUserProfile(
   BuildContext context, {
   required String userId,
   String? displayName,
+  String? caseId,
 }) {
   return Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) =>
-          AdminUserProfilePage(userId: userId, displayName: displayName),
+      builder: (_) => AdminUserProfilePage(
+        userId: userId,
+        displayName: displayName,
+        caseId: caseId,
+      ),
     ),
   );
 }
@@ -70,6 +74,7 @@ class AdminUserProfilePage extends ConsumerWidget {
     super.key,
     required this.userId,
     this.displayName,
+    this.caseId,
   });
 
   final String userId;
@@ -77,6 +82,11 @@ class AdminUserProfilePage extends ConsumerWidget {
   /// Cagiran yuzeyin bildigi ad (vaka karti gibi). Dosya cozulunce sunucudaki
   /// ad kazanir; boylece baslik yuklenirken de bos kalmaz.
   final String? displayName;
+
+  /// 🔴 Yaptirimi ACAN vakanin kimligi. Denetim kaydinda yaptirimi hangi
+  /// sikayetin dogurdugunu bu baglar; panel bir vakadan degil de dizinden
+  /// acildiysa `null`dir ve yaptirim yine uygulanir, yalniz vakaya baglanmaz.
+  final String? caseId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -117,6 +127,7 @@ class AdminUserProfilePage extends ConsumerWidget {
             ),
             _SanctionBar(
               targetUserId: userId,
+              caseId: caseId,
               // Kalici yasak teyidi e-postayi yazdirir; e-posta yoksa kimlik.
               confirmationPhrase: email.isEmpty ? userId : email,
               // Silinmis hesaba yaptirim olu anahtardir.
@@ -539,11 +550,13 @@ class _SanctionBar extends ConsumerWidget {
     required this.targetUserId,
     required this.confirmationPhrase,
     required this.enabled,
+    this.caseId,
   });
 
   final String targetUserId;
   final String confirmationPhrase;
   final bool enabled;
+  final String? caseId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -569,6 +582,16 @@ class _SanctionBar extends ConsumerWidget {
                     ref,
                     targetUserId: targetUserId,
                     confirmationPhrase: confirmationPhrase,
+                    // 🔴 TAM katalog. Varsayilan
+                    // `kAdminAccountRestrictionLadder` yalniz
+                    // `requiresAuthBan` basamaklari sunar; WP-775 yaptirimi
+                    // vaka seridinden buraya tasiyinca `Uyar`, `Sustur` ve
+                    // `Isim sifirla` HICBIR YERDEN uygulanamaz oldu -- en cok
+                    // kullanilan, en yumusak uc basamak. Vaka sayfasi bunlari
+                    // hep sunuyordu (`650bcd5f~1`).
+                    ladder: kAdminSanctionLadder,
+                    // Yaptirimi doguran sikayet denetim kaydinda gorunsun.
+                    caseId: caseId,
                   )
                 : null,
             icon: const Icon(Icons.gavel_outlined, size: 20),
