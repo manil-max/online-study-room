@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +27,10 @@ class _FlakySendRepository extends InMemoryAdminRepository {
     required String ticketId,
     required String message,
     String? clientMessageId,
+    // WP-784: arayuze eklenen opsiyonel foto eki; bu sahte onu yalnizca
+    // gecirir, davranisi degismez.
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
     if (failures > 0) {
       failures -= 1;
@@ -35,6 +41,8 @@ class _FlakySendRepository extends InMemoryAdminRepository {
       ticketId: ticketId,
       message: message,
       clientMessageId: clientMessageId,
+      attachmentBytes: attachmentBytes,
+      attachmentExt: attachmentExt,
     );
   }
 }

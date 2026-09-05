@@ -356,11 +356,19 @@ abstract class AdminRepository {
     String userId,
   );
 
+  /// Bir bilete mesaj — kullanici ya da yonetici ucu.
+  ///
+  /// WP-784: ek opsiyoneldir ama [sendCaseMessage] ile ayni kurala tabidir —
+  /// yukleme basarisiz olursa mesaj da gonderilmez ve [AdminException] atilir.
+  /// Kullanici yazma seridindeki onizlemede fotografi gordu; sessizce eksiz
+  /// gondermek, gondermedigi bir seyi gonderdi sanmasidir.
   Future<FeedbackTicketMessage> sendTicketMessage({
     required String userId,
     required String ticketId,
     required String message,
     String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   });
 
   /// Kullanicinin kendi biletlerinde **okunmamis yonetici yaniti** sayisi.

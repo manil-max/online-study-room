@@ -561,14 +561,39 @@ class SupabaseAdminRepository implements AdminRepository {
     required String ticketId,
     required String message,
     String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
+    // Bos/uzun mesaj yuzunden bosa yukleme yapilmasin diye once dogrulanir.
+    final normalized = normalizeFeedbackTicketReply(message);
+
+    String? attachmentPath;
+    if (attachmentBytes != null && attachmentExt != null) {
+      attachmentPath = await uploadReportAttachment(
+        _client,
+        bytes: attachmentBytes,
+        ext: attachmentExt,
+        bucket: kTicketMessageAttachmentBucket,
+      );
+      // 🔴 `sendCaseMessage` ile ayni kural: `uploadReportAttachment` hatayi
+      // yutup `null` doner, burada YUTULMAZ. Ek dusup mesaj gidersaydi
+      // kullanici onizlemede gordugu fotografi gonderdigini sanirdi.
+      if (attachmentPath == null) {
+        throw AdminException(
+          feedbackUserMessageForCode('storage'),
+          code: 'storage',
+        );
+      }
+    }
+
     try {
       final row = await _client.rpc(
         'send_feedback_ticket_message',
         params: {
           'p_ticket_id': ticketId,
-          'p_message': normalizeFeedbackTicketReply(message),
+          'p_message': normalized,
           'p_client_message_id': clientMessageId ?? const Uuid().v4(),
+          'p_attachment_path': attachmentPath,
         },
       );
       return FeedbackTicketMessage.fromMap(

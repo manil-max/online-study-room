@@ -339,6 +339,8 @@ class InMemoryAdminRepository implements AdminRepository {
     required String ticketId,
     required String message,
     String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
     final ticketIndex = _requireTicketParticipant(userId, ticketId);
     final commandId = clientMessageId ?? _uuid.v4();
@@ -349,6 +351,15 @@ class InMemoryAdminRepository implements AdminRepository {
     final senderRole = _superAdminUserIds.contains(userId)
         ? FeedbackTicketSenderRole.admin
         : FeedbackTicketSenderRole.user;
+
+    // WP-784: kullanici ucu de tek foto gonderebilir; yol bicimi sunucudaki
+    // `<uid>/<uuid>.<ext>` ile ayni (`_appendCaseMessage` ile ortak kural).
+    String? attachmentPath;
+    if (attachmentBytes != null && attachmentExt != null) {
+      attachmentPath = '$userId/${_uuid.v4()}.$attachmentExt';
+      _ticketMessageAttachments[attachmentPath] = attachmentBytes;
+    }
+
     final now = DateTime.now();
     final item = FeedbackTicketMessage(
       id: _uuid.v4(),
@@ -367,6 +378,7 @@ class InMemoryAdminRepository implements AdminRepository {
               ) +
           1,
       clientMessageId: commandId,
+      attachmentPath: attachmentPath,
     );
     _ticketMessages.add(item);
     _tickets[ticketIndex] = _tickets[ticketIndex].copyWith(

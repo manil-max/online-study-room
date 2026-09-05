@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -248,15 +250,43 @@ Future<void> showFeedbackTicketConversation({
   );
 }
 
+/// WP-784: yazma seridindeki atac (tek foto) dugmesi.
+const Key kFeedbackReplyAttachKey = Key('feedback-reply-attach');
+
+/// WP-784: gonderilmeden once eklenen fotografin onizlemesi.
+const Key kFeedbackReplyPhotoPreviewKey = Key('feedback-reply-photo-preview');
+
+/// WP-784: onizlemedeki kaldir dugmesi.
+const Key kFeedbackReplyPhotoRemoveKey = Key('feedback-reply-photo-remove');
+
+/// WP-784: yanita eklenmis tek fotograf (galeriden okunmus bayt + uzanti).
+@immutable
+class FeedbackReplyPhoto {
+  const FeedbackReplyPhoto({required this.bytes, required this.ext});
+
+  final Uint8List bytes;
+  final String ext;
+}
+
+/// Galeri kancasi. Uretimde [pickFeedbackReplyPhoto], testte sahte.
+typedef FeedbackReplyPhotoPicker =
+    Future<FeedbackReplyPhoto?> Function(BuildContext context);
+
 /// Gonderilmeyi bekleyen ya da basarisiz olan yanit.
 ///
 /// WP-437: Basarisiz mesaj **kaybolmaz** ve sahte "gonderildi" gorunmez;
 /// ayni istemci komut kimligiyle yeniden denenir (WP-435 idempotency).
+/// WP-784: fotograf da bu kaydin parcasi — yeniden denemede ek kaybolmaz.
 class _PendingReply {
-  _PendingReply({required this.clientMessageId, required this.text});
+  _PendingReply({
+    required this.clientMessageId,
+    required this.text,
+    this.photo,
+  });
 
   final String clientMessageId;
   final String text;
+  final FeedbackReplyPhoto? photo;
   bool failed = false;
 }
 
@@ -296,9 +326,17 @@ class _FeedbackTicketConversationDialog extends StatelessWidget {
 /// Bir biletin admin↔kullanici yazismasi: sabit thread baglami, mesaj listesi
 /// ve gonderme satiri. Kabuktan bagimsizdir; kendisine verilen alani doldurur.
 class FeedbackTicketConversationView extends ConsumerStatefulWidget {
-  const FeedbackTicketConversationView({super.key, required this.ticket});
+  const FeedbackTicketConversationView({
+    super.key,
+    required this.ticket,
+    this.photoPicker,
+  });
 
   final FeedbackTicket ticket;
+
+  /// WP-784: galeri kancasi. `null` ise gercek galeri acilir; test kosumu
+  /// kendi sahtesini gecer (`image_picker` widget testinde calismaz).
+  final FeedbackReplyPhotoPicker? photoPicker;
 
   @override
   ConsumerState<FeedbackTicketConversationView> createState() =>
@@ -315,6 +353,9 @@ class _FeedbackTicketConversationViewState
   // gorunen pencerenin en eskide takili kalmasiydi.
   final _scrollController = ScrollController();
   final List<_PendingReply> _pending = [];
+
+  /// WP-784: gonderilmeyi bekleyen tek fotograf.
+  FeedbackReplyPhoto? _photo;
   List<FeedbackTicketMessage>? _messages;
   StreamSubscription<List<FeedbackTicketMessage>>? _messageSubscription;
   bool _loading = true;
@@ -438,11 +479,27 @@ class _FeedbackTicketConversationViewState
     });
   }
 
+  Future<void> _pickPhoto() async {
+    final picker = widget.photoPicker ?? pickFeedbackReplyPhoto;
+    final photo = await picker(context);
+    if (photo == null || !mounted) return;
+    setState(() => _photo = photo);
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final reply = _PendingReply(clientMessageId: _uuid.v4(), text: text);
-    setState(() => _pending.add(reply));
+    final reply = _PendingReply(
+      clientMessageId: _uuid.v4(),
+      text: text,
+      photo: _photo,
+    );
+    setState(() {
+      _pending.add(reply);
+      // Fotograf artik bekleyen kaydin uzerinde; seritte ikinci kez
+      // gorunmemeli, yoksa ayni foto iki kez gonderilir.
+      _photo = null;
+    });
     _controller.clear();
     _scrollToBottom(animated: true);
     await _deliver(reply);
@@ -462,6 +519,8 @@ class _FeedbackTicketConversationViewState
             ticketId: widget.ticket.id,
             message: reply.text,
             clientMessageId: reply.clientMessageId,
+            attachmentBytes: reply.photo?.bytes,
+            attachmentExt: reply.photo?.ext,
           );
       if (mounted) {
         setState(() => _pending.remove(reply));
@@ -503,6 +562,7 @@ class _FeedbackTicketConversationViewState
     required String body,
     required double maxWidth,
     String? attachmentPath,
+    Uint8List? localPhotoBytes,
     String? statusLabel,
     Color? statusColor,
     VoidCallback? onTap,
@@ -542,6 +602,21 @@ class _FeedbackTicketConversationViewState
                     const SizedBox(height: 8),
                     _TicketPhoto(key: ValueKey(attachmentPath), path: attachmentPath),
                   ],
+                  // WP-784: henuz gonderilmemis yanitin fotografi yerel
+                  // baytlardan cizilir — sunucuda daha yol yok, ama kullanici
+                  // neyi gonderdigini (ve basarisizsa neyin bekledigini)
+                  // gormeli.
+                  if (localPhotoBytes != null) ...[
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      child: Image.memory(
+                        localPhotoBytes,
+                        key: const Key('feedback-pending-photo'),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
                   if (statusLabel != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -556,6 +631,38 @@ class _FeedbackTicketConversationViewState
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// WP-784: gonderilmeden onceki tek foto onizlemesi + kaldir dugmesi.
+  Widget _photoPreview(AppLocalizations l10n, FeedbackReplyPhoto photo) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Container(
+            key: kFeedbackReplyPhotoPreviewKey,
+            height: 96,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: theme.dividerColor),
+              image: DecorationImage(
+                image: MemoryImage(photo.bytes),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          IconButton(
+            key: kFeedbackReplyPhotoRemoveKey,
+            tooltip: l10n.coreKapat,
+            style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+            icon: Icon(Icons.cancel, color: theme.colorScheme.onInverseSurface),
+            onPressed: () => setState(() => _photo = null),
+          ),
+        ],
       ),
     );
   }
@@ -645,6 +752,7 @@ class _FeedbackTicketConversationViewState
                             own: true,
                             senderLabel: l10n.feedbackYou,
                             body: reply.text,
+                            localPhotoBytes: reply.photo?.bytes,
                             maxWidth: bubbleWidth,
                             statusLabel: reply.failed
                                 ? l10n.feedbackMessageFailed
@@ -675,8 +783,21 @@ class _FeedbackTicketConversationViewState
                     ),
             ),
             const SizedBox(height: 12),
+            if (_photo != null) _photoPreview(l10n, _photo!),
             Row(
               children: [
+                // 🔴 Tek adet: foto eklendikten sonra atac dugmesi cizilmez,
+                // yerini onizlemedeki kaldir dugmesi alir.
+                if (_photo == null)
+                  IconButton(
+                    key: kFeedbackReplyAttachKey,
+                    tooltip: l10n.adminVakaYazismaFotoEkle,
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    icon: const Icon(Icons.attach_file),
+                    onPressed: _pickPhoto,
+                  ),
                 Expanded(
                   child: TextField(
                     controller: _controller,
@@ -706,6 +827,40 @@ class _FeedbackTicketConversationViewState
   }
 }
 
+
+/// WP-784 — galeriden tek foto; `features/safety/report_sheet.dart` ve
+/// yonetici yazismasiyla ayni desen.
+///
+/// Asil sinir sunucudadir (`0138` bucket 5 MB + MIME +
+/// `assert_ticket_message_attachment_allowed`); buradaki kontrol yalniz bosa
+/// yukleme yapmamak icindir.
+Future<FeedbackReplyPhoto?> pickFeedbackReplyPhoto(BuildContext context) async {
+  const maxBytes = 5 * 1024 * 1024;
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    if (file == null) return null;
+    final bytes = await file.readAsBytes();
+    if (bytes.lengthInBytes > maxBytes) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileDosyaBoyutu5mbdanKucuk)),
+      );
+      return null;
+    }
+    var ext = file.name.split('.').last.toLowerCase();
+    if (!const ['jpg', 'jpeg', 'png', 'webp'].contains(ext)) {
+      ext = 'jpg';
+    }
+    return FeedbackReplyPhoto(bytes: bytes, ext: ext);
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.profileResimSecilemedi)));
+    return null;
+  }
+}
 
 /// WP-783 — yazismaya ekli tek fotograf, kullanicinin ekraninda.
 ///
