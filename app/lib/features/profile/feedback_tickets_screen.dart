@@ -12,6 +12,9 @@ import '../../data/providers/admin_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../l10n/app_localizations.dart';
+// WP-770: kuyruk tazeleme kurali tek yerde (yazma sonrasi ekranin **izledigi**
+// saglayicilar).
+import '../admin/ticket/admin_ticket_actions.dart';
 // WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
 import 'settings_screen.dart';
 
@@ -257,18 +260,53 @@ class _PendingReply {
   bool failed = false;
 }
 
-class _FeedbackTicketConversationDialog extends ConsumerStatefulWidget {
+/// Kullanici tarafinin kabugu: diyalog. WP-770'te **govde** ortak widget'a
+/// tasindi ([FeedbackTicketConversationView]); yonetim panelinin tam sayfa
+/// bilet detayi ayni govdeyi kullanir, iki kopya yazisma yuzeyi tutulmaz.
+/// Kabuk (anahtar, baslik, "Kapat", olculer) aynen korunur.
+class _FeedbackTicketConversationDialog extends StatelessWidget {
   const _FeedbackTicketConversationDialog({required this.ticket});
 
   final FeedbackTicket ticket;
 
   @override
-  ConsumerState<_FeedbackTicketConversationDialog> createState() =>
-      _FeedbackTicketConversationDialogState();
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final media = MediaQuery.of(context);
+    final width = (media.size.width - 80).clamp(260.0, 520.0);
+    final height = (media.size.height * 0.7).clamp(240.0, 440.0);
+    return AlertDialog(
+      key: Key('feedback-conversation-${ticket.id}'),
+      title: Text(l10n.feedbackConversation),
+      content: SizedBox(
+        width: width,
+        height: height,
+        child: FeedbackTicketConversationView(ticket: ticket),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.coreKapat),
+        ),
+      ],
+    );
+  }
 }
 
-class _FeedbackTicketConversationDialogState
-    extends ConsumerState<_FeedbackTicketConversationDialog> {
+/// Bir biletin admin↔kullanici yazismasi: sabit thread baglami, mesaj listesi
+/// ve gonderme satiri. Kabuktan bagimsizdir; kendisine verilen alani doldurur.
+class FeedbackTicketConversationView extends ConsumerStatefulWidget {
+  const FeedbackTicketConversationView({super.key, required this.ticket});
+
+  final FeedbackTicket ticket;
+
+  @override
+  ConsumerState<FeedbackTicketConversationView> createState() =>
+      _FeedbackTicketConversationViewState();
+}
+
+class _FeedbackTicketConversationViewState
+    extends ConsumerState<FeedbackTicketConversationView> {
   static const _uuid = Uuid();
 
   final _controller = TextEditingController();
@@ -419,7 +457,10 @@ class _FeedbackTicketConversationDialogState
       ref.invalidate(myFeedbackTicketsProvider);
       ref.invalidate(myFeedbackTicketSummariesProvider);
       ref.invalidate(unreadFeedbackReplyCountProvider);
-      ref.invalidate(adminFeedbackTicketsProvider(null));
+      // 🔴 WP-770 (a): burada yalniz `adminFeedbackTicketsProvider(null)`
+      // tazeleniyordu. Panel arsiv gorunumundeyse ya da tur filtresi seciliyse
+      // ekranin **izledigi** aile baskaydi ve liste bayat kaliyordu.
+      refreshFeedbackTicketQueues(ref, widget.ticket.type);
     } on AdminException {
       if (!mounted) return;
       // Mesaj listede kalir; kullanici dokunarak ayni komut kimligiyle
@@ -502,18 +543,14 @@ class _FeedbackTicketConversationDialogState
     final l10n = AppLocalizations.of(context);
     final user = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
-    final media = MediaQuery.of(context);
-    final width = (media.size.width - 80).clamp(260.0, 520.0);
-    final height = (media.size.height * 0.7).clamp(240.0, 440.0);
     final messages = _messages ?? const <FeedbackTicketMessage>[];
     final rowCount = messages.length + _pending.length;
-    return AlertDialog(
-      key: Key('feedback-conversation-${widget.ticket.id}'),
-      title: Text(l10n.feedbackConversation),
-      content: SizedBox(
-        width: width,
-        height: height,
-        child: Column(
+    // Balon genisligi kabugun verdigi alandan turer; diyalogda bu deger
+    // eskiden oldugu gibi govde genisligidir.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bubbleWidth = constraints.maxWidth - 100;
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // WP-437: Sabit thread baglami — konu, durum ve tur her zaman
@@ -574,7 +611,6 @@ class _FeedbackTicketConversationDialogState
                       itemCount: rowCount,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
-                        final bubbleWidth = width - 100;
                         if (index >= messages.length) {
                           final reply = _pending[index - messages.length];
                           return _bubble(
@@ -639,14 +675,8 @@ class _FeedbackTicketConversationDialogState
               ],
             ),
           ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.coreKapat),
-        ),
-      ],
+        );
+      },
     );
   }
 }
