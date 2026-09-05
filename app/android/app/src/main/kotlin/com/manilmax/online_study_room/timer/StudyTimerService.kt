@@ -23,8 +23,6 @@ import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.overlay.TimerOverlay
 import com.manilmax.online_study_room.widgets.TimerWidgets
 import com.manilmax.online_study_room.widgets.rememberedSubjectId
-import com.manilmax.online_study_room.widgets.widgetAccountId
-import com.manilmax.online_study_room.widgets.widgetSubjectOptions
 import java.util.Locale
 
 /**
@@ -224,25 +222,21 @@ internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
  */
 internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_camp
 
-/**
- * Terfi eden (Live Update) kartin DURUM SATIRI (saatin altindaki metin). **Saf.**
+/*
+ * 🔴 WP-791 (sahip, cihazda): terfi eden kartta DURUM SATIRI YOK.
  *
- * 🔴 WP-775 (sahip, cihazda, v79): kart Samsung Saat'in canli bildirimi gibi
- * olsun -- buyuk saat baslikta, altinda tek satir durum, tek dugme. Bu satir
- * ders adidir; ders yoksa odak cumlesi, molada mola cumlesi (Samsung'un "No
- * laps completed" satirinin karsiligi). WP-772'de bu metin BASLIKTI; baslik
- * artik saatin kendisi.
+ * WP-775 saatin altina ders adini koymustu (Samsung Saat'in "No laps
+ * completed" satirinin karsiligi). Cihazda olculdu: ikinci satir varken
+ * One UI saati kuculterek ikisini de sigdiriyor -- sahibin istedigi seyin
+ * tam tersi. Kartta artik yalniz BUYUK SAAT ve dugme var; `setContentText`
+ * hic cagrilmaz. Ders adi kartta gorunmez, ama bildirim gecmisi/TalkBack
+ * icin baslik zaten saati okur ve mola ile odak dugme etiketiyle ayrisir
+ * ("Durdur" / "Calismaya don").
+ *
+ * Bu yuzden `promotedCardStatusLine` ve onu besleyen `runningSubjectName`
+ * SILINDI; geri gelmeleri saatin yeniden kuculmesi demektir. Nobetci:
+ * `timer_card_clock_overlay_wp774_test.dart` (setContentText yasak).
  */
-internal fun promotedCardStatusLine(
-    isBreak: Boolean,
-    subjectName: String?,
-    focusLabel: String,
-    breakLabel: String,
-): String {
-    if (isBreak) return breakLabel
-    val subject = subjectName?.trim().orEmpty()
-    return if (subject.isEmpty()) focusLabel else subject
-}
 
 /**
  * Bosta duran sayac bildiriminin **saf** sunum karari.
@@ -1115,12 +1109,14 @@ class StudyTimerService : Service() {
                 .setCustomBigContentView(custom)
             return builder.build()
         }
-        // 🔴 WP-775 (sahip, cihazda, v79): kart Samsung Saat'in canli bildirimi
-        // gibi -- BUYUK saat baslikta, altinda ders adi, tek dugme. v79'daki
-        // cift saat (basliktaki kronometre + govdedeki metin) gitti: kronometre
-        // ve `when` gosterimi KAPALI. Saat hem kartta hem cipte BIZIM metnimiz
-        // (`shortCriticalText`); `scheduleCardTick` her saniye tazeler. Buyuk
-        // sayacli ozel panel bu yolda imkansiz: ozel gorunum terfiyi dusurur.
+        // 🔴 WP-775 -> WP-791 (sahip, cihazda): kartta YALNIZ buyuk saat ve
+        // dugme. v79'daki cift saat (basliktaki kronometre + govde metni)
+        // gitti; WP-775'in ders adi satiri da gitti, cunku ikinci satir
+        // varken One UI saati kuculuyordu. Kronometre ve `when` gosterimi
+        // KAPALI; saat hem kartta hem cipte BIZIM metnimiz
+        // (`shortCriticalText`), `scheduleCardTick` her saniye tazeler.
+        // Buyuk sayacli ozel panel bu yolda imkansiz: ozel gorunum terfiyi
+        // dusurur.
         val clock = cardClockText(
             nowMs = System.currentTimeMillis(),
             startedAtMs = startedAtMs,
@@ -1129,14 +1125,6 @@ class StudyTimerService : Service() {
         )
         builder
             .setContentTitle(clock)
-            .setContentText(
-                promotedCardStatusLine(
-                    isBreak = isBreak,
-                    subjectName = runningSubjectName(p),
-                    focusLabel = getString(R.string.timer_focusing_title),
-                    breakLabel = getString(R.string.timer_break_title),
-                ),
-            )
             .setShortCriticalText(clock)
             .setShowWhen(false)
             .setUsesChronometer(false)
@@ -1269,18 +1257,6 @@ class StudyTimerService : Service() {
         )
         return views
     }
-
-    /**
-     * Kosan kosunun ders ADI (kimlik degil). Ayna yoksa ya da kimlik listede
-     * yoksa `null`; bozuk prefs basligi bos birakir, SURECI oldurmez.
-     */
-    private fun runningSubjectName(p: SharedPreferences): String? = runCatching {
-        val subjectId = p.getString(TimerStateStore.KEY_SUBJECT, null)?.trim().orEmpty()
-        if (subjectId.isEmpty()) return@runCatching null
-        widgetSubjectOptions(p, widgetAccountId(p))
-            .firstOrNull { it.id == subjectId }
-            ?.name
-    }.getOrNull()
 
     private fun baseBuilder(): NotificationCompat.Builder =
         NotificationCompat.Builder(this, CHANNEL_ID)

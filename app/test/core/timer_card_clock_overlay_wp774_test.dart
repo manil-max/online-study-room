@@ -33,12 +33,19 @@ void main() {
 
   test('terfi eden kartin govdesi canli saat tasir ve saniyede bir yenilenir',
       () {
-    // WP-775: saat BASLIK (Samsung Saat gibi), durum satiri altinda; cip
-    // metni de ayni saat. Kronometre yok (cift saat kusuru).
-    final promoted = service.substring(service.indexOf('promotedCardStatusLine('));
-    expect(promoted, contains('.setContentTitle(clock)'));
+    // WP-775 -> WP-791: saat BASLIK, cip metni de ayni saat, kronometre yok
+    // (cift saat kusuru) ve GOVDE SATIRI YOK -- ikinci satir varken One UI
+    // saati kuculuyordu.
+    final promoted = service.substring(service.indexOf('.setContentTitle(clock)'));
     expect(promoted, contains('.setShortCriticalText(clock)'));
     expect(promoted, contains('.setUsesChronometer(false)'));
+    final promotedBranch = promoted.substring(0, promoted.indexOf('addAction('));
+    expect(
+      promotedBranch,
+      isNot(contains('.setContentText(')),
+      reason:
+          'Kartta ikinci satir olursa One UI saati kucultur (WP-791 cihaz olcumu).',
+    );
     expect(service, contains('scheduleCardTick(startedAtMs)'));
     expect(service, contains('CARD_TICK_TOKEN'));
     // Ekran kapaliyken bildirim gonderilmez; yalniz durum yoklanir.

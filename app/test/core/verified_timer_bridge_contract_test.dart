@@ -171,8 +171,10 @@ void main() {
       reason:
           'Kronometre geri gelirse baslikta ikinci bir saat belirir (v79 kusuru).',
     );
-    // Saatin altındaki durum satırı saf karardan gelir: ders adı / faz cümlesi.
-    expect(service, contains('promotedCardStatusLine('));
+    // 🔴 WP-791 (sahip, cihazda): kartta durum satırı YOK — ikinci satır
+    // varken One UI saati küçültüyordu. Terfi eden dalda `setContentText`
+    // hiç çağrılmaz; kartta yalnız büyük saat ve düğme kalır.
+    expect(service, isNot(contains('promotedCardStatusLine(')));
 
     // Durum çubuğu ikonu monokrom; renkli launcher ikonu değil.
     // WP-772: jenerik saat kadranı yerine uygulamanın logosu (kamp ateşi

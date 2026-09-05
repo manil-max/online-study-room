@@ -11713,3 +11713,31 @@ bildirimi referans gösterildi: "buna benzer olsun".
 ### Cihazda ölçülmeyen
 - Kartın One UI'da Samsung Saat'inki gibi çizildiği; çipin metin saatle
   (kronometre yok) akıcı kaldığı; AOD'de 5 sn gecikme. Sahip v80'de ölçecek.
+
+## 2026-09-05 — KARTTA DERS ADI YOK: YALNIZ BÜYÜK SAAT (WP-791)
+
+**Tetikleyen (sahip, cihazda):** *"ders yazmasın, saat iyice küçülüyor ya."*
+
+WP-790 saatin altına ders adını koymuştu (Samsung Saat'in "No laps completed"
+satırının karşılığı). Cihazda ölçüldü: ikinci satır varken One UI saati
+küçülterek ikisini de sığdırıyor — istenenin tam tersi.
+
+### Değişen
+- `StudyTimerService.kt`: terfi eden dalda `setContentText` **hiç
+  çağrılmıyor**; kartta yalnız büyük saat (`setContentTitle(clock)`) ve
+  düğme var. Çip metni yine aynı saat.
+- `promotedCardStatusLine` ve onu besleyen `runningSubjectName` **silindi**
+  (widget ders-aynası importları da). Geri gelmeleri saatin yeniden
+  küçülmesi demektir; karar kodda yorum olarak duruyor.
+- Mola ile odak ayrımı düğme etiketiyle: "Durdur" / "Çalışmaya dön".
+
+### Testler
+- `timer_card_clock_overlay_wp774_test.dart`: terfi eden dalda
+  `.setContentText(` **yasak** (dal `addAction(`e kadar taranıyor).
+- `verified_timer_bridge_contract_test.dart`: `promotedCardStatusLine(`
+  artık kodda **olmamalı**.
+- `TimerLiveUpdateWp753Test`: durum satırı testi kaldırıldı (85 JVM yeşil).
+- Dart 16/16, analyze 0.
+
+### Cihazda ölçülmeyen
+- Tek satırlık kartta saatin gerçekten büyüdüğü. Sahip v80'de ölçecek.
