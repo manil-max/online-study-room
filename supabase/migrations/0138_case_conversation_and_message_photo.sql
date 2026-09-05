@@ -49,6 +49,64 @@
 -- `0096`'nin kuralini zayiflatirdi; bu yuzden ayri `ticket_message_attachments`
 -- bucket'i acilir ve okumasi **biletin taraflarina** acilir.
 --
+-- ---------------------------------------------------------------------------
+-- KARAR 4 — hesap silinince bu fotograflara ne olur (PURGE KAPSAMI)
+-- ---------------------------------------------------------------------------
+-- Yeni bir bucket acmak `supabase/tests/049_account_purge_storage_scope.test.sql`
+-- §1'deki dondurulmus envanter iddiasini KIRMIZI dusurur. Iddia bilerek
+-- boyledir: bir bucket, icindeki dosyalarin HESAP SILINDIGINDE ne olacagina
+-- dair bir karar verilmeden eklenemez. Karar ve gerekcesi burada.
+--
+-- ELENEN YOL — eki `feedback_attachments` icinde tasimak (sifir yeni bucket):
+--   • O bucket yalnizca `(id, name, public)` ile aciliyor (`0045:84`,
+--     `0072:17`); `file_size_limit` ve `allowed_mime_types` YOK. Foto oraya
+--     tasinsaydi `0096`nin bucket duzeyindeki 5 MB / jpeg-png-webp kapisi
+--     kaybolurdu. Geri kazanmanin tek yolu, halihazirda dosya tutan bir
+--     bucket'in sozlesmesini geriye donuk daraltmakti.
+--   • Okuma politikasi `kullanici_ve_admin_ekleri_okuyabilir` (`0045:97-105`,
+--     `0072:36-46`) "kendi klasorun VEYA super-admin" der. Yoneticinin
+--     gonderdigi fotograf yoneticinin klasorunde durur; yani KULLANICI
+--     OKUYAMAZDI. Duzeltmek, eski nesneleri tasiyan bir bucket'in okuma
+--     sinirini genisletmek demekti.
+--   Ozet: (b) "yeni yuzey acmiyor" gibi gorunur ama PRODUCTION'da duran bir
+--   bucket'in IKI sozlesmesini birden degistirir.
+--
+-- SECILEN YOL (a) — bucket kalir, purge KULLANICI dongusune girer:
+--   • Yeni bucket hicbir mevcut nesneye dokunmaz; kendi dar sinirlariyla
+--     dogar ve `0096` desenini birebir tasir.
+--   • Acilan tek yeni yuzey `USER_OWNED_STORAGE_BUCKETS` listesine eklenen
+--     tek satirdir — zaten kirmizi testin yazdirmak istedigi karar.
+--
+-- PURGE BU BUCKET'A NASIL ERISIR (taklit edilen desen):
+--   `purge-accounts/index.ts:96-98` listeye girme olcutunu tek cumleyle
+--   yaziyor: nesne yolunun ilk klasoru ham `auth.uid()` mi? Burada evet ve
+--   UC yerde birden zorlanir:
+--     - yukleme politikasi `ticket_message_attachments_insert_own` (asagida)
+--     - sunucu kapisi `assert_ticket_message_attachment_allowed` (asagida)
+--     - istemci yolu `<uid>/<uuid>.<ext>`
+--       (`app/lib/data/repositories/supabase/report_attachment_upload.dart:56`)
+--   Yani uzay `feedback_attachments` / `report_attachments` ile birebir ayni
+--   (`index.ts:100-102`); mevcut kullanici dongusu (`index.ts:193-195` ->
+--   `purgeStorageFolder`) bucket adi listeye yazilir yazilmaz her nesneyi
+--   sayfalayarak siler. Silmenin bedeli yok: dosyayi isaret eden satir
+--   (`feedback_ticket_messages` -> `feedback_tickets.user_id` -> `auth.users`
+--   cascade) zaten gidiyor; birakmak "delil saklamak" degil, hicbir satirin
+--   isaret etmedigi bir fotograf birakmak olurdu (`index.ts:104-109`).
+--
+-- 🔴 Temizlik BU MIGRATION'DA yapilamaz: `0054` DB'den dogrudan
+-- `storage.objects` silmeyi kaldirdi ("Direct deletions from storage tables
+-- is not allowed, use the storage API"). Purge yolu yalniz Edge function
+-- listesinde yasayabilir; bu dosya o listenin dayanagini (uid anahtarli uzay)
+-- kurar ve test onu olcer.
+--
+-- 🔴 BILINEN ARTIK (bilerek birakildi, kapsam disi): yoneticinin gonderdigi
+-- fotograf yoneticinin klasorundedir. Karsi taraf hesabini silince bilet
+-- satirlari cascade ile gider, o fotograf yoneticinin klasorunde oksuz kalir;
+-- ancak yoneticinin KENDI hesabi silindiginde temizlenir. Diger uc bucket'ta
+-- bu durum yok, cunku oralara yalniz biletin/raporun sahibi yukluyor.
+-- Kapatmak `deleteUser`dan ONCE `attachment_path` toplayan ayri bir purge
+-- adimi gerektirir — ayri WP.
+--
 -- Geri alma (Rollback):
 --   drop function if exists public.admin_send_case_message(uuid, text, text, uuid, text);
 --   drop function if exists public.admin_case_conversation_channels(uuid);
@@ -71,6 +129,10 @@
 --   -- `_enqueue_support_ticket_admin_push` govdelerini `0103`/`0090` haline dondur.
 --   -- Bucket ve objeler otomatik silinmez; konusma kaniti oldugu icin elle
 --   -- degerlendirilir: delete from storage.buckets where id='ticket_message_attachments';
+--   -- Geri alirken `supabase/functions/purge-accounts/index.ts` icindeki
+--   -- `USER_OWNED_STORAGE_BUCKETS` listesinden de 'ticket_message_attachments'
+--   -- satiri cikarilir (KARAR 4); aksi halde purge var olmayan bir bucket'i
+--   -- listelemeye calisir ve is retry kuyruguna duser.
 
 -- ---------------------------------------------------------------------------
 -- 1. Mesaj basina tek foto eki
@@ -78,6 +140,11 @@
 alter table public.feedback_ticket_messages
   add column if not exists attachment_path text;
 
+-- 🔴 PURGE KAPSAMI (KARAR 4): bu bucket'in adi
+-- `supabase/functions/purge-accounts/index.ts` icindeki
+-- `USER_OWNED_STORAGE_BUCKETS` listesinde BULUNMAK ZORUNDADIR. Bulunmazsa
+-- hesap silindiginde fotograflar ham uid klasorunde oksuz kalir ve hata bile
+-- vermez. Sozlesme: `supabase/tests/049_account_purge_storage_scope.test.sql`.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'ticket_message_attachments',
