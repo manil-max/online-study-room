@@ -9,6 +9,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/feedback_ticket.dart';
 import '../../../data/models/feedback_ticket_message.dart';
+import '../../../data/models/feedback_ticket_note.dart';
 import '../../../data/models/moderation_case.dart';
 import '../../../data/models/report_target.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
@@ -74,6 +75,16 @@ const Key kAdminCaseSanctionRevokeKey = Key('admin-case-sanction-revoke');
 
 /// Sikayet edenle yazisma (aynali destek kaydi).
 const Key kAdminCaseReplyKey = Key('admin-case-reply');
+
+/// WP-795: **Ic notlar** — yalniz yoneticiler gorur. Migration yok: notlar
+/// vakanin ayna biletine (`report_ugc`, 0110) yazilir; bilet yoksa bolum
+/// bunu soyler ve giris alani cizilmez.
+const Key kAdminCaseNotesKey = Key('admin-case-notes');
+const Key kAdminCaseNoteFieldKey = Key('admin-case-note-field');
+const Key kAdminCaseNoteSendKey = Key('admin-case-note-send');
+
+/// Tek bir not satiri; `noteId` ile benzersizlesir.
+Key adminCaseNoteRowKey(String noteId) => Key('admin-case-note-$noteId');
 
 /// Hedefe dogrudan bildirim (kullaniciya ozel duyuru).
 const Key kAdminCaseNoticeTitleKey = Key('admin-case-notice-title');
@@ -222,6 +233,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           Text(l10n.adminIncelemeDetayYok),
           const SizedBox(height: 24),
           ..._users(context),
+          ..._notes(context),
           ..._contactFold(context),
         ],
       );
@@ -241,6 +253,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           ..._evidence(context, data),
           const SizedBox(height: 24),
           ..._users(context, detail: data),
+          ..._notes(context),
           ..._contactFold(context),
         ],
       ),
@@ -380,6 +393,36 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       Text(
         l10n.adminVakaSikayetSayisi(count),
         style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      const SizedBox(height: 24),
+    ];
+  }
+
+  /// **Ic notlar** — Kullanicilar'dan sonra, yazisma katindan once.
+  ///
+  /// WP-795, sahibin onayladigi onizleme. Veri katmani yeni degil: her UGC
+  /// sikayeti bir ayna destek bileti acar ve bilet notlari zaten var
+  /// (`fetchTicketNotes` / `addTicketNote`). Bolum o bilete yazar.
+  ///
+  /// Ayna bilet yoksa (rapor kimligi cozulmeyen eski vaka) alan cizilmez ve
+  /// NEDEN cizilmedigi soylenir — sessiz bosluk degil.
+  List<Widget> _notes(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final ticket = widget.mirrorTicket;
+    return [
+      Column(
+        key: kAdminCaseNotesKey,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _section(context, l10n.adminIcNotlar),
+          if (ticket == null)
+            Text(
+              l10n.adminVakaNotYok,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            _CaseNotes(ticketId: ticket.id),
+        ],
       ),
       const SizedBox(height: 24),
     ];
@@ -869,6 +912,185 @@ class _Signal extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Vaka ic notlari — ayna biletin notlari, sayfanin govdesinde.
+///
+/// `ticket/admin_ticket_detail_page.dart` `_TicketNotes` deseninin kopyasi;
+/// iki fark var: satir kimligi anahtarlanir (test satiri arar) ve gonderim
+/// `authStateProvider.future` ile bekler (bkz. [_add]).
+class _CaseNotes extends ConsumerStatefulWidget {
+  const _CaseNotes({required this.ticketId});
+
+  final String ticketId;
+
+  @override
+  ConsumerState<_CaseNotes> createState() => _CaseNotesState();
+}
+
+class _CaseNotesState extends ConsumerState<_CaseNotes> {
+  final _controller = TextEditingController();
+  List<FeedbackTicketNote>? _notes;
+  bool _loading = true;
+
+  /// Okuma hatasi ile "not yok" ayri durumlardir (WP-770 dersi: hata
+  /// yutulunca govde BOS ciziliyordu).
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    try {
+      final notes = await ref
+          .read(adminRepositoryProvider)
+          .fetchTicketNotes(widget.ticketId);
+      if (!mounted) return;
+      setState(() {
+        _notes = notes;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _notes = null;
+        _loading = false;
+        _failed = true;
+      });
+    }
+  }
+
+  Future<void> _add() async {
+    final text = _controller.text.trim();
+    // Bos not sunucuya gitmez.
+    if (text.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    // 🔴 `.value` DEGIL `.future` — dinleyicisiz anda `.value` null doner ve
+    // dugme sessizce hicbir sey yapmaz (depoda kayitli Riverpod tuzagi).
+    final admin = await ref.read(authStateProvider.future);
+    if (!mounted || admin == null) return;
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .addTicketNote(
+            ticketId: widget.ticketId,
+            note: text,
+            adminId: admin.id,
+          );
+    } on AdminException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    _controller.clear();
+    await _load();
+  }
+
+  Widget _body(AppLocalizations l10n, String? currentAdminId) {
+    if (_loading) {
+      return const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_failed) {
+      return Row(
+        children: [
+          Expanded(child: Text(l10n.adminBiletNotOkunamadi)),
+          IconButton(
+            tooltip: l10n.updaterTekrarDene,
+            style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+            icon: const Icon(Icons.refresh),
+            onPressed: _load,
+          ),
+        ],
+      );
+    }
+    final notes = _notes ?? const <FeedbackTicketNote>[];
+    if (notes.isEmpty) return Text(l10n.adminHenuzNotYok);
+    return Column(
+      children: [
+        for (final note in notes)
+          ListTile(
+            key: adminCaseNoteRowKey(note.id),
+            contentPadding: EdgeInsets.zero,
+            title: Text(note.note),
+            // "sen" / admin kimligi · tarih. Silinen admin icin `0114` alani
+            // NULL'lar (WP-464).
+            subtitle: Text(
+              '${_author(l10n, note.adminId, currentAdminId)} · '
+              '${note.createdAt.toString().substring(0, 16)}',
+            ),
+          ),
+      ],
+    );
+  }
+
+  static String _author(
+    AppLocalizations l10n,
+    String? adminId,
+    String? currentAdminId,
+  ) {
+    if (adminId == null) return l10n.adminUgcDeletedUser;
+    if (adminId == currentAdminId) return l10n.feedbackYou;
+    return adminId;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final currentAdminId = ref.watch(authStateProvider).value?.id;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.adminIcNotlarGizli,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _body(l10n, currentAdminId),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: kAdminCaseNoteFieldKey,
+                controller: _controller,
+                decoration: InputDecoration(
+                  hintText: l10n.adminYeniNot,
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onSubmitted: (_) => _add(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.tonal(
+              key: kAdminCaseNoteSendKey,
+              onPressed: _add,
+              child: Text(l10n.adminNotEkle),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
