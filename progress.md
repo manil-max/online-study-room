@@ -11976,3 +11976,28 @@ büyütür — yani varsayılan yol.
 - Genişletilmiş bildirimde 56sp saatin One UI'da kırpılmadan çizildiği;
   daraltılmışta 32sp'nin satırı uzatmadığı.
 - Kapananlar çipinin dar telefonda filtre şeridine sığması (yatay kaydırma var).
+
+## 2026-09-05 — v81 YAYINDA + PLAY ALPHA COMPLETED (WP-792/793 kullanıcıya ulaştı)
+
+Sahip GO: *"neyse v81'i çıkar … google play'e de atar mısın"* → *"bitince play e
+completed at, haber ver."*
+
+| Adım | Kanıt |
+|---|---|
+| release commit / tag | `17327249`, `v81` |
+| Release Orchestrator | `33988535747` 6/6, GitHub Release 20:16:59Z |
+| Play upload | `33990740683` → `alpha` **completed** |
+| Play verify | `33990826649` → `alpha = 81` (v80 draft yerini bıraktı) |
+| Veritabanı | değişmedi, head `0138` |
+
+Kanıt belgesi: `docs/qa/V81-STABLE-RELEASE-EVIDENCE.md`.
+
+🔴 Sahip **Live Update modunda** olduğunu teyit etti ("live update dedim, ona
+göre küçük dedim"). WP-793 o yolda **hiçbir fark üretmez** — özel görünüm
+yasak, başlık boyutunu sistem çizer. Sürüm notunda açıkça yazılı; varsayılan
+paneldeki kullanıcılar için geçerli. Sahibin gölgesindeki küçük MM:SS için
+kodda yapılabilecek bir şey YOK; bu bir kusur değil, o yolun sınırı.
+
+### Cihazda ölçülmeyen (sahip v81'de bakacak)
+- Kapananlar çipi + çözülen vakanın listeden gitmesi (asıl şikâyet).
+- Genişletilmiş bildirimde 56sp saat — yalnız zengin panel kullanıcılarında.
