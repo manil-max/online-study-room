@@ -4,6 +4,22 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v81 / 1.0.81+81] - 2026-09-05
+
+### Öne çıkanlar
+
+- Yönetim kuyruğunda çözülen ve reddedilen işler artık listeden kalkar; Kapananlar filtresiyle her zaman ulaşılabilir.
+- Bildirim panelinde sayaç büyüdü: genişletilmiş bildirimde tam boy saat, daraltılmışta daha okunaklı rakamlar.
+
+### Düzeltmeler
+
+- Kapananlar filtresi dar ekranlarda da kaydırmadan görünür.
+
+### Doğrulama sınırı
+
+- Canlı bildirim (Live Update) modunda bildirim panelindeki sayaç boyutunu telefonun sistemi belirler; bu sürüm o modu değiştirmez.
+- Genişletilmiş bildirimdeki tam boy saatin gerçek telefondaki görünümü henüz ölçülmedi.
+
 ## [v80 / 1.0.80+80] - 2026-09-05
 
 ### Öne çıkanlar

@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.81",
+      "buildNumber": 81,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v81: WP-792 queue closed-state filter; WP-793 expanded notification clock",
+      "highlights": [
+        "WP-792: buildAdminQueue no longer keeps closed cases/tickets in the default list; a pinned Closed chip (kAdminQueueClosedFilterKey) shows only closed work and keeps the reopen path. Root cause: admin_ugc_report_groups() has no status filter and the queue only sorted closed items to the bottom.",
+        "WP-793: timer_notification_big.xml gives the expanded custom view its own layout (56sp clock alone on a row, pill below); collapsed clock 26->32sp within the 44dp button height; buildRunningRemoteViews(layout=...) binds both layouts with shared ids."
+      ],
+      "fixes": [
+        "WP-792/2: Closed chip moved outside the horizontally scrolling type-chip strip; at 390dp it previously landed at x=706 and was unreachable without scrolling.",
+        "Mixed line endings in StudyTimerService.kt (467 CRLF + 965 LF) re-applied byte-for-byte from the HEAD blob so the diff is 10/2, not 969 lines."
+      ],
+      "notes": [
+        "No database change; migration head stays 0138 on staging and production. Play: v80 was uploaded to alpha as draft (33984240093); v81 goes to alpha after this release.",
+        "NOT DEVICE-VERIFIED: 56sp expanded clock rendering on One UI. The owner uses the Live Update (promoted) path, where custom views are forbidden and the system draws the title size; WP-793 does not change that path."
+      ]
+    },
+    {
       "versionName": "1.0.80",
       "buildNumber": 80,
       "channel": "stable",

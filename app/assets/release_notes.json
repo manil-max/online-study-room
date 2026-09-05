@@ -3,6 +3,34 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.81",
+      "buildNumber": 81,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v81: geri bildirimlerinizle iyileştirmeler",
+      "highlights": [
+        "Yönetim kuyruğunda çözülen ve reddedilen işler artık listeden kalkar; Kapananlar filtresiyle her zaman ulaşabilirsin.",
+        "Bildirim panelinde sayaç büyüdü: genişletilmiş bildirimde tam boy saat, daraltılmışta daha okunaklı rakamlar."
+      ],
+      "fixes": [
+        "Kapananlar filtresi dar ekranlarda da kaydırmadan görünür."
+      ],
+      "notes": [
+        "Canlı bildirim (Live Update) modunda bildirim panelindeki sayaç boyutunu telefonun sistemi belirler."
+      ],
+      "titleEn": "v81: improvements from your feedback",
+      "highlightsEn": [
+        "Resolved and rejected items now leave the moderation queue; the Closed filter keeps them one tap away.",
+        "The timer in the notification panel is bigger: a full-size clock when expanded, clearer digits when collapsed."
+      ],
+      "fixesEn": [
+        "The Closed filter stays visible on narrow screens without scrolling."
+      ],
+      "notesEn": [
+        "In Live Update mode, the system decides the size of the clock shown in the notification panel."
+      ]
+    },
+    {
       "versionName": "1.0.80",
       "buildNumber": 80,
       "channel": "stable",
