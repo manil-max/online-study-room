@@ -107,7 +107,10 @@ List<AdminDirectoryEntry> adminMergeDirectory({
       AdminDirectoryEntry(
         id: member.id,
         displayName: member.displayName,
-        isMember: true,
+        // 🔴 WP-771: `is_active` sunucudan geliyordu ama okunmuyordu — gruptan
+        // AYRILMIS kisi secicide "Grup uyesi" olarak isaretleniyordu. Satir
+        // kalir (kisi dizinde vardir), yalniz uyelik iddiasi kalkar.
+        isMember: member.isActive,
       ),
     );
   }
@@ -182,17 +185,28 @@ class AdminGroupMemberList extends ConsumerWidget {
                     l10n.adminIdGroupid(member.id),
                     style: theme.textTheme.bodySmall,
                   ),
-                  trailing: IconButton(
-                    tooltip: l10n.adminUyeyiAt,
-                    icon: const Icon(Icons.person_remove_outlined, size: 20),
-                    onPressed: () => onRemove(
-                      AdminDirectoryEntry(
-                        id: member.id,
-                        displayName: adminMemberLabel(member),
-                        isMember: true,
-                      ),
-                    ),
-                  ),
+                  // 🔴 WP-771: ayrilmis uye aktif uye gibi ciziliyor ve
+                  // yanina "Uyeyi at" dugmesi konuyordu. Olmayan bir uyeligi
+                  // bitiren dugme yalan soyler; satir etiketle kalir.
+                  trailing: member.isActive
+                      ? IconButton(
+                          tooltip: l10n.adminUyeyiAt,
+                          icon: const Icon(
+                            Icons.person_remove_outlined,
+                            size: 20,
+                          ),
+                          onPressed: () => onRemove(
+                            AdminDirectoryEntry(
+                              id: member.id,
+                              displayName: adminMemberLabel(member),
+                              isMember: true,
+                            ),
+                          ),
+                        )
+                      : Chip(
+                          label: Text(l10n.adminEskiUye),
+                          visualDensity: VisualDensity.compact,
+                        ),
                 ),
             ],
           ),

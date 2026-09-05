@@ -88,10 +88,19 @@ class AdminPersonDossier extends ConsumerWidget {
   final String? targetEmail;
 
   /// Sert teyitte yazdirilacak metin: e-posta bilinmiyorsa kimlik.
+  ///
+  /// 🔴 WP-771: burada `ref.read` vardi. `adminUsersProvider` **autoDispose**
+  /// (`data/providers/admin_providers.dart:131`); dinleyicisi olmayan bir
+  /// `read` Riverpod 3'te `AsyncLoading` (deger `null`) doner, yani e-posta
+  /// HIC cozulmuyordu. Vakadan acilan dosyada — kopru e-postayi tasimaz
+  /// (`widgets/moderation_queue_card.dart:90`) — "Kalici yasak"/"Hesabi sil"
+  /// teyidi 36 karakterlik UUID yazdiriyordu. `watch` hem saglayiciyi ayakta
+  /// tutar hem de cevap gelince ekrani tazeler. Sozlesme degismedi: e-posta
+  /// yazilmadan geri alinamaz eylem uygulanmaz.
   String _confirmationPhrase(WidgetRef ref) {
     final known = targetEmail?.trim();
     if (known != null && known.isNotEmpty) return known;
-    final users = ref.read(adminUsersProvider).value;
+    final users = ref.watch(adminUsersProvider).value;
     if (users != null) {
       for (final user in users) {
         if (user.id == targetUserId) return user.email;
@@ -221,10 +230,9 @@ class AdminPersonDossier extends ConsumerWidget {
             targetUserId: targetUserId,
             reason: reason,
           );
-    } on AdminException {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-      );
+    } on AdminException catch (e) {
+      // 🔴 WP-771: sunucunun gercek mesaji burada yutuluyordu.
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
       return;
     }
     ref.invalidate(adminUsersProvider);

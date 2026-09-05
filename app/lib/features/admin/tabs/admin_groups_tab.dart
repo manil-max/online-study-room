@@ -144,62 +144,36 @@ class _GroupCard extends ConsumerWidget {
     await _perform(context, ref, action: 'delete_group', reason: reason);
   }
 
-  /// Gerekce diyalogu. Kontrolun `dispose`u burada garanti — eski kod iki
-  /// `TextEditingController`i hic serbest birakmiyordu (§2.4).
+  /// Gerekce diyalogu.
+  ///
+  /// 🔴 WP-771: kontrol eskiden BURADA, `showDialog` doner donmez `dispose`
+  /// ediliyordu. Diyalogun kapanis animasyonu hala surdugu icin `TextField`
+  /// atilmis bir controller ile yeniden ciziliyor ve cerceve
+  /// "A TextEditingController was used after being disposed" ile dusuyordu —
+  /// yani gerekce yazip "Onayla"ya basan yonetici hata kabugu goruyordu.
+  /// Ayni ders `sanctions/admin_sanction_dialogs.dart:34-43` icinde zaten
+  /// yaziliydi: kontrolu **diyalogun kendisi** tutar ve serbest birakir.
   Future<String?> _askReason(
     BuildContext context, {
     required String title,
     required String subtitle,
   }) async {
     final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController();
-    try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(subtitle),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: l10n.adminGerekceZorunlu,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.adminIptal),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.adminOnayla),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return null;
-      final reason = controller.text.trim();
-      if (reason.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.adminGerekliAlanlarDoldurulmalidir)),
-          );
-        }
-        return null;
+    final raw = await showDialog<String>(
+      context: context,
+      builder: (_) => _GroupReasonDialog(title: title, subtitle: subtitle),
+    );
+    if (raw == null) return null;
+    final reason = raw.trim();
+    if (reason.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.adminGerekliAlanlarDoldurulmalidir)),
+        );
       }
-      return reason;
-    } finally {
-      controller.dispose();
+      return null;
     }
+    return reason;
   }
 
   Future<void> _perform(
@@ -220,16 +194,24 @@ class _GroupCard extends ConsumerWidget {
             reason: reason,
           );
       ref.invalidate(adminGroupsProvider);
+      // 🔴 WP-771: uye listesi AYRI saglayicidan gelir ve `autoDispose`
+      // degildir; yalniz grup listesini tazelemek karti bayat birakiyordu —
+      // atilan kisi satirda durmaya devam ediyordu. Tazeleyici WP-F'de
+      // yazilmisti ama yalniz hata-yeniden-dene dugmesinden cagriliyordu.
+      if (targetUserId != null) {
+        refreshAdminGroupMembers(ref, group.id);
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
       }
-    } on AdminException {
+    } on AdminException catch (e) {
+      // 🔴 WP-771: sunucunun gercek mesaji burada yutuluyordu.
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -291,6 +273,63 @@ class _GroupCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Gerekce diyalogu — kontrolu diyalogun kendisi tutar (bkz. [_GroupCard._askReason]).
+///
+/// `null` = iptal; bos dize = onaylandi ama gerekce yazilmadi.
+class _GroupReasonDialog extends StatefulWidget {
+  const _GroupReasonDialog({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  State<_GroupReasonDialog> createState() => _GroupReasonDialogState();
+}
+
+class _GroupReasonDialogState extends State<_GroupReasonDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.subtitle),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: l10n.adminGerekceZorunlu,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.adminIptal),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(l10n.adminOnayla),
+        ),
+      ],
     );
   }
 }

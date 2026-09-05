@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/data/models/announcement.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminAnnouncementsTab extends ConsumerWidget {
@@ -98,6 +99,14 @@ class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
       }
+    } on AdminException catch (e) {
+      // 🔴 WP-771: `catch (_)` sunucunun cevabini tamamen yutuyordu. Silme
+      // dogrudan tabloya gider; RLS reddi burada tanisiz kayboluyordu.
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -190,6 +199,14 @@ class _CreateAnnouncementDialogState
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
+      }
+    } on AdminException catch (e) {
+      // 🔴 WP-771: olusturma da dogrudan tabloya insert eder; reddi jenerik
+      // metne cevirmek tanisiz birakiyordu.
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } catch (_) {
       if (mounted) {

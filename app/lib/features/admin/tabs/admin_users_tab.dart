@@ -7,6 +7,7 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../directory/admin_search_field.dart';
 import '../sanctions/admin_person_dossier.dart';
 import '../sanctions/admin_sanction_actions.dart';
 import '../sanctions/admin_sanction_dialogs.dart';
@@ -27,37 +28,87 @@ import '../sanctions/sanction_ladder.dart';
 final List<ModerationAction> kAdminSuspensionLadder =
     kAdminAccountRestrictionLadder;
 
-class AdminUsersTab extends ConsumerWidget {
+/// 🔴 WP-771: kisi dizininde **arama yoktu**. Grup dizini ve uye secici
+/// WP-D'de arama kazandi, kullanici listesi duz bir `ListView` olarak kaldi:
+/// bir vakadan gelen e-postayi/kimligi yonetici listede gozle ariyordu. Yeni
+/// desen icat edilmedi — ayni ucu (`AdminSearchField` + [adminMatchesQuery] +
+/// `AdminEmptyResult`) burada da kullanilir.
+class AdminUsersTab extends ConsumerStatefulWidget {
   const AdminUsersTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminUsersTab> createState() => _AdminUsersTabState();
+}
+
+class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final users = ref.watch(adminUsersProvider);
     final l10n = AppLocalizations.of(context);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(adminUsersProvider);
-        await ref.read(adminUsersProvider.future);
-      },
-      child: users.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) =>
-            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(child: Text(l10n.adminKullaniciBulunamadi));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              return _UserCard(user: items[index]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: AdminSearchField(
+            label: l10n.adminKullaniciAramaIpucu,
+            value: _query,
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(adminUsersProvider);
+              await ref.read(adminUsersProvider.future);
             },
-          );
-        },
-      ),
+            child: users.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) =>
+                  Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
+              data: (items) {
+                final visible = items
+                    .where(
+                      (user) =>
+                          adminMatchesQuery(_query, [user.email, user.id]),
+                    )
+                    .toList(growable: false);
+
+                if (visible.isEmpty) {
+                  // Kaydirilabilir kalir ki "asagi cek-yenile" bos ekranda da
+                  // calissin.
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+                    children: [
+                      AdminEmptyResult(
+                        message: items.isEmpty
+                            ? l10n.adminKullaniciBulunamadi
+                            : l10n.adminSonucYok,
+                        onClearFilter: _query.isEmpty
+                            ? null
+                            : () => setState(() => _query = ''),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: visible.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) =>
+                      _UserCard(user: visible[index]),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -95,10 +146,10 @@ class _UserCard extends ConsumerWidget {
           );
       ref.invalidate(adminUsersProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
-    } on AdminException {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-      );
+    } on AdminException catch (e) {
+      // 🔴 WP-771: sunucunun gercek cevabi ("Forbidden", "reason is required")
+      // burada atiliyordu; yonetici neden reddedildigini goremiyordu.
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
