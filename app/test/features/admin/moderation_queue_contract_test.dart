@@ -187,7 +187,14 @@ void main() {
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
 
-      // Kapatılan vaka listeden düşmez; yalnız listenin dibine iner.
+      // 🔴 IDDIA YON DEGISTIRDI (WP-792, sahip cihazda): eskiden "kapatilan
+      // vaka listeden dusmez, dibe iner" idi ve sahip tam bunu sikayet etti:
+      // "resolved isaretliyorum ama gitmiyor". Kuyruk BEKLEYEN isin
+      // listesidir; kapanan varsayilan gorunumden DUSER. Geri acma yolu
+      // kaybolmaz: "Kapananlar" cipi altinda durur.
+      expect(open(targetId), findsNothing);
+      await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
+      await tester.pumpAndSettle();
       expect(open(targetId), findsOneWidget);
 
       await tester.tap(open(targetId));
@@ -201,6 +208,50 @@ void main() {
       expect(repo.statusWrites.last, endsWith('=resolved'));
       final queue = await repo.fetchQueue();
       expect(queue.single.status, ModerationCaseStatus.resolved);
+    });
+
+    /// 🔴 SAHIBIN SIKAYETI BIREBIR (WP-792): *"kartlarda resolved
+    /// isaretliyorum ama gitmiyor."* Ayni akis: vakayi ac, Coz, geri don.
+    /// Kart artik bekleyenlerde YOK, Kapananlar'da VAR. Bu test kullanicinin
+    /// gordugu satiri olcer, saglayicinin dondugu listeyi degil.
+    testWidgets('cozulen vaka kuyruktan GIDER, Kapananlar altinda durur', (
+      tester,
+    ) async {
+      final repo = InMemoryAdminModerationRepository(seed: [_case()]);
+      await tester.pumpWidget(_host(repo));
+      await tester.pumpAndSettle();
+      expect(open(targetId), findsOneWidget);
+
+      await tester.tap(open(targetId));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('moderation-decision-resolved')));
+      await tester.pumpAndSettle();
+      // `pageBack` Cupertino dugmesi arar; sayfa Material `AppBar` tasir.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(
+        open(targetId),
+        findsNothing,
+        reason: 'Cozulen vaka bekleyen isin arasinda duruyor -- sahibin '
+            '"gitmiyor" dedigi sey tam bu.',
+      );
+      expect(find.text('Bekleyen iş yok.'), findsOneWidget);
+
+      await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
+      await tester.pumpAndSettle();
+      expect(open(targetId), findsOneWidget);
+    });
+
+    testWidgets('Kapananlar bosken kendi bos metnini yazar', (tester) async {
+      final repo = InMemoryAdminModerationRepository(seed: [_case()]);
+      await tester.pumpWidget(_host(repo));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
+      await tester.pumpAndSettle();
+      // "Bekleyen is yok" yazsaydi yalan olurdu: bekleyen is VAR, gizli.
+      expect(find.text('Kapanmış iş yok.'), findsOneWidget);
+      expect(find.text('Bekleyen iş yok.'), findsNothing);
     });
 
     testWidgets('sunucu hatası kullanıcıya bildirilir, kuyruk çökmez', (

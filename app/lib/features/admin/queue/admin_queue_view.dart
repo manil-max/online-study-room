@@ -37,6 +37,9 @@ const Key kAdminQueueErrorKey = Key('admin-queue-error');
 Key adminQueueFilterKey(AdminQueueCategory? category) =>
     Key('admin-queue-filter-${category?.name ?? 'all'}');
 
+/// WP-792: kapanmis isleri gosteren cip.
+const Key kAdminQueueClosedFilterKey = Key('admin-queue-filter-closed');
+
 /// Kart uzerindeki **tek** dugme.
 Key adminQueueOpenKey(AdminQueueEntry entry) =>
     Key('admin-queue-open-${entry.id}');
@@ -53,6 +56,14 @@ class AdminQueueView extends ConsumerStatefulWidget {
 
 class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
   AdminQueueCategory? _category;
+
+  /// WP-792 (sahip, cihazda): *"kartlarda resolved isaretliyorum ama
+  /// gitmiyor."* Hakliydi. `admin_ugc_report_groups()` durum filtresi
+  /// uygulamaz ve [buildAdminQueue] kapanmis isi yalniz DIBE indiriyordu;
+  /// cozulen vaka listeden hic cikmiyordu. Kuyruk BEKLEYEN isin listesidir:
+  /// kapananlar varsayilan gorunumden duser, bu cip acikken YALNIZ onlar
+  /// gorunur (geri acma yolu -- karar + "Geri al" -- oradan yasar).
+  bool _showClosed = false;
 
   Future<void> _refresh() async {
     ref.invalidate(moderationQueueProvider);
@@ -73,12 +84,12 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
       tickets: ticketList,
       appeals: appeals.value ?? const [],
     );
-    final visible = _category == null
-        ? entries
-        : [
-            for (final entry in entries)
-              if (entry.category == _category) entry,
-          ];
+    final visible = [
+      for (final entry in entries)
+        if (entry.isClosed == _showClosed &&
+            (_category == null || entry.category == _category))
+          entry,
+    ];
 
     final loading =
         cases.isLoading || tickets.isLoading || appeals.isLoading;
@@ -123,11 +134,17 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(l10n.adminKuyrukBos),
-                                    if (_category != null)
+                                    Text(
+                                      _showClosed
+                                          ? l10n.adminKuyrukKapananBos
+                                          : l10n.adminKuyrukBos,
+                                    ),
+                                    if (_category != null || _showClosed)
                                       TextButton(
-                                        onPressed: () =>
-                                            setState(() => _category = null),
+                                        onPressed: () => setState(() {
+                                          _category = null;
+                                          _showClosed = false;
+                                        }),
                                         child: Text(l10n.adminFiltreyiTemizle),
                                       ),
                                   ],
@@ -175,6 +192,15 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
                 onSelected: (_) => setState(() => _category = category),
               ),
             ),
+          // Tur ciplerinden AYRI durur: tur "ne", bu "hangi halde". Ikisi
+          // birlikte calisir (kapanmis sikayetler gibi).
+          FilterChip(
+            key: kAdminQueueClosedFilterKey,
+            avatar: const Icon(Icons.check_circle_outline, size: 18),
+            label: Text(l10n.adminKuyrukKapananlar),
+            selected: _showClosed,
+            onSelected: (value) => setState(() => _showClosed = value),
+          ),
         ],
       ),
     );
