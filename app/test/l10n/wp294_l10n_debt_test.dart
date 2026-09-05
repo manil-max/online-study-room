@@ -167,11 +167,13 @@ void main() {
     });
 
     test('native sayaç bildirimi düzeni string kaynağı kullanıyor', () {
-      final layout = File(
-        'android/app/src/main/res/layout/timer_notification.xml',
-      ).readAsStringSync();
-      expect(layout, contains('android:text="@string/action_stop"'));
-      expect(layout, isNot(contains('android:text="Durdur"')));
+      for (final name in ['timer_notification.xml', 'timer_notification_big.xml']) {
+        final layout = File(
+          'android/app/src/main/res/layout/$name',
+        ).readAsStringSync();
+        expect(layout, contains('android:text="@string/action_stop"'));
+        expect(layout, isNot(contains('android:text="Durdur"')));
+      }
     });
   });
 

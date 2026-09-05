@@ -1095,6 +1095,13 @@ class StudyTimerService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
         if (plan.usesCustomView) {
             val custom = buildRunningRemoteViews(startedAtMs, isBreak, plan)
+            // WP-793 (sahip, cihazda): "MM:SS kucuk kalmis". Daraltilmis
+            // satirda sayacin tavani dugmenin 44dp'sidir; buyuk saat ancak
+            // genisletilmis gorunumun kendi duzeniyle mumkun. Ayni kimlikler,
+            // ayni baglama kodu: biri guncellenip oteki unutulamaz.
+            val big = buildRunningRemoteViews(
+                startedAtMs, isBreak, plan, layout = R.layout.timer_notification_big,
+            )
             builder
                 // 🔴 WP-759 kusur 3: burasi `""` yaziyordu. Panel kendi metnini
                 // cizdigi icin gorunurde fark etmiyordu, ama bildirim gecmisi,
@@ -1106,7 +1113,7 @@ class StudyTimerService : Service() {
                 .setShowWhen(false)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
-                .setCustomBigContentView(custom)
+                .setCustomBigContentView(big)
             return builder.build()
         }
         // 🔴 WP-775 -> WP-791 (sahip, cihazda): kartta YALNIZ buyuk saat ve
@@ -1211,8 +1218,9 @@ class StudyTimerService : Service() {
         startedAtMs: Long,
         isBreak: Boolean,
         plan: TimerNotificationPlan,
+        layout: Int = R.layout.timer_notification,
     ): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification)
+        val views = RemoteViews(packageName, layout)
         // Sira onemli: bayrak once, taban sonra. `setBase` metni yeniden cizer.
         views.setChronometerCountDown(R.id.notif_timer_elapsed, plan.countDown)
         views.setChronometer(

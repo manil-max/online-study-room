@@ -191,12 +191,21 @@ void main() {
     // Geri dönüş valfi: v43 zengin panel hâlâ derlenir ve `true` yazılırsa
     // koşar; ama artık varsayılan DEĞİL (eskiden default true idi ve anahtarı
     // yazan kod olmadığı için standart dal ulaşılamazdı).
+    // 🔴 WP-793 IDDIA YON DEGISTIRDI: eskiden daraltilmis ve genisletilmis
+    // gorunum AYNI `custom` nesnesiydi. Sahip cihazda "MM:SS kucuk kalmis"
+    // dedi; daraltilmis satirda sayacin tavani 44dp dugmedir, buyuk saat
+    // ancak genisletilmis gorunumun KENDI duzeniyle mumkun. Tek baglama kodu
+    // iki duzeni de doldurur (`layout` parametresi), kimlikler ortaktir.
+    expect(service, contains('RemoteViews(packageName, layout)'));
+    expect(service, contains('layout: Int = R.layout.timer_notification,'));
+    expect(service, contains('layout = R.layout.timer_notification_big,'));
+    expect(service, contains('.setCustomContentView(custom)'));
     expect(
       service,
-      contains('RemoteViews(packageName, R.layout.timer_notification)'),
+      contains('.setCustomBigContentView(big)'),
+      reason: 'Genisletilmis gorunum daraltilmisin kopyasi olursa buyuk saat '
+          'kaybolur; sahibin sikayeti aynen geri gelir.',
     );
-    expect(service, contains('.setCustomContentView(custom)'));
-    expect(service, contains('.setCustomBigContentView(custom)'));
     // 🔴 v71: varsayilan true (v43 zengin panel). Live Update yolu duruyor
     // ama artik OPT-IN: cihazda dogrulanmadan varsayilan yapilmasi
     // bildirimin sayacini 00:00'a dusurup Start/Stop'u yok etmisti.
@@ -274,6 +283,10 @@ void main() {
     final layout = File(
       'android/app/src/main/res/layout/timer_notification.xml',
     ).readAsStringSync();
+    // WP-793: genisletilmis duzen de ayni iki yonlu renk kuraline tabidir.
+    final bigLayout = File(
+      'android/app/src/main/res/layout/timer_notification_big.xml',
+    ).readAsStringSync();
     final pill = File(
       'android/app/src/main/res/drawable/timer_pill_bg.xml',
     ).readAsStringSync();
@@ -293,17 +306,27 @@ void main() {
     // `?android:attr/...` HOST'un koyu/acik ayarini izlemez. Golge zemini
     // ustundeki metin bildirim `TextAppearance`ini kullanmali; onun rengi
     // yapilandirmaya bagli bir KAYNAKTIR ve host'u izler.
-    expect(
-      layout,
-      isNot(contains('?android:attr/textColor')),
-      reason: 'Golge ustundeki metin tema niteligi kullanamaz; koyu golgede kaybolur.',
-    );
+    for (final body in [layout, bigLayout]) {
+      expect(
+        body,
+        contains('@style/TextAppearance.Compat.Notification.Title'),
+      );
+      expect(
+        body,
+        isNot(contains('?android:attr/textColor')),
+        reason: 'Golge ustundeki metin tema niteligi kullanamaz; koyu golgede kaybolur.',
+      );
+    }
     expect(pill, contains('?android:attr/colorControlHighlight'));
 
     // Renk NİTELİĞİ ham hex taşıyamaz. (Yorum metni tarihi anlatmak için
     // eski literalleri anabilir; ölçülen şey gerçekten çizilen değerdir.)
     final hardCodedColor = RegExp(r'android:(textColor|color)="#');
-    for (final entry in {'timer_notification.xml': layout, 'timer_pill_bg.xml': pill}.entries) {
+    for (final entry in {
+      'timer_notification.xml': layout,
+      'timer_notification_big.xml': bigLayout,
+      'timer_pill_bg.xml': pill,
+    }.entries) {
       expect(
         hardCodedColor.hasMatch(entry.value),
         isFalse,

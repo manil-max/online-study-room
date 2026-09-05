@@ -40,7 +40,7 @@
         android:maxLines="1"
         android:text="00:00:00"
         android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
-        android:textSize="26sp"
+        android:textSize="32sp"
         android:textStyle="bold" />
 
     <!-- 🔴 WP-759 kusur 3: mola ile odak bildirimde AYIRT EDILEMIYORDU. Panelin
