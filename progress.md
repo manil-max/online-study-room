@@ -11919,3 +11919,60 @@ yüzeyde de karşılanıyor.
   fotoğrafın yönetici panelinde görünmesi.
 - Yönetici vaka yazışması: iki sekme, geçmiş konuşmalar, foto.
 - Profil paneli: oranlar, hesap açılış tarihi, yaptırım geçmişi.
+
+## 2026-09-05 — v80 YAYINDA; sahibin ilk iki cihaz notu (WP-792, WP-793)
+
+v80 sahip + ikinci ajan tarafından yayımlandı (run `33981277911`, 6/6; kanıt
+`docs/qa/V80-STABLE-RELEASE-EVIDENCE.md`). Devirde eksik kalan Play adımı
+lider tarafından kapatıldı: `alpha` izinde `80` **draft** (run `33984240093`,
+verify `33984653538` → `alpha = 80, 79`). Draft = testçilere açılmadı; Console'da
+tamamlamak sahibin kararı.
+
+### WP-792 — "kartlarda resolved işaretliyorum ama gitmiyor"
+
+Kök neden **iki katmanlı ve ikisi de kasıtlıydı**: `admin_ugc_report_groups()`
+durum filtresi uygulamaz (tüm vakaları döner) ve `buildAdminQueue` kapanmış işi
+yalnız **dibe indiriyordu** — testi bile vardı ("kapatılan vaka listeden düşmez").
+Yani çözülen vaka kuyrukta sonsuza kadar duruyordu; sahip haklıydı.
+
+- `admin_queue_view.dart`: kapananlar varsayılan görünümden **düşer**; yeni
+  "Kapananlar" çipi (`kAdminQueueClosedFilterKey`) açıkken **yalnız** onlar
+  görünür. Tür çipleriyle birlikte çalışır. Kapananlar boşken kendi metnini
+  yazar ("Kapanmış iş yok." — "Bekleyen iş yok." yazsaydı yalan olurdu).
+- İddia yön değiştirdi: `yanlışlıkla kapatılan vaka kuyrukta kalır` → artık
+  Kapananlar çipi altında bulunur ve geri açılır (yol kaybolmadı).
+- Yeni nöbetçi sahibin akışının birebiri: aç → Çöz → geri dön → kart
+  bekleyenlerde **yok**, Kapananlar'da **var**. `moderation_queue_contract_test`
+  12/12.
+
+### WP-793 — "bildirim panelinde kronometre MM:SS küçük kalmış"
+
+Daraltılmış satırda sayacın tavanı düğmenin 44dp yüksekliğidir; büyük saat
+ancak genişletilmiş görünümün **kendi düzeniyle** mümkün. Eskiden ikisi aynı
+`custom` nesnesiydi.
+
+- `timer_notification_big.xml` (yeni): dikey düzen, saat **56sp** tam
+  genişlikte tek başına, altında faz etiketi + hap. Dikey olması bilinçli:
+  yatayda 56sp "1:23:45" + 84dp hap 320dp ekrana sığmaz ve `RemoteViews`
+  içinde `autoSizeTextType` yok — rakamlar kırpılırdı.
+- `timer_notification.xml`: daraltılmış sayaç 26 → **32sp** (44dp düğmenin
+  içinde kalır, satır büyümez).
+- `StudyTimerService.kt`: `buildRunningRemoteViews(layout=…)` tek bağlama kodu
+  iki düzeni de doldurur (kimlikler ortak); `setCustomBigContentView(big)`.
+- Renk kuralı iki yönlü, yeni düzende de ölçülüyor
+  (`TimerNotificationBigPanelWp793Test`, 6 test). Sabotaj A (`big`→`custom`)
+  kırmızı döndü, dosya sha ile geri konuldu.
+- 🔴 Satır sonu tuzağı bu turda da tetiklendi: `StudyTimerService.kt` karışık
+  (467 CRLF + 965 LF); metin modunda yazınca 10 satırlık değişiklik 969
+  satırlık diff oldu. Blob'dan satır sonları korunarak yeniden uygulandı;
+  `--numstat` = `--ignore-cr-at-eol --numstat` = 10/2.
+
+🔴 **Terfi eden (Live Update) yolda bu değişikliğin etkisi YOK** ve olamaz:
+orada özel görünüm yasak, başlık boyutunu sistem çizer. Bu, `timer_panel_expanded`
+anahtarı yazılmamış (otomatik) ve `true` kullanıcıların gördüğü zengin paneli
+büyütür — yani varsayılan yol.
+
+### Cihazda ölçülmeyen (sahip v81'de bakacak)
+- Genişletilmiş bildirimde 56sp saatin One UI'da kırpılmadan çizildiği;
+  daraltılmışta 32sp'nin satırı uzatmadığı.
+- Kapananlar çipinin dar telefonda filtre şeridine sığması (yatay kaydırma var).
