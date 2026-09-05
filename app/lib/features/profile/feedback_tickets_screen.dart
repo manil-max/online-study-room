@@ -502,6 +502,7 @@ class _FeedbackTicketConversationViewState
     required String senderLabel,
     required String body,
     required double maxWidth,
+    String? attachmentPath,
     String? statusLabel,
     Color? statusColor,
     VoidCallback? onTap,
@@ -531,6 +532,16 @@ class _FeedbackTicketConversationViewState
                   Text(senderLabel, style: theme.textTheme.labelMedium),
                   const SizedBox(height: 4),
                   Text(body, softWrap: true),
+                  // 🔴 WP-783: bu satir olmadan ozellik YOKTU. 0138 yoneticiye
+                  // yazismada tek foto gonderme hakki verdi, yonetici ekrani
+                  // onu ciziyordu -- ama KULLANICININ ekrani yalniz metni
+                  // ciziyordu. Yani yonetici "gonderdim" diyor, kullanici
+                  // hicbir sey gormuyordu. Yuklenip gorulemeyen foto,
+                  // olmayan fotograftir.
+                  if (attachmentPath != null) ...[
+                    const SizedBox(height: 8),
+                    _TicketPhoto(key: ValueKey(attachmentPath), path: attachmentPath),
+                  ],
                   if (statusLabel != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -657,6 +668,7 @@ class _FeedbackTicketConversationViewState
                               message.senderId == user?.id,
                           senderLabel: _senderLabel(l10n, message, isAdmin),
                           body: message.message,
+                          attachmentPath: message.attachmentPath,
                           maxWidth: bubbleWidth,
                         );
                       },
@@ -690,6 +702,89 @@ class _FeedbackTicketConversationViewState
           ],
         );
       },
+    );
+  }
+}
+
+
+/// WP-783 — yazismaya ekli tek fotograf, kullanicinin ekraninda.
+///
+/// Adres imzalidir ve suresi doludur; bu yuzden her acilista yeniden istenir,
+/// onbelleklenmez. Yonetici ekranindaki `_BubblePhoto` ile ayni davranis:
+/// yuklenemezse SESSIZ kalmaz, "tekrar dene" verir -- bir fotografin
+/// gorunmemesi ile hic gonderilmemis olmasi kullanici icin ayni seye benzer.
+class _TicketPhoto extends ConsumerStatefulWidget {
+  const _TicketPhoto({super.key, required this.path});
+
+  final String path;
+
+  @override
+  ConsumerState<_TicketPhoto> createState() => _TicketPhotoState();
+}
+
+class _TicketPhotoState extends ConsumerState<_TicketPhoto> {
+  String? _url;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _url = null;
+    });
+    String? url;
+    try {
+      url = await ref
+          .read(adminRepositoryProvider)
+          .getTicketMessageAttachmentUrl(widget.path);
+    } catch (_) {
+      url = null;
+    }
+    if (!mounted) return;
+    setState(() {
+      _url = url;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (_loading) {
+      return const SizedBox(
+        height: 96,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final url = _url;
+    if (url == null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: Text(l10n.adminGorselYuklenemedi)),
+          IconButton(
+            key: const Key('feedback-photo-retry'),
+            tooltip: l10n.updaterTekrarDene,
+            style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+            icon: const Icon(Icons.refresh),
+            onPressed: _load,
+          ),
+        ],
+      );
+    }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 220),
+      child: Image.network(
+        url,
+        key: const Key('feedback-message-photo'),
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => Text(l10n.adminGorselYuklenemedi),
+      ),
     );
   }
 }
