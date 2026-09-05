@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0136",
+  "local_migration_head": "0138",
   "staging": {
     "migration_head": "0136",
-    "deploy_enabled": false,
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED on 2026-08-22 after the 0136 staging apply SUCCEEDED: run 32576114372, post-check printed 0136|0136|0136. Migration 0136_fire_streak_equals_paused_streak.sql was pushed. Head stays 0136 until the owner gives a fresh apply GO for a later migration."
+    "hold_reason": "OPEN 2026-09-05 for 0137 (admin_user_insight) and 0138 (case_conversation_and_message_photo). Sahip GO: 'migrationlari da uygula'. 🔴 Bu iki dosya HIC KOSULMADI -- yerel replay bu makinede Docker bloke oldugu icin yapilamadi, yani SQL'in gercekten calistigi ILK KEZ burada olculecek. Staging bu yuzden atlanmiyor. re-lock: staging apply biter bitmez deploy_enabled tekrar false yazilir ve head 0138'e sabitlenir."
   },
   "production": {
     "migration_head": "0136",

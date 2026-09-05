@@ -142,7 +142,7 @@ Assert-Equal $contract.staging.migration_head '0136' 'staging hedefi 0136: WP-73
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0136 staging apply sonrasi yeniden kilitli'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0137+0138 staging apply icin kapi ACIK; yerel replay Docker bloke oldugu icin SQL ilk kez burada kosacak'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
