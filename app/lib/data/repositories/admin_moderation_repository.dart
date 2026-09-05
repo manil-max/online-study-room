@@ -1,3 +1,4 @@
+import '../models/admin_user_insight.dart';
 import '../models/moderation_appeal.dart';
 import '../models/moderation_case.dart';
 import '../models/moderation_sanction.dart';
@@ -57,6 +58,17 @@ abstract class AdminModerationRepository {
 
   /// Hedefin yaptırım geçmişi, en yenisi başta.
   Future<List<ModerationSanction>> fetchSanctions(String targetUserId);
+
+  /// WP-775: bir kullanıcının moderasyon dosyası — oranlar, hesap, kullanım.
+  ///
+  /// Vaka sayfasındaki kullanıcı satırına dokununca açılan profil panelini
+  /// besler. Hem şikâyet **edilen** hem şikâyet **eden** yönünü taşır, çünkü
+  /// aynı kişi çoğu vakada iki rolde de görünür.
+  ///
+  /// 🔴 Şikâyet eden yönü sunucuda `admin_reporter_abuse_score` olarak `0105`
+  /// ten beri **vardı ve hiçbir yerden çağrılmıyordu**. Bu metot onu da
+  /// devreye alır.
+  Future<AdminUserInsight> fetchUserInsight(String userId);
 
   /// Vakayı geri alınabilir karantinaya alır ya da karantinadan çıkarır.
   ///

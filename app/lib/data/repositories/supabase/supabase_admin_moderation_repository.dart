@@ -1,3 +1,4 @@
+import '../../models/admin_user_insight.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/moderation_appeal.dart';
@@ -350,6 +351,23 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
         },
       );
       return ModerationAppeal.fromWire(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  /// WP-775: kullanıcının moderasyon dosyası.
+  ///
+  /// Tek RPC, çünkü ekran hepsini AYNI ANDA gösteriyor; parça parça çağırmak
+  /// yarım dolu bir panel üretirdi.
+  @override
+  Future<AdminUserInsight> fetchUserInsight(String userId) async {
+    try {
+      final row = await _client.rpc(
+        'admin_user_insight',
+        params: {'p_user_id': userId},
+      );
+      return AdminUserInsight.fromWire(Map<String, dynamic>.from(row as Map));
     } on PostgrestException catch (e) {
       throw ModerationException(e.message);
     }

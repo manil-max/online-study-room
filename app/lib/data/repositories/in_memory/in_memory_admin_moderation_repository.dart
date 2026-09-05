@@ -1,3 +1,4 @@
+import '../../models/admin_user_insight.dart';
 import '../../models/moderation_appeal.dart';
 import '../../models/moderation_case.dart';
 import '../../models/moderation_sanction.dart';
@@ -295,4 +296,23 @@ class InMemoryAdminModerationRepository implements AdminModerationRepository {
     quarantineWrites.add('${moderationCase.caseKey}=$quarantined');
     _cases[index] = _cases[index].copyWith(quarantined: quarantined);
   }
+
+  /// WP-775: bellek içi dosya. Testler kendi sayılarını [userInsights] ile
+  /// verir; verilmemişse **boş bir dosya** döner, uydurma sayı üretilmez.
+  ///
+  /// 🔴 Uydurma sayı üretmemek bilerek: ekran "5/7 haklı" gibi bir şeyi
+  /// fikstürden değil GERÇEKTEN gelen veriden çizdiğini ispatlayabilmeli.
+  final Map<String, AdminUserInsight> userInsights = {};
+
+  @override
+  Future<AdminUserInsight> fetchUserInsight(String userId) async =>
+      userInsights[userId] ??
+      AdminUserInsight(
+        userId: userId,
+        reportsAgainst: 0,
+        reportsAgainstUpheld: 0,
+        reportsFiled: 0,
+        reportsFiledUpheld: 0,
+      );
+
 }

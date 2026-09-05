@@ -1,3 +1,4 @@
+import '../models/admin_user_insight.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -54,4 +55,16 @@ final moderationAppealsProvider = FutureProvider<List<ModerationAppeal>>((
   ref,
 ) async {
   return ref.watch(adminModerationRepositoryProvider).fetchAppeals();
+}, retry: readRetryPolicy);
+
+/// WP-775: kullanıcının moderasyon dosyası — vaka sayfasındaki isme dokununca
+/// açılan profil panelini besler.
+///
+/// 🔴 `family` anahtarı kullanıcı kimliğidir; aynı vakada iki farklı kişiye
+/// bakmak iki ayrı çağrıdır ve birbirinin önbelleğini EZMEZ. Tek bir
+/// `FutureProvider` kullanmak, şikâyet edenin dosyasını açıp geri dönünce
+/// şikâyet edilenin dosyasında onun sayılarını gösterirdi.
+final adminUserInsightProvider =
+    FutureProvider.family<AdminUserInsight, String>((ref, userId) async {
+  return ref.watch(adminModerationRepositoryProvider).fetchUserInsight(userId);
 }, retry: readRetryPolicy);

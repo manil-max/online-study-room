@@ -8,7 +8,6 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/feedback_ticket.dart';
 import '../../../data/models/moderation_case.dart';
-import '../../../data/models/moderation_sanction.dart';
 import '../../../data/models/report_target.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
 import '../../../data/providers/admin_providers.dart';
@@ -16,9 +15,8 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/repositories/admin_moderation_repository.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../queue/moderation_attachment_preview.dart';
+import 'admin_user_profile_page.dart';
 import '../queue/moderation_dialogs.dart';
-import '../sanctions/admin_sanction_actions.dart';
-import '../sanctions/sanction_ladder.dart';
 import '../ticket/admin_ticket_detail_page.dart';
 
 /// WP-769 — sikayetin **kendi tam sayfasi**.
@@ -54,7 +52,15 @@ const Key kModerationDecisionRejectedKey = Key('moderation-decision-rejected');
 const Key kModerationDecisionQuarantineKey = Key(
   'moderation-decision-quarantine',
 );
-const Key kModerationDecisionSanctionKey = Key('moderation-decision-sanction');
+/// Karar seridindeki tasma menusu (karantina buradan cikar).
+const Key kModerationDecisionMoreKey = Key('moderation-decision-more');
+
+/// Vaka sayfasindaki **Kullanicilar** bolumu: taraflar ve ceza gecmisi tek
+/// yerde. Satira dokununca kisinin profil paneli acilir.
+const Key kAdminCaseUsersKey = Key('admin-case-users');
+
+/// Tek bir kullanici satiri; `userId` ile benzersizlesir.
+Key adminCaseUserRowKey(String userId) => Key('admin-case-user-$userId');
 const Key kModerationUndoBarKey = Key('moderation-undo-bar');
 const Key kModerationUndoButtonKey = Key('moderation-undo-button');
 
@@ -120,7 +126,6 @@ class _UndoEntry {
 }
 
 class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
-  final TextEditingController _reason = TextEditingController();
   final TextEditingController _noticeTitle = TextEditingController();
   final TextEditingController _noticeBody = TextEditingController();
 
@@ -138,14 +143,12 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       _undoTimer?.cancel();
       _undo = null;
       _case = widget.moderationCase;
-      _reason.clear();
     }
   }
 
   @override
   void dispose() {
     _undoTimer?.cancel();
-    _reason.dispose();
     _noticeTitle.dispose();
     _noticeBody.dispose();
     super.dispose();
@@ -181,10 +184,8 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
                 Expanded(child: _body(context)),
                 _DecisionBar(
                   moderationCase: _case,
-                  reason: _reason,
                   onStatus: _applyStatus,
-                  onQuarantine: _quarantineFromBar,
-                  onSanction: _targetUserId == null ? null : _openSanctions,
+                  onQuarantine: _askQuarantineReason,
                 ),
               ],
             ),
@@ -210,9 +211,8 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           const SizedBox(height: 12),
           Text(l10n.adminIncelemeDetayYok),
           const SizedBox(height: 24),
-          ..._parties(context),
-          ..._targetDossier(context),
-          ..._contact(context),
+          ..._users(context),
+          ..._contactFold(context),
         ],
       );
     }
@@ -230,10 +230,8 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           const SizedBox(height: 16),
           ..._evidence(context, data),
           const SizedBox(height: 24),
-          ..._parties(context, detail: data),
-          ..._targetDossier(context),
-          ..._history(context, data),
-          ..._contact(context),
+          ..._users(context, detail: data),
+          ..._contactFold(context),
         ],
       ),
     );
@@ -303,7 +301,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       ],
     ];
   }
-
+  /// Yazisma + bildirim: karari **anlatmanin** iki yolu da sayfada.
   /// Gerekce · gelis zamani · rapor sayisi.
   Widget _meta(BuildContext context, ModerationCaseDetail data) {
     final l10n = AppLocalizations.of(context);
@@ -329,116 +327,75 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
     );
   }
 
-  /// Kim sikayet etti, kim edildi — kuyruk kartindan **kopya degil**, kararin
-  /// verildigi yerde durur.
-  List<Widget> _parties(BuildContext context, {ModerationCaseDetail? detail}) {
+  /// **Kullanicilar** — taraflar ve ceza gecmisi TEK bolumde.
+  ///
+  /// 🔴 WP-775, sahibin sozleri: *"ceza gecmisi kismi yerine kullanicilar
+  /// olsun, oradan olaya dahil iki kisinin de gecmisini goreyim... basinca
+  /// detayli profil ekrani acilsin."* Ayrica: *"taraflarla ceza gecmisini
+  /// birlestirebilirsin."*
+  ///
+  /// Eskiden bu bilgi UC ayri bolume dagilmisti: `Taraflar` (isim + ham UUID),
+  /// `Kisi dosyasi` (aktif kisit) ve `Hedefin gecmisi` (duz metin satirlar).
+  /// Ucu de ayni kisi hakkindaydi ve hicbiri otekine baglanmiyordu; ustelik
+  /// gecmis YALNIZ hedef icin vardi, sikayet EDENIN gecmisi hic gorunmuyordu.
+  ///
+  /// Satirda tek bakislik isaret duruyor, ayrinti dokununca acilir. Boylece
+  /// WP-769'un sarti da korunur: cogu vakada panele girmeden karar verilebilir.
+  List<Widget> _users(BuildContext context, {ModerationCaseDetail? detail}) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final identity = _case.targetIdentity;
-    final targetName = identity == null || identity.isDeleted
-        ? l10n.adminUgcDeletedUser
-        : identity.displayName;
     final count = detail?.reportCount ?? _case.reportCount;
     return [
       _section(context, l10n.adminVakaTaraflar),
-      _partyRow(context, l10n.adminUgcTarget, targetName, _case.targetId),
+      _CaseUserRow(
+        key: adminCaseUserRowKey(_case.targetId),
+        userId: _targetUserId,
+        name: identity == null || identity.isDeleted
+            ? l10n.adminUgcDeletedUser
+            : identity.displayName,
+        role: l10n.adminUgcTarget,
+      ),
       for (final reporter in _case.reporters)
-        _partyRow(
-          context,
-          l10n.adminUgcReporter,
-          reporter.isDeleted ? l10n.adminUgcDeletedUser : reporter.displayName,
-          reporter.id,
+        _CaseUserRow(
+          key: adminCaseUserRowKey(reporter.id),
+          userId: reporter.isDeleted ? null : reporter.id,
+          name: reporter.isDeleted
+              ? l10n.adminUgcDeletedUser
+              : reporter.displayName,
+          role: l10n.adminUgcReporter,
         ),
       const SizedBox(height: 4),
       Text(
         l10n.adminVakaSikayetSayisi(count),
-        style: theme.textTheme.bodyMedium,
+        style: Theme.of(context).textTheme.bodyMedium,
       ),
       const SizedBox(height: 24),
     ];
   }
 
-  Widget _partyRow(
-    BuildContext context,
-    String role,
-    String name,
-    String id,
-  ) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$role: $name',
-            style: theme.textTheme.bodyMedium,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SelectableText(
-            id,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 🔴 Sahibin sarti: *"bu panele hic ihtiyacim olmasin gelenleri
-  /// degerlendirirken."* Hedefin aktif kisiti, ceza gecmisi ve yaptirim yolu
-  /// bu yuzden **bu sayfada** durur; Kisiler & Gruplar yuzeyine gitmek
-  /// gerekmez.
-  List<Widget> _targetDossier(BuildContext context) {
-    final targetUserId = _targetUserId;
-    if (targetUserId == null) return const [];
-    return [
-      _section(context, AppLocalizations.of(context).adminSanctionDossierTitle),
-      _TargetSanctions(
-        key: kAdminCaseTargetSummaryKey,
-        targetUserId: targetUserId,
-        caseId: _case.caseId,
-      ),
-      const SizedBox(height: 24),
-    ];
-  }
-
-  List<Widget> _history(BuildContext context, ModerationCaseDetail data) {
+  /// Yazisma + bildirim — **katlanmis**.
+  ///
+  /// 🔴 Bildirim yazma alani (iki metin kutusu + dugme) surekli ACIK
+  /// duruyordu. Nadiren kullanilan bir sey icin kalici yer; sahip sayfayi
+  /// "duvar" diye tarif etti. Icerik ayni, yalniz varsayilan olarak kapali.
+  List<Widget> _contactFold(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return [
-      _section(context, l10n.adminIncelemeGecmis),
-      if (data.sanctions.isEmpty)
-        Text(l10n.adminIncelemeGecmisYok, style: theme.textTheme.bodySmall)
-      else
-        for (final entry in data.sanctions) _historyRow(context, entry),
-      const SizedBox(height: 24),
+      Card(
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          key: const Key('admin-case-contact-fold'),
+          title: Text(l10n.adminVakaYanitBaslik),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _contact(context),
+        ),
+      ),
+      const SizedBox(height: 16),
     ];
   }
 
-  Widget _historyRow(
-    BuildContext context,
-    ModerationSanctionHistoryEntry entry,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final action = entry.moderationAction;
-    // Merdivene oturmayan denetim satiri ham adiyla gosterilir; yutulmaz.
-    final label = action == null
-        ? (entry.action ?? '—')
-        : moderationActionLabel(l10n, action);
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        (entry.reason ?? '').isEmpty ? label : '$label — ${entry.reason}',
-        style: theme.textTheme.bodyMedium,
-      ),
-    );
-  }
-
-  /// Yazisma + bildirim: karari **anlatmanin** iki yolu da sayfada.
   List<Widget> _contact(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
@@ -601,11 +558,22 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
     );
   }
 
-  /// Karar seridindeki **tek** gerekce alanini kullanir; ikinci diyalog acmaz.
-  Future<void> _quarantineFromBar() async {
-    final reason = _reason.text.trim();
-    if (reason.isEmpty) return;
+  /// Gerekceyi **gerektigi anda** sorar.
+  ///
+  /// 🔴 WP-775: eskiden serit kalici bir gerekce alani tasiyordu ve o alan
+  /// yalniz BU eylemde okunuyordu. Dort eylemden ucu icin bosuna ekranda
+  /// duruyordu (bkz. [_DecisionBar]). Depoda hazir duran
+  /// [askModerationReason] tek kaynaktir: bos gerekce sessizce "gerekce
+  /// belirtilmedi"ye cevrilmez, islem hic yapilmaz.
+  Future<void> _askQuarantineReason() async {
     final l10n = AppLocalizations.of(context);
+    final reason = await askModerationReason(
+      context,
+      _case.quarantined
+          ? l10n.adminModerationQuarantineRelease
+          : l10n.adminModerationQuarantine,
+    );
+    if (reason == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final next = !_case.quarantined;
     try {
@@ -633,24 +601,6 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       ),
     );
   }
-
-  Future<void> _openSanctions() async {
-    final targetUserId = _targetUserId;
-    if (targetUserId == null) return;
-    await AdminSanctionActions.chooseAndApply(
-      context,
-      ref,
-      targetUserId: targetUserId,
-      // Sert teyit yalniz kalici yasakta calisir; kimlik dizinden gelmezse
-      // kullanicinin kendi kimligi yazdirilir.
-      confirmationPhrase: targetUserId,
-      // Tam katalog: uyari ve isim sifirlama da bu sayfadan uygulanir.
-      ladder: kAdminSanctionLadder,
-      caseId: _case.caseId,
-    );
-    _refresh();
-  }
-
   /// Kullaniciya dogrudan bildirim — hedefe ozel duyuru
   /// (`announcements.target_type = 'user'`).
   Future<void> _sendNotice(String targetUserId) async {
@@ -717,165 +667,148 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
   );
 }
 
-/// Hedefin aktif kisiti + ceza gecmisi + yaptirim yolu.
+/// Vaka sayfasindaki tek kullanici satiri.
 ///
-/// `moderationSanctionsProvider` burada **`ref.watch`** edilir: yaptirim
-/// uygulanip geri alindiginda blok kendiliginden tazelenir.
-class _TargetSanctions extends ConsumerWidget {
-  const _TargetSanctions({
+/// Satir tek bakislik bir isaret tasir: kisinin hakkindaki sikayetlerin kaci
+/// haklı cikmis. Ayrinti dokununca acilan profil panelindedir.
+///
+/// 🔴 Isaret bir **kolayliktir**, sayfanin isleyisi ona bagli DEGILDIR:
+/// oranlar sunucudan gelir ve o sorgu (`admin_user_insight`) henuz
+/// uygulanmamis bir migration'a bagli. Veri gelmezse satir adiyla ve roluyle
+/// yine cizilir. Ama hata SESSIZCE yutulmaz — "olculemedi" ile "sikayet yok"
+/// ayni gorunmez, cunku ikisi ayni sey degildir.
+class _CaseUserRow extends ConsumerWidget {
+  const _CaseUserRow({
     super.key,
-    required this.targetUserId,
-    required this.caseId,
+    required this.userId,
+    required this.name,
+    required this.role,
   });
 
-  final String targetUserId;
-  final String? caseId;
+  /// `null` = silinmis hesap; profil acilamaz.
+  final String? userId;
+  final String name;
+  final String role;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final sanctions = ref.watch(moderationSanctionsProvider(targetUserId));
-
-    return sanctions.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: LinearProgressIndicator(),
+    final id = userId;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        leading: CircleAvatar(
+          child: Text(
+            _initials(name),
+            style: theme.textTheme.labelLarge,
+          ),
+        ),
+        title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(role, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: id == null ? null : _Signal(userId: id),
+        onTap: id == null ? null : () => _open(context, id),
       ),
-      error: (_, _) => Text(l10n.authBeklenmeyenBirHataOlustu),
-      data: (items) {
-        final now = DateTime.now();
-        ModerationSanction? active;
-        for (final sanction in items) {
-          if (sanction.isActive(now)) {
-            active = sanction;
-            break;
-          }
-        }
-        final current = active;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (current == null)
-              Text(
-                l10n.adminSanctionNoActiveRestriction,
-                style: theme.textTheme.bodyMedium,
-              )
-            else
-              Card(
-                color: theme.colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.adminModerationSanctionActive(
-                          adminSanctionLabel(l10n, current.action),
-                        ),
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onErrorContainer,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        current.expiresAt == null
-                            ? l10n.adminSanctionNoExpiry
-                            : l10n.adminSanctionExpiresAt(
-                                _stamp(current.expiresAt!),
-                              ),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onErrorContainer,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        key: kAdminCaseSanctionRevokeKey,
-                        onPressed: () => AdminSanctionActions.revoke(
-                          context,
-                          ref,
-                          sanction: current,
-                        ),
-                        icon: const Icon(Icons.undo, size: 20),
-                        label: Text(l10n.adminSanctionLiftRestriction),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                key: kAdminCaseSanctionApplyKey,
-                onPressed: () => AdminSanctionActions.chooseAndApply(
-                  context,
-                  ref,
-                  targetUserId: targetUserId,
-                  confirmationPhrase: targetUserId,
-                  ladder: kAdminSanctionLadder,
-                  caseId: caseId,
-                ),
-                icon: const Icon(Icons.gavel_outlined, size: 20),
-                label: Text(l10n.adminSanctionApplyRestriction),
-              ),
+    );
+  }
+
+  void _open(BuildContext context, String id) {
+    // 🔴 DIKIS: profil paneli ayri bir lane'de yazildi. Bu cagri liderin
+    // isidir ve `verified_admin_case_contract_test` ile kilitlenir —
+    // "iki ajan birbirinin yoluna saygi gosterip ozelligi baglamadan birakir"
+    // tuzagi bu depoda yasandi.
+    openAdminUserProfile(context, userId: id, displayName: name);
+  }
+
+  static String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    if (parts.isEmpty) return '?';
+    final letters = parts.take(2).map((p) => p.characters.first.toUpperCase());
+    return letters.join();
+  }
+}
+
+/// Satirdaki oran rozeti.
+class _Signal extends ConsumerWidget {
+  const _Signal({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final insight = ref.watch(adminUserInsightProvider(userId));
+    return insight.when(
+      loading: () => const SizedBox.shrink(),
+      // Hata YUTULMAZ: rozet yerine olculemedigini soyleyen bir isaret durur.
+      error: (_, _) => Tooltip(
+        message: AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+        child: Icon(
+          Icons.report_gmailerrorred_outlined,
+          size: 20,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      data: (data) {
+        final total = data.reportsAgainst;
+        if (total <= 0) return const SizedBox.shrink();
+        final scheme = theme.colorScheme;
+        // Yuksek oran = tekrar eden ve cogunlukla hakli cikan bir oruntu.
+        final bad = data.flaggedAsOffender;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: bad ? scheme.errorContainer : scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            '${data.reportsAgainstUpheld}/$total',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: bad ? scheme.onErrorContainer : scheme.onSurfaceVariant,
             ),
-            if (items.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  l10n.adminSanctionHistoryEmpty,
-                  style: theme.textTheme.bodySmall,
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.adminSanctionHistoryTitle,
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    for (final sanction in items)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${adminSanctionLabel(l10n, sanction.action)} · '
-                          '${adminSanctionStateLabel(l10n, sanction.state)}'
-                          '${sanction.appliedAt == null ? '' : ' · ${_stamp(sanction.appliedAt!)}'}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
+          ),
         );
       },
     );
   }
-
-  static String _stamp(DateTime value) =>
-      value.toLocal().toString().substring(0, 16);
 }
 
-/// Karar seridi — sayfanin **altina sabit**.
+/// Karar seridi tasma menusundeki eylemler.
+enum _CaseMenuAction { quarantine }
+
+/// Karar seridi — **tek satir**.
+///
+/// 🔴 WP-775, sahibin cihazda gordugu sikayet: *"altta reject vs nin oldugu
+/// kisimda kapanip acilabilsin ya da baska bir cozum bul, cok yer kapliyor."*
+///
+/// Eski serit 196 dp idi ve bunu su parcalardan topluyordu: baslik 20, gerekce
+/// alani 48, iki satira saran dort dugme 88, ic bosluk ve aralar 40.
+/// Telefonda ekranin dortte biri, sen daha kaniti okurken.
+///
+/// **Katlanir yapilmadi.** Katlanmak her karara BIR DOKUNUS daha ekler ve
+/// gunluk is tam da o iki karardir. Sik olani ucretsiz birakmak, nadiri bir
+/// dokunusa gondermekten daha iyi.
+///
+/// 🔴 GEREKCE ALANI TAMAMEN KALKTI ve sebebi olculdu: dort eylemden yalniz
+/// BIRI onu okuyordu. [ModerationCaseStatus] degisimi `setCaseStatus`
+/// uzerinden gider ve o imzada gerekce alani **yoktur** -- yani `Coz` ve
+/// `Reddet` yazilani hicbir zaman sunucuya tasimadi. Kalici olarak ekranda
+/// duran alan, islerin cogunda bosuna yer kapliyordu. Artik gerekcenin
+/// GERCEKTEN gerektigi yerde, karantina sayfasinda soruluyor.
+///
+/// Yaptirim da buradan kalkti: kisiye uygulanan bir karardir ve kisinin
+/// profilinde, oranlari ve ceza gecmisi gorunurken verilir
+/// ([kAdminCaseUsersKey] satirlarina dokununca acilan panel).
 class _DecisionBar extends StatelessWidget {
   const _DecisionBar({
     required this.moderationCase,
-    required this.reason,
     required this.onStatus,
     required this.onQuarantine,
-    required this.onSanction,
   });
 
   final ModerationCase moderationCase;
-  final TextEditingController reason;
   final ValueChanged<ModerationCaseStatus> onStatus;
   final VoidCallback onQuarantine;
-  final VoidCallback? onSanction;
 
   @override
   Widget build(BuildContext context) {
@@ -884,71 +817,61 @@ class _DecisionBar extends StatelessWidget {
     final scheme = theme.colorScheme;
     return Container(
       key: kModerationDecisionBarKey,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
         border: Border(top: BorderSide(color: scheme.outlineVariant)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Text(l10n.adminIncelemeKarar, style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          TextField(
-            key: kModerationDecisionReasonKey,
-            controller: reason,
-            decoration: InputDecoration(
-              labelText: l10n.adminGerekceZorunlu,
-              border: const OutlineInputBorder(),
-              isDense: true,
+          Expanded(
+            child: OutlinedButton(
+              key: kModerationDecisionRejectedKey,
+              onPressed: () => onStatus(ModerationCaseStatus.rejected),
+              child: Text(
+                l10n.adminUgcStatusRejected,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: reason,
-            builder: (context, value, _) {
-              // Gerekce sunucuya GERCEKTEN giden eylemlerde zorunludur;
-              // gitmedigi yerde zorunlu gostermek yalan etiket olurdu.
-              final hasReason = value.text.trim().isNotEmpty;
-              final canQuarantine =
-                  hasReason && moderationCase.supportsCaseActions;
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton(
-                    key: kModerationDecisionQuarantineKey,
-                    onPressed: canQuarantine ? onQuarantine : null,
-                    child: Text(
-                      moderationCase.quarantined
-                          ? l10n.adminModerationQuarantineRelease
-                          : l10n.adminModerationQuarantine,
-                    ),
-                  ),
-                  Tooltip(
-                    message: onSanction == null
-                        ? l10n.adminKullaniciBulunamadi
-                        : l10n.adminModerationSanctionTitle,
-                    child: OutlinedButton(
-                      key: kModerationDecisionSanctionKey,
-                      onPressed: onSanction,
-                      child: Text(l10n.adminModerationSanctionTitle),
-                    ),
-                  ),
-                  OutlinedButton(
-                    key: kModerationDecisionRejectedKey,
-                    onPressed: () => onStatus(ModerationCaseStatus.rejected),
-                    child: Text(l10n.adminUgcStatusRejected),
-                  ),
-                  FilledButton(
-                    key: kModerationDecisionResolvedKey,
-                    onPressed: () => onStatus(ModerationCaseStatus.resolved),
-                    child: Text(l10n.adminUgcStatusResolved),
-                  ),
-                ],
-              );
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton(
+              key: kModerationDecisionResolvedKey,
+              onPressed: () => onStatus(ModerationCaseStatus.resolved),
+              child: Text(
+                l10n.adminUgcStatusResolved,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Karantina ICERIGE uygulanir (o mesaji gizler), kisiye degil. Karari
+          // verirken kanit onunde oldugu icin serit menusunde durur.
+          // 🔴 Deger tipi `void`/`null` OLAMAZ: `PopupMenuButton.onSelected`
+          // yalniz null OLMAYAN bir deger secilince cagrilir. `value: null`
+          // ile menu acilir, ogeye dokunulur ve HICBIR SEY olmaz -- sessiz
+          // olu dokunus. Nobetci bunu yakaladi.
+          PopupMenuButton<_CaseMenuAction>(
+            key: kModerationDecisionMoreKey,
+            tooltip: l10n.adminIncelemeKarar,
+            enabled: moderationCase.supportsCaseActions,
+            onSelected: (action) => switch (action) {
+              _CaseMenuAction.quarantine => onQuarantine(),
             },
+            itemBuilder: (context) => [
+              PopupMenuItem<_CaseMenuAction>(
+                key: kModerationDecisionQuarantineKey,
+                value: _CaseMenuAction.quarantine,
+                child: Text(
+                  moderationCase.quarantined
+                      ? l10n.adminModerationQuarantineRelease
+                      : l10n.adminModerationQuarantine,
+                ),
+              ),
+            ],
           ),
         ],
       ),

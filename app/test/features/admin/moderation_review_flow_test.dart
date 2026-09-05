@@ -33,6 +33,7 @@ import 'package:online_study_room/data/repositories/supabase/supabase_admin_mode
 import 'package:online_study_room/features/admin/admin_screen.dart';
 import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
 import 'package:online_study_room/features/admin/detail/admin_case_detail_page.dart';
+import 'package:online_study_room/features/admin/detail/admin_user_profile_page.dart';
 import 'package:online_study_room/features/admin/queue/admin_queue_entry.dart';
 import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -492,22 +493,43 @@ void main() {
       findsOneWidget,
       reason: 'Karar seridi kaydirmayla kaybolmamali.',
     );
-    await tester.drag(
-      find.byKey(kModerationEvidenceKey),
-      const Offset(0, -900),
-    );
-    await tester.pumpAndSettle();
+    // 🔴 IDDIA YON DEGISTIRDI (WP-775). Eskiden ceza gecmisi bu sayfada duz
+    // metin satirlar halinde basiliyordu ve iddia onu ariyordu.
+    //
+    // Sahibin 2026-09-05 istegi: *"ceza gecmisi kismi yerine kullanicilar
+    // olsun... basinca detayli profil ekrani acilsin."* Gecmis artik kisinin
+    // profilinde, tarih / tur / gerekce ayri sutunlarda. Vaka sayfasinda
+    // kalan sey, panele girmeden karar verebilmek icin tek bakislik isaret.
+    //
+    // Olculen: gecmis bu sayfadan KALKTI ama kisiye giden yol DURUYOR.
     expect(
       find.textContaining('24 saat yazma kısıtı'),
-      findsWidgets,
-      reason: 'Hedefe daha once ne yapildigi ayni sayfada okunmali.',
+      findsNothing,
+      reason: 'Ceza gecmisi profil paneline tasindi.',
+    );
+    expect(
+      find.byKey(adminCaseUserRowKey(_targetA)),
+      findsOneWidget,
+      reason: 'Gecmise giden yol kapanmamali; satir yerinde durmali.',
     );
   });
 
-  // --- WP-769 KABUL 4: hedefin dosyasi AYNI SAYFADA ---------------------
+  // --- WP-775 KABUL 4: kullanicilar TEK bolumde, ayrinti profilde --------
   //
-  // Sahibin sarti: "bu panele hic ihtiyacim olmasin gelenleri degerlendirirken".
-  testWidgets('hedefin aktif kisiti ve yaptirim yolu sayfanin icinde', (
+  // 🔴 IDDIA YON DEGISTIRDI (zayiflatilmadi). WP-769'da bu test "hedefin
+  // aktif kisiti ve yaptirim yolu sayfanin icinde" diyordu; sahibin o
+  // zamanki sarti "bu panele hic ihtiyacim olmasin"di ve dogruydu.
+  //
+  // Sahip 2026-09-05'te kendi kurdugu bu yapiya bakti ve sordu:
+  // *"hedef dosyasini anlamadim, kisit uygula kismi yaptirim degil mi
+  // zaten?"* Haklıydı: `Kisi dosyasi > Kisit uygula` ile karar seridindeki
+  // `Yaptirim` AYNI islemdi, iki ayri yerde duruyordu.
+  //
+  // Yeni sozlesme: yaptirim KISIYE uygulanir ve kisinin profilinde, oranlari
+  // ile ceza gecmisi gorunurken verilir. Vaka sayfasinda kalan sey, karari
+  // panele girmeden verebilmek icin tek bakislik isarettir — yani WP-769'un
+  // asil derdi korunur.
+  testWidgets('taraflar ve gecmis tek Kullanicilar bolumunde toplanir', (
     tester,
   ) async {
     final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
@@ -515,17 +537,16 @@ void main() {
       ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
     await _pumpCase(tester, repo, moderationCase);
 
-    expect(find.byKey(kAdminCaseTargetSummaryKey), findsOneWidget);
-    expect(find.text('Kişi dosyası'), findsOneWidget);
     expect(
-      find.text('Aktif kısıt yok.'),
+      find.byKey(adminCaseUserRowKey(_targetA)),
       findsOneWidget,
-      reason: 'Hedefin kisit durumu baska ekranda aranmamali.',
+      reason: 'Sikayet edilen kisi satiri Kullanicilar bolumunde olmali.',
     );
-    expect(find.byKey(kAdminCaseSanctionApplyKey), findsOneWidget);
     expect(
-      find.text('Bu kişiye daha önce yaptırım uygulanmadı.'),
-      findsOneWidget,
+      find.byKey(kAdminCaseSanctionApplyKey),
+      findsNothing,
+      reason:
+          'Yaptirim vaka sayfasindan KALKTI; ayni islem iki yerde duruyordu.',
     );
   });
 
@@ -669,7 +690,80 @@ void main() {
     );
   });
 
-  testWidgets('karar seridi mevcut yaptirim merdivenini gercekten uygular', (
+  /// 🔴 DIKIS NOBETCISI — bu depoda tekrar eden kusur icin.
+  ///
+  /// Profil paneli ayri bir lane'de yazildi ve o lane kendi raporunda
+  /// *"ekran hicbir yerden acilmiyor"* diye bildirdi. Bu deponun kayitli
+  /// deseni tam olarak budur: iki ajan birbirinin SAHIP yoluna saygi gosterir,
+  /// ozellik ortada baglanmadan kalir, testler yesil gecer ve ozellik YOKTUR.
+  ///
+  /// Iddia paneli DEGIL, dokunusun onu ACTIGINI olcer.
+  testWidgets('kullanici satirina dokununca profil paneli GERCEKTEN acilir', (
+    tester,
+  ) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'kanıt');
+    await _pumpCase(tester, repo, moderationCase);
+
+    final row = find.byKey(adminCaseUserRowKey(_targetA));
+    expect(row, findsOneWidget);
+    await tester.ensureVisible(row);
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(kAdminUserProfileKey),
+      findsOneWidget,
+      reason:
+          'Satir dokunulabiliyor ama profil acilmiyor: ozellik baglanmamis.',
+    );
+  });
+
+  /// 🔴 SAHIBIN ASIL SIKAYETI OLCULUR: *"altta reject vs nin oldugu kisimda
+  /// ... cok yer kapliyor."*
+  ///
+  /// Eski serit dar telefonda 196 dp idi: baslik 20 + gerekce alani 48 +
+  /// iki satira saran dort dugme 88 + ic bosluk ve aralar 40. Ekranin
+  /// dortte biri, daha kaniti okurken.
+  ///
+  /// Bu iddia SAYIYI kilitler, "daha kucuk" gibi olculemez bir sey degil.
+  /// 96 dp esigi kasten gercek olcumun (~68) uzerinde: dugme yuksekligi tema
+  /// ile birkac piksel oynayabilir, ama iki satira SARARSA esik derhal asilir.
+  testWidgets('karar seridi dar telefonda 96 dp ustune cikmaz', (tester) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'kanıt');
+    await _pumpCase(
+      tester,
+      repo,
+      moderationCase,
+      window: const Size(360, 740),
+    );
+
+    final bar = find.byKey(kModerationDecisionBarKey);
+    expect(bar, findsOneWidget);
+    expect(
+      tester.getRect(bar).height,
+      lessThan(96),
+      reason:
+          'Serit yine iki satira sardi ya da kalici bir alan geri geldi; '
+          'sahibin sikayeti aynen geri gelir.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  // 🔴 IDDIA YON DEGISTIRDI (WP-775). Eski test yaptirimi KARAR SERIDINDEN
+  // uyguluyordu. Serit 196 dp idi ve sahip cihazda gorup "cok yer kapliyor"
+  // dedi; olculdu ki gerekce alani seridin yarisini kapliyor ama dort
+  // eylemden yalniz BIRI (karantina) onu okuyor — `setCaseStatus` imzasinda
+  // gerekce alani YOK.
+  //
+  // Serit artik tek satir: Reddet · Coz · tasma menusu. Yaptirim kisiye ait
+  // oldugu icin profil panelinde. Bu test seridin KUCULDUGUNU degil,
+  // ICERIGINI olcer: yaptirim dugmesi seritte OLMAMALI, iki karar dugmesi
+  // OLMALI.
+  testWidgets('karar seridi tek satir: iki karar + tasma menusu', (
     tester,
   ) async {
     final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
@@ -682,22 +776,27 @@ void main() {
       window: const Size(1366, 768),
     );
 
-    expect(find.byKey(kModerationDecisionSanctionKey), findsOneWidget);
-    await tester.tap(find.byKey(kModerationDecisionSanctionKey));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('24 saat yazma kısıtı').last);
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('admin-user-reason-field')),
-      'kanıtlı ihlal',
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('admin-user-reason-confirm')));
-    await tester.pumpAndSettle();
+    expect(find.byKey(kModerationDecisionRejectedKey), findsOneWidget);
+    expect(find.byKey(kModerationDecisionResolvedKey), findsOneWidget);
+    expect(find.byKey(kModerationDecisionMoreKey), findsOneWidget);
 
-    final sanctions = await repo.fetchSanctions(_targetA);
-    expect(sanctions.single.action, ModerationAction.mute24h);
-    expect(find.byKey(const Key('admin-sanction-undo')), findsOneWidget);
+    expect(
+      find.byKey(kModerationDecisionReasonKey),
+      findsNothing,
+      reason:
+          'Kalici gerekce alani kalkti: dort eylemden yalniz biri okuyordu.',
+    );
+
+    // Karantina tasma menusunde durur ve gerekceyi ACILDIGINDA sorar.
+    await tester.tap(find.byKey(kModerationDecisionMoreKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(kModerationDecisionQuarantineKey));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('moderation-reason-field')),
+      findsOneWidget,
+      reason: 'Gerekce, GEREKTIGI anda sorulmali.',
+    );
   });
 
   // --- WP-769 KABUL 7: itiraz kendi sayfasinda karara baglanir -----------

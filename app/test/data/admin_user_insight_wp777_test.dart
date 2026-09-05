@@ -202,22 +202,16 @@ void main() {
     });
 
     test('cok sikayet edip tutturamayan raporlayici isaretlenir', () {
-      expect(
-        AdminUserInsight.fromWire({
-          ...wire(),
-          'reports_filed': 5,
-          'reports_filed_upheld': 1,
-        }).flaggedAsAbusiveReporter,
-        isTrue,
-      );
-      expect(
-        AdminUserInsight.fromWire({
-          ...wire(),
-          'reports_filed': 4,
-          'reports_filed_upheld': 2,
-        }).flaggedAsAbusiveReporter,
-        isFalse,
-      );
+      // 🔴 IDDIA KALDIRILDI (lider, WP-775). `flaggedAsAbusiveReporter`
+      // modelden SILINDI cunku dogru hesaplanamiyordu: "reddedilen" sayisi
+      // `filed - filedUpheld` ile turetiliyordu ve bu, henuz `open`/`in_review`
+      // duran sikayetleri de "tutmadi" sayiyordu. Yani hakkinda karar bile
+      // verilmemis sikayetleri olan bir kullaniciyi "kotuye kullanan" diye
+      // damgaliyordu.
+      //
+      // Sunucu bu ayrimi yapabiliyor ama sozlesme yalniz toplam ve haklı
+      // cikan sayilarini tasiyor. Isaret geri istenirse dogru yol,
+      // `reports_filed_decided` alanini uctan uca eklemektir -- ayri WP.
     });
   });
 
