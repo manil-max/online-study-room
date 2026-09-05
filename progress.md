@@ -11574,6 +11574,11 @@ kısmında hiçbir şey yok sadece github sayfasının linki var."*
 - Komşu: `push_delivery_contract_test` + updater paketi 80/80. analyze 0,
   l10n audit OK (1808 anahtar), `git diff --stat` = `--ignore-cr-at-eol`.
 
+### Kapı gerçeği
+- **Tam kapı (`python scripts/test_all.py --full`, 2026-09-05):** 25 kapı ·
+  **0 kırmızı · 4 atlandı** (deno, emülatör, Docker; CI'da koşar). 946 s.
+  Veritabanı değişmedi, head `0136`.
+
 ### Cihazda ölçülmeyen
 - Yeni bildirim metni ancak v78 kurulu telefona GELECEK sürümün (v79) push'unda
   görülür; v77'de kalan telefon Türkçe yedek metni görmeye devam eder.
