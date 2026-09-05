@@ -11741,3 +11741,126 @@ küçülterek ikisini de sığdırıyor — istenenin tam tersi.
 
 ### Cihazda ölçülmeyen
 - Tek satırlık kartta saatin gerçekten büyüdüğü. Sahip v80'de ölçecek.
+
+## 2026-09-05 — ADMİN VAKA SAYFASI YENİDEN + ÜÇ DİKİŞ KAPANDI (WP-775…WP-781)
+
+**Tetikleyen (sahip, önizleme üzerinden):** *"admin tarafı garip olmuş… alttaki
+reject vs nin olduğu kısım çok yer kaplıyor"*, ardından ikinci tur:
+*"kısıt uygula yaptırım değil mi zaten? … ceza geçmişi yerine kullanıcılar
+olsun, oradan olaya dahil iki kişinin de geçmişini göreyim, en üstte oranları…
+yanıt kısmı yenilensin, iki tarafa ayrı chat olsun, geçmiş konuşmaları da
+göreyim… bu sohbet ve şikâyetlerde 1 foto yüklenebilsin."*
+
+### Ölçüm, tercih değil
+
+Eski karar şeridi dar telefonda **196 dp** idi. Ölçüldü ki gerekçe alanı
+şeridin yarısını kaplıyor ama **dört eylemden yalnız biri** onu okuyor:
+`setCaseStatus` imzasında gerekçe alanı **yok** — `Çöz` ve `Reddet` o kutuya
+yazılanı hiçbir zaman sunucuya taşımadı. Şerit tek satıra indi
+(`Reddet · Çöz · taşma menüsü`); gerekçe gerçekten gerektiği anda soruluyor.
+
+🔴 Katlanır **yapılmadı** ve bu bilinçli: katlanmak her karara bir dokunuş
+daha ekler, günlük iş de tam o iki karardır.
+
+### Kullanıcılar tek bölüm
+Bilgi üç ayrı yere dağılmıştı (`Taraflar`, `Kişi dosyası`, `Hedefin geçmişi`)
+ve hiçbiri ötekine bağlanmıyordu. 🔴 Üstelik geçmiş **yalnız hedef** için
+vardı: çok şikâyet edip hiçbiri tutmayan kullanıcı da bir moderasyon
+sinyalidir, ama görünmüyordu. Tek `Kullanıcılar` bölümü + dokununca açılan
+profil paneli (oranlar en üstte).
+
+`flaggedAsAbusiveReporter` **silindi**: "reddedilen"i `filed - filedUpheld`
+ile türetiyordu, yani henüz `open`/`in_review` duran şikâyetleri de
+"tutmadı" sayıyordu. Yanlış yönde hata eden bir işaret, işaretsizlikten
+kötüdür.
+
+### ÜÇ DİKİŞ — hepsi liderin işi, hepsi ölçüldü
+
+Bu turda üç ayrı lane üç parça yazdı ve **hiçbiri ötekine bağlı değildi**.
+Deponun kayıtlı kusuru (`bitmis-backend-baglanmamis-ui`,
+`ajan-dikis-yerinde-is-ortada-kalir`): dosyalar var, testler yeşil, **özellik
+yok**.
+
+**1. Yazışma (`935ded0b`).** `_CaseGateway` adaptörü. Kritik satır
+`_ticketIds[party.role] = sent.ticketId` — şikâyet edilen tarafın kanalı
+tembeldir; kimlik saklanmazsa yöneticinin az önce yazdığı mesaj geri
+okunamaz. Etiket "Şikâyet edenle yazış" → "Taraflarla yazış": yüzey artık
+tek taraflı değil, eski etiket yalan söylüyordu.
+
+🔴 **Nöbetçi gerçek bir hata yakaladı.** Dikiş yazıldıktan *sonra* da buton
+sessizce ölüydü: `authStateProvider` dinleyicisiz okunduğu için okumadan
+hemen sonra düşüyor, `.value` sonsuza kadar `AsyncLoading` kalıyordu. Ne
+hata, ne log — `PLAN §2.2` sessiz ölü dokunuş. `build` içinde
+`ref.watch(authStateProvider)` ile kapatıldı; aynı açık `_sendNotice` için de
+vardı.
+
+**2. Purge (`d82bf74e`).** WP-778 lane'i bucket kararını verdi ama TS ucunu
+yazamadı (SAHİP yolu değildi) ve raporunda "AÇIK DİKİŞ" dedi.
+`ticket_message_attachments` purge listesine girdi; ölçüt varsayılmadı,
+`0138`'in yükleme politikası nesneleri diğer üçüyle **aynı ham uid
+klasörüne** kilitliyor (`0138:168`), yani `list(uid)` onları gerçekten bulur.
+
+🔴 Boşluk **yapısaldı**: pgTAP `storage.objects` politikalarını ölçer,
+sözleşme kapısı RPC'leri ölçer, **aradaki TS listesini hiçbir kapı okumaz**.
+Eksik isim hata bile vermez — `list(uid)` hiç çağrılmaz, purge "başarılı"
+raporlar, fotoğraflar sonsuza kadar öksüz kalır.
+`backend_contract_audit.py` artık dördüncü yüzeyi de denetliyor: uid'ye
+kilitleyen her bucket listede **bulunmak**, kilitlemeyen hiçbiri
+**bulunmamak** zorunda (`group-avatars` grup kimliğine bakar, doğru şekilde
+dışarıda). `--self-test` 4/4 kırmızı döndü.
+
+**3. Bildirim dili (`f66cfa6f`).** Sahibin gördüğü metin WP-773 ile v78'de
+zaten düzeltilmişti (bildirim v77'deyken düştü). Ama arayınca gerçek bir açık
+çıktı: `showRemote` dili `activeAppLocale` **global**'inden okuyordu ve arka
+plan isolate'inde o global hiç tohumlanmaz → sessizce cihaz diline düşer.
+Sürüm bildirimi tam da uygulama kapalıyken gelir, yani **her zaman** o yoldan
+geçer. Uygulaması İngilizce, cihazı Türkçe olan kullanıcı Türkçe alırdı.
+`showNudge` **kasten** değiştirilmedi: o ön planda üretilir, orada global
+tohumlanmıştır.
+
+### Testler
+- `moderation_review_flow_test`: 21/21 (üç iddia yön değiştirdi, iki yeni
+  dikiş nöbetçisi).
+- `admin_user_insight_wp777_test`: 19/19.
+- `push_update_localization_wp773_test`: 3/3 (sabotaj kırmızı).
+- `backend_contract_audit.py`: OK + `--self-test` 4/4.
+- `guard.tests.ps1`: 89/89. `flutter analyze` (admin + data): 0.
+
+### Migration durumu
+`0137` + `0138` yazıldı; **yerel replay bu hostta yapılamadı** (Docker bloke),
+yani SQL'in gerçekten çalıştığı ilk yer staging. İlk kuru koşu
+(`33974652010`) dört kusur buldu ve iyi ki bulundu:
+- üçü fikstür izolasyonu (`064` tohum satırlarıyla çakışıyordu → `13ddc9ea`),
+- biri kasıtlı kapı: yeni bucket için purge kararı (`2720e5fa`).
+
+`33975928887` ve `33976563296` benim tetikleme hatalarımla düştü (eksik
+`expected_git_sha`; sonra staging hedef head'i hâlâ `0136`) — ikisi de SQL
+kusuru değil. `129ad2da` staging hedefini `0138`e aldı. Production hedefi
+**bilerek** `0136`'da: staging koşup doğrulanmadan production'ı ilerletmek bu
+turun tüm gerekçesini boşa çıkarırdı.
+
+### 🔴 Merkezî kapı WP-775'in AÇTIĞI gerçek kaybı buldu (WP-782, `715d2336`)
+
+Tam kapı dört kırmızı verdi. Üçü WP-775'in değiştirdiği yüzeye bakan eski
+iddialardı — o lane iddiaları **yalnız kendi test dosyasında** çevirdi,
+`moderation_enforcement_wp441_test.dart` kırmızı kaldı ve ancak kapı tek
+merkezden koşunca göründü. **Lane kendi dosyasını yeşil görüp "bitti" der.**
+
+İddiaları çevirirken asıl kusur çıktı: WP-775 yaptırımı şeritten profil
+paneline taşırken `ladder` parametresini geçirmemiş. Varsayılan
+`kAdminAccountRestrictionLadder` yalnız `requiresAuthBan` basamaklarını sunar
+→ **`Uyar`, `Sustur (24s)` ve `İsim sıfırla` hiçbir yerden uygulanamıyordu**;
+merdivenin en yumuşak ve günlük işte en çok kullanılan üçü. Vaka sayfası
+bunları hep sunuyordu (`650bcd5f~1:648`). Testler yeşildi, özellik yoktu.
+
+Aynı yerde ikinci kayıp: `caseId` de geçilmiyordu → yaptırım onu doğuran
+şikâyete bağlanmıyordu, denetim kaydında "bu ceza hangi vakadan çıktı"
+cevapsız kalıyordu. İkisi de kapatıldı, ölçülüyor, sabotajla kırmızı görüldü.
+
+### Kuru koşu YEŞİL (`33976795633`)
+`0137` + `0138` gerçek bir Postgres'te **ilk kez** sorunsuz koştu. Sıra:
+staging apply → doğrula → re-lock → production.
+
+### Tam kapı (tek merkezden)
+20 kapı · 0 kırmızı · 2 atlandı (`deno` bu makinede yok, CI'da koşar —
+**bunlar yeşil değildir**).
