@@ -170,39 +170,50 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
 
   Widget _filterBar(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      key: kAdminQueueFilterKey,
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: Row(
-        children: [
-          for (final category in <AdminQueueCategory?>[
-            null,
-            AdminQueueCategory.complaint,
-            AdminQueueCategory.suggestion,
-            AdminQueueCategory.question,
-            AdminQueueCategory.appeal,
-          ])
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                key: adminQueueFilterKey(category),
-                label: Text(_categoryLabel(l10n, category)),
-                selected: _category == category,
-                onSelected: (_) => setState(() => _category = category),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            key: kAdminQueueFilterKey,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+            child: Row(
+              children: [
+                for (final category in <AdminQueueCategory?>[
+                  null,
+                  AdminQueueCategory.complaint,
+                  AdminQueueCategory.suggestion,
+                  AdminQueueCategory.question,
+                  AdminQueueCategory.appeal,
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      key: adminQueueFilterKey(category),
+                      label: Text(_categoryLabel(l10n, category)),
+                      selected: _category == category,
+                      onSelected: (_) => setState(() => _category = category),
+                    ),
+                  ),
+              ],
             ),
-          // Tur ciplerinden AYRI durur: tur "ne", bu "hangi halde". Ikisi
-          // birlikte calisir (kapanmis sikayetler gibi).
-          FilterChip(
+          ),
+        ),
+        // 🔴 Kaydirilan seridin DISINDA, her zaman gorunur. Ilk yazimda
+        // tur ciplerinin sonundaydi ve 390dp'de x=706'ya dusuyordu: telefonda
+        // yatay kaydirmadan BULUNAMAZDI -- test ekran disinda kaldigi icin
+        // yakaladi. Tur "ne", bu "hangi halde"; ikisi birlikte calisir.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),
+          child: FilterChip(
             key: kAdminQueueClosedFilterKey,
             avatar: const Icon(Icons.check_circle_outline, size: 18),
             label: Text(l10n.adminKuyrukKapananlar),
             selected: _showClosed,
             onSelected: (value) => setState(() => _showClosed = value),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

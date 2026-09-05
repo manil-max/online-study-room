@@ -576,6 +576,12 @@ void main() {
         width: 390,
         ticket: _ticket(archivedAt: DateTime.now()),
       );
+      // WP-792: arsivlenmis bilet KAPANMIS istir ve varsayilan kuyruktan
+      // duser (sahip: "resolved isaretliyorum ama gitmiyor"). Iddianin amaci
+      // ayni -- arsiv isareti seritte belli olur -- yeri Kapananlar cipi.
+      expect(find.text('Arşivde'), findsNothing);
+      await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
+      await tester.pumpAndSettle();
       expect(find.text('Arşivde'), findsOneWidget);
     });
   });
