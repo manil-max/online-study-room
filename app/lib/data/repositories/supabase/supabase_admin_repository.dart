@@ -12,6 +12,7 @@ import '../../models/feedback_ticket_thread_summary.dart';
 import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
+import 'report_attachment_upload.dart';
 
 /// Postgres "permission denied for function" SQLSTATE'i.
 const String _kPermissionDeniedCode = '42501';
@@ -652,6 +653,95 @@ class SupabaseAdminRepository implements AdminRepository {
         _friendlyMessage(e.message),
         code: e.code == _kPermissionDeniedCode ? _kPurgeHealthDenied : null,
       );
+    }
+  }
+
+  @override
+  Future<List<CaseConversationChannel>> fetchCaseConversationChannels({
+    required String userId,
+    required String reportId,
+  }) async {
+    try {
+      final rows =
+          await _client.rpc(
+                'admin_case_conversation_channels',
+                params: {'p_report_id': reportId},
+              )
+              as List<dynamic>;
+      return [
+        for (final row in rows)
+          CaseConversationChannel.fromMap(
+            Map<String, dynamic>.from(row as Map),
+          ),
+      ];
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<FeedbackTicketMessage> sendCaseMessage({
+    required String userId,
+    required String reportId,
+    required CaseConversationParty party,
+    required String message,
+    String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
+  }) async {
+    // Bos/uzun mesaj yuzunden bosa yukleme yapilmasin diye once dogrulanir.
+    final normalized = normalizeFeedbackTicketReply(message);
+
+    String? attachmentPath;
+    if (attachmentBytes != null && attachmentExt != null) {
+      attachmentPath = await uploadReportAttachment(
+        _client,
+        bytes: attachmentBytes,
+        ext: attachmentExt,
+        bucket: kTicketMessageAttachmentBucket,
+      );
+      // 🔴 `uploadReportAttachment` hatayi yutup `null` doner — sikayet
+      // akisinda dogrudur (ek yuzunden sikayet kaybolmamali), yazismada
+      // DEGILDIR: yonetici fotografi ekrandaki onizlemede gorup gonderdi.
+      // Sessizce eksiz gondermek, gondermedigi bir seyi gonderdi sanmasidir.
+      if (attachmentPath == null) {
+        throw AdminException(
+          feedbackUserMessageForCode('storage'),
+          code: 'storage',
+        );
+      }
+    }
+
+    try {
+      final row = await _client.rpc(
+        'admin_send_case_message',
+        params: {
+          'p_report_id': reportId,
+          'p_party': party.dbValue,
+          'p_message': normalized,
+          'p_client_message_id': clientMessageId ?? const Uuid().v4(),
+          'p_attachment_path': attachmentPath,
+        },
+      );
+      return FeedbackTicketMessage.fromMap(
+        Map<String, dynamic>.from(row as Map),
+      );
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<String?> getTicketMessageAttachmentUrl(String path) async {
+    // Bucket private (`0138`); okuma politikasi biletin taraflarina acik.
+    // Imzalanamayan adres ekrani cokertmez, "gorsel yuklenemedi" dalina duser.
+    try {
+      final url = await _client.storage
+          .from(kTicketMessageAttachmentBucket)
+          .createSignedUrl(path, 3600);
+      return url.trim().isEmpty ? null : url;
+    } on StorageException {
+      return null;
     }
   }
 

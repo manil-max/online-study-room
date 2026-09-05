@@ -28,6 +28,14 @@ class InMemoryAdminRepository implements AdminRepository {
   final List<FeedbackTicket> _tickets = [];
   final List<FeedbackTicketMessage> _ticketMessages = [];
   final Map<(String, String), int> _readWatermarks = {};
+
+  /// WP-780: vaka basina taraf kanallari
+  /// (`admin_case_conversation_channels` karsiligi).
+  final Map<String, List<CaseConversationChannel>> _caseChannels = {};
+
+  /// WP-780: yuklenen mesaj eklerinin yol -> bayt haritasi. Sahte bir depolama
+  /// katmanidir; testler ekin GERCEKTEN tasindigini buradan olcer.
+  final Map<String, Uint8List> _ticketMessageAttachments = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();
   AccountPurgeHealth _purgeHealth;
   final AdminException? _purgeHealthError;
@@ -427,6 +435,193 @@ class InMemoryAdminRepository implements AdminRepository {
     }
   }
 
+  /// Test/demo kurulumu: vakanin taraflari.
+  ///
+  /// `ticketId` verilmeyen taraf **kanali acilmamis** taraftir; ilk mesaj
+  /// kanali acar ve bu liste yerinde guncellenir.
+  ///
+  /// 🔴 `ticketId` VERILEN taraf icin bilet satiri da uretilir. Sunucuda bir
+  /// kanal kimligi varsa arkasinda mutlaka bir `feedback_tickets` satiri
+  /// vardir; sahte bu degismezi tasimazsa yazisma okunurken "bilet yok"
+  /// diye duser ve sahteyi kullanan test gercekte olmayan bir hatayi olcer.
+  void seedCaseConversationChannels(
+    String reportId,
+    List<CaseConversationChannel> channels,
+  ) {
+    _caseChannels[reportId] = [...channels];
+    for (final channel in channels) {
+      final ticketId = channel.ticketId;
+      if (ticketId == null ||
+          _tickets.any((ticket) => ticket.id == ticketId)) {
+        continue;
+      }
+      _tickets.add(
+        _caseChannelTicket(
+          id: ticketId,
+          userId: channel.userId,
+          message: _kCaseChannelSubject,
+          ugcReportId: _ugcReportIdFor(channel.party, reportId),
+        ),
+      );
+    }
+  }
+
+  /// Yuklenmis mesaj eklerinin yol -> bayt haritasi (salt okunur).
+  Map<String, Uint8List> get ticketMessageAttachments =>
+      Map.unmodifiable(_ticketMessageAttachments);
+
+  @override
+  Future<List<CaseConversationChannel>> fetchCaseConversationChannels({
+    required String userId,
+    required String reportId,
+  }) async {
+    _requireAdmin(userId);
+    return List.unmodifiable(
+      _caseChannels[reportId] ?? const <CaseConversationChannel>[],
+    );
+  }
+
+  @override
+  Future<FeedbackTicketMessage> sendCaseMessage({
+    required String userId,
+    required String reportId,
+    required CaseConversationParty party,
+    required String message,
+    String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
+  }) async {
+    _requireAdmin(userId);
+    final channels = _caseChannels[reportId];
+    final index =
+        channels?.indexWhere((channel) => channel.party == party) ?? -1;
+    if (channels == null || index < 0) {
+      // Sahte tohumlanmamis: gelistirici kurulum hatasi, kullaniciya donen bir
+      // durum degil. Bu yuzden `AdminException` degil `StateError`.
+      throw StateError('case channel not seeded: $reportId/${party.dbValue}');
+    }
+    final channel = channels[index];
+    final text = normalizeFeedbackTicketReply(message);
+
+    var ticketId = channel.ticketId;
+    if (ticketId == null) {
+      // `0138` §6 karsiligi: kanal TEMBELDIR ve yonetici actigi icin ilk mesaj
+      // da YONETICININDIR.
+      //
+      // 🔴 Sunucudan tek sapma: orada `reporter` tarafinin kanali yoksa
+      // `case_conversation_missing` atilir, cunku ayna bileti `report_ugc`
+      // her sikayette acar. Sahtede boyle bir garanti yok; iki taraf da ayni
+      // tembel yolu izler.
+      final ticket = _caseChannelTicket(
+        id: _uuid.v4(),
+        userId: channel.userId,
+        message: text,
+        ugcReportId: _ugcReportIdFor(channel.party, reportId),
+      );
+      _tickets.add(ticket);
+      ticketId = ticket.id;
+      channels[index] = CaseConversationChannel(
+        party: channel.party,
+        userId: channel.userId,
+        displayName: channel.displayName,
+        ticketId: ticketId,
+      );
+    }
+
+    return _appendCaseMessage(
+      ticketId: ticketId,
+      adminId: userId,
+      message: text,
+      commandId: clientMessageId ?? _uuid.v4(),
+      attachmentBytes: attachmentBytes,
+      attachmentExt: attachmentExt,
+    );
+  }
+
+  @override
+  Future<String?> getTicketMessageAttachmentUrl(String path) async {
+    // Yuklenmemis yol imzalanamaz — gercek bucket'ta da obje yoksa imza yok.
+    if (!_ticketMessageAttachments.containsKey(path)) return null;
+    return 'memory://$path';
+  }
+
+  /// Vaka kanalinin bilet satiri. Sunucudaki karsiligi `0138` §6'daki
+  /// `insert into public.feedback_tickets (...)`.
+  ///
+  /// 🔴 [ugcReportId] yalniz sikayet EDEN kanalinda doludur. `0138` KARAR 2:
+  /// sikayet edilen kanali `ugc_report_id`yi bilerek NULL birakir, cunku
+  /// `feedback_tickets_ugc_report_id_unique` rapor basina tek bilete izin
+  /// verir ve `report_ugc` o indeksi arbiter alir. Sahte bu ayrimi tasimazsa
+  /// kuyruk elemesini olcen testler yanlis yesil verir.
+  FeedbackTicket _caseChannelTicket({
+    required String id,
+    required String userId,
+    required String message,
+    String? ugcReportId,
+  }) {
+    final now = DateTime.now();
+    return FeedbackTicket(
+      id: id,
+      userId: userId,
+      kind: FeedbackTicketKind.feedback,
+      // 'report': `0090` kota sayaci yalniz 'feedback'/'question' sayar;
+      // yoneticinin actigi kanal kullanicinin kotasini tuketmemeli.
+      type: FeedbackTicketType.report,
+      subject: _kCaseChannelSubject,
+      message: message,
+      status: FeedbackTicketStatus.open,
+      createdAt: now,
+      updatedAt: now,
+      ugcReportId: ugcReportId,
+    );
+  }
+
+  /// Yoneticinin mesajini bir bilete ekler; komut kimligi tekrarlanirsa AYNI
+  /// satiri doner (sunucudaki `client_message_id` tekilligi).
+  FeedbackTicketMessage _appendCaseMessage({
+    required String ticketId,
+    required String adminId,
+    required String message,
+    required String commandId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
+  }) {
+    final replay = _ticketMessages.where(
+      (item) => item.ticketId == ticketId && item.clientMessageId == commandId,
+    );
+    if (replay.isNotEmpty) return replay.first;
+
+    String? attachmentPath;
+    if (attachmentBytes != null && attachmentExt != null) {
+      // Sunucunun bekledigi yol bicimi: `<uid>/<uuid>.<ext>`.
+      attachmentPath = '$adminId/${_uuid.v4()}.$attachmentExt';
+      _ticketMessageAttachments[attachmentPath] = attachmentBytes;
+    }
+
+    final item = FeedbackTicketMessage(
+      id: _uuid.v4(),
+      ticketId: ticketId,
+      senderId: adminId,
+      senderRole: FeedbackTicketSenderRole.admin,
+      message: message,
+      createdAt: DateTime.now(),
+      messageSeq:
+          _ticketMessages
+              .where((existing) => existing.ticketId == ticketId)
+              .fold<int>(
+                0,
+                (maxSeq, existing) =>
+                    existing.messageSeq > maxSeq ? existing.messageSeq : maxSeq,
+              ) +
+          1,
+      clientMessageId: commandId,
+      attachmentPath: attachmentPath,
+    );
+    _ticketMessages.add(item);
+    _changes.add(null);
+    return item;
+  }
+
   @override
   Future<AccountPurgeHealth> fetchAccountPurgeHealth() async {
     final error = _purgeHealthError;
@@ -448,6 +643,9 @@ class InMemoryAdminRepository implements AdminRepository {
     ];
   }
 
+  String? _ugcReportIdFor(CaseConversationParty party, String reportId) =>
+      party == CaseConversationParty.reporter ? reportId : null;
+
   void _requireAdmin(String userId) {
     if (!_superAdminUserIds.contains(userId)) {
       throw const AdminException('Bu işlem için admin yetkisi gerekiyor.');
@@ -468,6 +666,12 @@ class InMemoryAdminRepository implements AdminRepository {
 
   void dispose() => _changes.close();
 }
+
+/// Vaka kanali biletinin konu satiri.
+///
+/// Sunucudaki karsiligi `0138` §6'daki notr konudur: kimin sikayet ettigini ve
+/// gerekcesini SIZDIRMAZ.
+const String _kCaseChannelSubject = 'Moderasyon ekibinden mesaj';
 
 /// Sahtenin varsayilani: yapilandirilmis ve temiz kuyruk.
 ///

@@ -128,6 +128,30 @@ final settingsBadgeCountProvider = Provider<int>((ref) {
   return announcements + replies;
 });
 
+/// WP-780: vakanin iki taraf kanali — vaka sayfasindaki "Yazisma" bolumu bu
+/// listeyi okuyup yazisma ekranini acar.
+///
+/// 🔴 `autoDispose`: sikayet edilen tarafin `ticketId`si, yonetici ilk mesaji
+/// gonderene kadar `null`dur ve gonderdiginde DEGISIR. Kalici onbellek, ikinci
+/// acilista hala `null` tasiyan bayat bir liste verirdi. `family` anahtari
+/// rapor kimligidir; iki vaka birbirinin onbellegini ezmez.
+final adminCaseConversationChannelsProvider =
+    FutureProvider.autoDispose.family<List<CaseConversationChannel>, String>((
+      ref,
+      reportId,
+    ) async {
+      final profile = ref.watch(authStateProvider).value;
+      if (profile == null) return const [];
+      final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
+      if (!isAdmin) return const [];
+      return ref
+          .watch(adminRepositoryProvider)
+          .fetchCaseConversationChannels(
+            userId: profile.id,
+            reportId: reportId,
+          );
+    }, retry: adminRetryPolicy);
+
 final adminUsersProvider = FutureProvider.autoDispose<List<AdminUserDto>>((
   ref,
 ) async {

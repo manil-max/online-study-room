@@ -11,6 +11,17 @@ import 'package:uuid/uuid.dart';
 /// super-admin üretebilir.
 const String kReportAttachmentBucket = 'report_attachments';
 
+/// WP-780: vaka yazismasindaki mesaj basina tek fotografin bucket'ı (`0138`).
+///
+/// 🔴 [kReportAttachmentBucket] DEĞİLDİR. Şikâyet eki bilerek yalnız
+/// super-admin'e okunur (`0096`); yazışma fotoğrafı ise biletin **iki**
+/// tarafına da okunur olmak zorundadır. Delil bucket'ına ikinci bir okuma
+/// politikası eklemek `0096`nın kuralını zayıflatırdı.
+///
+/// Yol kuralı (`<uid>/<uuid>.<ext>`), 5 MB sınırı ve izinli MIME listesi iki
+/// bucket'ta da aynıdır; bu yüzden aynı yükleyici gövdesi kullanılır.
+const String kTicketMessageAttachmentBucket = 'ticket_message_attachments';
+
 /// İstemcinin kabul ettiği uzantılar. **Asıl kapı sunucudadır**
 /// (bucket `file_size_limit` + `allowed_mime_types` ve
 /// `assert_report_attachment_allowed`); buradaki liste yalnız gereksiz yüklemeyi
@@ -22,10 +33,16 @@ const List<String> kReportAttachmentExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 ///
 /// Ek **opsiyoneldir**: yükleme başarısız olursa `null` döner ve çağıran
 /// şikâyeti/soruyu eksiz göndermeye devam eder. Ek yüzünden bildirim düşmez.
+///
+/// [bucket] varsayılanı [kReportAttachmentBucket]'tır — mevcut çağıranların
+/// (şikâyet ve destek sorusu) davranışı değişmez. Vaka yazışması
+/// [kTicketMessageAttachmentBucket] geçer ve `null` dönüşünü **yutmaz**; bkz.
+/// `SupabaseAdminRepository.sendCaseMessage`.
 Future<String?> uploadReportAttachment(
   SupabaseClient client, {
   required Uint8List? bytes,
   required String? ext,
+  String bucket = kReportAttachmentBucket,
 }) async {
   if (bytes == null || ext == null || bytes.isEmpty) return null;
 
@@ -40,7 +57,7 @@ Future<String?> uploadReportAttachment(
 
   try {
     await client.storage
-        .from(kReportAttachmentBucket)
+        .from(bucket)
         .uploadBinary(
           path,
           bytes,

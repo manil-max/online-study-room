@@ -198,6 +198,56 @@ class AccountPurgeHealth {
   }
 }
 
+/// WP-780: vakanin bir tarafi.
+///
+/// Sunucu bu iki degeri `feedback_tickets.case_party` CHECK'i ve
+/// `admin_send_case_message`in `p_party` kontrolu ile kabul eder
+/// (`supabase/migrations/0138_case_conversation_and_message_photo.sql`).
+enum CaseConversationParty {
+  reporter('reporter'),
+  reported('reported');
+
+  const CaseConversationParty(this.dbValue);
+
+  final String dbValue;
+
+  /// 🔴 Tanimadigi degeri bir tarafa **yuvarlamaz**. `FeedbackTicketSenderRole`
+  /// gibi varsayilana dusseydi, sunucu tarafi yeniden adlandirildigi anda
+  /// yonetici sikayet edilene yazdigini sanip sikayet edene yazardi.
+  static CaseConversationParty fromDb(String value) =>
+      values.firstWhere((party) => party.dbValue == value);
+}
+
+/// `admin_case_conversation_channels(p_report_id)` ciktisinin bir satiri.
+///
+/// [ticketId] `null` ise o tarafla **henuz kanal yoktur**; kanali ilk mesaj
+/// acar ([AdminRepository.sendCaseMessage]).
+@immutable
+class CaseConversationChannel {
+  const CaseConversationChannel({
+    required this.party,
+    required this.userId,
+    this.displayName,
+    this.ticketId,
+  });
+
+  final CaseConversationParty party;
+  final String userId;
+
+  /// Profili silinmis kisi icin `null` doner; taraf yine de gorunur.
+  final String? displayName;
+  final String? ticketId;
+
+  factory CaseConversationChannel.fromMap(Map<String, dynamic> map) {
+    return CaseConversationChannel(
+      party: CaseConversationParty.fromDb(map['party'] as String),
+      userId: map['user_id'] as String,
+      displayName: map['display_name'] as String?,
+      ticketId: map['ticket_id'] as String?,
+    );
+  }
+}
+
 abstract class AdminRepository {
   Future<bool> isSuperAdmin(String userId);
 
@@ -335,6 +385,40 @@ abstract class AdminRepository {
   /// Reddedilen/okunamayan saglik **bos sonuc degil** [AdminException] doner:
   /// "sorulamadi" ile "sorun yok" ayni sey degildir.
   Future<AccountPurgeHealth> fetchAccountPurgeHealth();
+
+  /// WP-780: vakanin iki taraf kanali (`admin_case_conversation_channels`).
+  ///
+  /// Grup/grup adi raporunda sikayet edilen tek bir kisi yoktur; sunucu o
+  /// vakada **yalniz** sikayet eden satirini doner. Yani liste bir ya da iki
+  /// elemanlidir.
+  Future<List<CaseConversationChannel>> fetchCaseConversationChannels({
+    required String userId,
+    required String reportId,
+  });
+
+  /// WP-780: yoneticinin taraf kanalina mesaji (`admin_send_case_message`).
+  ///
+  /// Kanal **tembeldir**: sikayet edilen kisi, yonetici gercekten yazana kadar
+  /// hicbir destek kaydi gormez. Bu yuzden donus tipi `void` degildir — ilk
+  /// mesajdan sonra o tarafin gecmisi ancak donen mesajin
+  /// [FeedbackTicketMessage.ticketId]'siyle okunabilir; cagiran kimligi
+  /// saklamazsa yeni acilan kanal ekranda bos gorunur.
+  ///
+  /// Ek opsiyoneldir ama **sessizce dusmez**: yukleme basarisiz olursa mesaj da
+  /// gonderilmez ve [AdminException] atilir.
+  Future<FeedbackTicketMessage> sendCaseMessage({
+    required String userId,
+    required String reportId,
+    required CaseConversationParty party,
+    required String message,
+    String? clientMessageId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
+  });
+
+  /// WP-780: mesaja ekli fotografin imzali adresi (`ticket_message_attachments`
+  /// bucket'i, `0138`). `null` = gosterilemiyor.
+  Future<String?> getTicketMessageAttachmentUrl(String path);
 
   Future<List<AdminAuditLog>> fetchAuditLogs();
 }
