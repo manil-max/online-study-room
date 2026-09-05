@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// asagidaki iddialar kablolari olcer, sonucu degil (o cihaz kaniti).
 void main() {
   const root = 'android/app/src/main/';
-  String code(String path) => File(root + path)
+  String code(String path) => File('$root$path')
       .readAsStringSync()
       .split('\n')
       .where((line) {
@@ -27,8 +27,9 @@ void main() {
   final overlay = code(
     'kotlin/com/manilmax/online_study_room/overlay/TimerOverlay.kt',
   );
-  final layout = File(root + 'res/layout/timer_overlay_pill.xml')
-      .readAsStringSync();
+  final layout = File(
+    '${root}res/layout/timer_overlay_pill.xml',
+  ).readAsStringSync();
 
   test('terfi eden kartin govdesi canli saat tasir ve saniyede bir yenilenir',
       () {
