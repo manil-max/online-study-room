@@ -26,12 +26,14 @@ import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/data/repositories/admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/supabase_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
 import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
+import 'package:online_study_room/features/admin/detail/admin_case_conversations_page.dart';
 import 'package:online_study_room/features/admin/detail/admin_case_detail_page.dart';
 import 'package:online_study_room/features/admin/detail/admin_user_profile_page.dart';
 import 'package:online_study_room/features/admin/queue/admin_queue_entry.dart';
@@ -141,6 +143,9 @@ Future<void> _pumpQueue(
 /// Karttaki **tek** dugme.
 Finder _open(String targetId) =>
     find.byKey(Key('admin-queue-open-case:message:$targetId'));
+
+Profile _profile(String id) =>
+    Profile(id: id, displayName: id, createdAt: DateTime(2026));
 
 Future<void> _pumpCase(
   WidgetTester tester,
@@ -718,6 +723,108 @@ void main() {
       reason:
           'Satir dokunulabiliyor ama profil acilmiyor: ozellik baglanmamis.',
     );
+  });
+
+  /// 🔴 IKINCI DIKIS NOBETCISI — yazisma.
+  ///
+  /// Sahip: *"yanit ve geri bildirim kismi yenilensin, iki taraflara ayri chat
+  /// sohbeti olsun."* Yazisma sayfasi AYRI bir lane'de yazildi ve kendi
+  /// gecidini (`CaseConversationGateway`) zorunlu parametre yapti; veri yolu
+  /// UCUNCU bir lane'de yazildi. Ikisini birlestiren adaptor bu sayfada.
+  ///
+  /// Adaptor yazilmasaydi dosyalarin ucu de var olur, testlerin ucu de yesil
+  /// gecerdi ve YAZISMA DIYE BIR SEY OLMAZDI — bu deponun kayitli kusuru
+  /// (`bitmis-backend-baglanmamis-ui`).
+  ///
+  /// Iddia: dokunus IKI sekmeli yazismayi acar. Sikayet EDILEN sekmesinin
+  /// ayrica aranmasi bilincli — eski yuzey yalniz sikayet EDENle yazisiyordu,
+  /// yani tek sekme gorseydik dikis "calisiyor" gorunup sahibin istegini
+  /// karsilamazdi.
+  testWidgets('yanit dugmesi IKI TARAFLI yazismayi GERCEKTEN acar', (
+    tester,
+  ) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'kanıt');
+
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          adminModerationRepositoryProvider.overrideWithValue(repo),
+          adminRepositoryProvider.overrideWithValue(InMemoryAdminRepository()),
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(_profile('admin-1')),
+          ),
+          adminCaseConversationChannelsProvider('report-a').overrideWith(
+            (ref) async => const [
+              CaseConversationChannel(
+                party: CaseConversationParty.reporter,
+                userId: 'reporter-1',
+                displayName: 'Şikâyetçi',
+                ticketId: 't-mirror',
+              ),
+              // 🔴 `ticketId` KASTEN null: sikayet edilen tarafin kanali
+              // tembeldir, yonetici yazana kadar yoktur. Sekme yine de
+              // acilmali; acilmazsa yonetici o kisiye hic ulasamaz.
+              CaseConversationChannel(
+                party: CaseConversationParty.reported,
+                userId: _targetA,
+                displayName: 'Şikâyet edilen',
+              ),
+            ],
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AdminCaseDetailPage(moderationCase: moderationCase),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Yazisma kati VARSAYILAN OLARAK KAPALI (WP-775: bildirim alani surekli
+    // yer kapliyordu). Kullanici da once onu acar; test de acmali.
+    final fold = find.byKey(const Key('admin-case-contact-fold'));
+    expect(fold, findsOneWidget);
+    await tester.ensureVisible(fold);
+    await tester.tap(fold);
+    await tester.pumpAndSettle();
+
+    // 🔴 `ensureVisible` YETMEZ: dugmeyi gorunur yapar ama karar seridi
+    // (sabit alt serit) uzerini orter ve dokunus serite gider. Liste bir
+    // miktar kaydirilir ki dugme seridin USTUNDE kalsin.
+    final reply = find.byKey(kAdminCaseReplyKey);
+    expect(reply, findsOneWidget);
+    await tester.ensureVisible(reply);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byKey(kModerationEvidenceKey), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    await tester.tap(reply);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(kCaseConversationsKey),
+      findsOneWidget,
+      reason: 'Dugme dokunulabiliyor ama yazisma acilmiyor: dikis yok.',
+    );
+    expect(
+      find.byKey(kCaseConversationTabKey(CasePartyRole.reporter)),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(kCaseConversationTabKey(CasePartyRole.reported)),
+      findsOneWidget,
+      reason:
+          'Sikayet EDILEN sekmesi yok: kanali tembel oldugu icin dusuruldu, '
+          'yani sahibin istedigi iki tarafli yazisma yine tek tarafli.',
+    );
+    expect(tester.takeException(), isNull);
   });
 
   /// 🔴 SAHIBIN ASIL SIKAYETI OLCULUR: *"altta reject vs nin oldugu kisimda

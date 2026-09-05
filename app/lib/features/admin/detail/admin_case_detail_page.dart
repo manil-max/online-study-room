@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/feedback_ticket.dart';
+import '../../../data/models/feedback_ticket_message.dart';
 import '../../../data/models/moderation_case.dart';
 import '../../../data/models/report_target.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
@@ -15,6 +17,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/repositories/admin_moderation_repository.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../queue/moderation_attachment_preview.dart';
+import 'admin_case_conversations_page.dart';
 import 'admin_user_profile_page.dart';
 import '../queue/moderation_dialogs.dart';
 import '../ticket/admin_ticket_detail_page.dart';
@@ -166,6 +169,13 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // 🔴 Sonuc kullanilmiyor ama bu satir GEREKLI ve silinemez.
+    // `authStateProvider`i CANLI tutar. Onsuz, dugmeye basildiginda yapilan
+    // `ref.read(authStateProvider...)` dinleyicisiz bir provider yaratir,
+    // provider okumadan hemen sonra dusurulur ve `.value` sonsuza kadar
+    // `AsyncLoading` kalir -- dugme SESSIZCE hicbir sey yapmaz. Depoda kayitli
+    // tuzak: `riverpod3-autodispose-test-trap`. Nobetci testi bunu yakaladi.
+    ref.watch(authStateProvider);
     return Scaffold(
       key: kAdminCaseDetailKey,
       appBar: AppBar(title: Text(l10n.adminVakaDetayBaslik)),
@@ -403,9 +413,22 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
     final targetUserId = _targetUserId;
     return [
       _section(context, l10n.adminVakaYanitBaslik),
-      if (ticket == null)
+      if (_reportId != null)
+        // WP-780 DIKIS: iki tarafli yazisma. Sahip "iki taraflara ayri chat
+        // sohbeti olsun, direkt gecmis konusmalari da goreyim" dedi; tek
+        // aynali bilet bunu karsilamiyordu (yalniz sikayet EDEN tarafi vardi).
+        OutlinedButton.icon(
+          key: kAdminCaseReplyKey,
+          onPressed: _openConversations,
+          icon: const Icon(Icons.forum_outlined, size: 20),
+          label: Text(l10n.adminVakaYanitBaslik),
+        )
+      else if (ticket == null)
         Text(l10n.adminVakaYanitYok, style: theme.textTheme.bodySmall)
       else
+        // Rapor kimligi cozulemeyen vaka: kanal RPC'si anahtarsiz calisamaz,
+        // eski tek-bilet yuzeyi YEDEK olarak durur. Kaldirmak, o vakalarda
+        // yoneticiyi yazisamaz birakirdi.
         OutlinedButton.icon(
           key: kAdminCaseReplyKey,
           onPressed: () =>
@@ -603,6 +626,72 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
   }
   /// Kullaniciya dogrudan bildirim — hedefe ozel duyuru
   /// (`announcements.target_type = 'user'`).
+  /// WP-780 — vaka yazismasini acar.
+  ///
+  /// 🔴 Kanal listesi RPC'den gelir, `_case`ten TURETILMEZ. Sikayet edilen
+  /// tarafin bileti **tembeldir**: yonetici gercekten yazana kadar yoktur.
+  /// Kimlikleri burada uydursaydik, ilk mesajdan sonra gecmis okunamazdi.
+  Future<void> _openConversations() async {
+    final reportId = _reportId;
+    if (reportId == null) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // 🔴 `.value` DEGIL `.future`. `authStateProvider` bir `StreamProvider`;
+    // o an baska bir dinleyicisi yoksa `read(...).value` yukleniyor halinde
+    // `null` doner ve dugme SESSIZCE hicbir sey yapmaz -- deponun kayitli
+    // Riverpod tuzagi. Nobetci testi tam olarak bunu yakaladi.
+    final admin = await ref.read(authStateProvider.future);
+    if (!mounted || admin == null) return;
+
+    final List<CaseConversationChannel> channels;
+    try {
+      channels = await ref.read(
+        adminCaseConversationChannelsProvider(reportId).future,
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileBeklenmeyenBirHataOlustu)),
+      );
+      return;
+    }
+    if (!mounted) return;
+    if (channels.isEmpty) {
+      // Sessiz olu dokunus olmasin: neden acilmadigi soylenir.
+      messenger.showSnackBar(SnackBar(content: Text(l10n.adminVakaYanitYok)));
+      return;
+    }
+
+    final ticketIds = <CasePartyRole, String?>{
+      for (final channel in channels) _roleOf(channel.party): channel.ticketId,
+    };
+    await openAdminCaseConversations(
+      context,
+      parties: [
+        for (final channel in channels)
+          CaseParty(
+            role: _roleOf(channel.party),
+            userId: channel.userId,
+            displayName: channel.displayName ?? l10n.adminUgcDeletedUser,
+            ticketId: channel.ticketId,
+          ),
+      ],
+      gateway: _CaseGateway(
+        repo: ref.read(adminRepositoryProvider),
+        adminId: admin.id,
+        reportId: reportId,
+        ticketIds: ticketIds,
+      ),
+    );
+    if (!mounted) return;
+    // Tembel kanal acilmis olabilir; liste bayat kalmasin.
+    ref.invalidate(adminCaseConversationChannelsProvider(reportId));
+  }
+
+  static CasePartyRole _roleOf(CaseConversationParty party) => switch (party) {
+    CaseConversationParty.reporter => CasePartyRole.reporter,
+    CaseConversationParty.reported => CasePartyRole.reported,
+  };
+
   Future<void> _sendNotice(String targetUserId) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -903,3 +992,62 @@ String _reasonLabel(AppLocalizations l10n, String reason) => switch (reason) {
   'other' => l10n.safetyReasonOther,
   _ => reason.isEmpty ? '—' : reason,
 };
+
+
+/// WP-780 — sayfa ile depo arasindaki adaptor.
+///
+/// 🔴 Neden `features/` altinda: veri katmani `CaseParty`/`CasePartyRole`
+/// tanimaz ve tanimamalidir. Sayfanin sozlesmesi ile deponun sozlesmesi
+/// birbirine burada cevrilir.
+class _CaseGateway implements CaseConversationGateway {
+  _CaseGateway({
+    required this.repo,
+    required this.adminId,
+    required this.reportId,
+    required Map<CasePartyRole, String?> ticketIds,
+  }) : _ticketIds = {...ticketIds};
+
+  final AdminRepository repo;
+  final String adminId;
+  final String reportId;
+
+  /// 🔴 Tembel kanalin kimligi. `send` yeni bilet acinca BURADA guncellenir;
+  /// guncellenmezse yoneticinin az once yazdigi mesaj `messages()` ile geri
+  /// okunamaz ve ekranda kaybolur.
+  final Map<CasePartyRole, String?> _ticketIds;
+
+  static CaseConversationParty _party(CasePartyRole role) => switch (role) {
+    CasePartyRole.reporter => CaseConversationParty.reporter,
+    CasePartyRole.reported => CaseConversationParty.reported,
+  };
+
+  @override
+  Future<List<FeedbackTicketMessage>> messages(CaseParty party) async {
+    final ticketId = _ticketIds[party.role];
+    // Kanal henuz yok — hata degil, "ilk mesaji siz yazin" halidir.
+    if (ticketId == null) return const [];
+    return repo.fetchTicketMessages(userId: adminId, ticketId: ticketId);
+  }
+
+  @override
+  Future<void> send({
+    required CaseParty party,
+    required String message,
+    Uint8List? photoBytes,
+    String? photoExt,
+  }) async {
+    final sent = await repo.sendCaseMessage(
+      userId: adminId,
+      reportId: reportId,
+      party: _party(party.role),
+      message: message,
+      attachmentBytes: photoBytes,
+      attachmentExt: photoExt,
+    );
+    _ticketIds[party.role] = sent.ticketId;
+  }
+
+  @override
+  Future<String?> photoUrl(String attachmentPath) =>
+      repo.getTicketMessageAttachmentUrl(attachmentPath);
+}

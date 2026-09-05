@@ -2347,7 +2347,7 @@
   "adminVakaDurumBagimsizUyari": "Bu kayıt bir vakaya bağlı değil; durum sunucuda değişmedi.",
   "adminVakaBildirimBaslik": "Kullanıcıya bildirim gönder",
   "adminVakaBildirimGonderildi": "Bildirim gönderildi.",
-  "adminVakaYanitBaslik": "Şikâyet edenle yazış",
+  "adminVakaYanitBaslik": "Taraflarla yazış",
   "adminVakaYanitYok": "Bu şikâyetin destek kaydı bulunamadı.",
   "adminVakaSikayetSayisi": "Bu hedefe gelen toplam şikâyet: {count}",
   "adminBiletDetayBaslik": "Destek kaydı",
