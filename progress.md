@@ -11525,3 +11525,57 @@ saati değil metni çizer**. WP-753'ün *"when geçmişte kalır, çip süreyi
 - Devir notu `docs/analiz/DINAMIK-PANEL-DEVIR-NOTU.md` (untracked, sahibin)
   ve `WP-751-dinamik-panel-kok-neden.md` eski teşhisi taşıyor; bu kart
   doğrusudur.
+
+## 2026-09-05 — SÜRÜM BİLDİRİMİ CİHAZ DİLİNDE + GÜNCELLEME NOTU LİNK DEĞİL NOT (WP-773)
+
+**Tetikleyen (sahip, cihazda, v77):** *"ben İngilizce kullanmama rağmen
+uygulamaya güncelleme geldi bildirimi Türkçe idi... güncelledikten sonra notes
+kısmında hiçbir şey yok sadece github sayfasının linki var."*
+
+### Teşhis (`Kodda doğrulandı`)
+- **Bildirim dili:** `release.yml` `enqueue_update`ye sabit Türkçe
+  `title`/`body` gönderiyor ("Odak Kampı güncellendi / Yeni sürüm indirilmeye
+  hazır."); `dispatch-push` `update` tipini yerelleştirmiyor (payload metni
+  varsa aynen geçiyor); uygulama `showRemote` payload metnini olduğu gibi
+  gösteriyordu. Üç katmanın hiçbirinde dil sorusu sorulmuyordu.
+- **Notlar:** `softprops/action-gh-release` `generate_release_notes: true` ile
+  commit listesinden yalnız "**Full Changelog**: compare linki" üretiyor
+  (v77 gövdesi tam olarak bu). `updater_dialog` gövde BOŞ değilse bundled nota
+  hiç inmiyordu. Üstelik bundled not yeni sürümün notunu ZATEN taşıyamaz:
+  pencere ESKİ sürümde koşar, yeni sürümün girdisi eski asset'te yoktur.
+
+### WP-773 — Düzeltme (lider)
+- `app_push_notification_service.dart`: `update` tipinde metin cihazda,
+  cihaz diliyle kurulur (`localizedUpdatePush`, saf; `version_name`
+  payload'dan). Payload `title`/`body` bilerek okunmaz. Yeni l10n
+  anahtarları `pushUpdateTitle` / `pushUpdateBody` / `pushUpdateBodyGeneric`
+  (EN+TR). Sunucu ve workflow değişmedi: eski sürümler yedek Türkçe metni
+  görmeye devam eder, Edge deploy gerekmedi.
+- `release_notes_service.dart`: `fetchNoteForTag` — etiketin kendi
+  `release_notes.json`u GitHub raw'dan çekilir, build numarasıyla eşleşen not
+  `forLocale` ile kullanıcının dilinde; ağ/JSON hatası sessizce `null`.
+  `parseNotes` saf ve ortak. `updater_service.dart`: `UpdateInfo.tag`.
+- `updater_dialog.dart`: sıra etiketin notu → bundled → GitHub gövdesi; eski
+  "gövde boşsa" kapısı kaldırıldı.
+- `release.yml`: `generate_release_notes: false` (iki finalize job'ında da),
+  gövde `tooling/release/release_body.py` ile `release_notes.json`dan TR+EN
+  üretilir (`body_path`), artefaktla taşınır; üreteç önce self-test koşar
+  (8/8), build bulunamazsa uygulama içi notlara işaret eden yedek gövde
+  yazar, iş akışı düşmez. İkinci metin kaynağı yok (WP-668 kuralı).
+  Gömülü-girdi envanteri: yeni `${{ }}` yalnız `env:` altında, `inputs.` yok.
+
+### Testler
+- `push_update_localization_wp773_test.dart`: EN/TR içerik, sürümsüz gövde,
+  `showRemote` içinde yerelleştirme boş-içerik kapısından ÖNCE.
+- `release_notes_remote_wp773_test.dart`: raw URL, build eşleşmesi, dil
+  seçimi, ağ/JSON/etiketsiz durumlarda sessiz `null`, penceredeki sıra.
+- `release_body_contract_wp773_test.dart`: workflow `generate_release_notes:
+  true` içermez, `body_path` var, self-test artefakttan önce.
+- Komşu: `push_delivery_contract_test` + updater paketi 80/80. analyze 0,
+  l10n audit OK (1808 anahtar), `git diff --stat` = `--ignore-cr-at-eol`.
+
+### Cihazda ölçülmeyen
+- Yeni bildirim metni ancak v78 kurulu telefona GELECEK sürümün (v79) push'unda
+  görülür; v77'de kalan telefon Türkçe yedek metni görmeye devam eder.
+- Etiketten not çekme de v78 kurulu cihazda v79 güncellemesinde görülür.
+  GitHub gövdesi düzeltmesi ise v78 yayınında herkese ulaşır.

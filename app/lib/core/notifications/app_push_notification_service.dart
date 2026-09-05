@@ -26,6 +26,23 @@ const kNotificationChannelTypes = <String>[
 const _seenPushEventIdsKey = 'push_seen_event_ids_v1';
 const _lastPushEventIdKey = 'push_last_event_id';
 const _lastPushTypeKey = 'push_last_type';
+
+/// WP-773: surum bildiriminin cihaz dilindeki icerigi. **Saf.**
+///
+/// Payload `version_name` tasir (`enqueue_update_push`, 0066); bossa surumsuz
+/// govde. Payload'daki `title`/`body` BILEREK okunmaz: ikisi de Turkce sabit.
+({String title, String body}) localizedUpdatePush(
+  AppLocalizations l10n,
+  Map<String, dynamic> data,
+) {
+  final version = (data['version_name'] ?? '').toString().trim();
+  return (
+    title: l10n.pushUpdateTitle,
+    body: version.isEmpty
+        ? l10n.pushUpdateBodyGeneric
+        : l10n.pushUpdateBody(version),
+  );
+}
 const _lastPushReceivedAtKey = 'push_last_received_at';
 
 enum AppPushPermission { authorized, denied, notDetermined, unsupported }
@@ -238,15 +255,26 @@ class AppNotificationCoordinator {
     final prefs = await SharedPreferences.getInstance();
     if (!await _markReceivedOnce(prefs, eventId: eventId, type: type)) return;
 
-    final title =
+    var title =
         message.notification?.title ??
         (message.data['title'] ?? '').toString().trim();
-    final body =
+    var body =
         message.notification?.body ??
         (message.data['body'] ?? '').toString().trim();
+    final l10n = await loadSystemLocalizations();
+    if (type == 'update') {
+      // WP-773 (sahip, cihazda): uygulama Ingilizceyken surum bildirimi
+      // Turkce geliyordu. Sunucu payload'i `release.yml`den SABIT Turkce
+      // metin tasir ve dispatcher `update` tipini yerellestirmez. Metin
+      // cihazda, cihazin diliyle yeniden kurulur; payload metni yalniz eski
+      // surumlerin gordugu yedektir.
+      final content = localizedUpdatePush(l10n, message.data);
+      title = content.title;
+      body = content.body;
+    }
     if (title.isEmpty && body.isEmpty) return;
     await initialize();
-    final channel = _channelFor(type, await loadSystemLocalizations());
+    final channel = _channelFor(type, l10n);
     await _adapter.show(
       id: eventId.hashCode & 0x7fffffff,
       title: title,

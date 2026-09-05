@@ -224,6 +224,19 @@ jobs:
           data['artifacts'].append({'name': aab.name, 'sha256': hashlib.sha256(aab.read_bytes()).hexdigest()})
           manifest.write_text(json.dumps(data, indent=2) + '\n')
           PY
+      # WP-773: GitHub Release govdesi. `generate_release_notes` commit
+      # listesinden yalniz "Full Changelog" baglantisi uretiyordu; uygulama
+      # icindeki guncelleme penceresi govde BOS olmadigi icin bundled nota hic
+      # inmiyor, kullanici not yerine bir link goruyordu. Govde artik
+      # `release_notes.json`dan (TR + EN) turetilir; ikinci bir metin kaynagi
+      # yok (WP-668'in Play kurali). Uretec once kendi self-test'ini kosar.
+      - name: GitHub Release govdesini surum notlarindan uret (WP-773)
+        env:
+          BUILD_NUMBER: ${{ needs.preflight.outputs.build_number }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          python3 ../tooling/release/release_body.py --self-test
+          python3 ../tooling/release/release_body.py --notes assets/release_notes.json --build-number "$BUILD_NUMBER" --tag "$RELEASE_TAG" --out build/app/outputs/flutter-apk/release-body.md
       - uses: actions/upload-artifact@v4
         with:
           name: android-release
@@ -273,7 +286,9 @@ jobs:
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}
           prerelease: ${{ needs.preflight.outputs.channel == 'beta' }}
-          generate_release_notes: true
+          # WP-773: otomatik commit listesi DEGIL, surum notlari (TR + EN).
+          generate_release_notes: false
+          body_path: release-assets/android/release-body.md
           files: |
             release-assets/android/*.apk
             release-assets/android/*.aab
@@ -338,7 +353,9 @@ jobs:
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}
           prerelease: ${{ needs.preflight.outputs.channel == 'beta' }}
-          generate_release_notes: true
+          # WP-773: otomatik commit listesi DEGIL, surum notlari (TR + EN).
+          generate_release_notes: false
+          body_path: release-assets/android/release-body.md
           files: |
             release-assets/android/*.apk
             release-assets/android/*.aab

@@ -25,9 +25,11 @@ class ReleaseNotesService {
     SharedPreferences? preferences,
     Future<String> Function(String path)? assetLoader,
     Future<PackageInfo> Function()? packageInfoLoader,
+    Future<String> Function(Uri url)? remoteLoader,
   }) : _preferences = preferences,
        _assetLoader = assetLoader ?? rootBundle.loadString,
-       _packageInfoLoader = packageInfoLoader ?? PackageInfo.fromPlatform;
+       _packageInfoLoader = packageInfoLoader ?? PackageInfo.fromPlatform,
+       _remoteLoader = remoteLoader;
 
   static const assetPath = 'assets/release_notes.json';
   static const _kLastSeenBuild = 'release_notes_last_seen_build';
@@ -36,8 +38,42 @@ class ReleaseNotesService {
   final Future<String> Function(String path) _assetLoader;
   final Future<PackageInfo> Function() _packageInfoLoader;
 
-  Future<List<ReleaseNote>> loadBundledNotes() async {
-    final raw = await _assetLoader(assetPath);
+  /// WP-773: `null` = uzak kaynak yok (yalniz bundled).
+  final Future<String> Function(Uri url)? _remoteLoader;
+
+  Future<List<ReleaseNote>> loadBundledNotes() async =>
+      parseNotes(await _assetLoader(assetPath));
+
+  /// WP-773: etiketin kendi `release_notes.json`u (GitHub raw).
+  ///
+  /// Guncelleme penceresi ESKI surumde kosar: yeni surumun notu bundled
+  /// asset'te YOKTUR, GitHub Release govdesi ise tek dillidir. Etiketin
+  /// dosyasi iki dili de tasir ve `forLocale` ile secilir.
+  static Uri rawNotesUrlForTag(String tag) => Uri.parse(
+    'https://raw.githubusercontent.com/manil-max/online-study-room/'
+    '${Uri.encodeComponent(tag.trim())}/app/assets/release_notes.json',
+  );
+
+  /// Etiketteki notlar icinden [buildNumber]. Ag/JSON hatasi `null`:
+  /// guncelleme penceresi not yuzunden dusmez, GitHub govdesine iner.
+  Future<ReleaseNote?> fetchNoteForTag({
+    required String tag,
+    required int buildNumber,
+  }) async {
+    final loader = _remoteLoader;
+    if (loader == null || tag.trim().isEmpty || buildNumber <= 0) return null;
+    try {
+      for (final note in parseNotes(await loader(rawNotesUrlForTag(tag)))) {
+        if (note.buildNumber == buildNumber) return note;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// `release_notes.json` metnini cozer; yeni build ustte. **Saf.**
+  static List<ReleaseNote> parseNotes(String raw) {
     final decoded = jsonDecode(raw);
     final releases = decoded is Map<String, dynamic>
         ? decoded['releases']

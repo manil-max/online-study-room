@@ -113,6 +113,8 @@ class UpdaterService {
               ? (data['name'] as String).trim()
               : (data['tag_name'] as String? ?? 'v$latestCode'),
           releaseNotes: (data['body'] as String?)?.trim() ?? '',
+          // WP-773: etiket, surum notlarinin ham dosyasina giden anahtar.
+          tag: (data['tag_name'] as String? ?? '').trim(),
           downloadUrl: packageUrl,
           sha256Url: _findAssetUrl(assets, '$assetName.sha256'),
           packageKind: isWindows
@@ -233,12 +235,18 @@ class UpdateInfo {
     required this.downloadUrl,
     this.sha256Url,
     this.packageKind = UpdatePackageKind.apk,
+    this.tag = '',
   });
 
   final int versionCode;
   final String versionName;
   final String releaseNotes;
   final String downloadUrl;
+
+  /// GitHub Release etiketi (`v78`). WP-773: guncelleme penceresi ESKI surumde
+  /// kosar; yeni surumun notu bundled asset'te yoktur, GitHub govdesi tek
+  /// dillidir. Etiketin kendi `release_notes.json`u iki dili de tasir.
+  final String tag;
 
   /// Beklenen SHA-256 dosyasının linki; `null` ise doğrulama atlanır.
   final String? sha256Url;
@@ -253,6 +261,7 @@ class UpdateInfo {
     String? downloadUrl,
     String? sha256Url,
     UpdatePackageKind? packageKind,
+    String? tag,
   }) {
     return UpdateInfo(
       versionCode: versionCode ?? this.versionCode,
@@ -261,6 +270,7 @@ class UpdateInfo {
       downloadUrl: downloadUrl ?? this.downloadUrl,
       sha256Url: sha256Url ?? this.sha256Url,
       packageKind: packageKind ?? this.packageKind,
+      tag: tag ?? this.tag,
     );
   }
 }

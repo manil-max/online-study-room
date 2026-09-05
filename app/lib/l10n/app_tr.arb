@@ -2356,5 +2356,8 @@
   "adminBiletNotOkunamadi": "İç notlar okunamadı.",
   "adminBiletDurumBaslik": "Durum",
   "adminEskiUye": "Gruptan ayrıldı",
-  "adminKullaniciAramaIpucu": "E-posta veya kimlik ara"
+  "adminKullaniciAramaIpucu": "E-posta veya kimlik ara",
+  "pushUpdateTitle": "Odak Kampı güncellendi",
+  "pushUpdateBody": "{version} sürümü indirilmeye hazır.",
+  "pushUpdateBodyGeneric": "Yeni sürüm indirilmeye hazır."
 }

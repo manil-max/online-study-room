@@ -7287,5 +7287,11 @@
   "adminEskiUye": "Left the group",
   "@adminEskiUye": {"description": "WP-771: admin member list marks rows whose membership already ended."},
   "adminKullaniciAramaIpucu": "Search by e-mail or id",
-  "@adminKullaniciAramaIpucu": {"description": "WP-771: search field hint above the admin user list."}
+  "@adminKullaniciAramaIpucu": {"description": "WP-771: search field hint above the admin user list."},
+  "pushUpdateTitle": "Focus Camp updated",
+  "@pushUpdateTitle": {"description": "WP-773: title of the release push. Built on the device because the server payload carries fixed Turkish text."},
+  "pushUpdateBody": "Version {version} is ready to download.",
+  "@pushUpdateBody": {"description": "WP-773: body of the release push.", "placeholders": {"version": {"type": "String"}}},
+  "pushUpdateBodyGeneric": "A new version is ready to download.",
+  "@pushUpdateBodyGeneric": {"description": "WP-773: release push body when the payload carries no version name."}
 }

@@ -28,23 +28,33 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
   var info = await UpdaterService().checkForUpdate();
   if (info == null || !context.mounted) return;
 
-  if (info.releaseNotes.trim().isEmpty) {
-    final bundledNote = await ReleaseNotesService().noteForBuild(
-      info.versionCode,
-      channel: UpdaterService.channel,
+  // WP-773 (sahip, cihazda): "notlar kisminda hicbir sey yok, sadece GitHub
+  // linki". GitHub Release govdesi otomatik uretilen "Full Changelog"
+  // baglantisiydi; BOS olmadigi icin bundled not hic devreye girmiyordu.
+  // Sira artik: etiketin kendi release_notes.json'u (kullanicinin dilinde)
+  // -> bundled not -> GitHub govdesi. Ilk ikisi de yoksa govde kalir.
+  final notesService = ReleaseNotesService(
+    remoteLoader: _fetchReleaseNotesText,
+  );
+  var note = await notesService.fetchNoteForTag(
+    tag: info.tag,
+    buildNumber: info.versionCode,
+  );
+  note ??= await notesService.noteForBuild(
+    info.versionCode,
+    channel: UpdaterService.channel,
+  );
+  if (note != null) {
+    // WP-131: async gap sonrası locale için mounted guard.
+    if (!context.mounted) return;
+    final locale = Localizations.localeOf(context);
+    info = info.copyWith(
+      releaseNotes: note.forLocale(locale).plainText(
+        highlightsLabel: l10n.updaterYenilikler,
+        fixesLabel: l10n.updaterDuzeltmeler,
+        notesLabel: l10n.updaterNotlar,
+      ),
     );
-    if (bundledNote != null) {
-      // WP-131: async gap sonrası locale için mounted guard.
-      if (!context.mounted) return;
-      final locale = Localizations.localeOf(context);
-      info = info.copyWith(
-        releaseNotes: bundledNote.forLocale(locale).plainText(
-          highlightsLabel: l10n.updaterYenilikler,
-          fixesLabel: l10n.updaterDuzeltmeler,
-          notesLabel: l10n.updaterNotlar,
-        ),
-      );
-    }
   }
 
   if (!context.mounted) return;
@@ -54,6 +64,20 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
     barrierDismissible: true,
     builder: (_) => UpdaterDialog(info: info!),
   );
+}
+
+/// GitHub raw dosyasini duz metin olarak ceker (10 sn sinir, hata = firlatir;
+/// cagiran sessizce GitHub govdesine iner).
+Future<String> _fetchReleaseNotesText(Uri url) async {
+  final response = await Dio().get<String>(
+    url.toString(),
+    options: Options(
+      responseType: ResponseType.plain,
+      receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
+    ),
+  );
+  return response.data ?? '';
 }
 
 /// Yeni sürümü tanıtan ve indirmeyi yöneten pencere.
