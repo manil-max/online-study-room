@@ -11430,3 +11430,98 @@ kapalı test sürümleri gerekiyor. Bu tur o sürümlerin gövdesi.
 - Serbest süreli yaptırım ("N gün") yok — merdiven sabit 9 basamak
   (24 s / 7 g / 14 g / 30 g / kalıcı); yeni süre = yeni enum + migration.
 - **Cihaz kabulü yok.** Tüm iddialar `Kodda doğrulandı` + otomatik test.
+
+## 2026-09-05 — DİNAMİK PANEL KAPANDI: SORUN SAMSUNG'UN ONAY LİSTESİYDİ (WP-772)
+
+**Tetikleyen (sahip):** *"9 kere denedim olmadı, bu sefer kök sorunu aramanı
+istiyorum... sadece 'kesin sorun bu: X ve şunu yapabiliriz: Y' ile gel."*
+Salt okunur analiz ile başladı; kod ancak sahip cihazda çipi gördükten ve
+açık onay verdikten sonra değişti.
+
+### Kesin kök neden — `Cihazda doğrulandı` (S23 / One UI 8.5)
+
+1. **Kod hep doğruydu.** Bildirim Google'ın dokuz maddelik Live Update
+   uygunluk listesini karşılıyor (stil, izin, terfi isteği, ongoing, başlık,
+   RemoteViews yok, grup özeti değil, colorized değil, kanal ≠ MIN). v76 APK
+   manifesti `POST_PROMOTED_NOTIFICATIONS` ilan ediyor (indirilip okundu).
+   androidx 1.18 `setRequestPromotedOngoing` extra'yı doğrudan yazıyor
+   (bytecode'dan doğrulandı). Cihazda "System GRANTED the promotion".
+2. **Samsung Now Bar → Live notifications listesi bir ONAY listesi.** Ekran
+   görüntüsündeki 13 uygulamanın hepsi Samsung/Google/ortak (THY, Aralık 2025
+   ortaklığı). Samsung destek (Ağu 2026): *"listede yoksa şu an
+   kullanamazsınız"*. Aviate geliştiricisi (13 Ağu 2026): *"approved for the
+   now bar... No more developer options!"*. Kakao T paketini taklit ederek
+   Now Bar'a giren hobi uygulaması allowlist'in paket adına göre olduğunu
+   kanıtlıyor.
+3. **Onaysız uygulama yalnız Developer options → "Live notifications for all
+   apps" açıkken çizilir.** Sahip anahtarı açtı, çip **aynı kodla** çıktı.
+4. Altı turun yamaları (ProgressStyle, indeterminate, kategori, yoklama,
+   overlay) bu kapıya hiç ulaşmıyordu. Emülatörde `ui_rich_ongoing` yok;
+   oradaki "terfi yok" ölçümü S23'e taşınamazdı. Codex alt ajanının "36.1
+   şart" tezi de yanlıştı: AOSP 16.0'da terfi `isColorizedRequested()` ister,
+   uygulama colorized çağırmadığı için bayrak ancak QPR1+ mantığında
+   (`isRequestPromotedOngoing`, `ui_rich_ongoing` açık) yazılabilir — cihazda
+   bayrak yazıldığına göre UI katmanı açıktı.
+
+### WP-772 — Çipte sayaç, logo ikonu, sade kart (lider, cihaz ölçümüyle)
+
+Sahip iki fotoğraf attı: bizim çip `⏱ Focus`, Samsung Saat'in çipi `00:05`.
+Tek fark: biz `shortCriticalText` gönderiyorduk ve **çip metin verilirse
+saati değil metni çizer**. WP-753'ün *"when geçmişte kalır, çip süreyi
+çizemez"* okuması yanlıştı; kronometre `when`den itibaren geçen süreyi çizer.
+
+- `StudyTimerService.kt`: terfi eden iki dalda `shortCriticalTextRes = 0`,
+  `setShortCriticalText` çağrısı kaldırıldı → çip odakta yukarı, pomodoro /
+  molada aşağı sayar. Terfi eden kartın başlığı saf `promotedCardTitle`
+  (ders adı → yoksa uygulama etiketi → molada "Break"); "You're focusing"
+  ve açıklama satırı gitti; sayaç sistemin başlık kronometresi, düğme
+  sistemin. Ders adı `subjects_cache` aynasından (`widgetSubjectOptions`).
+  Büyük sayaçlı v43 paneli bu yolda imkânsız (RemoteViews terfiyi düşürür);
+  sahibe söylendi, kabul etti.
+- İkon: jenerik saat kadranı `ic_stat_focus_timer.xml` silindi; launcher
+  ön planındaki kamp ateşinin beyaz alfa silueti beş yoğunlukta
+  `drawable-*dpi/ic_stat_focus_camp.png` (kıvılcım adaları atıldı, 24 px'te
+  alev + çapraz kütük okunuyor). Hem çipte hem çekmece başlığında logo.
+- Zengin panel yolu ve otomatik kural DEĞİŞMEDİ: sıradan Samsung
+  kullanıcısında geliştirici anahtarı kapalı, terfi eden kart çipsiz düz
+  kart olurdu.
+
+### Testler (iddia yön değiştirdi — ÖLÇÜMLE)
+- `TimerLiveUpdateWp753Test`: dört iddia `assertNotEquals(0, shortCritical…)`
+  → `assertEquals(0, …)`; `every_promotable_path_carries_the_chip_text…` →
+  `…sends_no_chip_text_so_the_chip_draws_the_clock`; ikon iddiası
+  `ic_stat_focus_camp`; yeni `promoted_card_title_is_the_subject_or_the_app_label_and_never_empty`.
+- `verified_timer_bridge_contract_test.dart`: `.setShortCriticalText(` artık
+  **yasak** (`isNot(contains)`, gerekçe cihaz ölçümü); `promotedCardTitle(`
+  ve `R.drawable.ic_stat_focus_camp` şart.
+- `TimerNotificationPanelWp759Test` değişmedi: zengin panel faz etiketini
+  korur (o yol terfi etmez).
+- Satır sonu: servis dosyası HEAD'de karışıktı (469 CRLF + 786 LF);
+  düzenleyici hepsini CRLF yapmıştı, dokunulmayan satırların özgün sonları
+  geri kondu; `git diff --stat` = `--ignore-cr-at-eol --stat` (141/58/22).
+
+### Kapı gerçeği
+- Timer paketi JVM: 74 test yeşil (yeni nöbetçiler dahil). Dart sözleşme
+  testi 13/13.
+- **Tam kapı (`python scripts/test_all.py --full`, 2026-09-05):** 25 kapı ·
+  **0 kırmızı · 4 atlandı** (deno yok, emülatör yok, Docker yok; CI'da koşar).
+  1052 s. Veritabanı değişmedi, head `0136`.
+
+### Açık kalanlar
+- **Pomodoro ilerleme çubuğu donuk:** ProgressStyle bir kez gönderiliyor,
+  `progress` hiç güncellenmiyor. Sayaç koşarken ~30 s'de bir sessiz yenileme
+  (`onlyAlertOnce`) gerekir. Ayrı WP.
+- **Herkese açılması:** Samsung Now Bar incelemesine başvuru (iş kararı);
+  herkese açık form bulunamadı. Onay gelirse mevcut kod olduğu gibi çalışır.
+- Verdict damgası `Build.FINGERPRINT`'e bağlı; "Otomatik" verdict'i silmez,
+  3 sonuçsuz yoklama DENIED yazar → build değişene kadar Live Update sessizce
+  zengin panele düşer. Test ederken "vermedi" görülürse sebep bu; sıfırlama
+  yolu yok (küçük WP).
+- `schedulePromotionProbe` `mayPromote = true` sabitiyle çağrılıyor: izin
+  kapalı cihazda Live Update seçilirse zengin panel gönderilip DENIED
+  damgalanır (yanlış pozitif RED).
+- Yüzen şerit (`SYSTEM_ALERT_WINDOW`) artık gereksiz; kapalı doğduğu için
+  acele yok, Play beyanı istenmiyorsa kaldırılır.
+- Devir notu `docs/analiz/DINAMIK-PANEL-DEVIR-NOTU.md` (untracked, sahibin)
+  ve `WP-751-dinamik-panel-kok-neden.md` eski teşhisi taşıyor; bu kart
+  doğrusudur.

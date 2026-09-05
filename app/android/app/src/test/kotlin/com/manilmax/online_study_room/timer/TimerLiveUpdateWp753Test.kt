@@ -39,12 +39,12 @@ class TimerLiveUpdateWp753Test {
         // Resmî şart 1: açık uçlu kronometrenin üst sınırı yok, ProgressStyle
         // yanlış olurdu (yüzde diye bir şey yok).
         assertEquals(0, plan.totalSeconds)
-        // `when` başlangıç anıdır → GEÇMİŞTE kalır. Belge: "The when time is in
-        // the past: The text isn't shown." Çip metni bu yüzden kısa kritik
-        // metinden gelmek ZORUNDA.
+        // `when` başlangıç anıdır; kronometre oradan itibaren YUKARI sayar.
+        // 🔴 WP-772: çip metni 0. Metin verilirse çip saati gizler (S23'te
+        // ölçüldü: "Focus" yazdı, sayaç görünmedi).
         assertEquals(startedAt, plan.whenMs)
         assertFalse(plan.countDown)
-        assertNotEquals(0, plan.shortCriticalTextRes)
+        assertEquals(0, plan.shortCriticalTextRes)
     }
 
     @Test
@@ -65,13 +65,11 @@ class TimerLiveUpdateWp753Test {
         assertEquals(startedAt + 1_500_000L, plan.whenMs)
         assertTrue(plan.countDown)
         // Sabit kısa metin canlı geri sayımı gölgelemesin diye yazılmaz.
-        // 🔴 IDDIA YON DEGISTIRDI (WP-762). Eskiden hedefi olan modda cip
-        // yazisinin BOS olmasini kilitliyordu. Sahibin S23'unde olculdu:
-        // terfi VERILDI (FLAG_PROMOTED_ONGOING yazildi) ama ekranda hicbir sey
-        // cizilmedi. Cip once `shortCriticalText`i cizer; bos birakmak terfi
-        // edilmis bildirimi icerik olarak sessiz birakir.
-        assertNotEquals(
-            "Hedefi olan modda da cipin yazisi gonderilmeli",
+        // 🔴 IDDIA IKINCI KEZ YON DEGISTIRDI (WP-772). WP-762 metni zorunlu
+        // yapmisti; cihazda olculdu: cip metni SAATI GIZLIYOR. Cipin hic
+        // cizilmemesinin sebebi Samsung'un onay listesiydi, metin degil.
+        assertEquals(
+            "Hedefi olan modda cip metni GONDERILMEZ; cip geri sayimi cizer",
             0,
             plan.shortCriticalTextRes,
         )
@@ -131,8 +129,24 @@ class TimerLiveUpdateWp753Test {
 
         assertEquals(R.string.timer_focusing_title, work.titleRes)
         assertEquals(R.string.timer_break_title, rest.titleRes)
-        assertEquals(R.string.timer_subtext_focus, work.shortCriticalTextRes)
-        assertEquals(R.string.timer_subtext_break, rest.shortCriticalTextRes)
+        // WP-772: terfi eden yolda cip metni yok; ayrim baslik + dugme
+        // etiketiyle (ve kartta `promotedCardTitle`) yapilir.
+        assertEquals(0, work.shortCriticalTextRes)
+        assertEquals(0, rest.shortCriticalTextRes)
+    }
+
+    /**
+     * 🔴 WP-772 (sahip, cihazda): "You're focusing" istenmiyor. Terfi eden
+     * kartin basligi ders adi; ders yoksa uygulama etiketi; molada faz
+     * etiketi. Bos baslik terfiyi dusurur, o yuzden her dal dolu doner.
+     */
+    @Test
+    fun promoted_card_title_is_the_subject_or_the_app_label_and_never_empty() {
+        assertEquals("Matematik", promotedCardTitle(false, "Matematik", "Focus Camp", "Break"))
+        assertEquals("Matematik", promotedCardTitle(false, "  Matematik ", "Focus Camp", "Break"))
+        assertEquals("Focus Camp", promotedCardTitle(false, null, "Focus Camp", "Break"))
+        assertEquals("Focus Camp", promotedCardTitle(false, "   ", "Focus Camp", "Break"))
+        assertEquals("Break", promotedCardTitle(true, "Matematik", "Focus Camp", "Break"))
     }
 
     @Test
@@ -387,7 +401,7 @@ class TimerLiveUpdateWp753Test {
      * bekledigi stille gelmelidir.
      */
     @Test
-    fun every_promotable_path_carries_the_chip_text_it_can_actually_use() {
+    fun every_promotable_path_sends_no_chip_text_so_the_chip_draws_the_clock() {
         val openEnded = runningTimerNotificationPlan(
             richPanel = false,
             isBreak = false,
@@ -408,8 +422,11 @@ class TimerLiveUpdateWp753Test {
                 "terfi isteyen dal terfi yuzeyinin bekledigi stille gelmeli",
                 plan.requestPromotedOngoing,
             )
-            assertNotEquals(
-                "terfi edilen bildirimin cip yazisi bos birakilamaz",
+            // 🔴 WP-772 (S23 / One UI 8.5, cihazda): cip metni SAATI GIZLER.
+            // Bizim cipte "Focus", Samsung Saat'in cipinde "00:05" vardi;
+            // tek fark buydu. Metin gonderilmez, cip kronometreyi cizer.
+            assertEquals(
+                "terfi edilen bildirime cip metni GONDERILMEZ",
                 0,
                 plan.shortCriticalTextRes,
             )
@@ -433,12 +450,15 @@ class TimerLiveUpdateWp753Test {
     }
 
     /**
-     * Durum çubuğu/çip ikonu monokrom vektör olmalı. Bugüne kadar renkli adaptif
+     * Durum çubuğu/çip ikonu monokrom olmalı. Bugüne kadar renkli adaptif
      * launcher ikonuydu (`setSmallIcon(R.mipmap.ic_launcher)`) — yanlış tür.
+     *
+     * WP-772: jenerik saat kadranı (`ic_stat_focus_timer`) gitti; sahip çipte
+     * uygulamanın logosunu istedi. Kamp ateşi silueti, beş yoğunlukta alfa PNG.
      */
     @Test
-    fun status_bar_icon_is_not_the_colored_launcher_icon() {
-        assertEquals(R.drawable.ic_stat_focus_timer, TIMER_NOTIFICATION_SMALL_ICON)
+    fun status_bar_icon_is_the_app_logo_silhouette_not_the_colored_launcher_icon() {
+        assertEquals(R.drawable.ic_stat_focus_camp, TIMER_NOTIFICATION_SMALL_ICON)
         assertNotEquals(R.mipmap.ic_launcher, TIMER_NOTIFICATION_SMALL_ICON)
     }
 

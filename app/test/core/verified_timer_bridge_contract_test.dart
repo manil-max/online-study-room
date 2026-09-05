@@ -158,12 +158,24 @@ void main() {
     expect(service, contains('NotificationCompat.ProgressStyle()'));
     expect(service, contains('TimerNotificationStyle.STANDARD'));
 
-    // Çip metni: açık uçlu kronometrede `when` geçmişte kalır, çip süreyi
-    // çizemez → kısa kritik metin şart.
-    expect(service, contains('.setShortCriticalText('));
+    // 🔴 WP-772 — İDDİA YÖN DEĞİŞTİRDİ (cihazda ölçüldü, S23 / One UI 8.5).
+    // Çip `shortCriticalText` verilirse SAATİ DEĞİL METNİ çizer: bizim çipte
+    // "Focus" yazıyordu, Samsung Saat'in çipinde `00:05` akıyordu. Sahip
+    // sayaç istiyor; metin hiç gönderilmez, çip `when` kronometresini çizer.
+    expect(
+      service,
+      isNot(contains('.setShortCriticalText(')),
+      reason:
+          'Cip metni saati gizler (WP-772 cihaz olcumu). Kronometre kipinde '
+          'metin gonderilmez; geri gelirse cipte sayac yerine yazi cikar.',
+    );
+    // Terfi eden kartın başlığı saf karardan gelir: ders adı / etiket.
+    expect(service, contains('promotedCardTitle('));
 
-    // Durum çubuğu ikonu monokrom vektör; renkli launcher ikonu değil.
-    expect(service, contains('R.drawable.ic_stat_focus_timer'));
+    // Durum çubuğu ikonu monokrom; renkli launcher ikonu değil.
+    // WP-772: jenerik saat kadranı yerine uygulamanın logosu (kamp ateşi
+    // silueti, beş yoğunlukta alfa PNG).
+    expect(service, contains('R.drawable.ic_stat_focus_camp'));
     expect(
       service,
       isNot(contains('setSmallIcon(R.mipmap.ic_launcher)')),

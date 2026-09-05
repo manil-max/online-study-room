@@ -22,6 +22,8 @@ import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.overlay.TimerOverlay
 import com.manilmax.online_study_room.widgets.TimerWidgets
 import com.manilmax.online_study_room.widgets.rememberedSubjectId
+import com.manilmax.online_study_room.widgets.widgetAccountId
+import com.manilmax.online_study_room.widgets.widgetSubjectOptions
 
 /**
  * WP-753: Zengin özel panelin prefs anahtarı.
@@ -147,6 +149,13 @@ internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
         // Elimizde "cip GERCEKTEN cizilecek mi" sorusunu onceden cevaplayan
         // bir sinyal YOK; bayrak yalniz "sistem kabul etti" der. O yuzden
         // otomatik akilli davranamaz ve calisani secer.
+        //
+        // 🔴 WP-772 (2026-09-05): "Samsung cizmiyor"un sebebi bulundu. Now Bar
+        // listesi Samsung'un onayladigi paketlerden kuruluyor; onaysiz
+        // uygulama yalniz Developer options > "Live notifications for all
+        // apps" acikken cizilir. Sahip anahtari acti, cip ayni kodla cikti.
+        // Otomatik kural yine calisani secer: siradan Samsung kullanicisinda
+        // o anahtar kapali, terfi eden kart cipsiz duz kart olurdu.
         null -> true
         // Kullanici acikca zengin panel dedi.
         true -> true
@@ -159,12 +168,43 @@ internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
 /**
  * WP-753: durum çubuğu / Live Update çipi ikonu.
  *
- * Monokrom vektör olmak **zorunda**; renkli adaptif launcher ikonu
+ * Monokrom olmak **zorunda**; renkli adaptif launcher ikonu
  * (`R.mipmap.ic_launcher`) yanlış türdür. Sabit olarak durur ki cihazsız JVM
  * testi türü ölçebilsin — `baseBuilder()` bir `Context` istediği için o yol
  * cihazsız ölçülemez.
+ *
+ * 🔴 WP-772 (sahip, S23 / One UI 8.5, cihazda): eski ikon jenerik bir saat
+ * kadraniydi ve cipte "garip bir saat ikonu" olarak okunuyordu; Samsung
+ * Saat'in kendi cipiyle karisiyordu. Artik UYGULAMANIN LOGOSU: launcher on
+ * planindaki kamp atesinin beyaz alfa silueti (`drawable-*dpi/
+ * ic_stat_focus_camp.png`, 24dp tabanli bes yogunluk). Kivilcim gibi kucuk
+ * adalar uretimde atildi ki 24 pikselde alev + capraz kutuk okunsun.
  */
-internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_timer
+internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_camp
+
+/**
+ * Terfi eden (Live Update) kartin basligi. **Saf.**
+ *
+ * 🔴 WP-772 (sahip, cihazda): "You're focusing" cumlesi istenmiyor; kartta
+ * sayac + dugme yapisi isteniyor. Terfi eden bildirim ozel gorunum
+ * TASIYAMAZ, yani buyuk sayacli v43 paneli bu yolda imkansiz. Elimizdeki en
+ * yakin yapi: baslik = ders adi, sag ustte sistemin canli kronometresi,
+ * altta sistemin cizdigi tek dugme. Aciklama satiri yok.
+ *
+ * Baslik BOS OLAMAZ (resmi sart: "Must have a contentTitle set"); ders
+ * secili degilse uygulama etiketi yazilir. Molada faz etiketi yazar ki mola
+ * ile odak ayirt edilsin.
+ */
+internal fun promotedCardTitle(
+    isBreak: Boolean,
+    subjectName: String?,
+    appLabel: String,
+    breakLabel: String,
+): String {
+    if (isBreak) return breakLabel
+    val subject = subjectName?.trim().orEmpty()
+    return if (subject.isEmpty()) appLabel else subject
+}
 
 /**
  * Bosta duran sayac bildiriminin **saf** sunum karari.
@@ -232,17 +272,15 @@ internal enum class TimerNotificationStyle {
     CUSTOM_PANEL,
 
     /**
-     * Açık uçlu kronometre (stopwatch).
+     * Açık uçlu kronometre (stopwatch). Standart stil, `ProgressStyle` yok.
      *
-     * 🔴 WP-762: bu dal `ProgressStyle` TAŞIMIYORDU ve terfinin görünmemesinin
-     * en olası sebebi bu. Android 16'nın Live Update yüzeyleri (durum çubuğu
-     * çipi, Now Bar) `ProgressStyle` etrafında kuruludur; `requestPromotedOngoing`
-     * tek başına yalnız BAYRAĞI aldırır. Sahibin S23'ünde ölçülen tam olarak
-     * buydu: `FLAG_PROMOTED_ONGOING` yazıldı, ekranda hiçbir şey çizilmedi.
-     *
-     * Açık uçlu koşunun toplamı yoktur, o yüzden ilerleme **belirsizdir**
-     * (`setProgressIndeterminate`). Uydurma bir toplam yazmak yerine API'nin
-     * bunun için var olan yolu kullanılır.
+     * 🔴 WP-772 KOK NEDEN KAPANDI (2026-09-05). Alti tur boyunca cip
+     * cikmamasinin sebebi bu dalin stili DEGILDI: Samsung, Now Bar'in "Live
+     * notifications" listesini kendi onayladigi paketlerden kuruyor;
+     * onaysiz uygulama yalniz Developer options > "Live notifications for all
+     * apps" acikken cizilir. Sahip anahtari acti, cip ayni kodla cikti.
+     * WP-762'nin `setProgressIndeterminate` hipotezi de bu yuzden bosa
+     * cikmisti (cihazda bozdu, geri alindi).
      */
     STANDARD,
 
@@ -265,11 +303,18 @@ internal data class TimerNotificationPlan(
     val titleRes: Int,
     val bodyRes: Int,
     /**
-     * KISA faz etiketi (Odak/Mola). Iki yuzeyi birden besler:
-     *  - Live Update yolunda `setShortCriticalText` (0 = yazilmaz; cip metnini
-     *    `when` kronometresi tasir),
-     *  - zengin panel yolunda panelin GORUNEN faz isareti (0 OLAMAZ; WP-759
-     *    kusur 3'te mola ile odak bildirimde ayirt edilemiyordu).
+     * KISA faz etiketi (Odak/Mola).
+     *
+     * 🔴 WP-772: terfi eden yollarda **0**. Cip, `shortCriticalText` verilirse
+     * SAATI DEGIL METNI cizer. Sahibin S23'unde olculdu: bizim cipte "Focus"
+     * yaziyordu, Samsung Saat'in cipinde `00:05` akiyordu; tek fark buydu.
+     * Metin gonderilmeyince cip `when` kronometresini cizer: odakta yukari,
+     * pomodoro/molada asagi sayar. WP-753'un "when gecmiste kalir, cip
+     * sureyi cizemez" okumasi YANLISTI -- kronometre `when`den itibaren
+     * gecen sureyi cizer.
+     *
+     * Zengin panel yolunda panelin GORUNEN faz isareti olarak kalir (0 OLAMAZ;
+     * WP-759 kusur 3'te mola ile odak bildirimde ayirt edilemiyordu).
      */
     val shortCriticalTextRes: Int,
     val whenMs: Long,
@@ -290,14 +335,14 @@ internal data class TimerNotificationPlan(
 /**
  * WP-753: sunum yolunu seçer.
  *
- * Çip metni kararı resmî belgeden çıkar
- * (<https://developer.android.com/develop/ui/views/notifications/live-update>):
- * *"The when time is in the past: The text isn't shown"* ve *"The Chronometer
- * timer is shown in the chip as long as it is positive"*.
- * - **Açık uçlu kronometre**: `when` başlangıç anıdır, yani GEÇMİŞTE kalır →
- *   çip süreyi çizemez; kısa kritik metin (Odak/Mola) şart.
- * - **Hedefli mod**: `when` bitiş anıdır, yani GELECEKTEDİR → çipte canlı geri
- *   sayım akar; sabit kısa metin o canlı sayıyı gölgelemesin diye yazılmaz.
+ * Çip içeriği (WP-772, cihazda ölçüldü): terfi eden iki dalda da kısa metin
+ * GÖNDERİLMEZ, çip `when` kronometresini çizer.
+ * - **Açık uçlu kronometre**: `when` başlangıç anı, `usesChronometer` açık →
+ *   çipte geçen süre yukarı sayar (Samsung Saat'in kronometresiyle aynı).
+ * - **Hedefli mod**: `when` bitiş anı, `chronometerCountDown` açık → çipte
+ *   canlı geri sayım akar.
+ * Resmî belge: *"The Chronometer timer is shown in the chip as long as it is
+ * positive"* (<https://developer.android.com/develop/ui/views/notifications/live-update>).
  */
 internal fun runningTimerNotificationPlan(
     richPanel: Boolean,
@@ -341,12 +386,14 @@ internal fun runningTimerNotificationPlan(
             totalSeconds = richTotal ?: 0,
         )
     }
+    // 🔴 WP-772: terfi eden dallarda cip metni 0. Metin verilirse cip saati
+    // gizler (sahibin S23'unde "Focus" yaziyordu, sayac gorunmuyordu).
     val total = targetSeconds?.takeIf { it > 0 }
         ?: return TimerNotificationPlan(
             style = TimerNotificationStyle.STANDARD,
             titleRes = titleRes,
             bodyRes = bodyRes,
-            shortCriticalTextRes = phaseLabelRes,
+            shortCriticalTextRes = 0,
             whenMs = startedAtMs,
             countDown = false,
             progressSeconds = 0,
@@ -356,10 +403,7 @@ internal fun runningTimerNotificationPlan(
         style = TimerNotificationStyle.PROGRESS,
         titleRes = titleRes,
         bodyRes = bodyRes,
-        // 🔴 WP-762: burasi `0` idi -- yani hedefi olan modda cipin YAZISI hic
-        // gonderilmiyordu. Cip once `shortCriticalText`i cizer; bos birakmak
-        // terfi edilmis bildirimi icerik olarak SESSIZ birakir.
-        shortCriticalTextRes = phaseLabelRes,
+        shortCriticalTextRes = 0,
         whenMs = startedAtMs + total * 1000L,
         countDown = true,
         progressSeconds = ((nowMs - startedAtMs) / 1000L)
@@ -951,9 +995,19 @@ class StudyTimerService : Service() {
                 .setCustomBigContentView(custom)
             return builder.build()
         }
+        // 🔴 WP-772 (sahip, cihazda): "You're focusing" gitti. Baslik ders adi
+        // (yoksa uygulama etiketi, molada faz etiketi); aciklama satiri YOK;
+        // sayaci sistemin kronometresi, dugmeyi sistem cizer. Buyuk sayacli
+        // panel bu yolda imkansiz: ozel gorunum terfiyi dusurur.
         builder
-            .setContentTitle(getString(plan.titleRes))
-            .setContentText(getString(plan.bodyRes))
+            .setContentTitle(
+                promotedCardTitle(
+                    isBreak = isBreak,
+                    subjectName = runningSubjectName(p),
+                    appLabel = applicationInfo.loadLabel(packageManager).toString(),
+                    breakLabel = getString(R.string.timer_subtext_break),
+                ),
+            )
             .setUsesChronometer(true)
             .setWhen(plan.whenMs)
             .setShowWhen(true)
@@ -969,13 +1023,10 @@ class StudyTimerService : Service() {
                 else getString(R.string.action_stop),
                 if (isBreak) endBreakActionPending() else stopActionPending(),
             )
-        if (plan.shortCriticalTextRes != 0) {
-            builder.setShortCriticalText(getString(plan.shortCriticalTextRes))
-        }
-        // 🔴 WP-762: terfi edilebilir HER iki dal da `ProgressStyle` tasir.
-        // Eskiden yalniz hedefi olan mod tasiyordu; acik uclu kronometre
-        // standart stille terfi istiyordu ve sistem bayragi yazsa bile cizecek
-        // bir Live Update ogesi bulamiyordu.
+        // 🔴 WP-772: `setShortCriticalText` BILEREK cagrilmiyor. Cip metin
+        // verilirse saati gizler; sahip cipte sayac istiyor. Kural planda
+        // (`shortCriticalTextRes = 0`) ve burada birlikte kilitli; nobetci
+        // `TimerLiveUpdateWp753Test` + Dart sozlesme testi.
         when (plan.style) {
             TimerNotificationStyle.PROGRESS -> builder.setStyle(
                 NotificationCompat.ProgressStyle()
@@ -1091,6 +1142,18 @@ class StudyTimerService : Service() {
         )
         return views
     }
+
+    /**
+     * Kosan kosunun ders ADI (kimlik degil). Ayna yoksa ya da kimlik listede
+     * yoksa `null`; bozuk prefs basligi bos birakir, SURECI oldurmez.
+     */
+    private fun runningSubjectName(p: SharedPreferences): String? = runCatching {
+        val subjectId = p.getString(TimerStateStore.KEY_SUBJECT, null)?.trim().orEmpty()
+        if (subjectId.isEmpty()) return@runCatching null
+        widgetSubjectOptions(p, widgetAccountId(p))
+            .firstOrNull { it.id == subjectId }
+            ?.name
+    }.getOrNull()
 
     private fun baseBuilder(): NotificationCompat.Builder =
         NotificationCompat.Builder(this, CHANNEL_ID)
