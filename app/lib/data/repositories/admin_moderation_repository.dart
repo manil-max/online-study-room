@@ -1,3 +1,4 @@
+import '../models/admin_case_timeline_event.dart';
 import '../models/admin_user_insight.dart';
 import '../models/moderation_appeal.dart';
 import '../models/moderation_case.dart';
@@ -69,6 +70,15 @@ abstract class AdminModerationRepository {
   /// ten beri **vardı ve hiçbir yerden çağrılmıyordu**. Bu metot onu da
   /// devreye alır.
   Future<AdminUserInsight> fetchUserInsight(String userId);
+
+  /// WP-796: vakanın zaman çizelgesi — eskiden yeniye.
+  ///
+  /// Kaynak `moderation_audit_events` (`0106`): vaka olayları doğrudan,
+  /// yaptırım ve itiraz olayları vakaya `case_id` üzerinden bağlanır.
+  ///
+  /// 🔴 Bu zincir `0106`dan beri doluyor ve **hiç okunmadı**. Sunucuda eksik
+  /// yok; migration gerekmez. `caseId` yoksa (tarihsel kayıt) boş liste.
+  Future<List<AdminCaseTimelineEvent>> fetchCaseTimeline(String caseId);
 
   /// Vakayı geri alınabilir karantinaya alır ya da karantinadan çıkarır.
   ///

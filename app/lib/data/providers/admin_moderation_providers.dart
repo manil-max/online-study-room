@@ -1,3 +1,4 @@
+import '../models/admin_case_timeline_event.dart';
 import '../models/admin_user_insight.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -64,6 +65,13 @@ final moderationAppealsProvider = FutureProvider<List<ModerationAppeal>>((
 /// bakmak iki ayrı çağrıdır ve birbirinin önbelleğini EZMEZ. Tek bir
 /// `FutureProvider` kullanmak, şikâyet edenin dosyasını açıp geri dönünce
 /// şikâyet edilenin dosyasında onun sayılarını gösterirdi.
+/// WP-796: vakanin zaman cizelgesi. autoDispose: durum her kararda degisir,
+/// kalici onbellek ikinci acilista bayat cizelge verirdi.
+final adminCaseTimelineProvider = FutureProvider.autoDispose
+    .family<List<AdminCaseTimelineEvent>, String>((ref, caseId) async {
+  return ref.watch(adminModerationRepositoryProvider).fetchCaseTimeline(caseId);
+}, retry: readRetryPolicy);
+
 final adminUserInsightProvider =
     FutureProvider.family<AdminUserInsight, String>((ref, userId) async {
   return ref.watch(adminModerationRepositoryProvider).fetchUserInsight(userId);

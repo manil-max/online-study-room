@@ -1,3 +1,4 @@
+import '../../models/admin_case_timeline_event.dart';
 import '../../models/admin_user_insight.dart';
 import '../../models/moderation_appeal.dart';
 import '../../models/moderation_case.dart';
@@ -303,6 +304,14 @@ class InMemoryAdminModerationRepository implements AdminModerationRepository {
   /// 🔴 Uydurma sayı üretmemek bilerek: ekran "5/7 haklı" gibi bir şeyi
   /// fikstürden değil GERÇEKTEN gelen veriden çizdiğini ispatlayabilmeli.
   final Map<String, AdminUserInsight> userInsights = {};
+
+  /// WP-796: vaka kimligi -> olaylar. Tohumsuz BOS doner; uydurma olay yok,
+  /// boylece ekranin GERCEK veriden cizdigi ispatlanabilir.
+  final Map<String, List<AdminCaseTimelineEvent>> caseTimelines = {};
+
+  @override
+  Future<List<AdminCaseTimelineEvent>> fetchCaseTimeline(String caseId) async =>
+      sortCaseTimeline(caseTimelines[caseId] ?? const []);
 
   @override
   Future<AdminUserInsight> fetchUserInsight(String userId) async =>

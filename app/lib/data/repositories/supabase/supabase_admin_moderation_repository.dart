@@ -1,3 +1,4 @@
+import '../../models/admin_case_timeline_event.dart';
 import '../../models/admin_user_insight.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -368,6 +369,53 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
         params: {'p_user_id': userId},
       );
       return AdminUserInsight.fromWire(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<List<AdminCaseTimelineEvent>> fetchCaseTimeline(String caseId) async {
+    try {
+      // Yaptirim ve itiraz olaylari zincirde kendi kimlikleriyle durur;
+      // vakaya bag istemcide kurulur (sunucuda bir gorunum yok, migration
+      // acmamak icin bilinçli).
+      final sanctionRows = await _client
+          .from('moderation_sanctions')
+          .select('id')
+          .eq('case_id', caseId);
+      final sanctionIds = [
+        for (final row in sanctionRows) (row['id'] ?? '').toString(),
+      ]..removeWhere((id) => id.isEmpty);
+      final appealIds = <String>[];
+      if (sanctionIds.isNotEmpty) {
+        final appealRows = await _client
+            .from('moderation_appeals')
+            .select('id')
+            .inFilter('sanction_id', sanctionIds);
+        appealIds.addAll([
+          for (final row in appealRows) (row['id'] ?? '').toString(),
+        ]..removeWhere((id) => id.isEmpty));
+      }
+      final filters = <String>[
+        'and(entity_type.eq.case,entity_id.eq.$caseId)',
+        if (sanctionIds.isNotEmpty)
+          'and(entity_type.eq.sanction,entity_id.in.(${sanctionIds.join(',')}))',
+        if (appealIds.isNotEmpty)
+          'and(entity_type.eq.appeal,entity_id.in.(${appealIds.join(',')}))',
+      ];
+      final rows = await _client
+          .from('moderation_audit_events')
+          .select(
+            'id, occurred_at, actor_id, entity_type, entity_id, action, '
+            'old_value, new_value, reason',
+          )
+          .or(filters.join(','))
+          .order('occurred_at', ascending: true);
+      return sortCaseTimeline([
+        for (final row in rows)
+          AdminCaseTimelineEvent.fromWire(Map<String, dynamic>.from(row)),
+      ]);
     } on PostgrestException catch (e) {
       throw ModerationException(e.message);
     }

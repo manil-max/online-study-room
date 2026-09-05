@@ -710,7 +710,8 @@ void main() {
       // esitlik iddiasi onu dogruladi). Sayi TRIPWIRE'dir: yeni bir okuma
       // saglayicisi eklendiginde bilerek kirmizi dusup buraya bakilmasini
       // saglar.
-      'lib/data/providers/admin_moderation_providers.dart': 5,
+      // WP-796: +1 = `adminCaseTimelineProvider`.
+      'lib/data/providers/admin_moderation_providers.dart': 6,
     };
 
     for (final entry in files.entries) {
