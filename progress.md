@@ -11881,3 +11881,35 @@ bir `true` kanıttan okunur, hatırlamaya kalmaz).
 production'a gitseydi hepsi geri dönüş yolu olmayan bir ortamda patlardı.
 Production yedeksiz uygulandı — Free plan, PITR yok; sahibin 2026-07-27
 kabulü.
+
+### Foto iki yönlü oldu — tek yönlü kalsa özellik yarım giderdi (WP-783/784)
+
+Sürüm öncesi sahibin foto isteğini uçtan uca izlerken **gerçek bir kusur**
+çıktı: yönetici foto gönderiyor, **kullanıcı onu hiç görmüyordu**. Bilet
+ekranı balona yalnız `message.message` veriyordu; `attachment_path` okunuyor,
+modele giriyor ve orada ölüyordu.
+
+🔴 Üç lane'in (ekran + veri yolu + SQL) hiçbiri bunu görmedi çünkü hiçbiri
+**kullanıcının ekranına** bakmıyordu — `kullanicinin-gordugu-satiri-test-et`
+dersinin aynısı. Yüklenip görülemeyen foto, olmayan fotoğraftır.
+
+- `79ebd0a4` (lider) — `_TicketPhoto`: imzalı adres her açılışta yeniden
+  istenir (süresi doludur), yüklenemezse **sessiz kalmaz**, "tekrar dene"
+  verir. Bir fotoğrafın görünmemesi ile hiç gönderilmemiş olması kullanıcı
+  için aynı şeye benzer; ikisi ayrılmalı.
+- `6940f39c` (alt ajan) — kullanıcı da tek foto **gönderebiliyor**.
+  `sendTicketMessage` ek alıyor; yükleme düşerse mesaj da gitmiyor
+  (`AdminException`), çünkü kullanıcı önizlemede gördüğünü gönderdiğini
+  sanır. Bekleyen balon yerel baytları çizer → başarısız gönderim yeniden
+  denendiğinde foto kaybolmaz. Altı sabotajın altısı kırmızı döndü.
+
+Şikâyet akışında foto zaten vardı (`report_sheet.dart`), yani sahibin
+*"bu sohbet ve şikâyetlerde foto yüklenebilsin 1 tane"* isteği artık üç
+yüzeyde de karşılanıyor.
+
+### Cihazda ölçülmeyen (sahip v80'de bakacak)
+- Gerçek galeri seçimi ve gerçek Supabase yüklemesi (widget testinde koşmaz):
+  destek yazışmasında ataç → önizleme → gönder → balonda foto, ve aynı
+  fotoğrafın yönetici panelinde görünmesi.
+- Yönetici vaka yazışması: iki sekme, geçmiş konuşmalar, foto.
+- Profil paneli: oranlar, hesap açılış tarihi, yaptırım geçmişi.
