@@ -224,7 +224,7 @@ Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0137+0138 produ
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a
 # doner" diyordu; kapi acik unutulmustu. Simdi kapali ve iddia da oyle.
 # Yeni bir yayin, kontrati ve bu satiri BILEREK acan somut bir sahip GO'su ister.
-Assert-Equal ([bool]$contract.production.release_enabled) $true 'v79 icin production release kapisi ACIK; 0136 zaten uygulandi, yeni migration yok'
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release kapisi ACIK (v79/v80/v81 bu kapidan cikti, head 0138, yeni migration yok); her tag kendi taze GO dizesini ister'
 
 # Kalici kural (WP-506): acik bir bayrak sessizce birakilamaz. Kontratin
 # kendisi hangi is icin acildigini ve re-lock taahhudunu yazili tasimalidir;
