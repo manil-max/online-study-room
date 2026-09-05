@@ -354,6 +354,18 @@ class _FeedbackTicketConversationViewState
     });
   }
 
+  /// 🔴 Oturum ilk karede henuz `AsyncLoading` olabilir
+  /// (`authStateProvider` bir akistir). O anda abone olunamayinca
+  /// [_loading] sonsuza kadar `true` kaliyor ve yazismanin yerinde **hic
+  /// durmayan bir cark** kaliyordu. Diyalogda gorunmuyordu, cunku diyalog
+  /// ancak kullanici dokununca aciliyordu; tam sayfa (WP-770) ise dogrudan
+  /// monte oluyor. Oturum cozulunce yeniden denenir.
+  void _subscribeWhenSessionReady() {
+    if (_messageSubscription != null) return;
+    if (ref.read(authStateProvider).value == null) return;
+    unawaited(_subscribeToMessages());
+  }
+
   Future<void> _subscribeToMessages() async {
     final user = ref.read(authStateProvider).value;
     if (user == null) return;
@@ -541,6 +553,7 @@ class _FeedbackTicketConversationViewState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    ref.listen(authStateProvider, (_, _) => _subscribeWhenSessionReady());
     final user = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final messages = _messages ?? const <FeedbackTicketMessage>[];

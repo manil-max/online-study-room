@@ -12,7 +12,7 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
-import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
+import 'package:online_study_room/features/admin/ticket/admin_ticket_detail_page.dart';
 import 'package:online_study_room/features/profile/feedback_tickets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -104,22 +104,31 @@ void main() {
     expect(find.text('Son sözüm.'), findsOneWidget);
   });
 
-  testWidgets('yönetici kartında kullanıcıya yanıt yolu iç notlardan önce gelir', (
+  testWidgets('yönetici sayfasında yazışma iç notlardan önce gelir', (
     tester,
   ) async {
     final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
     addTearDown(repo.dispose);
-    await repo.submitFeedback(
+    final ticket = await repo.submitFeedback(
       userId: 'u1',
       kind: FeedbackTicketKind.bug,
       subject: 'Sıralama bileti',
       message: 'Gövde.',
     );
 
-    await tester.pumpWidget(_wrap(repo, 'admin', const AdminReportsTab()));
+    // 🔴 WP-768/WP-770: "Yanıt yaz" ve "İç Notlar" artık kart eylemi değil,
+    // biletin kendi sayfasındaki iki bölüm. V51-4 kabulü sıra olarak korunur.
+    // Tam sayfa tek yuzeydir; olcum penceresi kisa olursa alt bolumler
+    // (`Ic Notlar`) hic kurulmaz ve iddia goruntu penceresi sorusuna doner.
+    tester.view.physicalSize = const Size(900, 2200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      _wrap(repo, 'admin', AdminTicketDetailPage(ticket: ticket)),
+    );
     await tester.pumpAndSettle();
 
-    final reply = find.text('Yanıt yaz');
+    final reply = find.text('Yazışma');
     final notes = find.text('İç Notlar');
     expect(reply, findsOneWidget);
     expect(notes, findsOneWidget);
@@ -131,7 +140,7 @@ void main() {
       replyTop.dy < notesTop.dy ||
           (replyTop.dy == notesTop.dy && replyTop.dx < notesTop.dx),
       isTrue,
-      reason: 'Yanıt yaz eylemi iç notlardan önce gelmeli.',
+      reason: 'Yazışma bölümü iç notlardan önce gelmeli.',
     );
   });
 
@@ -147,10 +156,14 @@ void main() {
       message: 'Gövde.',
     );
 
-    await tester.pumpWidget(_wrap(repo, 'admin', const AdminReportsTab()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(Key('feedback-notes-${ticket.id}')));
+    // Tam sayfa tek yuzeydir; olcum penceresi kisa olursa alt bolumler
+    // (`Ic Notlar`) hic kurulmaz ve iddia goruntu penceresi sorusuna doner.
+    tester.view.physicalSize = const Size(900, 2200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      _wrap(repo, 'admin', AdminTicketDetailPage(ticket: ticket)),
+    );
     await tester.pumpAndSettle();
 
     expect(
