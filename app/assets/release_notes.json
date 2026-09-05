@@ -3,6 +3,38 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.80",
+      "buildNumber": 80,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v80: fotoğraflı destek, sade yönetim ve büyük sayaç",
+      "highlights": [
+        "Destek yazışmalarında hem sen hem yönetici mesajına bir fotoğraf ekleyebilir.",
+        "Yönetimde vaka kararları sadeleşti; kullanıcı bilgileri ve ceza geçmişi tek profil panelinde toplandı.",
+        "Canlı bildirim kartında büyük sayaç, yüzen şeritte yenilenen Başlat ve Durdur düğmeleri."
+      ],
+      "fixes": [
+        "Vaka yazışmalarının açılması ve Uyar, Sustur, İsim sıfırla işlemlerinin erişimi düzeltildi.",
+        "Uygulama kapalıyken gelen güncelleme bildirimi de seçtiğin uygulama dilini kullanır."
+      ],
+      "notes": [
+        "Canlı bildirim görünümü telefonuna ve sistem ayarlarına bağlıdır."
+      ],
+      "titleEn": "v80: photo support, simpler moderation and a bigger clock",
+      "highlightsEn": [
+        "Both you and the administrator can attach one photo to a support message.",
+        "Moderation decisions are simpler, with user details and sanction history together in one profile panel.",
+        "The live notification card has a bigger clock; the floating strip has refreshed Start and Stop buttons."
+      ],
+      "fixesEn": [
+        "Fixed opening case conversations and access to Warn, Mute and Reset name actions.",
+        "Update alerts use your selected app language even when the app is closed."
+      ],
+      "notesEn": [
+        "Live notification appearance depends on your phone and system settings."
+      ]
+    },
+    {
       "versionName": "1.0.79",
       "buildNumber": 79,
       "channel": "stable",

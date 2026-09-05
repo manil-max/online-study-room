@@ -18,6 +18,12 @@
 
 ## Proje Gerçekleri
 
+- **Güncel devir / v80 hazırlığı (2026-09-05):** Sahip, Claude'un limiti dolduktan sonra kalan CI ve yayının tamamlanmasını açıkça istedi. Uygulama kaynak tabanı `81a9936e`; son CI `33980155808` **7/7 başarılı** (Linux tam test+kapsam, Windows golden ve integration, Android API 30/33 sayaç smoke, Edge testleri, backend sözleşmesi). `1.0.80+80` TR/EN notları ve yayın metadata'sı hazırlanıyor. Sonraki tarihsel maddelerin üzerindeki güncel gerçek budur.
+  - Migration head repo/local, staging ve production **0138**. Staging apply `33977602736`, production apply `33977837446` başarılı; tekrar SQL uygulanmayacak. İki `deploy_enabled=false`; staging release kapalı, production release mevcut sözleşmede açık.
+  - Yayından önce bulunan eksik operasyon kapandı: `d82bf74e` yeni fotoğraf bucket'ını purge listesine ekliyordu, fakat son kayıtlı staging/production purge workflow'ları Temmuz/Ağustos tarihliydi. Güncel sunucu kodu önce staging'e (`33981030034`), sağlık + dry-run yeşilinden sonra production'a (`33981190557`) dağıtıldı; ikisi de **başarılı**. Sağlık `configured`, bekleyen/takılan/başarısız iş 0; `dry_run=true`, işlenen 0. Doğrulama hiçbir hesap silmedi.
+  - Play `verify` koşumu `33981031948` başarılı: mevcut kapalı test `alpha`, kod **79**; production/beta/internal boş. v80 yalnız mevcut kapalı teste gönderilecek, Play production veya Microsoft Store başvurusu bu yayının kapsamı değil.
+  - Gerçek cihazdaki iki yönlü fotoğraf, profil yaptırımları ve Samsung bildirim görünümü **henüz doğrulanmadı**. Sahip yayın emriyle ilerleniyor; cihaz kabulü yapılmış sayılmıyor. Mevcut yedeksiz production muafiyeti korunur, yeni backup/rollback kanıtı iddia edilmez.
+
 - ✅ **Migration gerçeği (2026-08-01 · v58 yayını sonrası):** repo/local,
   staging ve production **üçü de `0119`**. Staging apply run `30715755597`,
   production apply run `30716014464`; iki post-check de

@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v80 / 1.0.80+80] - 2026-09-05
+
+### Öne çıkanlar
+
+- Destek yazışmalarında kullanıcı ve yönetici mesajlarına tek fotoğraf ekleyebilir; gelen fotoğraflar iki tarafta da görünür.
+- Yönetimde vaka kararları sadeleşti; kullanıcı bilgileri, oranlar ve ceza geçmişi tek profil panelinde toplandı.
+- Canlı bildirim kartında büyük sayaç; yüzen şeritte yenilenen Başlat ve Durdur düğmeleri.
+
+### Düzeltmeler
+
+- Vaka yazışmalarını açan düğmenin sessizce çalışmaması giderildi.
+- Uyar, Sustur ve İsim sıfırla işlemlerine erişim geri getirildi.
+- Uygulama kapalıyken gelen güncelleme bildirimi de seçilen uygulama dilini kullanır.
+
+### Doğrulama sınırı
+
+- Canlı bildirim görünümü telefon ve sistem ayarlarına bağlıdır.
+- Bu sürümün gerçek telefondaki fotoğraf gönderme ve bildirim görünümü kabulü henüz ölçülmedi; yayın sonrası cihaz kontrolünde doğrulanacak.
+
 ## [v79 / 1.0.79+79] - 2026-09-05
 
 > **Canlı bildirim kartında sayaç geri geldi ve yüzen şerit artık durum

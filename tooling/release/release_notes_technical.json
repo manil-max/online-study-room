@@ -3,6 +3,28 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.80",
+      "buildNumber": 80,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v80: WP-775–784 moderation, conversations and photos; WP-790/791 timer presentation",
+      "highlights": [
+        "WP-775/776/777: single-row moderation decisions and admin_user_insight profile; migrations 0137+0138 applied to staging (33977602736) and production (33977837446), both apply gates relocked.",
+        "WP-778/780/781/783/784: per-party case conversations, persistent ticket IDs, one attachment per message, signed-image rendering and retry-preserving upload on both sides.",
+        "WP-790/791: larger promoted-card clock without subject text, refreshed overlay layout and controls."
+      ],
+      "fixes": [
+        "WP-779: background showRemote resolves persisted app locale rather than an unseeded isolate global; foreground showNudge unchanged.",
+        "WP-782: restore full sanction ladder and caseId association after moving enforcement to the profile.",
+        "Purge storage scope includes ticket_message_attachments; backend contract audit covers uid-owned buckets and rejects missing/extra purge entries."
+      ],
+      "notes": [
+        "Owner explicitly requested takeover and publication on 2026-09-05. Existing full-gate record: 20 gates, 0 failures, 2 local Deno skips covered by CI. Final post-photo CI and release evidence are recorded in progress.md.",
+        "No new migration apply required. Existing production backup waiver remains; no backup/PITR or SQL rollback path is claimed.",
+        "NOT DEVICE-VERIFIED: two-way photo flow with real gallery/storage, profile enforcement and Samsung notification presentation. Owner-directed release is not device acceptance. Microsoft Store submission remains separate."
+      ]
+    },
+    {
       "versionName": "1.0.79",
       "buildNumber": 79,
       "channel": "stable",
