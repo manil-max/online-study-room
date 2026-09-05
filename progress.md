@@ -11864,3 +11864,20 @@ staging apply → doğrula → re-lock → production.
 ### Tam kapı (tek merkezden)
 20 kapı · 0 kırmızı · 2 atlandı (`deno` bu makinede yok, CI'da koşar —
 **bunlar yeşil değildir**).
+
+### Migration zinciri TAMAM — 0137 + 0138 her iki ortamda CANLI
+
+| Adım | Run | Kanıt |
+|---|---|---|
+| staging dry-run | `33976795633` | yeşil (SQL ilk kez gerçek Postgres'te) |
+| staging apply | `33977602736` | `0138\|0138\|0138`, purge `configured` / 0 kuyruk |
+| production apply | `33977837446` | `0137\|0137\|0137` ve `0138\|0138\|0138` |
+
+Her iki kapı da **aynı turda yeniden kilitlendi** (WP-506 kuralı: unutulmuş
+bir `true` kanıttan okunur, hatırlamaya kalmaz).
+
+🔴 Sıranın karşılığı ölçüldü: bu SQL'in **ilk** kuru koşusu dört kusur verdi
+(üç pgTAP fikstür izolasyonu + bir yeni-bucket purge kararı). Doğrudan
+production'a gitseydi hepsi geri dönüş yolu olmayan bir ortamda patlardı.
+Production yedeksiz uygulandı — Free plan, PITR yok; sahibin 2026-07-27
+kabulü.

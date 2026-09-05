@@ -9,7 +9,7 @@
   },
   "production": {
     "migration_head": "0138",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN 2026-09-05 for 0137 (admin_user_insight) and 0138 (case_conversation_and_message_photo). Sahip GO: 'migrationlari da uygula isi bitir'. Staging is PROVEN first, deliberately: dry-run 33976795633 green, apply run 33977602736 printed 0138|0138|0138 and purge health configured / 0 queued / 0 stuck. Applied with NO BACKUP (free plan, no PITR) - the owner's standing accepted risk from 2026-07-27. release_enabled stays OPEN for the next stable tag on this same commit; the release GO string is separate from the apply GO string. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-05 after the 0137+0138 production apply SUCCEEDED: run 33977837446, post-check printed 0137|0137|0137 and 0138|0138|0138 for local|remote|file on jiphfrpzvkpzubbkhrwb. Staging was proven FIRST and deliberately: dry-run 33976795633 green, apply 33977602736 printed 0138|0138|0138 with purge health configured / 0 queued / 0 stuck. That order paid for itself - the very first dry-run of this SQL found FOUR defects (three pgTAP fixture-isolation failures plus one deliberate new-storage-bucket purge decision), all of which would have landed in an environment with no rollback path. Applied with NO BACKUP (free plan, no PITR) - the owner's standing accepted risk from 2026-07-27. release_enabled stays OPEN for the next stable tag; the release GO string is separate from the apply GO string and must be typed fresh."
   }
 }
