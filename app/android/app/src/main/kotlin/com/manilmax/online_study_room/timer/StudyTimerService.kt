@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -24,6 +25,7 @@ import com.manilmax.online_study_room.widgets.TimerWidgets
 import com.manilmax.online_study_room.widgets.rememberedSubjectId
 import com.manilmax.online_study_room.widgets.widgetAccountId
 import com.manilmax.online_study_room.widgets.widgetSubjectOptions
+import java.util.Locale
 
 /**
  * WP-753: Zengin özel panelin prefs anahtarı.
@@ -88,6 +90,42 @@ internal fun shouldRepostAfterProbe(
 
 /** Yoklamanin sistem gonderimini beklemesi gereken sure. */
 internal const val PROMOTION_PROBE_DELAY_MS = 400L
+
+/** WP-774: terfi eden kartin govde saati bu aralikla yenilenir (ekran acikken). */
+internal const val CARD_TICK_MS = 1_000L
+
+/** WP-774: ekran kapaliyken yalniz durum yoklanir, bildirim gonderilmez. */
+internal const val CARD_IDLE_POLL_MS = 5_000L
+
+/**
+ * WP-774: terfi eden kartin govde satiri. **Saf.**
+ *
+ * Sahip (cihazda, v77): kart "bos bildirim gibi" duruyordu, yalniz ders adi
+ * vardi. Standart sablonda kronometre BASLIKTA durur ve One UI onu one
+ * cikarmaz. Kosarken gecen sure, hedefli modda kalan sure; saat asilirsa
+ * `H:MM:SS`. Saat geri alinmissa eksiye dusmez.
+ */
+internal fun cardClockText(
+    nowMs: Long,
+    startedAtMs: Long,
+    countDown: Boolean,
+    totalSeconds: Int,
+): String {
+    val elapsed = ((nowMs - startedAtMs) / 1000L).coerceAtLeast(0L)
+    val shown = if (countDown && totalSeconds > 0) {
+        (totalSeconds - elapsed).coerceAtLeast(0L)
+    } else {
+        elapsed
+    }
+    val hours = shown / 3600L
+    val minutes = (shown % 3600L) / 60L
+    val seconds = shown % 60L
+    return if (hours > 0L) {
+        "%d:%02d:%02d".format(Locale.ROOT, hours, minutes, seconds)
+    } else {
+        "%02d:%02d".format(Locale.ROOT, minutes, seconds)
+    }
+}
 
 /**
  * Zengin panelde faz etiketi olarak NE yazilir. **Saf.**
@@ -617,6 +655,7 @@ class StudyTimerService : Service() {
         // turda `richPanel` her zaman `true` idi: olcum zaten hicbir seyi
         // degistirmiyordu. Kablo takilinca yaris gorunur oldu.
         schedulePromotionProbe(startedAtMs)
+        scheduleCardTick(startedAtMs)
         // WP-764: yuzen serit. Uc kosul birden ([TimerOverlay.shouldShow]):
         // kullanici acmis, izin var, sayac kosuyor. Ucu de saglanmazsa hicbir
         // sey cizilmez -- serit KAPALI dogar.
@@ -688,7 +727,7 @@ class StudyTimerService : Service() {
         // "durmussa gonderme" der; bu satir isin bosuna kuyrukta
         // beklemesini de onler.
         mainHandler.removeCallbacksAndMessages(PROMOTION_PROBE_TOKEN)
-        TimerOverlay.hide(this)
+        mainHandler.removeCallbacksAndMessages(CARD_TICK_TOKEN)
         // ÖNEMLİ: 5 sn içinde startForeground (Android 12+ FGS borcu).
         startForegroundCompat(buildIdleNotification())
 
@@ -757,11 +796,29 @@ class StudyTimerService : Service() {
         // WP-135: idle + sıfır — senkron commit (apply asimetri kapatıldı).
         TimerStateStore.writeIdle(p)
 
+        // WP-774 (sahip, cihazda): serit durunca KAYBOLMASIN, yeniden
+        // baslatilabilsin. Pencere bu surece aittir; servis kapaninca surec
+        // olebilir ve serit onunla gider. Serit acik + izinliyse servis BOSTA
+        // KARTLA on planda kalir. Yalniz gizli gelistirici secenegi: WP-759'un
+        // "bosta kart kalmaz" kurali siradan kullanici icin degismedi.
+        if (keepAliveForOverlay()) {
+            syncOverlay(0L)
+            TimerWidgets.updateAll(this)
+            notifyStateChanged()
+            return
+        }
+        TimerOverlay.hide(this)
         exitForegroundRemovingNotification()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
         stopSelf()
     }
+
+    /** Serit acik ve izinli mi: o zaman bosta da yasamali. */
+    private fun keepAliveForOverlay(): Boolean = TimerOverlay.shouldShow(
+        enabled = TimerOverlay.isEnabled(prefs()),
+        permitted = TimerOverlay.isPermitted(this),
+    )
 
     /**
      * WP-431: yalnız YEREL projeksiyonu düşürür — sunucuya hiçbir sey gitmez.
@@ -773,6 +830,8 @@ class StudyTimerService : Service() {
      * zarfi ne de bekleyen aralik yazilir.
      */
     private fun handleDiscardProjection() {
+        mainHandler.removeCallbacksAndMessages(CARD_TICK_TOKEN)
+        TimerOverlay.hide(this)
         startForegroundCompat(buildIdleNotification())
         TimerStateStore.writeIdle(prefs())
         exitForegroundRemovingNotification()
@@ -783,6 +842,8 @@ class StudyTimerService : Service() {
 
     /** Beklenmedik/boş komutta güvenli kapanış: kısa foreground + tam kaldırma. */
     private fun safeStopEverything() {
+        mainHandler.removeCallbacksAndMessages(CARD_TICK_TOKEN)
+        TimerOverlay.hide(this)
         // Foreground borcu olabilir; kisa bir bildirimle kapat ve tamamen kaldir.
         runCatching { startForegroundCompat(buildIdleNotification()) }
         exitForegroundRemovingNotification()
@@ -827,8 +888,9 @@ class StudyTimerService : Service() {
      * boylece kullanici o oturumu yanlis kartla gecirmez.
      */
     /**
-     * Yoklama icin tek handler. Servis komut guduludur ve baska hicbir yerde
-     * zamanlayici YOKTUR; bu handler yalniz terfi yoklamasi icin vardir.
+     * Tek handler, iki is: terfi yoklamasi (WP-760) ve terfi eden kartin
+     * saniyelik govde saati (WP-774). Ikisi ayri token tasir; her durdurma
+     * yolu ikisini de iptal eder.
      */
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -844,22 +906,80 @@ class StudyTimerService : Service() {
         val show = TimerOverlay.shouldShow(
             enabled = TimerOverlay.isEnabled(p),
             permitted = TimerOverlay.isPermitted(this),
-            running = TimerStateStore.isRunning(p),
         )
         if (!show) {
             TimerOverlay.hide(this)
             return
         }
-        val target = TimerStateStore
-            .readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
-            .takeIf { it > 0 } ?: 0
+        // WP-774: serit iki durumu da cizer. Bosta `00:00` + Baslat; kosarken
+        // kronometre + Durdur. Tek dugme tek komut gonderir: `ACTION_TOGGLE`,
+        // yani bosta Baslat widget'in yolunu izler (son secili ders + secili
+        // mod, `rememberedSubjectId` + `nativeStartPlan`).
+        val running = TimerStateStore.isRunning(p)
+        val target = if (running) {
+            TimerStateStore.readIntCompat(p, TimerStateStore.KEY_TARGET_SECONDS, 0)
+                .takeIf { it > 0 } ?: 0
+        } else {
+            0
+        }
         TimerOverlay.show(
             context = this,
-            startedAtMs = startedAtMs,
+            running = running,
+            startedAtMs = if (running) startedAtMs else 0L,
             countDown = target > 0,
             totalSeconds = target,
             onTap = { startActivity(openAppIntent()) },
-            onStop = { sendCommand(this, ACTION_STOP) },
+            onToggle = { sendCommand(this, ACTION_TOGGLE) },
+        )
+    }
+
+    /**
+     * WP-774 (sahip, cihazda): Live Update karti "bos bildirim gibi" duruyordu.
+     * Govde satirina `MM:SS` yazilir ve kart saniyede bir SESSIZCE yenilenir
+     * (`onlyAlertOnce`; ses/titresim yok). Yalniz terfi eden yolda -- zengin
+     * panel kendi Chronometer'ini cizer -- ve yalniz EKRAN ACIKKEN: ekran
+     * kapaliyken 5 sn'de bir yalniz durum yoklanir, bildirim gonderilmez.
+     */
+    private fun scheduleCardTick(startedAtMs: Long) {
+        mainHandler.removeCallbacksAndMessages(CARD_TICK_TOKEN)
+        if (!promotedCardInUse()) return
+        HandlerCompat.postDelayed(
+            mainHandler,
+            { runCardTick(startedAtMs) },
+            CARD_TICK_TOKEN,
+            CARD_TICK_MS,
+        )
+    }
+
+    /** Gonderilen kart terfi eden (govde saatli) kart mi? */
+    private fun promotedCardInUse(): Boolean {
+        val p = prefs()
+        return !useRichPanel(
+            override = panelOverride(p),
+            mayPromote = TimerPromotion.mayRequestPromotion(
+                TimerPromotion.currentVerdict(p, notificationManager()),
+            ),
+        )
+    }
+
+    private fun runCardTick(startedAtMs: Long) {
+        val p = prefs()
+        // Durmus ya da baska bir kosuya gecmis sayac icin kart gonderilmez.
+        if (!TimerStateStore.isRunning(p) || TimerStateStore.startedAtMs(p) != startedAtMs) return
+        if (!promotedCardInUse()) return
+        val interactive = runCatching {
+            (getSystemService(Context.POWER_SERVICE) as? PowerManager)?.isInteractive ?: true
+        }.getOrDefault(true)
+        if (interactive) {
+            runCatching {
+                notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
+            }
+        }
+        HandlerCompat.postDelayed(
+            mainHandler,
+            { runCardTick(startedAtMs) },
+            CARD_TICK_TOKEN,
+            if (interactive) CARD_TICK_MS else CARD_IDLE_POLL_MS,
         )
     }
 
@@ -1006,6 +1126,15 @@ class StudyTimerService : Service() {
                     subjectName = runningSubjectName(p),
                     appLabel = applicationInfo.loadLabel(packageManager).toString(),
                     breakLabel = getString(R.string.timer_subtext_break),
+                ),
+            )
+            // WP-774: govde satiri canli saat; `scheduleCardTick` tazeler.
+            .setContentText(
+                cardClockText(
+                    nowMs = System.currentTimeMillis(),
+                    startedAtMs = startedAtMs,
+                    countDown = plan.countDown,
+                    totalSeconds = plan.totalSeconds,
                 ),
             )
             .setUsesChronometer(true)
@@ -1278,6 +1407,9 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         /** Gecikmeli yoklamayi iptal edilebilir kilan isaret. */
         private val PROMOTION_PROBE_TOKEN = Any()
+
+        /** WP-774: govde saati sayacinin handler token'i. */
+        private val CARD_TICK_TOKEN = Any()
 
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001

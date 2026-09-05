@@ -10,15 +10,17 @@
      acik golgede kayboldu; WP-753 tema niteligi yazdi, koyu golgede kayboldu.
      Burada o sarkac hic baslamasin diye cift bastan sabit.
 
-     Tonlar uygulamanin "ember" kimligiyle ayni ailede. Olculen oranlar:
-       ink / fill              = 13.4:1
-       action_ink / action_fill = 8.19:1 (bildirim hapiyla ayni cift) -->
+     WP-774 (sahip, cihazda): serit Live Update cipi gibi gorunsun. Cipin
+     rengi sistem temasindan gelir; biz onun mavi tonunu sabitledik.
+     Olculen oranlar:
+       ink / fill = 5.5:1 (beyaz / #2F5BE5)
+       dugme: beyaz simge, %20 beyaz saydam zemin (mavi ustunde ayni oran) -->
 <resources>
-    <!-- Seridin OPAK zemini. -->
-    <color name="timer_overlay_fill">#120E0A</color>
-    <!-- Sayac rakamlari. -->
-    <color name="timer_overlay_ink">#FFF3E6</color>
-    <!-- Durdur dugmesinin dolgusu ve uzerindeki simge. -->
-    <color name="timer_overlay_action_fill">#FF8A3D</color>
-    <color name="timer_overlay_action_ink">#120E0A</color>
+    <!-- Seridin OPAK zemini: cip mavisi. -->
+    <color name="timer_overlay_fill">#2F5BE5</color>
+    <!-- Logo, sayac rakamlari ve dugme simgesi. -->
+    <color name="timer_overlay_ink">#FFFFFF</color>
+    <!-- Dugmenin yari saydam hapi: mavi ustunde hafif aydinlik. -->
+    <color name="timer_overlay_action_fill">#33FFFFFF</color>
+    <color name="timer_overlay_action_ink">#FFFFFF</color>
 </resources>

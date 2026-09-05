@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Chronometer
+import android.widget.ImageView
 import com.manilmax.online_study_room.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -48,6 +49,15 @@ import kotlin.math.roundToInt
  * * Izin normal calisma-zamani penceresiyle ISTENEMEZ; kullanici Ayarlar'da
  *   elle acar ([permissionSettingsIntentNeeded]).
  *
+ * ## WP-774 (sahip, cihazda) -- kok neden sonradan bulundu
+ *
+ * "Samsung cizmiyor" teshisi YANLISTI: Samsung, Now Bar listesini onayladigi
+ * paketlerden kuruyor; onaysiz uygulama Developer options > "Live
+ * notifications for all apps" acikken cizilir (WP-772). Serit yine de
+ * kaldi: kilit ekrani disinda her uygulamanin ustunde duran, bizim
+ * cizdigimiz bir yuzey. Artik cip gibi gorunur (logo + sayac + kucuk dugme)
+ * ve durunca KAYBOLMAZ: bosta `00:00` + Baslat.
+ *
  * Nobetci: `TimerOverlayWp764Test`.
  */
 internal object TimerOverlay {
@@ -70,14 +80,17 @@ internal object TimerOverlay {
     /**
      * Serit cizilmeli mi? **Saf** -- cihazsiz JVM'de olculur.
      *
-     * Uc kosulun UCU de sart ve ucu de AYRI seyler:
+     * Iki kosulun IKISI de sart ve ikisi de AYRI seyler:
      *  - kullanici acmis olmali (varsayilan kapali);
      *  - izin verilmis olmali (kullanici Ayarlar'dan geri ALABILIR, o yuzden
-     *    her seferinde sorulur, bir kez olculup saklanmaz);
-     *  - sayac gercekten kosuyor olmali.
+     *    her seferinde sorulur, bir kez olculup saklanmaz).
+     *
+     * 🔴 WP-774: "sayac kosuyor olmali" kosulu KALKTI. Sahip cihazda: serit
+     * durunca yok oluyordu, yeniden baslatilamiyordu. Serit bosta da durur;
+     * ne cizecegi (`00:00` + Baslat) [show] icindeki `running` ile secilir.
      */
-    fun shouldShow(enabled: Boolean, permitted: Boolean, running: Boolean): Boolean =
-        enabled && permitted && running
+    fun shouldShow(enabled: Boolean, permitted: Boolean): Boolean =
+        enabled && permitted
 
     /** Kullanici seridi acti mi. */
     fun isEnabled(prefs: SharedPreferences): Boolean =
@@ -149,32 +162,36 @@ internal object TimerOverlay {
     private var view: View? = null
 
     /**
-     * Seridi gosterir (zaten varsa yalnizca sayaci tazeler).
+     * Seridi gosterir; zaten varsa yalnizca durumunu tazeler.
+     *
+     * WP-774: iki durum, tek dugme.
+     *  - kosarken: kronometre akar, dugme Durdur (kare);
+     *  - bosta: `00:00` durur, dugme Baslat (ucgen).
+     * Dugme tek komut gonderir; servis bosta baslatirken kullanicinin SON
+     * SECILI dersini ve modunu kullanir (widget ile ayni yol).
      *
      * @param onTap serite dokununca (uygulamayi ac)
-     * @param onStop Durdur'a basinca
+     * @param onToggle dugmeye basinca (kosarken Durdur, bosta Baslat)
      */
     fun show(
         context: Context,
+        running: Boolean,
         startedAtMs: Long,
         countDown: Boolean,
         totalSeconds: Int,
         onTap: () -> Unit,
-        onStop: () -> Unit,
+        onToggle: () -> Unit,
     ) {
         if (!isPermitted(context)) return
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-
         val existing = view
         if (existing != null) {
-            bindChronometer(existing, startedAtMs, countDown, totalSeconds)
+            bindState(existing, running, startedAtMs, countDown, totalSeconds)
             return
         }
-
         val root = LayoutInflater.from(context).inflate(R.layout.timer_overlay_pill, null)
-        bindChronometer(root, startedAtMs, countDown, totalSeconds)
-
+        bindState(root, running, startedAtMs, countDown, totalSeconds)
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -189,9 +206,7 @@ internal object TimerOverlay {
             x = prefs.getInt(KEY_X, 0)
             y = prefs.getInt(KEY_Y, 0)
         }
-
-        attachTouch(root, params, wm, prefs, onTap, onStop)
-
+        attachTouch(root, params, wm, prefs, onTap, onToggle)
         // `addView` izin o an geri alinmissa cokebilir; serit bir kolayliktir,
         // uygulamayi dusuremez.
         val added = runCatching { wm.addView(root, params) }.isSuccess
@@ -206,13 +221,26 @@ internal object TimerOverlay {
         runCatching { wm.removeView(current) }
     }
 
-    private fun bindChronometer(
+    /** Iki durumu tek yerden cizer. */
+    private fun bindState(
         root: View,
+        running: Boolean,
         startedAtMs: Long,
         countDown: Boolean,
         totalSeconds: Int,
     ) {
         val chronometer = root.findViewById<Chronometer>(R.id.overlay_timer_elapsed)
+        val action = root.findViewById<ImageView>(R.id.overlay_timer_action)
+        if (!running) {
+            // Bosta: sayac durur ve `00:00` gosterir (`setBase` metni yeniden
+            // cizer); dugme Baslat.
+            chronometer.stop()
+            chronometer.isCountDown = false
+            chronometer.base = SystemClock.elapsedRealtime()
+            action.setImageResource(R.drawable.ic_overlay_play)
+            action.contentDescription = root.context.getString(R.string.action_start)
+            return
+        }
         // 🔴 Sira onemli: bayrak ONCE, taban SONRA -- `setBase` metni yeniden
         // cizer. Ayni tuzak bildirim panelinde de vardi (WP-759).
         chronometer.isCountDown = countDown
@@ -225,6 +253,8 @@ internal object TimerOverlay {
         }
         chronometer.base = nowElapsed - (nowMs - targetMs)
         chronometer.start()
+        action.setImageResource(R.drawable.ic_overlay_stop)
+        action.contentDescription = root.context.getString(R.string.action_stop)
     }
 
     private fun attachTouch(
@@ -233,17 +263,15 @@ internal object TimerOverlay {
         wm: WindowManager,
         prefs: SharedPreferences,
         onTap: () -> Unit,
-        onStop: () -> Unit,
+        onToggle: () -> Unit,
     ) {
-        root.findViewById<View>(R.id.overlay_timer_stop).setOnClickListener { onStop() }
-
+        root.findViewById<View>(R.id.overlay_timer_action).setOnClickListener { onToggle() }
         val slop = android.view.ViewConfiguration.get(root.context).scaledTouchSlop
         var downX = 0f
         var downY = 0f
         var startX = 0
         var startY = 0
         var dragging = false
-
         root.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-774: bosta seridin Baslat simgesi (ucgen). Durdur karesiyle ayni
+     kutu, ayni renk; yalniz bicim degisir ki dugme yer degistirmesin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/timer_overlay_action_ink"
+        android:pathData="M8,5 L19,12 L8,19 Z" />
+</vector>

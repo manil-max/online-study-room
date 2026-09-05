@@ -11584,3 +11584,69 @@ kısmında hiçbir şey yok sadece github sayfasının linki var."*
   görülür; v77'de kalan telefon Türkçe yedek metni görmeye devam eder.
 - Etiketten not çekme de v78 kurulu cihazda v79 güncellemesinde görülür.
   GitHub gövdesi düzeltmesi ise v78 yayınında herkese ulaşır.
+
+## 2026-09-05 — LIVE UPDATE KARTINA CANLI MM:SS + ŞERİT ÇİP GİBİ VE KALICI (WP-774)
+
+**Tetikleyen (sahip, cihazda, v77):** *"kronometre dinamik panelde çalışıyor
+ama normal bildirim kısmında boş bildirimmiş gibi duruyor sadece seçilen ders
+var... MM:SS şekline geri olsun. Her ekranda uygulamaların üstüne taşı
+özelliğinin görüntüsü dinamik paneldeki gibi olsun; durdur/başlat butonu çok
+büyük ve durdurunca yok oluyor, yok olmasın yeniden başlatılabilsin; başlat
+her zaman son seçili ders olarak varsayılan kalsın."*
+
+### Teşhis (`Kodda doğrulandı`)
+- Terfi eden kart standart şablon; kronometre BAŞLIKTA durur ve One UI onu
+  öne çıkarmaz. Gövde satırı WP-772'de bilerek boş bırakılmıştı → kart
+  "boş" okunuyor.
+- Şerit `shouldShow(enabled, permitted, running)` ile yalnız koşarken
+  çiziliyordu; durunca `TimerOverlay.hide` + `stopSelf` → pencere süreçle
+  gidiyor. Düğme 44dp turuncu daire, palet "ember".
+- Bildirim/widget Başlat'ı zaten `rememberedSubjectId` + `nativeStartPlan`
+  kullanıyor (son seçili ders + seçili mod); eksik olan yalnız şeritti.
+
+### WP-774 — Değişen (lider)
+- `StudyTimerService.kt`: saf `cardClockText` (MM:SS; ≥1 saat `H:MM:SS`;
+  hedefli modda kalan süre; saat geri alınırsa `00:00`). Terfi eden kartın
+  gövdesi bu metin; `scheduleCardTick` kartı **saniyede bir sessizce**
+  yeniler (`onlyAlertOnce`), yalnız terfi eden yolda ve yalnız ekran
+  açıkken (`PowerManager.isInteractive`; kapalıyken 5 sn'de bir yalnız
+  durum yoklanır). Her durdurma yolu (`handleStop`, discard, safeStop)
+  sayacı iptal eder; koşu değişirse tick kendini keser.
+- Şerit: `shouldShow(enabled, permitted)` — koşma şartı KALKTI. `show(...,
+  running, ...)` iki durumu çizer: koşarken kronometre + Durdur (kare),
+  bosta `00:00` + Başlat (üçgen). Tek düğme `ACTION_TOGGLE` gönderir →
+  boşta Başlat widget'ın yolu (son seçili ders + seçili mod). Pencere
+  süreçle yaşadığı için şerit açık + izinliyse servis **boşta kartla ön
+  planda kalır** (`keepAliveForOverlay`); yalnız gizli geliştirici
+  seçeneği, WP-759'un "boşta kart kalmaz" kuralı sıradan kullanıcı için
+  değişmedi.
+- Şerit görünümü çip gibi: `ic_stat_focus_camp` logo (16dp) + 15sp kalın
+  sayaç + 32dp yarı saydam tek düğme; zemin çip mavisi `#2F5BE5`, mürekkep
+  beyaz (5.5:1). `timer_overlay_stop_bg.xml` silindi, `timer_overlay_action_bg`
+  ve `ic_overlay_play` eklendi.
+- Kök neden düzeltmesi belgeye işlendi: `TimerOverlay.kt` başlığındaki
+  "Samsung çizmiyor" teşhisi WP-772 ile düzeltildi.
+
+### Testler
+- `TimerCardClockWp774Test` (5): MM:SS, saat alanı, geri sayım/sıfırda
+  durma, geri alınmış saat, tick aralıkları.
+- `TimerOverlayWp764Test`: üç-koşul iddiası ÖLÇÜMLE iki koşula döndü
+  (`..._and_idle_is_not_a_condition`).
+- `timer_card_clock_overlay_wp774_test.dart` (3): gövde saati + tick
+  kablosu + her durdurma yolunda iptal; koşma şartı kalktı + keep-alive +
+  tek komut; layout logo + tek düğme + eski büyük düğme yok.
+- Timer+overlay JVM 86/86; bridge sözleşmesi 16/16; l10n audit OK;
+  `git diff --stat` = `--ignore-cr-at-eol` (servis dosyası karışık sonlu,
+  dokunulmayan satırlar korundu).
+
+### Cihazda ölçülmeyen
+- Saniyelik kart yenilemesinin One UI'da titreme/pil etkisi; çipin her
+  yenilemede sabit kalması. Şeridin boşta gerçekten kalması ve Başlat'ın
+  son dersle koşması. Sahip v79'da ölçecek.
+- Şerit kapalıyken hiçbir şey değişmedi; boşta kart yalnız şerit açıkken.
+
+### Açık kalanlar
+- Kart saniyede bir yenileniyor; Samsung throttle ederse görünür etki yalnız
+  gövde saatinin donması olur, çip sistem kronometresinden akmaya devam eder.
+- Şerit About'tan kapatılınca servis bir sonraki komuta kadar boşta kartla
+  kalır (dev seçeneği; ayrı küçük WP).

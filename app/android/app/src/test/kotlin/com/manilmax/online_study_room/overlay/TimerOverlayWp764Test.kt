@@ -54,27 +54,27 @@ class TimerOverlayWp764Test {
     }
 
     /**
-     * Uc kosulun UCU de sart ve ucu de AYRI seyler.
+     * Iki kosulun IKISI de sart ve ikisi de AYRI seyler.
      *
      * 🔴 "Izin var" ile "kullanici istedi" ayni sey DEGILDIR. Izni gecmiste
      * vermis ama seridi kapatmis bir kullaniciya serit gostermek, ayarinin
      * hicbir seye yaramadigi anlamina gelir.
+     *
+     * 🔴 WP-774 — IDDIA YON DEGISTIRDI (sahip, cihazda): "sayac kosmuyorsa
+     * gosterecek bir sey yok" kosulu KALKTI. Serit durunca yok oluyor ve
+     * yeniden baslatilamiyordu; artik bosta `00:00` + Baslat cizer.
      */
     @Test
-    fun nothing_is_drawn_unless_all_three_conditions_hold() {
-        assertTrue(TimerOverlay.shouldShow(enabled = true, permitted = true, running = true))
+    fun nothing_is_drawn_unless_both_conditions_hold_and_idle_is_not_a_condition() {
+        assertTrue(TimerOverlay.shouldShow(enabled = true, permitted = true))
 
         assertFalse(
             "Kullanici acmadiysa izin VARSA BILE cizilmez",
-            TimerOverlay.shouldShow(enabled = false, permitted = true, running = true),
+            TimerOverlay.shouldShow(enabled = false, permitted = true),
         )
         assertFalse(
             "Izin yoksa cizilemez",
-            TimerOverlay.shouldShow(enabled = true, permitted = false, running = true),
-        )
-        assertFalse(
-            "Sayac kosmuyorsa gosterecek bir sey yok",
-            TimerOverlay.shouldShow(enabled = true, permitted = true, running = false),
+            TimerOverlay.shouldShow(enabled = true, permitted = false),
         )
     }
 
