@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-08-12** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-09-05** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. Eskiden buraya işaret
@@ -130,6 +130,13 @@
   v56 kaydında `0100`dür.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### 2026-09-05 — Yönetim paneli: TEK kuyruk + karta özel TAM SAYFA (WP-768…WP-771)
+
+**Durum: kod tamamlandı, otomatik kapı geçti; cihaz kabulü bekliyor.** Ayrıntı
+ve kanıt: dosyanın sonundaki `2026-09-05` bölümü. Sahibin bu turdaki emri
+Play üretim başvurusunun 14 günlük yeniden test penceresine düşen kapalı test
+sürümleri için "birkaç fix" idi; bu tur o sürümlerden ilkinin gövdesidir.
 
 ### 2026-08-19 — "seri" tek tanıma indi (WP-739)
 
@@ -11280,3 +11287,146 @@ verildi.
   goruntusu al. Gelistirici secenekleri "Live notifications for all apps".
 - Grup sekmesi "Ay" -> geri ok -> liderlik gecmisi gecen ayin yarisini ciziyor mu.
 - "Gun" -> geri ok -> gosterge kartinda "Bugun" yazmiyor mu.
+
+## 2026-09-05 — ADMIN PANELİ: TEK KUYRUK + KARTA ÖZEL TAM SAYFA (WP-768…WP-771)
+
+**Tetikleyen (sahip, birebir):** *"tam olarak rahat bir şekilde tek bildirilen
+karttan hem şikayeti görüp hem ilgili dosyaları görüp (belki foto belki
+uygunsuz mesaj bildirim, uygunsuz ad gibi gibi) tek panelde bunları görüp ek
+olarak da o kartta direkt hesaba birkaç günlük time out ya da direkt hesabına
+ban vs ya da mesajlaşma… şikayet/öneri/soru gibi filtrelenebilen bir liste
+olsun. orada her kartta sadece detaylı incele butonu olsun ve ona basınca ayrı
+bir sayfa açılsın o karta özel ve her şey orada olsun başka bir ekranı
+istemiyorum. birde admin tarafında… grupları ve kişilerle ilgili kendim açıp
+bilgi görebileceğim bir ayrı yer olsun… ama bu panele hiç ihtiyacım olmasın
+gelenleri değerlendirirken."*
+
+**Bağlam:** Play üretim başvurusu 28 Ağu'da "more testing required" ile döndü;
+sayaç 11 Eyl'e kadar yeniden koşuyor ve o pencerede geri bildirimden doğan
+kapalı test sürümleri gerekiyor. Bu tur o sürümlerin gövdesi.
+
+### Teşhis (üç alt ajan taraması, `Kodda doğrulandı`)
+
+- Panel WP-691/WP-A…F ile zaten bir kez yenilenmişti: 3 yüzey + masaüstünde
+  **bölmeli** usta-detay. Sahibin istediği bölme değil **karta özel tam
+  sayfa**; PLAN §4.2'nin üç bölmeli tasarımı bu turla **iptal**.
+- Kuyruk yüzeyi ikiye bölünmüştü (`Raporlar` = destek biletleri,
+  `İçerik Şikayetleri` = UGC vakaları) ve **aynı şikâyet ikisinde birden**
+  görünüyordu: `report_ugc` her şikâyet için bir bilet de açıyor
+  (`0110:160-167`), bilet `ugc_report_id` ile bağlı; sunucu bu alanı
+  döndürüyordu (`0090:118`), Dart modeli atıyordu.
+- Kartlarda gizli menüler: durum hapı `PopupMenuButton` (menü olduğunu
+  gösteren işaret yok), `…` menüsü (yaptırım/karantina/kopyala). Sahibin
+  "tuş neyi ne olduğu belli değil" şikâyetinin karşılığı.
+- Hunter 14 kanıtlı kusur çıkardı; bu turda 11'i kapandı (aşağıda).
+
+### WP-768 — Tek kuyruk + tek buton kart (lider)
+- `app/lib/features/admin/queue/admin_queue_entry.dart` (yeni, saf): üç kaynak
+  (vaka · bilet · itiraz) → tek liste. **Ayna bilet elenir** (`ugcReportId`
+  dolu), karara bağlanmış itiraz düşer, açık iş üstte. `adminMirrorTicket`
+  vakanın destek yazışmasını bulur.
+- `app/lib/features/admin/queue/admin_queue_view.dart` (yeni): filtre çipleri
+  `Tümü · Şikâyet · Öneri · Soru · İtiraz`; kaynak düşerse kuyruk boş
+  görünmez, kayıp yazılır + yeniden dene; boş sonuçta filtre temizlenir.
+- `widgets/moderation_queue_card.dart`: durum hapı **okunur etiket** oldu
+  (`AdminWorkStatusLabel`, `cards/admin_work_card.dart`), `…` menüsü ve kişi
+  dosyası köprüsü kalktı; tek görünür eylem **"Detaylı incele"**.
+- `shell/admin_shell.dart`: kuyruk yüzeyi tek bölüm; tek bölümlü yüzeyde ne
+  bölüm seçici ne master bölmesi çizilir — tüm genişlik çalışma alanı.
+- `data/models/feedback_ticket.dart`: `ugcReportId` alanı (sunucu zaten
+  gönderiyordu).
+- Silinen: `tabs/admin_reports_tab.dart`, `tabs/admin_moderation_tab.dart`,
+  `queue/moderation_review_view.dart` (işlevleri yeni sayfalara taşındı).
+- l10n: 20 yeni anahtar (EN+TR), `flutter gen-l10n` üretildi.
+
+### WP-769 — Vakanın kendi tam sayfası (lider)
+- `app/lib/features/admin/detail/admin_case_detail_page.dart` (yeni): tek
+  sayfada kanıt (içerik · **ek görsel** · açıklama · gerekçe · zaman · bağlam
+  mesajları) + **Taraflar** + **hedefin dosyası sayfanın içinde** (aktif kısıt,
+  ceza geçmişi, `Kısıtla` tam katalog: uyarı / isim sıfırlama / 24 s susturma /
+  24 s–7 g–14 g–30 g askı / kalıcı yasak, `Kısıtı kaldır`) + **şikâyet edenle
+  yazış** (ayna bilet) + **kullanıcıya bildirim** (hedefe özel duyuru) +
+  sabit **karar şeridi** (tek gerekçe alanı; Karantina · Yaptırım · Reddet ·
+  Çözüldü) + 10 sn "Geri al".
+- `app/lib/features/admin/detail/admin_appeal_detail_page.dart` (yeni): itiraz
+  edilen yaptırım + gerekçe + itiraz metni; çıkar çatışmasında düğme yok, nedeni
+  yazılı; karar gerekçe ister.
+- Kapanan hunter kusurları: **(#2)** kanıt panosu hiçbir eylemden sonra
+  tazelenmiyordu → `_refresh` detay + kuyruk + yaptırım sağlayıcılarını
+  tazeler; **(#5)** `setCaseStatus` etkilenen satır sayısını dönüyordu, ekran
+  okumuyordu → 0 satırda "Çözüldü" denmez, `adminVakaDurumBagimsizUyari`
+  yazılır, geri alma açılmaz; **(#13)** itiraz kararı kuyruğu tazeler (hedef
+  kimliği modelde yok, kısıt listesi hâlâ tazelenemiyor — açık).
+- `sanctions/admin_sanction_actions.dart`: dokuz basamaklı katalog 768 px'te
+  taşıyordu, sayfa `SingleChildScrollView` oldu (kalıcı yasak görünmüyordu).
+
+### WP-770 — Destek kaydı tam sayfa (alt ajan, `e377ed81`)
+- `app/lib/features/admin/ticket/admin_ticket_detail_page.dart` +
+  `admin_ticket_actions.dart` (yeni): kimlik, mesaj, ek görsel (satır içi,
+  yeniden dene), **yazışma sayfanın gövdesinde**, iç notlar, durum + arşiv.
+- `profile/feedback_tickets_screen.dart`: yazışma gövdesi
+  `FeedbackTicketConversationView` olarak dışa çıktı; diyalog + sayfa aynı
+  widget'ı kullanır, kullanıcı tarafı davranışı korundu.
+- Kapanan hunter kusurları: **(#4)** arşiv görünümünde yazma sonrası ekran eski
+  kalıyordu → aktif+arşiv × null+tür dört sağlayıcı tazelenir; **(#7)**
+  `_setArchived` hata yakalamıyordu; **(#8)** iç notlar okunamayınca boş gövde
+  → `adminBiletNotOkunamadi`; **(#9, bilet payı)** `e.message` gösterilir.
+- 🔴 Commit başlığı bozuk yazıldı (`@ WP-770: …`, gövde kesik) — PowerShell
+  here-string Bash'te. Paylaşılan dizinde `--amend` yasak; HEAD~1 olduğu için
+  düzeltilmedi, kayda geçti.
+- 🔴 **Entegrasyonda lider buldu:** sayfa doğrudan monte edilince oturum ilk
+  karede `AsyncLoading`; `_subscribeToMessages` `user == null` görüp dönüyor ve
+  yazışma yerinde **hiç durmayan bir çark** kalıyordu (diyalogda görünmezdi,
+  dokunuşla açılıyordu). Oturum çözülünce yeniden abone olunur
+  (`_subscribeWhenSessionReady`, `ref.listen`). Probe ile ölçüldü:
+  `spinner=1 transient=1` → `spinner=0 transient=0`.
+
+### WP-771 — Kişi/grup dizini + yutulan hatalar (alt ajan, `eebaa097`)
+- `tabs/admin_users_tab.dart`: **arama kutusu** (e-posta/kimlik), boş sonuçta
+  filtre temizleme.
+- **(#3)** üye atma sonrası üye listesi tazelenir; **(#6)** ayrılmış üye
+  "Gruptan ayrıldı" etiketiyle, "Üyeyi at" düğmesi çizilmez (istemci tarafı;
+  edge function'a dokunulmadı, deploy gerekmedi); **(#9)** users/groups/dosya
+  eylemlerinde `e.message`; **(#10)** duyuru oluştur/sil hatası yüzeye çıktı;
+  **(#11)** `accountPurgeHealthProvider` `readRetryPolicy`; **(#12)** sert
+  teyit e-postayı `ref.watch` ile çözer (UUID yazdırmaz).
+- Kapsam dışı ama SAHİP yolda düzeltilen: `admin_groups_tab.dart` gerekçe
+  diyaloğu denetleyiciyi kapanış animasyonu sürerken dispose ediyordu → her
+  onayda "used after being disposed" çerçevesi düşüyordu; denetleyici diyaloğa
+  taşındı (`_GroupReasonDialog`, depodaki `admin_sanction_dialogs.dart` dersi).
+
+### Testler
+- Yeniden yazılan: `moderation_review_flow_test.dart` (WP-768/769 kabulleri:
+  ayna eleme, tek düğme, filtre, tam sayfa, kanıt+karar aynı anda, hedef
+  dosyası sayfada, ek görsel, geri al, **0 satırda başarı yok**, şerit sabit,
+  merdiven uygulanır, itiraz sayfası, panelden kablo), `moderation_queue_card_test.dart`.
+- Uyarlanan (kabuller korunarak yeni yüzeye taşındı): `admin_shell_layout_test`,
+  `admin_card_system_wp698_test`, `appeal_card_language_wp703_test`,
+  `moderation_appeal_wp442_test`, `moderation_enforcement_wp441_test`,
+  `moderation_queue_contract_test`, `admin_directory_test`,
+  `admin_sanction_surface_test`, `admin_screen_test`,
+  `feedback_conversation_wp374_test`.
+- Yeni: `admin_ticket_detail_wp770_test.dart` (10), `admin_directory_wp771_test.dart` (13).
+
+### Kapı gerçeği
+- `flutter analyze lib test` → 0 uyarı. `python scripts/l10n_audit.py` → OK
+  (1805 anahtar, gömülü metin yok, borç sayaçları değişmedi).
+- Satır sonu: `git diff --stat` ile `--ignore-cr-at-eol --stat` birebir aynı;
+  karışık dosya yok (`core.autocrlf=true`, depo LF).
+- **Tam kapı (`python scripts/test_all.py`, 2026-09-05):** 20 kapı · **18 geçti · 0 kırmızı · 2 atlandı** (Deno kurulu değil; Edge Function tip/davranış testleri CI'da koşar). Flutter test paketi + kapsam 348 s, Android JVM 109 s, kapsam ratchet geçti.
+
+### Açık kalanlar (bu turda yapılmadı, kayda geçti)
+- **Hunter #1:** hesap silme sağlık paneli hiçbir yüzeye bağlı değil **ve**
+  `get_account_purge_health` `authenticated`'a kapalı (`0113:349-350`) —
+  bağlansa da 42501 alır. Migration (`0137`) gerektirir; deploy kapısı
+  fail-closed, ayrı WP.
+- **Hunter #13 kalanı:** `ModerationAppeal` hedef kimliği taşımıyor; itiraz
+  kabul edilince kişi dosyasının kısıt listesi tazelenemiyor.
+- **Hunter #14:** `fetchTicketMessages` ölü metod (zararsız).
+- Kullanıcılar/gruplar **liste yükleme** hatası hâlâ jenerik metin
+  (`admin_users_tab.dart:71`, eylem yolları düzeltildi, okuma yolları değil).
+- Üye seçici gruba hiç üye olmayanları da listeliyor; seçilince sunucu
+  reddediyor, seçici önden elemiyor.
+- Serbest süreli yaptırım ("N gün") yok — merdiven sabit 9 basamak
+  (24 s / 7 g / 14 g / 30 g / kalıcı); yeni süre = yeni enum + migration.
+- **Cihaz kabulü yok.** Tüm iddialar `Kodda doğrulandı` + otomatik test.
