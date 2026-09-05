@@ -298,10 +298,90 @@ def select_columns(text: str):
 # --------------------------------------------------------------------------
 # Denetim
 # --------------------------------------------------------------------------
+PURGE_FUNCTION = ROOT / "supabase" / "functions" / "purge-accounts" / "index.ts"
+
+# `(storage.foldername(name))[1] = auth.uid()::text` — bir nesnenin ilk
+# klasoru HAM kullanici kimligi mi? Purge `list(uid)` ile calistigi icin
+# kapsama girme olcutu tam olarak budur.
+UID_KEYED = re.compile(
+    r"\(\s*storage\.foldername\s*\(\s*name\s*\)\s*\)\s*\[\s*1\s*\]"
+    r"\s*=\s*auth\.uid\(\)::text"
+)
+BUCKET_ID = re.compile(r"bucket_id\s*=\s*'([a-z0-9_\-]+)'")
+
+
+def uid_keyed_buckets(sql: str) -> set[str]:
+    """Yukleme politikasi nesneyi HAM uid klasorune kilitleyen bucket'lar.
+
+    🔴 `group-avatars` bilerek disarida kalir: onun politikasi
+    `is_group_admin(...)` ile grup kimligine bakar, uid'ye degil. Purge onu
+    ayri bir anahtarla temizler; bu listeye koymak `list(uid)`in hicbir zaman
+    bulamayacagi bir bucket icin sahte guven uretirdi.
+    """
+    found: set[str] = set()
+    for statement in sql.split(";"):
+        if "create policy" not in statement or "storage.objects" not in statement:
+            continue
+        if " for insert" not in statement:
+            continue
+        if not UID_KEYED.search(statement):
+            continue
+        found.update(BUCKET_ID.findall(statement))
+    return found
+
+
+def declared_purge_buckets(ts: str) -> set[str]:
+    match = re.search(
+        r"USER_OWNED_STORAGE_BUCKETS\s*=\s*\[(.*?)\]\s*as const", ts, re.S
+    )
+    if match is None:
+        return set()
+    return set(re.findall(r'"([^"]+)"', match.group(1)))
+
+
+def storage_purge_scope(sql: str, ts: str) -> list[str]:
+    """DORDUNCU YUZEY: silinen hesabin dosyalari gercekten siliniyor mu.
+
+    🔴 Bu bosluk sessizdir ve hicbir mevcut kapi gormez. pgTAP `storage.objects`
+    politikalarini olcer, Dart kapisi RPC'leri olcer; ARADAKI TS listesi
+    olculmez. Eksik bir isim hata VERMEZ -- `list(uid)` hic cagrilmaz, purge
+    "basarili" raporlar ve fotograflar hesap silindikten sonra sonsuza kadar
+    oksuz kalir. WP-778'de `ticket_message_attachments` tam olarak bu sekilde
+    listenin disinda kalmisti.
+    """
+    errors: list[str] = []
+    required = uid_keyed_buckets(sql)
+    declared = declared_purge_buckets(ts)
+    rel = PURGE_FUNCTION.relative_to(ROOT).as_posix()
+
+    if not declared:
+        errors.append(f"{rel}: `USER_OWNED_STORAGE_BUCKETS` listesi okunamadi")
+        return errors
+
+    for bucket in sorted(required - declared):
+        errors.append(
+            f"{rel}: `{bucket}` bucket'i nesneleri ham `auth.uid()` klasorunde "
+            f"tutuyor ama purge listesinde YOK -- hesap silinince dosyalari "
+            f"oksuz kalir ve hata bile vermez"
+        )
+    for bucket in sorted(declared - required):
+        errors.append(
+            f"{rel}: `{bucket}` purge listesinde ama hicbir migration onu ham "
+            f"`auth.uid()` klasorune kilitlemiyor -- `list(uid)` orada hicbir "
+            f"zaman bir sey bulamaz (sahte guven)"
+        )
+    return errors
+
+
 def audit() -> tuple[list[str], str]:
-    functions, tables, views = sql_schema(_sql_text())
+    sql = _sql_text()
+    functions, tables, views = sql_schema(sql)
     errors: list[str] = []
     rpc_count = column_count = 0
+
+    errors.extend(
+        storage_purge_scope(sql, PURGE_FUNCTION.read_text(encoding="utf-8"))
+    )
 
     for path in _client_sources():
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -349,7 +429,9 @@ def audit() -> tuple[list[str], str]:
     summary = (
         f"{rpc_count} RPC çağrısı / "
         f"{sum(len(v) for v in functions.values())} sunucu imzası, "
-        f"{column_count} sütun referansı / {len(tables)} tablo"
+        f"{column_count} sütun referansı / {len(tables)} tablo, "
+        f"{len(declared_purge_buckets(PURGE_FUNCTION.read_text(encoding='utf-8')))} "
+        f"purge bucket'ı"
     )
     return errors, summary
 
@@ -383,13 +465,30 @@ def self_test() -> int:
     expected = ("bu_rpc_hicbir_migrationda_yok", "boyle_bir_sutun_yok")
     caught = {token: any(token in e for e in new) for token in expected}
 
+    # ÜÇÜNCÜ PROB — purge kapsamı. Dosyaya yazmak yerine saf fonksiyon
+    # doğrudan bozuk girdiyle çağrılır: gerçek `index.ts` bir an bile bozuk
+    # kalmaz (paylaşılan dizinde başka lane çalışıyor olabilir).
+    sql = _sql_text()
+    real_ts = PURGE_FUNCTION.read_text(encoding="utf-8")
+    missing = re.sub(r'^\s*"report_attachments",\s*$', "", real_ts, count=1,
+                     flags=re.M)
+    extra = real_ts.replace(
+        '"avatars",', '"avatars",' + chr(10) + '  "group-avatars",', 1
+    )
+    caught["purge listesinden düşen bucket"] = any(
+        "report_attachments" in e for e in storage_purge_scope(sql, missing)
+    )
+    caught["purge listesindeki uid'siz bucket"] = any(
+        "group-avatars" in e for e in storage_purge_scope(sql, extra)
+    )
+
     print("self-test — kapı probu:")
     for token, hit in caught.items():
         print(f"  {'yakalandı' if hit else 'KAÇIRILDI'}: {token}")
     if not all(caught.values()):
         print("FAIL: kapı sessizce etkisiz — proba kırmızı dönmedi.")
         return 1
-    print(f"OK: kapı iki probu da reddetti ({len(new)} yeni bulgu).")
+    print(f"OK: kapı dört probu da reddetti ({len(new)} yeni bulgu).")
     return 0
 
 

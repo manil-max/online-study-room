@@ -97,9 +97,10 @@ function must<T extends { error: unknown }>(result: T, step: string): T {
  * Silme `list(uid)` ile çalışır; başka bir anahtarla saklanan bir bucket bu
  * yoldan asla bulunmaz — hata bile vermez, sessizce sıfır nesne döner.
  *
- *   • avatars              — `<uid>/avatar.jpg`  (`0002_avatars_storage.sql:30`)
- *   • feedback_attachments — `<uid>/...`         (`0072_...:31`)
- *   • report_attachments   — `<uid>/...`         (`0096_...:69`)
+ *   • avatars                    — `<uid>/avatar.jpg` (`0002_avatars_storage.sql:30`)
+ *   • feedback_attachments       — `<uid>/...`        (`0072_...:31`)
+ *   • report_attachments         — `<uid>/...`        (`0096_...:69`)
+ *   • ticket_message_attachments — `<uid>/...`        (`0138_...:163`)
  *
  * Son ikisinin dayanağı aynı: bunlar kullanıcının KENDİ içeriğidir ve dosyayı
  * işaret eden satır (`feedback_tickets`, `ugc_reports`) `auth.users`'a
@@ -130,6 +131,10 @@ const USER_OWNED_STORAGE_BUCKETS = [
   "avatars",
   "feedback_attachments",
   "report_attachments",
+  // WP-778 — 0138 KARAR 4. Vaka yazışmasına eklenen fotoğraf; yol anahtarı
+  // `foldername(name)[1] = auth.uid()` (`0138_...:167`), yani üstteki ölçütü
+  // aynı şekilde karşılar ve `list(uid)` onu gerçekten bulur.
+  "ticket_message_attachments",
 ] as const
 
 type StoragePurgeReport = {
