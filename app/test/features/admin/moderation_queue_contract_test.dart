@@ -7,7 +7,7 @@ import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// WP-440: Kuyruğun kod borcu kapanışı.
@@ -41,7 +41,7 @@ Widget _host(InMemoryAdminModerationRepository repo) {
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(body: AdminModerationTab()),
+      home: const Scaffold(body: AdminQueueView()),
     ),
   );
 }
@@ -58,22 +58,30 @@ String _codeOf(String path) {
 
 void main() {
   group('kod borcu: ekran doğrudan Supabase okumuyor', () {
-    test('admin_moderation_tab.dart Supabase istemcisine referans vermiyor', () {
+    test('kuyruk ve vaka sayfası Supabase istemcisine referans vermiyor', () {
       // Yorum satırları elenmeli: WP-440 açıklaması kaldırılan çağrının adını
       // anlatıyor, kodun kendisi değil.
-      final source = _codeOf('lib/features/admin/tabs/admin_moderation_tab.dart');
+      //
+      // WP-768: eski `tabs/admin_moderation_tab.dart` silindi; aynı borç
+      // kapısı yerine geçen iki dosyada koşar.
+      for (final path in const [
+        'lib/features/admin/queue/admin_queue_view.dart',
+        'lib/features/admin/detail/admin_case_detail_page.dart',
+      ]) {
+        final source = _codeOf(path);
 
-      expect(
-        source.contains('Supabase.instance'),
-        isFalse,
-        reason: 'ekran doğrudan Supabase istemcisi kullanıyor',
-      );
-      expect(
-        source.contains("from('ugc_reports')"),
-        isFalse,
-        reason: 'ekran tabloyu doğrudan okuyor/yazıyor',
-      );
-      expect(source.contains('supabase_flutter'), isFalse);
+        expect(
+          source.contains('Supabase.instance'),
+          isFalse,
+          reason: '$path doğrudan Supabase istemcisi kullanıyor',
+        );
+        expect(
+          source.contains("from('ugc_reports')"),
+          isFalse,
+          reason: '$path tabloyu doğrudan okuyor/yazıyor',
+        );
+        expect(source.contains('supabase_flutter'), isFalse, reason: path);
+      }
     });
 
     test('durum yazımı RPC sözleşmesinden geçiyor', () {
@@ -143,53 +151,56 @@ void main() {
   });
 
   group('ekran davranışı', () {
+    // WP-768: durum hapı karttan kalktı. Vaka artık "Detaylı incele" ile kendi
+    // sayfasında açılır ve durum orada, karar şeridinden yazılır.
+    Finder open(String id) => find.byKey(Key('admin-queue-open-case:message:$id'));
+    const targetId = '22222222-2222-4222-8222-222222222222';
+
     testWidgets('kuyruk boşsa boş durum gösterilir', (tester) async {
       final repo = InMemoryAdminModerationRepository();
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
-      expect(find.text('UGC raporu yok'), findsOneWidget);
+      expect(find.text('Bekleyen iş yok.'), findsOneWidget);
     });
 
-    testWidgets('çipten seçilen durum vaka bazında sunucuya yazılır', (
+    testWidgets('karar şeridinden seçilen durum vaka bazında yazılır', (
       tester,
     ) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
+      await tester.tap(open(targetId));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Çözüldü').last);
+      await tester.tap(find.byKey(const Key('moderation-decision-resolved')));
       await tester.pumpAndSettle();
 
-      expect(repo.statusWrites, [
-        'message:22222222-2222-4222-8222-222222222222=resolved',
-      ]);
+      expect(repo.statusWrites, ['message:$targetId=resolved']);
     });
 
     testWidgets('yanlışlıkla kapatılan vaka kuyrukta kalır ve geri açılır', (
       tester,
     ) async {
-      final repo = InMemoryAdminModerationRepository(seed: [_case()]);
+      final repo = InMemoryAdminModerationRepository(
+        seed: [_case(status: ModerationCaseStatus.resolved)],
+      );
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
+      // Kapatılan vaka listeden düşmez; yalnız listenin dibine iner.
+      expect(open(targetId), findsOneWidget);
+
+      await tester.tap(open(targetId));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Çözüldü').last);
+      // Geri açma yolu: karar verilir, sonra "Geri al".
+      await tester.tap(find.byKey(const Key('moderation-decision-rejected')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('moderation-undo-button')));
       await tester.pumpAndSettle();
 
-      // Kapatılan vaka listeden düşmez; çipi hâlâ oradadır.
-      expect(find.byKey(const Key('moderation-status-chip')), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İnceleniyor').last);
-      await tester.pumpAndSettle();
-
-      expect(repo.statusWrites.last, endsWith('=in_review'));
+      expect(repo.statusWrites.last, endsWith('=resolved'));
       final queue = await repo.fetchQueue();
-      expect(queue.single.status, ModerationCaseStatus.inReview);
+      expect(queue.single.status, ModerationCaseStatus.resolved);
     });
 
     testWidgets('sunucu hatası kullanıcıya bildirilir, kuyruk çökmez', (
@@ -200,9 +211,9 @@ void main() {
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
+      await tester.tap(open(targetId));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Çözüldü').last);
+      await tester.tap(find.byKey(const Key('moderation-decision-resolved')));
       await tester.pumpAndSettle();
 
       expect(find.text('Sunucuya ulaşılamadı.'), findsOneWidget);

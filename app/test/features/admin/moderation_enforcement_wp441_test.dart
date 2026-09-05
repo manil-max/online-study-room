@@ -9,7 +9,7 @@ import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/repositories/admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// WP-441: Basamaklı yaptırım, karantina, önem/SLA.
@@ -68,7 +68,7 @@ Widget _host(InMemoryAdminModerationRepository repo) {
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(body: AdminModerationTab()),
+      home: const Scaffold(body: AdminQueueView()),
     ),
   );
 }
@@ -296,27 +296,45 @@ void main() {
       expect(find.text('Karantinada'), findsOneWidget);
     });
 
+    // 🔴 WP-768/769: karttaki `…` menusu kalkti. Yaptirim ve karantina artik
+    // vakanin kendi sayfasindaki karar seridinden uygulanir; gerekce
+    // sozlesmesi (bos gerekceyle hicbir sey yazilmaz) aynen korunur.
+    Future<void> openCase(WidgetTester tester) async {
+      await tester.tap(
+        find.byKey(Key('admin-queue-open-case:message:$_targetId')),
+      );
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('yaptırım sayfası gerekçesiz gönderilemez', (tester) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
+      await openCase(tester);
 
-      await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
+      await tester.tap(find.byKey(const Key('moderation-decision-sanction')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Yaptırım uygula').last);
+      await tester.tap(find.text('Uyar').last);
+      await tester.pumpAndSettle();
+      // Gerekçe boşken onay hiçbir şey yazmaz.
+      await tester.tap(find.byKey(const Key('admin-user-reason-confirm')));
+      await tester.pumpAndSettle();
+      expect(await repo.fetchSanctions(_targetId), isEmpty);
+      expect(find.text('Gerekçe belirtilmelidir.'), findsOneWidget);
+      // Uyari snackbar'i kaybolsun; yoksa basari mesaji kuyrukta bekler.
+      await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      final submit = tester.widget<FilledButton>(
-        find.byKey(const Key('moderation-sanction-submit')),
-      );
-      expect(submit.onPressed, isNull, reason: 'gerekçe boşken uygulanamaz');
-
+      await tester.tap(find.byKey(const Key('moderation-decision-sanction')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Uyar').last);
+      await tester.pumpAndSettle();
       await tester.enterText(
-        find.byKey(const Key('moderation-sanction-reason')),
+        find.byKey(const Key('admin-user-reason-field')),
         'tekrarlayan hakaret',
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('moderation-sanction-submit')));
+      await tester.tap(find.byKey(const Key('admin-user-reason-confirm')));
       await tester.pumpAndSettle();
 
       final sanctions = await repo.fetchSanctions(_targetId);
@@ -325,36 +343,32 @@ void main() {
       expect(find.text('Yaptırım uygulandı'), findsOneWidget);
     });
 
-    testWidgets('karantina menüden açılır ve gerekçe ister', (tester) async {
+    testWidgets('karantina karar şeridinden açılır ve gerekçe ister', (
+      tester,
+    ) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
+      await openCase(tester);
 
-      await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İçeriği karantinaya al').last);
-      await tester.pumpAndSettle();
-
-      // Gerekçe boş bırakılırsa hiçbir şey yazılmaz.
-      await tester.tap(find.byKey(const Key('moderation-reason-confirm')));
-      await tester.pumpAndSettle();
+      // Gerekçe boşken düğme devre dışıdır: hiçbir şey yazılmaz.
+      final quarantine = find.byKey(const Key('moderation-decision-quarantine'));
+      expect(tester.widget<OutlinedButton>(quarantine).onPressed, isNull);
       expect(repo.quarantineWrites, isEmpty);
 
-      await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İçeriği karantinaya al').last);
-      await tester.pumpAndSettle();
       await tester.enterText(
-        find.byKey(const Key('moderation-reason-field')),
+        find.byKey(const Key('moderation-decision-reason')),
         'inceleme bitene kadar',
       );
-      await tester.tap(find.byKey(const Key('moderation-reason-confirm')));
+      await tester.pumpAndSettle();
+      expect(tester.widget<OutlinedButton>(quarantine).onPressed, isNotNull);
+      await tester.tap(quarantine);
       await tester.pumpAndSettle();
 
       expect(repo.quarantineWrites.single, endsWith('=true'));
     });
 
-    testWidgets('tarihsel kayıtta karantina seçeneği hiç gösterilmez', (
+    testWidgets('tarihsel kayıtta karantina seçeneği hiç etkinleşmez', (
       tester,
     ) async {
       final repo = InMemoryAdminModerationRepository(
@@ -362,11 +376,31 @@ void main() {
       );
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
+      await openCase(tester);
 
-      await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
+      await tester.enterText(
+        find.byKey(const Key('moderation-decision-reason')),
+        'inceleme bitene kadar',
+      );
       await tester.pumpAndSettle();
-      expect(find.text('İçeriği karantinaya al'), findsNothing);
-      expect(find.text('Yaptırım uygula'), findsOneWidget);
+      // Vaka kimliği olmayan satırda karantina yazılamaz; düğme söz vermez.
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const Key('moderation-decision-quarantine')),
+            )
+            .onPressed,
+        isNull,
+      );
+      // Yaptırım yolu ise açıktır.
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const Key('moderation-decision-sanction')),
+            )
+            .onPressed,
+        isNotNull,
+      );
     });
   });
 

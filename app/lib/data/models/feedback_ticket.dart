@@ -68,6 +68,7 @@ class FeedbackTicket {
     this.reporterDisplayName,
     this.attachmentPath,
     this.archivedAt,
+    this.ugcReportId,
   });
 
   final String id;
@@ -82,6 +83,12 @@ class FeedbackTicket {
   final String? reporterDisplayName;
   final String? attachmentPath;
   final DateTime? archivedAt;
+
+  /// WP-768: bu bilet bir UGC sikayetinin aynasiysa (`report_ugc` her
+  /// sikayet icin bir bilet acar) o sikayetin kimligi. Birlesik kuyruk ayni
+  /// isi iki kez gostermesin diye aynalari bu alanla eler; vaka detayi da
+  /// sikayet edenle yazismayi bu alan uzerinden bulur.
+  final String? ugcReportId;
 
   FeedbackTicket copyWith({
     FeedbackTicketStatus? status,
@@ -104,6 +111,7 @@ class FeedbackTicket {
       reporterDisplayName: reporterDisplayName ?? this.reporterDisplayName,
       attachmentPath: attachmentPath ?? this.attachmentPath,
       archivedAt: archivedAt ?? this.archivedAt,
+      ugcReportId: ugcReportId,
     );
   }
 
@@ -123,6 +131,7 @@ class FeedbackTicket {
       archivedAt: map['archived_at'] == null
           ? null
           : DateTime.parse(map['archived_at'] as String),
+      ugcReportId: map['ugc_report_id'] as String?,
     );
   }
 
@@ -140,6 +149,7 @@ class FeedbackTicket {
       'reporter_display_name': reporterDisplayName,
       if (attachmentPath != null) 'attachment_path': attachmentPath,
       if (archivedAt != null) 'archived_at': archivedAt!.toIso8601String(),
+      if (ugcReportId != null) 'ugc_report_id': ugcReportId,
     };
   }
 }

@@ -1,57 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:online_study_room/core/utils/duration_format.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../cards/admin_work_card.dart';
-import '../sanctions/admin_case_target_link.dart';
 
-/// WP-440 / **WP-698**: icerik sikayeti karti.
+/// WP-440 / WP-698 / **WP-768**: icerik sikayeti karti.
 ///
-/// WP-698'e kadar bu dosya kendi `Card > Column`unu, kendi durum cipini, kendi
-/// rozetlerini ve kendi kimlik satirini cizerdi; destek bileti karti da
-/// (`tabs/admin_reports_tab.dart`) tamamen ayrisik bir tasarim kullanirdi.
-/// Ayni isi gosteren iki kart **tek widget paylasmiyordu** ve 280 px'te
-/// yukseklikleri 242 / 610 px idi. Artik ikisi de [AdminWorkCard]'dan turer;
-/// bu dosyada kalan tek is, **vakayi o dilin alanlarina cevirmektir**.
+/// WP-698 kart dilini tek yerde topladi; bu dosyada kalan is **vakayi o dilin
+/// alanlarina cevirmektir**.
 ///
-/// Korunan kabuller:
-///   - Durum secimi hala hapten yapilir (`moderation-status-chip`) ve menu
-///     `PopupMenuItem<ModerationCaseStatus>` uretir.
-///   - Yaptirim / karantina / kopyala hala `moderation-secondary-actions`
-///     menusunde. **Tehlikeli eylem kartin yuzune cikmaz** (WP-B/C: karar
-///     seridi inceleme panosunda).
-///   - Rozet seridi `moderation-case-badges` anahtarini korur.
-///   - Durum degistiginde kart yuksekligi sicramaz: her satir `maxLines` ile
-///     kilitli, hap her durumda ayni `labelSmall` + tek satir.
+/// 🔴 WP-768 sahip karari: *"her kartta sadece detayli incele butonu olsun."*
+/// Karttan kalkan uc kontrol ve gittikleri yer:
+///
+/// | eski kontrol | nereye gitti |
+/// | --- | --- |
+/// | durum hapi (`moderation-status-chip`, `PopupMenuButton`) | detay sayfasinin karar seridi; kartta artik **okunur** hap |
+/// | `…` menusu (`moderation-secondary-actions`): Yaptirim · Karantina · Kopyala | detay sayfasi: yaptirim blogu, karar seridi, taraflar bolumundeki secilebilir kimlik |
+/// | taraf satirindaki kisi dosyasi kopru dugmesi | detay sayfasinin "Hedefin dosyasi" blogu (ayni sayfada) |
+///
+/// Kart artik bir **ozet**tir: kim, neyi, ne zaman, ne kadar acil. Karar
+/// yuzeyi tek: vakanin kendi sayfasi.
+///
+/// Korunanlar: rozet seridi `moderation-case-badges` anahtarini korur; durum
+/// degistiginde kart yuksekligi sicramaz (her satir `maxLines` ile kilitli,
+/// hap her durumda ayni `labelSmall` + tek satir).
 class ModerationQueueCard extends StatelessWidget {
   const ModerationQueueCard({
     super.key,
     required this.moderationCase,
-    required this.onStatusSelected,
-    this.onSelect,
-    this.selected = false,
-    this.onSanction,
-    this.onQuarantineToggle,
+    required this.onOpenDetail,
+    required this.openKey,
   });
 
   final ModerationCase moderationCase;
-  final ValueChanged<ModerationCaseStatus> onStatusSelected;
 
-  /// WP-B: kart **secilebilir liste satiri**dir; dokunus vakayi yandaki
-  /// inceleme panosuna baglar.
-  final VoidCallback? onSelect;
+  /// Karttaki **tek** dugme: vakanin kendi sayfasini acar.
+  final VoidCallback onOpenDetail;
 
-  /// Su an incelenen vaka bu mu? (SPEC §4: gorunur secim + hover/focus.)
-  final bool selected;
-
-  /// WP-441: Basamakli yaptirim sayfasini acar.
-  final VoidCallback? onSanction;
-
-  /// WP-441: Karantinayi acar/kapatir — geri alinabilir oldugu icin tek dugme.
-  final ValueChanged<bool>? onQuarantineToggle;
+  final Key openKey;
 
   @override
   Widget build(BuildContext context) {
@@ -65,32 +53,16 @@ class ModerationQueueCard extends StatelessWidget {
       typeIcon: _typeIcon(moderationCase.targetType),
       title: _reasons(l10n),
       tone: _tone(overdue),
-      selected: selected,
-      onTap: onSelect,
-      status: AdminWorkStatusPill<ModerationCaseStatus>(
+      status: AdminWorkStatusLabel(
         key: const Key('moderation-status-chip'),
         label: _statusLabel(l10n, moderationCase.status),
         tone: _statusTone(moderationCase.status),
-        options: ModerationCaseStatus.writableValues,
-        optionLabel: (status) => _statusLabel(l10n, status),
-        onSelected: onStatusSelected,
       ),
       participants: [
         AdminWorkParticipant(
           roleLabel: l10n.adminUgcTarget,
           name: _name(l10n, moderationCase.targetIdentity),
           avatarUrl: moderationCase.targetIdentity?.avatarUrl,
-          // 🔴 PLAN §2.3 / WP-C olcut 5: vakadan kisiye kopru yoktu. Tek yardim
-          // uc noktadaki "Kopyala" idi. Kopru taraf satirinda durur: baslik
-          // satiri 280 px'te zaten hap + `…` ile dolu.
-          trailing:
-              moderationCase.targetIdentity == null ||
-                  moderationCase.targetIdentity!.isDeleted
-              ? null
-              : AdminCaseTargetLink(
-                  targetUserId: moderationCase.targetIdentity!.id,
-                  compact: true,
-                ),
         ),
         AdminWorkParticipant(
           roleLabel: l10n.adminUgcReporter,
@@ -120,44 +92,16 @@ class ModerationQueueCard extends StatelessWidget {
             tone: AdminWorkTone.done,
           ),
       ],
-      overflowKey: const Key('moderation-secondary-actions'),
-      overflowItems: [
-        AdminWorkMenuItem(
-          label: l10n.adminModerationSanctionTitle,
-          onSelected: onSanction,
-          disabledReason: onSanction == null
-              ? l10n.adminKullaniciBulunamadi
-              : null,
-        ),
-        // Karantina vaka kimligi ister; `0104` oncesi tarihsel satirlarda
-        // secenek hic gosterilmez — olu menu girdisi birakmiyoruz.
-        if (onQuarantineToggle != null && moderationCase.supportsCaseActions)
-          AdminWorkMenuItem(
-            label: moderationCase.quarantined
-                ? l10n.adminModerationQuarantineRelease
-                : l10n.adminModerationQuarantine,
-            onSelected: () => onQuarantineToggle!(!moderationCase.quarantined),
-          ),
-        AdminWorkMenuItem(
-          label: l10n.classroomKopyala,
-          onSelected: () => _copyTargetId(context, l10n),
+      actions: [
+        AdminWorkAction(
+          buttonKey: openKey,
+          label: l10n.adminDetayliIncele,
+          icon: Icons.open_in_new,
+          primary: true,
+          onPressed: onOpenDetail,
         ),
       ],
-      // Yaptirim/karantina gorunur seride **konmaz**: kart bir ozettir.
-      actions: const <AdminWorkAction>[],
     );
-  }
-
-  Future<void> _copyTargetId(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
-    // Degismez hedef kimligi: destek yazismasinda vakayi bu id tekillestirir.
-    await Clipboard.setData(ClipboardData(text: moderationCase.targetId));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.adminUgcIdCopied)));
   }
 
   /// Aciliyet: sunucunun bildigi iki sinyal (onem + SLA) disinda istemci risk

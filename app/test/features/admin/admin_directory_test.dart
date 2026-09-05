@@ -32,7 +32,7 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_re
 import 'package:online_study_room/features/admin/tabs/admin_audit_log_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_dashboard_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_groups_tab.dart';
-import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
+import 'package:online_study_room/features/admin/ticket/admin_ticket_detail_page.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 const _alfaId = '11111111-1111-4111-8111-111111111111';
@@ -275,116 +275,70 @@ void main() {
   });
 
   // --- KABUL 4: bos sonucta filtreyi temizleme --------------------------
-  testWidgets('rapor listesi bos kalinca filtre temizlenebilir', (tester) async {
-    await _pump(
-      tester,
-      const AdminReportsTab(),
-      overrides: [
-        adminFeedbackTicketsProvider(
-          null,
-        ).overrideWith((ref) async => [_ticket(subject: 'Bildirim aksiyonu')]),
-        adminFeedbackTicketsProvider(
-          FeedbackTicketType.question,
-        ).overrideWith((ref) async => const <FeedbackTicket>[]),
-        adminArchivedFeedbackTicketsProvider(
-          null,
-        ).overrideWith((ref) async => const <FeedbackTicket>[]),
-        adminArchivedFeedbackTicketsProvider(
-          FeedbackTicketType.question,
-        ).overrideWith((ref) async => const <FeedbackTicket>[]),
-      ],
-    );
-
-    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(FilterChip, 'Soru'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Bildirim aksiyonu'), findsNothing);
-
-    final clear = find.text('Filtreyi temizle');
-    expect(
-      clear,
-      findsOneWidget,
-      reason:
-          'ADMIN-PANEL-PLAN §2.4 filtre cikmazi / §5 WP-D kabul 4: bos sonucta '
-          'filtreyi kaldiracak kontrol ekranda yok.',
-    );
-
-    await tester.tap(clear);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('Bildirim aksiyonu'),
-      findsOneWidget,
-      reason: '"Filtreyi temizle" basildi ama liste geri gelmedi.',
-    );
-  });
-
-  testWidgets('grup aramasi bos kalinca filtre temizlenebilir', (tester) async {
-    await _pump(tester, const AdminGroupsTab(), overrides: _groupOverrides());
-
-    await tester.enterText(find.widgetWithText(TextField, 'Grup ara'), 'zzz');
-    await tester.pumpAndSettle();
-
-    expect(find.text('Alfa Grubu'), findsNothing);
-    final clear = find.text('Filtreyi temizle');
-    expect(clear, findsOneWidget, reason: 'WP-D kabul 4 (dizin tarafi).');
-
-    await tester.tap(clear);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Alfa Grubu'), findsOneWidget);
-    expect(find.text('Beta Grubu'), findsOneWidget);
-  });
+  //
+  // 🔴 WP-768: tur filtresi artik `AdminReportsTab`te degil, panelin TEK
+  // kuyrugunda. Kabul olcutu tasindi ve orada olculuyor:
+  // `moderation_review_flow_test.dart` -> "filtre cipi turu suzer; bos
+  // sonuctan filtre temizlenir".
 
   // --- KABUL 5: arsiv etiketi -------------------------------------------
   // WP-733: arsiv artik tam satiri yiyen bir cip degil, filtre seridindeki
   // kompakt bir gecistir (sahip: "arsiv butonu bir satirda tek basina her
   // yeri kapliyor"). Kabul DEGISMEDI: etiket yalan soylememeli -- "Tamamlandi"
   // yazmamali ve kontrol dogru adiyla erisilebilir olmali.
-  testWidgets('arsiv gecisi dogru adiyla durur, "Tamamlandi" yazmaz', (
+  testWidgets('arsiv kontrolu dogru adiyla durur, "Tamamlandi" yazmaz', (
     tester,
   ) async {
+    // 🔴 WP-768/WP-770: arsivleme artik kart cipinde degil, biletin kendi
+    // sayfasinda. Etiket kabulu (yalan etiket yok) oraya tasindi.
+    tester.view.physicalSize = const Size(900, 2200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await _pump(
       tester,
-      const AdminReportsTab(),
-      overrides: [
-        adminFeedbackTicketsProvider(
-          null,
-        ).overrideWith((ref) async => [_ticket(subject: 'Bildirim aksiyonu')]),
-        adminArchivedFeedbackTicketsProvider(
-          null,
-        ).overrideWith((ref) async => const <FeedbackTicket>[]),
-      ],
+      AdminTicketDetailPage(
+        ticket: _ticket(subject: 'Bildirim aksiyonu'),
+      ),
     );
 
-    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+    // Konu hem kimlik blogunda hem mesaj basliginda gecer.
+    expect(find.text('Bildirim aksiyonu'), findsWidgets);
     expect(
       find.text('Tamamlandı'),
       findsNothing,
       reason:
-          'ADMIN-PANEL-PLAN §5 WP-D kabul 5: arsiv cipinin ustunde "Tamamlandi" '
-          'yaziyor (admin_reports_tab.dart:240) — etiket yalan.',
+          'ADMIN-PANEL-PLAN §5 WP-D kabul 5: arsiv kontrolunun ustunde '
+          '"Tamamlandi" yaziyordu — etiket yalan.',
     );
+    // Durum blogu sayfanin en altinda; liste tembel kurulur.
+    await tester.scrollUntilVisible(
+      find.byKey(kAdminTicketArchiveKey),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(
-      find.byTooltip('Arşivi göster'),
+      find.text('Arşivle'),
       findsOneWidget,
-      reason: 'Arsiv gecisi dogru adiyla (tooltip) erisilebilir olmali.',
+      reason: 'Arsiv kontrolu dogru adiyla erisilebilir olmali.',
     );
   });
 
-  test('profileTamamland anahtari admin_reports_tab.dart icinde gecmez', () {
-    final source = File(
-      'lib/features/admin/tabs/admin_reports_tab.dart',
-    ).readAsStringSync();
-    expect(
-      source.contains('profileTamamland'),
-      isFalse,
-      reason:
-          'ADMIN-PANEL-PLAN §5 WP-D kabul 5: "Tamamlandi" anahtari bu dosyada '
-          'hic gecmemeli.',
-    );
+  test('profileTamamland anahtari bilet yuzeyinde gecmez', () {
+    for (final path in const [
+      'lib/features/admin/ticket/admin_ticket_detail_page.dart',
+      'lib/features/admin/ticket/admin_ticket_actions.dart',
+      'lib/features/admin/queue/admin_queue_view.dart',
+    ]) {
+      final source = File(path).readAsStringSync();
+      expect(
+        source.contains('profileTamamland'),
+        isFalse,
+        reason:
+            'ADMIN-PANEL-PLAN §5 WP-D kabul 5: "Tamamlandi" anahtari $path '
+            'icinde hic gecmemeli.',
+      );
+    }
   });
 
   // --- KABUL 6: ozet izgarasi -------------------------------------------
@@ -483,7 +437,8 @@ void main() {
       'widgets/moderation_queue_card.dart': 2,
     };
     const owned = <String>{
-      'tabs/admin_reports_tab.dart',
+      'ticket/admin_ticket_detail_page.dart',
+      'ticket/admin_ticket_actions.dart',
       'tabs/admin_groups_tab.dart',
       'tabs/admin_audit_log_tab.dart',
       'tabs/admin_dashboard_tab.dart',

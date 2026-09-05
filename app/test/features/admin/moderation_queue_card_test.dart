@@ -1,13 +1,24 @@
+// WP-440 / WP-698 / **WP-768** — icerik sikayeti kartinin sozlesmesi.
+//
+// WP-768 sahip karari: *"her kartta sadece detayli incele butonu olsun."*
+// Karttan kalkan durum menusu, `…` menusu (yaptirim/karantina/kopyala) ve kisi
+// dosyasi kopru dugmesi vakanin **kendi sayfasina** tasindi
+// (`features/admin/detail/admin_case_detail_page.dart`, `moderation_review_flow_test.dart`).
+//
+// Bu dosya iki seyi birden olcer: (1) kaldirilanlar gercekten kalkti mi,
+// (2) kaldirilirken kartin tasima/erisilebilirlik kabulleri (yukseklik
+// sicramamasi, 320 dp + 1.3 olcek, cozulemeyen kimlik) bozuldu mu.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
+import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
 import 'package:online_study_room/features/admin/widgets/moderation_queue_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 const _reporterId = '11111111-1111-4111-8111-111111111111';
 const _targetId = '22222222-2222-4222-8222-222222222222';
+const _openKey = Key('queue-open');
 
 ModerationCase _case({
   ModerationCaseStatus status = ModerationCaseStatus.open,
@@ -30,7 +41,7 @@ ModerationCase _case({
 
 Widget _host(
   ModerationCase moderationCase, {
-  ValueChanged<ModerationCaseStatus>? onStatusSelected,
+  VoidCallback? onOpenDetail,
   double textScale = 1.0,
 }) {
   return MaterialApp(
@@ -45,43 +56,57 @@ Widget _host(
     home: Scaffold(
       body: ModerationQueueCard(
         moderationCase: moderationCase,
-        onStatusSelected: onStatusSelected ?? (_) {},
+        openKey: _openKey,
+        onOpenDetail: onOpenDetail ?? () {},
       ),
     ),
   );
 }
 
 void main() {
-  testWidgets('kart adı gösterir, değişmez kimlik üç noktadan kopyalanır', (
+  testWidgets('kart kimlikleri gosterir ve TEK dugmesi detayi acar', (
     tester,
   ) async {
-    final copied = <String>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copied.add((call.arguments as Map)['text'] as String);
-        }
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        null,
-      ),
-    );
+    var opened = 0;
+    await tester.pumpWidget(_host(_case(), onOpenDetail: () => opened++));
 
-    await tester.pumpWidget(_host(_case()));
     expect(find.textContaining('Mehmet'), findsOneWidget);
     expect(find.textContaining('Ayşe'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
+    expect(find.byKey(_openKey), findsOneWidget);
+    expect(find.text('Detaylı incele'), findsOneWidget);
+    await tester.tap(find.byKey(_openKey));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Kopyala'));
-    await tester.pumpAndSettle();
+    expect(opened, 1);
+  });
 
-    expect(copied, [_targetId]);
+  testWidgets('gizli menuler karttan kalkti', (tester) async {
+    await tester.pumpWidget(_host(_case()));
+
+    expect(
+      find.byKey(const Key('moderation-secondary-actions')),
+      findsNothing,
+      reason:
+          'Sahip: "tus neyi ne oldugu belli degil". Yaptirim/karantina/kopyala '
+          'artik vakanin kendi sayfasinda.',
+    );
+    expect(
+      find.byType(PopupMenuButton<ModerationCaseStatus>),
+      findsNothing,
+      reason: 'Durum menusu karttan kalkti; durum detay sayfasinda degisir.',
+    );
+    // Kartin TEK dokunulabilir kontrolu vardir.
+    expect(find.byType(PopupMenuButton<Object?>), findsNothing);
+  });
+
+  testWidgets('durum bilgisi kaybolmadi, yalniz okunur oldu', (tester) async {
+    await tester.pumpWidget(_host(_case()));
+    expect(find.byType(AdminWorkStatusLabel), findsOneWidget);
+    expect(find.text('Açık'), findsOneWidget);
+
+    await tester.pumpWidget(_host(_case(status: ModerationCaseStatus.resolved)));
+    await tester.pumpAndSettle();
+    expect(find.text('Çözüldü'), findsOneWidget);
   });
 
   testWidgets('çözülemeyen hedef boş değil silinmiş kullanıcı olur', (
@@ -101,15 +126,9 @@ void main() {
     await tester.pumpWidget(_host(unresolved));
     // Hem hedef hem raporlayan satırı çözülemiyor: ikisi de boş kalmaz.
     expect(find.textContaining('Silinmiş kullanıcı'), findsNWidgets(2));
-    await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
-    await tester.pumpAndSettle();
-    final sanctionItem = find.widgetWithText(
-      PopupMenuItem<int>,
-      'Yaptırım uygula',
-    );
-    expect(sanctionItem, findsOneWidget);
-    expect(tester.widget<PopupMenuItem<int>>(sanctionItem).enabled, isFalse);
-    expect(find.textContaining('Kullanıcı bulunamadı'), findsOneWidget);
+    // Hedef cozulemese de kart acilabilir: sayfa NEDEN yaptirim
+    // uygulanamadigini orada yazar (sessiz olu dokunus yok).
+    expect(find.byKey(_openKey), findsOneWidget);
   });
 
   group('WP-440 kabul: yerleşim sıçramaz', () {
@@ -125,7 +144,7 @@ void main() {
       expect(
         heights.values.toSet(),
         hasLength(1),
-        reason: 'durum çipi kart yüksekliğini değiştiriyor: $heights',
+        reason: 'durum hapı kart yüksekliğini değiştiriyor: $heights',
       );
     });
 
@@ -160,65 +179,15 @@ void main() {
     });
   });
 
-  group('WP-440 kabul: durum çipi', () {
-    testWidgets('durum seçimi doğrudan çipten yapılır', (tester) async {
-      final selected = <ModerationCaseStatus>[];
-      await tester.pumpWidget(_host(_case(), onStatusSelected: selected.add));
+  testWidgets('durum etiketi ekran okuyucuya okunur', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_host(_case()));
 
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İnceleniyor').last);
-      await tester.pumpAndSettle();
-
-      expect(selected, [ModerationCaseStatus.inReview]);
-    });
-
-    testWidgets('kapatılan vaka çipten geri açılabilir', (tester) async {
-      final selected = <ModerationCaseStatus>[];
-      await tester.pumpWidget(
-        _host(
-          _case(status: ModerationCaseStatus.resolved),
-          onStatusSelected: selected.add,
-        ),
-      );
-
-      // Kapalı vakanın çipi hâlâ etkin: yanlışlıkla kapatma geri alınabilir.
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('İnceleniyor').last);
-      await tester.pumpAndSettle();
-
-      expect(selected, [ModerationCaseStatus.inReview]);
-    });
-
-    testWidgets('menü dört durumu da sunar', (tester) async {
-      await tester.pumpWidget(_host(_case()));
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
-      await tester.pumpAndSettle();
-
-      // WP-441 (`0105`): `open` da yazılabilir; yanlışlıkla kapatılan vaka
-      // gerçekten geri açılsın diye menüde durur.
-      expect(
-        find.widgetWithText(PopupMenuItem<ModerationCaseStatus>, 'Açık'),
-        findsOneWidget,
-      );
-      expect(find.text('İnceleniyor'), findsOneWidget);
-      expect(find.text('Çözüldü'), findsOneWidget);
-      expect(find.text('Reddedildi'), findsOneWidget);
-    });
-
-    testWidgets('durum çipi ekran okuyucuya buton olarak duyurulur', (
-      tester,
-    ) async {
-      final handle = tester.ensureSemantics();
-      await tester.pumpWidget(_host(_case()));
-
-      expect(
-        find.bySemanticsLabel('Açık'),
-        findsWidgets,
-        reason: 'çipin erişilebilirlik etiketi yok',
-      );
-      handle.dispose();
-    });
+    expect(
+      find.bySemanticsLabel('Açık'),
+      findsWidgets,
+      reason: 'durum etiketinin erişilebilirlik metni yok',
+    );
+    handle.dispose();
   });
 }

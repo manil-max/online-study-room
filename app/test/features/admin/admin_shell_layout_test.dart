@@ -23,14 +23,12 @@ import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
-import 'package:online_study_room/features/admin/queue/moderation_review_view.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/features/admin/shell/admin_shell.dart';
 import 'package:online_study_room/features/admin/tabs/admin_announcements_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_audit_log_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_dashboard_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_groups_tab.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
-import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
 import 'package:online_study_room/features/admin/tabs/admin_users_tab.dart';
 import 'package:online_study_room/features/desktop/desktop_page_scaffold.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -145,8 +143,27 @@ int _paneCount() =>
 
 void main() {
   // --- KABUL 1 + 2 ------------------------------------------------------
+  // 🔴 WP-768: Kuyruk yuzeyi TEK bolumlu oldu (tek liste); bolum listesi ve
+  // master bolmesi orada cizilmez. Master-detay sozlesmesi cok bolumlu
+  // yuzeyde (Kisiler & Gruplar) olculur.
+  testWidgets('1280 px: kuyruk yuzeyi tek bolme, tum genislik', (tester) async {
+    await _pumpAdmin(tester, window: const Size(1280, 900));
+
+    expect(find.byKey(kAdminQueueListKey), findsOneWidget);
+    expect(
+      find.byKey(kAdminMasterPaneKey),
+      findsNothing,
+      reason: 'Tek secenegi olan bolum listesi secim degil gurultudur.',
+    );
+    expect(find.byKey(kAdminSectionSelectorKey), findsNothing);
+    // Sikayet ve destek kaydi AYNI listede.
+    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+    expect(find.textContaining('Mehmet'), findsWidgets);
+  });
+
   testWidgets('1280 px: iki bolme, master sutunu 280 px', (tester) async {
     await _pumpAdmin(tester, window: const Size(1280, 900));
+    await _openSurface(tester, kAdminDirectoryIcon);
 
     expect(
       find.byType(DesktopMasterDetail),
@@ -160,7 +177,7 @@ void main() {
       reason: 'DESKTOP-UI-SPEC §3 A1: master sutunu 280 px.',
     );
     // Govde GERCEK mi? Kabuk degil, icerik olculuyor.
-    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+    expect(find.text('test1@example.com'), findsOneWidget);
   });
 
   testWidgets('800 px: tek bolme', (tester) async {
@@ -174,6 +191,7 @@ void main() {
 
   testWidgets('1600 px: uc bolme, ucuncu bolme <= 320 px', (tester) async {
     await _pumpAdmin(tester, window: const Size(1600, 1000));
+    await _openSurface(tester, kAdminDirectoryIcon);
 
     expect(_paneCount(), 3, reason: 'ADMIN-PANEL-PLAN §5 WP-A kabul 2.');
     expect(tester.getSize(find.byKey(kAdminMasterPaneKey)).width, 280);
@@ -182,7 +200,7 @@ void main() {
       lessThanOrEqualTo(320.0),
       reason: 'DESKTOP-UI-SPEC §4.5: ucuncu bolme <= 320 px.',
     );
-    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+    expect(find.text('test1@example.com'), findsOneWidget);
   });
 
   // --- KABUL 3 ----------------------------------------------------------
@@ -224,7 +242,10 @@ void main() {
         reason: 'Yuzey etiketi "$label" ekranda yok.',
       );
     }
-    expect(find.text('İçerik Şikayetleri'), findsWidgets);
+    // WP-768: "İçerik Şikayetleri" bir BOLUM adiydi; bolum kalkti, isin
+    // kendisi Kuyruk yuzeyinin tek listesinde duruyor.
+    expect(find.text('İçerik Şikayetleri'), findsNothing);
+    expect(find.text('Detaylı incele'), findsWidgets);
   });
 
   // --- LIDER SARTI 5: telefon -------------------------------------------
@@ -273,13 +294,13 @@ void main() {
 
   for (final window in const [Size(1366, 768), Size(1920, 1080)]) {
     testWidgets('${window.width.toInt()}x${window.height.toInt()}: '
-        'rail ve vaka master-detail birlikte görünür', (tester) async {
+        'rail ve tek kuyruk birlikte görünür', (tester) async {
       await _pumpAdmin(tester, window: window);
-      await _openSection(tester, 'İçerik Şikayetleri');
 
       expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byKey(kModerationQueueListKey), findsOneWidget);
-      expect(find.byKey(kModerationEvidenceKey), findsOneWidget);
+      // Bolum secmeye gerek yok: kuyruk yuzeyin kendisidir.
+      expect(find.byKey(kAdminQueueListKey), findsOneWidget);
+      expect(find.byKey(kAdminQueueFilterKey), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -301,7 +322,7 @@ void main() {
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.byType(AdminReportsTab), findsOneWidget);
+    expect(find.byType(AdminQueueView), findsOneWidget);
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
@@ -313,16 +334,11 @@ void main() {
   testWidgets('yedi eski sekmenin hepsi uc yuzeyden ulasilir', (tester) async {
     await _pumpAdmin(tester, window: const Size(1280, 900));
 
-    // 1) Kuyruk / Raporlar  <- eski 4. sekme
+    // 1+2) Kuyruk  <- eski 4. ve 5. sekme, WP-768'de TEK listede birlesti.
+    // Kabuk degil GOVDE olculuyor: iki tur de gercekten cizilmis mi?
     await _openSurface(tester, kAdminQueueIcon);
-    await _openSection(tester, 'Raporlar');
-    expect(find.byType(AdminReportsTab), findsOneWidget);
+    expect(find.byType(AdminQueueView), findsOneWidget);
     expect(find.text('Bildirim aksiyonu'), findsOneWidget);
-
-    // 2) Kuyruk / Icerik Sikayetleri  <- eski 5. sekme (ham 'UGC')
-    await _openSection(tester, 'İçerik Şikayetleri');
-    expect(find.byType(AdminModerationTab), findsOneWidget);
-    // Kabuk degil GOVDE olculuyor: kuyrukta gercek bir vaka karti cizilmis mi?
     expect(find.textContaining('Mehmet'), findsWidgets);
 
     // 3) Kisiler & Gruplar / Kullanicilar  <- eski 2. sekme

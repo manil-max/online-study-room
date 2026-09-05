@@ -31,7 +31,7 @@ import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/features/admin/widgets/moderation_queue_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -84,7 +84,7 @@ Future<InMemoryAdminModerationRepository> _pumpAppeals(
         locale: const Locale('tr'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const Scaffold(body: AdminModerationTab()),
+        home: const Scaffold(body: AdminQueueView()),
       ),
     ),
   );
@@ -109,7 +109,8 @@ Future<void> _pumpModerationCard(
         body: SingleChildScrollView(
           child: ModerationQueueCard(
             moderationCase: _case(),
-            onStatusSelected: (_) {},
+            openKey: const Key('queue-open'),
+            onOpenDetail: () {},
           ),
         ),
       ),
@@ -164,6 +165,13 @@ List<double> _tapTargetHeights(WidgetTester tester, Finder root) {
     heights.add(tester.getSize(find.byWidget(element.widget)).height);
   }
   return heights;
+}
+
+/// 🔴 WP-768: karar dugmeleri karttan kalkti. Kartta tek dugme var ve o
+/// dugme itirazin **kendi sayfasini** acar; karar orada verilir.
+Future<void> _openAppealPage(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('admin-queue-open-appeal:appeal-1')));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -276,6 +284,11 @@ void main() {
 
     testWidgets('B1/B2 iki karar dugmesi anahtarlariyla durur', (tester) async {
       await _pumpAppeals(tester);
+      // Kartta karar yok: sahip her kartta tek dugme istedi.
+      expect(find.byKey(const Key('appeal-uphold-appeal-1')), findsNothing);
+      expect(find.text('Detaylı incele'), findsOneWidget);
+
+      await _openAppealPage(tester);
       expect(find.byKey(const Key('appeal-uphold-appeal-1')), findsOneWidget);
       expect(find.byKey(const Key('appeal-overturn-appeal-1')), findsOneWidget);
       expect(find.text('Yaptırımı koru'), findsOneWidget);
@@ -296,25 +309,18 @@ void main() {
       );
       expect(find.byKey(const Key('appeal-overturn-appeal-1')), findsNothing);
       expect(find.byKey(const Key('appeal-uphold-appeal-1')), findsNothing);
-      // Durum hapi burada **soz vermez**: karar menusu hic acilmaz.
-      final pill = find.descendant(
-        of: _appealCard(_statement),
-        matching: find.byType(PopupMenuButton<ModerationAppealStatus>),
-      );
-      expect(pill, findsOneWidget);
-      await tester.tap(pill);
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Yaptırımı kaldır'),
-        findsNothing,
-        reason:
-            'Karara baglayamayan yoneticiye acilan bir menu, sunucunun '
-            'reddedecegi bir eylem vaat ederdi.',
-      );
+
+      // Detay sayfasi da **soz vermez**: karara baglayamayan yoneticiye
+      // sunucunun reddedecegi bir dugme gosterilmez, nedeni yazilir.
+      await _openAppealPage(tester);
+      expect(find.byKey(const Key('appeal-overturn-appeal-1')), findsNothing);
+      expect(find.byKey(const Key('appeal-uphold-appeal-1')), findsNothing);
+      expect(find.textContaining('Kendi verdiğin yaptırımın'), findsOneWidget);
     });
 
     testWidgets('karar hala gerekce ister ve kuyrugu tazeler', (tester) async {
       final repo = await _pumpAppeals(tester);
+      await _openAppealPage(tester);
 
       await tester.tap(find.byKey(const Key('appeal-overturn-appeal-1')));
       await tester.pumpAndSettle();
@@ -338,6 +344,7 @@ void main() {
 
     testWidgets('"koru" dugmesi de karari yazar', (tester) async {
       final repo = await _pumpAppeals(tester);
+      await _openAppealPage(tester);
       await tester.tap(find.byKey(const Key('appeal-uphold-appeal-1')));
       await tester.pumpAndSettle();
       await tester.enterText(

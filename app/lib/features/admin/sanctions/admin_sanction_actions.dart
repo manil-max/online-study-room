@@ -44,9 +44,13 @@ class AdminSanctionActions {
     final selected = await showModalBottomSheet<ModerationAction>(
       context: context,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        // 🔴 WP-769: vaka sayfasi TAM katalogu (dokuz basamak) sunuyor; sabit
+        // `Column` 768 px'lik pencerede tasiyordu ve alt basamaklar
+        // (kalici yasak dahil) hic gorunmuyordu.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             ListTile(
               dense: true,
               title: Text(
@@ -65,9 +69,10 @@ class AdminSanctionActions {
                         color: Theme.of(sheetContext).colorScheme.error,
                       )
                     : null,
-                onTap: () => Navigator.of(sheetContext).pop(action),
-              ),
-          ],
+                  onTap: () => Navigator.of(sheetContext).pop(action),
+                ),
+            ],
+          ),
         ),
       ),
     );

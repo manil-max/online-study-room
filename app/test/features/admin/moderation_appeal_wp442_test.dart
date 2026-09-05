@@ -11,7 +11,7 @@ import 'package:online_study_room/data/repositories/admin_moderation_repository.
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/moderation_repository.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/features/safety/blocked_users_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -64,7 +64,7 @@ Widget _adminHost(InMemoryAdminModerationRepository repo) {
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(body: AdminModerationTab()),
+      home: const Scaffold(body: AdminQueueView()),
     ),
   );
 }
@@ -266,8 +266,18 @@ void main() {
       await tester.pumpWidget(_adminHost(repo));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('moderation-appeal-queue')), findsOneWidget);
-      expect(find.text('İtirazlar'), findsOneWidget);
+      // 🔴 WP-768: itiraz artik ayri bir kuyruk basligi degil, panelin TEK
+      // kuyrugundaki bir satirdir; karar kendi sayfasinda verilir.
+      expect(
+        find.byKey(const Key('admin-queue-row-appeal:appeal-1')),
+        findsOneWidget,
+      );
+      // Hem filtre cipi hem satirin durum etiketi "Itiraz" yazar.
+      expect(find.text('İtiraz'), findsWidgets);
+      await tester.tap(
+        find.byKey(const Key('admin-queue-open-appeal:appeal-1')),
+      );
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('appeal-overturn-appeal-1')),
         findsOneWidget,
@@ -289,6 +299,10 @@ void main() {
     testWidgets('karar gerekçe ister ve kuyruğu tazeler', (tester) async {
       final repo = InMemoryAdminModerationRepository()..appeals.add(_appeal());
       await tester.pumpWidget(_adminHost(repo));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('admin-queue-open-appeal:appeal-1')),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('appeal-overturn-appeal-1')));

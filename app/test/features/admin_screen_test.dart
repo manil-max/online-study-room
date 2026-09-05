@@ -9,8 +9,10 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
+import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
-import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
+import 'package:online_study_room/features/admin/ticket/admin_ticket_detail_page.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
@@ -37,6 +39,9 @@ void main() {
             ),
           ),
           adminRepositoryProvider.overrideWithValue(repo),
+          adminModerationRepositoryProvider.overrideWithValue(
+            InMemoryAdminModerationRepository(),
+          ),
         ],
         child: const MaterialApp(
           locale: Locale('tr'),
@@ -58,12 +63,9 @@ void main() {
     // ölçen harita testi: `test/features/admin/admin_shell_layout_test.dart`
     // ("yedi eski sekmenin hepsi uc yuzeyden ulasilir").
     expect(find.byType(TabBar), findsNothing);
-    expect(find.text('Raporlar'), findsWidgets);
 
-    // Raporlar bölümüne geç (varsayılan bölüm zaten bu; seçici çalışıyor mu?)
-    await tester.tap(find.text('Raporlar').first);
-    await tester.pumpAndSettle();
-
+    // 🔴 WP-768: "Raporlar" ayri bir bolum degil. Kuyruk yuzeyi TEK listedir;
+    // destek kaydi bolum secmeden ekranda olmali.
     final listFinder = find.byType(Scrollable).last;
     await tester.scrollUntilVisible(
       find.text('Bildirim aksiyonu'),
@@ -72,6 +74,7 @@ void main() {
     );
     expect(find.text('Bildirim aksiyonu'), findsOneWidget);
     expect(find.text('Açık'), findsOneWidget);
+    expect(find.text('Detaylı incele'), findsOneWidget);
     expect(find.text('Ekran Görüntüsü'), findsNothing);
   });
 
@@ -138,17 +141,15 @@ void main() {
               null,
             ).overrideWith((ref) => Future.value([ticket])),
           ],
-          child: const MaterialApp(
-            locale: Locale('tr'),
+          child: MaterialApp(
+            locale: const Locale('tr'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: AdminReportsTab()),
+            // WP-770: ek onizlemesi biletin kendi sayfasinda, satir ici.
+            home: AdminTicketDetailPage(ticket: ticket),
           ),
         ),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Ekran Görüntüsü'));
       await tester.pumpAndSettle();
 
       expect(find.text('Görsel yüklenemedi.'), findsOneWidget);

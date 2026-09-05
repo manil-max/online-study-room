@@ -191,6 +191,64 @@ abstract class AdminWorkStatusPillBase extends StatelessWidget {
   const AdminWorkStatusPillBase({super.key});
 }
 
+/// WP-768: yalniz **gosteren** durum hapi.
+///
+/// 🔴 Sahip karari: *"her kartta sadece detayli incele butonu olsun."* Kuyruk
+/// kartindaki durum hapi bir `PopupMenuButton`du; ustunde menu oldugunu
+/// soyleyen hicbir isaret yoktu ve sahip ona basinca ne olacagini bilmiyordu.
+/// Durum artik **detay sayfasinda** degistirilir; kartta yalnizca okunur.
+/// Hap gorunumu [AdminWorkStatusPill] ile birebir ayni kalir ki kart
+/// yuksekligi ve tipografi olcegi sicramasin.
+class AdminWorkStatusLabel extends AdminWorkStatusPillBase {
+  const AdminWorkStatusLabel({
+    super.key,
+    required this.label,
+    required this.tone,
+  });
+
+  final String label;
+  final AdminWorkTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (background, foreground) = adminWorkToneContainer(
+      theme.colorScheme,
+      tone,
+    );
+    return Semantics(
+      container: true,
+      // Etiket hapin kendisidir; alttaki Text ikinci kez okunmasin.
+      excludeSemantics: true,
+      label: label,
+      child: ConstrainedBox(
+        // Dokunma hedefi degil; ama satir yuksekligi hapli kartlarla ayni
+        // kalsin diye ayni 48 px'lik kutu icinde ortalanir.
+        constraints: const BoxConstraints(
+          minHeight: kAdminWorkCardTapTarget,
+          maxWidth: 132,
+        ),
+        child: Center(
+          widthFactor: 1,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(color: foreground),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Tek durum kontrolu: hem durumu **gosterir** hem degistirir.
 ///
 /// Jenerik, cunku cagri yerleri kendi durum `enum`larini menude tasir

@@ -154,7 +154,7 @@ void main() {
     });
 
     test('UGC sekmesi de kendi listesini yazmaz', () {
-      final source = _read('lib/features/admin/tabs/admin_moderation_tab.dart');
+      final source = _read('lib/features/admin/detail/admin_case_detail_page.dart');
       expect(
         RegExp(r'List<ModerationAction>\s+\w+\s*=\s*(const\s*)?\[').hasMatch(
           source,

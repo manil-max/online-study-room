@@ -31,10 +31,12 @@ import 'package:online_study_room/data/models/feedback_ticket.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/report_target.dart';
+import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
-import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/features/admin/widgets/moderation_queue_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -44,6 +46,12 @@ const _targetId = '22222222-2222-4222-8222-222222222222';
 /// Eski kartin olculen yukseklikleri — iddialarin referans cizgisi.
 const _oldTicketHeight = <int, double>{280: 610, 390: 500};
 const _oldModerationHeight = <int, double>{280: 242, 390: 216};
+
+/// 🔴 WP-768 sonrasi tavan. Vaka karti **buyudu** ve bu bilincli bir takas:
+/// durum menusu, `…` menusu ve kisi dosyasi kopru dugmesi karttan kalkti,
+/// yerine tek gorunur eylem ("Detayli incele", 48 px serit) geldi. Kart hala
+/// eski 610/500 px'lik bilet kartinin cok altinda.
+const _moderationHeightCeiling = <int, double>{280: 320, 390: 300};
 
 ModerationCase _case({
   ModerationSeverity severity = ModerationSeverity.high,
@@ -90,7 +98,6 @@ Future<void> _pumpModeration(
   WidgetTester tester, {
   required double width,
   ModerationCase? moderationCase,
-  ValueChanged<ModerationCaseStatus>? onStatusSelected,
 }) async {
   tester.view.physicalSize = Size(width, 2400);
   tester.view.devicePixelRatio = 1.0;
@@ -104,9 +111,10 @@ Future<void> _pumpModeration(
         body: SingleChildScrollView(
           child: ModerationQueueCard(
             moderationCase: moderationCase ?? _case(),
-            onStatusSelected: onStatusSelected ?? (_) {},
-            onSanction: () {},
-            onQuarantineToggle: (_) {},
+            // WP-768: kartin TEK dugmesi. Durum/yaptirim/karantina detay
+            // sayfasina tasindi; kart bir ozettir.
+            openKey: const Key('queue-open'),
+            onOpenDetail: () {},
           ),
         ),
       ),
@@ -142,6 +150,11 @@ Future<void> _pumpTickets(
         adminArchivedFeedbackTicketsProvider(
           null,
         ).overrideWith((ref) async => const <FeedbackTicket>[]),
+        // Kuyruk uc kaynagi birlestirir; bu dosya yalniz bilet kartini
+        // olcer, moderasyon tarafi bos kalir.
+        adminModerationRepositoryProvider.overrideWithValue(
+          InMemoryAdminModerationRepository(),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('tr'),
@@ -152,7 +165,7 @@ Future<void> _pumpTickets(
           maxScaleFactor: textScale,
           child: child!,
         ),
-        home: const Scaffold(body: AdminReportsTab()),
+        home: const Scaffold(body: AdminQueueView()),
       ),
     ),
   );
@@ -395,10 +408,12 @@ void main() {
         );
         expect(
           height,
-          lessThanOrEqualTo(_oldModerationHeight[width]!),
+          lessThanOrEqualTo(_moderationHeightCeiling[width]!),
           reason:
-              'WP-698: vaka karti $width px genislikte eskiden '
-              '${_oldModerationHeight[width]} px idi; uzadi.',
+              'WP-768: vaka karti $width px genislikte eskiden '
+              '${_oldModerationHeight[width]} px idi; tek eylem seridiyle '
+              '${_moderationHeightCeiling[width]} px tavani kondu, '
+              'olculen $height px.',
         );
       });
     }
@@ -503,11 +518,10 @@ void main() {
   });
 
   group('WP-698/6 — islev kaybi yok', () {
-    testWidgets('vaka: durum, tekrar sayaci, rozet, uc nokta yerinde', (
+    testWidgets('vaka: tekrar sayaci, rozet, durum ve TEK eylem yerinde', (
       tester,
     ) async {
-      final picked = <ModerationCaseStatus>[];
-      await _pumpModeration(tester, width: 390, onStatusSelected: picked.add);
+      await _pumpModeration(tester, width: 390);
 
       // Tekrar sayaci: 4 rapor => sikayet edenin yaninda (+3).
       expect(
@@ -520,60 +534,38 @@ void main() {
       expect(find.text('Yüksek risk'), findsOneWidget);
       expect(find.text('Süresi aştı'), findsOneWidget);
 
-      // Durum hapi dort secenegi de sunar ve secim geri doner.
-      await tester.tap(find.byKey(const Key('moderation-status-chip')));
-      await tester.pumpAndSettle();
-      for (final label in ['Açık', 'İnceleniyor', 'Çözüldü', 'Reddedildi']) {
-        expect(
-          find.widgetWithText(PopupMenuItem<ModerationCaseStatus>, label),
-          findsOneWidget,
-          reason: 'Durum menusunde "$label" yok.',
-        );
-      }
-      await tester.tap(find.text('İnceleniyor').last);
-      await tester.pumpAndSettle();
-      expect(picked, [ModerationCaseStatus.inReview]);
+      // 🔴 WP-768: durum artik okunur bir etikettir, menu degil.
+      expect(find.byType(AdminWorkStatusLabel), findsOneWidget);
+      expect(find.text('Açık'), findsOneWidget);
+      expect(find.byType(PopupMenuButton<ModerationCaseStatus>), findsNothing);
 
-      // Uc nokta: yaptirim / karantina / kopyala.
-      await tester.tap(find.byKey(const Key('moderation-secondary-actions')));
-      await tester.pumpAndSettle();
-      expect(find.text('Yaptırım uygula'), findsOneWidget);
-      expect(find.text('İçeriği karantinaya al'), findsOneWidget);
-      expect(find.text('Kopyala'), findsOneWidget);
+      // `…` menusu kalkti; yerine kartin tek gorunur eylemi geldi.
+      expect(
+        find.byKey(const Key('moderation-secondary-actions')),
+        findsNothing,
+      );
+      expect(find.text('Detaylı incele'), findsOneWidget);
     });
 
-    testWidgets('bilet: ana eylemler kompakt, arsiv uc nokta menusundedir', (
+    testWidgets('bilet: kimlik ve durum yerinde, TEK eylem detayi acar', (
       tester,
     ) async {
       await _pumpTickets(tester, width: 390);
 
-      final reply = find.text('Yanıt yaz');
-      final notes = find.text('İç Notlar');
-      expect(reply, findsOneWidget);
-      expect(notes, findsOneWidget);
-      expect(find.text('Ekran Görüntüsü'), findsOneWidget);
+      // 🔴 WP-768: "Yanit yaz", "Ic Notlar", "Ekran Goruntusu" ve "Arsivle"
+      // karttan kalkti — hepsi biletin kendi sayfasinda, tek yerde
+      // (`admin_ticket_detail_wp770_test.dart`). Kartta yalniz ozet + tek yol.
+      expect(find.text('Yanıt yaz'), findsNothing);
+      expect(find.text('İç Notlar'), findsNothing);
+      expect(find.text('Ekran Görüntüsü'), findsNothing);
       expect(find.text('Arşivle'), findsNothing);
+      expect(find.byKey(const Key('feedback-more-ticket-1')), findsNothing);
+
+      expect(find.text('Detaylı incele'), findsOneWidget);
       // Durum hapi bilette de tek kontrol.
       expect(find.text('Açık'), findsOneWidget);
       // Gonderen taraf satirinda.
       expect(find.textContaining('Gönderen: Ayse'), findsOneWidget);
-
-      // Kullaniciya giden yol ic notlardan once (V51-4 regresyonu).
-      final replyTop = tester.getTopLeft(reply);
-      final notesTop = tester.getTopLeft(notes);
-      expect(
-        replyTop.dy < notesTop.dy ||
-            (replyTop.dy == notesTop.dy && replyTop.dx < notesTop.dx),
-        isTrue,
-      );
-
-      await tester.tap(find.byKey(const Key('feedback-more-ticket-1')));
-      await tester.pumpAndSettle();
-      expect(find.text('Arşivle'), findsOneWidget);
-      final sanctionItem = find.widgetWithText(PopupMenuItem<int>, 'Kısıtla');
-      expect(sanctionItem, findsOneWidget);
-      expect(tester.widget<PopupMenuItem<int>>(sanctionItem).enabled, isFalse);
-      expect(find.textContaining('Kullanıcı bulunamadı'), findsOneWidget);
     });
 
     testWidgets('arsivlenmis bilet isaret seridinde belli olur', (
@@ -593,29 +585,35 @@ void main() {
       tester,
     ) async {
       await _pumpModeration(tester, width: 390);
-      // Menu KAPALIYKEN bu etiketler ekranda olmamali: kart bir ozettir,
-      // karar seridi inceleme panosundadir (WP-B/C).
+      // Kart bir ozettir: tehlikeli eylem yuzune cikmaz, karar vakanin kendi
+      // sayfasindadir (WP-769 karar seridi).
       expect(
         find.text('Yaptırım uygula'),
         findsNothing,
         reason:
-            'WP-698: yaptirim kartin yuzune cikmis; tehlikeli eylem yalniz '
-            'menude ve karar seridinde durur.',
+            'WP-698/WP-768: yaptirim kartin yuzune cikmis; karar yalniz '
+            'vakanin kendi sayfasinda verilir.',
       );
       expect(find.text('İçeriği karantinaya al'), findsNothing);
-      // Eylem seridi `TextButton` / `FilledButton` cizer; vaka kartinda hic
-      // olmamali. (`IconButton` haric tutulmaz cunku o zaten `…` menusu ve
-      // kisi dosyasi koprusudur — ikisi de tehlikeli degil.)
+      expect(find.text('Kalıcı yasak'), findsNothing);
+
+      // Eylem seridinde tek dugme var ve o dugme tehlikeli degil: yalnizca
+      // vakayi acar.
       final card = _card(tester, 'Nefret');
-      expect(
-        find.descendant(of: card, matching: find.byType(TextButton)),
-        findsNothing,
-        reason: 'Vaka kartinda gorunur eylem seridi olmamali.',
+      final actions = find.descendant(
+        of: card,
+        matching: find.byWidgetPredicate(
+          (w) => w is FilledButton || w is TextButton || w is OutlinedButton,
+        ),
       );
       expect(
-        find.descendant(of: card, matching: find.byType(FilledButton)),
-        findsNothing,
-        reason: 'Vaka kartinda vurgulu eylem dugmesi olmamali.',
+        actions,
+        findsOneWidget,
+        reason: 'Vaka kartinda tek gorunur eylem olmali.',
+      );
+      expect(
+        find.descendant(of: actions, matching: find.text('Detaylı incele')),
+        findsOneWidget,
       );
     });
   });

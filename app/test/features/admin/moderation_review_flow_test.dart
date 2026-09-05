@@ -1,13 +1,14 @@
-// WP-B (WP-691 FAZ 2) — sikayet inceleme: KANIT + KARAR TEK EKRANDA.
+// WP-768 / WP-769 — TEK KUYRUK + VAKANIN KENDI SAYFASI.
 //
-// ONCE KIRMIZI. Bes kabul olcutu `docs/design/ADMIN-PANEL-PLAN.md` §5 WP-B'den
-// birebir alindi; liderin iki ek sarti (geri al seridi · serit kaydirmayla
-// kaybolmaz) sonda. Bu dosyanin ilk kosumunda BESI DE kirmiziydi:
-//   - kabul 1: `attachment_path` / `reason` / `created_at` / `sanctions[].action`
-//     istemci modelinde HIC yoktu (derleme hatasi).
-//   - kabul 2/3/4 + serit: `moderation-case-row-*` bulunamadi (0 widget) —
-//     vaka satiri secilebilir bile degildi.
-//   - kabul 5: '7 gün askıya al' icin 0 widget bulundu.
+// Bu dosya WP-B'nin (kanit + karar tek ekranda) kabul olcutlerini devralir ve
+// sahip kararina gore yeniden yazar:
+//
+//   *"sikayet/oneri/soru gibi filtrelenebilen bir liste olsun. Orada her kartta
+//    sadece detayli incele butonu olsun ve ona basinca ayri bir sayfa acilsin o
+//    karta ozel ve her sey orada olsun; baska bir ekrani istemiyorum."*
+//
+// Degisen sey duzendir, sozlesme degil: kanit hala karar dugmesiyle ayni anda
+// agactadir — ama artik bir bolmede degil, vakanin **kendi sayfasinda**.
 //
 // 🔴 Olculen sey KULLANICININ GORDUGU seydir. Bir alan adinin kaynakta gecmesi
 // kanit degildir; her duzen iddiasinin yaninda GOVDENIN GERCEK oldugunu
@@ -30,11 +31,10 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_mo
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/supabase_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
-import 'package:online_study_room/features/admin/queue/moderation_review_view.dart';
-import 'package:online_study_room/features/admin/sanctions/admin_case_target_link.dart';
-import 'package:online_study_room/features/admin/sanctions/admin_person_dossier.dart';
-import 'package:online_study_room/features/admin/shell/admin_shell.dart';
-import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
+import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
+import 'package:online_study_room/features/admin/detail/admin_case_detail_page.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_entry.dart';
+import 'package:online_study_room/features/admin/queue/admin_queue_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../support/supabase_wire_harness.dart';
@@ -95,7 +95,26 @@ ModerationCaseDetail _detail({
   ],
 );
 
-Future<void> _pump(
+FeedbackTicket _ticket({
+  required String id,
+  required FeedbackTicketType type,
+  String subject = 'Konu',
+  String message = 'Mesaj',
+  String? ugcReportId,
+}) => FeedbackTicket(
+  id: id,
+  userId: 'u1',
+  kind: FeedbackTicketKind.feedback,
+  subject: subject,
+  message: message,
+  status: FeedbackTicketStatus.open,
+  createdAt: DateTime(2026, 8, 10, 8),
+  updatedAt: DateTime(2026, 8, 10, 8),
+  type: type,
+  ugcReportId: ugcReportId,
+);
+
+Future<void> _pumpQueue(
   WidgetTester tester,
   InMemoryAdminModerationRepository repo, {
   Size window = const Size(1280, 900),
@@ -111,18 +130,240 @@ Future<void> _pump(
         locale: Locale('tr'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: AdminModerationTab()),
+        home: Scaffold(body: AdminQueueView()),
       ),
     ),
   );
   await tester.pumpAndSettle();
 }
 
-Finder _row(String targetId) =>
-    find.byKey(Key('moderation-case-row-message:$targetId'));
+/// Karttaki **tek** dugme.
+Finder _open(String targetId) =>
+    find.byKey(Key('admin-queue-open-case:message:$targetId'));
+
+Future<void> _pumpCase(
+  WidgetTester tester,
+  InMemoryAdminModerationRepository repo,
+  ModerationCase moderationCase, {
+  Size window = const Size(1280, 900),
+}) async {
+  tester.view.physicalSize = window;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [adminModerationRepositoryProvider.overrideWithValue(repo)],
+      child: MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AdminCaseDetailPage(moderationCase: moderationCase),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
 
 void main() {
-  // --- KABUL 1: sunucunun gonderdigi alanlar istemcide DURUYOR -----------
+  // --- WP-768 KABUL 1: birlestirme kurallari (saf) -----------------------
+  group('buildAdminQueue', () {
+    test('UGC sikayetinin AYNA bileti listede ikinci kez gorunmez', () {
+      final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+      final entries = buildAdminQueue(
+        cases: [moderationCase],
+        tickets: [
+          // `report_ugc` her sikayet icin bir bilet de acar (0110:160-167).
+          _ticket(
+            id: 't-mirror',
+            type: FeedbackTicketType.report,
+            ugcReportId: 'report-a',
+          ),
+          _ticket(id: 't-soru', type: FeedbackTicketType.question),
+        ],
+        appeals: const [],
+      );
+
+      expect(
+        entries.whereType<AdminQueueTicketEntry>().map((e) => e.ticket.id),
+        ['t-soru'],
+        reason:
+            'Ayni sikayet hem vaka hem bilet olarak listelenirse sahip ayni '
+            'isi iki kez gorur.',
+      );
+      expect(entries.whereType<AdminQueueCaseEntry>(), hasLength(1));
+    });
+
+    test('karara baglanmis itiraz kuyrukta durmaz', () {
+      final entries = buildAdminQueue(
+        cases: const [],
+        tickets: const [],
+        appeals: [
+          ModerationAppeal.fromWire(const {
+            'id': 'a-open',
+            'sanction_id': 's1',
+            'statement': 'ben yapmadim',
+            'status': 'open',
+            'created_at': '2026-08-01T10:00:00Z',
+          }),
+          ModerationAppeal.fromWire(const {
+            'id': 'a-done',
+            'sanction_id': 's2',
+            'statement': 'karar verildi',
+            'status': 'upheld',
+            'created_at': '2026-08-02T10:00:00Z',
+          }),
+        ],
+      );
+      expect(entries.map((e) => e.id), ['appeal:a-open']);
+    });
+
+    test('acik isler kapanmislarin ustunde durur', () {
+      final entries = buildAdminQueue(
+        cases: const [],
+        tickets: [
+          _ticket(id: 't-eski', type: FeedbackTicketType.question),
+          FeedbackTicket(
+            id: 't-kapali',
+            userId: 'u1',
+            kind: FeedbackTicketKind.feedback,
+            subject: 'Kapali',
+            message: 'x',
+            status: FeedbackTicketStatus.closed,
+            createdAt: DateTime(2026, 9),
+            // Daha YENI ama kapali: yine de altta kalmali.
+            updatedAt: DateTime(2026, 9),
+          ),
+        ],
+        appeals: const [],
+      );
+      expect(entries.map((e) => e.id), ['ticket:t-eski', 'ticket:t-kapali']);
+    });
+
+    test('adminMirrorTicket vakanin destek kaydini bulur', () {
+      final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+      final mirror = _ticket(
+        id: 't-mirror',
+        type: FeedbackTicketType.report,
+        ugcReportId: 'report-a',
+      );
+      expect(
+        adminMirrorTicket([mirror], moderationCase)?.id,
+        't-mirror',
+        reason:
+            'Sikayet edenle yazismanin tek kanali bu bilettir; kuyruk onu '
+            'gizledigi icin bagi vaka detayi kurmali.',
+      );
+      expect(
+        adminMirrorTicket(
+          [_ticket(id: 't-baska', type: FeedbackTicketType.report)],
+          moderationCase,
+        ),
+        isNull,
+      );
+    });
+  });
+
+  // --- WP-768 KABUL 2: kartta TEK dugme ---------------------------------
+  testWidgets('kuyruk kartinda yalniz "Detayli incele" dugmesi var', (
+    tester,
+  ) async {
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpQueue(tester, repo);
+
+    expect(_open(_targetA), findsOneWidget, reason: 'Tek dugme yok.');
+    expect(find.text('Detaylı incele'), findsOneWidget);
+
+    // Sahibin sikayeti: "tus neyi ne oldugu belli degil". Gizli menuler kalkti.
+    expect(
+      find.byKey(const Key('moderation-secondary-actions')),
+      findsNothing,
+      reason: 'Karttaki `…` menusu (yaptirim/karantina/kopyala) kaldirildi.',
+    );
+    expect(
+      find.byType(PopupMenuButton<ModerationCaseStatus>),
+      findsNothing,
+      reason: 'Durum hapi artik menu acmaz; durum detay sayfasinda degisir.',
+    );
+    // Durum yine de OKUNUR: bilgi kaybi yok.
+    expect(find.byType(AdminWorkStatusLabel), findsOneWidget);
+    expect(find.text('Açık'), findsOneWidget);
+  });
+
+  // --- WP-768 KABUL 3: tur filtresi -------------------------------------
+  testWidgets('filtre cipi turu suzer; bos sonuctan filtre temizlenir', (
+    tester,
+  ) async {
+    final adminRepo = InMemoryAdminRepository(
+      superAdminUserIds: const {'admin'},
+    );
+    addTearDown(adminRepo.dispose);
+    await adminRepo.submitFeedback(
+      userId: 'u1',
+      kind: FeedbackTicketKind.feedback,
+      subject: 'Karanlik tema',
+      message: 'Daha koyu olsun',
+    );
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(
+              Profile(
+                id: 'admin',
+                displayName: 'Admin',
+                createdAt: DateTime(2026),
+              ),
+            ),
+          ),
+          adminRepositoryProvider.overrideWithValue(adminRepo),
+          adminModerationRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: AdminQueueView()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Once GOVDE gercek mi: iki tur de listede mi?
+    expect(find.text('Karanlik tema'), findsOneWidget);
+    expect(_open(_targetA), findsOneWidget);
+
+    // Oneri filtresi: sikayet duser.
+    await tester.tap(
+      find.byKey(adminQueueFilterKey(AdminQueueCategory.suggestion)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Karanlik tema'), findsOneWidget);
+    expect(_open(_targetA), findsNothing);
+
+    // Soru filtresi: hicbir sey kalmaz ve filtre temizlenebilir.
+    await tester.tap(
+      find.byKey(adminQueueFilterKey(AdminQueueCategory.question)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(kAdminQueueEmptyKey), findsOneWidget);
+    expect(find.text('Bekleyen iş yok.'), findsOneWidget);
+    await tester.tap(find.text('Filtreyi temizle'));
+    await tester.pumpAndSettle();
+    expect(find.text('Karanlik tema'), findsOneWidget);
+    expect(_open(_targetA), findsOneWidget);
+  });
+
+  // --- WP-769 KABUL 1: sunucunun gonderdigi alanlar istemcide DURUYOR ----
   test('detay ek yolu, gerekce, zaman ve sanctions[].action tasir', () async {
     final wire = SupabaseWireHarness();
     wire.respond('admin_ugc_report_detail', {
@@ -191,29 +432,124 @@ void main() {
     expect(detail.attachmentPath, isNull);
   });
 
-  // --- KABUL 2: ek gorsel onizleme dugmesi -------------------------------
+  // --- WP-769 KABUL 2: dugme AYRI SAYFA acar ----------------------------
+  testWidgets('"Detayli incele" vakanin kendi sayfasini acar', (tester) async {
+    final repo = InMemoryAdminModerationRepository(
+      seed: [_case(targetId: _targetA, reportId: 'report-a')],
+    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpQueue(tester, repo);
+
+    expect(find.byKey(kAdminCaseDetailKey), findsNothing);
+    await tester.tap(_open(_targetA));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(kAdminCaseDetailKey),
+      findsOneWidget,
+      reason: 'Sahip karti degil AYRI SAYFA istedi.',
+    );
+    expect(find.text('Şikâyet detayı'), findsOneWidget);
+    // Kuyruk artik ekranda degil: sayfa tam ekran.
+    expect(find.byKey(kAdminQueueListKey), findsNothing);
+    // Govde gercek mi?
+    expect(find.text('aptal herif diye yazmis'), findsOneWidget);
+  });
+
+  // --- WP-769 KABUL 3: kanit ve karar AYNI ANDA -------------------------
+  testWidgets('sayfada icerik metni ve "Cozuldu" ayni anda agacta', (
+    tester,
+  ) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpCase(tester, repo, moderationCase);
+
+    expect(
+      find.text('aptal herif diye yazmis'),
+      findsOneWidget,
+      reason: 'Sikayet edilen icerik ekranda degil.',
+    );
+    expect(
+      find.byKey(kModerationDecisionResolvedKey),
+      findsOneWidget,
+      reason:
+          'ADMIN-PANEL-PLAN §2.2 kok neden: kanitin gorundugu yuzey ile '
+          'kararin verildigi yuzey ayni anda ekranda degildi.',
+    );
+    // Sikayet edenin yazdigi aciklama da ayni ekranda.
+    expect(find.text('derste surekli hakaret ediyor'), findsOneWidget);
+
+    // Sayfanin geri kalani (taraflar, hedefin dosyasi, ceza gecmisi) ayni
+    // listede; kaydirilarak okunur, baska ekrana gecilmez.
+    await tester.drag(
+      find.byKey(kModerationEvidenceKey),
+      const Offset(0, -600),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Taraflar'), findsOneWidget);
+    expect(
+      find.byKey(kModerationDecisionResolvedKey),
+      findsOneWidget,
+      reason: 'Karar seridi kaydirmayla kaybolmamali.',
+    );
+    await tester.drag(
+      find.byKey(kModerationEvidenceKey),
+      const Offset(0, -900),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('24 saat yazma kısıtı'),
+      findsWidgets,
+      reason: 'Hedefe daha once ne yapildigi ayni sayfada okunmali.',
+    );
+  });
+
+  // --- WP-769 KABUL 4: hedefin dosyasi AYNI SAYFADA ---------------------
+  //
+  // Sahibin sarti: "bu panele hic ihtiyacim olmasin gelenleri degerlendirirken".
+  testWidgets('hedefin aktif kisiti ve yaptirim yolu sayfanin icinde', (
+    tester,
+  ) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpCase(tester, repo, moderationCase);
+
+    expect(find.byKey(kAdminCaseTargetSummaryKey), findsOneWidget);
+    expect(find.text('Kişi dosyası'), findsOneWidget);
+    expect(
+      find.text('Aktif kısıt yok.'),
+      findsOneWidget,
+      reason: 'Hedefin kisit durumu baska ekranda aranmamali.',
+    );
+    expect(find.byKey(kAdminCaseSanctionApplyKey), findsOneWidget);
+    expect(
+      find.text('Bu kişiye daha önce yaptırım uygulanmadı.'),
+      findsOneWidget,
+    );
+  });
+
+  // --- WP-769 KABUL 5: ek gorsel onizleme -------------------------------
   testWidgets('ek yolu dolu vakada gorsel onizleme dugmesi bulunur', (
     tester,
   ) async {
+    final withAttachment = _case(targetId: _targetA, reportId: 'report-a');
+    final withoutAttachment = _case(
+      targetId: _targetB,
+      reportId: 'report-b',
+      name: 'Kemal',
+    );
     final repo =
         InMemoryAdminModerationRepository(
-            seed: [
-              _case(targetId: _targetA, reportId: 'report-a'),
-              _case(targetId: _targetB, reportId: 'report-b', name: 'Kemal'),
-            ],
+            seed: [withAttachment, withoutAttachment],
           )
           ..details['report-a'] = _detail(
             snapshot: 'aptal herif diye yazmis',
             attachmentPath: 'uid/evidence.png',
           )
           ..details['report-b'] = _detail(snapshot: 'spam linki atmis');
-    await _pump(tester, repo);
 
-    expect(_row(_targetA), findsOneWidget, reason: 'Vaka satiri yok.');
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-
-    // Govde GERCEK mi? Once kanit metnini bul, sonra dugmeyi olc.
+    await _pumpCase(tester, repo, withAttachment);
     expect(find.text('aptal herif diye yazmis'), findsOneWidget);
     expect(
       find.byKey(const Key('moderation-attachment-open')),
@@ -223,10 +559,8 @@ void main() {
           'gosterilmiyordu (0097 attachment_path donduruyor).',
     );
 
-    // Sabotaj kapisi: eki OLMAYAN vakada dugme HIC cikmamali; yoksa "her
-    // vakada duran ama hicbir sey acmayan dugme" olur.
-    await tester.tap(_row(_targetB));
-    await tester.pumpAndSettle();
+    // Sabotaj kapisi: eki OLMAYAN vakada dugme HIC cikmamali.
+    await _pumpCase(tester, repo, withoutAttachment);
     expect(find.text('spam linki atmis'), findsOneWidget);
     expect(
       find.byKey(const Key('moderation-attachment-open')),
@@ -236,124 +570,83 @@ void main() {
     expect(find.text('Şikâyete görsel eklenmemiş.'), findsOneWidget);
   });
 
-  // --- KABUL 3: kanit ve karar AYNI ANDA ---------------------------------
-  testWidgets('vaka secili iken icerik metni ve "Cozuldu" ayni anda agacta', (
+  // --- WP-769 KABUL 6: karar + geri alma --------------------------------
+  testWidgets('karar verilince "Geri al" belirir ve gercekten geri alir', (
     tester,
   ) async {
-    final repo = InMemoryAdminModerationRepository(
-      seed: [_case(targetId: _targetA, reportId: 'report-a')],
-    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
-    await _pump(tester, repo);
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpCase(tester, repo, moderationCase);
 
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('aptal herif diye yazmis'),
-      findsOneWidget,
-      reason: 'Sikayet edilen icerik ekranda degil.',
-    );
-    expect(
-      find.byKey(const Key('moderation-decision-resolved')),
-      findsOneWidget,
-      reason:
-          'ADMIN-PANEL-PLAN §2.2 kok neden: kanitin gorundugu yuzey ile '
-          'kararin verildigi yuzey ayni anda ekranda degildi.',
-    );
-    // Sikayet edenin yazdigi aciklama ve hedefin gecmisi de ayni ekranda.
-    expect(find.text('derste surekli hakaret ediyor'), findsOneWidget);
-    expect(find.textContaining('24 saat yazma kısıtı'), findsOneWidget);
-  });
-
-  // --- KABUL 4: sonraki vaka + geri al -----------------------------------
-  testWidgets('karar verilince sonraki vaka secilir ve "Geri al" belirir', (
-    tester,
-  ) async {
-    final repo =
-        InMemoryAdminModerationRepository(
-            seed: [
-              _case(targetId: _targetA, reportId: 'report-a'),
-              _case(targetId: _targetB, reportId: 'report-b', name: 'Kemal'),
-            ],
-          )
-          ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis')
-          ..details['report-b'] = _detail(snapshot: 'spam linki atmis');
-    await _pump(tester, repo);
-
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-    expect(find.text('aptal herif diye yazmis'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('moderation-decision-resolved')));
+    await tester.tap(find.byKey(kModerationDecisionResolvedKey));
     await tester.pumpAndSettle();
 
     expect(repo.statusWrites.single, 'message:$_targetA=resolved');
     expect(
-      find.text('spam linki atmis'),
-      findsOneWidget,
-      reason: 'PLAN §4.2: karardan sonra imlec siradaki vakaya gecmeli.',
-    );
-    expect(
-      find.byKey(const Key('moderation-undo-bar')),
+      find.byKey(kModerationUndoBarKey),
       findsOneWidget,
       reason:
           'PLAN §4.4.2: geri alinabilir karar teyit degil 10 sn serit ister.',
     );
 
-    await tester.tap(find.byKey(const Key('moderation-undo-button')));
+    await tester.tap(find.byKey(kModerationUndoButtonKey));
     await tester.pumpAndSettle();
 
     expect(repo.statusWrites.last, 'message:$_targetA=open');
-    expect(find.byKey(const Key('moderation-undo-bar')), findsNothing);
+    expect(find.byKey(kModerationUndoBarKey), findsNothing);
     final queue = await repo.fetchQueue();
     expect(queue.first.status, ModerationCaseStatus.open);
   });
 
-  // --- KABUL 5: itirazda yaptirim etiketi --------------------------------
-  testWidgets('itiraz detayinda sanctionAction etiketi bulunur', (
+  // --- WP-769 HATA (a): SIFIR satirda basari iddia edilmez --------------
+  //
+  // `admin_set_ugc_report_group_status` `returns bigint`; `0104` oncesi
+  // kapanmis raporlarin vakasi yok ve RPC sifir satir gunceller. Ekran bu
+  // sayiyi hic okumuyordu: "Cozuldu" yazip geri alma seridi aciyordu.
+  testWidgets('sunucu 0 satir guncellerse ekran "Cozuldu" demez', (
     tester,
   ) async {
+    final orphan = _case(targetId: _targetA, reportId: 'report-a');
+    // Vaka repoda YOK -> setCaseStatus 0 doner (in-memory repo:104).
     final repo = InMemoryAdminModerationRepository()
-      ..appeals.add(
-        ModerationAppeal.fromWire(const {
-          'id': 'appeal-1',
-          'sanction_id': 'sanction-1',
-          'statement': 'ben yapmadim',
-          'status': 'open',
-          'created_at': '2026-08-01T10:00:00Z',
-          'sanction_action': 'suspend_7d',
-          'sanction_reason': 'tekrarlayan hakaret',
-        }),
-      );
-    await _pump(tester, repo);
+      ..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
+    await _pumpCase(tester, repo, orphan);
 
-    // Once govde gercek mi: itiraz karti gercekten cizildi mi?
-    expect(find.text('ben yapmadim'), findsOneWidget);
+    await tester.tap(find.byKey(kModerationDecisionResolvedKey));
+    await tester.pumpAndSettle();
+
+    expect(repo.statusWrites, isEmpty);
     expect(
-      find.textContaining('7 gün askıya al'),
+      find.text('Bu kayıt bir vakaya bağlı değil; durum sunucuda değişmedi.'),
       findsOneWidget,
-      reason:
-          'ADMIN-PANEL-PLAN §2.1: admin HANGI cezaya itiraz edildigini '
-          'gormeden "koru/kaldir" diyordu.',
+      reason: 'Sifir satirda basari iddia edilemez.',
+    );
+    expect(
+      find.byKey(kModerationUndoBarKey),
+      findsNothing,
+      reason: 'Yapilmamis bir kararin "geri al"i olmaz.',
     );
   });
 
-  // --- LIDER SARTI 7: karar seridi kaydirmayla KAYBOLMAZ -----------------
+  // --- LIDER SARTI: karar seridi kaydirmayla KAYBOLMAZ ------------------
   testWidgets('karar seridi uzun kanit kaydirilinca piksel piksel yerinde', (
     tester,
   ) async {
-    final repo = InMemoryAdminModerationRepository(
-      seed: [_case(targetId: _targetA, reportId: 'report-a')],
-    )..details['report-a'] = _detail(snapshot: _longSnapshot);
-    await _pump(tester, repo, window: const Size(1280, 620));
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: _longSnapshot);
+    await _pumpCase(
+      tester,
+      repo,
+      moderationCase,
+      window: const Size(1280, 620),
+    );
 
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-
-    final bar = find.byKey(const Key('moderation-decision-bar'));
+    final bar = find.byKey(kModerationDecisionBarKey);
     expect(bar, findsOneWidget);
     final before = tester.getRect(bar);
-    final evidence = find.byKey(const Key('moderation-evidence'));
+    final evidence = find.byKey(kModerationEvidenceKey);
     final firstLine = find.text(_longSnapshot);
     final textBefore = tester.getRect(firstLine).top;
 
@@ -376,109 +669,78 @@ void main() {
     );
   });
 
-  testWidgets(
-    'vaka karar seridi mevcut yaptırım merdivenini gerçekten uygular',
-    (tester) async {
-      final repo = InMemoryAdminModerationRepository(
-        seed: [_case(targetId: _targetA, reportId: 'report-a')],
-      )..details['report-a'] = _detail(snapshot: 'kanıt');
-      await _pump(tester, repo, window: const Size(1366, 768));
-
-      expect(find.byKey(kModerationDecisionSanctionKey), findsOneWidget);
-      await tester.tap(find.byKey(kModerationDecisionSanctionKey));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('moderation-sanction-action')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('24 saat yazma kısıtı').last);
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('moderation-sanction-reason')),
-        'kanıtlı ihlal',
-      );
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.byKey(const Key('moderation-sanction-submit')),
-            )
-            .onPressed,
-        isNotNull,
-      );
-      await tester.tap(find.byKey(const Key('moderation-sanction-submit')));
-      await tester.pumpAndSettle();
-
-      final sanctions = await repo.fetchSanctions(_targetA);
-      expect(sanctions.single.action, ModerationAction.mute24h);
-      expect(find.byKey(const Key('admin-sanction-undo')), findsOneWidget);
-    },
-  );
-
-  // --- LIDER EKI: vakadan hedefin dosyasina KOPRU ------------------------
-  // PLAN §2.3 / WP-C olcut 5. WP-C varis noktasini kurdu; kopruyu vaka karti
-  // tasir ve o dosya bu WP'nin yolunda. Widget'in VARLIGI kanit degil:
-  // dokunuluyor ve dosyanin GERCEKTEN cizildigi metinle olculuyor.
-  testWidgets('vakadan hedefin dosyasina tek dokunusla gidilir', (
+  testWidgets('karar seridi mevcut yaptirim merdivenini gercekten uygular', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(1280, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
-
-    final adminRepo = InMemoryAdminRepository(
-      superAdminUserIds: const {'admin'},
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'kanıt');
+    await _pumpCase(
+      tester,
+      repo,
+      moderationCase,
+      window: const Size(1366, 768),
     );
-    addTearDown(adminRepo.dispose);
-    final repo = InMemoryAdminModerationRepository(
-      seed: [_case(targetId: _targetA, reportId: 'report-a')],
-    )..details['report-a'] = _detail(snapshot: 'aptal herif diye yazmis');
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(
-              Profile(
-                id: 'admin',
-                displayName: 'Admin',
-                createdAt: DateTime(2026),
-              ),
-            ),
-          ),
-          adminRepositoryProvider.overrideWithValue(adminRepo),
-          adminModerationRepositoryProvider.overrideWithValue(repo),
-        ],
-        child: const MaterialApp(
-          locale: Locale('tr'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: AdminModerationTab()),
-        ),
-      ),
+    expect(find.byKey(kModerationDecisionSanctionKey), findsOneWidget);
+    await tester.tap(find.byKey(kModerationDecisionSanctionKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('24 saat yazma kısıtı').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('admin-user-reason-field')),
+      'kanıtlı ihlal',
     );
     await tester.pumpAndSettle();
-
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-    expect(find.text('aptal herif diye yazmis'), findsOneWidget);
-
-    final link = find.byKey(kAdminCaseTargetLinkKey);
-    expect(link, findsOneWidget, reason: 'Vakadan kisiye kopru yok.');
-    await tester.tap(link);
+    await tester.tap(find.byKey(const Key('admin-user-reason-confirm')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(kAdminPersonDossierKey), findsOneWidget);
-    // Kabuk degil GOVDE: dosyanin icindeki gercek bir blok cizildi mi?
-    expect(find.text('Ceza geçmişi'), findsOneWidget);
+    final sanctions = await repo.fetchSanctions(_targetA);
+    expect(sanctions.single.action, ModerationAction.mute24h);
+    expect(find.byKey(const Key('admin-sanction-undo')), findsOneWidget);
+  });
+
+  // --- WP-769 KABUL 7: itiraz kendi sayfasinda karara baglanir -----------
+  testWidgets('itiraz karti yaptirimi yazar, karar kendi sayfasinda verilir', (
+    tester,
+  ) async {
+    final repo = InMemoryAdminModerationRepository()
+      ..appeals.add(
+        ModerationAppeal.fromWire(const {
+          'id': 'appeal-1',
+          'sanction_id': 'sanction-1',
+          'statement': 'ben yapmadim',
+          'status': 'open',
+          'created_at': '2026-08-01T10:00:00Z',
+          'sanction_action': 'suspend_7d',
+          'sanction_reason': 'tekrarlayan hakaret',
+        }),
+      );
+    await _pumpQueue(tester, repo);
+
+    // Kartta: hangi cezaya itiraz edildigi YAZAR, karar dugmesi YOKTUR.
+    expect(find.text('ben yapmadim'), findsOneWidget);
     expect(
-      find.text('Bu kişiye daha önce yaptırım uygulanmadı.'),
+      find.textContaining('7 gün askıya al'),
       findsOneWidget,
+      reason:
+          'ADMIN-PANEL-PLAN §2.1: admin HANGI cezaya itiraz edildigini '
+          'gormeden "koru/kaldir" diyordu.',
     );
+    expect(find.byKey(const Key('appeal-overturn-appeal-1')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('admin-queue-open-appeal:appeal-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('appeal-uphold-appeal-1')), findsOneWidget);
+    expect(find.byKey(const Key('appeal-overturn-appeal-1')), findsOneWidget);
+    expect(find.text('tekrarlayan hakaret'), findsOneWidget);
   });
 
   // --- KABLO: yuzey GERCEKTEN panelden ulasilir mi? ----------------------
   // "Bitmis backend + baglanmamis UI" sinifi: widget'i dogrudan kuran test,
   // onun gercek kabuga hic baglanmadigini goremez.
-  testWidgets('inceleme akisi yonetim panelinin Kuyruk yuzeyinden acilir', (
+  testWidgets('kuyruk ve vaka sayfasi yonetim panelinden acilir', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 900);
@@ -529,25 +791,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Kuyruk yuzeyi -> Icerik Sikayetleri bolumu.
-    await tester.tap(
-      find
-          .descendant(
-            of: find.byKey(kAdminMasterPaneKey),
-            matching: find.text('İçerik Şikayetleri'),
-          )
-          .first,
-    );
+    // Kuyruk yuzeyi varsayilan; ARA BOLUM SECIMI YOK (tek liste).
+    expect(find.byKey(kAdminQueueListKey), findsOneWidget);
+    // Sikayet ve destek kaydi AYNI listede.
+    expect(find.text('Bildirim aksiyonu'), findsOneWidget);
+    expect(_open(_targetA), findsOneWidget);
+
+    await tester.tap(_open(_targetA));
     await tester.pumpAndSettle();
 
-    await tester.tap(_row(_targetA));
-    await tester.pumpAndSettle();
-
+    expect(find.byKey(kAdminCaseDetailKey), findsOneWidget);
     expect(find.text('aptal herif diye yazmis'), findsOneWidget);
-    expect(
-      find.byKey(const Key('moderation-decision-resolved')),
-      findsOneWidget,
-    );
+    expect(find.byKey(kModerationDecisionResolvedKey), findsOneWidget);
     expect(find.byKey(const Key('moderation-attachment-open')), findsOneWidget);
   });
 }

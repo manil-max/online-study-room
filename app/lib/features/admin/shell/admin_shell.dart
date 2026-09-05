@@ -5,12 +5,11 @@ import 'package:online_study_room/core/desktop/desktop_layout.dart';
 import 'package:online_study_room/features/desktop/desktop_page_scaffold.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../queue/admin_queue_view.dart';
 import '../tabs/admin_announcements_tab.dart';
 import '../tabs/admin_audit_log_tab.dart';
 import '../tabs/admin_dashboard_tab.dart';
 import '../tabs/admin_groups_tab.dart';
-import '../tabs/admin_moderation_tab.dart';
-import '../tabs/admin_reports_tab.dart';
 import '../tabs/admin_users_tab.dart';
 
 /// WP-A (`docs/design/ADMIN-PANEL-PLAN.md` §4.1 / §4.5) — yonetim panelinin
@@ -127,20 +126,14 @@ class _AdminShellState extends State<AdminShell> {
       icon: kAdminQueueIcon,
       label: l10n.adminYuzeyKuyruk,
       sections: [
-        // Eski 4. sekme.
+        // 🔴 WP-768: bu yuzey ikiye bolunmustu (`Raporlar` = destek biletleri,
+        // `Icerik Sikayetleri` = UGC vakalari). Ayni sikayet ikisinde birden
+        // gorunuyordu. Sahip tek liste istedi; bolum secici de kalkti.
         AdminSection(
-          id: 'reports',
-          icon: Icons.report_outlined,
-          label: l10n.adminRaporlar,
-          child: const AdminReportsTab(),
-        ),
-        // Eski 5. sekme. Adi kodda ham `'UGC'` dizesiydi (admin_screen.dart:56)
-        // — yerellestirilmemis bir kisaltma. Artik katalogdan geliyor.
-        AdminSection(
-          id: 'moderation',
-          icon: Icons.flag_outlined,
-          label: l10n.adminIcerikSikayetleri,
-          child: const AdminModerationTab(),
+          id: 'queue',
+          icon: Icons.inbox_outlined,
+          label: l10n.adminYuzeyKuyruk,
+          child: const AdminQueueView(),
         ),
       ],
     ),
@@ -378,6 +371,14 @@ class _AdminShellState extends State<AdminShell> {
         windowClass == DesktopNavigationMode.large ||
         windowClass == DesktopNavigationMode.xlarge;
 
+    // 🔴 WP-768: tek bolumlu yuzeyde ne bolum secici ne master bolmesi cizilir
+    // — tek secenegi olan bir liste secim degil, gurultudur. Kuyruk yuzeyi
+    // artik boyledir ve tum genisligi calisma alanina birakir.
+    final singleSection = surface.sections.length == 1;
+    if (singleSection) {
+      return Padding(padding: density.pagePadding, child: detail);
+    }
+
     if (!twoPane) {
       // Tek bolme: bolum secici ustte, govde altta. Kaydirmayla kaybolmaz —
       // `Column` + `Expanded` (PLAN §4.6, `Scaffold.bottomSheet` tuzagi).
@@ -394,16 +395,12 @@ class _AdminShellState extends State<AdminShell> {
       );
     }
 
-    final moderationWorkspace =
-        surface.id == 'queue' && section.id == 'moderation';
     final cappedDetail = Align(
       alignment: Alignment.topLeft,
       child: ConstrainedBox(
         // SPEC §3 A1: detay sutunu "kalan, maks. 760".
-        constraints: BoxConstraints(
-          maxWidth: moderationWorkspace
-              ? double.infinity
-              : DesktopBreakpoints.maxFormWidth,
+        constraints: const BoxConstraints(
+          maxWidth: DesktopBreakpoints.maxFormWidth,
         ),
         child: detail,
       ),
@@ -429,8 +426,7 @@ class _AdminShellState extends State<AdminShell> {
           selectedId: section.id,
           onSelected: (id) => _selectSection(surface, id),
         ),
-        detail:
-            windowClass == DesktopNavigationMode.xlarge && !moderationWorkspace
+        detail: windowClass == DesktopNavigationMode.xlarge
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
