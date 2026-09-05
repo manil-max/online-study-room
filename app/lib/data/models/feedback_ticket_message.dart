@@ -31,6 +31,7 @@ class FeedbackTicketMessage {
     required this.messageSeq,
     this.clientMessageId,
     this.readAt,
+    this.attachmentPath,
   });
 
   final String id;
@@ -42,6 +43,14 @@ class FeedbackTicketMessage {
   final int messageSeq;
   final String? clientMessageId;
   final DateTime? readAt;
+
+  /// WP-778: mesaja ekli **tek** fotografin `ticket_message_attachments`
+  /// icindeki ozel yolu (`0138`). Ek opsiyoneldir; yol bossa mesaj eksizdir.
+  ///
+  /// 🔴 Bu bucket `report_attachments` DEGILDIR: sikayet eki yalniz
+  /// super-admin'e okunur (`0096`), yazisma fotografi ise biletin iki tarafina
+  /// da okunur olmak zorundadir.
+  final String? attachmentPath;
 
   factory FeedbackTicketMessage.fromMap(Map<String, dynamic> map) {
     return FeedbackTicketMessage(
@@ -56,6 +65,7 @@ class FeedbackTicketMessage {
       readAt: map['read_at'] == null
           ? null
           : DateTime.parse(map['read_at'] as String),
+      attachmentPath: map['attachment_path'] as String?,
     );
   }
 }

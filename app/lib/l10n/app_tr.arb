@@ -2405,5 +2405,12 @@
   "adminUserProfileLoadFailed": "Bu kişinin dosyası okunamadı.",
   "@adminUserProfileLoadFailed": {"description": "WP-776: dosya okumasinin hata dali. Bos panel cizmek yerine hata ekrana yazilir."},
   "adminUserProfileSanctionsFailed": "Ceza geçmişi okunamadı.",
-  "@adminUserProfileSanctionsFailed": {"description": "WP-776: ceza gecmisi okumasinin hata dali."}
+  "@adminUserProfileSanctionsFailed": {"description": "WP-776: ceza gecmisi okumasinin hata dali."},
+  "adminVakaYazismalarBaslik": "Vaka yazışmaları",
+  "adminVakaYazismaSekmesi": "{role} · {name}",
+  "adminVakaYazismaHenuzYok": "Bu kişiyle henüz yazışmadınız. İlk mesajı siz yazın.",
+  "adminVakaYazismaOkunamadi": "Yazışma okunamadı.",
+  "adminVakaYazismaGirdiIpucu": "Mesajını yaz",
+  "adminVakaYazismaFotoEkle": "Fotoğraf ekle (1 adet)",
+  "adminVakaYazismaGonderilemedi": "Mesaj gönderilemedi."
 }

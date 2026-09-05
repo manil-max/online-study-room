@@ -7339,5 +7339,19 @@
   "adminUserProfileLoadFailed": "This person's file could not be read.",
   "@adminUserProfileLoadFailed": {"description": "WP-776: error branch of the insight read. The failure is written on screen instead of rendering an empty panel."},
   "adminUserProfileSanctionsFailed": "The sanction history could not be read.",
-  "@adminUserProfileSanctionsFailed": {"description": "WP-776: error branch of the sanction history read."}
+  "@adminUserProfileSanctionsFailed": {"description": "WP-776: error branch of the sanction history read."},
+  "adminVakaYazismalarBaslik": "Case conversations",
+  "@adminVakaYazismalarBaslik": {"description": "WP-778: app bar title of the two-party case conversation page."},
+  "adminVakaYazismaSekmesi": "{role} · {name}",
+  "@adminVakaYazismaSekmesi": {"description": "WP-778: tab label pairing the party role with the person's name.", "placeholders": {"role": {"type": "String"}, "name": {"type": "String"}}},
+  "adminVakaYazismaHenuzYok": "You have not written to this person yet. Send the first message.",
+  "@adminVakaYazismaHenuzYok": {"description": "WP-778: empty state for a party that has no channel yet; the composer stays open."},
+  "adminVakaYazismaOkunamadi": "The conversation could not be loaded.",
+  "@adminVakaYazismaOkunamadi": {"description": "WP-778: a read failure is not the same as an empty thread."},
+  "adminVakaYazismaGirdiIpucu": "Write your message",
+  "@adminVakaYazismaGirdiIpucu": {"description": "WP-778: hint of the composer text field."},
+  "adminVakaYazismaFotoEkle": "Attach a photo (1 only)",
+  "@adminVakaYazismaFotoEkle": {"description": "WP-778: tooltip of the composer attach button; a message carries at most one photo."},
+  "adminVakaYazismaGonderilemedi": "The message could not be sent.",
+  "@adminVakaYazismaGonderilemedi": {"description": "WP-778: fallback when the failure carries no server message."}
 }
