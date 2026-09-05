@@ -11,7 +11,7 @@
       "highlights": [
         "Güncelleme bildirimi artık uygulamanın diliyle geliyor. İngilizce kullanan telefona da Türkçe bildirim düşüyordu.",
         "Güncelleme penceresinde GitHub bağlantısı yerine yeni sürümün notları, kullanıcının dilinde.",
-        "GitHub sürüm sayfası da otomatik commit listesi yerine Türkçe ve İngilizce notları gösteriyor."
+        "GitHub sürüm sayfası da otomatik üretilen değişiklik listesi yerine Türkçe ve İngilizce notları gösteriyor."
       ],
       "fixes": [
         "Sürüm bildiriminin metni sunucudan sabit Türkçe geliyordu; artık cihazda kuruluyor.",
@@ -25,7 +25,7 @@
       "highlightsEn": [
         "The update notification now arrives in the app's language. Phones set to English were getting a Turkish alert.",
         "The update window shows the new version's notes in your language instead of a GitHub link.",
-        "The GitHub release page shows Turkish and English notes instead of an auto-generated commit list."
+        "The GitHub release page shows Turkish and English notes instead of an auto-generated change list."
       ],
       "fixesEn": [
         "The update alert text came from the server as fixed Turkish; it is now built on the device.",

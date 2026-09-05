@@ -17,7 +17,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 - **Güncelleme penceresinde gerçek notlar.** Eskiden yalnızca GitHub sayfasına
   giden bir bağlantı görünüyordu. Artık yeni sürümün notları, kullanıcının
   dilinde, pencerenin içinde.
-- **GitHub sürüm sayfası da notları gösteriyor.** Otomatik üretilen commit
+- **GitHub sürüm sayfası da notları gösteriyor.** Otomatik üretilen değişiklik
   listesi yerine Türkçe ve İngilizce sürüm notları.
 
 ### Doğrulama
