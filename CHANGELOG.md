@@ -4,6 +4,30 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v78 / 1.0.78+78] - 2026-09-05
+
+> **Güncelleme bildirimi artık telefonun dilinde geliyor ve güncelleme
+> penceresinde link yerine gerçek sürüm notları var. Play kapalı testine
+> giden ilk sürüm bu.**
+
+### Öne çıkanlar
+- **Güncelleme bildirimi uygulamanın dilinde.** İngilizce kullanan telefona
+  da Türkçe bildirim düşüyordu; metin artık cihazda, cihazın diliyle
+  kuruluyor.
+- **Güncelleme penceresinde gerçek notlar.** Eskiden yalnızca GitHub sayfasına
+  giden bir bağlantı görünüyordu. Artık yeni sürümün notları, kullanıcının
+  dilinde, pencerenin içinde.
+- **GitHub sürüm sayfası da notları gösteriyor.** Otomatik üretilen commit
+  listesi yerine Türkçe ve İngilizce sürüm notları.
+
+### Doğrulama
+- Yerel tam kalite kapısı yeşil; veritabanı değişmedi.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- Bildirim dili ve pencere notu düzeltmeleri, bu sürüm kurulduktan SONRAKİ
+  güncellemede görünür; bu sürümün kendi bildirimi eski metinle gelir.
+- Pomodoro kartındaki ilerleme çubuğu koşu boyunca ilerlemiyor.
+
 ## [v77 / 1.0.77+77] - 2026-09-05
 
 > **Durum çubuğundaki canlı sayaç (dinamik panel) dokuz turdan sonra

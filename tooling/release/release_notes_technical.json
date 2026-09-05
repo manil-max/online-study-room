@@ -3,6 +3,44 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.78",
+      "buildNumber": 78,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v78: WP-773 localized update push + release body from release_notes.json + tag-scoped notes fetch",
+      "highlights": [
+        "WP-773: `showRemote` rebuilds `update`-type push content on-device (`localizedUpdatePush`, pure; `version_name` from payload). release.yml still sends fixed Turkish title/body as a fallback for older builds; no Edge deploy.",
+        "WP-773: `ReleaseNotesService.fetchNoteForTag` pulls the tag's own `app/assets/release_notes.json` from GitHub raw and picks the build's note via `forLocale`; `updater_dialog` order is tag note -> bundled -> GitHub body. `UpdateInfo.tag` added.",
+        "WP-773: release.yml `generate_release_notes: false` in both finalize jobs; body produced by `tooling/release/release_body.py` from release_notes.json (EN then TR), carried in the android-release artifact (`body_path`). Generator self-tests first (8/8); missing build writes a fallback body instead of failing."
+      ],
+      "fixes": [
+        "Root cause of the Turkish alert: three layers (workflow payload, dispatcher `update` branch, app `showRemote`) and none asked for the locale.",
+        "Root cause of the link-only notes: `generate_release_notes` yields only the compare link, and the dialog only fell back to bundled notes when the body was EMPTY. Bundled notes could never carry the NEW build's entry anyway (the dialog runs on the old build)."
+      ],
+      "notes": [
+        "Local full gate 25 gates / 0 red / 4 skipped (deno, emulator, Docker). No migration change, head stays 0136.",
+        "Guardians: push_update_localization_wp773 (3), release_notes_remote_wp773 (4), release_body_contract_wp773 (3); updater + push contract 80/80; l10n audit OK (1808 keys). Embedded-input inventory unchanged: new `${{ }}` only under env:.",
+        "NOT DEVICE-VERIFIED: the localized alert and the tag-scoped notes fetch are only observable on a v78 device receiving v79. The GitHub body change is visible on the v78 release page itself.",
+        "First build intended for the Play closed test (alpha track) since v65; store notes derived from release_notes.json (play_publish.py)."
+      ],
+      "titleEn": "v78: WP-773 localized update push + release body from release_notes.json + tag-scoped notes fetch",
+      "highlightsEn": [
+        "WP-773: `showRemote` rebuilds `update`-type push content on-device (`localizedUpdatePush`, pure; `version_name` from payload). release.yml still sends fixed Turkish title/body as a fallback for older builds; no Edge deploy.",
+        "WP-773: `ReleaseNotesService.fetchNoteForTag` pulls the tag's own `app/assets/release_notes.json` from GitHub raw and picks the build's note via `forLocale`; `updater_dialog` order is tag note -> bundled -> GitHub body. `UpdateInfo.tag` added.",
+        "WP-773: release.yml `generate_release_notes: false` in both finalize jobs; body produced by `tooling/release/release_body.py` from release_notes.json (EN then TR), carried in the android-release artifact (`body_path`). Generator self-tests first (8/8); missing build writes a fallback body instead of failing."
+      ],
+      "fixesEn": [
+        "Root cause of the Turkish alert: three layers (workflow payload, dispatcher `update` branch, app `showRemote`) and none asked for the locale.",
+        "Root cause of the link-only notes: `generate_release_notes` yields only the compare link, and the dialog only fell back to bundled notes when the body was EMPTY. Bundled notes could never carry the NEW build's entry anyway (the dialog runs on the old build)."
+      ],
+      "notesEn": [
+        "Local full gate 25 gates / 0 red / 4 skipped (deno, emulator, Docker). No migration change, head stays 0136.",
+        "Guardians: push_update_localization_wp773 (3), release_notes_remote_wp773 (4), release_body_contract_wp773 (3); updater + push contract 80/80; l10n audit OK (1808 keys). Embedded-input inventory unchanged: new `${{ }}` only under env:.",
+        "NOT DEVICE-VERIFIED: the localized alert and the tag-scoped notes fetch are only observable on a v78 device receiving v79. The GitHub body change is visible on the v78 release page itself.",
+        "First build intended for the Play closed test (alpha track) since v65; store notes derived from release_notes.json (play_publish.py)."
+      ]
+    },
+    {
       "versionName": "1.0.77",
       "buildNumber": 77,
       "channel": "stable",

@@ -3,6 +3,40 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.78",
+      "buildNumber": 78,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v78: bildirim telefonun dilinde, güncelleme penceresinde gerçek notlar",
+      "highlights": [
+        "Güncelleme bildirimi artık uygulamanın diliyle geliyor. İngilizce kullanan telefona da Türkçe bildirim düşüyordu.",
+        "Güncelleme penceresinde GitHub bağlantısı yerine yeni sürümün notları, kullanıcının dilinde.",
+        "GitHub sürüm sayfası da otomatik commit listesi yerine Türkçe ve İngilizce notları gösteriyor."
+      ],
+      "fixes": [
+        "Sürüm bildiriminin metni sunucudan sabit Türkçe geliyordu; artık cihazda kuruluyor.",
+        "Güncelleme penceresi, sürüm sayfasının gövdesi boş olmadığı için uygulama içindeki notlara hiç düşmüyordu."
+      ],
+      "notes": [
+        "Bu iki düzeltme bu sürüm kurulduktan SONRAKİ güncellemede görünür; bu sürümün kendi bildirimi eski metinle gelir.",
+        "Pomodoro kartındaki ilerleme çubuğu koşu boyunca ilerlemiyor; sonraki sürümde."
+      ],
+      "titleEn": "v78: update alerts in your language, real release notes in the update window",
+      "highlightsEn": [
+        "The update notification now arrives in the app's language. Phones set to English were getting a Turkish alert.",
+        "The update window shows the new version's notes in your language instead of a GitHub link.",
+        "The GitHub release page shows Turkish and English notes instead of an auto-generated commit list."
+      ],
+      "fixesEn": [
+        "The update alert text came from the server as fixed Turkish; it is now built on the device.",
+        "The update window never fell back to in-app notes because the release page body was not empty."
+      ],
+      "notesEn": [
+        "Both fixes become visible with the update AFTER this one; this version's own alert still uses the old text.",
+        "The pomodoro card's progress bar does not advance during a run; next release."
+      ]
+    },
+    {
       "versionName": "1.0.77",
       "buildNumber": 77,
       "channel": "stable",
