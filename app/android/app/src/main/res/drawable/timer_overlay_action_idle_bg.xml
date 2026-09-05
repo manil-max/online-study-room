@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WP-775: seridin icindeki tek dugmenin BOSTA hapi: sari, koyu yazi.
+     Baslat ile Durdur bir bakista ayrissin diye renk degisir, yer degismez. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/timer_overlay_action_idle_fill" />
+    <corners android:radius="18dp" />
+</shape>

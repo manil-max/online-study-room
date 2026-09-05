@@ -130,23 +130,23 @@ class TimerLiveUpdateWp753Test {
         assertEquals(R.string.timer_focusing_title, work.titleRes)
         assertEquals(R.string.timer_break_title, rest.titleRes)
         // WP-772: terfi eden yolda cip metni yok; ayrim baslik + dugme
-        // etiketiyle (ve kartta `promotedCardTitle`) yapilir.
+        // etiketiyle (ve kartta `promotedCardStatusLine`) yapilir.
         assertEquals(0, work.shortCriticalTextRes)
         assertEquals(0, rest.shortCriticalTextRes)
     }
 
     /**
-     * 🔴 WP-772 (sahip, cihazda): "You're focusing" istenmiyor. Terfi eden
-     * kartin basligi ders adi; ders yoksa uygulama etiketi; molada faz
-     * etiketi. Bos baslik terfiyi dusurur, o yuzden her dal dolu doner.
+     * 🔴 WP-772 -> WP-775 (sahip, cihazda): kart Samsung Saat gibi. Baslik
+     * saatin kendisi; bu satir saatin ALTINDAKI durum: ders adi, ders yoksa
+     * odak cumlesi, molada mola cumlesi. Her dal dolu doner.
      */
     @Test
-    fun promoted_card_title_is_the_subject_or_the_app_label_and_never_empty() {
-        assertEquals("Matematik", promotedCardTitle(false, "Matematik", "Focus Camp", "Break"))
-        assertEquals("Matematik", promotedCardTitle(false, "  Matematik ", "Focus Camp", "Break"))
-        assertEquals("Focus Camp", promotedCardTitle(false, null, "Focus Camp", "Break"))
-        assertEquals("Focus Camp", promotedCardTitle(false, "   ", "Focus Camp", "Break"))
-        assertEquals("Break", promotedCardTitle(true, "Matematik", "Focus Camp", "Break"))
+    fun promoted_card_status_line_is_the_subject_or_the_phase_sentence_and_never_empty() {
+        assertEquals("Matematik", promotedCardStatusLine(false, "Matematik", "Odaklanıyorsun", "Mola sürüyor"))
+        assertEquals("Matematik", promotedCardStatusLine(false, "  Matematik ", "Odaklanıyorsun", "Mola sürüyor"))
+        assertEquals("Odaklanıyorsun", promotedCardStatusLine(false, null, "Odaklanıyorsun", "Mola sürüyor"))
+        assertEquals("Odaklanıyorsun", promotedCardStatusLine(false, "   ", "Odaklanıyorsun", "Mola sürüyor"))
+        assertEquals("Mola sürüyor", promotedCardStatusLine(true, "Matematik", "Odaklanıyorsun", "Mola sürüyor"))
     }
 
     @Test

@@ -12,7 +12,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Chronometer
-import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.manilmax.online_study_room.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -55,8 +56,8 @@ import kotlin.math.roundToInt
  * paketlerden kuruyor; onaysiz uygulama Developer options > "Live
  * notifications for all apps" acikken cizilir (WP-772). Serit yine de
  * kaldi: kilit ekrani disinda her uygulamanin ustunde duran, bizim
- * cizdigimiz bir yuzey. Artik cip gibi gorunur (logo + sayac + kucuk dugme)
- * ve durunca KAYBOLMAZ: bosta `00:00` + Baslat.
+ * cizdigimiz bir yuzey. WP-775: sahibin cizimi -- logo / buyuk MM:SS /
+ * metinli hap dugme (beyaz "Durdur", bosta sari "Baslat"); durunca KAYBOLMAZ.
  *
  * Nobetci: `TimerOverlayWp764Test`.
  */
@@ -230,15 +231,18 @@ internal object TimerOverlay {
         totalSeconds: Int,
     ) {
         val chronometer = root.findViewById<Chronometer>(R.id.overlay_timer_elapsed)
-        val action = root.findViewById<ImageView>(R.id.overlay_timer_action)
+        val action = root.findViewById<TextView>(R.id.overlay_timer_action)
         if (!running) {
             // Bosta: sayac durur ve `00:00` gosterir (`setBase` metni yeniden
-            // cizer); dugme Baslat.
+            // cizer); dugme SARI hapta "Baslat" (WP-775, sahibin cizimi).
             chronometer.stop()
             chronometer.isCountDown = false
             chronometer.base = SystemClock.elapsedRealtime()
-            action.setImageResource(R.drawable.ic_overlay_play)
-            action.contentDescription = root.context.getString(R.string.action_start)
+            action.setText(R.string.action_start)
+            action.setBackgroundResource(R.drawable.timer_overlay_action_idle_bg)
+            action.setTextColor(
+                ContextCompat.getColor(root.context, R.color.timer_overlay_action_idle_ink),
+            )
             return
         }
         // 🔴 Sira onemli: bayrak ONCE, taban SONRA -- `setBase` metni yeniden
@@ -253,8 +257,10 @@ internal object TimerOverlay {
         }
         chronometer.base = nowElapsed - (nowMs - targetMs)
         chronometer.start()
-        action.setImageResource(R.drawable.ic_overlay_stop)
-        action.contentDescription = root.context.getString(R.string.action_stop)
+        // Kosarken BEYAZ hapta "Durdur".
+        action.setText(R.string.action_stop)
+        action.setBackgroundResource(R.drawable.timer_overlay_action_bg)
+        action.setTextColor(ContextCompat.getColor(root.context, R.color.timer_overlay_action_ink))
     }
 
     private fun attachTouch(

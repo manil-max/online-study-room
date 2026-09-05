@@ -11662,3 +11662,49 @@ her zaman son seçili ders olarak varsayılan kalsın."*
   gövde saatinin donması olur, çip sistem kronometresinden akmaya devam eder.
 - Şerit About'tan kapatılınca servis bir sonraki komuta kadar boşta kartla
   kalır (dev seçeneği; ayrı küçük WP).
+
+## 2026-09-05 — KART SAMSUNG SAAT GİBİ + ŞERİT SAHİBİN ÇİZİMİ (WP-775)
+
+**Tetikleyen (sahip, cihazda, v79):** *"bu olmamış hiç"* — kartta çift saat
+(başlıkta kronometre 00:10, gövdede 00:09) ve düz metin. Sahip Paint'te
+çizdi: tek yatay hap, solda logo, ortada büyük `MM:SS`, sağda Başlat/Durdur.
+Önizleme artifact'ında (üç yüzey, iki kart seçeneği) **çipli kart (B)**,
+**52dp şerit** ve **boşta sarı düğme** seçildi; Samsung Saat'in canlı
+bildirimi referans gösterildi: "buna benzer olsun".
+
+### Teşhis (`Kodda doğrulandı`)
+- Çift saat: `setUsesChronometer(true)` başlıkta sistem kronometresini
+  çiziyor, WP-774 gövdeye ayrıca metin saat koymuştu. Kronometre kapatılırsa
+  çip saati kaybederdi (çip `when` kronometresinden okuyor) — çözüm, çip
+  metnini saatin kendisi yapmak: kart zaten saniyede bir yenileniyor.
+- Hap tasarımı bildirim kartına konamaz (özel görünüm terfiyi düşürür);
+  şeritte birebir mümkün.
+
+### WP-775 — Değişen (lider)
+- `StudyTimerService.kt` terfi eden kart: **başlık = `MM:SS`** (büyük),
+  **gövde = durum satırı** (`promotedCardStatusLine`: ders adı → yoksa
+  "Odaklanıyorsun" → molada "Mola sürüyor"; Samsung'un "No laps completed"
+  karşılığı), **çip metni = aynı saat** (`setShortCriticalText(clock)`),
+  `setUsesChronometer(false)` + `setShowWhen(false)` → üst satır ve çift saat
+  gitti. Tick artık ekran kapalıyken de gönderir (5 sn; AOD/Now Bar en fazla
+  5 sn geride), açıkken 1 sn.
+- Şerit (`timer_overlay_pill.xml`, `TimerOverlay.kt`): sahibin çizimi — 52dp
+  hap, 26dp logo, 22sp kalın saat, **metinli** hap düğme: koşarken beyaz
+  "Durdur" (mavi yazı), boşta sarı "Başlat" (`timer_overlay_action_idle_bg`,
+  `#FFD166` / `#1A1F33`, 11.9:1). `ic_overlay_play/stop` silindi.
+- Önizleme: `sayac-hapi-onizleme.html` (artifact) — üç yüzey, seçilen kart
+  işaretli.
+
+### Testler (iddialar ÖLÇÜMLE yön değiştirdi)
+- `verified_timer_bridge_contract_test.dart`: `.setContentTitle(clock)` +
+  `.setShortCriticalText(clock)` şart, `.setUsesChronometer(true)` YASAK
+  (v79 çift saat); fixture testi de aynı yöne çevrildi (`countDown =
+  plan.countDown,` `cardClockText`e girer; zengin panel kendi Chronometer'i).
+- `timer_card_clock_overlay_wp774_test.dart`: başlık saat, durum satırı,
+  metinli düğme (`R.string.action_start/stop`, idle bg), 52dp/22sp.
+- `TimerLiveUpdateWp753Test`: `promoted_card_status_line_...` (5 dal).
+- Timer+overlay JVM 86/86; bridge + updater + WP-774 Dart 84/84; l10n OK.
+
+### Cihazda ölçülmeyen
+- Kartın One UI'da Samsung Saat'inki gibi çizildiği; çipin metin saatle
+  (kronometre yok) akıcı kaldığı; AOD'de 5 sn gecikme. Sahip v80'de ölçecek.

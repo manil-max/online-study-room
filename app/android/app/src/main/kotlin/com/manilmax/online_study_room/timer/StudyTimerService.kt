@@ -94,7 +94,11 @@ internal const val PROMOTION_PROBE_DELAY_MS = 400L
 /** WP-774: terfi eden kartin govde saati bu aralikla yenilenir (ekran acikken). */
 internal const val CARD_TICK_MS = 1_000L
 
-/** WP-774: ekran kapaliyken yalniz durum yoklanir, bildirim gonderilmez. */
+/**
+ * WP-774/775: ekran kapaliyken kart 5 sn'de bir tazelenir. WP-775'ten beri
+ * cipin saati de bu metinden geldigi icin (kronometre yok) ekran kapaliyken
+ * de gondermek gerekir: AOD / Now Bar en fazla 5 sn geride kalir.
+ */
 internal const val CARD_IDLE_POLL_MS = 5_000L
 
 /**
@@ -221,27 +225,23 @@ internal fun useRichPanel(override: Boolean?, mayPromote: Boolean): Boolean =
 internal val TIMER_NOTIFICATION_SMALL_ICON: Int = R.drawable.ic_stat_focus_camp
 
 /**
- * Terfi eden (Live Update) kartin basligi. **Saf.**
+ * Terfi eden (Live Update) kartin DURUM SATIRI (saatin altindaki metin). **Saf.**
  *
- * 🔴 WP-772 (sahip, cihazda): "You're focusing" cumlesi istenmiyor; kartta
- * sayac + dugme yapisi isteniyor. Terfi eden bildirim ozel gorunum
- * TASIYAMAZ, yani buyuk sayacli v43 paneli bu yolda imkansiz. Elimizdeki en
- * yakin yapi: baslik = ders adi, sag ustte sistemin canli kronometresi,
- * altta sistemin cizdigi tek dugme. Aciklama satiri yok.
- *
- * Baslik BOS OLAMAZ (resmi sart: "Must have a contentTitle set"); ders
- * secili degilse uygulama etiketi yazilir. Molada faz etiketi yazar ki mola
- * ile odak ayirt edilsin.
+ * 🔴 WP-775 (sahip, cihazda, v79): kart Samsung Saat'in canli bildirimi gibi
+ * olsun -- buyuk saat baslikta, altinda tek satir durum, tek dugme. Bu satir
+ * ders adidir; ders yoksa odak cumlesi, molada mola cumlesi (Samsung'un "No
+ * laps completed" satirinin karsiligi). WP-772'de bu metin BASLIKTI; baslik
+ * artik saatin kendisi.
  */
-internal fun promotedCardTitle(
+internal fun promotedCardStatusLine(
     isBreak: Boolean,
     subjectName: String?,
-    appLabel: String,
+    focusLabel: String,
     breakLabel: String,
 ): String {
     if (isBreak) return breakLabel
     val subject = subjectName?.trim().orEmpty()
-    return if (subject.isEmpty()) appLabel else subject
+    return if (subject.isEmpty()) focusLabel else subject
 }
 
 /**
@@ -937,8 +937,8 @@ class StudyTimerService : Service() {
      * WP-774 (sahip, cihazda): Live Update karti "bos bildirim gibi" duruyordu.
      * Govde satirina `MM:SS` yazilir ve kart saniyede bir SESSIZCE yenilenir
      * (`onlyAlertOnce`; ses/titresim yok). Yalniz terfi eden yolda -- zengin
-     * panel kendi Chronometer'ini cizer -- ve yalniz EKRAN ACIKKEN: ekran
-     * kapaliyken 5 sn'de bir yalniz durum yoklanir, bildirim gonderilmez.
+     * panel kendi Chronometer'ini cizer. Ekran acikken saniyede bir, kapaliyken
+     * 5 sn'de bir (WP-775: cipin saati de bu metinden gelir).
      */
     private fun scheduleCardTick(startedAtMs: Long) {
         mainHandler.removeCallbacksAndMessages(CARD_TICK_TOKEN)
@@ -970,10 +970,10 @@ class StudyTimerService : Service() {
         val interactive = runCatching {
             (getSystemService(Context.POWER_SERVICE) as? PowerManager)?.isInteractive ?: true
         }.getOrDefault(true)
-        if (interactive) {
-            runCatching {
-                notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
-            }
+        // WP-775: kronometre yok, cipin saati de bu metin; ekran kapaliyken de
+        // gonderilir (5 sn'de bir), acikken saniyede bir.
+        runCatching {
+            notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
         }
         HandlerCompat.postDelayed(
             mainHandler,
@@ -1115,32 +1115,31 @@ class StudyTimerService : Service() {
                 .setCustomBigContentView(custom)
             return builder.build()
         }
-        // 🔴 WP-772 (sahip, cihazda): "You're focusing" gitti. Baslik ders adi
-        // (yoksa uygulama etiketi, molada faz etiketi); aciklama satiri YOK;
-        // sayaci sistemin kronometresi, dugmeyi sistem cizer. Buyuk sayacli
-        // panel bu yolda imkansiz: ozel gorunum terfiyi dusurur.
+        // 🔴 WP-775 (sahip, cihazda, v79): kart Samsung Saat'in canli bildirimi
+        // gibi -- BUYUK saat baslikta, altinda ders adi, tek dugme. v79'daki
+        // cift saat (basliktaki kronometre + govdedeki metin) gitti: kronometre
+        // ve `when` gosterimi KAPALI. Saat hem kartta hem cipte BIZIM metnimiz
+        // (`shortCriticalText`); `scheduleCardTick` her saniye tazeler. Buyuk
+        // sayacli ozel panel bu yolda imkansiz: ozel gorunum terfiyi dusurur.
+        val clock = cardClockText(
+            nowMs = System.currentTimeMillis(),
+            startedAtMs = startedAtMs,
+            countDown = plan.countDown,
+            totalSeconds = plan.totalSeconds,
+        )
         builder
-            .setContentTitle(
-                promotedCardTitle(
+            .setContentTitle(clock)
+            .setContentText(
+                promotedCardStatusLine(
                     isBreak = isBreak,
                     subjectName = runningSubjectName(p),
-                    appLabel = applicationInfo.loadLabel(packageManager).toString(),
-                    breakLabel = getString(R.string.timer_subtext_break),
+                    focusLabel = getString(R.string.timer_focusing_title),
+                    breakLabel = getString(R.string.timer_break_title),
                 ),
             )
-            // WP-774: govde satiri canli saat; `scheduleCardTick` tazeler.
-            .setContentText(
-                cardClockText(
-                    nowMs = System.currentTimeMillis(),
-                    startedAtMs = startedAtMs,
-                    countDown = plan.countDown,
-                    totalSeconds = plan.totalSeconds,
-                ),
-            )
-            .setUsesChronometer(true)
-            .setWhen(plan.whenMs)
-            .setShowWhen(true)
-            .setChronometerCountDown(plan.countDown)
+            .setShortCriticalText(clock)
+            .setShowWhen(false)
+            .setUsesChronometer(false)
             .setRequestPromotedOngoing(plan.requestPromotedOngoing)
             // 🔴 WP-759 kusur 5: ikon `0` idi. Bildirim golgesi Android 7'den
             // beri eylem ikonunu ZATEN cizmez, ama Wear/Auto, eski surumler ve
@@ -1152,10 +1151,9 @@ class StudyTimerService : Service() {
                 else getString(R.string.action_stop),
                 if (isBreak) endBreakActionPending() else stopActionPending(),
             )
-        // 🔴 WP-772: `setShortCriticalText` BILEREK cagrilmiyor. Cip metin
-        // verilirse saati gizler; sahip cipte sayac istiyor. Kural planda
-        // (`shortCriticalTextRes = 0`) ve burada birlikte kilitli; nobetci
-        // `TimerLiveUpdateWp753Test` + Dart sozlesme testi.
+        // 🔴 WP-772 -> WP-775: cip metni SABIT bir etiketse saati gizler (v77
+        // "Focus"). Artik metin saatin KENDISI ve her saniye tazelenir; plandaki
+        // `shortCriticalTextRes` yine 0 (faz etiketi cipe hic girmez).
         when (plan.style) {
             TimerNotificationStyle.PROGRESS -> builder.setStyle(
                 NotificationCompat.ProgressStyle()

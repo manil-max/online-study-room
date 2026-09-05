@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WP-774: seridin icindeki tek dugmenin (Durdur/Baslat) hapi. Mavi zeminin
-     ustunde yari saydam beyaz: dugme oldugu belli, ama cipin sadeligini
-     bozmayacak kadar hafif. -->
+<!-- WP-775: seridin icindeki tek dugmenin KOSARKEN hapi: beyaz, mavi yazi. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
+    android:shape="rectangle">
     <solid android:color="@color/timer_overlay_action_fill" />
+    <corners android:radius="18dp" />
 </shape>

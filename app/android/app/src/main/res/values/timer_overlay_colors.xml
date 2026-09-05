@@ -10,17 +10,21 @@
      acik golgede kayboldu; WP-753 tema niteligi yazdi, koyu golgede kayboldu.
      Burada o sarkac hic baslamasin diye cift bastan sabit.
 
-     WP-774 (sahip, cihazda): serit Live Update cipi gibi gorunsun. Cipin
-     rengi sistem temasindan gelir; biz onun mavi tonunu sabitledik.
-     Olculen oranlar:
-       ink / fill = 5.5:1 (beyaz / #2F5BE5)
-       dugme: beyaz simge, %20 beyaz saydam zemin (mavi ustunde ayni oran) -->
+     WP-775 (sahibin cizimi, onizlemede onaylandi): zemin cip mavisi, saat ve
+     logo beyaz; dugme kosarken BEYAZ hap / mavi yazi, bosta SARI hap / koyu
+     yazi (Baslat ile Durdur bir bakista ayrissin). Olculen oranlar:
+       ink / fill              = 5.5:1  (beyaz / #2F5BE5)
+       action_ink / action_fill = 5.5:1  (#2F5BE5 / beyaz)
+       idle_ink / idle_fill     = 11.9:1 (#1A1F33 / #FFD166) -->
 <resources>
     <!-- Seridin OPAK zemini: cip mavisi. -->
     <color name="timer_overlay_fill">#2F5BE5</color>
-    <!-- Logo, sayac rakamlari ve dugme simgesi. -->
+    <!-- Logo ve sayac rakamlari. -->
     <color name="timer_overlay_ink">#FFFFFF</color>
-    <!-- Dugmenin yari saydam hapi: mavi ustunde hafif aydinlik. -->
-    <color name="timer_overlay_action_fill">#33FFFFFF</color>
-    <color name="timer_overlay_action_ink">#FFFFFF</color>
+    <!-- Kosarken dugme: beyaz hap, mavi yazi. -->
+    <color name="timer_overlay_action_fill">#FFFFFF</color>
+    <color name="timer_overlay_action_ink">#2F5BE5</color>
+    <!-- Bosta dugme: sari hap, koyu yazi. -->
+    <color name="timer_overlay_action_idle_fill">#FFD166</color>
+    <color name="timer_overlay_action_idle_ink">#1A1F33</color>
 </resources>

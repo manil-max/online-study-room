@@ -158,19 +158,21 @@ void main() {
     expect(service, contains('NotificationCompat.ProgressStyle()'));
     expect(service, contains('TimerNotificationStyle.STANDARD'));
 
-    // 🔴 WP-772 — İDDİA YÖN DEĞİŞTİRDİ (cihazda ölçüldü, S23 / One UI 8.5).
-    // Çip `shortCriticalText` verilirse SAATİ DEĞİL METNİ çizer: bizim çipte
-    // "Focus" yazıyordu, Samsung Saat'in çipinde `00:05` akıyordu. Sahip
-    // sayaç istiyor; metin hiç gönderilmez, çip `when` kronometresini çizer.
+    // 🔴 WP-772 → WP-775 — iddia İKİNCİ KEZ yön değiştirdi (cihazda ölçüldü).
+    // WP-772: sabit "Focus" metni çipte saati gizliyordu, metin kaldırıldı.
+    // WP-775: kart Samsung Saat gibi olsun; başlıktaki kronometre + gövde
+    // çift saat üretiyordu. Kronometre kapatıldı, saat artık BİZİM metnimiz
+    // ve her saniye tazeleniyor: aynı `clock` hem başlık hem çip metni.
+    expect(service, contains('.setContentTitle(clock)'));
+    expect(service, contains('.setShortCriticalText(clock)'));
     expect(
       service,
-      isNot(contains('.setShortCriticalText(')),
+      isNot(contains('.setUsesChronometer(true)')),
       reason:
-          'Cip metni saati gizler (WP-772 cihaz olcumu). Kronometre kipinde '
-          'metin gonderilmez; geri gelirse cipte sayac yerine yazi cikar.',
+          'Kronometre geri gelirse baslikta ikinci bir saat belirir (v79 kusuru).',
     );
-    // Terfi eden kartın başlığı saf karardan gelir: ders adı / etiket.
-    expect(service, contains('promotedCardTitle('));
+    // Saatin altındaki durum satırı saf karardan gelir: ders adı / faz cümlesi.
+    expect(service, contains('promotedCardStatusLine('));
 
     // Durum çubuğu ikonu monokrom; renkli launcher ikonu değil.
     // WP-772: jenerik saat kadranı yerine uygulamanın logosu (kamp ateşi
@@ -328,9 +330,15 @@ void main() {
     expect(fixture, contains('"hourBoundaryFormat"'));
     expect(service, isNot(contains('"00:%s"')));
     expect(service, isNot(contains('chronometerFormatHandler')));
-    expect(service, contains('.setUsesChronometer(true)'));
-    // Geri sayımda `when` GELECEKTEDİR; çip canlı sayıyı oradan çizer.
-    expect(service, contains('.setChronometerCountDown(plan.countDown)'));
+    // 🔴 WP-775 — iddia yön değiştirdi (sahip, cihazda, v79): terfi eden
+    // kartta sistem kronometresi KAPALI. Açıkken başlıkta ikinci bir saat
+    // beliriyordu (çift saat). Saat ve geri sayım artık saf `cardClockText`
+    // ile hesaplanır ve her saniye tazelenir; geri sayım yönü `plan.countDown`
+    // ile o fonksiyona girer. Zengin panel kendi Chronometer'ini (RemoteViews)
+    // çizmeye devam eder.
+    expect(service, isNot(contains('.setUsesChronometer(true)')));
+    expect(service, contains('countDown = plan.countDown,'));
+    expect(service, contains('.setChronometerCountDown(R.id.notif_timer_elapsed'));
     // WP-558: tani ekstralari her bildirime yaziliyordu, okuyucusu yoktu.
     expect(service, isNot(contains('EXTRA_PROMOTED_NOW_BAR')));
     expect(service, isNot(contains('EXTRA_TIMER_PRESENTATION')));
