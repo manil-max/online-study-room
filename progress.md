@@ -12001,3 +12001,21 @@ kodda yapılabilecek bir şey YOK; bu bir kusur değil, o yolun sınırı.
 ### Cihazda ölçülmeyen (sahip v81'de bakacak)
 - Kapananlar çipi + çözülen vakanın listeden gitmesi (asıl şikâyet).
 - Genişletilmiş bildirimde 56sp saat — yalnız zengin panel kullanıcılarında.
+
+### 2026-09-06 — Live Update'te gölge saati: ölçüldü, büyütülemez (kaynak doğrulandı)
+
+Sahip: *"normal saat uygulamasında kocaman kronometre varken bizimkinde hâlâ
+küçük."* Web'den doğrulandı (developer.android.com live-update + metric-style):
+
+- Android 16 terfi eden bildirimde izinli stiller **yalnız** Standard, BigText,
+  Call, Progress, MetricStyle; `customContentView` ve BigPicture **yasak**;
+  başlık boyutu sistemin. Chronometer yalnız **çipte** gösterilir.
+- Samsung Saat'in gölgedeki büyük rakamları **özel RemoteViews** — One UI
+  8.0'da Saat Now Bar'da bile değil (8.5 ile geliyor). Yani bizim **zengin
+  panel** modumuzla aynı sınıf: çip yok, büyük saat var.
+- "Büyük değer" için tasarlanan şablon `Notification.MetricStyle`
+  (`Metric.TimeDifference` kendi sayar) **Android 17 / API 37**. S23'te yok.
+
+Karar: kod değişmedi. Live Update modunda gölge saati büyütülemez; büyük saat
+isteyen Geliştirici → "Live Update sayaç bildirimi" anahtarını **kapatır**
+(zengin panel, WP-793 56sp). Android 17 gelince MetricStyle yolu yazılacak.
