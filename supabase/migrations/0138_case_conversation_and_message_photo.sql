@@ -58,12 +58,15 @@
 --   -- `0090`daki govdeyi geri kur.
 --   drop trigger if exists feedback_tickets_stamp_case_party on public.feedback_tickets;
 --   drop function if exists public._stamp_feedback_ticket_case_party();
+--   drop function if exists public.case_report_reported_user(uuid);
 --   drop function if exists public.assert_ticket_message_attachment_allowed(text);
 --   drop policy if exists ticket_message_attachments_insert_own on storage.objects;
 --   drop policy if exists ticket_message_attachments_select_participant on storage.objects;
 --   alter table public.feedback_ticket_messages drop column if exists attachment_path;
 --   alter table public.feedback_tickets drop column if exists case_report_id;
 --   alter table public.feedback_tickets drop column if exists case_party;
+--   -- (uq_feedback_tickets_reported_channel ve idx_feedback_tickets_case_report
+--   --  bu iki kolonla birlikte dusar; ayrica drop gerekmez.)
 --   -- `_seed_feedback_ticket_initial_message` ve
 --   -- `_enqueue_support_ticket_admin_push` govdelerini `0103`/`0090` haline dondur.
 --   -- Bucket ve objeler otomatik silinmez; konusma kaniti oldugu icin elle
