@@ -261,7 +261,17 @@ class AppNotificationCoordinator {
     var body =
         message.notification?.body ??
         (message.data['body'] ?? '').toString().trim();
-    final l10n = await loadSystemLocalizations();
+    // 🔴 WP-779: `loadSystemLocalizations()` DEGIL. O, `activeAppLocale` adli
+    // degisken bir global'i okur ve arka plan isolate'i AYRI bir bellek
+    // alanidir: orada global hic tohumlanmaz, cihazin dilinde kalir. Surum
+    // bildirimi tam da uygulama KAPALIYKEN duser, yani her zaman o yoldan
+    // gecer. Sonuc: uygulamasini Ingilizce yapmis ama cihazi Turkce olan
+    // kullanici bildirimi Turkce alirdi -- WP-773'un kapatmak istedigi
+    // kusurun ta kendisi, yalniz baska bir kapidan.
+    //
+    // `prefs` iki satir yukarida zaten elde; kullanicinin DISKTEKI tercihi
+    // oradan okunur ve global de ayni turda tohumlanir.
+    final l10n = await loadAppLocalizations(prefs);
     if (type == 'update') {
       // WP-773 (sahip, cihazda): uygulama Ingilizceyken surum bildirimi
       // Turkce geliyordu. Sunucu payload'i `release.yml`den SABIT Turkce
