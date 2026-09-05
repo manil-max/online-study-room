@@ -11663,7 +11663,12 @@ her zaman son seçili ders olarak varsayılan kalsın."*
 - Şerit About'tan kapatılınca servis bir sonraki komuta kadar boşta kartla
   kalır (dev seçeneği; ayrı küçük WP).
 
-## 2026-09-05 — KART SAMSUNG SAAT GİBİ + ŞERİT SAHİBİN ÇİZİMİ (WP-775)
+## 2026-09-05 — KART SAMSUNG SAAT GİBİ + ŞERİT SAHİBİN ÇİZİMİ (WP-790)
+
+> 🔴 Numara çakışması: bu kart ve commit `585c2a71` **WP-775** adıyla yazıldı;
+> aynı anda admin lane'i WP-775…WP-780'i kullanıyordu (`650bcd5f` "WP-775:
+> vaka detay sayfası"). Bu iş **WP-790** olarak anılır; commit başlığı
+> değiştirilmedi (paylaşılan dizinde `--amend` yasak).
 
 **Tetikleyen (sahip, cihazda, v79):** *"bu olmamış hiç"* — kartta çift saat
 (başlıkta kronometre 00:10, gövdede 00:09) ve düz metin. Sahip Paint'te
@@ -11680,7 +11685,7 @@ bildirimi referans gösterildi: "buna benzer olsun".
 - Hap tasarımı bildirim kartına konamaz (özel görünüm terfiyi düşürür);
   şeritte birebir mümkün.
 
-### WP-775 — Değişen (lider)
+### WP-790 — Değişen (lider)
 - `StudyTimerService.kt` terfi eden kart: **başlık = `MM:SS`** (büyük),
   **gövde = durum satırı** (`promotedCardStatusLine`: ders adı → yoksa
   "Odaklanıyorsun" → molada "Mola sürüyor"; Samsung'un "No laps completed"
