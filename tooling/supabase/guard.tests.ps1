@@ -137,7 +137,7 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 🔴 pgTAP YERELDE KOSMADI: Docker motoru bu hostta kalkmiyor. tests/055 ve
 # 056 yazildi ama kosturulmadi; bu OLCEMEDIM'dir, yesil degildir. Ilk gercek
 # replay CI database-gates icindedir.
-Assert-Equal $contract.staging.migration_head '0136' 'staging hedefi 0136: WP-739 duraklamali Alevli Seri'
+Assert-Equal $contract.staging.migration_head '0138' 'staging hedefi 0138: 0137 admin_user_insight + 0138 case_conversation_and_message_photo'
 # 2026-08-19: sahip yayin emrini verdi ("gonder sen"); staging apply kapisi
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
