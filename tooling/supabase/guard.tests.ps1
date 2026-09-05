@@ -142,7 +142,7 @@ Assert-Equal $contract.staging.migration_head '0138' 'staging hedefi 0138: 0137 
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0137+0138 staging apply icin kapi ACIK; yerel replay Docker bloke oldugu icin SQL ilk kez burada kosacak'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0137+0138 staging apply KOSTU (run 33977602736, post-check 0138|0138|0138) ve kapi yeniden kilitlendi'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -215,10 +215,10 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
-Assert-Equal $contract.production.migration_head '0136' 'production hedefi 0136: WP-739 duraklamali Alevli Seri'
+Assert-Equal $contract.production.migration_head '0138' 'production hedefi 0138: 0137 admin_user_insight + 0138 case_conversation_and_message_photo'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0136 production apply sonrasi yeniden kilitli'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0137+0138 production apply icin kapi ACIK; staging ONCE kanitlandi (run 33977602736)'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a

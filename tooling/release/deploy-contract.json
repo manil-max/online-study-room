@@ -3,13 +3,13 @@
   "local_migration_head": "0138",
   "staging": {
     "migration_head": "0138",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "OPEN 2026-09-05 for 0137 (admin_user_insight) and 0138 (case_conversation_and_message_photo). Sahip GO: 'migrationlari da uygula'. 🔴 Bu iki dosya HIC KOSULMADI -- yerel replay bu makinede Docker bloke oldugu icin yapilamadi, yani SQL'in gercekten calistigi ILK KEZ burada olculecek. Staging bu yuzden atlanmiyor. re-lock: staging apply biter bitmez deploy_enabled tekrar false yazilir ve head 0138'e sabitlenir."
+    "hold_reason": "RE-LOCKED 2026-09-05 after the 0137+0138 staging apply SUCCEEDED: run 33977602736, post-check printed 0138|0138|0138 for local|remote|file and the purge health row read configured / 0 queued / 0 stuck. Dry-run 33976795633 was green first. Migration 0137_admin_user_insight.sql and 0138_case_conversation_and_message_photo.sql are live on rskiuyjabyzelqododpa."
   },
   "production": {
-    "migration_head": "0136",
-    "deploy_enabled": false,
+    "migration_head": "0138",
+    "deploy_enabled": true,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED for apply on 2026-08-22 after the 0136 production apply SUCCEEDED: run 32576116205, post-check printed 0136|0136|0136. Migration 0136_fire_streak_equals_paused_streak.sql was pushed to jiphfrpzvkpzubbkhrwb. Applied with NO BACKUP (free plan, no PITR) - the owner's standing accepted risk from 2026-07-27. release_enabled is now OPEN for the v71 stable tag on this same commit; the release GO string is separate from the apply GO string and must be typed fresh. RE-LOCK release_enabled right after the Release Orchestrator run is read. EARLIER TODAY: a first apply attempt (runs 32575062568 / 32575064431) died at 01-explicit-link with Unauthorized because SUPABASE_ACCESS_TOKEN was set at REPOSITORY level while the protected job reads the ENVIRONMENT-scoped secret; databases were never touched."
+    "hold_reason": "OPEN 2026-09-05 for 0137 (admin_user_insight) and 0138 (case_conversation_and_message_photo). Sahip GO: 'migrationlari da uygula isi bitir'. Staging is PROVEN first, deliberately: dry-run 33976795633 green, apply run 33977602736 printed 0138|0138|0138 and purge health configured / 0 queued / 0 stuck. Applied with NO BACKUP (free plan, no PITR) - the owner's standing accepted risk from 2026-07-27. release_enabled stays OPEN for the next stable tag on this same commit; the release GO string is separate from the apply GO string. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
   }
 }
