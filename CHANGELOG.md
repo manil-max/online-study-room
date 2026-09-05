@@ -4,6 +4,42 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v77 / 1.0.77+77] - 2026-09-05
+
+> **Durum çubuğundaki canlı sayaç (dinamik panel) dokuz turdan sonra
+> çözüldü: sorun uygulamada değil, Samsung'un onay listesindeydi. Çipte artık
+> "Focus" yazısı değil akan sayaç ve solunda logomuz var.**
+
+### Öne çıkanlar
+- **Çipte sayaç akıyor.** Live Update çipi eskiden "Focus" yazıyordu; o yazı
+  saati gizliyordu. Artık odakta yukarı, pomodoro ve molada aşağı sayan canlı
+  saat görünür, tıpkı sistemin kendi kronometresi gibi.
+- **Çipte ve bildirim başlığında uygulamanın logosu.** Jenerik saat kadranı
+  gitti; yerinde kamp ateşi silueti var.
+- **Live Update kartı sadeleşti.** "Odaklanıyorsun" cümlesi ve açıklama satırı
+  kaldırıldı. Başlıkta ders adı (ders seçilmemişse uygulama adı, molada
+  "Mola"), sağ üstte canlı sayaç, altta tek düğme.
+
+### Neden dokuz tur çıkmadı
+- Uygulama Android'in canlı bildirim şartlarının hepsini karşılıyordu ve
+  sistem terfiyi veriyordu. Samsung, Now Bar'ın "Live notifications"
+  listesini yalnızca kendi onayladığı uygulamalardan kuruyor; onaysız bir
+  uygulama ancak Developer options'taki "Live notifications for all apps"
+  anahtarı açıkken çizilir. Anahtar açılınca çip aynı kodla çıktı.
+
+### Doğrulama
+- Sahibin cihazında (Galaxy S23, One UI 8.5) çip görüldü; çip içeriği ve
+  logo bu sürümde değişti, cihazda yeniden bakılacak.
+- Yerel tam kalite kapısı yeşil; veritabanı değişmedi.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- **Çip yalnız Live Update seçeneği ve Samsung'da geliştirici anahtarıyla
+  görünür.** Varsayılan davranış değişmedi: herkes bugünkü zengin paneli
+  görmeye devam eder. Herkese açılması Samsung'un uygulamayı listesine
+  almasına bağlı.
+- Pomodoro kartındaki ilerleme çubuğu koşu boyunca ilerlemiyor.
+- Yüzen şerit artık gereksiz; kapalı gelmeye devam ediyor.
+
 ## [v76 / 1.0.76+76] - 2026-08-27
 
 > **Silinen sayac bildirimi artik gorunmeden kosmuyor. Istatistiklerde iki

@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.77",
+      "buildNumber": 77,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v77: WP-772 chip clock + logo icon + promoted card title; root cause = Samsung allowlist",
+      "highlights": [
+        "Root cause (device-verified, S23 / One UI 8.5): the payload met every Live Update eligibility rule and the system set FLAG_PROMOTED_ONGOING; Samsung's Now Bar 'Live notifications' list is an approval allowlist (Samsung support Aug 2026; Aviate 'approved... no more developer options'; Kakao T package spoof). Unapproved apps draw only with Developer options > 'Live notifications for all apps'. With the toggle on, the chip appeared with unchanged code.",
+        "WP-772: shortCriticalText was hiding the clock (our chip 'Focus' vs Samsung Clock '00:05'). Promoted paths now send no chip text; the chip draws the `when` chronometer (up for stopwatch, down for targeted modes). WP-753's 'when in the past hides the chip time' reading was wrong.",
+        "WP-772: small icon is the launcher campfire's white alpha silhouette (`drawable-*dpi/ic_stat_focus_camp.png`, 5 densities, spark islands dropped); `ic_stat_focus_timer.xml` deleted.",
+        "WP-772: promoted card title from pure `promotedCardTitle` (subject name from `subjects_cache` mirror, else app label, 'Break' on break); no content text; system chronometer + system action. The v43 big-clock panel is impossible on the promoted path (RemoteViews drops promotion)."
+      ],
+      "fixes": [
+        "Guardians flipped BY MEASUREMENT: `TimerLiveUpdateWp753Test` four assertions to `shortCriticalTextRes == 0`, test renamed `every_promotable_path_sends_no_chip_text_so_the_chip_draws_the_clock`, new `promoted_card_title_...` test; Dart contract now forbids `.setShortCriticalText(` and requires `promotedCardTitle(` + `ic_stat_focus_camp`.",
+        "Line endings: StudyTimerService.kt was mixed in HEAD (469 CRLF + 786 LF); the editor had rewritten it all-CRLF. Untouched lines got their original endings back; `git diff --stat` equals `--ignore-cr-at-eol --stat` (141/58/22)."
+      ],
+      "notes": [
+        "Local full gate green (deno absent, 2 skipped). No migration change, head stays 0136.",
+        "Auto mode and the rich panel are unchanged: an ordinary Samsung user has the developer toggle off, so a promoted card would be a plain card without a chip.",
+        "Open: pomodoro ProgressStyle is posted once and never updated (needs ~30 s silent re-post); verdict stamp is fingerprint-bound and 'Automatic' does not clear it (3 unobserved probes stamp DENIED until the next firmware); `schedulePromotionProbe` passes `mayPromote = true` (false DENIED when permission is off); overlay strip now redundant; Samsung Now Bar review is a business step.",
+        "NOT DEVICE-VERIFIED in this build: the new chip content (clock instead of text) and the logo icon; the owner tests on the stable update. Prior handoff notes claiming 'AOSP path closed on this device' and '36.1 required' were wrong."
+      ],
+      "titleEn": "v77: WP-772 chip clock + logo icon + promoted card title; root cause = Samsung allowlist",
+      "highlightsEn": [
+        "Root cause (device-verified, S23 / One UI 8.5): the payload met every Live Update eligibility rule and the system set FLAG_PROMOTED_ONGOING; Samsung's Now Bar 'Live notifications' list is an approval allowlist (Samsung support Aug 2026; Aviate 'approved... no more developer options'; Kakao T package spoof). Unapproved apps draw only with Developer options > 'Live notifications for all apps'. With the toggle on, the chip appeared with unchanged code.",
+        "WP-772: shortCriticalText was hiding the clock (our chip 'Focus' vs Samsung Clock '00:05'). Promoted paths now send no chip text; the chip draws the `when` chronometer (up for stopwatch, down for targeted modes). WP-753's 'when in the past hides the chip time' reading was wrong.",
+        "WP-772: small icon is the launcher campfire's white alpha silhouette (`drawable-*dpi/ic_stat_focus_camp.png`, 5 densities, spark islands dropped); `ic_stat_focus_timer.xml` deleted.",
+        "WP-772: promoted card title from pure `promotedCardTitle` (subject name from `subjects_cache` mirror, else app label, 'Break' on break); no content text; system chronometer + system action. The v43 big-clock panel is impossible on the promoted path (RemoteViews drops promotion)."
+      ],
+      "fixesEn": [
+        "Guardians flipped BY MEASUREMENT: `TimerLiveUpdateWp753Test` four assertions to `shortCriticalTextRes == 0`, test renamed `every_promotable_path_sends_no_chip_text_so_the_chip_draws_the_clock`, new `promoted_card_title_...` test; Dart contract now forbids `.setShortCriticalText(` and requires `promotedCardTitle(` + `ic_stat_focus_camp`.",
+        "Line endings: StudyTimerService.kt was mixed in HEAD (469 CRLF + 786 LF); the editor had rewritten it all-CRLF. Untouched lines got their original endings back; `git diff --stat` equals `--ignore-cr-at-eol --stat` (141/58/22)."
+      ],
+      "notesEn": [
+        "Local full gate green (deno absent, 2 skipped). No migration change, head stays 0136.",
+        "Auto mode and the rich panel are unchanged: an ordinary Samsung user has the developer toggle off, so a promoted card would be a plain card without a chip.",
+        "Open: pomodoro ProgressStyle is posted once and never updated (needs ~30 s silent re-post); verdict stamp is fingerprint-bound and 'Automatic' does not clear it (3 unobserved probes stamp DENIED until the next firmware); `schedulePromotionProbe` passes `mayPromote = true` (false DENIED when permission is off); overlay strip now redundant; Samsung Now Bar review is a business step.",
+        "NOT DEVICE-VERIFIED in this build: the new chip content (clock instead of text) and the logo icon; the owner tests on the stable update. Prior handoff notes claiming 'AOSP path closed on this device' and '36.1 required' were wrong."
+      ]
+    },
+    {
       "versionName": "1.0.76",
       "buildNumber": 76,
       "channel": "stable",

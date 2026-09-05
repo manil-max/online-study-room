@@ -3,6 +3,44 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.77",
+      "buildNumber": 77,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v77: çipte sayaç akıyor, logo çipte, dinamik panelin sırrı çözüldü",
+      "highlights": [
+        "Durum çubuğundaki canlı çipte artık \"Focus\" yazısı değil akan sayaç var: odakta yukarı, pomodoro ve molada aşağı sayar. Yazı saati gizliyordu.",
+        "Çipte ve bildirim başlığında jenerik saat kadranı yerine uygulamanın logosu (kamp ateşi silueti) var.",
+        "Live Update kartı sadeleşti: \"Odaklanıyorsun\" cümlesi ve açıklama satırı gitti; başlıkta ders adı, sağ üstte canlı sayaç, altta tek düğme.",
+        "Dinamik panelin dokuz turdur çıkmamasının sebebi bulundu: uygulama doğruydu, Samsung yalnızca kendi onayladığı uygulamaları Now Bar'a alıyor. Geliştirici anahtarı açılınca çip aynı kodla çıktı."
+      ],
+      "fixes": [
+        "Çipte \"Focus\" yazısı sayacı gizliyordu.",
+        "Bildirimin küçük ikonu sistemin saat ikonuyla karışıyordu."
+      ],
+      "notes": [
+        "Çip yalnız Hakkında'daki Live Update seçeneği ve Samsung'da Developer options > \"Live notifications for all apps\" açıkken görünür. Varsayılan davranış değişmedi; herkes bugünkü zengin paneli görmeye devam eder.",
+        "Pomodoro kartındaki ilerleme çubuğu koşu boyunca ilerlemiyor; sonraki sürümde.",
+        "Yüzen şerit artık gereksiz; kapalı gelmeye devam ediyor."
+      ],
+      "titleEn": "v77: the chip shows the running clock, our logo in the chip, live panel mystery solved",
+      "highlightsEn": [
+        "The live status chip now shows the running clock instead of the word \"Focus\": counting up while focusing, counting down in pomodoro and breaks. The text was hiding the clock.",
+        "The chip and the notification header now use the app logo (campfire silhouette) instead of a generic clock face.",
+        "The Live Update card is simpler: the \"You're focusing\" line and the description are gone; the title is the subject name, the live clock sits top right, one button below.",
+        "Why the live panel never appeared: the app was correct all along. Samsung only admits apps it has approved to the Now Bar; with the developer toggle on, the chip appeared with the same code."
+      ],
+      "fixesEn": [
+        "The word \"Focus\" in the chip was hiding the clock.",
+        "The notification's small icon looked like the system clock icon."
+      ],
+      "notesEn": [
+        "The chip only appears with the Live Update option in About and, on Samsung, with Developer options > \"Live notifications for all apps\" enabled. The default behaviour is unchanged; everyone keeps today's rich panel.",
+        "The pomodoro card's progress bar does not advance during a run; next release.",
+        "The floating strip is now redundant; it still ships off."
+      ]
+    },
+    {
       "versionName": "1.0.76",
       "buildNumber": 76,
       "channel": "stable",
