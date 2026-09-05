@@ -4,6 +4,31 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v79 / 1.0.79+79] - 2026-09-05
+
+> **Canlı bildirim kartında sayaç geri geldi ve yüzen şerit artık durum
+> çubuğundaki çip gibi görünüyor; durunca kaybolmuyor.**
+
+### Öne çıkanlar
+- **Canlı bildirim kartında sayaç.** Live Update seçiliyken kart yalnızca ders
+  adını gösteriyor, boş gibi duruyordu. Artık gövdede `MM:SS` akıyor; bir
+  saati geçince `S:DD:SS`. Pomodoro ve molada kalan süre geri sayar.
+- **Yüzen şerit çip gibi.** Solda logo, ortada sayaç, sağda küçük tek düğme;
+  eski büyük turuncu düğme gitti.
+- **Şerit durunca kaybolmuyor.** Boşta `00:00` ve Başlat gösterir; aynı
+  düğme koşarken Durdur olur. Başlat, en son seçtiğin dersle ve seçili
+  modla başlar.
+
+### Doğrulama
+- Yerel tam kalite kapısı yeşil; veritabanı değişmedi.
+
+### Bu sürümde ÇÖZÜLMEYENLER
+- Kart saniyede bir sessizce yenileniyor; telefonun bunu kısması hâlinde
+  yalnızca karttaki sayaç donar, çipteki sayaç akmaya devam eder.
+- Şerit yalnızca gizli geliştirici bölümünden açılır; açıkken sayaç
+  durduğunda hazır kartı bildirimde kalır (şerit kapalıyken hiçbir şey
+  değişmedi).
+
 ## [v78 / 1.0.78+78] - 2026-09-05
 
 > **Güncelleme bildirimi artık telefonun dilinde geliyor ve güncelleme

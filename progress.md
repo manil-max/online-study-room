@@ -11639,6 +11639,18 @@ her zaman son seçili ders olarak varsayılan kalsın."*
   `git diff --stat` = `--ignore-cr-at-eol` (servis dosyası karışık sonlu,
   dokunulmayan satırlar korundu).
 
+### Kapı gerçeği
+- İlk tam kapı 25 kapı · 1 kırmızı (flutter analyze: test dosyasında tek
+  `prefer_interpolation` info; commit kapı bitmeden atılmıştı) → lint
+  düzeltmesi ayrı commit. **İkinci tam kapı (v79 dosyalarıyla, 2026-09-05):
+  25 kapı · 0 kırmızı · 4 atlandı** (deno, emülatör, Docker; CI'da koşar).
+  714 s. Veritabanı değişmedi, head `0136`.
+- v78 dersi: v78 ilk koşusu CI'da `release_notes_test.dart` ile düştü
+  ("commit listesi" kelimesi); notlar yalnız PowerShell sözleşmesiyle
+  sınanmıştı. Sözleşme stable+build≥78 notlarında aynı dört kelimeyi
+  yasaklıyor (sabotajla doğrulandı). Tag `v78` düzeltme commit'ine taşındı,
+  hiçbir artefakt yayınlanmamıştı.
+
 ### Cihazda ölçülmeyen
 - Saniyelik kart yenilemesinin One UI'da titreme/pil etkisi; çipin her
   yenilemede sabit kalması. Şeridin boşta gerçekten kalması ve Başlat'ın

@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.79",
+      "buildNumber": 79,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v79: WP-774 promoted card MM:SS ticker + chip-like persistent overlay",
+      "highlights": [
+        "WP-774: pure `cardClockText` (MM:SS / H:MM:SS, remaining in targeted modes, clamped at 0). Promoted card body carries it; `scheduleCardTick` re-posts silently every 1 s (onlyAlertOnce) only on the promoted path and only while `PowerManager.isInteractive`; screen off polls every 5 s without posting. Every stop path cancels the tick token.",
+        "WP-774: `TimerOverlay.shouldShow(enabled, permitted)` — running is no longer a condition; `show(running, ...)` binds either chronometer+stop or 00:00+play. One button sends ACTION_TOGGLE (idle start = widget path: rememberedSubjectId + nativeStartPlan). With the strip enabled+permitted the service stays foreground with the idle card (`keepAliveForOverlay`) so the window's process survives.",
+        "WP-774: overlay restyled like the chip: `ic_stat_focus_camp` logo, 15sp bold clock, 32dp translucent action; fill #2F5BE5 / ink white (5.5:1). `timer_overlay_stop_bg.xml` removed; `timer_overlay_action_bg` + `ic_overlay_play` added."
+      ],
+      "fixes": [
+        "Overlay header doc corrected: the 'Samsung draws nothing' diagnosis was replaced by the WP-772 finding (Now Bar allowlist + developer toggle)."
+      ],
+      "notes": [
+        "Local full gate green; no migration change, head stays 0136.",
+        "Guardians: TimerCardClockWp774Test (5), TimerOverlayWp764Test three-condition claim flipped to two by measurement, timer_card_clock_overlay_wp774_test.dart (3). Timer+overlay JVM 86/86; bridge contract 16/16.",
+        "NOT DEVICE-VERIFIED: 1 Hz card refresh behaviour on One UI (flicker/throttle), idle overlay persistence, start-from-strip subject. Owner tests on the stable update."
+      ],
+      "titleEn": "v79: WP-774 promoted card MM:SS ticker + chip-like persistent overlay",
+      "highlightsEn": [
+        "WP-774: pure `cardClockText` (MM:SS / H:MM:SS, remaining in targeted modes, clamped at 0). Promoted card body carries it; `scheduleCardTick` re-posts silently every 1 s (onlyAlertOnce) only on the promoted path and only while `PowerManager.isInteractive`; screen off polls every 5 s without posting. Every stop path cancels the tick token.",
+        "WP-774: `TimerOverlay.shouldShow(enabled, permitted)` — running is no longer a condition; `show(running, ...)` binds either chronometer+stop or 00:00+play. One button sends ACTION_TOGGLE (idle start = widget path: rememberedSubjectId + nativeStartPlan). With the strip enabled+permitted the service stays foreground with the idle card (`keepAliveForOverlay`) so the window's process survives.",
+        "WP-774: overlay restyled like the chip: `ic_stat_focus_camp` logo, 15sp bold clock, 32dp translucent action; fill #2F5BE5 / ink white (5.5:1). `timer_overlay_stop_bg.xml` removed; `timer_overlay_action_bg` + `ic_overlay_play` added."
+      ],
+      "fixesEn": [
+        "Overlay header doc corrected: the 'Samsung draws nothing' diagnosis was replaced by the WP-772 finding (Now Bar allowlist + developer toggle)."
+      ],
+      "notesEn": [
+        "Local full gate green; no migration change, head stays 0136.",
+        "Guardians: TimerCardClockWp774Test (5), TimerOverlayWp764Test three-condition claim flipped to two by measurement, timer_card_clock_overlay_wp774_test.dart (3). Timer+overlay JVM 86/86; bridge contract 16/16.",
+        "NOT DEVICE-VERIFIED: 1 Hz card refresh behaviour on One UI (flicker/throttle), idle overlay persistence, start-from-strip subject. Owner tests on the stable update."
+      ]
+    },
+    {
       "versionName": "1.0.78",
       "buildNumber": 78,
       "channel": "stable",

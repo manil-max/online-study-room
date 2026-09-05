@@ -3,6 +3,40 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.79",
+      "buildNumber": 79,
+      "channel": "stable",
+      "date": "2026-09-05",
+      "title": "v79: canlı bildirim kartında sayaç, yüzen şerit çip gibi ve kalıcı",
+      "highlights": [
+        "Live Update kartında sayaç geri geldi: gövdede MM:SS akıyor, bir saati geçince saat alanı ekleniyor; pomodoro ve molada kalan süre geri sayar.",
+        "Yüzen şerit artık durum çubuğundaki çip gibi görünüyor: solda logo, ortada sayaç, sağda küçük tek düğme.",
+        "Şerit durunca kaybolmuyor: boşta 00:00 ve Başlat gösterir; Başlat en son seçtiğin dersle ve seçili modla başlar."
+      ],
+      "fixes": [
+        "Live Update kartı yalnızca ders adını gösteriyor, boş gibi duruyordu.",
+        "Şeritteki Durdur düğmesi çok büyüktü ve sayaç durunca şerit yok oluyordu."
+      ],
+      "notes": [
+        "Kart saniyede bir sessizce yenilenir; telefon bunu kısarsa yalnızca karttaki sayaç donar, çipteki sayaç akmaya devam eder.",
+        "Şerit açıkken sayaç durduğunda hazır kartı bildirimde kalır; şerit kapalıyken hiçbir şey değişmedi."
+      ],
+      "titleEn": "v79: the live card shows the clock, the floating strip looks like the chip and stays",
+      "highlightsEn": [
+        "The Live Update card shows the clock again: MM:SS in the body, an hour field past one hour; pomodoro and breaks count down the remaining time.",
+        "The floating strip now looks like the status bar chip: logo on the left, clock in the middle, one small button on the right.",
+        "The strip no longer disappears when you stop: idle shows 00:00 and Start; Start uses your last selected subject and mode."
+      ],
+      "fixesEn": [
+        "The Live Update card showed only the subject name and looked empty.",
+        "The strip's stop button was too big and the strip vanished when the timer stopped."
+      ],
+      "notesEn": [
+        "The card refreshes silently once a second; if the phone throttles it, only the card's clock pauses while the chip keeps running.",
+        "With the strip on, the ready card stays in the shade after a stop; nothing changed with the strip off."
+      ]
+    },
+    {
       "versionName": "1.0.78",
       "buildNumber": 78,
       "channel": "stable",
