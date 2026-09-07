@@ -3,6 +3,38 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.82",
+      "buildNumber": 82,
+      "channel": "stable",
+      "date": "2026-09-07",
+      "title": "v82: yönetimde arşiv ve vaka geçmişi",
+      "highlights": [
+        "Yönetim kuyruğu Bekleyen ve Arşiv olarak ikiye ayrıldı; kapanan hiçbir iş kaybolmuyor, sayılarıyla görünüyor.",
+        "Vakalara yalnız yöneticilerin gördüğü iç notlar eklendi.",
+        "Her vakanın zaman çizelgesi: kim, ne zaman, hangi gerekçeyle ne yaptı."
+      ],
+      "fixes": [
+        "Arşivlenen destek kayıtları artık kuyrukta bulunabiliyor.",
+        "Kapanan bir iş Arşiv'den tek dokunuşla geri açılıyor."
+      ],
+      "notes": [
+        "Yönetim ekranları yalnız yöneticilere görünür."
+      ],
+      "titleEn": "v82: archive and case history in moderation",
+      "highlightsEn": [
+        "The moderation queue is split into Waiting and Archive; closed work is never lost and each view shows its count.",
+        "Cases now carry internal notes visible only to administrators.",
+        "Every case has a timeline: who did what, when, and why."
+      ],
+      "fixesEn": [
+        "Archived support threads can be found in the queue again.",
+        "Closed work can be reopened from the Archive with one tap."
+      ],
+      "notesEn": [
+        "Moderation screens are visible to administrators only."
+      ]
+    },
+    {
       "versionName": "1.0.81",
       "buildNumber": 81,
       "channel": "stable",

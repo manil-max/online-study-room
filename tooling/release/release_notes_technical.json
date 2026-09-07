@@ -3,6 +3,26 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.82",
+      "buildNumber": 82,
+      "channel": "stable",
+      "date": "2026-09-07",
+      "title": "v82: WP-794 queue Waiting/Archive, WP-795 case notes, WP-796 case timeline",
+      "highlights": [
+        "WP-794: mutually exclusive Waiting/Archive segments with counts; archived feedback tickets joined into the Archive view (previously unreachable from any view); oldest/newest sort via buildAdminQueue(oldestFirst:) which flips activity order only; take-for-review writes in_review (a status present since 0104 that no surface could write); reopen and unarchive actions.",
+        "WP-795: case internal notes stored on the mirror ticket via existing fetchTicketNotes/addTicketNote; no migration.",
+        "WP-796: case timeline reads moderation_audit_events (0106) for the first time; case/sanction/appeal events joined client-side through case_id. No migration was needed - the append-only chain has been recording actor, time, old/new and reason since 0106."
+      ],
+      "fixes": [
+        "Unknown audit actions fall back to raw entity:action instead of being rounded into a wrong branch; an empty chain and a failed read are rendered differently (retry, not a clean history).",
+        "Two brittle widget tests bound to conditions: ListView lazily builds children so the contact fold needed scrollUntilVisible, and a fixed drag offset was replaced by scrolling until the button clears the decision bar."
+      ],
+      "notes": [
+        "No database change; migration head stays 0138 on staging and production. Sub-agent for WP-794 was cut off by the nightly limit without running its sabotage round; the lead applied five sabotages and all went red before the commit.",
+        "NOT DEVICE-VERIFIED: Archive segment usage on a real phone, note authoring flow, and timeline populated from real moderation_audit_events rows (measured against the seeded in-memory repository only)."
+      ]
+    },
+    {
       "versionName": "1.0.81",
       "buildNumber": 81,
       "channel": "stable",

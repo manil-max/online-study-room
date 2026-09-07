@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v82 / 1.0.82+82] - 2026-09-07
+
+### Öne çıkanlar
+
+- Yönetim kuyruğu Bekleyen ve Arşiv olarak ikiye ayrıldı; kapanan hiçbir iş kaybolmuyor, her görünüm sayısını gösteriyor.
+- Vakalara yalnız yöneticilerin gördüğü iç notlar eklendi.
+- Her vakanın zaman çizelgesi: kim, ne zaman, hangi gerekçeyle ne yaptı.
+- Kuyruk en eski ya da en yeni harekete göre sıralanabiliyor; bir vaka "İncelemeye al" ile üstlenilebiliyor.
+
+### Düzeltmeler
+
+- Arşivlenen destek kayıtları artık kuyrukta bulunabiliyor.
+- Kapanan bir iş Arşiv'den tek dokunuşla geri açılıyor.
+
+### Doğrulama sınırı
+
+- Veritabanı değişmedi; zaman çizelgesi 2026-08'den beri yazılan denetim zincirini ilk kez okuyor.
+- Arşiv görünümü, iç not yazma ve zaman çizelgesinin gerçek sunucu kayıtlarıyla dolması gerçek telefonda henüz ölçülmedi.
+
 ## [v81 / 1.0.81+81] - 2026-09-05
 
 ### Öne çıkanlar
