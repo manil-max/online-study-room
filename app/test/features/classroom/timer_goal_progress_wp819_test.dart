@@ -23,6 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/core/utils/duration_format.dart';
+
+import '../../support/istanbul_fixture.dart';
 import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/models/subject.dart';
@@ -35,10 +37,15 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// Blok yalnız yükseklik >= [kTimerFullMinHeight] iken çizilir.
 const double _tallEnough = kTimerFullMinHeight + 240;
 
-/// Bugüne düşen, İstanbul gününde kalan bir oturum (gece koşumunda kaymasın).
+/// Bugüne düşen, İstanbul gününde kalan bir oturum.
+///
+/// 🔴 WP-821/2: ilk hâli `DateTime(now.year, now.month, now.day, 12)` idi —
+/// yani YEREL öğlen. Kendi makinemde (UTC+3) doğruydu, CI'da (UTC) yanlış:
+/// 21:34 UTC'de yerel gün 7 Eylül, İstanbul günü ise 8 Eylül. Oturum düne
+/// düştü ve `%25` iddiası kırmızı oldu. Gece yarısı tuzağının **aynadaki
+/// hâli**: bu kez saat değil SAAT DİLİMİ kaydırdı.
 StudySession _todaySession(int seconds) {
-  final now = DateTime.now();
-  final safe = DateTime(now.year, now.month, now.day, 12);
+  final safe = agoWithinIstanbulToday(const Duration(hours: 1));
   return StudySession(
     id: 's1',
     userId: 'u1',

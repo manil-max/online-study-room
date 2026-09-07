@@ -116,11 +116,14 @@ List<StudySession> _sessions() {
   final out = <StudySession>[];
   for (var d = 0; d < 90; d++) {
     for (var k = 0; k < 2; k++) {
-      final day = DateTime(
-        _now.year,
-        _now.month,
-        _now.day,
-      ).subtract(Duration(days: d));
+      // 🔴 WP-821/2: gun YEREL duvar saatinden DEGIL Istanbul gununden
+      // turer. Ayni dosya bunu `_groupStats` icin zaten yaziyordu (bkz.
+      // asagidaki not) ama oturumlar icin uygulamamisti: UTC bir makinede
+      // 21:00-24:00 arasi hicbir oturum Istanbul-bugune dusmuyor, "Bugun"
+      // karti bos duruma geciyor, yuksekligi degisiyor ve envanter citasi
+      // tasma oraniyla kirmizi doner. CI 2026-09-07 21:34 UTC'de tam boyle
+      // dustu.
+      final day = dayOf(_now).subtract(Duration(days: d));
       final start = day.add(Duration(hours: 9 + (d + k * 7) % 12));
       out.add(
         StudySession(
