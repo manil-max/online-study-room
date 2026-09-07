@@ -12184,3 +12184,35 @@ Golden takımı 52/52 (dört referans yenilendi).
 TalkBack ile sayı seçicilerde "artır/azalt" duyurusu ve çift artış olmaması;
 turların sırası (gruplar → kamp ateşi); dört açık temada rütbe renklerinin
 gerçek ekranda okunması.
+
+### 2026-09-07 — Kayıt akışı canlıda kırılmaya açıktı; doğrulama kapatıldı (WP-802)
+
+**Bulgu.** Production auth ayarı okundu (`34121117896`, dry-run):
+`mailer_autoconfirm=false` + `custom_smtp_configured=false` +
+`rate_limit_email_sent=2`. Yani doğrulama postası Supabase'in **yerleşik test
+sağlayıcısından** gidiyordu ve **saatte 2 posta** ile sınırlıydı — proje
+genelinde. Aynı saatte üçüncü kez kayıt olan kullanıcı postayı hiç almaz:
+hesabı oluşur, giremez, kendi başına çözemez.
+
+🔴 **Neden kimse fark etmemiş:** staging'de `mailer_autoconfirm` zaten `true`
+idi (doğrulama kapalı). Test hep staging'de yapıldığı için kayıt akışı sorunsuz
+görünüyordu; kusur yalnız production'da yaşıyordu.
+
+**Karar (lider).** Kapalı testte bu koruma bir işe yaramıyor, yalnızca kayıt
+akışını kırıyor → **kapatıldı**. Geri alınması tek koşum.
+Kalıcı çözüm özel SMTP'dir — şifre sıfırlama da aynı 2/saat sınırına takılı
+(`recovery_template_has_token: false`, masaüstü kod yolu zaten çalışmıyor).
+
+**Yol.** Workflow bu alanı okuyor ama **yazamıyordu**; yeteneği eklendi
+(`982f8067`). Kapılar: girdi varsayılanı `keep` (dokunma); ayrı adım, ayrı
+koşul — rutin bir `site_url` tazelemesi bu ayarı sessizce değiştiremez; `on`
+istenirken SMTP yoksa uyarı; doğrulama adımı **okunan değeri** sert kapı
+yapıyor.
+
+| Ortam | Koşum | Sonuç |
+|---|---|---|
+| staging (önce) | `34130833557` | `Verified: … (off)` — zaten `true` idi, no-op |
+| production | `34130950621` | `false → true`, okunarak doğrulandı |
+
+🔴 İsim tersine okunur: `mailer_autoconfirm = true` **doğrulama KAPALI**
+demektir. Girdi bu yüzden kullanıcı dilinde `on`/`off`; çevrim tek yerde.
