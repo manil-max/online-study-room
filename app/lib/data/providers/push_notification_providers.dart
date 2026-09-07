@@ -21,7 +21,9 @@ import '../repositories/supabase/supabase_push_registration_repository.dart';
 import 'auth_providers.dart';
 import 'global_timer_providers.dart';
 
-const _pushInstallationIdKey = 'push_installation_id_v1';
+// WP-815: dize artik `push_registration_repository.dart` icinde tek yerde
+// duruyor; buradaki takma ad yalniz okunurlugu korur.
+const _pushInstallationIdKey = kPushInstallationIdPrefsKey;
 
 final pushRegistrationRepositoryProvider = Provider<PushRegistrationRepository>(
   (ref) {

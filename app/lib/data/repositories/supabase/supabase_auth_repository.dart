@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
+import '../push_registration_repository.dart';
 
 /// Kimlik e-postalarının (şifre sıfırlama ve e-posta değişikliği) mevcut auth
 /// derin bağlantı hedefini üretir. Eski public parametre adı geriye uyumluluk
@@ -775,7 +776,12 @@ class SupabaseAuthRepository implements AuthRepository {
     // aynı tokenı atomik olarak yeni kullanıcıya taşır.
     try {
       final prefs = await SharedPreferences.getInstance();
-      final installationId = prefs.getString('push_installation_id_v1');
+      // 🔴 WP-815: burada dize ELLE yaziliydi ve
+      // `push_notification_providers.dart` icindeki private sabitin
+      // kopyasiydi. Biri degisseydi cikis yolu sessizce bozulur, cihaz
+      // kaydi sunucuda kalir ve eski hesabin bildirimleri bu cihaza
+      // dusmeye devam ederdi. Artik tek kaynak.
+      final installationId = prefs.getString(kPushInstallationIdPrefsKey);
       if (installationId != null && installationId.trim().isNotEmpty) {
         await _client.rpc(
           'unregister_push_device',
