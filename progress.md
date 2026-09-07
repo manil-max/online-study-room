@@ -12216,3 +12216,46 @@ yapıyor.
 
 🔴 İsim tersine okunur: `mailer_autoconfirm = true` **doğrulama KAPALI**
 demektir. Girdi bu yüzden kullanıcı dilinde `on`/`off`; çevrim tek yerde.
+
+### 2026-09-07 — Yazılmış ama HİÇ ÇALIŞTIRILMAMIŞ üç süpürücü zamanlandı (WP-803 / 0139)
+
+| Adım | Run | Kanıt |
+|---|---|---|
+| staging kuru koşu | `34133111179` | yeşil |
+| staging apply | `34133465652` | `0139\|0139\|0139` |
+| production apply | `34133833524` | `0139\|0139\|0139` |
+
+Her iki kapı da aynı turda yeniden kilitlendi.
+
+**Bulgu.** Üç fonksiyon da tanımlı, grant'lı ve pgTAP'te sınanmış; hiçbiri
+`cron.job` içinde yoktu — yani bugüne kadar **bir kez bile çalışmadılar**:
+`moderation_purge_expired_evidence` (`0106:388`),
+`expire_multi_group_presence_leases` (`0081:240`),
+`prune_stale_push_devices` (`0066:438`).
+
+🔴 **Birincisi belge–kod çelişkisiydi.** `0106`'nın kendi başlığı *"Kanıt artık
+süresiz durmaz"* diyordu; kanıt süresiz duruyordu. Şikâyet edilen
+kullanıcıların içerik kopyaları saklama süresi dolduktan sonra da
+saklanıyordu — ekran hatası değil, gizlilik borcu.
+
+🔴 **Olduğu gibi zamanlansaydı yine hiç çalışmayacaktı.** Gövdenin ilk satırı
+`is_super_admin()` istiyordu; cron işi tablo sahibi olarak koşar, JWT yoktur,
+kontrol `false` döner ve iş her gece exception üretirdi — bu yalnız
+`cron.job_run_details` içinde görünürdü. Muhafız kardeş süpürücülerin zaten
+kullandığı biçime çevrildi (service_role/postgres **veya** süper admin);
+yetki daralmadı, genişleyen taraf yalnız sunucunun kendisi ve `authenticated`
+grant'ı korundu.
+
+**Test ne ölçüyor:** fonksiyonun davranışını değil, **zamanlanmış olmasını** ve
+JWT olmadan koşabilmesini (`lives_ok` — cron bağlamının taklidi). Cron komutu
+bir dizedir; yanlış ad her gece sessizce düşer, onun için çağrılan
+fonksiyonların varlığı da ayrıca iddia ediliyor.
+
+🔴 İlk kuru koşu (`34132777594`) düştü ama **iddialar değil**: *"All 14
+subtests passed."* Tek kusur dosyanın epiloğuydu (`select rollback();` →
+`select * from finish(); rollback;`).
+
+Bu sınıf hata bu depoda **ikinci kez**: `0089` da
+`expire_global_timer_v2_leases`'i `0082`'den beri zamanlanmamış bulmuştu.
+Sebep aynı: test fonksiyonu doğrudan çağırır, yani "çalışıyor" ölçümü
+"çağrılıyor" ölçümünü içermez.

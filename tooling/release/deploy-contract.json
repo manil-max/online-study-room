@@ -9,7 +9,7 @@
   },
   "production": {
     "migration_head": "0139",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN 2026-09-07 for 0139 (unscheduled_sweepers). Three sweepers were written but never scheduled; the evidence-redaction one also needed a cron-safe guard, so this is not a pure cron entry. Staging is PROVEN first, deliberately: dry-run 34133111179 green, apply 34133465652 printed 0139|0139|0139. Applied with NO BACKUP (free plan, no PITR) - the owner's standing accepted risk from 2026-07-27. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-07 after the 0139 production apply SUCCEEDED: run 34133833524, post-check printed 0139|0139|0139 on jiphfrpzvkpzubbkhrwb. Three sweepers that had NEVER run are now scheduled: moderation-evidence-purge (daily 03:20 UTC), multi-group-presence-lease-sweeper (every minute), push-device-stale-pruner (daily 03:40 UTC). The first one closes a documented-but-unenforced promise: 0106 claimed evidence stops being retained, and it never was. Staging was proven first: dry-run 34133111179, apply 34133465652. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. release_enabled stays OPEN; the release GO string is separate and must be typed fresh."
   }
 }
