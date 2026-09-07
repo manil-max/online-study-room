@@ -12330,3 +12330,188 @@ Dört post-check de `head\|head\|head`. Kapılar aynı turda kilitlendi.
 ### Cihazda ölçülmeyen
 Titreşimlerin gerçek şiddeti ve faz-bitişi çift darbesinin aralığı; sayfa
 geçişinin hissi; kutlamanın dar hücrede taşması (`Clip.none`).
+
+## 2026-09-07 — KURTARMA YOLLARI VE YALAN SÖYLEYEN GERİ BİLDİRİM (WP-809…WP-817)
+
+Turun tek cümlesi: **yıkıcı yön kolaydı, kurtarma yönü ya zordu ya yalandı.**
+Üç ayrı yerde aynı şekil çıktı ve üçü de "kod geçerli, test yeşil, mesaj
+yanlış" sınıfındaydı.
+
+### WP-809 — vakadan yaptırım uygulanıyordu, kaldırılamıyordu
+Vakadaki taraf satırına dokununca açılan kişi profili yaptırım **uyguluyor**
+(`kAdminUserSanctionApplyKey`) ama aktif kısıtı hiç göstermiyor ve kaldırma
+yolu taşımıyordu. Kaldırma yalnız Kullanıcılar sekmesindeki kişi dosyasındaydı.
+Yani yasaklama vakadan tek dokunuş, geri alma başka sekmede hazine avı.
+Aktif kısıt kartı ortak bir widget'a taşındı, iki yüzey de onu kullanıyor.
+
+### WP-810 — vaka satırındaki rozet YANLIŞ SAYIYI gösteriyordu
+Rozet her tarafa `reportsAgainstUpheld/reportsAgainst` yazıyordu — şikâyet
+**edenin** satırında da "bu kişi kaç kez şikâyet edildi". Zararı ters yönde:
+dokuz şikâyet açıp biri tutmayan bir şikâyetçi, sırf **kendisi** hiç şikâyet
+edilmediği için rozetsiz, yani ekranda **en temiz görünen kişi**ydi.
+Model iki yönü de zaten taşıyordu; eksik olan satırın hangi yönü sorduğuydu.
+🔴 Şikâyetçi yönünde uyarı rengi YOK ve bu ölçülmüş bir karar: sunucu eşiğinin
+paydası REDDEDİLEN şikâyet, istemcide o sayı yok. Elimizdeki fark henüz karara
+bağlanmamış şikâyetleri de içeriyor; o sayıdan damga üretmek adaletsiz olurdu.
+
+### WP-811 + WP-816 — dürtme okundu bilgisi, ve onun açtığı yeni kusur
+`markRead` yazılıydı, `lib/` içinde **sıfır çağrı yeri** vardı; her satır
+sunucuda ömür boyu `read_at = null` kalıyor ve dinleyicideki okunmamış süzgeci
+etkisiz duruyordu. Çağrı kuruldu.
+
+🔴 **Ama düzeltmenin kendisi daha ağır bir kusur açtı.** Çağrı şöyleydi:
+`_markProcessedOnServer(ref.read(nudgeRepositoryProvider), id)`. Depo,
+sarmalayıcının `try` bloğunun **dışında** çözülüyordu; `nudgeRepositoryProvider`
+yapılandırılmış ortamda `Supabase.instance.client` okur ve **fırlatabilir**.
+Fırlattığında hata sarmalayıcıya hiç ulaşmıyor, `ref.listen` geri çağrımını
+düşürüyor ve **bildirim hiç gösterilmiyordu**. Yani bir hijyen yazması,
+kullanıcının gördüğü yolun önüne geçmişti.
+
+**Nasıl bulundu — turun en değerli parçası bu.** Lane'in kendi testi YEŞİLDİ
+çünkü depoyu override ediyordu. Kusuru, depoyu override **etmeyen** iki komşu
+dosya yakaladı ve onları yalnız merkezden koşan tam kapı koşturdu. Üstelik
+çıplak `flutter test` de yeşil geçiyordu: kapı ve CI
+`--dart-define-from-file=env.json` ile koşar, yani `SupabaseConfig.isConfigured`
+**doğru** olur ve depo gerçekten fırlatır. Bayraksız koşu o dalı hiç görmüyor.
+
+### WP-812 / WP-814 — testin kendisi de "yazıldı, çağrılmadı" olabiliyor
+`AdminCaseTargetLink` vakadan kişi dosyasına giden bir düğmeydi, sıfır çağrı
+yeri vardı ve onu ölçen tek test widget'ı **boş bir Scaffold içinde kendi
+kuruyordu**: yeşildi ama kanıtladığı şey "bu widget çalışıyor"du, "vakadan
+kişiye geçilebiliyor" değil. Gerçek köprü bu arada başka biçimde kurulmuştu
+(taraf satırı → kişi profili) ve daha genişti. Silindi.
+WP-814 aynı sınıftan iki ölü anahtarı ve onların üstündeki **yalan yorumu**
+kaldırdı. Ayrım kayda geçti: çağrılmayan bir anahtar ya bilerek boş bırakılmış
+bir SÖZLEŞMEDİR (silinemez) ya da hiç yazılmamış bir NİYETTİR (silinmeli);
+farkı yorum değil **testin kendisi** söyler.
+
+### WP-813 — "Geri al" düğmesi yalan söylüyordu
+Yönetici bir kullanıcının adını sıfırlıyor, on saniyelik **Geri al** şeridi
+çıkıyor, basıyor, **başarı** mesajı görüyor — ve ad geri gelmiyordu. Zincirin
+her halkası geçerliydi: `name_reset` kısıtlayıcı sayılmadığı için sert teyit
+istemez, şerit çıkar, şerit `revokeSanction` çağırır, geri alma dalı ise
+yalnız auth ban'ını temizler. Adı geri yazan tek kod Edge fonksiyonundaydı ve
+`app/lib` içinde sıfır göndereni vardı.
+
+Tasarım kararı: ad yalnız hedefin şu anki adı hâlâ moderasyonun koyduğu yer
+tutucuysa geri yüklenir. Kullanıcı bu arada kendine yeni bir ad seçtiyse o
+seçim EZİLMEZ — "geri al" bir moderasyon işlemini geri alır, kullanıcının
+kendi kararını değil.
+
+🔴 **Ölçüm sınırı dürüstçe kaydedildi:** `index.ts` en üst seviyede `serve(...)`
+çağırdığı için test import edemiyor. Saf yüklem Deno'da ölçülüyor, **kablonun
+kendisi bu depoda ölçülemiyor**. Bu bir kapsam boşluğudur ve kapatmak
+`_shared`'a IO enjekte edilen bir orkestratör çıkarmayı gerektirir.
+
+### WP-815 — bir anahtar iki yerde, biri kopya
+`push_installation_id_v1` hem sağlayıcıda (private sabit) hem auth deposunda
+(elle yazılmış dize) duruyordu. Bugün eşitlerdi; biri değişseydi çıkış yolu
+**sessizce** bozulur, cihaz kaydı sunucuda kalır ve **eski hesabın bildirimleri
+o cihaza düşmeye devam ederdi**. Üç şey birden bunu görünmez yapıyordu:
+derleyici uyarmaz, `signOut` push temizliğini bilerek yutar (çıkış
+engellenmemeli), ve hiçbir test iki dizeyi karşılaştırmıyordu.
+
+### 🔴 Belge doğruluk turu — envanter beni İKİ KEZ yapılmış işe gönderdi
+`docs/design/ADMIN-PANEL-PLAN.md` §3 tablosu *"Kişi arama — yok"* diyordu;
+arama WP-771'de eklenmişti. Bir av raporu grup liderlik zaman serisi için
+*"hiçbir ekran çizmiyor"* dedi; grafik çiziliyordu ve widget bunu **kendi doc
+yorumunda yazıyordu** — yalnız veriyi sunucu RPC'sinden değil istemcideki
+günlük kayıtlardan hesaplıyor.
+
+İkisinde de kod yazmadan önce dosyayı açtığım için durdum. Tablo silinmedi
+(tarihsel kayıt), altına tarihli §3.1 ölçüm bölümü eklendi: **on iki satırın
+onu kapanmış**, ikisi açık — tek yaptırım yüzeyi (hâlâ iki kişi ekranı) ve
+destek kutusunda "yanıtlanmamış üstte" sıralaması.
+
+Aynı turda "sıfır çağrı yeri" sayımının tek başına yetmediği de görüldü:
+`group_leaderboard_series` gerçekten çağrılmıyor ama **özellik var**.
+`0140`'ın dersi burada da geçerli — *çağrılmıyor olmak tek başına kaldırma (ya
+da yazma) gerekçesi değildir.*
+
+### WP-818 — birincil grup seçimi İKİ ayrı şekilde sessizdi
+Bir av turu birincisini buldu: `_select` yalnız `on GroupException`
+yakalıyordu, oysa depo katmanı **sadece** `PostgrestException`i sarıyor. Ağ
+kopması, zaman aşımı ve beklenmeyen her sınıf o dalın yanından geçiyor, çağrı
+yeri de `VoidCallback` olduğu için düşen `Future` hiçbir yere ulaşmıyordu.
+
+🔴 **Testi yazarken ikincisi çıktı ve daha ağırdı.** Kart `authStateProvider`i
+canlı tutmuyordu: `_select` içindeki `ref.read(authStateProvider).value`
+dinleyicisiz bir sağlayıcı yaratıyor, sağlayıcı hemen düşürülüyor, `.value`
+`AsyncLoading` yüzünden `null` dönüyor ve fonksiyon `user == null` dalından
+sessizce çıkıyordu. Yani onay diyaloğu açılıyor, kullanıcı onaylıyor, **hiçbir
+şey olmuyordu**. Depoda kayıtlı tuzak; aynı açıklama `admin_case_detail_page`
+içinde zaten yazılıydı, bu dosyaya girmemişti.
+
+Bunu benim tarifim değil **testin kırmızısı** buldu: sahte depo hiç
+çağrılmıyordu. İlk hipotezim (yalnız geniş `catch` eksik) yetseydi o testler
+yeşil geçerdi. Ders: tarifi doğru sanıp testi ona göre yazmak, ikinci kusuru
+gizleyebilirdi.
+
+Zarar bu ekranda normalden ağır — seçimin bir **soğuma penceresi** var.
+Kullanıcı "değiştirdim" sanıp bırakıyor, oysa seçim yokken grup ilerlemesi
+hiçbir gruba yazılmıyor (WP-352) ve bu kayıp başka hiçbir yüzeyde görünmüyor.
+
+### WP-817 + WP-819 — yükleme karesindeki sahte "0", iki ayrı yalan üretiyordu
+`todayRecordedSecondsProvider` oturumlar yüklenirken **0** döner: "henüz
+bilmiyorum" ile "hiç çalışmamış" aynı sayıya düşüyordu. İki sonucu vardı.
+
+**Sahte kutlama.** Hedef kartı `previous < goal && next >= goal` geçişinde
+kutluyordu; yükleme karesinin `0`'ı gerçek değere sıçrayınca bu koşul **her
+soğuk açılışta** doğru oluyordu. Yani hedefini tutmuş kullanıcı, uygulamayı
+açtığı için titreşim + halka halosu + ✓ darbesi alıyordu. Kartın kendi yorumu
+tam tersini iddia ediyordu; onu sağlaması beklenen `previous == null` koruması
+non-nullable bir sağlayıcı için **hiç tetiklenmez**.
+
+**Kesin "0" iddiası.** Hedef kartı ve sayaç kartı `cardDataGate` kullanmıyordu:
+`0sn`, `%0`, seri `0`. Hata hâlinde bu **kalıcı**, üstelik yanlarındaki özet
+kartı aynı sağlayıcı için "Veriler yüklenemedi" çiziyor — aynı ekranda iki
+çelişen gerçek.
+
+Çare iki karta **ayrı** uygulandı ve bu bir karardır: hedef kartı tamamen
+bilgilendirici olduğu için kapının arkasına alındı (kutlama kusuru böylece yan
+etki olarak kapandı, ayrı bayrak icat edilmedi); sayaç kartı **alınmadı**,
+çünkü BAŞLAT/DURDUR kontrollerini taşıyor ve onu iskelete çevirmek kullanıcıyı
+sayaç başlatamaz bırakırdı — çare hastalıktan kötü olurdu. Orada yalnız
+bilinmeyen sayının yerine işaret çizilir.
+
+🔴 **Kapının kendisi bir çökme ortaya çıkardı.** Hedef kartındaki
+`AnimationController` alan başlatıcısındaydı; kapı eklenince kart gövdesi hiç
+çizilmeden kapatılabilir oldu ve ilk kullanım `dispose()` üzerinden ölü element
+arıyordu (*"Looking up a deactivated widget's ancestor is unsafe"*). Denetleyici
+`initState`'e taşındı.
+
+🔴 **WP-819 — düzeltme MASAÜSTÜNDE eksik kalmıştı.** Aynı yalan sayaç kartının
+hedef çubuğunda sürüyordu: `%0`, sıfır süre ve **dolu** bir ilerleme çubuğu.
+Blok yalnız hücre yüksekliği 400'ü aşınca çizilir; dar telefonda görünmez,
+**masaüstünde görünür**. WP-817'nin testleri 260 px'te koşuyordu, yani blok o
+ölçümlerin hiçbirine girmedi — kusur tam olarak sahibin kullandığı yüzeyde
+açık kalmıştı. Çubuk artık bilinmiyorken **belirsiz**: dolu bir çubuk da bir
+sayı iddiasıdır.
+
+Testin ilk iddiası **nöbetçidir**: bloğun o ölçüde gerçekten çizildiğini ölçer.
+Onsuz bütün "yok" iddiaları boşa geçerdi.
+
+**Kapının kaçağı da kapatıldı.** WP-495C'nin kart listesi elle yazılmıştı; on
+üç kart sayılmış, `goal` ve `timer` listeye hiç girmemişti. Artık her
+`DashboardCardType` ya listede ya da **gerekçesi yazılı** bir muafiyet
+tablosunda olmak zorunda; yeni bir kart sessizce dışarıda kalamıyor.
+
+**Yanlış pozitif olarak elendi:** görev kartı rozetinin yüklenirken "0"
+göstereceği sanılmıştı; rozet `activeCount > 0` kapısının arkasında, yani hiç
+çizilmiyor. "0 görev" iddiası yok.
+
+### Ölçemediklerim / açık bıraktıklarım
+- **Deno testleri bu makinede koşmadı** (`deno` kurulu değil). WP-813'ün altı
+  yeni testi CI'da doğrulanır; yeşil sayılmadı.
+- Edge fonksiyonu **deploy edilene kadar** WP-813 cihazda görünmez.
+- `name_reset` kısıtlayıcı sayılmadığı için üst üste iki kez uygulanabilir;
+  ikinci `upsert` yutulur ve satır en eski adı taşır. Aradaki ad zaten yer
+  tutucu olduğundan sonuç bugün zararsız, ama "tek aktif ad sıfırlama" kuralı
+  sunucuda yok.
+- WP-813'ün kablosu ölçülemiyor (yukarıda).
+- `analysis_options.yaml` `unawaited_futures` lint'ini **açmıyor**; düşen bir
+  `Future` analiz kapısında hiç görünmüyor. WP-818'in birinci kusuru tam olarak
+  bu boşluktan geçmişti. Açmanın maliyeti ölçülmedi.
+- Aynı sessizlik deseni WP-610/617/619'da altı yüzeyde kapatılmıştı; bu dosya o
+  turların SAHİP yollarında değildi. Desen tek tek kapatıldığı sürece bir
+  sonraki dosyada tekrar doğar.
