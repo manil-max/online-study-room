@@ -9,7 +9,6 @@ import 'package:online_study_room/data/providers/admin_moderation_providers.dart
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
-import 'package:online_study_room/features/admin/sanctions/admin_case_target_link.dart';
 import 'package:online_study_room/features/admin/sanctions/sanction_ladder.dart';
 import 'package:online_study_room/features/admin/tabs/admin_users_tab.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -436,49 +435,74 @@ void main() {
     });
   });
 
-  group('WP-C/6 — vakadan hedefin dosyasina TEK dokunus', () {
-    testWidgets('kopruye bir kez dokun; aktif kisit ve gecmis ekranda', (
+  /// 🔴 WP-812 — BU GRUP BIR KOPRU WIDGET'INI OLCUYORDU, ARTIK GERCEK YOLU
+  /// OLCUYOR.
+  ///
+  /// Eski hali `AdminCaseTargetLink` adli bir dugmeyi bos bir `Scaffold`
+  /// icinde kurup ona dokunuyordu. O dugmenin `app/lib` icinde **sifir cagri
+  /// yeri** vardi: hicbir vaka sayfasi onu cizmiyordu. Yani test yesildi ama
+  /// kanitladigi sey "bu widget calisiyor"du, "vakadan kisiye gecilebiliyor"
+  /// degil — deponun tekrar eden kusuru (yazildi, cagrilmadi) bir kez de
+  /// TESTIN KENDISINDE.
+  ///
+  /// Gercek kopru bu arada baska bir yerden kuruldu: vaka sayfasindaki taraf
+  /// satiri (`admin_case_detail_page.dart` `_CaseUserRow.onTap`) kisi
+  /// profilini aciyor ve WP-809'dan beri o ekranda aktif kisit + geri alma da
+  /// var. Yani kopru widget'i yalnizca artik degil, ZARARLI: vakadan DAHA DAR
+  /// bir ekrana (hesap silme dugmesi tasiyan kisi dosyasina) giden hazir bir
+  /// dugme olarak duruyordu.
+  ///
+  /// Widget silindi. Bu grubun KENDI degeri korundu: `mute_24h` bir auth ban
+  /// DEGILDIR (`ModerationAction.requiresAuthBan == false`) ve WP-C/2 yalniz
+  /// `suspend_7d` ile olcuyor. Susturmanin da "aktif kisit" sayilip geri alma
+  /// dugmesi kazandigi iddiasi burada, ama artik GERCEK giris noktasindan.
+  group('WP-C/6 — susturma da aktif kisittir ve geri alinabilir', () {
+    testWidgets('mute_24h dosyada aktif gorunur ve geri alma dugmesi tasir', (
       tester,
     ) async {
       final moderation = _SpyModeration();
       await _seedActive(moderation, ModerationAction.mute24h);
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            adminModerationRepositoryProvider.overrideWithValue(moderation),
-          ],
-          child: MaterialApp(
-            locale: const Locale('tr'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            // Vaka kartinin yerine duran en kucuk kabuk: kopru bir vakadan
-            // yalniz hedefin kimligini bilir.
-            home: const Scaffold(
-              body: AdminCaseTargetLink(
-                targetUserId: _targetId,
-                targetEmail: _targetEmail,
-              ),
-            ),
-          ),
-        ),
-      );
+      // 🔴 `suspended: false` BILEREK: susturma auth ban kurmaz, yani
+      // `bannedUntil` bostur. Aktif kisit yine de gorunmeli — kaynak
+      // `moderation_sanctions`, auth tarafi degil.
+      await tester.pumpWidget(_host(moderation));
       await tester.pumpAndSettle();
+      _expectRealBody(tester);
       expect(find.byKey(const Key('admin-person-dossier')), findsNothing);
 
-      // TEK dokunus. Bugunku yol: UUID'yi kopyala, sekme degistir, aramasiz
-      // listede gozle ara.
-      await tester.tap(find.byKey(const Key('admin-case-target-link')));
-      await tester.pumpAndSettle();
+      await _openDossier(tester);
       _expectRealBody(tester);
 
       expect(find.byKey(const Key('admin-person-dossier')), findsOneWidget);
       expect(find.byKey(const Key('admin-sanction-history')), findsOneWidget);
-      expect(find.byKey(const Key('admin-sanction-revoke')), findsOneWidget);
+      expect(
+        find.byKey(const Key('admin-sanction-revoke')),
+        findsOneWidget,
+        reason:
+            'susturma geri alinamaz durumda: auth ban olmayan kisitlar da '
+            'kaldirilabilmeli',
+      );
       final l10n = await AppLocalizations.delegate.load(const Locale('tr'));
       expect(
         find.text(l10n.adminModerationSanctionMute24h),
         findsWidgets,
         reason: 'hedefin aktif kisiti dosyada gorunmuyor',
+      );
+    });
+  });
+
+  /// Silinen koprunun geri gelmemesi icin bir fren.
+  group('WP-812 — olu kopru widget\'i geri gelmez', () {
+    test('AdminCaseTargetLink kaynakta yok', () {
+      expect(
+        File(
+          'lib/features/admin/sanctions/admin_case_target_link.dart',
+        ).existsSync(),
+        isFalse,
+        reason:
+            'Kopru widget\'i geri gelmis. Vakadan kisiye gecis zaten var '
+            '(taraf satiri -> kisi profili) ve o ekran daha genis; bu dugme '
+            'vakadan DAHA DAR bir ekrana giden ikinci bir yol acardi.',
       );
     });
   });

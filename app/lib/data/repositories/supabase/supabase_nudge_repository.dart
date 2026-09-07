@@ -15,10 +15,18 @@ class SupabaseNudgeRepository implements NudgeRepository {
   /// 🔴 WP-653: bu pencere YOKTU. `_hydrateNudges` sonucu 50'ye kirpiyordu
   /// ama kirpma ISTEMCIDE oluyordu: sorgu kullanicinin OMUR BOYU aldigi tum
   /// durtme satirlarini cekiyor, realtime her degisimde ayni yuku tekrar
-  /// tasiyordu. `markRead` hicbir yerden cagrilmadigi icin
-  /// (`NudgeRepository.markRead` -> lib/ icinde sifir cagri yeri) satirlar
-  /// sunucuda omur boyu `read_at = null` kaliyor, yani yuk hic kuculmuyor.
-  /// Sinir artik SUNUCUDA.
+  /// tasiyordu. Sinir artik SUNUCUDA.
+  ///
+  /// 🔴 WP-811 GUNCELLEMESI — bu yorumun ikinci yarisi ARTIK YANLISTI ve
+  /// silindi. "`markRead` hicbir yerden cagrilmadigi icin satirlar sunucuda
+  /// omur boyu `read_at = null` kaliyor" diyordu; WP-811 o cagriyi kurdu
+  /// (`data/providers/nudge_notification_listener.dart`, kalici `notified`
+  /// seti buyudugu an). Pencerenin gerekcesi degismedi — akis hala en yeni
+  /// [kNudgeWindow] satiri tasir — ama gerekce artik "okundu bilgisi hic
+  /// yazilmiyor" degil, "gecmis sinirsiz buyuyebilir"dir.
+  ///
+  /// Bu duzeltmenin kendisi bir ders: yorumlar da bayatlar ve bayat bir yorum,
+  /// onu okuyan bir sonraki kisiyi yanlis olcume goturur.
   static const int kNudgeWindow = 50;
 
   @override
