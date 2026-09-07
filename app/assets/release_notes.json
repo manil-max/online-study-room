@@ -3,6 +3,48 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.83",
+      "buildNumber": 83,
+      "channel": "stable",
+      "date": "2026-09-08",
+      "title": "v83: akıcı his, okunur renkler, dürüst sayılar",
+      "highlights": [
+        "Uygulama artık akıyor: sayfa geçişleri, değişen sayılar ve hedefe ulaşma anı yumuşak bir hareket diliyle çiziliyor.",
+        "Sayacı başlatıp durdurduğunda telefon hafifçe titriyor; ekrana bakmadan hangisine bastığını anlıyorsun.",
+        "Rütbe ve ders renkleri her temada okunur hâle geldi; koyu temada kaybolan yazı kalmadı.",
+        "Küçük dokunma hedefleri büyütüldü ve ekran okuyucu desteği eklendi."
+      ],
+      "fixes": [
+        "Veriler yüklenirken kartlar artık “bugün 0” demiyor; ölçülmemiş sayının yerinde bir çizgi duruyor.",
+        "Hedefini zaten tutmuşken uygulamayı açtığında sahte kutlama artık oynamıyor.",
+        "Sayacı ikinci bir cihazdan durdurduğunda gerçekten duruyor.",
+        "Kayıt olduktan sonra hesabına hemen girebiliyorsun; doğrulama postası beklemek gerekmiyor.",
+        "Birincil grup seçimi başarısız olursa uygulama artık bunu söylüyor.",
+        "Aynı dürtme ikinci cihazda tekrar bildirilmiyor."
+      ],
+      "notes": [
+        "Yönetim ekranları yalnız yöneticilere görünür."
+      ],
+      "titleEn": "v83: smoother feel, readable colors, honest numbers",
+      "highlightsEn": [
+        "The app flows now: page transitions, changing numbers and the moment you reach a goal are drawn with a soft motion language.",
+        "Starting and stopping the timer gives a gentle vibration, so you can tell which one you pressed without looking.",
+        "Rank and subject colors are readable in every theme; no more text vanishing on a dark background.",
+        "Small touch targets were enlarged and screen-reader support was added."
+      ],
+      "fixesEn": [
+        "While data is loading, cards no longer claim “0 today”; a dash stands where the number has not been measured yet.",
+        "Opening the app after you already reached your goal no longer plays a false celebration.",
+        "Stopping the timer from a second device now really stops it.",
+        "You can sign in right after registering; no need to wait for a verification email.",
+        "If choosing your primary group fails, the app now says so.",
+        "The same nudge is no longer announced again on a second device."
+      ],
+      "notesEn": [
+        "Moderation screens are visible to administrators only."
+      ]
+    },
+    {
       "versionName": "1.0.82",
       "buildNumber": 82,
       "channel": "stable",

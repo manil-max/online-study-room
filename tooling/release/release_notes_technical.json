@@ -3,6 +3,36 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.83",
+      "buildNumber": 83,
+      "channel": "stable",
+      "date": "2026-09-08",
+      "title": "v83: WP-797..WP-821 motion language, contrast gate, recovery paths, honest loading states",
+      "highlights": [
+        "WP-797/804: rank and subject palettes take the surface as a required parameter and are wired to the repo's own contrastRatio gate. The compiler is the gate; the two raw-colour escapes are named and their count is locked by a test.",
+        "WP-798: touch targets and screen-reader semantics enforced as a gate rather than patched per widget.",
+        "WP-806: planTimerStop was documented as the single decision point for Stop but had zero production call sites - all five callers were tests. The Dart side now goes through the plan, locked by a two-ended contract test.",
+        "WP-808: motion language capped at 320 ms and fully disabled under reduce-motion. The stop haptic lives in the shared stopTimerFromSurface helper, so the full-screen focus surface is no longer silent; haptics are measured through SystemChannels.platform.",
+        "WP-817/819: todayRecordedSeconds returns 0 while sessions load, conflating 'unknown' with 'none'. That produced a false goal celebration on every cold start (the previous == null guard is dead on a non-nullable provider) and permanent '0' claims on error. The goal card moved behind cardDataGate before ref.listen registers; the timer card kept its controls live and shows an unknown marker instead. WP-819 closed the same lie in the goal bar, which only renders above 400 px - i.e. on desktop.",
+        "WP-809/810/820: the person screen reachable from a case could apply a sanction but not revoke one; the case row badge drew the offender ratio for reporters too; and chooseAndApply defaulted to the five-step auth ladder, so three entry points offered two menus. The ladder parameter was removed outright.",
+        "WP-813: the Undo strip after a name_reset reported success and never restored the name. restore_user_name existed in the edge function with zero senders from app/lib. Restore now runs on revoke, but only while the display name is still the moderation placeholder."
+      ],
+      "fixes": [
+        "WP-802: production had mailer_autoconfirm=false with no custom SMTP and a 2-emails-per-hour cap, so the third account created in an hour never received its verification mail. Staging already had autoconfirm on, which is why the defect lived only in production.",
+        "WP-803 (0139): three sweepers were written, granted and pgTAP-covered but never scheduled - and would still have failed as written, since their bodies require is_super_admin() and cron has no JWT.",
+        "WP-807 (0140): two of four candidate grants removed. Staging paid for itself twice on one migration: the first dry run proved revoke-from-authenticated is a no-op while PUBLIC holds EXECUTE, the second proved a third revoke would break three security tests.",
+        "WP-811/816: markRead had zero call sites, so nudges stayed unread forever. The fix then introduced a worse defect - the repository was resolved outside the wrapper's try block, so a throw dropped the ref.listen callback and the notification was never shown.",
+        "WP-812/814/815: removed a bridge widget and two keys that were defined but never rendered, and single-sourced the push installation preference key that was duplicated between the provider and signOut.",
+        "WP-818: the primary-group selector swallowed unwrapped network errors and, separately, never kept authStateProvider alive - so the confirm dialog could complete and write nothing at all.",
+        "WP-821: three test fixtures derived sessions from the local wall clock and turned the gate red between midnight and roughly 02:00; two more failed on CI because UTC and Istanbul were on different days."
+      ],
+      "notes": [
+        "Database unchanged since 0140; both environments are at that head.",
+        "The admin edge functions were deployed to staging and production before this release, so WP-813 is already live independently of the app build.",
+        "Documentation truth pass: the admin panel plan's inventory table sent this round to already-finished work twice. The table was kept as a historical record with a dated measurement section added beneath it."
+      ]
+    },
+    {
       "versionName": "1.0.82",
       "buildNumber": 82,
       "channel": "stable",

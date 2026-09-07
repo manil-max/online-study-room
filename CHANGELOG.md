@@ -4,6 +4,31 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v83 / 1.0.83+83] - 2026-09-08
+
+### Öne çıkanlar
+
+- Uygulama artık akıyor: sayfa geçişleri, değişen sayılar ve hedefe ulaşma anı yumuşak bir hareket diliyle çiziliyor.
+- Sayacı başlatıp durdurduğunda telefon hafifçe titriyor; ekrana bakmadan hangisine bastığını anlıyorsun.
+- Rütbe ve ders renkleri her temada okunur hâle geldi; koyu temada kaybolan yazı kalmadı.
+- Küçük dokunma hedefleri büyütüldü ve ekran okuyucu desteği eklendi.
+
+### Düzeltmeler
+
+- Veriler yüklenirken kartlar artık "bugün 0" demiyor; ölçülmemiş sayının yerinde bir çizgi duruyor.
+- Hedefini zaten tutmuşken uygulamayı açtığında sahte kutlama artık oynamıyor.
+- Sayacı ikinci bir cihazdan durdurduğunda gerçekten duruyor.
+- Kayıt olduktan sonra hesabına hemen girebiliyorsun; doğrulama postası beklemek gerekmiyor.
+- Birincil grup seçimi başarısız olursa uygulama artık bunu söylüyor.
+- Aynı dürtme ikinci cihazda tekrar bildirilmiyor.
+- Yönetim tarafı: vakadan açılan kişi ekranından kısıt kaldırılabiliyor, şikâyet edenin satırı doğru oranı gösteriyor, yaptırım menüsü her yerde aynı ve "Geri al" adı gerçekten geri yüklüyor.
+
+### Doğrulama sınırı
+
+- Veritabanı değişmedi; iki ortam da aynı sürümde.
+- Yönetim tarafındaki ad geri yükleme sunucu tarafıdır ve bu sürümden bağımsız olarak zaten yayında.
+- Titreşimlerin gerçek şiddeti, sahte kutlamanın gittiği ve yükleme sırasında çizginin göründüğü gerçek telefonda henüz ölçülmedi.
+
 ## [v82 / 1.0.82+82] - 2026-09-07
 
 ### Öne çıkanlar
