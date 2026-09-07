@@ -5,9 +5,11 @@ import {
   isLadderAction,
   legacyIdempotencyKey,
   legacyLadderActionFor,
+  MODERATION_NAME_PLACEHOLDER,
   PERMANENT_BAN_DURATION,
   requiresAuthBan,
   shouldClearAuthBanOnRevoke,
+  shouldRestoreNameOnRevoke,
 } from "../_shared/admin_sanction_policy.ts"
 
 const corsHeaders = {
@@ -124,6 +126,60 @@ serve(async (req) => {
             if (authError) throw authError
           }
         }
+        // 🔴 WP-813: ad sıfırlamanın "Geri al" düğmesi YALAN söylüyordu.
+        //
+        // `name_reset` auth'a hiç dokunmaz, bu yüzden yukarıdaki blok onda
+        // hiçbir şey yapmaz; satır `revoked` olur, yönetici BAŞARI mesajı
+        // görür, kullanıcının adı yer tutucuda KALIRDI. Adı geri yazan tek
+        // kod aşağıdaki eski `restore_user_name` dalıydı ve istemcide hiçbir
+        // çağrı yeri yoktu — yönetici bunu uygulamadan düzeltemiyordu.
+        //
+        // Karar (Tasarım C) ve neden A/B seçilmediği:
+        // `_shared/admin_sanction_policy.ts` → `shouldRestoreNameOnRevoke`.
+        if (revoked?.action === 'name_reset' && revoked?.target_user_id) {
+          const restoreTargetId = revoked.target_user_id
+          const { data: nameReset, error: nameResetReadError } =
+            await supabaseAdmin
+              .from('moderation_name_resets')
+              .select('previous_name')
+              .eq('target_type', 'user')
+              .eq('target_id', restoreTargetId)
+              .maybeSingle()
+          if (nameResetReadError) throw nameResetReadError
+          if (nameReset?.previous_name) {
+            const { data: restoreProfile, error: restoreProfileError } =
+              await supabaseAdmin
+                .from('profiles')
+                .select('display_name')
+                .eq('id', restoreTargetId)
+                .single()
+            if (restoreProfileError) throw restoreProfileError
+            if (
+              shouldRestoreNameOnRevoke({
+                revokedAction: revoked.action,
+                currentDisplayName: restoreProfile?.display_name,
+              })
+            ) {
+              const { error: restoreError } = await supabaseAdmin
+                .from('profiles')
+                .update({ display_name: nameReset.previous_name })
+                .eq('id', restoreTargetId)
+              if (restoreError) throw restoreError
+            }
+            // Satır HER İKİ durumda da tüketilir (onarıldı ya da kullanıcının
+            // kendi seçimi korundu). Sebep: `0098` tablosu hedef başına TEK
+            // satır tutar ve sıfırlama `ignoreDuplicates: true` ile yazılır
+            // (aşağıda, aynı dosyada). Satır kalırsa İKİNCİ bir `name_reset`
+            // yeni adı hiç kaydedemez ve ileriki bir geri alma EN ESKİ adı
+            // geri yükler.
+            const { error: nameResetDeleteError } = await supabaseAdmin
+              .from('moderation_name_resets')
+              .delete()
+              .eq('target_type', 'user')
+              .eq('target_id', restoreTargetId)
+            if (nameResetDeleteError) throw nameResetDeleteError
+          }
+        }
         return jsonResponse(revoked)
       }
 
@@ -168,7 +224,9 @@ serve(async (req) => {
             )
           if (resetError) throw resetError
           const { error: renameError } = await supabaseAdmin
-            .from('profiles').update({ display_name: 'İsimsiz kullanıcı' }).eq('id', targetUserId)
+            .from('profiles')
+            .update({ display_name: MODERATION_NAME_PLACEHOLDER })
+            .eq('id', targetUserId)
           if (renameError) throw renameError
         } else if (banDuration) {
           const { error: banError } = await supabaseAdmin.auth.admin
@@ -256,7 +314,7 @@ serve(async (req) => {
         if (resetError) throw resetError
         const { error } = await supabaseAdmin
           .from('profiles')
-          .update({ display_name: 'İsimsiz kullanıcı' })
+          .update({ display_name: MODERATION_NAME_PLACEHOLDER })
           .eq('id', targetUserId)
         if (error) throw error
         result = { success: true }

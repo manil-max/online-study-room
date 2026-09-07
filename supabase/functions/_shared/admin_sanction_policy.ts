@@ -24,6 +24,15 @@
 /// GoTrue `ban_duration` biçiminde "pratikte sonsuz".
 export const PERMANENT_BAN_DURATION = '876000h'
 
+/// `name_reset` basamağının profile yazdığı yer tutucu ad.
+///
+/// 🔴 WP-813: bu dize `admin-user-actions/index.ts` içinde **iki ayrı yerde**
+/// elle yazılıydı (yaptırım hattı + eski `reset_user_name` dalı). WP-813 üçüncü
+/// bir okuma yeri ekliyor: geri alma, adı ancak hedef HÂLÂ bu yer tutucudaysa
+/// onarır. Üç yerde ayrı yaşayan bir dize, birinde değişince sessizce bozulur —
+/// yer tutucu değişse geri alma hiçbir zaman eşleşmez ve kimse hata görmez.
+export const MODERATION_NAME_PLACEHOLDER = 'İsimsiz kullanıcı'
+
 /// Auth tarafında hesabı kapatan basamaklar ve süreleri.
 ///
 /// Bu tablo aynı zamanda "hangi yaptırım auth'a dokunur" sorusunun TEK
@@ -110,4 +119,33 @@ export function shouldClearAuthBanOnRevoke(input: {
   softDeleted: boolean
 }): boolean {
   return requiresAuthBan(input.revokedAction) && !input.softDeleted
+}
+
+/// Geri alınan yaptırım kullanıcının **adını** geri yüklemeli mi?
+///
+/// 🔴 WP-813 ölçülen kusur: `name_reset` kısıtlayıcı sayılmadığı için
+/// (`moderation_sanction.dart`, `nameReset.isRestrictive == false`) sert teyit
+/// istemez (`sanction_ladder.dart:62-63`), uygulandıktan sonra 10 saniyelik
+/// "Geri al" şeridi çıkar ve düğme `moderation_revoke`u çağırır. O dal satırı
+/// `revoked` yapıp yalnız auth ban'ına bakıyordu; adı geri yazan tek kod eski
+/// `restore_user_name` dalıydı ve `app/lib` içinde **sıfır** çağrı yeri vardı.
+/// Yönetici BAŞARI mesajı görüyor, kullanıcının adı yer tutucuda kalıyordu.
+///
+/// **Tasarım C — koşullu onarım.** Ad ancak hedefin şu anki adı moderasyonun
+/// koyduğu yer tutucuysa geri yazılır:
+/// * *Tasarım A* (koşulsuz onarım) kullanıcının bu arada kendi seçtiği adı
+///   ezerdi. "Geri al" bir moderasyon işlemini geri alır, kullanıcının kendi
+///   kararını değil.
+/// * *Tasarım B* (sert teyit + ayrı "adı geri yükle" düğmesi) yeni yüzey ve
+///   yeni l10n anahtarı isterdi; bu tur yalanı kapatıyor, yüzey açmıyor.
+///
+/// Yan fayda: soft-delete edilmiş hesabın adı `Silinmiş Kullanıcı`dır, yer
+/// tutucuya eşit değildir — eski bir ad sıfırlamayı geri almak silinmiş
+/// hesabın adını diriltmez.
+export function shouldRestoreNameOnRevoke(input: {
+  revokedAction: string | null | undefined
+  currentDisplayName: string | null | undefined
+}): boolean {
+  return input.revokedAction === 'name_reset' &&
+    input.currentDisplayName === MODERATION_NAME_PLACEHOLDER
 }

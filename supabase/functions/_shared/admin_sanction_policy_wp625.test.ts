@@ -26,9 +26,11 @@ import {
   isLadderAction,
   legacyIdempotencyKey,
   legacyLadderActionFor,
+  MODERATION_NAME_PLACEHOLDER,
   PERMANENT_BAN_DURATION,
   requiresAuthBan,
   shouldClearAuthBanOnRevoke,
+  shouldRestoreNameOnRevoke,
 } from "./admin_sanction_policy.ts"
 
 const TARGET = "11111111-1111-4111-8111-111111111111"
@@ -118,4 +120,110 @@ Deno.test("eksik/bozuk aksiyon geri alma yolunda fail-closed", () => {
   assertFalse(
     shouldClearAuthBanOnRevoke({ revokedAction: undefined, softDeleted: false }),
   )
+})
+
+/* ---------------------------------------------------------------------------
+ * WP-813 — ad sıfırlamanın "Geri al" düğmesi YALAN söylüyordu.
+ *
+ * Ölçülen kusur: `name_reset` sert teyit istemeyen bir basamak olduğu için
+ * uygulandıktan sonra 10 sn "Geri al" şeridi çıkıyor, düğme
+ * `moderation_revoke`u çağırıyor, satır `revoked` oluyor ve yönetici BAŞARI
+ * mesajı görüyordu — ama adı geri yazan tek kod eski `restore_user_name`
+ * dalıydı ve istemcide hiçbir çağrı yeri yoktu. Ad yer tutucuda kalıyordu.
+ *
+ * 🔴 İki uçlu iddia: **moderasyonun koyduğu ad geri alınır, kullanıcının
+ * kendi seçtiği ad EZİLMEZ.** Tek yönlü düşünmek burada iki ayrı hata üretir:
+ * koşulsuz onarım kullanıcının kararını siler, onarımsız geri alma yalan söyler.
+ * ------------------------------------------------------------------------- */
+
+Deno.test("ad sıfırlamayı geri almak yer tutucudaki adı onarır", () => {
+  assert(
+    shouldRestoreNameOnRevoke({
+      revokedAction: "name_reset",
+      currentDisplayName: MODERATION_NAME_PLACEHOLDER,
+    }),
+  )
+})
+
+Deno.test("kullanıcının kendi seçtiği ad geri almayla EZİLMEZ", () => {
+  // "Geri al" bir moderasyon işlemini geri alır, kullanıcının kendi kararını
+  // değil: sıfırlamadan sonra kendine yeni ad seçmişse o ad korunur.
+  for (const chosen of ["Mehmet", "isimsiz kullanıcı", "İsimsiz kullanıcı ", ""]) {
+    assertFalse(
+      shouldRestoreNameOnRevoke({
+        revokedAction: "name_reset",
+        currentDisplayName: chosen,
+      }),
+      chosen,
+    )
+  }
+})
+
+Deno.test("ad sıfırlama DIŞINDAKİ basamakların geri alınması ada dokunmaz", () => {
+  // Yer tutucu ada sahip bir hedefte bile: uyarıyı/askıyı geri almak, ilgisiz
+  // bir ad sıfırlamayı da geri alıyor olsaydı R1'in ad tarafını kurmuş olurduk.
+  for (
+    const action of [
+      "no_action",
+      "warn",
+      "mute_24h",
+      "suspend_24h",
+      "suspend_7d",
+      "suspend_14d",
+      "suspend_30d",
+      "ban_permanent",
+    ]
+  ) {
+    assertFalse(
+      shouldRestoreNameOnRevoke({
+        revokedAction: action,
+        currentDisplayName: MODERATION_NAME_PLACEHOLDER,
+      }),
+      action,
+    )
+  }
+})
+
+Deno.test("eksik aksiyon/ad onarım yolunda fail-closed", () => {
+  assertFalse(
+    shouldRestoreNameOnRevoke({
+      revokedAction: null,
+      currentDisplayName: MODERATION_NAME_PLACEHOLDER,
+    }),
+  )
+  assertFalse(
+    shouldRestoreNameOnRevoke({
+      revokedAction: undefined,
+      currentDisplayName: MODERATION_NAME_PLACEHOLDER,
+    }),
+  )
+  assertFalse(
+    shouldRestoreNameOnRevoke({
+      revokedAction: "name_reset",
+      currentDisplayName: null,
+    }),
+  )
+  assertFalse(
+    shouldRestoreNameOnRevoke({
+      revokedAction: "name_reset",
+      currentDisplayName: undefined,
+    }),
+  )
+})
+
+Deno.test("silinmiş hesabın adı geri alma yoluyla dirilmez", () => {
+  // `soft_delete_user` profili `Silinmiş Kullanıcı` yapar; yer tutucuya eşit
+  // olmadığı için eski bir ad sıfırlamanın geri alınması onu diriltmez.
+  assertFalse(
+    shouldRestoreNameOnRevoke({
+      revokedAction: "name_reset",
+      currentDisplayName: "Silinmiş Kullanıcı",
+    }),
+  )
+})
+
+Deno.test("yer tutucu dizesi sabittir", () => {
+  // 🔴 Bu dize canlı veritabanındaki satırlarda DURUYOR. Değişirse geri alma
+  // hiçbir zaman eşleşmez ve kimse hata görmez — sessizce onarımsız kalır.
+  assertEquals(MODERATION_NAME_PLACEHOLDER, "İsimsiz kullanıcı")
 })
