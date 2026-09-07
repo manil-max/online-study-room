@@ -60,12 +60,6 @@ List<UserTask> sortUserTasksByDue(List<UserTask> tasks) {
   return copy;
 }
 
-/// Gecikmiş mi? (dueAt < now, tamamlanmamış varsayımı çağıranda).
-bool isTaskOverdue(DateTime now, DateTime? dueAt) {
-  if (dueAt == null) return false;
-  return dueAt.toUtc().isBefore(now.toUtc());
-}
-
 /// Kalan süre spektrumu (WP-197).
 ///
 /// - süresiz: nötr outline

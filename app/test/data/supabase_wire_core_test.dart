@@ -11,6 +11,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/data/models/subject.dart';
 import 'package:online_study_room/data/repositories/notification_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/supabase_gamification_repository.dart';
@@ -163,7 +164,9 @@ void main() {
       wire.respond('gamification_profiles', const []);
       final repo = SupabaseGamificationRepository(wire.client());
 
-      await repo.setStreakFreezes('u1', 500);
+      await repo.updateProfile(
+        GamificationProfile.initial('u1').copyWith(streakFreezes: 500),
+      );
 
       expect(wire.last.json['streak_freezes'], 99);
       expect(wire.last.json['user_id'], 'u1');
@@ -176,7 +179,9 @@ void main() {
       wire.respond('gamification_profiles', const []);
       final repo = SupabaseGamificationRepository(wire.client());
 
-      await repo.setStreakFreezes('u1', 3);
+      await repo.updateProfile(
+        GamificationProfile.initial('u1').copyWith(streakFreezes: 3),
+      );
 
       expect(wire.last.json.keys, isNot(contains('xp')));
       expect(wire.last.json.keys, isNot(contains('crown_rank')));

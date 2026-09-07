@@ -22,16 +22,6 @@ class SupabaseGamificationRepository implements GamificationRepository {
   }
 
   @override
-  Future<void> setStreakFreezes(String userId, int value) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _client.from('gamification_profiles').upsert({
-      'user_id': userId,
-      'streak_freezes': value.clamp(0, 99),
-      'updated_at': now,
-    });
-  }
-
-  @override
   Future<void> updateProfile(GamificationProfile profile) async {
     // WP-56: istemci XP / crown_rank yazamaz (0024 guard + bu dar yazım).
     // Yalnız seri koruma ve vitrin rozetleri.

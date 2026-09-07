@@ -18,16 +18,6 @@ class InMemoryGamificationRepository implements GamificationRepository {
   }
 
   @override
-  Future<void> setStreakFreezes(String userId, int value) async {
-    final current = _profileFor(userId);
-    _profiles[userId] = current.copyWith(
-      streakFreezes: value.clamp(0, 99),
-      updatedAt: DateTime.now(),
-    );
-    _changes.add(null);
-  }
-
-  @override
   Future<void> updateProfile(GamificationProfile profile) async {
     _profiles[profile.userId] = profile.copyWith(updatedAt: DateTime.now());
     _changes.add(null);

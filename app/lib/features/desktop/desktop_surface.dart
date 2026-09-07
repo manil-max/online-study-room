@@ -47,10 +47,6 @@ class DesktopSurface {
   /// geniş olamaz.
   static const double panelWidthXLarge = 1472;
 
-  /// Geniş stüdyo (tema) — **taban** genişlik.
-  static const double studioWidth = 1040;
-  static const double studioHeight = 720;
-
   /// Okuma genişliği (liste sayfaları ortalanır).
   static const double readingWidth = 760;
 
@@ -232,22 +228,6 @@ Future<T?> showDesktopPanel<T>({
         ),
       );
     },
-  );
-}
-
-/// Geniş stüdyo paneli (tema vb.).
-///
-/// Aynı merdiveni kullanır, tabanı bugünkü 1040 px: stüdyo hiçbir pencerede
-/// bugünkünden dar açılmaz, ama 1200 ve 1600'de panelle birlikte büyür.
-Future<T?> showDesktopStudio<T>({
-  required BuildContext context,
-  required WidgetBuilder builder,
-}) {
-  return showDesktopPanel<T>(
-    context: context,
-    builder: builder,
-    baseWidth: DesktopSurface.studioWidth,
-    height: DesktopSurface.studioHeight,
   );
 }
 

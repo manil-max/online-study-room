@@ -4,7 +4,6 @@ import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
 import 'package:online_study_room/features/stats/charts/gauge_chart.dart';
 import 'package:online_study_room/features/stats/charts/radar_stat_chart.dart';
 import 'package:online_study_room/features/stats/charts/series_palette.dart';
-import 'package:online_study_room/features/stats/charts/stacked_bar_chart.dart';
 
 void main() {
   testWidgets('GaugeChart renders percent', (tester) async {
@@ -28,25 +27,6 @@ void main() {
       ),
     );
     expect(find.byType(AreaLineChart), findsOneWidget);
-  });
-
-  testWidgets('StackedBarChart builds', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 120,
-            child: StackedBarChart(
-              stacks: [
-                [1, 2],
-                [2, 1],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    expect(find.byType(StackedBarChart), findsOneWidget);
   });
 
   testWidgets('RadarStatChart builds', (tester) async {

@@ -54,8 +54,6 @@ void main() {
       ),
       TourBlockReason.routeNotCurrent,
     );
-    expect(isPermanentBlock(TourBlockReason.routeNotCurrent), isFalse);
-    expect(isPermanentBlock(TourBlockReason.alreadySeen), isTrue);
   });
 
   test('controller son adımda turu kalıcı olarak bitirir', () async {

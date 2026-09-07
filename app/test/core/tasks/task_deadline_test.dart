@@ -93,7 +93,6 @@ void main() {
     test('overdue is overdue kind and red-ish', () {
       final past = DateTime.utc(2026, 7, 18, 10);
       expect(taskUrgencyKind(now, past), TaskUrgencyKind.overdue);
-      expect(isTaskOverdue(now, past), isTrue);
       final c = taskUrgencyColor(now, past, scheme);
       expect(c.r, greaterThan(0.5));
     });

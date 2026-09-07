@@ -117,17 +117,5 @@ void main() {
       expect(taskOccurrenceDayForCompletion(task, afterMidnight), isNull);
       expect(nextTaskOccurrenceDay(task, afterMidnight), DateTime(2026, 8, 2));
     });
-
-    test('completion projection yalnız aynı occurrence gününü kapatır', () {
-      final task = recurring(
-        id: 'Fizik',
-        anchor: DateTime(2026, 7, 30),
-        completedAt: DateTime.utc(2026, 7, 30, 18),
-        completionDay: DateTime.utc(2026, 7, 30, 12),
-      );
-
-      expect(isTaskOccurrenceCompleted(task, DateTime(2026, 7, 30)), isTrue);
-      expect(isTaskOccurrenceCompleted(task, DateTime(2026, 8, 2)), isFalse);
-    });
   });
 }

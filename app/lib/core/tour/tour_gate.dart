@@ -43,7 +43,3 @@ TourBlockReason? tourBlockReason({
   if (!appResumed) return TourBlockReason.appNotResumed;
   return null;
 }
-
-/// Engel kalıcı mı (bir daha denemeye değmez), yoksa geçici mi (ertelenir)?
-bool isPermanentBlock(TourBlockReason reason) =>
-    reason == TourBlockReason.alreadySeen;

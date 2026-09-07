@@ -69,6 +69,11 @@ const Set<HomeWidgetProvider> kSelfUpdatingHomeWidgets = {
 ///
 /// Iki gecerli yol: [StudyHomeWidget] uyesi olmak (Flutter `updateWidget`
 /// gonderir) ya da [kSelfUpdatingHomeWidgets] icinde olmak.
+///
+/// WP-805: cagrisi yalniz test'te — bu bir kusur degil, sozlesmenin kendisi.
+/// Uretim kodu yayindaki her saglayiciyi zaten bu iki yoldan biriyle kurar;
+/// yardimci o kurulumun BOZULMADIGINI olcer. Isaret olmadan olu koda benzer.
+@visibleForTesting
 bool hasHomeWidgetRefreshPath(HomeWidgetProvider provider) =>
     kSelfUpdatingHomeWidgets.contains(provider) ||
     StudyHomeWidget.values.any((widget) => widget.catalogProvider == provider);

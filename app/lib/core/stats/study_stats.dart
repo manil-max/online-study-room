@@ -409,14 +409,6 @@ int longestStudyStreak(
   );
 }
 
-/// Çalışma serisi: üst üste (en az 1 sn) çalışılan gün sayısı. Grup üyeleri için
-/// herkesin günlük hedefi bilinmediğinden "çalıştığın gün" temelli seri (§3.7).
-int studyStreak(
-  Iterable<StudySession> sessions, {
-  DateTime? today,
-  Map<DateTime, int>? totals,
-}) => currentStreak(sessions, 1, today: today, totals: totals);
-
 // ── Grup geneli agregalar: per-user-per-gün toplamlardan (DailyStat) ─────────
 
 /// Tüm üyelerin günlük toplamlarını gün bazında birleştirir (gün → saniye).

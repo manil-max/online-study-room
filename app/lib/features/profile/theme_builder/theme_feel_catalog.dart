@@ -129,6 +129,12 @@ const List<FeelOption> kFeelOptions = [
   ),
 ];
 
+/// Kimlikten his secimi.
+///
+/// WP-805: `lib/` bu yolu kullanmaz — sihirbaz [kFeelOptions] uzerinde
+/// dogrudan doner ve secilen `option.feel`i tasir. Yardimci yalnizca
+/// testlerin bir hissi adiyla kurmasi icin vardir.
+@visibleForTesting
 FeelOption feelOptionById(String id) => kFeelOptions.firstWhere(
   (option) => option.id == id,
   orElse: () => kFeelOptions.first,

@@ -66,14 +66,6 @@ DateTime nextTaskOccurrenceDay(
   return _calendarDateFromOrdinal(anchorOrdinal + (steps * task.intervalDays));
 }
 
-/// Projection'daki completion yalnız sorulan occurrence'a mı ait?
-bool isTaskOccurrenceCompleted(UserTask task, DateTime occurrenceDay) {
-  if (!task.completed || task.completionDay == null) return false;
-  final expected = _calendarDate(occurrenceDay);
-  final actual = istanbulDay(task.completionDay!);
-  return _dayOrdinal(actual) == _dayOrdinal(expected);
-}
-
 DateTime _calendarDate(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
