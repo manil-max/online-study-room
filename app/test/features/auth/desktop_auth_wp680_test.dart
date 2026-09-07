@@ -435,7 +435,10 @@ void main() {
 
       // Adim 4 — hazir
       expect(find.text(tr.onboardingReadyTitle), findsOneWidget);
-      expect(find.text(tr.onboardingStart), findsOneWidget);
+      // 🔴 WP-799: dugme adi "Kamp atesine git" idi ama kullaniciyi Ana
+      // Sayfa'ya goturuyordu -- ad ile davranis birbirini yalanliyordu.
+      // Ad gerceklestirdigi ise cevrildi.
+      expect(find.text(tr.classroomCalismayaBasla), findsOneWidget);
     }),
   );
 

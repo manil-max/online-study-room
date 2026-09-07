@@ -121,19 +121,30 @@ void main() {
       expect(tour.steps.single.anchor, isNull);
     });
 
-    test('iki dilde de metin uzun basmayı tarif ediyor', () {
-      expect(
-        AppTours.home(AppLocalizationsTr(), isEmpty: false).steps.single.text,
-        contains('uzun bas'),
-      );
-      expect(
-        AppTours.home(AppLocalizationsEn(), isEmpty: false).steps.single.text,
-        contains('hold'),
-      );
+    // 🔴 WP-799 — IDDIA YON DEGISTIRDI ve sebebi olculmustu.
+    //
+    // Bu tur, onboarding'den cikan kullaniciya gosterilen TEK balondu ve
+    // "karta uzun bas: duzenleme acilir" diyordu. Yani yeni kullaniciya
+    // ogretilen ilk ve tek sey KART DUZENLEMEKTI; sayac turu WP-417'de
+    // kaldirilmis, yerine bir sey konmamisti.
+    //
+    // Artik balon kullaniciyi ilk deger anina goturuyor: sayaci baslat.
+    // Olculen sey "hangi kelime gectigi" degil, turun DOGRU ISI isaret
+    // ettigi.
+    test('iki dilde de metin sayaci baslatmayi isaret ediyor', () {
+      final tr = AppTours.home(AppLocalizationsTr(), isEmpty: false);
+      final en = AppTours.home(AppLocalizationsEn(), isEmpty: false);
+      expect(tr.steps.single.text, contains('Sayac'));
+      expect(en.steps.single.text, contains('timer'));
+      // Eski davranis geri gelmesin: duzenleme artik ilk ogretilen sey degil.
+      expect(tr.steps.single.text, isNot(contains('uzun bas')));
+      expect(en.steps.single.text, isNot(contains('hold')));
     });
 
     test('tur sürümü ilerledi: metin değiştiği için yeniden gösterilir', () {
-      expect(AppTours.home(AppLocalizationsTr(), isEmpty: false).version, 2);
+      // v2 -> v3: metin degisti, turu daha once gormus kullanici yenisini
+      // gormeli.
+      expect(AppTours.home(AppLocalizationsTr(), isEmpty: false).version, 3);
     });
   });
 }
