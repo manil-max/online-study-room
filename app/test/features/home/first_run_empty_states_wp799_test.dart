@@ -54,6 +54,7 @@ import 'package:online_study_room/features/profile/subjects_screen.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/istanbul_fixture.dart';
 
 final _me = Profile(
   id: 'me-1',
@@ -174,8 +175,11 @@ void main() {
           id: 's-1',
           userId: _me.id,
           subjectId: 'sub-1',
-          start: DateTime.now().subtract(const Duration(hours: 2)),
-          end: DateTime.now().subtract(const Duration(hours: 1)),
+          // 🔴 WP-821: `now - 2sa` gece 00:00–02:00 kosumunda oturumu DUNE
+          // dusuruyordu; bugunun toplami 0 cikip test kirmizi doner.
+          // `agoWithinIstanbulToday` (WP-565) tam bunun icin var.
+          start: agoWithinIstanbulToday(const Duration(hours: 2)),
+          end: agoWithinIstanbulToday(const Duration(hours: 1)),
           durationSeconds: 3600,
           source: StudySource.live,
         ),
@@ -199,8 +203,11 @@ void main() {
         StudySession(
           id: 's-1',
           userId: _me.id,
-          start: DateTime.now().subtract(const Duration(hours: 2)),
-          end: DateTime.now().subtract(const Duration(hours: 1)),
+          // 🔴 WP-821: `now - 2sa` gece 00:00–02:00 kosumunda oturumu DUNE
+          // dusuruyordu; bugunun toplami 0 cikip test kirmizi doner.
+          // `agoWithinIstanbulToday` (WP-565) tam bunun icin var.
+          start: agoWithinIstanbulToday(const Duration(hours: 2)),
+          end: agoWithinIstanbulToday(const Duration(hours: 1)),
           durationSeconds: 3600,
           source: StudySource.live,
         ),

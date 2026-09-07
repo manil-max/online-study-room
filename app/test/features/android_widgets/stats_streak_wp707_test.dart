@@ -35,6 +35,7 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/repositories/goal_streak_repository.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import '../../support/istanbul_fixture.dart';
 
 /// Gateway sahtesi: tur sonunda prefs dosyasinda ne kalir?
 ///
@@ -123,13 +124,23 @@ Profile _profile() => Profile(
 );
 
 /// Bugun hedefi tutturan tek bir oturum: gunluk hedef yuzdesi de gercek cikar.
+/// 🔴 WP-821 — SAAT BOMBASI. Bu fikstur `DateTime.now()`dan geriye sayiyordu:
+/// gece 00:00–02:00 arasinda kosunca oturum DUNE dusuyor, bugunun toplami 0
+/// oluyor ve testler kirmiziya donuyordu. 2026-09-08 saat 00:16'da uc dosya
+/// birden dustu; sebep bir regresyon degil, saatti.
+///
+/// `agoWithinIstanbulToday` (WP-565) tam bunun icin yazilmisti ve bu dosyalar
+/// onu kullanmiyordu. Geri gidis bugunden cikiyorsa bugune sigan en buyuk
+/// geri gidise kirpilir; `durationSeconds` acikca verildigi icin toplam
+/// degismez.
 List<StudySession> _sessions() {
+  final start = agoWithinIstanbulToday(const Duration(minutes: 45));
   final end = DateTime.now();
   return [
     StudySession(
       id: 's-1',
       userId: _userId,
-      start: end.subtract(const Duration(minutes: 45)),
+      start: start,
       end: end,
       durationSeconds: 45 * 60,
       source: StudySource.live,
