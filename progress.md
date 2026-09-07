@@ -12259,3 +12259,74 @@ Bu sınıf hata bu depoda **ikinci kez**: `0089` da
 `expire_global_timer_v2_leases`'i `0082`'den beri zamanlanmamış bulmuştu.
 Sebep aynı: test fonksiyonu doğrudan çağırır, yani "çalışıyor" ölçümü
 "çağrılıyor" ölçümünü içermez.
+
+## 2026-09-07 — GENEL KALİTE TURU II: hareket, ölü kod, iki migration (WP-802…WP-808)
+
+### WP-802 — 🔴 Production'da kayıt akışı kırılmaya açıktı
+`mailer_autoconfirm=false` + `custom_smtp_configured=false` +
+`rate_limit_email_sent=2`. Aynı saatte üçüncü kayıt doğrulama postasını hiç
+almaz: hesabı oluşur, giremez. **Staging'de `autoconfirm` zaten `true` idi**
+— test hep orada yapıldığı için kusur yalnız production'da yaşıyordu.
+Workflow bu alanı okuyor ama yazamıyordu; yeteneği eklendi (varsayılan
+`keep`, ayrı adım/ayrı koşul, okunan değerle sert doğrulama) ve kapatıldı.
+
+### WP-803 (0139) — hiç çalıştırılmamış üç süpürücü
+`moderation_purge_expired_evidence`, `expire_multi_group_presence_leases`,
+`prune_stale_push_devices` — üçü de yazılı, grant'lı, pgTAP'li ve
+`cron.job` içinde yok. 🔴 Birincisi belge–kod çelişkisiydi: `0106` *"kanıt
+süresiz durmaz"* diyor, duruyordu.
+🔴 Olduğu gibi zamanlansaydı **yine hiç çalışmayacaktı**: gövde
+`is_super_admin()` istiyor, cron'un JWT'si yok. Muhafız kardeş süpürücülerin
+biçimine çevrildi. Test fonksiyonun davranışını değil **zamanlanmış olmasını**
+ve JWT'siz koşabilmesini ölçüyor.
+
+### WP-804 — renk zemini ZORUNLU: derleyici kapıya dönüştü
+27 çağrı yeri düzeldi. Lane iki **kaçış yolunu** da kapattı (`crownColorFor`
+pozisyonel opsiyoneldi, `badgeVisualColor` sessizce ham dönüyordu). Ham yola
+çıkış iki yerde (kamp ateşinin kendi boyalı zemini) ve **sayısı kilitli**.
+
+### WP-805 — ölü kod: 8 silindi, 5 BİLEREK bırakıldı
+Lane denetimin iki hatasını düzeltti ve üç şeyi haklı olarak silmedi:
+🔴 `readWorldClock` ölü kod değil, **yazılmamış ekran** (18 şehir + l10n +
+testli matematik hazır, Dünya sekmesi yok — ürün kararı bekliyor);
+`markRead`'i silmek bir hatayı çimentolardı; `AdminCaseTargetLink` canlı
+lane'in parçasıydı.
+
+### WP-806 — `planTimerStop` üretimde çağrılmıyordu
+*"Durdur'un tek karar noktası"* diye belgelenmişti; beş çağrısı da testtendi.
+Kural üç yerde ayrı yazılıydı (plan, Dart, native) ve **hiçbir şey
+uyuştuklarını ölçmüyordu** — `timer-sync-origin-sozlesme-kok-neden`
+dersinin tekrarı. Dart ucu plana bağlandı, iki uçlu sözleşme yazıldı, başlık
+düzeltildi ("tek nokta" değil, **Dart tarafının** tek noktası).
+
+### WP-807 (0140) — 🔴 staging kendini İKİ KEZ ödedi
+Dört aday grant'tan **ikisi** kaldırıldı.
+- Kuru koşu 1: `revoke ... from authenticated` **hiçbir şey yapmadı** —
+  PostgreSQL `EXECUTE`i varsayılan olarak `PUBLIC`e verir ve `0112`/`0120`
+  orada PUBLIC revoke'u yapmamış. Aynı dosyada üç revoke'un ikisi tuttu.
+- Kuru koşu 2: düzelttikten sonra revoke çalıştı ve **üç güvenlik testi**
+  kırmızıya döndü — `record_goal_completion` `set role authenticated` ile
+  çağrılıp korumaları kanıtlanıyormuş. Ölü grant değil, **korumaları
+  kanıtlanan yüzey**; kaldırmak `0112` sözleşmesinin kanıtını silerdi.
+Karar geri alındı ve **teste yazıldı**, böylece sonraki temizlik turu
+kırmızı görür.
+
+### WP-808 — hareket dili + dokunsal geri bildirim
+Sayfa geçişi (280 ms, kendi kurucusu), sayı geçişleri, hedef kutlaması, dört
+noktada titreşim. Tavan **320 ms** ve *"animasyonları azalt"* açıkken hepsi
+kapanır — ikisi de testle kilitli. Dokuz sabotaj kırmızı, golden etkisi yok.
+**WP-808/2:** darbe kartın düğmesindeydi, tam ekran odak ekranı sessizdi —
+`stopTimerFromSurface`'ın kendi yorumundaki WP-560 dersi darbe için
+tekrarlanmıştı. Kural yardımcının içine taşındı; titreşimler artık
+platform kanalından **ölçülüyor** (4 iddia, 3 sabotaj kırmızı).
+
+### Migration zinciri
+| | staging | production |
+|---|---|---|
+| 0139 | `34133465652` | `34133833524` |
+| 0140 | `34151001908` | `34151269937` |
+Dört post-check de `head\|head\|head`. Kapılar aynı turda kilitlendi.
+
+### Cihazda ölçülmeyen
+Titreşimlerin gerçek şiddeti ve faz-bitişi çift darbesinin aralığı; sayfa
+geçişinin hissi; kutlamanın dar hücrede taşması (`Clip.none`).
