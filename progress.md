@@ -12509,9 +12509,25 @@ göstereceği sanılmıştı; rozet `activeCount > 0` kapısının arkasında, y
   tutucu olduğundan sonuç bugün zararsız, ama "tek aktif ad sıfırlama" kuralı
   sunucuda yok.
 - WP-813'ün kablosu ölçülemiyor (yukarıda).
-- `analysis_options.yaml` `unawaited_futures` lint'ini **açmıyor**; düşen bir
-  `Future` analiz kapısında hiç görünmüyor. WP-818'in birinci kusuru tam olarak
-  bu boşluktan geçmişti. Açmanın maliyeti ölçülmedi.
+- 🔴 **Lint ölçüldü ve önerilen lint YANLIŞ çıktı.** Av raporu
+  `unawaited_futures` öneriyordu; o lint yalnız `async` gövdelerde çalışır,
+  WP-818'in kusuru ise sync bir geri çağrımdaydı (`onTap: () => _select(...)`)
+  — yani **yakalamazdı**. Doğru lint `discarded_futures`. İkisi geçici olarak
+  açılıp `lib/` tarandı:
+
+  | lint | bulgu |
+  |---|---|
+  | `discarded_futures` | 149 |
+  | `unawaited_futures` | 3 |
+
+  Üç `unawaited_futures` bulgusunun üçü de **zararsız**: bir titreşim çağrısı,
+  bir `Navigator.push` sonucu ve `initializeDateFormatting()` — sonuncusu
+  işini `intl` içinde **senkron** yapıp `Future.value()` döner
+  (`date_symbol_data_local.dart:30-35`), yani beklenmemesi güvenli.
+
+  Karar: **ikisi de açılmadı.** 149 bulgu bir tur değil bir projedir;
+  `unawaited_futures` ise bugün hiçbir gerçek kusur bulmuyor ve yakalaması
+  gereken sınıfı yakalamadığı ölçüldü. Ölçüm ayrı bir WP için kayıtta.
 - Aynı sessizlik deseni WP-610/617/619'da altı yüzeyde kapatılmıştı; bu dosya o
   turların SAHİP yollarında değildi. Desen tek tek kapatıldığı sürece bir
   sonraki dosyada tekrar doğar.
