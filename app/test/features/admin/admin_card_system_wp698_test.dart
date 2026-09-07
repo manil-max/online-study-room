@@ -77,8 +77,9 @@ ModerationCase _case({
   caseId: 'case-1',
 );
 
-FeedbackTicket _ticket({DateTime? archivedAt}) => FeedbackTicket(
-  id: 'ticket-1',
+FeedbackTicket _ticket({DateTime? archivedAt, String id = 'ticket-1'}) =>
+    FeedbackTicket(
+  id: id,
   userId: _reporterId,
   kind: FeedbackTicketKind.feedback,
   subject: 'Sayac geri sayimda duruyor',
@@ -127,6 +128,7 @@ Future<void> _pumpTickets(
   WidgetTester tester, {
   required double width,
   FeedbackTicket? ticket,
+  List<FeedbackTicket> archived = const [],
   double textScale = 1.0,
 }) async {
   tester.view.physicalSize = Size(width, 2400);
@@ -147,9 +149,11 @@ Future<void> _pumpTickets(
         adminFeedbackTicketsProvider(
           null,
         ).overrideWith((ref) async => [ticket ?? _ticket()]),
+        // WP-794: Arsiv gorunumu arsivlenmis bileti BU saglayicidan okur;
+        // arsivsiz liste onu hic tasimaz (sunucu `p_include_archived`).
         adminArchivedFeedbackTicketsProvider(
           null,
-        ).overrideWith((ref) async => const <FeedbackTicket>[]),
+        ).overrideWith((ref) async => archived),
         // Kuyruk uc kaynagi birlestirir; bu dosya yalniz bilet kartini
         // olcer, moderasyon tarafi bos kalir.
         adminModerationRepositoryProvider.overrideWithValue(
@@ -574,15 +578,18 @@ void main() {
       await _pumpTickets(
         tester,
         width: 390,
-        ticket: _ticket(archivedAt: DateTime.now()),
+        archived: [_ticket(id: 'ticket-2', archivedAt: DateTime.now())],
       );
       // WP-792: arsivlenmis bilet KAPANMIS istir ve varsayilan kuyruktan
       // duser (sahip: "resolved isaretliyorum ama gitmiyor"). Iddianin amaci
-      // ayni -- arsiv isareti seritte belli olur -- yeri Kapananlar cipi.
+      // ayni -- arsiv isareti seritte belli olur -- yeri Arsiv segmenti.
+      // WP-794: bilet gercek yolundan gelir (arsivli saglayici); arsivsiz
+      // listede yoktur, Bekleyen onu hic cizmez.
       expect(find.text('Arşivde'), findsNothing);
       await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
       await tester.pumpAndSettle();
       expect(find.text('Arşivde'), findsOneWidget);
+      expect(find.byKey(const Key('admin-queue-row-ticket:ticket-1')), findsNothing);
     });
   });
 

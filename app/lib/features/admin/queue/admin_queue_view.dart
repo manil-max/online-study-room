@@ -6,8 +6,12 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/feedback_ticket.dart';
 import '../../../data/models/moderation_appeal.dart';
+import '../../../data/models/moderation_case.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
 import '../../../data/providers/admin_providers.dart';
+import '../../../data/providers/auth_providers.dart';
+import '../../../data/repositories/admin_moderation_repository.dart';
+import '../../../data/repositories/admin_repository.dart';
 import '../cards/admin_work_card.dart';
 import '../detail/admin_appeal_detail_page.dart';
 import '../detail/admin_case_detail_page.dart';
@@ -27,6 +31,12 @@ import 'moderation_dialogs.dart';
 /// gorunuyordu ve kartlarda gizli menuler vardi. Bu ekran ucunu tek listede
 /// toplar, aynalari eler ([buildAdminQueue]) ve karttaki tek dugmeyi vakanin
 /// kendi sayfasina baglar.
+///
+/// WP-794 (sahip onayli onizleme): kuyruk iki **gorunume** ayrildi —
+/// "Bekleyen N" / "Arsiv N" segmentleri birbirini dislar; tur cipleri sayi
+/// tasir; sagda siralama cipi (En yeni <-> En eski). Arsiv, arsivlenmis
+/// biletleri de icerir ve karttan geri acma/arsivden cikarma yolu verir;
+/// Bekleyen'deki acik vaka karttan "Incelemeye al"inabilir.
 const Key kAdminQueueKey = Key('admin-queue');
 const Key kAdminQueueListKey = Key('admin-queue-list');
 const Key kAdminQueueFilterKey = Key('admin-queue-filter');
@@ -37,15 +47,34 @@ const Key kAdminQueueErrorKey = Key('admin-queue-error');
 Key adminQueueFilterKey(AdminQueueCategory? category) =>
     Key('admin-queue-filter-${category?.name ?? 'all'}');
 
-/// WP-792: kapanmis isleri gosteren cip.
+/// WP-794: "Bekleyen" segmenti.
+const Key kAdminQueueOpenFilterKey = Key('admin-queue-filter-open');
+
+/// WP-792/794: "Arsiv" segmenti. Anahtar adi WP-792'den korunur; testler onu
+/// kullanir.
 const Key kAdminQueueClosedFilterKey = Key('admin-queue-filter-closed');
 
-/// Kart uzerindeki **tek** dugme.
+/// WP-794: siralama cipi.
+const Key kAdminQueueSortKey = Key('admin-queue-sort');
+
+/// Kart uzerindeki **vurgulu** dugme.
 Key adminQueueOpenKey(AdminQueueEntry entry) =>
     Key('admin-queue-open-${entry.id}');
 
 Key adminQueueRowKey(AdminQueueEntry entry) =>
     Key('admin-queue-row-${entry.id}');
+
+/// WP-794: Bekleyen'deki acik vakada "Incelemeye al".
+Key adminQueueClaimKey(AdminQueueEntry entry) =>
+    Key('admin-queue-claim-${entry.id}');
+
+/// WP-794: Arsiv'deki kapali vakada "Geri ac".
+Key adminQueueReopenKey(AdminQueueEntry entry) =>
+    Key('admin-queue-reopen-${entry.id}');
+
+/// WP-794: Arsiv'deki arsivlenmis bilette "Arsivden cikar".
+Key adminQueueUnarchiveKey(AdminQueueEntry entry) =>
+    Key('admin-queue-unarchive-${entry.id}');
 
 class AdminQueueView extends ConsumerStatefulWidget {
   const AdminQueueView({super.key});
@@ -61,14 +90,18 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
   /// gitmiyor."* Hakliydi. `admin_ugc_report_groups()` durum filtresi
   /// uygulamaz ve [buildAdminQueue] kapanmis isi yalniz DIBE indiriyordu;
   /// cozulen vaka listeden hic cikmiyordu. Kuyruk BEKLEYEN isin listesidir:
-  /// kapananlar varsayilan gorunumden duser, bu cip acikken YALNIZ onlar
-  /// gorunur (geri acma yolu -- karar + "Geri al" -- oradan yasar).
+  /// kapananlar varsayilan gorunumden duser, Arsiv segmentinde YALNIZ onlar
+  /// gorunur (geri acma yolu oradan yasar).
   bool _showClosed = false;
+
+  /// WP-794: varsayilan en yeni hareket ustte; cip en uzun bekleyeni one alir.
+  bool _oldestFirst = false;
 
   Future<void> _refresh() async {
     ref.invalidate(moderationQueueProvider);
     ref.invalidate(moderationAppealsProvider);
     ref.invalidate(adminFeedbackTicketsProvider(null));
+    ref.invalidate(adminArchivedFeedbackTicketsProvider(null));
   }
 
   @override
@@ -76,30 +109,47 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
     final l10n = AppLocalizations.of(context);
     final cases = ref.watch(moderationQueueProvider);
     final tickets = ref.watch(adminFeedbackTicketsProvider(null));
+    final archivedTickets = ref.watch(adminArchivedFeedbackTicketsProvider(null));
     final appeals = ref.watch(moderationAppealsProvider);
 
-    final ticketList = tickets.value ?? const <FeedbackTicket>[];
+    final ticketList = _mergeTickets(tickets.value, archivedTickets.value);
     final entries = buildAdminQueue(
       cases: cases.value ?? const [],
       tickets: ticketList,
       appeals: appeals.value ?? const [],
+      oldestFirst: _oldestFirst,
     );
-    final visible = [
+    final closedCount = entries.where((entry) => entry.isClosed).length;
+    final segment = [
       for (final entry in entries)
-        if (entry.isClosed == _showClosed &&
-            (_category == null || entry.category == _category))
-          entry,
+        if (entry.isClosed == _showClosed) entry,
+    ];
+    final visible = [
+      for (final entry in segment)
+        if (_category == null || entry.category == _category) entry,
     ];
 
     final loading =
-        cases.isLoading || tickets.isLoading || appeals.isLoading;
-    final failed = cases.hasError || tickets.hasError || appeals.hasError;
+        cases.isLoading ||
+        tickets.isLoading ||
+        archivedTickets.isLoading ||
+        appeals.isLoading;
+    final failed =
+        cases.hasError ||
+        tickets.hasError ||
+        archivedTickets.hasError ||
+        appeals.hasError;
 
     return Column(
       key: kAdminQueueKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _filterBar(context),
+        _filterBar(
+          context,
+          openCount: entries.length - closedCount,
+          closedCount: closedCount,
+          segment: segment,
+        ),
         // Bir kaynak duserse kuyruk **bos gorunmez**: elde ne varsa cizilir,
         // kayip acikca yazilir ve yeniden denenebilir.
         if (failed)
@@ -168,60 +218,136 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
     );
   }
 
-  Widget _filterBar(BuildContext context) {
+  /// WP-794: Arsiv, arsivlenmis biletleri de gosterir. Eskiden yalniz
+  /// arsivsiz liste okunuyordu ve arsivlenen bilet kuyruktan **tamamen**
+  /// kayboluyordu. `includeArchived: true` listesi acik biletleri DE tasir;
+  /// kimlikle tekillestirilir ki ayni bilet iki kez cizilmesin.
+  static List<FeedbackTicket> _mergeTickets(
+    List<FeedbackTicket>? open,
+    List<FeedbackTicket>? withArchived,
+  ) {
+    final merged = <FeedbackTicket>[...?open];
+    if (withArchived == null) return merged;
+    final seen = {for (final ticket in merged) ticket.id};
+    for (final ticket in withArchived) {
+      if (seen.add(ticket.id)) merged.add(ticket);
+    }
+    return merged;
+  }
+
+  Widget _filterBar(
+    BuildContext context, {
+    required int openCount,
+    required int closedCount,
+    required List<AdminQueueEntry> segment,
+  }) {
     final l10n = AppLocalizations.of(context);
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: SingleChildScrollView(
-            key: kAdminQueueFilterKey,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
-            child: Row(
-              children: [
-                for (final category in <AdminQueueCategory?>[
-                  null,
-                  AdminQueueCategory.complaint,
-                  AdminQueueCategory.suggestion,
-                  AdminQueueCategory.question,
-                  AdminQueueCategory.appeal,
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      key: adminQueueFilterKey(category),
-                      label: Text(_categoryLabel(l10n, category)),
-                      selected: _category == category,
-                      onSelected: (_) => setState(() => _category = category),
-                    ),
+        // Satir 1 — gorunum: Bekleyen N | Arsiv N. Iki cip kendi satirinda;
+        // 390dp'de sagdaki siralama cipiyle ayni satiri paylasinca Arsiv cipi
+        // onun altina kayiyordu (test yakaladi: dokunus "En yeni"ye dusuyor).
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  key: kAdminQueueOpenFilterKey,
+                  label: Text(
+                    _counted(l10n, l10n.adminKuyrukBekleyen, openCount),
                   ),
-              ],
-            ),
+                  selected: !_showClosed,
+                  onSelected: (_) => setState(() => _showClosed = false),
+                ),
+              ),
+              ChoiceChip(
+                key: kAdminQueueClosedFilterKey,
+                label: Text(
+                  _counted(l10n, l10n.adminKuyrukKapananlar, closedCount),
+                ),
+                selected: _showClosed,
+                onSelected: (_) => setState(() => _showClosed = true),
+              ),
+            ],
           ),
         ),
-        // 🔴 Kaydirilan seridin DISINDA, her zaman gorunur. Ilk yazimda
-        // tur ciplerinin sonundaydi ve 390dp'de x=706'ya dusuyordu: telefonda
-        // yatay kaydirmadan BULUNAMAZDI -- test ekran disinda kaldigi icin
-        // yakaladi. Tur "ne", bu "hangi halde"; ikisi birlikte calisir.
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),
-          child: FilterChip(
-            key: kAdminQueueClosedFilterKey,
-            avatar: const Icon(Icons.check_circle_outline, size: 18),
-            label: Text(l10n.adminKuyrukKapananlar),
-            selected: _showClosed,
-            onSelected: (value) => setState(() => _showClosed = value),
-          ),
+        // Satir 2 — tur cipleri kayar; siralama cipi seridin DISINDA, her
+        // zaman gorunur (WP-792 dersi: kaydirilan seridin sonundaki cip
+        // 390dp'de x=706'ya dusmustu, telefonda bulunamiyordu).
+        Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                key: kAdminQueueFilterKey,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
+                child: Row(
+                  children: [
+                    for (final category in <AdminQueueCategory?>[
+                      null,
+                      AdminQueueCategory.complaint,
+                      AdminQueueCategory.suggestion,
+                      AdminQueueCategory.question,
+                      AdminQueueCategory.appeal,
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          key: adminQueueFilterKey(category),
+                          label: Text(
+                            _counted(
+                              l10n,
+                              _categoryLabel(l10n, category),
+                              category == null
+                                  ? segment.length
+                                  : segment
+                                        .where((e) => e.category == category)
+                                        .length,
+                            ),
+                          ),
+                          selected: _category == category,
+                          onSelected: (_) =>
+                              setState(() => _category = category),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+              child: ActionChip(
+                key: kAdminQueueSortKey,
+                avatar: const Icon(Icons.swap_vert, size: 18),
+                label: Text(
+                  _oldestFirst
+                      ? l10n.adminKuyrukSiralaEnEski
+                      : l10n.adminKuyrukSiralaEnYeni,
+                ),
+                onPressed: () =>
+                    setState(() => _oldestFirst = !_oldestFirst),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
+
+  /// Sayi 0 ise yalniz etiket: "Soru 0" yerine "Soru".
+  static String _counted(AppLocalizations l10n, String label, int count) =>
+      count == 0 ? label : l10n.adminKuyrukSayili(label, count);
 
   Widget _row(
     BuildContext context,
     AdminQueueEntry entry,
     List<FeedbackTicket> tickets,
   ) {
+    final l10n = AppLocalizations.of(context);
     return switch (entry) {
       AdminQueueCaseEntry(:final moderationCase) => ModerationQueueCard(
         key: adminQueueRowKey(entry),
@@ -232,6 +358,30 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
           moderationCase: moderationCase,
           mirrorTicket: adminMirrorTicket(tickets, moderationCase),
         ),
+        actions: [
+          // Zaten inceleniyorsa dugme yok; hap "Inceleniyor" yaziyor.
+          // Tarihsel kayit (case_id yok) sunucuda sifir satir gunceller;
+          // dugme hic cizilmez.
+          if (moderationCase.status == ModerationCaseStatus.open &&
+              moderationCase.supportsCaseActions)
+            AdminWorkAction(
+              buttonKey: adminQueueClaimKey(entry),
+              label: l10n.adminKuyrukIncelemeyeAl,
+              icon: Icons.visibility_outlined,
+              onPressed: () => _setCaseStatus(
+                moderationCase,
+                ModerationCaseStatus.inReview,
+              ),
+            ),
+          if (moderationCase.status.isClosed)
+            AdminWorkAction(
+              buttonKey: adminQueueReopenKey(entry),
+              label: l10n.adminKuyrukGeriAc,
+              icon: Icons.replay,
+              onPressed: () =>
+                  _setCaseStatus(moderationCase, ModerationCaseStatus.open),
+            ),
+        ],
       ),
       AdminQueueTicketEntry(:final ticket) => _TicketQueueCard(
         key: adminQueueRowKey(entry),
@@ -239,6 +389,10 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
         openKey: adminQueueOpenKey(entry),
         onOpenDetail: () =>
             openAdminTicketDetail(context: context, ticket: ticket),
+        unarchiveKey: adminQueueUnarchiveKey(entry),
+        onUnarchive: ticket.archivedAt == null
+            ? null
+            : () => _unarchive(ticket),
       ),
       AdminQueueAppealEntry(:final appeal) => _AppealQueueCard(
         key: adminQueueRowKey(entry),
@@ -247,6 +401,54 @@ class _AdminQueueViewState extends ConsumerState<AdminQueueView> {
         onOpenDetail: () => openAdminAppealDetail(context, appeal: appeal),
       ),
     };
+  }
+
+  /// Karttan durum yazimi (Incelemeye al / Geri ac). Vaka sayfasindaki
+  /// `_applyStatus` deseniyle ayni: `setCaseStatus` etkilenen satir sayisini
+  /// doner; sifirsa basari iddia edilmez (`0104` oncesi tarihsel kayit).
+  Future<void> _setCaseStatus(
+    ModerationCase moderationCase,
+    ModerationCaseStatus status,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final int affected;
+    try {
+      affected = await ref
+          .read(adminModerationRepositoryProvider)
+          .setCaseStatus(moderationCase: moderationCase, status: status);
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    if (affected == 0) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.adminVakaDurumBagimsizUyari)),
+      );
+      return;
+    }
+    await _refresh();
+  }
+
+  Future<void> _unarchive(FeedbackTicket ticket) async {
+    final userId = ref.read(authStateProvider).value?.id;
+    if (userId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .setFeedbackArchived(
+            userId: userId,
+            ticketId: ticket.id,
+            archived: false,
+          );
+    } on AdminException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    await _refresh();
   }
 
   static String _categoryLabel(
@@ -268,11 +470,17 @@ class _TicketQueueCard extends StatelessWidget {
     required this.ticket,
     required this.openKey,
     required this.onOpenDetail,
+    required this.unarchiveKey,
+    this.onUnarchive,
   });
 
   final FeedbackTicket ticket;
   final Key openKey;
   final VoidCallback onOpenDetail;
+
+  /// WP-794: arsivlenmis bilette "Arsivden cikar"; arsivsizde `null`.
+  final Key unarchiveKey;
+  final VoidCallback? onUnarchive;
 
   @override
   Widget build(BuildContext context) {
@@ -313,6 +521,13 @@ class _TicketQueueCard extends StatelessWidget {
           primary: true,
           onPressed: onOpenDetail,
         ),
+        if (onUnarchive != null)
+          AdminWorkAction(
+            buttonKey: unarchiveKey,
+            label: l10n.adminArsivdenCikar,
+            icon: Icons.unarchive_outlined,
+            onPressed: onUnarchive!,
+          ),
       ],
     );
   }

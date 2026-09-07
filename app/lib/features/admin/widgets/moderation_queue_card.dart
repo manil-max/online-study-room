@@ -32,14 +32,20 @@ class ModerationQueueCard extends StatelessWidget {
     required this.moderationCase,
     required this.onOpenDetail,
     required this.openKey,
+    this.actions = const <AdminWorkAction>[],
   });
 
   final ModerationCase moderationCase;
 
-  /// Karttaki **tek** dugme: vakanin kendi sayfasini acar.
+  /// Karttaki **vurgulu** dugme: vakanin kendi sayfasini acar.
   final VoidCallback onOpenDetail;
 
   final Key openKey;
+
+  /// WP-794: "Detayli incele"nin yanina cizilen **duz** eylemler (Bekleyen'de
+  /// "Incelemeye al", Arsiv'de "Geri ac"). Tehlikeli eylem buraya konmaz;
+  /// karar yuzeyi hala vakanin kendi sayfasidir.
+  final List<AdminWorkAction> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +106,7 @@ class ModerationQueueCard extends StatelessWidget {
           primary: true,
           onPressed: onOpenDetail,
         ),
+        ...actions,
       ],
     );
   }

@@ -116,11 +116,14 @@ class AdminQueueAppealEntry extends AdminQueueEntry {
 ///      olarak duran bir sikayetin kopyasidir; ikinci kez gosterilmez.
 ///      Yazismasi kaybolmaz — vaka detayi onu [adminMirrorTicket] ile bulur.
 ///   2. **Karara baglanmis itiraz** kuyrukta durmaz.
-///   3. Siralama: once acik isler, sonra en yeni hareket.
+///   3. Siralama: once acik isler, sonra en yeni hareket. WP-794: [oldestFirst]
+///      yalniz hareket yonunu cevirir (en uzun bekleyen ustte); acik/kapali
+///      gruplamasi degismez.
 List<AdminQueueEntry> buildAdminQueue({
   required List<ModerationCase> cases,
   required List<FeedbackTicket> tickets,
   required List<ModerationAppeal> appeals,
+  bool oldestFirst = false,
 }) {
   final entries = <AdminQueueEntry>[
     for (final moderationCase in cases) AdminQueueCaseEntry(moderationCase),
@@ -131,7 +134,9 @@ List<AdminQueueEntry> buildAdminQueue({
   ];
   entries.sort((a, b) {
     if (a.isClosed != b.isClosed) return a.isClosed ? 1 : -1;
-    return b.sortAt.compareTo(a.sortAt);
+    return oldestFirst
+        ? a.sortAt.compareTo(b.sortAt)
+        : b.sortAt.compareTo(a.sortAt);
   });
   return entries;
 }

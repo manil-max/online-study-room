@@ -214,7 +214,7 @@ void main() {
     /// isaretliyorum ama gitmiyor."* Ayni akis: vakayi ac, Coz, geri don.
     /// Kart artik bekleyenlerde YOK, Kapananlar'da VAR. Bu test kullanicinin
     /// gordugu satiri olcer, saglayicinin dondugu listeyi degil.
-    testWidgets('cozulen vaka kuyruktan GIDER, Kapananlar altinda durur', (
+    testWidgets('cozulen vaka kuyruktan GIDER, Arsiv altinda durur', (
       tester,
     ) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
@@ -243,14 +243,15 @@ void main() {
       expect(open(targetId), findsOneWidget);
     });
 
-    testWidgets('Kapananlar bosken kendi bos metnini yazar', (tester) async {
+    testWidgets('Arsiv bosken kendi bos metnini yazar', (tester) async {
       final repo = InMemoryAdminModerationRepository(seed: [_case()]);
       await tester.pumpWidget(_host(repo));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(kAdminQueueClosedFilterKey));
       await tester.pumpAndSettle();
       // "Bekleyen is yok" yazsaydi yalan olurdu: bekleyen is VAR, gizli.
-      expect(find.text('Kapanmış iş yok.'), findsOneWidget);
+      // WP-794: "Kapananlar" segmenti "Arsiv" oldu; bos metni de onunla.
+      expect(find.text('Arşiv boş.'), findsOneWidget);
       expect(find.text('Bekleyen iş yok.'), findsNothing);
     });
 
