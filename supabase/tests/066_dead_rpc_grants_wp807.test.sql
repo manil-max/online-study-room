@@ -25,11 +25,18 @@ select ok(
   ),
   'eski basarim denetimi `authenticated`a KAPALI (operasyon araci)'
 );
+-- 🔴 IDDIA YON DEGISTIRDI ve sebebi olculdu (staging run 34137437787).
+-- Bu RPC de kaldirilacakti; revoke GERCEKTEN calisinca UC mevcut pgTAP
+-- dosyasi kirmiziya dondu (037/038/045). Ucu de `set role authenticated`
+-- ile bu fonksiyonu cagirip koruma kapilarini KANITLIYOR. Yani olu grant
+-- degil, korumalari etkin bicimde sinanan bir yuzey; kaldirmak `0112`
+-- sozlesmesinin KANITINI silerdi.
 select ok(
-  not has_function_privilege(
+  has_function_privilege(
     'authenticated', 'public.record_goal_completion(text, uuid, date)', 'execute'
   ),
-  'hedef tamamlama RPC''si `authenticated`a KAPALI (yazici artik tetikleyici)'
+  '🔴 record_goal_completion grant''i KORUNDU — 037/038/045 onu authenticated '
+  'olarak cagirip "baskasinin kapsamina yazamaz" iddiasini kaniti yor'
 );
 
 -- ===========================================================================
@@ -46,7 +53,7 @@ select ok(
 );
 select ok(
   to_regprocedure('public.record_goal_completion(text, uuid, date)') is not null,
-  '🔴 hedef tamamlama govdesi duruyor — 0120''nin geri alma yolu ona dayanir'
+  'hedef tamamlama govdesi duruyor — 0120''nin geri alma yolu ona dayanir'
 );
 
 -- ===========================================================================

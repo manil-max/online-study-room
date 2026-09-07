@@ -1,9 +1,11 @@
 -- 0140_revoke_dead_rpc_grants.sql
--- WP-807: hiçbir istemcinin çağırmadığı dört RPC'nin `authenticated` grant'ı
--- kaldırılır. **Gövdeler durur**, yalnız kullanıcıya açık yüzey daralır.
+-- WP-807: hiçbir istemcinin çağırmadığı **iki** RPC'nin `authenticated`
+-- grant'ı kaldırılır. **Gövdeler durur**, yalnız kullanıcıya açık yüzey daralır.
 --
--- Ölü özellik denetiminin (2026-09-07) C maddesi. Dördü de bağımsız olarak
--- doğrulandı: `app/lib` ve `supabase/functions` içinde tek çağrı yok.
+-- Ölü özellik denetiminin (2026-09-07) C maddesi. Denetim dört aday saydı;
+-- ikisi kaldırıldı, ikisi kaldırılmadı ve nedenleri aşağıda yazılı. Sayının
+-- düşmesi ölçümün sonucudur: 'çağrılmıyor' ile 'kaldırılabilir' aynı şey
+-- değil.
 --
 -- 🔴 Neden gövde silinmiyor: bunlar bozuk değil, **kullanılmıyor**. Silmek
 -- rollback notlarını ve migration metnini okuyan testleri kırardı
@@ -46,25 +48,35 @@ comment on function public.achievement_legacy_audit(uuid) is
   'WP-807: gövde durur, `authenticated` grant''ı kaldırıldı — operasyon '
   'aracıdır, kullanıcı yüzeyi değil.';
 
--- 3) Hedef tamamlama yazımı `0120`de sunucu tetikleyicisine taşındı
---    (`_record_goal_completion`). Genel RPC'yi kimse çağırmıyor; AGENTS §2
---    "server-authoritative" gereği gereksiz yazma yüzeyi.
--- 🔴 BURADA `authenticated`tan almak YETMEZ ve bunu staging kuru kosusu
--- yakaladi (run 34137055615, "Failed test 3"). PostgreSQL bir fonksiyon
--- yaratildiginda `EXECUTE`i VARSAYILAN OLARAK `PUBLIC`e verir. `0112` ve
--- `0120` bu fonksiyonda `revoke ... from public` yapmamis; dolayisiyla
--- `authenticated` yetkiyi kendi grant'indan degil PUBLIC'ten MIRAS aliyordu
--- ve yalniz ondan revoke etmek hicbir sey degistirmiyordu.
+-- ---------------------------------------------------------------------------
+-- 🔴 3) `record_goal_completion(text, uuid, date)` — REVOKE EDİLMEDİ.
 --
--- Ust iki fonksiyon bu tuzaga dusmedi cunku kendi migration'larinda
--- (`0047:415`, `0050:497`) PUBLIC revoke'u zaten vardi.
+-- İlk taslakta bu da kaldırılıyordu ("üretim yazıcısı artık tetikleyici").
+-- Staging kuru koşusu iki turda iki ayrı şey öğretti ve ikincisi kararı
+-- DEĞİŞTİRDİ:
 --
--- Ders: "revoke yazdim" ile "yetki kalkti" ayni sey degildir; olculmeden
--- bilinmez. Testin `has_function_privilege` ile OKUYARAK olcmesi bu yuzden.
-revoke execute on function public.record_goal_completion(text, uuid, date)
-  from public, anon, authenticated;
-comment on function public.record_goal_completion(text, uuid, date) is
-  'WP-807: gövde durur (0120 rollback yolu ona dayanır), `authenticated` '
-  'grant''ı kaldırıldı — üretim yazıcısı artık tetikleyicidir.';
+--   Tur 1 (run 34137055615): `revoke ... from authenticated` HİÇBİR ŞEY
+--   yapmadı. PostgreSQL fonksiyona `EXECUTE`i varsayılan olarak `PUBLIC`e
+--   verir; `0112`/`0120` burada `revoke ... from public` yapmamış, yani
+--   `authenticated` yetkiyi PUBLIC'ten miras alıyordu. Üstteki iki fonksiyon
+--   bu tuzağa düşmedi çünkü kendi migration'larında (`0047:415`, `0050:497`)
+--   PUBLIC revoke'u zaten vardı. Sözdizimi geçerliydi, hata vermedi, etkisi
+--   sıfırdı — "revoke yazdım" ile "yetki kalktı" aynı şey değildir.
+--
+--   Tur 2 (run 34137437787): `from public, anon, authenticated` yazınca revoke
+--   GERÇEKTEN çalıştı ve ÜÇ mevcut pgTAP dosyası kırmızıya döndü —
+--   `037_goal_streak_projection:200`, `038_progression_matrix:135`,
+--   `045_goal_completion_writer:293`. Hepsi `set role authenticated` ile bu
+--   RPC'yi çağırıp koruma kapılarını KANITLIYOR: *"başkasının kişisel serisi
+--   yazılamaz"*, *"geleceğe seri yazılamaz: cihaz saatini ileri almak işe
+--   yaramaz"*, *"hedefe ulaşılmadan tamamlama kaydı yazılmaz"*.
+--
+-- Yani bu bir ÖLÜ grant değil, **korumaları etkin biçimde kanıtlanmış bir
+-- yüzey**. Kaldırmak yüzeyi değil, `0112` sözleşmesinin kanıtını silerdi:
+-- kimse çağıramayınca "çağıran da yazamaz" iddiası boşa düşer.
+--
+-- Aynı ölçüt `create_group(text)` ve `admin_reporter_abuse_score(uuid)` için
+-- de kullanıldı: çağrılmıyor olmak tek başına kaldırma gerekçesi değildir.
+-- ---------------------------------------------------------------------------
 
 notify pgrst, 'reload schema';
