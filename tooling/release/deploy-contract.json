@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0140",
   "staging": {
-    "migration_head": "0139",
-    "deploy_enabled": false,
+    "migration_head": "0140",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED 2026-09-07 after the 0139 staging apply SUCCEEDED: run 34133465652, post-check printed 0139|0139|0139. Dry-run 34133111179 was green first (an earlier attempt, 34132777594, failed only on the pgTAP file epilogue - all 14 assertions had already passed). Three sweepers are now scheduled on rskiuyjabyzelqododpa."
+    "hold_reason": "OPEN 2026-09-07 for 0140 (revoke_dead_rpc_grants). Grant-only: three uncalled RPCs lose their authenticated grant; bodies stay. 🔴 Never run anywhere (Docker blocked on this host), so staging executes it first and is deliberately not skipped. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0139",
