@@ -12019,3 +12019,67 @@ küçük."* Web'den doğrulandı (developer.android.com live-update + metric-sty
 Karar: kod değişmedi. Live Update modunda gölge saati büyütülemez; büyük saat
 isteyen Geliştirici → "Live Update sayaç bildirimi" anahtarını **kapatır**
 (zengin panel, WP-793 56sp). Android 17 gelince MetricStyle yolu yazılacak.
+
+## 2026-09-06/07 — ADMİN KUYRUĞU v2: ARŞİV + İÇ NOTLAR + ZAMAN ÇİZELGESİ (WP-794…WP-796)
+
+**Tetikleyen (sahip):** *"admin tarafında resolved dedilen şeyler falan
+kaybolmasın arşiv fln olsun; admin tarafını büyük uygulamalarda nasıl
+yapılıyor onları araştırarak daha da iyileştir."*
+
+Önce araştırma, sonra sahibin onayladığı önizleme (artifact `823f3dc4…`),
+sonra kod. Kaynaklar: Reddit modqueue üzerine CHI 2026 çalışması
+(arXiv 2509.07314), Zendesk "views" pratiği, Intercom paylaşılan gelen kutusu.
+
+### Araştırmadan gelen ve bizde EKSİK olanlar
+1. **İşlem gören iş kaybolmamalı** — modqueue'de en çok şikâyet edilen şey.
+   Bizde WP-792 kapananları listeden düşürmüştü ama **arşivlenen biletler
+   hiçbir görünümde yoktu**: sahibin "kaybolmasın" dediği şey tam buydu.
+2. **Görünümler birbirini dışlar ve sayılıdır** (Zendesk) — bizde sayı yoktu.
+3. **Kim bakıyor** — mod'ların %74'ü çakışma yaşıyor. `in_review` durumu
+   `0104`'ten beri VARDI ve hiçbir yerden yazılamıyordu.
+4. **Bağlam + notlar + geçmiş öğenin yanında** — biletlerde iç not vardı,
+   **vakalarda yoktu**; zaman çizelgesi hiç yoktu.
+5. Sıralama yönü yöneticinin kararı (kimi zaman eşitlik için en eski, kimi
+   zaman aciliyet için en yeni) — dayatılmaz.
+
+### WP-794 — Bekleyen / Arşiv (`606fa75f`)
+İki segment + sayılar; **arşivli biletler Arşiv'e katıldı**; En eski/En yeni
+(`buildAdminQueue(oldestFirst:)` yalnız hareket yönünü çevirir, açık/kapalı
+gruplaması durur); **İncelemeye al** (`=in_review`, tutulamayacak sözde
+çizilmez); **Geri aç** / **Arşivden çıkar**; boş durumlar ayrı metin.
+🔴 Alt ajan gece limitle kesildi ve kendi sabotaj turunu koşturamadı; **beş
+sabotaj lider tarafından uygulandı, beşi de kırmızı döndü**, dosyalar sha256
+ile geri kondu.
+
+### WP-795 — Vaka iç notları (`ca8a56fe`, alt ajan)
+Ayna bilet not altyapısı üzerinden; migration yok. Ayna bilet yoksa **neden
+tutulamadığı yazıyor** — sessiz boşluk değil.
+
+### WP-796 — Zaman çizelgesi (`4eb68ab2`, `12f0e048`, `2ee17e08`)
+🔴 **Faz B'nin migration'ı gereksiz çıktı.** `moderation_audit_events`
+(`0106`, WP-442) append-only zinciri vaka/yaptırım/itiraz olaylarını
+actor + zaman + eski/yeni + gerekçe ile **2026-08'den beri yazıyordu** ve
+istemci bu tabloyu **hiç okumamıştı** — deponun kayıtlı kusuru. Sunucuda
+eksik yok; `0139` açılmadı.
+Tanımadığı eylem `other`: ham `entity:action` görünür, **yanlış dala
+yuvarlanmaz**. Boş zincir ile okunamayan zincir **ayrı**: düşen sorgu
+"tekrar dene" verir, temiz geçmiş gibi görünmez.
+
+### Üçüncü dikiş nöbetçisi
+Bölüm ayrı dosyada hazırdı, testleri 6/6 yeşildi, **hiçbir yerden
+çağrılmıyordu**. Bu turda aynı tuzağa profil paneli ve yazışma için de
+düşülmüştü. Nöbetçi + sabotaj ile kilitlendi.
+
+### Sayfa uzayınca kırılan iki test koşula bağlandı
+`find.byKey` katı **0 widget** döndü (`ListView` tembel kurar) → önce
+`scrollUntilVisible`. Sabit `drag(-200)` yetmedi → düğmenin alt kenarı karar
+şeridinin üstüne çıkana kadar kaydırılıyor ve bu **ayrıca iddia ediliyor**.
+
+### Bilerek dışarıda
+Toplu seçim/işlem: tek yöneticili, günde birkaç iş; kart başına iki dokunuş
+toplu seçimden hızlı. Hacim artarsa gelir.
+
+### Cihazda ölçülmeyen
+Arşiv segmentinin gerçek telefonda kullanımı; iç not yazma akışı; zaman
+çizelgesinin gerçek `moderation_audit_events` satırlarıyla dolması (bellek
+içi depo tohumlu ölçüldü, **sunucudan okunuşu ölçülmedi**).
