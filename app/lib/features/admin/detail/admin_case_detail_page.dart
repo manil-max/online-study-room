@@ -375,6 +375,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       _section(context, l10n.adminVakaTaraflar),
       _CaseUserRow(
         key: adminCaseUserRowKey(_case.targetId),
+        direction: CaseSignalDirection.target,
         userId: _targetUserId,
         name: identity == null || identity.isDeleted
             ? l10n.adminUgcDeletedUser
@@ -385,6 +386,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
       for (final reporter in _case.reporters)
         _CaseUserRow(
           key: adminCaseUserRowKey(reporter.id),
+          direction: CaseSignalDirection.reporter,
           userId: reporter.isDeleted ? null : reporter.id,
           name: reporter.isDeleted
               ? l10n.adminUgcDeletedUser
@@ -843,6 +845,7 @@ class _CaseUserRow extends ConsumerWidget {
     required this.userId,
     required this.name,
     required this.role,
+    required this.direction,
     this.caseId,
   });
 
@@ -850,6 +853,13 @@ class _CaseUserRow extends ConsumerWidget {
   final String? userId;
   final String name;
   final String role;
+
+  /// Rozetin hangi soruyu yanitlayacagi.
+  ///
+  /// 🔴 [role] YERINE GECMEZ: o, ekranda gorunen CEVIRILMIS etikettir. Rozeti
+  /// cevrilmis metne bakarak secmek, dil degisince sessizce yanlis sayiya
+  /// donerdi.
+  final CaseSignalDirection direction;
 
   /// Yaptirimi doguran vaka; denetim kaydinda gorunsun diye tasinir.
   final String? caseId;
@@ -870,7 +880,9 @@ class _CaseUserRow extends ConsumerWidget {
         ),
         title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(role, maxLines: 1, overflow: TextOverflow.ellipsis),
-        trailing: id == null ? null : _Signal(userId: id),
+        trailing: id == null
+            ? null
+            : _Signal(userId: id, direction: direction),
         onTap: id == null ? null : () => _open(context, id),
       ),
     );
@@ -897,15 +909,50 @@ class _CaseUserRow extends ConsumerWidget {
   }
 }
 
-/// Satirdaki oran rozeti.
+/// Satirdaki rozetin HANGI SORUYU yanitladigi.
+///
+/// 🔴 WP-810: bu ayrim yoktu ve rozet her tarafta ayni sayiyi ciziyordu.
+enum CaseSignalDirection {
+  /// Sikayet EDILEN: "hakkindaki sikayetlerin kaci hakli cikti".
+  target,
+
+  /// Sikayet EDEN: "actigi sikayetlerin kaci hakli cikti".
+  reporter,
+}
+
+/// Satirdaki oran rozeti — **rolune gore** farkli sayiyi cizer.
+///
+/// 🔴 WP-810, olculmus kusur. Rozet vaka sayfasindaki HER tarafa
+/// `reportsAgainstUpheld / reportsAgainst` yaziyordu; yani sikayet EDENIN
+/// satirinda da "bu kisi kac kez sikayet edildi" gosteriliyordu. Oysa
+/// sikayetciye bakarken yoneticinin sordugu soru bu degildir: *actigi
+/// sikayetlerin kaci tuttu?* Yanlis sayi sessizce yanlis karara goturur --
+/// hicbir sikayeti tutmayan bir sikayetci, sirf KENDISI hic sikayet edilmedigi
+/// icin rozetsiz, yani temiz gorunuyordu.
+///
+/// `AdminUserInsight` iki yonu de ZATEN tasiyordu (`reportsFiled`,
+/// `reportsFiledUpheld`) ve kisi profili ikisini ayri ayri ciziyor
+/// (`admin_user_profile_page.dart` `_RatiosBlock`). Eksik olan tek sey, vaka
+/// satirinin hangi yonu sordugunu bilmesiydi.
+///
+/// 🔴 SIKAYETCI YONUNDE **UYARI RENGI YOK** ve bu bilincli bir karardir.
+/// Sunucudaki `admin_reporter_abuse_score` (`0105:443`) esigi
+/// `rejected >= 3 and rejected * 2 >= total` diye kurar -- paydasi REDDEDILEN
+/// sikayet. Istemcinin elinde `reportsFiled` ve `reportsFiledUpheld` var;
+/// ikisinin farki reddedilenleri DEGIL, henuz karara baglanmamis (`open`,
+/// `in_review`) sikayetleri de icerir. Bu iki sayidan bir "kotuye kullanim"
+/// damgasi uretmek, sirf sikayetleri daha incelenmemis birini damgalardi.
+/// Sayiyi gosteriyoruz, hukmu vermiyoruz.
 class _Signal extends ConsumerWidget {
-  const _Signal({required this.userId});
+  const _Signal({required this.userId, required this.direction});
 
   final String userId;
+  final CaseSignalDirection direction;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final insight = ref.watch(adminUserInsightProvider(userId));
     return insight.when(
       loading: () => const SizedBox.shrink(),
@@ -919,21 +966,37 @@ class _Signal extends ConsumerWidget {
         ),
       ),
       data: (data) {
-        final total = data.reportsAgainst;
+        final isTarget = direction == CaseSignalDirection.target;
+        final total = isTarget ? data.reportsAgainst : data.reportsFiled;
+        // Hic sikayet yoksa rozet CIZILMEZ: "0/0" olculmus bir sey degildir.
         if (total <= 0) return const SizedBox.shrink();
+        final upheld = isTarget
+            ? data.reportsAgainstUpheld
+            : data.reportsFiledUpheld;
         final scheme = theme.colorScheme;
-        // Yuksek oran = tekrar eden ve cogunlukla hakli cikan bir oruntu.
-        final bad = data.flaggedAsOffender;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: bad ? scheme.errorContainer : scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            '${data.reportsAgainstUpheld}/$total',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: bad ? scheme.onErrorContainer : scheme.onSurfaceVariant,
+        // Uyari rengi YALNIZ sikayet edilen yonde: yuksek oran = tekrar eden
+        // ve cogunlukla hakli cikan bir oruntu. Sikayetci yonunde ayni renk
+        // TERS anlama gelirdi (yuksek oran = guvenilir sikayetci).
+        final bad = isTarget && data.flaggedAsOffender;
+        return Tooltip(
+          // Etiketler kisi profilindeki olcum cubuklariyla AYNI: iki yuzey
+          // ayni sayiya ayni adi versin.
+          message: isTarget
+              ? l10n.adminUserProfileAgainstLabel
+              : l10n.adminUserProfileFiledLabel,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: bad
+                  ? scheme.errorContainer
+                  : scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$upheld/$total',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: bad ? scheme.onErrorContainer : scheme.onSurfaceVariant,
+              ),
             ),
           ),
         );
