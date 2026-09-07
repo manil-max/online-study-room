@@ -47,6 +47,12 @@ const double kTimerCoreMaxHeight = 240.0;
 /// ders seçici hapı, manuel süre ekle) gizlenir; üstünde tam kart çizilir.
 const double kTimerFullMinHeight = 400.0;
 
+/// Henüz ÖLÇÜLEMEMİŞ bir sayının yerine çizilen işaret (WP-817).
+///
+/// Çevrilmez: tek karakter, her dilde aynı ve "0" gibi yanlış bir iddia
+/// taşımaz. Bu yüzden yeni bir l10n anahtarı gerektirmez.
+const String kUnknownMetric = '—';
+
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
 /// [size] dar alana (küçük kart) uyum için: küçükken saat/yazılar küçülür.
@@ -166,6 +172,23 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     // Çalışıyorsa saniyelik UI tick; durunca ticker kapalı (Windows perf).
     _syncTicker(timer.isRunning);
     final recorded = ref.watch(todayRecordedSecondsProvider);
+    // 🔴 WP-817 — "Bugün" toplamı veri YOKKEN de kesin bir sayı yazıyordu.
+    //
+    // `todayRecordedSecondsProvider` oturumları `.value ?? const []` ile okur:
+    // yükleme ve hata karelerinde 0 döner. Kart bunu `headlineMedium` boyunda
+    // "0sn" diye yazıyordu — hata hâlinde KALICI olarak, üstelik yanındaki
+    // "Bugünün özeti" kartı AYNI akış için "Veriler yüklenemedi" çizerken.
+    // Aynı ekranda iki çelişen gerçek; kullanıcı serisini kaybettiğini sanıyor.
+    //
+    // 🔴 Çare [cardDataGate] DEĞİL. Bu kart sayacın BAŞLAT/DURDUR
+    // kontrollerini taşıyor; tüm kartı iskelete çevirmek, oturum listesi
+    // yüklenirken (ya da ağ hatasında KALICI olarak) kullanıcının sayacı
+    // başlatmasını engellerdi — çare hastalığından kötü olurdu. Kontroller her
+    // durumda canlı kalır; yalnız BİLİNMEYEN SAYININ yerine [kUnknownMetric]
+    // çizilir, hata hâlinde ölçülemediği ayrıca söylenir.
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    final todayKnown = sessionsAsync.hasValue;
+    final todayFailed = sessionsAsync.hasError;
     final todayKey = dayOf(DateTime.now());
 
     // Faz geçişinde ses/titreşim/uyarı (§2H).
@@ -555,11 +578,29 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              formatHumanSeconds(todayTotal),
+                              // WP-817: sayı ancak ÖLÇÜLDÜYSE yazılır.
+                              todayKnown
+                                  ? formatHumanSeconds(todayTotal)
+                                  : kUnknownMetric,
                               maxLines: 1,
                               style: theme.textTheme.headlineMedium,
                             ),
                           ),
+                          // Hata kalıcıdır: burada susup yalnız "—" çizmek
+                          // "yükleniyor" gibi okunur ve kullanıcı sonsuza kadar
+                          // bekler. Tek satır, kontrolleri aşağı itmeyecek boy.
+                          if (todayFailed) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              ).homeVerilerYuklenemedi,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                         ],
                         FittedBox(

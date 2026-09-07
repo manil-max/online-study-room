@@ -11,6 +11,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
+import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 /// Günlük hedef ilerlemesi + güncel seri (§3.11 kart). Hedefe ulaşılan oran bir
@@ -29,10 +30,16 @@ class _GoalCardState extends ConsumerState<GoalCard>
   // WP-808: günlük hedef bu uygulamanın TEK kutlama anı. Kart durumsuzken
   // kutlama her rebuild'de yeniden oynardı (pano kartları sık rebuild olur),
   // o yüzden animasyon kartın kendi state'inde durur.
-  late final AnimationController _celebration = AnimationController(
-    vsync: this,
-    duration: MotionTokens.celebration,
-  );
+  //
+  // 🔴 WP-817 — denetleyici [initState]'te kurulur, alan başlatıcısında DEĞİL.
+  // `late final ... = AnimationController(...)` yazımında denetleyici İLK
+  // KULLANIMDA doğar; veri kapısı eklendikten sonra kart gövdesini hiç
+  // çizmeden (yalnız yer tutucu göstererek) kapatılabiliyor ve ilk kullanım
+  // `dispose()` oluyordu. `AnimationController` orada `TickerMode`u aramak için
+  // context'e uzanır ve element artık ölü olduğu için
+  // *"Looking up a deactivated widget's ancestor is unsafe"* ile patlıyordu.
+  // Ömür build'e değil state'e bağlı.
+  late final AnimationController _celebration;
 
   /// ✓ işaretinin kısa ölçek darbesi: büyür, yerine oturur.
   late final Animation<double> _pulse = TweenSequence<double>([
@@ -53,6 +60,15 @@ class _GoalCardState extends ConsumerState<GoalCard>
   ]).animate(_celebration);
 
   @override
+  void initState() {
+    super.initState();
+    _celebration = AnimationController(
+      vsync: this,
+      duration: MotionTokens.celebration,
+    );
+  }
+
+  @override
   void dispose() {
     _celebration.dispose();
     super.dispose();
@@ -62,8 +78,19 @@ class _GoalCardState extends ConsumerState<GoalCard>
   ///
   /// 🔴 Tetik `ref.listen` ile kaydedilen süre DEĞİŞTİĞİNDE gelir, `build`
   /// içinden değil: build sırasında `forward()` çağırmak çizim sırasında
-  /// `markNeedsBuild` demektir. Uygulama hedef zaten tutmuşken açıldığında da
-  /// kutlama oynamaz — kullanıcı o anı yaşamadı, sadece uygulamayı açtı.
+  /// `markNeedsBuild` demektir.
+  ///
+  /// 🔴 WP-817 — "uygulama hedef zaten tutmuşken açıldığında kutlama oynamaz"
+  /// cümlesi buraya WP-808'de yazılmıştı ama **yalandı.** Kaydedilen süre
+  /// yükleme karesinde sahte bir 0'dan başlıyor, oturumlar gelince 0 → gerçek
+  /// değere sıçrıyordu; dinleyici bunu "eşik az önce geçildi" sayıyordu.
+  /// `previous == null` koruması ölüdür: `Provider<int>` non-nullable, yani
+  /// değişim anında önceki değer daima vardır. Sonuç: hedefini tutmuş kullanıcı
+  /// HER SOĞUK AÇILIŞTA titreşim + halo + ✓ darbesi alıyordu; uygulamadaki tek
+  /// kutlama anı böylece anlamını yitiriyordu.
+  ///
+  /// Cümleyi doğru kılan şey [build] başındaki veri kapısıdır (ayrı bir bayrak
+  /// değil): veri gelmeden dinleyici hiç kurulmaz.
   void _celebrate() {
     // Titreşim ayrı bir ayardır; "animasyonları azalt"a bağlanmaz.
     HapticFeedback.mediumImpact();
@@ -99,6 +126,36 @@ class _GoalCardState extends ConsumerState<GoalCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 🔴 WP-817 — KAPI, `ref.listen`DEN **ÖNCE** VE ERKEN DÖNÜŞLE.
+    //
+    // Kart bugünkü süreyi `todayRecordedSecondsProvider` üzerinden okur; o
+    // sağlayıcı oturumları `.value ?? const []` ile okuduğu için yükleme ve
+    // hata karelerinde **0** döner — "henüz bilmiyorum" ile "hiç çalışmamış"
+    // aynı sayıya düşer. Bunun iki ayrı sonucu vardı:
+    //
+    //  1. Kart "0sn / 4sa", "%0" ve 0 seri diye KESİN konuşuyordu. Hata
+    //     hâlinde bu kalıcıydı: yanındaki "Bugünün özeti" kartı aynı akış için
+    //     "Veriler yüklenemedi" çizerken bu kart sonsuza kadar 0 iddia ediyordu.
+    //  2. Oturumlar gelince değer 0 → gerçek toplama sıçrıyor, aşağıdaki
+    //     dinleyici bunu "hedef az önce tutuldu" sanıyordu (bkz. [_celebrate]).
+    //
+    // Kapının `ref.listen`den önce gelmesi bir düzen tercihi değil, (2)'nin
+    // çaresidir: yükleme karesinde dinleyici hiç KAYDEDİLMEZ, veri gelince
+    // build tekrar koşar ve dinleyici temel değerini GERÇEK değerden alır.
+    // Sıra bozulursa kutlama geri gelir — ölçülüyor:
+    // `test/features/home/goal_celebration_wp817_test.dart`.
+    //
+    // Tam kart kapısı burada güvenlidir: kart tamamen bilgilendiricidir, tek
+    // etkileşimi yoktur. (Sayaç kartı aynı çareyi ALAMAZ; oradaki gerekçe
+    // `study_timer_card.dart` içinde yazılı.)
+    final sessionsAsync = ref.watch(userSessionsProvider);
+    final gate = cardDataGate(
+      context,
+      title: AppLocalizations.of(context).homeGunlukHedef,
+      sources: [sessionsAsync],
+    );
+    if (gate != null) return gate;
+
     final recorded = ref.watch(todayRecordedSecondsProvider);
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
@@ -114,7 +171,8 @@ class _GoalCardState extends ConsumerState<GoalCard>
         : (recorded / goalSeconds).clamp(0.0, 1.0);
     final reached = recorded >= goalSeconds && goalSeconds > 0;
     // Yalnız eşiğin ALTINDAN ÜSTÜNE geçişte kutlanır; hedef tutmuşken gelen
-    // her yeni kayıt kutlamayı tekrar oynatmaz.
+    // her yeni kayıt kutlamayı tekrar oynatmaz. Yükleme karesindeki sahte 0'a
+    // karşı koruma burada DEĞİL, yukarıdaki kapıdadır (WP-817).
     ref.listen<int>(todayRecordedSecondsProvider, (previous, next) {
       if (goalSeconds <= 0 || previous == null) return;
       if (previous < goalSeconds && next >= goalSeconds) _celebrate();
