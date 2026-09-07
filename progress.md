@@ -12500,6 +12500,53 @@ tablosunda olmak zorunda; yeni bir kart sessizce dışarıda kalamıyor.
 göstereceği sanılmıştı; rozet `activeCount > 0` kapısının arkasında, yani hiç
 çizilmiyor. "0 görev" iddiası yok.
 
+### WP-820 — yaptırım menüsü TEK; sahibin şikâyetinin kalan yarısı
+WP-C basamak listesini tek kanonik kaynaktan **türetmişti** ama menüyü tek
+**yapmamıştı**. `chooseAndApply` varsayılanı auth'a inen beş basamaktı; tam
+kataloğu tek bir çağrı yeri geçiyordu. Üç giriş noktası, iki menü:
+
+| giriş | basamak |
+|---|---|
+| Kullanıcılar sekmesindeki satır | 5 |
+| Kişi dosyası | 5 |
+| Vakadan açılan kişi profili | 9 |
+
+Yani `Uyar`, `Sustur` ve `İsim sıfırla` — en çok kullanılan, en yumuşak üç
+basamak — Kullanıcılar tarafından **hiç** uygulanamıyordu. Üstelik fonksiyonun
+kendi yorumu *"iki yüzey tek yüzeydir"* diyordu: bu turda düzeltilen kaçıncı
+yalan yorum olduğunu saymayı bıraktım.
+
+`ladder` parametresi **kaldırıldı**, varsayılan yapılmadı: parametre "ileride
+lazım olur" diye durmuştu ve ikinci liste tam öyle doğmuştu. Daraltmanın yolu
+artık yok ve bunu kaynak düzeyinde bir test kilitliyor.
+`kAdminAccountRestrictionLadder` silinmedi — o bir menü değil, "hangi
+basamaklar auth tarafına iner" sorusunun türetilmiş cevabı.
+
+Bayat iddialar düzeltildi: WP-625'in menü testi **beş** basamak arıyordu, yani
+menü daraltılsa bile yeşil geçerdi; artık dokuzun hepsini arıyor.
+
+### WP-821 — 🔴 gece yarısı fikstür bombası (bu turun en pahalı yanlış hipotezi)
+Saat 00:16'da tam kapı üç testte birden kırmızı döndü. Sebep bir regresyon
+değildi: fikstürler oturumu `DateTime.now()`dan geriye sayıyordu ve o saatte
+`now - 45dk` **düne** düşüyor, bugünün toplamı 0 çıkıyordu.
+
+Kaybettiğim zamanın tamamı yanlış hipotezdendi. "Son commit'im bozdu" varsayıp
+ayrı bir çalışma ağacı kurdum, `env.json` kopyaladım, üretilmiş l10n eksik
+diye o da tutmadı. Testleri üç kez koşturup **deterministik** olduğunu görünce
+"flake değil" deyip daha da yanlış yöne saptım. Doğru cevabı tek bir `date`
+verdi. **Deterministik olmak masumiyet kanıtı değil: saat de deterministiktir.**
+
+`agoWithinIstanbulToday` (WP-565) tam bunun için yazılmıştı ve o üç dosya onu
+kullanmıyordu. Bir de **cırcır** eklendi: aynı deseni kullanan altı dosya daha
+var ve bugün kırmızı değiller, çünkü hiçbiri "bugünün toplamı" üzerine iddia
+kurmuyor. Onları zorla değiştirmek çalışan testleri ölçümsüz bir kural uğruna
+elden geçirmek olurdu. Cırcır listeye **yeni** dosya girmesini engelliyor ve
+muafiyet listesinin bayatlamasını da ölçüyor.
+
+Cırcırın ilk hâli **kendini** yakaladı: aranan deseni tarif eden `RegExp` metni
+de desene uyuyordu. Bu, aynı gün içindeki ikinci "testin kendi metnini ölçmesi"
+vakasıydı — birincisi WP-820'de çıktı.
+
 ### Ölçemediklerim / açık bıraktıklarım
 - **Deno testleri bu makinede koşmadı** (`deno` kurulu değil). WP-813'ün altı
   yeni testi CI'da doğrulanır; yeşil sayılmadı.

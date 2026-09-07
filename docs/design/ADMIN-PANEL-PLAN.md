@@ -307,7 +307,7 @@ kayıtlı iki not zaten bunu söylüyor (`wp-kart-iddialari-dogrulanmali`,
 | 2 | Kanıtın yanında karar vermek | **kapandı** (WP-769) | aynı sayfada `kModerationEvidenceKey` + `kModerationDecisionBarKey`, çözüldü/reddedildi/karantina tek şeritte (`:51-61`) |
 | 3 | Hedefin dosyası | **kapandı** (WP-775) | `admin_user_profile_page.dart` — oranlar, hesap, kullanım, ceza geçmişi |
 | 4 | Yaptırımı geri alma | **kapandı** (WP-C, WP-809) | `admin_active_restriction_card.dart` `kAdminSanctionRevokeKey`; WP-809'a kadar YALNIZ kişi dosyasındaydı, artık vakadan açılan profilde de var |
-| 5 | Tek yaptırım yüzeyi | 🔴 **AÇIK** (daraldı) | hâlâ iki kişi ekranı: `admin_user_profile_page.dart` (tam katalog) ve `admin_person_dossier.dart` (`kAdminAccountRestrictionLadder`). Basamak listesi tek kaynaktan türüyor, ama ekran iki |
+| 5 | Tek yaptırım yüzeyi | **kapandı** (WP-820) — menü tarafı | `chooseAndApply` artık `ladder` parametresi kabul etmiyor; üç giriş noktası da tam kataloğu sunuyor. Kalan tek şey **iki ekranın** varlığı: `admin_user_profile_page.dart` ve `admin_person_dossier.dart` aynı işi yapıyor, fark yalnız hesap silme yolunun dosyada olması. Bu bir duplikasyon borcudur, yaptırım kusuru değil |
 | 6 | İtirazı cezasıyla görmek | **kapandı** | `admin_appeal_detail_page.dart:48` + `admin_queue_view.dart:591` |
 | 7 | Kişi arama | **kapandı** (WP-771) | `admin_users_tab.dart:56-61` `AdminSearchField` + `adminMatchesQuery(_query, [user.email, user.id])` |
 | 8 | Grup üye listesi | **kapandı** (WP-D) | `directory/admin_group_members.dart` + `admin_member_picker.dart` |
@@ -318,8 +318,11 @@ kayıtlı iki not zaten bunu söylüyor (`wp-kart-iddialari-dogrulanmali`,
 | 13 | Duyuru | kapandı (zaten öyleydi) | — |
 | 14 | Yönetici rol yönetimi | kapsam dışı (değişmedi) | tek yöneticili ürün |
 
-**Kalan gerçek iş: 5 ve 9.** İkisi de küçük; 5 bir birleştirme kararı ister
-(iki ekran mı, bir ekran mı), 9 kuyruk sıralamasına ikinci bir ölçüt ekler.
+**Kalan gerçek iş: 9.** (5'in zararlı yarısı — iki farklı menü — WP-820'de
+kapandı; geriye iki ekranın duplikasyonu kaldı ve o bir borç, kusur değil.)
+9 kuyruk sıralamasına ikinci bir ölçüt ekler ve ölçüldüğünde "küçük" olmadığı
+görüldü: "yanıtlanmamış" bilgisi sunucudaki mesaj satırlarında var ama kuyruk
+projeksiyonu onu taşımıyor, yani bir migration ister.
 
 **Ayrıca bu turda bulunan, tabloda hiç olmayan iki kusur:**
 
