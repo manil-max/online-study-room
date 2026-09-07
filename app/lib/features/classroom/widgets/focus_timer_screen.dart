@@ -115,6 +115,16 @@ void listenTimerNotices(BuildContext context, WidgetRef ref) {
 /// uyguluyordu; aynı kuralın iki yüzeyde ayrık yaşaması WP-560'ın dersiydi
 /// ([listenTimerNotices] de bu yüzden burada duruyor).
 Future<void> stopTimerFromSurface(BuildContext context, WidgetRef ref) async {
+  // 🔴 WP-808/2: darbe BURADA, cagri yerinde degil. WP-808 onu kartin
+  // `onPressed`ine koymustu; tam ekran odak ekrani ayni yardimciyi cagirdigi
+  // halde titresimsiz kaliyordu — yani bu fonksiyonun kendi yorumundaki
+  // WP-560 dersi ("ayni kuralin iki yuzeyde ayrik yasamasi") darbe icin
+  // aynen tekrarlanmisti.
+  //
+  // Ayna onayi ISTENEN durumda darbe yine de burada verilir: kullanici
+  // Durdur'a BASTI, karari o an hissetmeli; diyalogdan vazgecse bile
+  // dokunusun karsiligini almis olur.
+  HapticFeedback.mediumImpact();
   final notifier = ref.read(studyTimerProvider.notifier);
   if (!ref.read(studyTimerProvider).isGlobalTimerMirror) {
     await notifier.stop();

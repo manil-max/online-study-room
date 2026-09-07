@@ -340,10 +340,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                       ? null
                       // WP-808: durdur daha "ağır" bir olaydır, başlat hafif.
                       // Ekrana bakmadan hangisine bastığın anlaşılsın.
-                      : () {
-                          HapticFeedback.mediumImpact();
-                          stopTimerFromSurface(context, ref);
-                        },
+                      // WP-808/2: darbe `stopTimerFromSurface` icine tasindi;
+                      // burada tekrarlamak cift titresim uretirdi ve tam
+                      // ekran odak ekranini yine disarida birakirdi.
+                      : () => stopTimerFromSurface(context, ref),
                   // WP-507: durdurma zinciri (native uzlaşma + sunucu finalize)
                   // bazen saniyeler sürüyor. Buton yalnız griye düşünce
                   // kullanıcı "tuş öldü" sanıyordu; ilerleme görünür olmalı.
