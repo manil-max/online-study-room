@@ -69,10 +69,27 @@ Key adminCaseUserRowKey(String userId) => Key('admin-case-user-$userId');
 const Key kModerationUndoBarKey = Key('moderation-undo-bar');
 const Key kModerationUndoButtonKey = Key('moderation-undo-button');
 
-/// Hedefin dosyasi — sayfanin **icinde**, ayri ekran degil.
-const Key kAdminCaseTargetSummaryKey = Key('admin-case-target-summary');
+/// 🔴 WP-814: bu blogun basindaki yorum YALANDI ve iki anahtari OLUYDU.
+///
+/// Yorum *"Hedefin dosyasi — sayfanin **icinde**, ayri ekran degil"* diyordu.
+/// Oysa `kAdminCaseTargetSummaryKey` ve `kAdminCaseSanctionRevokeKey`
+/// hicbir widget'a verilmemisti ve hicbir test onlari aramiyordu: ne `lib/`
+/// ne `test/` icinde tek referans vardi. Yani sayfa icinde bir hedef ozeti de,
+/// vakadan kisit kaldirma yolu da HIC cizilmemisti — yorum, yazilmamis bir
+/// tasarimi olmus gibi anlatiyordu. Ikisi de silindi.
+///
+/// Gercek cozum baska bicimde geldi ve daha iyisi: hedefin dosyasi sayfaya
+/// GOMULMEDI, bir dokunus uzaga kondu. Taraf satirina dokununca kisi profili
+/// acilir ([_CaseUserRow._open]) ve WP-809'dan beri o ekranda aktif kisit +
+/// kaldirma da var. Yaptirimin sayfaya gomulmemesi de bir karardir, kaza
+/// degil: asagidaki `kAdminCaseSanctionApplyKey` DURUYOR cunku
+/// `moderation_review_flow_test.dart:552-557` onu `findsNothing` ile olcuyor
+/// — *"yaptirim vaka sayfasindan KALKTI; ayni islem iki yerde duruyordu"*.
+///
+/// Ders: cagrilmayan bir anahtar iki ayri sey olabilir. Biri bilerek bos
+/// birakilmis bir SOZLESME (silinemez), oteki hic yazilmamis bir NIYET
+/// (silinmeli). Ayrimi yorum degil, testin kendisi soyler.
 const Key kAdminCaseSanctionApplyKey = Key('admin-case-sanction-apply');
-const Key kAdminCaseSanctionRevokeKey = Key('admin-case-sanction-revoke');
 
 /// Sikayet edenle yazisma (aynali destek kaydi).
 const Key kAdminCaseReplyKey = Key('admin-case-reply');
