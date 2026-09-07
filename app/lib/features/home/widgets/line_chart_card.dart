@@ -82,10 +82,11 @@ class _LineChartCardState extends ConsumerState<LineChartCard> {
                 selected: {_days},
                 onSelectionChanged: (s) => setState(() => _days = s.first),
                 showSelectedIcon: false,
-                style: const ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+                // `shrinkWrap` + `compact` birlikte segmenti 32 dp'ye
+                // düşürüyordu. `padded` (varsayılan) dokunma hedefini 48 dp'de
+                // tutar, `compact` görsel yüksekliği 40'ta bırakır —
+                // `period_summary_card.dart` ile aynı desen.
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
               );
 
         final series = lastNDays(sessions, _days);

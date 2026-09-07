@@ -68,6 +68,29 @@ class StudyHeatmap extends StatelessWidget {
       return theme.colorScheme.primary.withValues(alpha: alphas[level - 1]);
     }
 
+    // Ay etiketi yuvası. Sabit 14 dp idi: %130 metin ölçeğinde `labelSmall`
+    // yuvayı aşıp altındaki hücrelerin üstüne biniyordu. Yükseklik artık
+    // gerçek metin ölçeğinden ÖLÇÜLÜR. Değer tüm sütunlar için TEK olmak
+    // zorunda: ay yazan sütun diğerlerinden yüksek olursa hücre satırları
+    // birbirinden kayar ve ızgara bozulur.
+    // `height: 1.2` sıkı ama güvenli satır kutusu: varsayılan 1.45 satır
+    // kutusu 11 dp yazıyı ölçeksiz hâlde bile 14 dp yuvadan taşırıyordu.
+    // 1.2, tipik font yükseklik+alçaklığının (≈1.17 em) üstünde kalır, yani
+    // "Eyl"in y kuyruğu kesilmez; ölçeksiz yuva 13.2 → 14'te sabit kalır ve
+    // kartın yüksekliği DEĞİŞMEZ (kart-içi kaydırma çıtası buna bakıyor).
+    final monthStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      height: 1.2,
+    );
+    final monthProbe = TextPainter(
+      text: TextSpan(text: months.first, style: monthStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final monthSlot = monthProbe.height < 14.0 ? 14.0 : monthProbe.height;
+    monthProbe.dispose();
+
     final columns = <Widget>[];
     var prevMonth = -1;
     for (var w = 0; w < weeks; w++) {
@@ -109,14 +132,10 @@ class StudyHeatmap extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 14,
+                key: const ValueKey('heatmapMonthSlot'),
+                height: monthSlot,
                 child: showMonth
-                    ? Text(
-                        months[weekStart.month - 1],
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      )
+                    ? Text(months[weekStart.month - 1], style: monthStyle)
                     : null,
               ),
               ...cells,

@@ -153,10 +153,9 @@ class _DayFilter extends StatelessWidget {
         selected: {value},
         onSelectionChanged: (s) => onChanged(s.first),
         showSelectedIcon: false,
-        style: const ButtonStyle(
-          visualDensity: VisualDensity.compact,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
+        // Bkz. `line_chart_card.dart`: `shrinkWrap` dokunma hedefini 32 dp'ye
+        // düşürüyordu, kaldırıldı. `compact` görsel yükseklikte kalır.
+        style: const ButtonStyle(visualDensity: VisualDensity.compact),
       ),
     );
   }

@@ -29,7 +29,8 @@ class StatsPeriodBar extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 4, 2),
       child: SizedBox(
-        height: 44,
+        // Şerit chip'in dokunma hedefini (48 dp) kısıtlamasın diye 44 → 48.
+        height: kMinInteractiveDimension,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -88,13 +89,25 @@ class _PeriodChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: fg,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+        // Yalnız dolgu ile chip ≈ 33 dp kalıyordu. Deseni yanındaki
+        // `stats_range_navigator.dart` `_PeriodPickerButton`'dan alıyoruz:
+        // dolgu görsel, minimum yükseklik dokunma hedefi içindir.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: kMinInteractiveDimension,
+            minHeight: kMinInteractiveDimension,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: fg,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
             ),
           ),
         ),

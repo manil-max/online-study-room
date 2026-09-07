@@ -345,10 +345,22 @@ class CrownedAvatar extends StatelessWidget {
     }
 
     if (onTap == null) return avatar;
+    // `HitTestBehavior.opaque` yalnız kutunun İÇİNİ tıklanır yapar, kutuyu
+    // BÜYÜTMEZ: radius 14 avatarda dokunma hedefi 28×28 kalıyordu. Kutu
+    // burada en az 48 dp'ye çekiliyor (`kMinInteractiveDimension`); görsel
+    // boyut değişmez, avatar ortada durur, yalnız dokunulabilir alan büyür.
+    // `widthFactor/heightFactor: 1` şart: yoksa `Center` gevşek bir üst
+    // kısıtta bütün satırı kaplar.
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: avatar,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: kMinInteractiveDimension,
+          minHeight: kMinInteractiveDimension,
+        ),
+        child: Center(widthFactor: 1, heightFactor: 1, child: avatar),
+      ),
     );
   }
 }

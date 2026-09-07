@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Etiketli +/- sayaç (saat/dakika gibi sayısal seçimler için). +/- tuşuna
 /// **basılı tutunca** sabit hızda artırıp azaltır (tek tek basmamak için).
@@ -23,6 +24,7 @@ class NumberStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         Text(
@@ -43,6 +45,10 @@ class NumberStepper extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: HoldRepeatButton(
                     icon: Icons.remove,
+                    // Ekran okuyucu düğmenin ne yaptığını söyleyebilsin diye
+                    // etiket sayacın kendi başlığından türer: "Saat değerini
+                    // 1 azalt".
+                    semanticLabel: l10n.wp295PreviewDecrease(label, 1),
                     enabled: value > min,
                     onStep: () => onChanged((value - 1).clamp(min, max)),
                   ),
@@ -51,6 +57,7 @@ class NumberStepper extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: HoldRepeatButton(
                     icon: Icons.add,
+                    semanticLabel: l10n.wp295PreviewIncrease(label, 1),
                     enabled: value < max,
                     onStep: () => onChanged((value + 1).clamp(min, max)),
                   ),
@@ -73,11 +80,15 @@ class HoldRepeatButton extends StatefulWidget {
   const HoldRepeatButton({
     super.key,
     required this.icon,
+    required this.semanticLabel,
     required this.enabled,
     required this.onStep,
   });
 
   final IconData icon;
+
+  /// Ekran okuyucunun okuduğu ad. İkon tek başına konuşmadığı için zorunlu.
+  final String semanticLabel;
   final bool enabled;
   final VoidCallback onStep;
 
@@ -119,15 +130,30 @@ class _HoldRepeatButtonState extends State<HoldRepeatButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Listener (gesture arena dışı) basışı güvenilir yakalar; IconButton yalnız
-    // görsel/erişilebilirlik için (onPressed boş — gerçek artış Listener'da).
-    return Listener(
-      onPointerDown: widget.enabled ? (_) => _start() : null,
-      onPointerUp: (_) => _stop(),
-      onPointerCancel: (_) => _stop(),
-      child: IconButton.filledTonal(
-        onPressed: widget.enabled ? () {} : null,
-        icon: Icon(widget.icon),
+    // Listener (gesture arena dışı) basışı güvenilir yakalar ve basılı tutmayı
+    // yürütür; IconButton yalnız GÖRSEL (dolgu, mürekkep, devre dışı rengi) —
+    // `onPressed` bilerek boş, gerçek artış Listener'da.
+    //
+    // 🔴 Bu tasarımın bedeli: ekran okuyucunun "etkinleştir" jesti
+    // `SemanticsAction.tap` yollar, pointer olayı ÜRETMEZ → boş `onPressed`
+    // hiçbir şey yapmaz, sayaç ekran okuyucuyla hiç çalışmazdı. Bu yüzden
+    // semantik düğüm artık burada, elle kuruluyor: aksiyon doğrudan
+    // `onStep`'e bağlı ve etiketli. `excludeSemantics` altta kalan
+    // IconButton'un (eylemsiz, adsız) düğümünü eler ki tek düğüm kalsın.
+    return Semantics(
+      button: true,
+      enabled: widget.enabled,
+      label: widget.semanticLabel,
+      onTap: widget.enabled ? widget.onStep : null,
+      excludeSemantics: true,
+      child: Listener(
+        onPointerDown: widget.enabled ? (_) => _start() : null,
+        onPointerUp: (_) => _stop(),
+        onPointerCancel: (_) => _stop(),
+        child: IconButton.filledTonal(
+          onPressed: widget.enabled ? () {} : null,
+          icon: Icon(widget.icon),
+        ),
       ),
     );
   }

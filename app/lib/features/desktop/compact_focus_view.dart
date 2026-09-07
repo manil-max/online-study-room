@@ -240,19 +240,29 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
                     ),
                   ),
                 ),
+                // Sabit 42 dp iki kez hatalıydı: 48 dp dokunma hedefinin
+                // altındaydı ve "Durdur ve Kaydet" etiketi büyük metin
+                // ölçeğinde bu yüksekliğe sığmıyordu. Alt sınır 48, tavan
+                // yok — etiket büyüdükçe düğme büyür.
                 SizedBox(
                   width: double.infinity,
-                  height: 42,
-                  child: FilledButton.icon(
-                    key: const ValueKey('compact-focus-toggle'),
-                    onPressed: running
-                        ? () => ref.read(studyTimerProvider.notifier).stop()
-                        : ref.read(studyTimerProvider.notifier).start,
-                    icon: Icon(running ? Icons.stop : Icons.play_arrow),
-                    label: Text(
-                      running
-                          ? AppLocalizations.of(context).desktopDurdurVeKaydet
-                          : AppLocalizations.of(context).desktopBaslat,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: kMinInteractiveDimension,
+                    ),
+                    child: FilledButton.icon(
+                      key: const ValueKey('compact-focus-toggle'),
+                      onPressed: running
+                          ? () => ref.read(studyTimerProvider.notifier).stop()
+                          : ref.read(studyTimerProvider.notifier).start,
+                      icon: Icon(running ? Icons.stop : Icons.play_arrow),
+                      label: Text(
+                        running
+                            ? AppLocalizations.of(
+                                context,
+                              ).desktopDurdurVeKaydet
+                            : AppLocalizations.of(context).desktopBaslat,
+                      ),
                     ),
                   ),
                 ),

@@ -337,6 +337,10 @@ class _MessageBubble extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!mine) ...[
+            // Profili açmanın yolu bu avatar. radius 14 → 28×28 kutu, yani
+            // hedef 48 dp'nin çok altındaydı; jest algılayıcı kutuyu
+            // büyütmediği için dokunma sık sık ıskalanıyordu. Kutu en az
+            // 48 dp'ye çekildi, avatarın çizimi değişmedi.
             GestureDetector(
               onTap: () => openMemberProfileById(
                 context,
@@ -346,11 +350,22 @@ class _MessageBubble extends ConsumerWidget {
                 animal: message.authorAnimal,
               ),
               onLongPress: () => _showPeerActions(context, ref),
-              child: LiveCrownedAvatar(
-                userId: message.userId,
-                displayName: name,
-                avatarUrl: message.authorAvatarUrl,
-                radius: 14,
+              behavior: HitTestBehavior.opaque,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: kMinInteractiveDimension,
+                  minHeight: kMinInteractiveDimension,
+                ),
+                child: Center(
+                  widthFactor: 1,
+                  heightFactor: 1,
+                  child: LiveCrownedAvatar(
+                    userId: message.userId,
+                    displayName: name,
+                    avatarUrl: message.authorAvatarUrl,
+                    radius: 14,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 8),
