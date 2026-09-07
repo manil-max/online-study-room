@@ -5,9 +5,21 @@ name: Supabase Auth Config
 # Supabase CLI'nin `config push` komutu TÜM supabase/config.toml'u gönderir; o dosya
 # yerel geliştirme için yazılmıştır (site_url = 127.0.0.1:3000) ve uzak projeye
 # basılırsa şifre sıfırlamayı düzeltmek yerine tamamen kırar. Bu yüzden burada
-# Management API ile YALNIZ üç alan yamalanır:
+# Management API ile YALNIZ dört alan yamalanır:
 #   site_url, uri_allow_list, mailer_templates_recovery_content
+#   ve — YALNIZ açıkça istenirse — mailer_autoconfirm
 # Başka hiçbir auth ayarına dokunulmaz.
+#
+# 🔴 `mailer_autoconfirm` neden buraya girdi (2026-09-07): production okundu ve
+# `mailer_autoconfirm=false` + `custom_smtp_configured=false` +
+# `rate_limit_email_sent=2` çıktı. Yani doğrulama postası Supabase'in yerleşik
+# test sağlayıcısından gidiyor ve saatte 2 ile sınırlı — PROJE genelinde. Aynı
+# saatte üçüncü kez kayıt olan kullanıcı postayı HİÇ almaz: hesabı oluşur,
+# giriş yapamaz ve kendi başına çözemez. Kapalı testte bu koruma bir işe
+# yaramıyor, yalnızca kayıt akışını kırıyor.
+#
+# Varsayılan `keep`tir: bu alan ancak açıkça istenirse yazılır, yoksa okunur
+# ve raporlanır. Kalıcı çözüm özel SMTP'dir; o gelince `true` geri alınır.
 #
 # Redirect scheme'leri app/lib/core/config/auth_redirect_config.dart ile birebir
 # aynıdır (alt çizgisiz taban + flavor suffix'i).
@@ -35,6 +47,18 @@ on:
         required: false
         default: false
         type: boolean
+      mailer_autoconfirm:
+        description: >-
+          E-posta doğrulaması. keep = dokunma (varsayılan) · off = doğrulama
+          KAPALI, kayıt anında hesap aktif · on = doğrulama zorunlu (özel SMTP
+          gerekir, yoksa saatte 2 posta sınırı kayıt akışını kırar).
+        required: false
+        default: keep
+        type: choice
+        options:
+          - keep
+          - 'off'
+          - 'on'
 
 permissions:
   contents: read
@@ -56,6 +80,7 @@ jobs:
       TARGET: ${{ inputs.target }}
       CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
       DRY_RUN: ${{ inputs.dry_run }}
+      MAILER_AUTOCONFIRM: ${{ inputs.mailer_autoconfirm }}
     steps:
       - name: Verify target contract
         shell: bash
@@ -132,6 +157,53 @@ jobs:
 
           echo "Deep link routing patched on $TARGET."
 
+      # 🔴 Ayri adim, ayri kapi: bu alan yalniz `keep` DISINDA bir deger
+      # verilirse yazilir. Yonlendirme yamasi her kosumda calisir; bu
+      # calismaz. Boylece rutin bir `site_url` tazelemesi kayit akisinin
+      # guvenlik ayarini SESSIZCE degistiremez.
+      - name: Patch mailer_autoconfirm (only when explicitly requested)
+        if: ${{ inputs.dry_run == false && inputs.mailer_autoconfirm != 'keep' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # `off` = dogrulama KAPALI = mailer_autoconfirm TRUE (Supabase adi
+          # tersine okunur: "postayi otomatik onayla").
+          if [[ "$MAILER_AUTOCONFIRM" == "off" ]]; then
+            autoconfirm=true
+          elif [[ "$MAILER_AUTOCONFIRM" == "on" ]]; then
+            autoconfirm=false
+          else
+            echo "::error::Beklenmeyen mailer_autoconfirm degeri: $MAILER_AUTOCONFIRM"
+            exit 1
+          fi
+
+          # `on` istenirken ozel SMTP yoksa UYAR: yerlesik saglayici saatte 2
+          # posta gonderir ve kayit akisi ucuncu kullanicida kirilir.
+          smtp_configured="$(curl --fail-with-body --silent --show-error \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            | jq -r '((.smtp_host // "") != "")')"
+          if [[ "$autoconfirm" == "false" && "$smtp_configured" != "true" ]]; then
+            echo "::warning::$TARGET uzerinde dogrulama ACILIYOR ama ozel SMTP YOK. Yerlesik saglayici saatte 2 posta gonderir (proje geneli); ayni saatte ucuncu kayit postayi hic almaz."
+          fi
+
+          jq -n --argjson mailer_autoconfirm "$autoconfirm" '$ARGS.named' \
+            > "$RUNNER_TEMP/autoconfirm.json"
+
+          curl --fail-with-body --silent --show-error \
+            -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @"$RUNNER_TEMP/autoconfirm.json" \
+            --output "$RUNNER_TEMP/autoconfirm-response.json" || {
+              echo "Management API rejected the autoconfirm patch:"
+              cat "$RUNNER_TEMP/autoconfirm-response.json" || true
+              exit 1
+            }
+
+          echo "mailer_autoconfirm=$autoconfirm patched on $TARGET (istek: $MAILER_AUTOCONFIRM)."
+
       - name: Patch recovery email template (needs paid plan or custom SMTP)
         if: ${{ inputs.dry_run == false }}
         shell: bash
@@ -182,12 +254,26 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN")"
 
           printf '%s' "$after" \
-            | jq '{site_url, uri_allow_list,
+            | jq '{site_url, uri_allow_list, mailer_autoconfirm,
+                   rate_limit_email_sent,
+                   custom_smtp_configured: ((.smtp_host // "") != ""),
                    recovery_template_has_token:
                      ((.mailer_templates_recovery_content // "") | contains("{{ .Token }}")),
                    recovery_template_has_link:
                      ((.mailer_templates_recovery_content // "") | contains("{{ .ConfirmationURL }}"))}' \
             | tee "$RUNNER_TEMP/after.json"
+
+          # Istenen deger GERCEKTEN yazildi mi? Yazma adimi 200 donse bile
+          # okunan deger kanittir.
+          if [[ "$MAILER_AUTOCONFIRM" != "keep" ]]; then
+            want=$([[ "$MAILER_AUTOCONFIRM" == "off" ]] && echo true || echo false)
+            printf '%s' "$after" | jq -e --argjson want "$want" \
+              '.mailer_autoconfirm == $want' > /dev/null || {
+                echo "::error::mailer_autoconfirm istenen degere yazilmadi (istenen: $MAILER_AUTOCONFIRM)."
+                exit 1
+              }
+            echo "Verified: mailer_autoconfirm istenen degerde ($MAILER_AUTOCONFIRM)."
+          fi
 
           # Sert kapı yalnız yönlendirme tarafı: şablon, ücretsiz projelerde
           # değiştirilemediği için kabul kriteri değil (üstteki adım uyarır).
