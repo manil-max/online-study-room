@@ -117,4 +117,5 @@ select ok(
   'authenticated grant KORUNDU (super admin yolu bozulmadi)'
 );
 
-select rollback();
+select * from finish();
+rollback;
