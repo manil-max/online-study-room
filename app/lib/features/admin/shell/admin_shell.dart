@@ -8,6 +8,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../queue/admin_queue_view.dart';
 import '../tabs/admin_announcements_tab.dart';
 import '../tabs/admin_audit_log_tab.dart';
+import '../health/account_purge_health_panel.dart';
 import '../tabs/admin_dashboard_tab.dart';
 import '../tabs/admin_groups_tab.dart';
 import '../tabs/admin_users_tab.dart';
@@ -184,6 +185,20 @@ class _AdminShellState extends State<AdminShell> {
           icon: Icons.admin_panel_settings_outlined,
           label: l10n.adminDenetim,
           child: const AdminAuditLogTab(),
+        ),
+        // 🔴 WP-800 DIKIS. Panel, sağlayıcısı, bellek içi ikizi ve testleri
+        // WP-E'de yazıldı ve **hiçbir yerden çizilmiyordu**; onu yakalayacak
+        // tek test de `skip`liydi ("lider yol açınca kaldırılacak" — açılmadı).
+        // Kuyruk tıkanırsa süper admin bunu uygulamada göremiyordu; oysa bu
+        // ekran `hesap-silme-restrict-fk-blokaji` olayının erken uyarısıydı.
+        //
+        // Yüzeyin SONUNDA durur: günlük iş özet/duyuru/denetimdir, bu bir
+        // sağlık göstergesidir.
+        AdminSection(
+          id: 'purge-health',
+          icon: Icons.health_and_safety_outlined,
+          label: l10n.adminPurgeKuyrukBasligi,
+          child: const _PurgeHealthSection(),
         ),
       ],
     ),
@@ -588,4 +603,20 @@ String _balancedMobileLabel(String label) {
   spaces.sort((a, b) => (a - middle).abs().compareTo((b - middle).abs()));
   final split = spaces.first;
   return '${label.substring(0, split)}\n${label.substring(split + 1)}';
+}
+
+/// WP-800: sağlık panelini yüzeyin bölüm gövdesine uyarlar.
+///
+/// Panel bir `Card`; bölüm gövdeleri kaydırılabilir sayfalardır. Dar
+/// telefonda kart taşmasın diye kaydırma burada verilir.
+class _PurgeHealthSection extends StatelessWidget {
+  const _PurgeHealthSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [AccountPurgeHealthPanel()],
+    );
+  }
 }

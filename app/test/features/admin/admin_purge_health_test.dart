@@ -31,6 +31,7 @@ import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/supabase_admin_repository.dart';
 import 'package:online_study_room/features/admin/health/account_purge_health_panel.dart';
+import 'package:online_study_room/features/admin/shell/admin_shell.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../support/supabase_wire_harness.dart';
@@ -250,20 +251,70 @@ void main() {
   // hazir; lider yolu acinca `skip` kaldirilir ve iddia oldugu gibi kosar.
   // Testi silmek yerine `skip` birakiliyor ki kabul olcutu kaybolmasin.
   // ---------------------------------------------------------------------
-  group(
-    'WP-E kabul 3 — Kayit & Yayin yuzeyinin sonunda',
-    () {
-      testWidgets('panel yuzeyin son bolumudur ve kuyrugun ustune cikmaz', (
-        tester,
-      ) async {
-        fail('Kablolama SAHIP disi: features/admin/shell/**');
-      });
-    },
-    skip:
-        'BLOKE (WP-E): panelin yuzeye baglanmasi admin_shell.dart '
-        'degisikligi ister; o dosya bu WP\'nin SAHIP yollarinda degil. '
-        'Lider yol acinca skip kaldirilacak.',
-  );
+  // 🔴 WP-800: `skip` KALKTI ve iddia GERCEKTEN kosuyor.
+  //
+  // Bu grup WP-E'de `skip` ile birakilmisti ("lider yol acinca kaldirilacak")
+  // ve acilmadi. Sonuc: panel, saglayicisi, bellek ici ikizi ve dokuz testi
+  // hazirdi ama panel HICBIR YERDEN cizilmiyordu -- ve bunu yakalayacak tek
+  // test skip'liydi. Kapi yesil, ozellik yok.
+  //
+  // Deponun kayitli kusuru (`ajan-dikis-yerinde-is-ortada-kalir`): alt ajan
+  // SAHIP yolu disina cikamayinca kabul olcutunu skip'e alir, lider dikisi
+  // unutur. `skip` bir HATIRLATICI DEGILDIR; kimse okumaz.
+  group('WP-800 kabul 3 — Kayit & Yayin yuzeyinin sonunda', () {
+    testWidgets('panel yonetim kabugunda GERCEKTEN acilir', (tester) async {
+      tester.view.physicalSize = const Size(1400, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final repo = InMemoryAdminRepository(
+        superAdminUserIds: const {'admin'},
+        accountPurgeHealth: _health(dueCount: 3),
+      );
+      addTearDown(repo.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(
+                Profile(
+                  id: 'admin',
+                  displayName: 'Admin',
+                  createdAt: DateTime(2026),
+                ),
+              ),
+            ),
+            adminRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: MaterialApp(
+            locale: const Locale('tr'),
+            theme: _theme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const AdminShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Baslangicta baska bir yuzeydeyiz: panel gorunmemeli.
+      expect(find.byKey(kAdminPurgeHealthPanelKey), findsNothing);
+
+      final l10n = lookupAppLocalizations(const Locale('tr'));
+      await tester.tap(find.text(l10n.adminYuzeyKayitYayin).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.adminPurgeKuyrukBasligi).last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(kAdminPurgeHealthPanelKey),
+        findsOneWidget,
+        reason:
+            'Panel kabuktan acilmiyor: dosya var, saglayici var, ozellik yok.',
+      );
+    });
+  });
 
   // ---------------------------------------------------------------------
   // KABUL 4 — "yapilandirilmamis = saglikli" tuzagi.
