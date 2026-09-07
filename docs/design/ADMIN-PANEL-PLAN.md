@@ -279,6 +279,65 @@ bileti, grup, duyuru, hesap silme, denetim). "İş" sütunu kaba tahmindir.
 | 13 | **Duyuru** | Var ve çalışıyor | var | — |
 | 14 | Yönetici rol yönetimi (`app_admins`) | — | yok, elle SQL | **kapsam dışı** — tek yöneticili ürün |
 
+### 3.1 🔴 2026-09-07 ÖLÇÜMÜ — yukarıdaki tablo BAYAT
+
+Üstteki tablo WP-691 günü (2026-08-2x) doğruydu ve **tarihsel kayıt olarak
+duruyor**; silinmedi. Ama aradan WP-769…WP-812 geçti ve tablo artık *yanlış
+iş* ürettiriyor. Bu bölüm 2026-09-07'de satır satır ölçüldü.
+
+**Neden bu bölüm var — ölçülmüş maliyet.** Bu turda tablodaki iki satıra
+bakıp iki ayrı işe başladım ve ikisi de **zaten yapılmıştı**:
+
+- 7. satır *"Kişi arama — yok (`admin_users_tab.dart:44-56`)"*: arama
+  WP-771'de eklenmişti (`admin_users_tab.dart:31-34` yorumu ve `:56-61`
+  `AdminSearchField`). Kod yazmadan önce dosyayı açtığım için durdum.
+- Ayrı bir av raporu grup liderlik zaman serisinin *"hiçbir ekran
+  çizmiyor"* dediği için oraya da bakıldı: grafik **çiziliyor**
+  (`class_stats_view.dart:486` → `LeaderboardRankChart`), yalnız veriyi
+  sunucu RPC'sinden değil istemcideki `DailyStat`lardan hesaplıyor
+  (`leaderboard_rank_chart.dart:13` bunu açıkça yazıyor).
+
+İkisi de aynı dersin tekrarı: **belge kanıt değildir, kod kanıttır.** Depoda
+kayıtlı iki not zaten bunu söylüyor (`wp-kart-iddialari-dogrulanmali`,
+`alt-ajan-belgeye-guveniyor`); bu bölüm o dersin bu belgeye uygulanmış hâli.
+
+| # | ihtiyaç | 2026-09-07 durumu | kanıt |
+|---|---|---|---|
+| 1 | Şikâyeti içeriğiyle görmek | **kapandı** | `admin_case_detail_page.dart:229,250` (kanıt bloğu) + `:307` `ModerationAttachmentButton` |
+| 2 | Kanıtın yanında karar vermek | **kapandı** (WP-769) | aynı sayfada `kModerationEvidenceKey` + `kModerationDecisionBarKey`, çözüldü/reddedildi/karantina tek şeritte (`:51-61`) |
+| 3 | Hedefin dosyası | **kapandı** (WP-775) | `admin_user_profile_page.dart` — oranlar, hesap, kullanım, ceza geçmişi |
+| 4 | Yaptırımı geri alma | **kapandı** (WP-C, WP-809) | `admin_active_restriction_card.dart` `kAdminSanctionRevokeKey`; WP-809'a kadar YALNIZ kişi dosyasındaydı, artık vakadan açılan profilde de var |
+| 5 | Tek yaptırım yüzeyi | 🔴 **AÇIK** (daraldı) | hâlâ iki kişi ekranı: `admin_user_profile_page.dart` (tam katalog) ve `admin_person_dossier.dart` (`kAdminAccountRestrictionLadder`). Basamak listesi tek kaynaktan türüyor, ama ekran iki |
+| 6 | İtirazı cezasıyla görmek | **kapandı** | `admin_appeal_detail_page.dart:48` + `admin_queue_view.dart:591` |
+| 7 | Kişi arama | **kapandı** (WP-771) | `admin_users_tab.dart:56-61` `AdminSearchField` + `adminMatchesQuery(_query, [user.email, user.id])` |
+| 8 | Grup üye listesi | **kapandı** (WP-D) | `directory/admin_group_members.dart` + `admin_member_picker.dart` |
+| 9 | Destek bileti kutusu | **yarım** | sıralama VAR ama yalnız tarihe göre (`admin_queue_view.dart:324-333`, en eski ⇄ en yeni). *"Yanıtlanmamış olan üstte"* ve okunmamış işareti YOK |
+| 10 | Denetim kaydında "kim yaptı" | **kapandı** (WP-796) | `admin_case_timeline_section.dart:83,105-107` — "sen" / yönetici kimliği |
+| 11 | Hesap silme kuyruğu sağlığı | **kapandı** (WP-800) | `health/account_purge_health_panel.dart`, yönetim kabuğuna bağlı |
+| 12 | Kötüye kullanan şikâyetçi | **kapandı** (WP-810) | vaka satırındaki rozet artık role göre: şikâyet edenin satırında `reportsFiledUpheld/reportsFiled` (`admin_case_detail_page.dart` `_Signal`). Sunucudaki `admin_reporter_abuse_score` hâlâ çağrılmıyor ve bu bir karar: eşiğinin paydası REDDEDİLEN şikâyet, istemcide o sayı yok — bkz. `supabase/migrations/0140_revoke_dead_rpc_grants.sql` |
+| 13 | Duyuru | kapandı (zaten öyleydi) | — |
+| 14 | Yönetici rol yönetimi | kapsam dışı (değişmedi) | tek yöneticili ürün |
+
+**Kalan gerçek iş: 5 ve 9.** İkisi de küçük; 5 bir birleştirme kararı ister
+(iki ekran mı, bir ekran mı), 9 kuyruk sıralamasına ikinci bir ölçüt ekler.
+
+**Ayrıca bu turda bulunan, tabloda hiç olmayan iki kusur:**
+
+- 🔴 `name_reset` yaptırımının **"Geri al" düğmesi yalan söylüyor**: şerit
+  çıkar, basılır, başarı mesajı görünür ve ad geri gelmez. Zincir:
+  `moderation_sanction.dart` (`nameReset.isRestrictive == false`) →
+  `sanction_ladder.dart:62-64` (sert teyit istemez) →
+  `admin_sanction_actions.dart:180-198` ("Geri al" şeridi) →
+  `functions/admin-user-actions/index.ts:96-127` (yalnız auth ban temizlenir).
+  Adı geri yazan tek kod `index.ts:266-283` `restore_user_name` ve `app/lib`
+  içinde **sıfır** gönderim yeri var. WP-813 bunu kapatır.
+- `admin_case_detail_page.dart:73,75` — `kAdminCaseTargetSummaryKey` ve
+  `kAdminCaseSanctionRevokeKey` tanımlı ama **hiçbir widget'a verilmemiş** ve
+  hiçbir test aramıyor; üstlerindeki *"Hedefin dosyası — sayfanın içinde"*
+  yorumu yalan. (Kardeşleri `kAdminCaseSanctionApplyKey` ve
+  `kModerationDecisionReasonKey` ise BİLEREK boş: `moderation_review_flow_test`
+  onları `findsNothing` ile ölçüyor — "bu yüzey kalktı" sözleşmesi. Karıştırma.)
+
 ### Korunacaklar (atılmayacak)
 
 Bunlar ölçülüp doğru bulundu; yeniden yazılmaz, taşınır:
