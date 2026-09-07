@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
@@ -141,6 +142,88 @@ Map<String, Object?> _stopEnvelope({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // 🔴 WP-806 — IKI UCLU SOZLESME. Bu dosya `planTimerStop`u tek basina
+  // olcuyordu ve fonksiyon URETIMDE HIC CAGRILMIYORDU: kural Dart'ta
+  // (`stopMirroredRun`), native'de (`StudyTimerService.kt`) ve planda AYRI
+  // AYRI yaziliydi. Ucu de ayni sonucu veriyordu ama hicbir sey verdiklerini
+  // olcmuyordu -- `timer-sync-origin-sozlesme-kok-neden` dersinin birebir
+  // tekrari (WP-341'den beri olu senkron, iki uclu test olmadigi icin).
+  //
+  // Artik: Dart ucu plani CAGIRIR (asagida kaynak metinle olculuyor) ve
+  // native ucun AYNI kurali uyguladigi ayrica iddia edilir.
+  group('planTimerStop URETIMDE cagriliyor (dikis)', () {
+    final dart = File(
+      'lib/data/providers/study_providers.dart',
+    ).readAsStringSync();
+    final native = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+
+    test('ayna durdurma karari plandan gelir, elle yazilmaz', () {
+      expect(
+        dart,
+        contains('planTimerStop('),
+        reason:
+            'Plan cagrilmiyorsa "tek karar noktasi" iddiasi yalandir; kural '
+            'ucuncu kez elle yazilmis demektir.',
+      );
+      expect(
+        dart,
+        contains('plan.emitServerCommand'),
+        reason: 'Kimlik kapisi planin kararindan turemeli.',
+      );
+      // Eski elle yazilmis kimlik kontrolu geri gelmesin.
+      expect(
+        dart,
+        isNot(contains("runId == null || runId.isEmpty || revision == null")),
+      );
+    });
+
+    test('native ucu AYNI kurali uyguluyor: ayna yerel aralik YAZMAZ', () {
+      // Plan ne diyor?
+      final mirrorPlan = planTimerStop(
+        role: TimerControllerRole.mirror,
+        runId: 'run-1',
+        expectedRunRevision: 2,
+        wasWorkPhase: true,
+      );
+      expect(mirrorPlan.recordLocalInterval, isFalse);
+
+      // Native ayni sonuca varmali. Kaynak metni olculuyor cunku Kotlin
+      // karari JVM testinden bagimsiz olarak BURADA da sabitlenmeli: iki uc
+      // ayri dilde, ayri surecte kosuyor.
+      expect(
+        native,
+        contains('recordInterval && !isMirror'),
+        reason:
+            'Native ayna cihazda yerel aralik yazarsa WP-431in kapattigi '
+            '"uydurma oturum" kusuru geri gelir.',
+      );
+      expect(
+        native,
+        contains('TimerStateStore.isMirror(p)'),
+        reason: 'Rol kaynagi tek olmali; native kendi bayragini uydurmamali.',
+      );
+    });
+
+    test('source rolu yerel aralik YAZAR (kural tek yonlu degil)', () {
+      final sourcePlan = planTimerStop(
+        role: TimerControllerRole.source,
+        runId: 'run-1',
+        expectedRunRevision: 2,
+        wasWorkPhase: true,
+      );
+      expect(
+        sourcePlan.recordLocalInterval,
+        isTrue,
+        reason:
+            'Yalniz "ayna yazmaz" olculseydi, HICBIR ZAMAN yazmayan bir kod '
+            'da yesil gecerdi.',
+      );
+    });
+  });
 
   group('Tek durdurma karar fonksiyonu (planTimerStop)', () {
     test('kimlikli ayna: sunucuya CAS komutu, yerel oturum YOK', () {

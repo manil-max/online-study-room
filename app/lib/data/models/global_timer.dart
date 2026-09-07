@@ -262,7 +262,21 @@ class TimerStopPlan {
   final String? blockedReason;
 }
 
-/// WP-431: uygulama içi / bildirim / widget Durdur'unun **tek** karar noktası.
+/// WP-431 → WP-806: Durdur kararının **Dart tarafındaki** tek noktası.
+///
+/// 🔴 Başlık eskiden *"uygulama içi / bildirim / widget Durdur'unun **tek**
+/// karar noktası"* diyordu ve bu **doğru değildi**: fonksiyon üretimde hiçbir
+/// yerden çağrılmıyordu (2026-09-07 ölü özellik denetimi). Kural üç ayrı yerde
+/// elle yazılıydı — burada, `study_providers.stopMirroredRun`da ve native
+/// `StudyTimerService.kt:742` (`recordInterval && !isMirror`). Üçü de aynı
+/// sonucu veriyordu ama hiçbir şey verdiklerini ölçmüyordu; yani sözleşme
+/// testi **koşmayan kodu** ölçüyor, sahte güven üretiyordu.
+///
+/// Şimdi: Dart ucu bu fonksiyonu gerçekten çağırır ve
+/// `global_timer_controller_contract_test` hem o dikişi hem de native ucun
+/// AYNI kuralı uyguladığını ölçer. Başlık artık ne olduğunu söylüyor —
+/// "tek nokta" değil, **Dart tarafının** tek noktası; native ayrı bir süreçte
+/// ayrı bir dilde koşar ve ancak sözleşmeyle hizada tutulabilir.
 ///
 /// 🔴 Neden tek fonksiyon: v56'da üç giriş üç ayrı davranıyordu. Uygulama içi
 /// Durdur `stopMirroredRun()` ile gerçek CAS komutu üretiyor, bildirim ve widget

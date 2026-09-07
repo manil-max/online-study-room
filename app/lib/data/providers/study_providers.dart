@@ -2559,15 +2559,30 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_stopInFlight) return;
     _stopInFlight = true;
     try {
-      final runId = state.globalTimerRunId;
-      final revision = state.globalTimerRunRevision;
-      if (runId == null || runId.isEmpty || revision == null || revision < 1) {
-        throw StateError('global_timer_mirror_identity_required');
+      // 🔴 WP-806: karar artik `planTimerStop`tan gelir, burada UCUNCU KEZ
+      // elle yazilmaz. WP-431 bu fonksiyonu "Durdur'un tek karar noktasi"
+      // diye belgelemisti ama uretimde HIC cagrilmiyordu: ayni kural burada
+      // (kimlik kontrolu), native tarafta (`StudyTimerService.kt:742`
+      // `recordInterval && !isMirror`) ve planda ayri ayri duruyordu. Ucu de
+      // bugun ayni sonucu veriyordu -- ama hicbir sey verdiklerini olcmuyordu.
+      final plan = planTimerStop(
+        role: TimerControllerRole.mirror,
+        runId: state.globalTimerRunId,
+        expectedRunRevision: state.globalTimerRunRevision,
+        wasWorkPhase: state.phase == TimerPhase.work,
+      );
+      if (!plan.emitServerCommand) {
+        throw StateError(
+          plan.blockedReason ?? 'global_timer_mirror_identity_required',
+        );
       }
       state = state.copyWith(isStopping: true, clearSettling: true);
       await ref
           .read(globalTimerCoordinatorProvider)
-          .stopMirroredRun(runId: runId, expectedRunRevision: revision);
+          .stopMirroredRun(
+            runId: plan.runId!,
+            expectedRunRevision: plan.expectedRunRevision!,
+          );
       if (_disposed || !state.isGlobalTimerMirror) return;
       _finish();
     } finally {
