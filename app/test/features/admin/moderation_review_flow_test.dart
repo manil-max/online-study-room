@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/feedback_ticket.dart';
+import 'package:online_study_room/data/models/admin_case_timeline_event.dart';
 import 'package:online_study_room/data/models/moderation_appeal.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/moderation_sanction.dart';
@@ -34,6 +35,7 @@ import 'package:online_study_room/data/repositories/supabase/supabase_admin_mode
 import 'package:online_study_room/features/admin/admin_screen.dart';
 import 'package:online_study_room/features/admin/cards/admin_work_card.dart';
 import 'package:online_study_room/features/admin/detail/admin_case_conversations_page.dart';
+import 'package:online_study_room/features/admin/detail/admin_case_timeline_section.dart';
 import 'package:online_study_room/features/admin/detail/admin_case_detail_page.dart';
 import 'package:online_study_room/features/admin/detail/admin_user_profile_page.dart';
 import 'package:online_study_room/features/admin/queue/admin_queue_entry.dart';
@@ -790,21 +792,42 @@ void main() {
 
     // Yazisma kati VARSAYILAN OLARAK KAPALI (WP-775: bildirim alani surekli
     // yer kapliyordu). Kullanici da once onu acar; test de acmali.
+    //
+    // 🔴 `ListView` cocuklarini TEMBEL kurar: WP-796 sayfaya bir bolum daha
+    // ekleyince kat gorunum disinda kaldi ve `find.byKey` onu HIC bulamadi
+    // ("0 widgets"). Once ona kaydirilir, sonra dokunulur.
     final fold = find.byKey(const Key('admin-case-contact-fold'));
+    await tester.scrollUntilVisible(
+      fold,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(fold, findsOneWidget);
-    await tester.ensureVisible(fold);
     await tester.tap(fold);
     await tester.pumpAndSettle();
 
     // 🔴 `ensureVisible` YETMEZ: dugmeyi gorunur yapar ama karar seridi
-    // (sabit alt serit) uzerini orter ve dokunus serite gider. Liste bir
-    // miktar kaydirilir ki dugme seridin USTUNDE kalsin.
+    // (sabit alt serit) uzerini orter ve dokunus serite gider. Liste, dugme
+    // seridin USTUNE cikana kadar kaydirilir.
+    //
+    // 🔴 SABIT bir `drag(-200)` idi ve WP-796 sayfaya bir bolum daha ekleyince
+    // KIRILDI: dogru miktar sayfanin uzunluguna bagli, sabite baglanamaz.
+    // Simdi kosul olculuyor -- serit nerede, dugme nerede.
     final reply = find.byKey(kAdminCaseReplyKey);
     expect(reply, findsOneWidget);
     await tester.ensureVisible(reply);
     await tester.pumpAndSettle();
-    await tester.drag(find.byKey(kModerationEvidenceKey), const Offset(0, -200));
-    await tester.pumpAndSettle();
+    final barTop = tester.getRect(find.byKey(kModerationDecisionBarKey)).top;
+    for (var i = 0; i < 12; i++) {
+      if (tester.getRect(reply).bottom < barTop) break;
+      await tester.drag(find.byKey(kModerationEvidenceKey), const Offset(0, -120));
+      await tester.pumpAndSettle();
+    }
+    expect(
+      tester.getRect(reply).bottom,
+      lessThan(barTop),
+      reason: 'Dugme hala karar seridinin altinda; dokunus serite giderdi.',
+    );
     await tester.tap(reply);
     await tester.pumpAndSettle();
 
@@ -825,6 +848,43 @@ void main() {
           'yani sahibin istedigi iki tarafli yazisma yine tek tarafli.',
     );
     expect(tester.takeException(), isNull);
+  });
+
+  /// 🔴 UCUNCU DIKIS NOBETCISI — zaman cizelgesi.
+  ///
+  /// Bolum ayri bir dosyada yazildi (`admin_case_timeline_section.dart`) ve
+  /// kendi testleri (6/6) yesildi. Ama vaka sayfasindan CAGRILMADIKCA ozellik
+  /// YOKTUR: bu turda ayni tuzaga profil paneli ve yazisma icin de dusuldu.
+  ///
+  /// Olculen sey bolum degil, sayfanin onu ACTIGI: tohumlanmis olay satiri
+  /// vaka sayfasinda GORUNMELI.
+  testWidgets('vaka sayfasi zaman cizelgesini GERCEKTEN cizer', (tester) async {
+    final moderationCase = _case(targetId: _targetA, reportId: 'report-a');
+    final repo = InMemoryAdminModerationRepository(seed: [moderationCase])
+      ..details['report-a'] = _detail(snapshot: 'kanıt')
+      ..caseTimelines['case-report-a'] = [
+        AdminCaseTimelineEvent(
+          id: 'ev-1',
+          occurredAt: DateTime(2026, 9, 3, 18, 2),
+          actorId: null,
+          entityType: 'case',
+          entityId: 'case-report-a',
+          action: 'opened',
+        ),
+      ];
+    await _pumpCase(tester, repo, moderationCase);
+
+    final row = find.byKey(adminCaseTimelineRowKey('ev-1'));
+    await tester.scrollUntilVisible(row, 200, scrollable: find.byType(Scrollable).first);
+    expect(
+      row,
+      findsOneWidget,
+      reason: 'Cizelge bolumu sayfadan cagrilmiyor: dosya var, ozellik yok.',
+    );
+    expect(
+      find.text(AppLocalizations.of(tester.element(row)).adminZcVakaAcildi),
+      findsOneWidget,
+    );
   });
 
   /// 🔴 SAHIBIN ASIL SIKAYETI OLCULUR: *"altta reject vs nin oldugu kisimda

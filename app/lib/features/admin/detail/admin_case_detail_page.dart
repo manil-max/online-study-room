@@ -19,6 +19,7 @@ import '../../../data/repositories/admin_moderation_repository.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../queue/moderation_attachment_preview.dart';
 import 'admin_case_conversations_page.dart';
+import 'admin_case_timeline_section.dart';
 import 'admin_user_profile_page.dart';
 import '../queue/moderation_dialogs.dart';
 import '../ticket/admin_ticket_detail_page.dart';
@@ -234,6 +235,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           const SizedBox(height: 24),
           ..._users(context),
           ..._notes(context),
+          ..._timeline(context),
           ..._contactFold(context),
         ],
       );
@@ -254,6 +256,7 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
           const SizedBox(height: 24),
           ..._users(context, detail: data),
           ..._notes(context),
+          ..._timeline(context),
           ..._contactFold(context),
         ],
       ),
@@ -406,6 +409,29 @@ class _AdminCaseDetailPageState extends ConsumerState<AdminCaseDetailPage> {
   ///
   /// Ayna bilet yoksa (rapor kimligi cozulmeyen eski vaka) alan cizilmez ve
   /// NEDEN cizilmedigi soylenir — sessiz bosluk degil.
+  /// WP-796 DIKIS — vakanin zaman cizelgesi.
+  ///
+  /// 🔴 Bolum ayri bir lane'de yazildi (`admin_case_timeline_section.dart`) ve
+  /// bu cagri olmadan HICBIR YERDEN acilmiyordu: dosya var, testleri yesil,
+  /// ozellik YOK. Deponun kayitli kusuru (`ajan-dikis-yerinde-is-ortada-kalir`,
+  /// `bitmis-backend-baglanmamis-ui`).
+  ///
+  /// Kaynak `moderation_audit_events` (0106) — zincir 2026-08'den beri
+  /// doluyordu ve istemci onu hic okumamisti.
+  List<Widget> _timeline(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _section(context, l10n.adminZamanCizelgesi),
+          AdminCaseTimelineSection(caseId: _case.caseId),
+        ],
+      ),
+      const SizedBox(height: 24),
+    ];
+  }
+
   List<Widget> _notes(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final ticket = widget.mirrorTicket;
