@@ -688,7 +688,9 @@ class _StudyingBadge extends StatelessWidget {
           Text(
             count > 0
                 ? '$count · ${AppLocalizations.of(context).classroomCalisiyor}'
-                : AppLocalizations.of(context).classroomHenuzGrupYok,
+                // WP-797: bu rozet YALNIZ grubu olan kullanıcıya çiziliyor;
+                // 'Henüz grup yok' burada yanlış bilgiydi.
+                : AppLocalizations.of(context).classroomKimseCalismiyor,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12.5,
@@ -1199,12 +1201,18 @@ class _CamperStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    // WP-797: nokta ve kenarlık alt sayfanın TEMA yüzeyinde durur (sahnenin
+    // koyu zemininde değil); renk o yüzeyin fonksiyonu olmalı.
+    final surface = theme.colorScheme.surface;
     final (Color dot, String label) = switch (camper.status) {
       PresenceStatus.studying => (
-        subjectColor('chart-2'),
+        subjectColor('chart-2', on: surface),
         l10n.classroomCalisiyor,
       ),
-      PresenceStatus.onBreak => (subjectColor('chart-3'), l10n.classroomMolada),
+      PresenceStatus.onBreak => (
+        subjectColor('chart-3', on: surface),
+        l10n.classroomMolada,
+      ),
       PresenceStatus.offline => (
         theme.colorScheme.outline,
         l10n.classroomCevrimdisi,
@@ -1310,7 +1318,11 @@ class _CamperLiveElapsed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final color = subjectColor('chart-2');
+    // WP-797: ikon + süre yazısı alt sayfanın tema yüzeyinde.
+    final color = subjectColor(
+      'chart-2',
+      on: Theme.of(context).colorScheme.surface,
+    );
 
     Widget elapsed(DateTime now) {
       final value = formatHms(camper.liveExtra(now));

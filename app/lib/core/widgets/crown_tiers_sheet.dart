@@ -45,7 +45,10 @@ Future<void> showCrownTiers(BuildContext context, {required int currentXp}) {
                     // çeviri noktası hazır.
                     AppLocalizations.of(context).commonXpMiktari(currentXp),
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: tierColorFor(currentTier),
+                      color: tierColorFor(
+                        currentTier,
+                        on: theme.colorScheme.surface,
+                      ),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -97,7 +100,10 @@ class _CrownTierRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final color = tierColorFor(tier);
+    // WP-797: satırın rengi hem yazı hem ikon olarak çiziliyor → zemin
+    // farkındalı. Aynı renk ayrıca dolgu/kenarlık olarak alfayla kullanılıyor;
+    // eşiğe kilitlenmiş ton orada da doğru davranır.
+    final color = tierColorFor(tier, on: theme.colorScheme.surface);
     final visual = crownTierRowVisual(state);
     final isCurrent = state == CrownTierState.current;
     final reached = state != CrownTierState.locked;

@@ -35,9 +35,11 @@ class GoalCard extends ConsumerWidget {
         ? 0.0
         : (recorded / goalSeconds).clamp(0.0, 1.0);
     final reached = recorded >= goalSeconds && goalSeconds > 0;
-    final ringColor = reached
-        ? subjectColor('chart-2')
-        : theme.colorScheme.primary;
+    // WP-797: yeşil ton zeminden bağımsız sabitti; açık temalarda (soft_cream,
+    // pastel_day) halka ve ✓ işareti 2.2–2.4 ile eşiğin altındaydı. Hedefin
+    // tamamlandığını söyleyen TEK görsel sinyal buydu.
+    final doneGreen = subjectColor('chart-2', on: theme.colorScheme.surface);
+    final ringColor = reached ? doneGreen : theme.colorScheme.primary;
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -98,11 +100,7 @@ class GoalCard extends ConsumerWidget {
                         ),
                         const Spacer(),
                         if (reached)
-                          Icon(
-                            Icons.check_circle,
-                            color: subjectColor('chart-2'),
-                            size: 16,
-                          ),
+                          Icon(Icons.check_circle, color: doneGreen, size: 16),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -150,11 +148,7 @@ class GoalCard extends ConsumerWidget {
                         ),
                       ),
                       const Spacer(),
-                      if (reached)
-                        Icon(
-                          Icons.check_circle,
-                          color: subjectColor('chart-2'),
-                        ),
+                      if (reached) Icon(Icons.check_circle, color: doneGreen),
                     ],
                   ),
                   const SizedBox(height: 12),

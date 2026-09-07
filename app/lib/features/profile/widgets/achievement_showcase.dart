@@ -1105,11 +1105,16 @@ class _XpBar extends StatelessWidget {
                           Container(
                             height: 4,
                             decoration: BoxDecoration(
-                              color: tierColorFor(i).withValues(
-                                alpha: crownTierNumber(crownRankForXp(xp)) >= i
-                                    ? 1
-                                    : 0.25,
-                              ),
+                              color:
+                                  tierColorFor(
+                                    i,
+                                    on: theme.colorScheme.surface,
+                                  ).withValues(
+                                    alpha:
+                                        crownTierNumber(crownRankForXp(xp)) >= i
+                                        ? 1
+                                        : 0.25,
+                                  ),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -1118,7 +1123,10 @@ class _XpBar extends StatelessWidget {
                             _tierLabel(AppLocalizations.of(context), i),
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 9,
-                              color: tierColorFor(i),
+                              color: tierColorFor(
+                                i,
+                                on: theme.colorScheme.surface,
+                              ),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1383,7 +1391,7 @@ class _AchievementTierDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = complete
-        ? tierColorFor(tier.tier)
+        ? tierColorFor(tier.tier, on: theme.colorScheme.surface)
         : theme.colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1513,7 +1521,7 @@ class _NearestAchievementStrip extends StatelessWidget {
 
     if (nearest == null || targetTier == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final color = tierColorFor(targetTier.tier);
+    final color = tierColorFor(targetTier.tier, on: theme.colorScheme.surface);
     return Semantics(
       container: true,
       label:
@@ -2113,9 +2121,15 @@ class _CatalogTile extends StatelessWidget {
                                   height: 5,
                                   margin: const EdgeInsets.only(right: 3),
                                   decoration: BoxDecoration(
-                                    color: tierColorFor(i).withValues(
-                                      alpha: unlocked && tier >= i ? 1 : 0.22,
-                                    ),
+                                    color:
+                                        tierColorFor(
+                                          i,
+                                          on: theme.colorScheme.surface,
+                                        ).withValues(
+                                          alpha: unlocked && tier >= i
+                                              ? 1
+                                              : 0.22,
+                                        ),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),

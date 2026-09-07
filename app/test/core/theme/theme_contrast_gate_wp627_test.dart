@@ -2,9 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/progression_visuals.dart';
 import 'package:online_study_room/core/theme/app_theme.dart';
 import 'package:online_study_room/core/theme/container_roles.dart';
+import 'package:online_study_room/core/theme/subject_colors.dart';
 import 'package:online_study_room/core/theme/warning_tokens.dart';
+import 'package:online_study_room/data/models/subject.dart'
+    show kSubjectColorTokens;
 import 'package:online_study_room/features/stats/charts/series_palette.dart';
 import 'package:online_study_room/features/stats/widgets/member_chart_colors.dart';
 
@@ -146,10 +150,35 @@ void main() {
             );
           }
         }
+
+        // 🔴 WP-797: bu iki palet kapının DIŞINDAYDI ve sessizce sabitti.
+        // Ölçüldü (düzeltme öncesi): rütbe paletinde 90 ölçümün 22'si, ders
+        // paletinde 75 ölçümün 11'i 3.0 altında — açık temalarda altın 1.8,
+        // zümrüt 1.6; `coffee_library`/`forest_study`'de immortal 2.2. İkisi de
+        // metin/ikon olarak çiziliyor (taç satırı, kademe şeridi, "hedef
+        // tamamlandı" ✓, çalışıyor noktası), yani okunmuyorlardı.
+        //
+        // WP-657 boşluğu yazıyla tespit etmiş ama yalnız kendi dosyasını
+        // kapıya bağlamıştı. Artık palet kapının içinde: sessizce düşemez.
+        for (var tier = 1; tier <= 6; tier++) {
+          check(
+            '${preset.id}  rütbe $tier/surface',
+            tierColorFor(tier, on: s.surface),
+            s.surface,
+          );
+        }
+        for (final token in kSubjectColorTokens) {
+          check(
+            '${preset.id}  ders $token/surface',
+            subjectColor(token, on: s.surface),
+            s.surface,
+          );
+        }
       }
 
-      // Tema başına: 1 seçim çubuğu + 9 ayrışma + 8 seri + (2+5+8+12) üye.
-      expect(measured, kThemePresets.length * 45);
+      // Tema başına: 1 seçim çubuğu + 9 ayrışma + 8 seri + (2+5+8+12) üye
+      // + 6 rütbe + 5 ders.
+      expect(measured, kThemePresets.length * 56);
       expect(failures, isEmpty, reason: '\n${failures.join('\n')}');
     });
 
@@ -216,6 +245,83 @@ void main() {
         surface: const Color(0xFFFFFFFF),
       );
       expect(onDark['a'], isNot(equals(onLight['a'])));
+    });
+
+    test('rütbe ve ders paletleri de zeminin fonksiyonu (WP-797)', () {
+      // 🔴 Sabotaj kapısı: biri `tierColorFor`/`subjectColor` içindeki zemin
+      // uyarlamasını kaldırıp eski sabit değere dönerse bu test kırmızıya
+      // düşer. Yalnız kontrast ölçmek yetmiyordu — çözümün SABİT değil
+      // ZEMİN FARKINDALI olduğu ayrıca sabitlenmeli (WP-205 ham `#FFFFFF`
+      // açık temada, WP-753 tema niteliği koyu temada kayboldu).
+      const dark = Color(0xFF07090E);
+      const light = Color(0xFFFFFFFF);
+
+      // Palet BÜTÜN olarak karşılaştırılır: tek tek bakmak yanıltır, çünkü
+      // bronz gibi zaten iki uçta da eşiği geçen tonlar bilerek olduğu gibi
+      // döner (`ensureContrast` geçen rengi bozmaz). Düzeltme kalkarsa iki
+      // liste birebir aynı çıkar ve bu test kırmızıya düşer.
+      expect(
+        [for (var tier = 1; tier <= 6; tier++) tierColorFor(tier, on: dark)],
+        isNot(
+          equals([
+            for (var tier = 1; tier <= 6; tier++) tierColorFor(tier, on: light),
+          ]),
+        ),
+        reason: 'rütbe paleti zeminden bağımsız',
+      );
+      expect(
+        [for (final t in kSubjectColorTokens) subjectColor(t, on: dark)],
+        isNot(
+          equals([
+            for (final t in kSubjectColorTokens) subjectColor(t, on: light),
+          ]),
+        ),
+        reason: 'ders paleti zeminden bağımsız',
+      );
+
+      // Ve düzeltme gerçekten iş yapıyor: ham sabitlerin beyaz zeminde
+      // düştüğü her ölçüm, zemin farkındalı biçimde eşiği tutturur.
+      var corrected = 0;
+      void assertFixed(Color raw, Color fixed, String label) {
+        if (contrastRatio(raw, light) >= kMinSurfaceContrast) return;
+        corrected++;
+        expect(
+          contrastRatio(fixed, light),
+          greaterThanOrEqualTo(kMinSurfaceContrast),
+          reason: label,
+        );
+      }
+
+      for (var tier = 1; tier <= 6; tier++) {
+        assertFixed(
+          tierColorFor(tier),
+          tierColorFor(tier, on: light),
+          'rütbe $tier',
+        );
+      }
+      for (final token in kSubjectColorTokens) {
+        assertFixed(
+          subjectColor(token),
+          subjectColor(token, on: light),
+          'ders $token',
+        );
+      }
+      // 🔴 Ham palet beyaz zeminde zaten geçiyorsa bu blok hiçbir şey ölçmez.
+      // O gün biri sabitleri değiştirmiş demektir; kapı sessizce boşa dönmesin.
+      expect(corrected, greaterThan(0));
+    });
+
+    test('rütbe renkleri düzeltmeden sonra da 6 ayrı renk (WP-797)', () {
+      // Eşiğe kilitleme tonu korur; iki kademe aynı renge çökerse "hangi
+      // taçtayım" sorusu artık renkten yanıtlanamaz olurdu.
+      for (final preset in kThemePresets) {
+        final s = AppTheme.fromPreset(preset).colorScheme;
+        final colors = {
+          for (var tier = 1; tier <= 6; tier++)
+            tierColorFor(tier, on: s.surface),
+        };
+        expect(colors, hasLength(6), reason: preset.id);
+      }
     });
   });
 

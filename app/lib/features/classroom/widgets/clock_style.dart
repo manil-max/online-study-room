@@ -107,11 +107,17 @@ final clockStyleProvider = NotifierProvider<ClockStyleNotifier, ClockStyle>(
 
 /// Hedefe göre renk: 0 → kırmızı (chart-5), 0.5 → amber (chart-3),
 /// 1.0 → yeşil (chart-2). Aradaki değerler yumuşak geçişli.
-Color goalColor(double pct) {
+///
+/// 🔴 WP-797: [surface] zorunludur. Bu renk `colorShift` stilinde doğrudan
+/// **rakamların** rengidir; sabit paletle açık temalarda amber 2.2 ölçülüyordu,
+/// yani saat okunmuyordu. Varsayılan bir zemin koymak hatayı geri getirir —
+/// çağıran unutur, renk sessizce yanlış zemine göre çözülür
+/// (`member_chart_colors.dart` ile aynı gerekçe).
+Color goalColor(double pct, {required Color surface}) {
   final p = pct.clamp(0.0, 1.0);
-  final red = subjectColor('chart-5');
-  final amber = subjectColor('chart-3');
-  final green = subjectColor('chart-2');
+  final red = subjectColor('chart-5', on: surface);
+  final amber = subjectColor('chart-3', on: surface);
+  final green = subjectColor('chart-2', on: surface);
   if (p <= 0.5) return Color.lerp(red, amber, p / 0.5)!;
   return Color.lerp(amber, green, (p - 0.5) / 0.5)!;
 }
@@ -218,7 +224,11 @@ class StudyClock extends StatelessWidget {
               : theme.colorScheme.onSurfaceVariant,
         );
       case ClockStyle.colorShift:
-        return _digits(text, fontSize, goalColor(pctToGoal));
+        return _digits(
+          text,
+          fontSize,
+          goalColor(pctToGoal, surface: theme.colorScheme.surface),
+        );
       case ClockStyle.ring:
         return SizedBox(
           width: diameter,
@@ -232,7 +242,7 @@ class StudyClock extends StatelessWidget {
                   strokeWidth: 9,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    goalColor(pctToGoal),
+                    goalColor(pctToGoal, surface: theme.colorScheme.surface),
                   ),
                 ),
               ),
@@ -257,7 +267,10 @@ class StudyClock extends StatelessWidget {
                 child: CustomPaint(
                   painter: ClockPainter(
                     pctToGoal: pctToGoal.clamp(0.0, 1.0),
-                    color: goalColor(pctToGoal),
+                    color: goalColor(
+                      pctToGoal,
+                      surface: theme.colorScheme.surface,
+                    ),
                     bgColor: theme.colorScheme.surfaceContainerHighest,
                     isSlice: true,
                   ),
@@ -286,7 +299,10 @@ class StudyClock extends StatelessWidget {
                 child: CustomPaint(
                   painter: ClockPainter(
                     pctToGoal: pctToGoal.clamp(0.0, 1.0),
-                    color: goalColor(pctToGoal),
+                    color: goalColor(
+                      pctToGoal,
+                      surface: theme.colorScheme.surface,
+                    ),
                     bgColor: theme.colorScheme.surfaceContainerHighest,
                     isSlice: false,
                   ),

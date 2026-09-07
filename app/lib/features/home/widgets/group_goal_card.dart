@@ -104,9 +104,10 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
       groupId: group.id,
       timeZone: group.timeZone,
     );
-    final ringColor = reached
-        ? subjectColor('chart-2')
-        : theme.colorScheme.primary;
+    // WP-797: bkz. goal_card.dart — tamamlandı sinyali açık temalarda
+    // eşiğin altındaydı; renk artık zeminin fonksiyonu.
+    final doneGreen = subjectColor('chart-2', on: theme.colorScheme.surface);
+    final ringColor = reached ? doneGreen : theme.colorScheme.primary;
 
     return Card(
       child: LayoutBuilder(
@@ -176,11 +177,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                         ),
                         const Spacer(),
                         if (reached)
-                          Icon(
-                            Icons.check_circle,
-                            color: subjectColor('chart-2'),
-                            size: 16,
-                          ),
+                          Icon(Icons.check_circle, color: doneGreen, size: 16),
                       ],
                     ),
                     const SizedBox(height: 12),

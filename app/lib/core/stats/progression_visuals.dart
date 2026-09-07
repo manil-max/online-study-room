@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../theme/container_roles.dart' show accentOn;
 import 'achievement_ledger_engine.dart'
     show crownRankForXp, kCrownXpThresholds;
 
@@ -12,8 +13,10 @@ export 'achievement_ledger_engine.dart' show crownRankForXp, kCrownXpThresholds;
 /// dışında mor/eflatun bir "sır" rengi kullanır. Platin kalktı; 4=Elmas,
 /// 5=Zümrüt (Valorant Ascendant yeşili), 6=Immortal (Valorant Immortal kırmızısı).
 
-/// Kademe 1→6 renkleri (bronz → gümüş → altın → elmas → zümrüt → immortal).
-Color tierColorFor(int tier) {
+/// Kademe 1→6 marka tonları (bronz → gümüş → altın → elmas → zümrüt →
+/// immortal). Ton kimliktir; okunurluk [tierColorFor] içinde zemine göre
+/// ayarlanır.
+Color _tierBaseColor(int tier) {
   switch (tier.clamp(1, 6)) {
     case 1:
       return const Color(0xFFB87333); // bronz
@@ -29,6 +32,29 @@ Color tierColorFor(int tier) {
     default:
       return const Color(0xFFB02E42); // immortal (Valorant Immortal kırmızısı)
   }
+}
+
+/// Kademe 1→6 rengi. [on] verilirse renk **o zeminin fonksiyonudur**.
+///
+/// 🔴 WP-797: bu palet zeminden bağımsız sabitti ve 15 hazır temada ölçüldüğünde
+/// 90 ölçümün 22'si `kMinSurfaceContrast` (3.0) altındaydı — açık temalarda gümüş
+/// 2.4, altın 1.8, zümrüt 1.6; `coffee_library`/`forest_study` koyu temalarında
+/// immortal 2.2. Renkler metin ve ikon olarak çizildiği için kayıp sessizdi:
+/// "Günlük hedef tamamlandı" onay işareti tek görsel sinyaldi ve görünmüyordu.
+///
+/// Aynı sınıf hata bu depoda üç kez yamalandı (WP-205 ham `#FFFFFF` → açık
+/// temada kayboldu; WP-753 tema niteliği → koyu temada kayboldu; WP-627
+/// container rolleri). Dördüncüsü olmasın diye çözüm sabit değiştirmek değil:
+/// ton korunur, açıklık [accentOn] ile zemine karşı eşiğe kilitlenir. Kural
+/// `member_chart_colors.dart` / `series_palette.dart` ile aynı yerdedir.
+///
+/// [on] **yalnız** renk bir dolgu/alfa katmanı olarak kullanılırken atlanabilir
+/// (ör. `color.withValues(alpha: 0.12)` zemini). Metin, ikon, çizgi veya nokta
+/// olarak çiziyorsan zemini geçmek zorunludur — kapı
+/// `theme_contrast_gate_wp627_test.dart` bunu 15 temada ölçer.
+Color tierColorFor(int tier, {Color? on}) {
+  final base = _tierBaseColor(tier);
+  return on == null ? base : accentOn(on, preferred: base);
 }
 
 String tierLabel(int tier, AppLocalizations l10n) {
@@ -130,8 +156,13 @@ String crownLabel(String rank, AppLocalizations l10n) {
   }
 }
 
-Color crownColorFor(String rank, [ColorScheme? _]) {
-  return tierColorFor(crownTierNumber(rank));
+/// Taç rengi. [scheme] verilirse renk temanın yüzeyine göre çözülür.
+///
+/// 🔴 WP-797: ikinci parametre daha önce alınıyor ama **hiç kullanılmıyordu**
+/// (`[ColorScheme? _]`). Çağıran şemayı geçtiğinde renginin zemine uyarlandığını
+/// sanıyordu; uyarlanmıyordu. Artık gerçek etkisi var (ölü anahtar yok).
+Color crownColorFor(String rank, [ColorScheme? scheme]) {
+  return tierColorFor(crownTierNumber(rank), on: scheme?.surface);
 }
 
 /// XP → bir sonraki taç eşiği (0..1 progress).
@@ -328,6 +359,9 @@ class CrownXpHeader extends StatelessWidget {
 }
 
 /// Rozet rengi: gizli kilit → koyu mor; gizli açık → eflatun; normal → kademe.
+///
+/// [scheme] verildiğinde kademe rengi o temanın yüzeyine göre çözülür (WP-797);
+/// verilmezse ham marka tonu döner.
 Color badgeVisualColor({
   required int tier,
   required bool unlocked,
@@ -340,5 +374,5 @@ Color badgeVisualColor({
   if (!unlocked) {
     return scheme?.outline ?? const Color(0xFF6B7280);
   }
-  return tierColorFor(tier);
+  return tierColorFor(tier, on: scheme?.surface);
 }

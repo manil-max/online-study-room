@@ -59,7 +59,9 @@ class ActiveMembersCard extends ConsumerWidget {
 
     final memberById = {for (final m in members) m.id: m};
 
-    final green = subjectColor('chart-2');
+    // WP-797: nokta, süre yazısı ve rozet metni bu renkten çiziliyor →
+    // zemin farkındalı olmak zorunda (açık temalarda 2.2 ölçüldü).
+    final green = subjectColor('chart-2', on: theme.colorScheme.surface);
 
     return Card(
       child: LayoutBuilder(
