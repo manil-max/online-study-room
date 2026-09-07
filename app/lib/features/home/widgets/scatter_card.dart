@@ -17,7 +17,6 @@ class ScatterCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
     // WP-495C: yükleniyorken boş dağılım yanlış iddiadır.
     final gate = cardDataGate(
@@ -33,21 +32,13 @@ class ScatterCard extends ConsumerWidget {
         final isLarge = constraints.maxWidth >= 400;
         final days = isLarge ? 60 : (isCompact ? 14 : 30);
 
-        final header = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context).homeOturumDagilimi,
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              AppLocalizations.of(context).homeOturumDagilimi,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+        // 🔴 WP-799: basligin altina AYNI l10n anahtari
+        // (`homeOturumDagilimi`) ikinci kez yaziliyordu -- ekranda "Oturum
+        // dagilimi" alt alta iki kez gorunuyordu. Baslik tek ve ortak
+        // sozlesmeden gelir ([cardTitle]: titleMedium + tek satir + ellipsis).
+        final header = cardTitle(
+          context,
+          AppLocalizations.of(context).homeOturumDagilimi,
         );
 
         return CardScaffold(

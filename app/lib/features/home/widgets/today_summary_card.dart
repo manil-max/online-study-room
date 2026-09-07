@@ -85,8 +85,16 @@ class TodaySummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  // 🔴 WP-799: bu dal `homeKayitYok` ("Kayit yok") yaziyordu,
+                  // asagidaki tam boy dali ise ayni durumda "Bugun henuz calisma
+                  // kaydin yok. Sayactan basla!". Hangi dala dusuldugu OLCULDU:
+                  // varsayilan panoda (`defaultDashboardLayout`, 32 sutun) bu
+                  // kart w=16 hucre; 393 dp telefonda izgara genisligi 361 px,
+                  // cell = (361 - 31*8)/32 = 3.53 px, kart = 16*3.53 + 15*8 =
+                  // 176.5 px < 180 -> HER yeni kullanici kompakt dali, yani olu
+                  // ucu goruyordu. Iki dal artik ayni cumleyi kurar.
                   breakdown.isEmpty
-                      ? AppLocalizations.of(context).homeKayitYok
+                      ? AppLocalizations.of(context).homeBugunHenuzCalismaKaydin
                       : AppLocalizations.of(
                           context,
                         ).homeDersSayisi(breakdown.length),

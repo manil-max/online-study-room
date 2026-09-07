@@ -75,7 +75,12 @@ class SubjectsScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    '${l10n.profileHenuzDersinYok}\n${l10n.profileDersOpsiyonel}',
+                    // 🔴 WP-799: ikinci satir bir FORM ALANI etiketiydi
+                    // ("Ders (opsiyonel)", bkz. `manual_session_dialog.dart`),
+                    // govde metni diye yapistirilmisti ve hicbir sey
+                    // anlatmiyordu. Ekleme yolu zaten ekranin FAB'idir
+                    // (`profileDersEkle`), yani bos durum cikissiz degil.
+                    l10n.profileHenuzDersinYok,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,

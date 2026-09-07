@@ -11,24 +11,39 @@ abstract final class AppTours {
   /// Ana ekran turu — **tek adım**.
   ///
   /// 🔴 WP-417 (sahip cihaz testi): *"sadece edit kısmını gösterelim."* Genel
-  /// bakış adımı ve arkasından zincirlenen sayaç turu kaldırıldı; ana ekranda
-  /// artık yalnız kartları düzenleme düğmesi tanıtılır. Boş panoda metin aynı,
-  /// başlık kullanıcının o an gördüğü duruma göre değişir.
-  /// WP-488: adım artık **çapasız**. Düzenle butonu kaldırıldığı için
-  /// gösterilecek bir hedef yok; `TourStep.anchor` null iken balon ekranın
-  /// ortasında hedefsiz çiziliyor. Sürüm 1 → 2: metin davranışı değiştiği için
-  /// turu bir kez daha görmek doğrudur (eski metin butonu tarif ediyordu).
+  /// bakış adımı ve arkasından zincirlenen sayaç turu kaldırıldı.
+  /// WP-488: adım **çapasız**. Düzenle butonu kaldırıldığı için gösterilecek
+  /// bir hedef yok; `TourStep.anchor` null iken balon ekranın ortasında
+  /// hedefsiz çizilir.
+  ///
+  /// 🔴 WP-799 (sürüm 2 → 3): onboarding'in hemen ardından yeni kullanıcıya
+  /// söylenen İLK cümle *"Karta uzun bas: düzenleme açılır"* idi — yani
+  /// uygulamanın ilk öğrettiği şey kart düzenlemekti. WP-417 sayaç turunu
+  /// kaldırırken yerine bir şey koymamıştı; onboarding'in son sayfası ise
+  /// zaten *"Ana sayfada sayacı başlatarak…"* diyordu. Balon artık o cümleyi
+  /// sürdürür (*Hazırsın → Sayacı başlat*) ve sayaç varsayılan panonun ilk
+  /// kartıdır (`defaultDashboardLayout`), yani işaret ettiği şey gerçekten
+  /// orada. Sürüm artışı şart: metin davranışı değişti, turu bir kez daha
+  /// görmek doğrudur.
+  ///
+  /// Metinler MEVCUT anahtarlardan seçildi (bu WP `l10n/**`e dokunmuyor) ve
+  /// balon iki satır sınırına uymak zorunda (`app_tours_test.dart`):
+  /// `onboardingReadyBody` üç satıra taşıyordu, ölçülüp elendi.
+  ///
+  /// [isEmpty] ölü bir anahtar değil: pano boşken ekranda sayaç kartı YOKTUR
+  /// (`home_screen.dart` `_EmptyDashboard`), o yüzden o dalda balon kart
+  /// eklemeyi söyler — ekranın kendi düğmesiyle aynı sözü.
   static TourDefinition home(
     AppLocalizations l10n, {
     required bool isEmpty,
   }) => TourDefinition(
     id: 'home',
-    version: 2,
+    version: 3,
     steps: [
       TourStep(
-        id: 'edit',
-        title: isEmpty ? l10n.homeAnaSayfanBos : l10n.homeKartlariDuzenle,
-        text: l10n.tourHomeEdit,
+        id: isEmpty ? 'add' : 'start',
+        title: isEmpty ? l10n.homeAnaSayfanBos : l10n.onboardingReadyTitle,
+        text: isEmpty ? l10n.homeKartEkle : l10n.statsKisiselBosEylem,
       ),
     ],
   );

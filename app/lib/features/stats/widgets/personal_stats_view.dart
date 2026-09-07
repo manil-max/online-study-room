@@ -173,13 +173,20 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                   AppLocalizations.of(context).statsHenuzCalismaKaydinYok,
                   style: theme.textTheme.titleMedium,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                const SizedBox(height: 12),
+                // 🔴 WP-799: burada ayni sey iki kez yaziliyordu
+                // ("Henuz calisma kaydin yok" + "Bu donemde calisma kaydin
+                // yok.") ve HICBIR cikis yoktu. Ayni ekranin grup dali
+                // (`stats_screen.dart` `stats-group-empty-join`) bos durumda
+                // zaten bir dugme sunuyor; kisisel dal unutulmustu. Sayac
+                // Ana Sayfa panosunun varsayilan ilk kartidir
+                // (`defaultDashboardLayout`), o yuzden hedef `AppTab.home`.
+                FilledButton.icon(
+                  key: const Key('stats-personal-empty-start'),
+                  onPressed: () =>
+                      ref.read(navIndexProvider.notifier).setTab(AppTab.home),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(l10n.statsKisiselBosEylem),
                 ),
               ],
             ),

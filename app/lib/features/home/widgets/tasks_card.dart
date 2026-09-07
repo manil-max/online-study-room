@@ -5,6 +5,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../../core/tasks/task_deadline.dart';
 import '../../../core/tasks/task_sections.dart';
 import '../../../data/providers/user_task_providers.dart';
+import '../../android_widgets/widget_deep_link.dart';
 import '../dashboard_card.dart';
 import 'card_scaffold.dart';
 
@@ -53,16 +54,10 @@ class TasksCard extends ConsumerWidget {
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  l10n.taskListTitle,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              // WP-799: baslik diger TUM pano kartlariyla ayni sozlesmeden
+              // gelir ([cardTitle] -> titleMedium). Burasi tek istisnaydi
+              // (titleSmall + w700), yani ayni panoda iki farkli baslik olcusu.
+              Expanded(child: cardTitle(context, l10n.taskListTitle)),
               if (activeCount > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -85,11 +80,14 @@ class TasksCard extends ConsumerWidget {
           );
 
           if (ultraCompact) {
-            return Padding(padding: const EdgeInsets.all(8), child: header);
+            return Padding(padding: const EdgeInsets.all(16), child: header);
           }
 
+          // WP-799: ic bosluk artik [CardScaffold]'un varsayilani (`all(16)`)
+          // ile ayni; eskiden bu kart tek basina `fromLTRB(12, 8, 12, 6)` ve
+          // `all(8)` kullaniyordu ve panoda kartlarin kenari hizalanmiyordu.
           return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -102,80 +100,120 @@ class TasksCard extends ConsumerWidget {
                   ),
                 ),
                 Expanded(
-                  child: tasksAsync.when(
-                    loading: () => const Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                    error: (_, _) => _EmptyTasks(
-                      label: l10n.taskListSyncError,
-                      onRetry: () => ref.invalidate(userTasksProvider),
-                    ),
-                    data: (all) {
-                      // Kart önce "bugün ne var" sorusunu yanıtlar: Bugün
-                      // bölümü üstte, ileri tarihliler ve sırası gelmemiş
-                      // tekrarlananlar altında kalır (WP-450).
-                      final entries = groupTasksBySection([
-                        for (final t in all)
-                          if (t.isRecurring || !t.completed) t,
-                      ], now);
-                      final active = [
-                        ...tasksInSection(entries, TaskSection.today),
-                        ...tasksInSection(entries, TaskSection.other),
-                        ...tasksInSection(entries, TaskSection.recurring),
-                      ];
-                      if (active.isEmpty) {
-                        return _EmptyTasks(label: l10n.taskListEmpty);
-                      }
-                      final show = active.take(TasksCard._maxVisible).toList();
-                      final more = active.length - show.length;
-                      return ListView.separated(
-                        // WP-508: bayrak verilmezse dikey `ListView`
-                        // `AlwaysScrollableScrollPhysics`e düşer ve sığan
-                        // içerikte bile sürüklemeyi yutar.
-                        physics: kCardOverflowScrollPhysics,
-                        primary: false,
-                        padding: EdgeInsets.zero,
-                        itemCount: show.length + (more > 0 ? 1 : 0),
-                        separatorBuilder: (_, _) => Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: theme.colorScheme.outlineVariant.withValues(
-                            alpha: 0.35,
-                          ),
+                  // 🔴 WP-799: govde artik kendi yuksekligini BILIR.
+                  // Once kart her hucrede ayni 6 satiri denerdi; `all(16)`
+                  // ic bosluguyla dar telefonun tam hucresinde bu 26 px
+                  // tasiyordu (olcum: `card_scroll_inventory_test.dart`),
+                  // yani son satir kullanicinin gormedigi bir kaydiricinin
+                  // icinde kaliyordu. Kaydirici hala guvenlik agi, ama artik
+                  // normal durum degil.
+                  child: LayoutBuilder(
+                    builder: (context, bodyConstraints) => tasksAsync.when(
+                      loading: () => const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        itemBuilder: (context, i) {
-                          if (i >= show.length) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                l10n.taskListMore(more),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-                          }
-                          final entry = show[i];
-                          return _HomeTaskTile(
-                            entry: entry,
-                            now: now,
-                            dense: compact,
-                            // Sırası gelmemiş occurrence tamamlanamaz; tap
-                            // kapalıdır ki kullanıcı hataya koşmasın.
-                            onToggle: entry.nextOccurrenceDay != null
-                                ? null
-                                : () => ref
-                                      .read(userTaskActionsProvider)
-                                      .toggle(entry.task.id),
+                      ),
+                      error: (_, _) => _EmptyTasks(
+                        label: l10n.taskListSyncError,
+                        actionLabel: l10n.taskListRetry,
+                        onAction: () => ref.invalidate(userTasksProvider),
+                      ),
+                      data: (all) {
+                        // Kart önce "bugün ne var" sorusunu yanıtlar: Bugün
+                        // bölümü üstte, ileri tarihliler ve sırası gelmemiş
+                        // tekrarlananlar altında kalır (WP-450).
+                        final entries = groupTasksBySection([
+                          for (final t in all)
+                            if (t.isRecurring || !t.completed) t,
+                        ], now);
+                        final active = [
+                          ...tasksInSection(entries, TaskSection.today),
+                          ...tasksInSection(entries, TaskSection.other),
+                          ...tasksInSection(entries, TaskSection.recurring),
+                        ];
+                        if (active.isEmpty) {
+                          // 🔴 WP-799: [_EmptyTasks] bir eylem parametresi
+                          // TASIYORDU ama yalniz hata dali onu geciyordu; bos dal
+                          // cikissizdi. Kart bilerek bir ekleme yuzeyi degil
+                          // (WP-199), o yuzden eylem kullaniciyi gorevlerin
+                          // gercek ekranina goturur. Iki seviyeli rota
+                          // (`Araclar` sekmesi + `ClockTab.tasks`) icin hazir
+                          // mekanizma `widget_deep_link.dart`tadir; ikinci
+                          // seviyeyi `clock_screen.dart` kendi cozer.
+                          return _EmptyTasks(
+                            label: l10n.taskListEmpty,
+                            actionLabel: l10n.taskListAdd,
+                            onAction: () => ref
+                                .read(widgetRouteProvider.notifier)
+                                .open(WidgetRoute.tasks),
                           );
-                        },
-                      );
-                    },
+                        }
+                        // Satir yuksekligi: satirin en uzun ogesi kalan-sure
+                        // rozetidir (`_RemainingChip`: 2 x 3 px dolgu +
+                        // labelSmall satiri) = 22 px; ustune `_HomeTaskTile`in
+                        // dikey boslugu ve 1 px ayirici. 22 TAHMIN DEGIL:
+                        // `card_scroll_inventory_test.dart` 20 ile genis
+                        // telefonun iki hucresinde 4.0 px tasma olctu.
+                        final rowHeight = 22 + 2 * (compact ? 7 : 9) + 1;
+                        var capacity = bodyConstraints.hasBoundedHeight
+                            ? (bodyConstraints.maxHeight / rowHeight).floor()
+                            : TasksCard._maxVisible;
+                        capacity = capacity.clamp(1, TasksCard._maxVisible);
+                        // "+N daha" satiri da bir liste ogesidir ve yer kaplar;
+                        // sigmayacaksa gosterilen satir sayisindan dusulur.
+                        if (active.length > capacity && capacity > 1) {
+                          capacity -= 1;
+                        }
+                        final show = active.take(capacity).toList();
+                        final more = active.length - show.length;
+                        return ListView.separated(
+                          // WP-508: bayrak verilmezse dikey `ListView`
+                          // `AlwaysScrollableScrollPhysics`e düşer ve sığan
+                          // içerikte bile sürüklemeyi yutar.
+                          physics: kCardOverflowScrollPhysics,
+                          primary: false,
+                          padding: EdgeInsets.zero,
+                          itemCount: show.length + (more > 0 ? 1 : 0),
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.35,
+                            ),
+                          ),
+                          itemBuilder: (context, i) {
+                            if (i >= show.length) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  l10n.taskListMore(more),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              );
+                            }
+                            final entry = show[i];
+                            return _HomeTaskTile(
+                              entry: entry,
+                              now: now,
+                              dense: compact,
+                              // Sırası gelmemiş occurrence tamamlanamaz; tap
+                              // kapalıdır ki kullanıcı hataya koşmasın.
+                              onToggle: entry.nextOccurrenceDay != null
+                                  ? null
+                                  : () => ref
+                                        .read(userTaskActionsProvider)
+                                        .toggle(entry.task.id),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -188,15 +226,24 @@ class TasksCard extends ConsumerWidget {
 }
 
 class _EmptyTasks extends StatelessWidget {
-  const _EmptyTasks({required this.label, this.onRetry});
+  const _EmptyTasks({required this.label, this.actionLabel, this.onAction});
 
   final String label;
-  final VoidCallback? onRetry;
+
+  /// Eylem etiketi. WP-799'a kadar sabit "Tekrar dene" idi, yani dugme yalniz
+  /// hata dalinda anlamliydi ve bos dal onu hic kullanamiyordu.
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
+    // 🔴 WP-799: bos/hata durumu bir eylem dugmesi TASIYOR, yani bu
+    // blok kartin en uzun bos durumu. Kisa hucrede olculdu: eylemle birlikte
+    // 3.0 px tasiyor ve `RenderFlex` uyarisi veriyordu (yani dugmenin bir
+    // kismi hic gorunmuyordu). WP-508 sozlesmesi: sigiyorsa jest dis sayfaya
+    // gider, tasiyorsa kart kendi icinde kayar.
+    final body = Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -215,15 +262,29 @@ class _EmptyTasks extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (onRetry != null) ...[
+          if (onAction != null && actionLabel != null) ...[
             const SizedBox(height: 6),
             TextButton(
-              onPressed: onRetry,
-              child: Text(AppLocalizations.of(context).taskListRetry),
+              key: const Key('tasks-card-empty-action'),
+              onPressed: onAction,
+              child: Text(actionLabel!),
             ),
           ],
         ],
       ),
+    );
+
+    return LayoutBuilder(
+      // Sinirsiz yukseklikte kaydirici KURULMAZ (viewport sinirsiz kisit
+      // alamaz); o kontrol [cardScrollIfOverflows] belgesinde cagirana birakildi.
+      builder: (context, constraints) => constraints.hasBoundedHeight
+          ? cardScrollIfOverflows(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: body,
+              ),
+            )
+          : body,
     );
   }
 }

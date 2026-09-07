@@ -94,7 +94,9 @@ class GroupCardShell extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: theme.textTheme.titleMedium),
+              // WP-799: ciplak `Text` [cardTitle] sozlesmesini (tek satir +
+              // ellipsis) atliyordu; uzun grup adi + buyuk yazi olcusu tasiyordu.
+              cardTitle(context, title),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -164,7 +166,6 @@ class GroupCardStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -172,7 +173,8 @@ class GroupCardStatus extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: theme.textTheme.titleMedium),
+              // WP-799: kardesi [GroupCardShell] ile ayni baslik sozlesmesi.
+              cardTitle(context, title),
               const SizedBox(height: 12),
               child,
             ],

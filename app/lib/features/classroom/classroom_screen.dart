@@ -67,7 +67,25 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
       switcherAnchor: _groupSwitcherTourAnchor,
       hasGroup: group != null,
     );
-    final definition = groups;
+    // 🔴 WP-799: `AppTours.campfire` dört dilde metniyle, `_campfireTourAnchor`
+    // ise ekrandaki gerçek çapasıyla (`CampfireScene(key: campfireKey)`)
+    // hazırdı — ama `lib/` içinde turu başlatan tek satır yoktu: tanımlı,
+    // bağlanmamış, yani kullanıcı için var olmayan bir özellik. Çapa da bu
+    // yüzden ölü bir parametre olarak aşağı geçiyordu.
+    //
+    // İki tur ÜST ÜSTE binmez: motor aynı anda tek tur çalıştırır
+    // (`TourController.maybeStart` → `TourBlockReason.otherTourRunning`), o
+    // yüzden ikinci bir `TourHost` yığmak yerine bu ekran **sırayla** hangi
+    // turu vereceğini seçer. `ref.watch(tourControllerProvider)` yukarıda
+    // duruyor: gruplar turu bitip `seen` işaretlendiğinde bu build yeniden
+    // koşar, `TourHost`un `ValueKey`i değişir ve kamp ateşi turu başlar.
+    final definition = ref.read(tourControllerProvider.notifier).seen(groups)
+        ? AppTours.campfire(
+            l10n,
+            campfireAnchor: _campfireTourAnchor,
+            hasGroup: group != null,
+          )
+        : groups;
 
     return TourHost(
       key: ValueKey(definition.storageId),

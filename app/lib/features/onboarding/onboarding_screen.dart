@@ -307,13 +307,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ],
         ),
+      // 🔴 WP-799: dugme "Kamp atesine git" (`onboardingStart`) diyordu
+      // ama [_finish] yalniz onboarding bayragini yaziyor; `AuthGate`
+      // `HomeShell`e geciyor ve varsayilan sekme **home**
+      // (`core/navigation/nav_index.dart`). Kamp atesi `groups` sekmesinde,
+      // yani dugme gitmedigi bir yeri soyluyordu -- ustelik ayni sayfanin
+      // govdesi ("Ana sayfada sayaci baslatarak...") tersini yaziyordu.
+      // Etiket govdeye esitlendi; hedef ekran degismedi.
       _ => Semantics(
           button: true,
-          label: l10n.onboardingStart,
+          label: l10n.classroomCalismayaBasla,
           child: FilledButton(
             onPressed: _finish,
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-            child: Text(l10n.onboardingStart),
+            child: Text(l10n.classroomCalismayaBasla),
           ),
         ),
     };

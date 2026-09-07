@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/tour/tour_models.dart';
@@ -27,6 +29,13 @@ void main() {
     ];
   }
 
+  // 🔴 WP-799 — ÖNCE BUNU OKU. Bu dosyanın iddiaları uzun süre yalnız
+  // TANIMI ölçtü ("dört tur var, metinleri kısa"). `campfire` ve `profile`
+  // turları `lib/` içinde **hiç çağrılmadığı** hâlde bu kapı yeşil geçiyordu:
+  // dört dilde metni olan, sürümlenmiş, testli — ve kullanıcının asla
+  // görmediği iki tur. Aşağıdaki `every tour definition is mounted by a real
+  // screen` iddiası eksik olan ölçümdür; sayı saymak onun yerine geçmez.
+  //
   // 🔴 WP-417: sahip ana ekran turunu tek adıma indirdi ve istatistik dönem
   // turunu tamamen kaldırdı. Sayı burada sabit; yeni bir tur sessizce eklenirse
   // ya da geri gelirse bu test kırılır.
@@ -36,15 +45,17 @@ void main() {
       for (final hasContent in [true, false]) {
         final tours = definitions(l10n, hasContent: hasContent);
         // WP-488: ana ekran turu metni davranış değiştirdiği için v2.
+        // WP-799: ilk balon artık kart düzenlemeyi değil sayacı öğretiyor → v3.
         expect(tours.map((tour) => tour.storageId), [
-          'home.v2',
+          'home.v3',
           'groups.v1',
           'campfire.v1',
           'profile.v1',
         ]);
-        // Ana ekran turu tek adım: yalnız "kartları düzenle".
+        // Ana ekran turu tek adım; dolu panoda sayacı, boş panoda kart
+        // eklemeyi işaret eder (ekranın kendi düğmesiyle aynı söz).
         expect(tours.first.steps, hasLength(1));
-        expect(tours.first.steps.single.id, 'edit');
+        expect(tours.first.steps.single.id, hasContent ? 'start' : 'add');
         expect(tours.map((tour) => tour.id).toSet(), hasLength(tours.length));
 
         for (final tour in tours) {
@@ -76,6 +87,61 @@ void main() {
       }
     }
     expect(overflowingSteps, isEmpty, reason: 'Tour body exceeds two lines');
+  });
+
+  // 🔴 WP-799 — ÖLÇÜLEN ŞEY BAĞLANTI, TANIM DEĞİL.
+  //
+  // Denetim bulgusu: `AppTours.campfire` ve `AppTours.profile` tanımlıydı,
+  // dört dilde metni vardı, bu dosya onları "dört tur" diye sayıyordu — ama
+  // `lib/` içinde tek bir çağıranları yoktu. `classroom_screen.dart` kamp
+  // ateşi çapasını oluşturup aşağı geçiriyor, hiçbir tur onu kullanmıyordu.
+  // Bir tur yalnız bir ekran onu `TourHost`a verdiğinde vardır.
+  test('every tour definition is mounted by a real screen', () {
+    const defsPath = 'lib/features/tours/app_tours.dart';
+    final names = RegExp(r'static TourDefinition (\w+)\(')
+        .allMatches(File(defsPath).readAsStringSync())
+        .map((match) => match.group(1)!)
+        .toList();
+    expect(
+      names,
+      hasLength(4),
+      reason:
+          'Tur tanimlari taranamadi ya da sayi degisti; kapi bos olcum '
+          'yapmasin diye burasi bilerek sabit.',
+    );
+
+    final sources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .where(
+          (file) => !file.path.replaceAll(r'\', '/').endsWith(defsPath),
+        )
+        .map((file) => (path: file.path, text: file.readAsStringSync()))
+        .toList();
+    expect(sources.length, greaterThan(100), reason: 'lib/ taramasi bos.');
+
+    for (final name in names) {
+      final callers = sources
+          .where((source) => source.text.contains('AppTours.$name('))
+          .toList();
+      expect(
+        callers,
+        isNotEmpty,
+        reason:
+            '`AppTours.$name` tanimli ama lib/ icinde hicbir yerden '
+            'cagrilmiyor: metinleri yazilmis, surumlenmis ve kullaniciya hic '
+            'gorunmeyen bir tur. Ya bagla ya sil.',
+      );
+      expect(
+        callers.any((source) => source.text.contains('TourHost(')),
+        isTrue,
+        reason:
+            '`AppTours.$name` cagriliyor ama cagiran dosya turu monte eden '
+            '`TourHost`u kurmuyor; tanim bir degiskene atanip birakilmis '
+            'olabilir.',
+      );
+    }
   });
 
   test('empty states never point at content that does not exist', () {

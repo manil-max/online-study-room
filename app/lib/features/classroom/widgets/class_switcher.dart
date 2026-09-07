@@ -43,16 +43,36 @@ Future<void> showClassSwitcher(
         ),
       ),
     ),
+    // 🔴 WP-799: grup yokken tek satir `enabled: false` idi. `switchOnly`
+    // kolunda (Istatistik'ten acilan gecis menusu) asagidaki olustur/katil
+    // maddeleri HIC cizilmedigi icin menunun tamami tiklanamazdi: grubu
+    // olmayan kullanici icin cikissiz bir liste. Gecis kolunda satirin
+    // kendisi eyleme donusur; tam kolda bilgi satiri kalir cunku olustur/
+    // katil/kesfet maddeleri hemen altinda zaten duruyor.
     if (groups.isEmpty)
-      PopupMenuItem<void>(
-        enabled: false,
-        child: Text(
-          AppLocalizations.of(context).classroomHenuzGrupYok,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+      if (switchOnly)
+        PopupMenuItem<void>(
+          onTap: () => createGroupFlow(context, ref),
+          child: Row(
+            children: [
+              const Icon(Icons.add, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(AppLocalizations.of(context).classroomGrupOlustur),
+              ),
+            ],
+          ),
+        )
+      else
+        PopupMenuItem<void>(
+          enabled: false,
+          child: Text(
+            AppLocalizations.of(context).classroomHenuzGrupYok,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-      ),
     for (final g in groups)
       PopupMenuItem<void>(
         onTap: () => ref.read(activeGroupIdProvider.notifier).select(g.id),

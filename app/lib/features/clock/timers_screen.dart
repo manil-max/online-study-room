@@ -113,11 +113,34 @@ class TimersScreen extends ConsumerWidget {
           child: instances.when(
             data: (list) {
               if (list.isEmpty) {
+                // 🔴 WP-799: bos durum tek bir cumleydi ve NE
+                // YAPILACAGINI soylemiyordu. Kardes ekranlarda (alarm,
+                // gorevler) cikis bir FAB'dir; burada eylem zaten yukaridaki
+                // "Hizli baslat" seridindedir (hazir sureler + "Ozel"), o
+                // yuzden dogru duzeltme ikinci bir dugme degil o seridi
+                // isaret eden ipucudur.
                 return Center(
-                  child: Text(
-                    AppLocalizations.of(context).clockHenuzCalisanBirTimer,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context).clockHenuzCalisanBirTimer,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppLocalizations.of(context).clockTimerBosIpucu,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );

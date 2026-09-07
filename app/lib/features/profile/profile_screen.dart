@@ -12,8 +12,10 @@ import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/tour/tour_host.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import '../desktop/desktop_surface.dart';
+import '../tours/app_tours.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
@@ -243,9 +245,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
 
+    // 🔴 WP-799: bu iki satır aynı şeyi dönüyordu — kaldırılmış bir
+    // sarmalayıcının kalıntısı. `AppTours.profile` dört dilde metniyle ve
+    // ekrandaki İKİ gerçek çapasıyla (`_identityTourAnchor` :99,
+    // `_actionsTourAnchor` :164) tanımlıydı, ama `lib/` içinde tek çağıranı
+    // yoktu: tur kullanıcıya hiç görünmüyordu. Çapalar da bu yüzden ölüydü.
+    //
+    // Sekme kontrolü korunur: `HomeShell` beş ekranı `IndexedStack` içinde
+    // birlikte kurar, yani bu `build` sekme görünür olmasa da koşar. Kontrol
+    // olmasaydı profil turu kullanıcı Profil'e hiç girmeden başlardı.
     if (ref.watch(navIndexProvider) != AppTab.profile.index) return page;
 
-    return page;
+    final definition = AppTours.profile(
+      AppLocalizations.of(context),
+      identityAnchor: _identityTourAnchor,
+      actionsAnchor: _actionsTourAnchor,
+    );
+    return TourHost(
+      key: ValueKey(definition.storageId),
+      definition: definition,
+      child: page,
+    );
   }
 }
 
