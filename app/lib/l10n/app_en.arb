@@ -983,6 +983,12 @@
     "description": "Classroom user-facing text. Source: Grup değiştir"
   },
   "classroomGrupOlustur": "Create group",
+  "statsKisiselBosEylem": "Start the timer",
+  "@statsKisiselBosEylem": {"description": "WP-798: CTA shown when personal stats are empty."},
+  "classroomKimseCalismiyor": "Nobody is studying right now",
+  "@classroomKimseCalismiyor": {"description": "WP-797: campfire badge - the group exists but has no active member (previously said 'No groups yet')."},
+  "clockTimerBosIpucu": "Tap one of the durations above, or enter your own.",
+  "@clockTimerBosIpucu": {"description": "WP-798: tells the user what to do when the timer list is empty."},
   "@classroomGrupOlustur": {
     "description": "Classroom user-facing text. Source: Grup oluştur"
   },
