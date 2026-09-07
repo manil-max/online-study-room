@@ -31,16 +31,38 @@ class AdminSanctionActions {
   const AdminSanctionActions._();
 
   /// Basamak secim sayfasi. Secilen basamak dogrudan [apply]'a gider.
+  ///
+  /// 🔴 WP-820 — `ladder` PARAMETRESI KALDIRILDI ve bu bir karardir.
+  ///
+  /// Ustteki yorum *"iki yuzey tek yuzeydir"* diyordu ama menu oyle
+  /// calismiyordu: varsayilan `kAdminAccountRestrictionLadder`di, yani yalniz
+  /// hesaba dokunan BES basamak. Tam katalogu tek bir cagri yeri geciyordu
+  /// (`admin_user_profile_page.dart`). Sonuc uc giris noktasi, IKI menu:
+  ///
+  ///   * Kullanicilar sekmesindeki satir  -> 5 basamak
+  ///   * Kisi dosyasi                     -> 5 basamak
+  ///   * Vakadan acilan kisi profili      -> 9 basamak
+  ///
+  /// Yani `Uyar`, `Sustur` ve `Isim sifirla` -- en cok kullanilan, en yumusak
+  /// uc basamak -- Kullanicilar tarafindan HIC uygulanamiyordu. Sahibin
+  /// *"banlama farkli yere gidiyorum herhalde"* sikayetinin kalan yarisi
+  /// buydu: WP-C listeyi tek kaynaktan TURETTI ama menuyu tek yapmadi.
+  ///
+  /// Parametre "ileride lazim olur" diye durmustu; ikinci liste zaten tam
+  /// oyle dogmustu. Artik tek menu var ve daraltmanin yolu yok.
+  ///
+  /// Not: [kAdminAccountRestrictionLadder] SILINMEDI. O bir menu degil,
+  /// "hangi basamaklar auth tarafina iner" sorusunun turetilmis cevabidir ve
+  /// sozlesme testleri onu olcer.
   static Future<void> chooseAndApply(
     BuildContext context,
     WidgetRef ref, {
     required String targetUserId,
     required String confirmationPhrase,
-    List<ModerationAction>? ladder,
     String? caseId,
   }) async {
     final l10n = AppLocalizations.of(context);
-    final steps = ladder ?? kAdminAccountRestrictionLadder;
+    const steps = kAdminSanctionLadder;
     final selected = await showModalBottomSheet<ModerationAction>(
       context: context,
       builder: (sheetContext) => SafeArea(

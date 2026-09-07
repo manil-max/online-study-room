@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/models/admin_user_dto.dart';
-import 'package:online_study_room/data/models/moderation_sanction.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -11,22 +10,19 @@ import '../directory/admin_search_field.dart';
 import '../sanctions/admin_person_dossier.dart';
 import '../sanctions/admin_sanction_actions.dart';
 import '../sanctions/admin_sanction_dialogs.dart';
-import '../sanctions/sanction_ladder.dart';
 
-/// Kullanıcılar sekmesinden uygulanabilen askı basamakları.
-///
-/// 🔴 WP-625: burada **süresiz** bir seçenek yoktur. Eski "Askıya Al" düğmesi
-/// tek dokunuşta ≈100 yıllık, `moderation_sanctions`'a hiç yazılmayan bir ban
-/// kuruyordu: Moderasyon sekmesinde görünmüyor, geri alınamıyor, kendiliğinden
-/// dolmuyordu. Artık yönetici basamağı **seçer**, sunucu kaydı yazar. Kalıcı
-/// yasak listede duruyor ama adı kalıcı olduğunu söylüyor.
-///
-/// 🔴 WP-C: liste artık burada **sayılmaz**, tek kanonik kaynaktan
-/// (`sanctions/sanction_ladder.dart`) türetilir. Elle yazıldığı sürece UGC
-/// sekmesindeki dokuz basamaklı listeyle ayrı yaşıyordu; sahibin "banlama
-/// farklı yere gidiyorum herhalde" şikâyetinin kökü buydu.
-final List<ModerationAction> kAdminSuspensionLadder =
-    kAdminAccountRestrictionLadder;
+// 🔴 WP-820: `kAdminSuspensionLadder` BURADAN SILINDI.
+//
+// Bu sekmeye ait ayrı bir "askı basamakları" listesi vardı. WP-625 onu elle
+// sayılan bir literal olmaktan çıkarmış, WP-C de tek kanonik kaynaktan
+// türetmişti — ama adı hâlâ burada yaşıyordu ve menü gerçekten daraltıyordu:
+// bu sekmeden `Uyar`, `Sustur` ve `İsim sıfırla` uygulanamıyordu.
+//
+// Menü artık `AdminSanctionActions.chooseAndApply` içinde TEK ve tam
+// (`kAdminSanctionLadder`); daraltmanın yolu kaldırıldı. "Hangi basamaklar
+// auth tarafına iner" sorusunun cevabı `kAdminAccountRestrictionLadder` olarak
+// `sanctions/sanction_ladder.dart` içinde duruyor — o bir menü değil,
+// sözleşme.
 
 /// 🔴 WP-771: kisi dizininde **arama yoktu**. Grup dizini ve uye secici
 /// WP-D'de arama kazandi, kullanici listesi duz bir `ListView` olarak kaldi:

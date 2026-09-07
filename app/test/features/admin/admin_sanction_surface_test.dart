@@ -127,6 +127,17 @@ Future<void> _confirmReason(WidgetTester tester, String reason) async {
   await tester.pumpAndSettle();
 }
 
+/// 🔴 WP-820: menu BES basamaktan DOKUZa cikti; alt basamaklar test
+/// penceresinde ekran disinda kalabiliyor. Once gorunur yap, sonra dokun --
+/// kaydirmadan dokunmak "widget off-screen" uyarisi verip isabetsiz kalirdi.
+Future<void> _tapLadderStep(WidgetTester tester, ModerationAction action) async {
+  final target = find.byKey(Key('admin-suspend-${action.wire}'));
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
 String _read(String path) => File(path).readAsStringSync();
 
 void main() {
@@ -163,18 +174,59 @@ void main() {
       );
     });
 
-    test('kullanicilar basamagi kataloktan TURETILIR, kopyalanmaz', () {
-      // Ayni nesne olmasi "turedi"nin en sert kaniti: kopya bir liste esit
-      // olabilir ama ayni olamaz.
-      expect(identical(kAdminSuspensionLadder, kAdminAccountRestrictionLadder), isTrue);
+    test('auth alt kumesi kataloktan TURETILIR, kopyalanmaz', () {
       expect(kAdminSanctionLadder, ModerationAction.values);
       expect(
-        kAdminSuspensionLadder,
+        kAdminAccountRestrictionLadder,
         ModerationAction.values.where((a) => a.requiresAuthBan).toList(),
         reason: 'liste artik turemiyor',
       );
       // WP-625 sozlesmesi korunur: bes basamak, sonuncusu suresiz.
-      expect(kAdminSuspensionLadder, hasLength(5));
+      expect(kAdminAccountRestrictionLadder, hasLength(5));
+    });
+
+    /// 🔴 WP-820 — MENUYU DARALTMANIN YOLU YOK.
+    ///
+    /// WP-C listeyi tek kaynaktan turetti ama menuyu tek YAPMADI:
+    /// `chooseAndApply` varsayilani `kAdminAccountRestrictionLadder`di, yani
+    /// yalniz auth'a inen bes basamak. Tam katalogu tek bir cagri yeri
+    /// geciyordu. Sonuc uc giris noktasi, IKI menu -- Kullanicilar sekmesinden
+    /// ve kisi dosyasindan `Uyar`, `Sustur`, `Isim sifirla` HIC
+    /// uygulanamiyordu.
+    ///
+    /// Bu iddia kaynak duzeyindedir ve bilerek oyle: `ladder` adinda bir
+    /// parametre geri gelirse ikinci menu de geri gelir.
+    test('🔴 chooseAndApply menuyu daraltan bir parametre KABUL ETMEZ', () {
+      final source = _read(
+        'lib/features/admin/sanctions/admin_sanction_actions.dart',
+      );
+      expect(
+        source.contains('List<ModerationAction>? ladder'),
+        isFalse,
+        reason:
+            'Menuyu daraltan parametre geri gelmis. Ikinci liste tam olarak '
+            'boyle dogmustu: "ileride lazim olur" diye birakilan bir kapi.',
+      );
+      expect(
+        RegExp(r'const\s+steps\s*=\s*kAdminSanctionLadder').hasMatch(source),
+        isTrue,
+        reason: 'Menu TAM katalogdan gelmeli.',
+      );
+    });
+
+    test('Kullanicilar sekmesi kendi basamak takma adini TASIMAZ', () {
+      final source = _read('lib/features/admin/tabs/admin_users_tab.dart');
+      // 🔴 Aranan sey ANMA degil TANIMDIR: dosyanin kendi yorumu bu adi
+      // tarihce olarak yaziyor ve yazmali. Ilk yazdigim iddia `contains` idi
+      // ve kendi yorumumu yakalayip kirmizi dustu -- test, olcmek istedigi
+      // seyi degil metni olcuyordu.
+      expect(
+        RegExp(r'kAdminSuspensionLadder\s*=').hasMatch(source),
+        isFalse,
+        reason:
+            'Sekmeye ait ayri bir basamak listesi geri TANIMLANMIS; ad geri '
+            'gelince menu de daralir.',
+      );
     });
   });
 
@@ -296,10 +348,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('admin-sanction-apply-menu')));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(Key('admin-suspend-${ModerationAction.banPermanent.wire}')),
-      );
-      await tester.pumpAndSettle();
+      await _tapLadderStep(tester, ModerationAction.banPermanent);
       await _confirmReason(tester, 'agir ihlal');
 
       expect(
@@ -380,10 +429,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('admin-sanction-apply-menu')));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(Key('admin-suspend-${ModerationAction.suspend24h.wire}')),
-      );
-      await tester.pumpAndSettle();
+      await _tapLadderStep(tester, ModerationAction.suspend24h);
       await _confirmReason(tester, 'ilk uyari sonrasi');
       _expectRealBody(tester);
 
@@ -409,10 +455,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('admin-sanction-apply-menu')));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(Key('admin-suspend-${ModerationAction.suspend24h.wire}')),
-      );
-      await tester.pumpAndSettle();
+      await _tapLadderStep(tester, ModerationAction.suspend24h);
       await _confirmReason(tester, 'ilk uyari sonrasi');
 
       expect(

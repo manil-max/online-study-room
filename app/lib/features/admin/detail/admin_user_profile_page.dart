@@ -629,14 +629,13 @@ class _SanctionBar extends ConsumerWidget {
                     ref,
                     targetUserId: targetUserId,
                     confirmationPhrase: confirmationPhrase,
-                    // 🔴 TAM katalog. Varsayilan
-                    // `kAdminAccountRestrictionLadder` yalniz
-                    // `requiresAuthBan` basamaklari sunar; WP-775 yaptirimi
-                    // vaka seridinden buraya tasiyinca `Uyar`, `Sustur` ve
-                    // `Isim sifirla` HICBIR YERDEN uygulanamaz oldu -- en cok
-                    // kullanilan, en yumusak uc basamak. Vaka sayfasi bunlari
-                    // hep sunuyordu (`650bcd5f~1`).
-                    ladder: kAdminSanctionLadder,
+                    // 🔴 TARIHCE: burasi bir zamanlar `ladder:
+                    // kAdminSanctionLadder` geciyordu, cunku varsayilan yalniz
+                    // `requiresAuthBan` basamaklarini sunuyordu ve WP-775
+                    // yaptirimi vaka seridinden buraya tasiyinca `Uyar`,
+                    // `Sustur`, `Isim sifirla` HICBIR YERDEN uygulanamaz
+                    // olmustu. WP-820 o parametreyi kaldirdi: menu artik tek
+                    // ve tam. Bu satir gerekmiyor, gerekcesi kayitta duruyor.
                     // Yaptirimi doguran sikayet denetim kaydinda gorunsun.
                     caseId: caseId,
                   )

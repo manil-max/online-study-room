@@ -9,6 +9,7 @@ import 'package:online_study_room/data/providers/admin_moderation_providers.dart
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/tabs/admin_users_tab.dart';
+import 'package:online_study_room/features/admin/sanctions/sanction_ladder.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// WP-625 — "Askıya Al" düğmesi ve admin fonksiyonlarının deploy boşluğu.
@@ -57,8 +58,7 @@ Widget _host(InMemoryAdminModerationRepository moderation, {bool suspended = fal
 Future<void> _chooseLadderStep(WidgetTester tester, ModerationAction action) async {
   await tester.tap(find.byKey(const Key('admin-user-suspend-menu')));
   await tester.pumpAndSettle();
-  await tester.tap(find.byKey(Key('admin-suspend-${action.wire}')));
-  await tester.pumpAndSettle();
+  await _tapLadderStep(tester, action);
 }
 
 Future<void> _confirmReason(WidgetTester tester, String reason) async {
@@ -79,6 +79,19 @@ List<String> _deployedFunctions(String workflow) => RegExp(
   r'supabase functions deploy ([a-z0-9-]+)',
 ).allMatches(workflow).map((match) => match.group(1)!).toList();
 
+
+/// 🔴 WP-820: menu BES basamaktan DOKUZa cikti; alt basamaklar 800 px'lik
+/// test penceresinde ekran disinda kaliyor. Once gorunur yap, sonra dokun.
+/// Kaydirmadan dokunmak "widget off-screen" uyarisi verip sessizce isabetsiz
+/// kalirdi.
+Future<void> _tapLadderStep(WidgetTester tester, ModerationAction action) async {
+  final target = find.byKey(Key('admin-suspend-${action.wire}'));
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('WP-625/1 — askı süreli ve KAYITLI uygulanır', () {
     testWidgets('süre basamağı sorulur; seçim yaptırım kaydı yazar', (
@@ -90,8 +103,12 @@ void main() {
 
       await tester.tap(find.byKey(const Key('admin-user-suspend-menu')));
       await tester.pumpAndSettle();
-      // Beş basamağın hepsi seçilebilir olmalı: süresiz tek düğme yok.
-      for (final action in kAdminSuspensionLadder) {
+      // 🔴 WP-820: eskiden yalniz BES basamak (auth'a inenler) aranirdi ve
+      // menu de yalniz onlari sunuyordu. Artik bu sekmeden TAM katalog
+      // uygulanabilir; `Uyar`, `Sustur` ve `Isim sifirla` dahil dokuzunun
+      // hepsi gorunmeli. Bes ile yetinen eski iddia, menu daraltilsa bile
+      // yesil gecerdi.
+      for (final action in kAdminSanctionLadder) {
         expect(
           find.byKey(Key('admin-suspend-${action.wire}')),
           findsOneWidget,
@@ -99,10 +116,7 @@ void main() {
         );
       }
 
-      await tester.tap(
-        find.byKey(Key('admin-suspend-${ModerationAction.suspend7d.wire}')),
-      );
-      await tester.pumpAndSettle();
+      await _tapLadderStep(tester, ModerationAction.suspend7d);
       await _confirmReason(tester, 'tekrarlayan hakaret');
 
       final sanctions = await moderation.fetchSanctions(_targetId);
@@ -163,12 +177,15 @@ void main() {
     });
 
     test('askı basamaklarının hepsi auth tarafına iner ve süreleri artar', () {
-      expect(kAdminSuspensionLadder, hasLength(5));
-      for (final action in kAdminSuspensionLadder) {
+      // 🔴 WP-820: bu iddia bir MENU hakkinda degil, "hangi basamaklar auth
+      // tarafina iner" sozlesmesi hakkindadir. Menu artik tam katalogdur;
+      // alt kume kavrami ise durur ve olculmeye devam eder.
+      expect(kAdminAccountRestrictionLadder, hasLength(5));
+      for (final action in kAdminAccountRestrictionLadder) {
         expect(action.requiresAuthBan, isTrue, reason: action.wire);
       }
       expect(
-        kAdminSuspensionLadder.map((a) => a.duration).toList(),
+        kAdminAccountRestrictionLadder.map((a) => a.duration).toList(),
         [
           const Duration(hours: 24),
           const Duration(days: 7),
