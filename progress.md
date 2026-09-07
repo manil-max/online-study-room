@@ -12097,3 +12097,90 @@ içi depo tohumlu ölçüldü, **sunucudan okunuşu ölçülmedi**).
 Mağaza notu `release_notes.json`'dan türedi (TR 359 / EN 358 karakter,
 sınır 500) ve yüklemeyle birlikte gitti. Kanıt:
 `docs/qa/V82-STABLE-RELEASE-EVIDENCE.md`.
+
+## 2026-09-07 — GENEL KALİTE TURU: üç denetim, dört düzeltme, altı bayat iddia (WP-797…WP-801)
+
+**Tetikleyen (sahip):** *"Genel uygulama hakkında neler yapılabilir baksana,
+daha iyileştirme daha güzelleştirme… biraz daha profesyonellik istiyorum."*
+
+Tahminle iş seçmek yerine **üç salt-okunur denetim** koşturuldu: ölü özellik
+avı, erişilebilirlik/cila, ilk 5 dakika. Kaynaklar dışarıdan da beslendi
+(Reddit modqueue CHI 2026, Zendesk views, Intercom inbox — admin turunda).
+
+### Denetim hacmi
+138 migration · 247 SQL fonksiyonu · 429 Dart dosyası · 46 ekran · 180
+kontrast ölçümü. **İyi haber:** 46 ekranın hepsi ulaşılabilir; istemcinin
+çağırdığı ama sunucuda olmayan RPC **sıfır**; `lib/` içinde `TODO` ya da ölü
+`onPressed: null` yok.
+
+### WP-797 — renk görünürlüğü (`e5c7c32a`)
+🔴 Deponun KENDİ eşikleriyle 165 ölçümün **34'ü** altındaydı: dört açık
+temada rütbe renkleri (`paper_ink` zümrüt **1.59:1**), sekiz koyu temada
+immortal, ve **günlük hedef tamamlandı ✓** — hedefin tutturulduğunu söyleyen
+tek görsel sinyal — 2.2:1.
+Çözüm sabit değer değiştirmek değil **zemin farkındalık** (`accentOn`);
+kapının sayacı 45 → 56, iki palet artık bir daha sessizce düşemez.
+**34 → 0.** (Kayıtlı sarkaç: WP-205 ham beyaz yazdı → açıkta kayboldu;
+WP-753 tema niteliği yazdı → koyuda kayboldu.)
+
+### WP-798 — dokunma hedefi + ekran okuyucu (`072c76b1`)
+🔴 `NumberStepper` TalkBack ile **hiç çalışmıyordu**: değeri değiştiren kod
+yalnız `onPointerDown`'a bağlıydı, semantik tap boş gövdeye gidiyordu. Kodun
+kendi yorumu "erişilebilirlik için" diyordu, tersini yapıyordu. 10 çağrı yeri
+(pomodoro, günlük hedef, grup hedefi, elle oturum).
+Sohbet avatarı 28 → 48 dp, dönem şeridi 44 → 48, segmentler 32 → 40, kompakt
+odak düğmesi 42 → 48, ısı haritası ay yuvası ölçeğe uyar oldu.
+Yeni kapı: 13 test, 9 sabotaj kırmızı.
+
+### WP-799 — ilk 5 dakika + kart cilası (`29278c33`)
+Yeni kullanıcı ana ekranda **"Kayıt yok"** görüyordu (kartın kompakt dalı;
+tam boy dal doğru metni taşıyordu). Kişisel istatistik boş durumu aynı şeyi
+iki kez söyleyip hiçbir çıkış sunmuyordu. Onboarding'in son düğmesi **"Kamp
+ateşine git"** diyip Ana Sayfa'ya götürüyordu — ad ile davranış birbirini
+yalanlıyordu.
+🔴 İki tur (`campfire`, `profile`) hiçbir ekrana bağlı değildi; testleri
+"dört tur var" diye yeşil geçiyordu. Bağlandı ve test artık **tanımı değil
+bağlantıyı** ölçüyor.
+Ana ekran turu kart düzenlemeyi öğretiyordu → sayacı başlatmaya çevrildi.
+
+### WP-800 — hesap silme sağlık paneli (`534829e0`)
+Panel, sağlayıcı, sahte depo, dokuz test yazılmış; **kabuğa bağlanmamış**.
+Onu yakalayacak tek test `skip`liydi: *"lider yol açınca kaldırılacak."*
+Açılmamış. 🔴 **Ders: `skip` bir hatırlatıcı değildir; kimse okumaz.**
+
+### WP-801 — ALTI bayat iddia (`4c30f957`, `4df81f38`, `12bfbf77`)
+Üç lane kendi test dosyalarını çevirdi, başkalarınınkini göremedi — tam kapı
+yalnız tek merkezden koşar. Hepsi çevrildi, silinmedi; çoğuna eski davranışın
+geri gelmesini yasaklayan iddia eklendi.
+- 🔴 **Dört golden "önceden bozuk" diye raporlanmıştı.** Ölçüldü: dosyaları
+  WP-797 öncesine döndürünce yeşil. Golden kapısı yalnız `--full` ve CI'da
+  koşar → yerel yeşilken CI'da patlayacaktı.
+- 🔴 **En sinsisi:** `pull_to_refresh_wiring_wp550` "yenileme hiçbir şeyi
+  tazelemiyor" diye düştü — ürün regresyonu gibi. Sebep testin sabit yazılmış
+  `'tour.home.v2.me-1'` anahtarıydı; tur v3'e çıkınca bayrak başka anahtara
+  gitti, tur göründü, opak bariyer jesti yuttu. Sürüm artık kaynaktan
+  türetiliyor.
+
+### Kapı
+20 kapı · 0 kırmızı · 2 atlandı (`deno` yerelde yok, CI'da koşar).
+Golden takımı 52/52 (dört referans yenilendi).
+
+### Kapatılmadı — sıradaki
+1. 🔴 **Production'da `mailer_autoconfirm: false` + `custom_smtp_configured:
+   false` + `rate_limit_email_sent: 2`.** Aynı saatte 3 kişi kayıt olursa
+   üçüncüsüne doğrulama postası GİTMEZ; hesabı açılır, giremez. Sahip kararı
+   bekliyor (kapat / Resend bağla).
+2. `moderation_purge_expired_evidence` hiçbir zamanlayıcıya bağlı değil —
+   `0106` "kanıt süresiz durmaz" diyor, duruyor.
+3. `planTimerStop` üretimde hiç çağrılmıyor; sözleşme testi koşmayan kodu
+   ölçüyor (sahte güven).
+4. `tierColorFor`/`subjectColor` zemin parametresi **opsiyonel**; ~20 çağrı
+   yeri hâlâ ham renk alıyor ve kapı göremiyor. Zorunlu yapılınca derleyici
+   kapıya dönüşür.
+5. `card_scaffold.dart:148-169` 40×24 başlık düğmesi — ölçülerek
+   gerekçelendirilmiş, kapatılmamış ödünç.
+
+### Cihazda ölçülmeyen
+TalkBack ile sayı seçicilerde "artır/azalt" duyurusu ve çift artış olmaması;
+turların sırası (gruplar → kamp ateşi); dört açık temada rütbe renklerinin
+gerçek ekranda okunması.
