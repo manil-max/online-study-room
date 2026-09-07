@@ -7,7 +7,6 @@ import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../models/nudge.dart';
-import '../repositories/nudge_repository.dart';
 import 'auth_providers.dart';
 import 'nudge_providers.dart';
 
@@ -36,14 +35,25 @@ const _kNotifiedNudgeIdsKey = 'notified_nudge_ids';
 /// yine de sessizce kaybolmasın diye depodaki mevcut desenle
 /// (`SupabaseAdminRepository._debugLogFeedback`) günlüğe yazılır.
 /// `async` gövde sayesinde senkron fırlatan bir implementasyon da yakalanır.
-Future<void> _markProcessedOnServer(
-  NudgeRepository repository,
-  String nudgeId,
-) async {
+///
+/// 🔴 WP-816 — DEPO **İÇERİDE** ÇÖZÜLÜR, dışarıda değil. WP-811 bunu
+/// `_markProcessedOnServer(ref.read(nudgeRepositoryProvider), nudge.id)` diye
+/// çağırıyordu; yani depo, `try` bloğunun **dışında**, çağrı ifadesinin içinde
+/// çözülüyordu. `nudgeRepositoryProvider` yapılandırılmış ortamda
+/// `Supabase.instance.client` okur ve bu **fırlatabilir**. Fırlattığında hata
+/// bu fonksiyonun `try`ına hiç ulaşmıyor, `ref.listen` geri çağrımını
+/// düşürüyor ve döngü o noktada kesiliyordu — yani **bildirim hiç
+/// gösterilmiyordu**.
+///
+/// Zararı test artefaktı değil: bir hijyen yazması, kullanıcının GÖRDÜĞÜ
+/// bildirimin önüne geçmiş oluyordu. Kural artık yapıyla korunuyor: bu
+/// fonksiyona giren hiçbir şey, dışarıda çözülmüş olamaz.
+Future<void> _markProcessedOnServer(Ref ref, String nudgeId) async {
   try {
-    await repository.markRead(nudgeId);
+    await ref.read(nudgeRepositoryProvider).markRead(nudgeId);
   } catch (error, stackTrace) {
-    // NudgeException(NudgeErrorCode.markReadFailed) dahil her hata buraya düşer.
+    // NudgeException(NudgeErrorCode.markReadFailed) dahil her hata buraya
+    // düşer — depo ÇÖZÜLÜRKEN atılanlar da (bkz. WP-816).
     if (!kDebugMode) return;
     debugPrint('WP-811: nudge markRead basarisiz ($nudgeId): $error');
     debugPrint('$stackTrace');
@@ -130,9 +140,7 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
       //    kaçırdı, bir daha bildirim üretmeyecekler; sunucuda okunmamış
       //    durmaları yalnızca pencereyi kirletir.
       // `readAt != null` gelen dürtmeler bu döngüye zaten girmez (`unread`).
-      unawaited(
-        _markProcessedOnServer(ref.read(nudgeRepositoryProvider), nudge.id),
-      );
+      unawaited(_markProcessedOnServer(ref, nudge.id));
       if (isHistory) continue;
       if (quiet) continue;
       // WP-444: susturulan kişinin dürtmesi bildirim üretmez. Sohbet, profil ve

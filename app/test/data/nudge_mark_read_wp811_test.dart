@@ -323,4 +323,72 @@ void main() {
       );
     },
   );
+
+  // ==========================================================================
+  // 🔴 WP-816 — HIJYEN, KULLANICININ GORDUGU YOLU DUSUREMEZ
+  //
+  // WP-811 `markRead` cagrisini soyle yaziyordu:
+  //
+  //   unawaited(_markProcessedOnServer(ref.read(nudgeRepositoryProvider), id));
+  //
+  // Depo, sarmalayicinin `try` blogunun DISINDA — cagri ifadesinin icinde —
+  // cozuluyordu. `nudgeRepositoryProvider` yapilandirilmis ortamda
+  // `Supabase.instance.client` okur ve bu FIRLATABILIR. Firlattiginda hata
+  // sarmalayiciya hic ulasmiyor, `ref.listen` geri cagrimini dusuruyor ve
+  // dongu orada kesiliyordu: **bildirim hic gosterilmiyordu**.
+  //
+  // Bu bir test artefakti degildi. Tam kapi (`--dart-define-from-file=env.json`
+  // ile kosar, yani `SupabaseConfig.isConfigured` DOGRU olur) ve CI kirmizi
+  // dondu; depoyu override ETMEYEN iki komsu dosya bunu yakaladi
+  // (`nudge_notification_listener_test`, `nudge_notified_set_pruning_wp653`).
+  // Lane'in kendi testi yesildi cunku depoyu override ediyordu — lane'ler
+  // kendi dosyalarini kosar, kusuru merkezden kosan tam kapi buldu.
+  //
+  // Bu test o dersi KURAL haline getirir: depo cozulemese bile bildirim
+  // gosterilmelidir.
+  // ==========================================================================
+  test('8) depo COZULEMEZSE bile bildirim yine de gosterilir', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final controller = StreamController<List<Nudge>>();
+    addTearDown(controller.close);
+    final fake = _FakeNudgeService();
+
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        authStateProvider.overrideWith(
+          (ref) => Stream.value(
+            Profile(id: userId, displayName: 'Ben', createdAt: DateTime(2026)),
+          ),
+        ),
+        nudgeNotificationServiceProvider.overrideWithValue(fake),
+        // 🔴 Depo COZULURKEN firlatir. Uretimdeki karsiligi:
+        // `Supabase.instance.client` hazir degil / yapilandirma eksik.
+        nudgeRepositoryProvider.overrideWith(
+          (ref) => throw StateError('depo cozulemedi'),
+        ),
+        receivedNudgesProvider(userId).overrideWith((ref) => controller.stream),
+        mutedNudgeSenderIdsProvider.overrideWith(
+          (ref) async => const <String>{},
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(nudgeNotificationListenerProvider, (prev, next) {});
+    await container.read(authStateProvider.future);
+    await container.read(mutedNudgeSenderIdsProvider.future);
+    await _tick();
+
+    controller.add([_nudge('canli', createdAt: _live())]);
+    await _tick();
+
+    expect(
+      fake.shown.map((n) => n.id),
+      ['canli'],
+      reason:
+          'Sunucuya okundu yazmak bir HIJYEN islemidir. Basarisiz olmasi -- '
+          'hatta deposunun hic cozulememesi -- kullanicinin gordugu bildirimi '
+          'dusurmemeli. WP-811 bu siralamayi ters kurmustu.',
+    );
+  });
 }
