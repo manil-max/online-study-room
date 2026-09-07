@@ -119,7 +119,12 @@ void main() {
       expect(painter, isNotNull, reason: '$rank aura almalı');
       expect(painter!.intensity, auraIntensityForTier(crownTierNumber(rank)));
       // Aura rengi kademe rengiyle aynı — sahip böyle istedi.
-      expect(painter.color, crownColorFor(rank));
+      // WP-804: kademe rengi artık zeminin fonksiyonu; beklenti de pump
+      // edilen temanın şemasından türetilir.
+      final scheme = Theme.of(
+        tester.element(find.byType(CrownedAvatar)),
+      ).colorScheme;
+      expect(painter.color, crownColorFor(rank, scheme));
     }
   });
 

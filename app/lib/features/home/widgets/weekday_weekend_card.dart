@@ -30,8 +30,11 @@ class WeekdayWeekendCard extends ConsumerWidget {
     final split = weekdayWeekendSplit(sessions);
     final max = (split.weekday > split.weekend ? split.weekday : split.weekend)
         .clamp(1, 1 << 30);
-    final weekdayColor = subjectColor('chart-1');
-    final weekendColor = subjectColor('chart-4');
+    // WP-804: iki çubuk da `surfaceContainerHighest` zeminli
+    // `LinearProgressIndicator` içinde çiziliyor (bkz. [_Bar]); zemin o rol.
+    final barGround = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final weekdayColor = subjectColor('chart-1', on: barGround);
+    final weekendColor = subjectColor('chart-4', on: barGround);
 
     return CardScaffold(
       // 🔴 WP-659 — bkz. `hour_activity_card.dart`'taki aynı kusur. Çıplak

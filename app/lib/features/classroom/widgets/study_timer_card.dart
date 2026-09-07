@@ -786,8 +786,9 @@ class _SubjectSelector extends StatelessWidget {
       if (s.id == selectedId) selected = s;
     }
 
+    // WP-804: nokta kart yüzeyinde çiziliyor → zemin zorunlu.
     final dotColor = selected != null
-        ? subjectColor(selected.color)
+        ? subjectColor(selected.color, on: theme.colorScheme.surface)
         : theme.colorScheme.onSurfaceVariant;
     final label =
         selected?.name ??
@@ -877,7 +878,8 @@ class _SubjectSelector extends StatelessWidget {
             child: _subjectMenuRow(
               theme,
               s.name,
-              subjectColor(s.color),
+              // WP-804: menü satırı popup yüzeyinde (`surfaceContainer`).
+              subjectColor(s.color, on: theme.colorScheme.surfaceContainer),
               selectedId == s.id,
             ),
           ),
@@ -955,8 +957,10 @@ class _GoalProgress extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     // Hedefe ulaşınca yeşil (chart-2), yoksa birincil renk.
+    // WP-804: çubuğun kendi zemini `surfaceContainerHighest` (aşağıdaki
+    // `LinearProgressIndicator`), `surface` değil — ölçüm o role karşı.
     final barColor = reached
-        ? subjectColor('chart-2')
+        ? subjectColor('chart-2', on: theme.colorScheme.surfaceContainerHighest)
         : theme.colorScheme.primary;
 
     return InkWell(

@@ -282,8 +282,12 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                   children: [
                     CircleAvatar(
                       radius: 5,
+                      // WP-804: nokta tam ekran sayacın tema yüzeyinde.
                       backgroundColor: selected != null
-                          ? subjectColor(selected.color)
+                          ? subjectColor(
+                              selected.color,
+                              on: theme.colorScheme.surface,
+                            )
                           : theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 8),

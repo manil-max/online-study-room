@@ -672,7 +672,11 @@ class _StudyingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amber = subjectColor('chart-3');
+    // 🔴 WP-797/804 HAM (bilinçli): rozet sahnenin KENDİ boyalı zemininde
+    // duruyor — siyah %34 örtü + gölgeli beyaz yazı. Tema yüzeyi değil, o
+    // yüzden `on:` verilecek doğru bir zemin yok. Kapı bu iki ham kullanımı
+    // ada ada kilitler (`theme_contrast_gate_wp627_test.dart`).
+    final amber = subjectColorRaw('chart-3');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -864,7 +868,9 @@ class _MemberLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final studying = camper.studying;
-    final green = subjectColor('chart-2');
+    // 🔴 WP-797/804 HAM (bilinçli): etiket sahnenin kendi boyalı zemininde,
+    // gölgeli beyaz yazıyla. Tema yüzeyi değil — bkz. `_StudyingBadge`.
+    final green = subjectColorRaw('chart-2');
     final name = _camperName(AppLocalizations.of(context), camper);
 
     // 🔴 WP-554: bu katman dokunulamaz bir **tekrar**dır — ad zaten gövdenin

@@ -65,6 +65,9 @@ class StudyRecords extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final months = _months(context);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
+    // WP-804: döşeme ikonları kart yüzeyinin üstünde çiziliyor; renk o zeminin
+    // fonksiyonu (zorunlu parametre).
+    final surface = Theme.of(context).colorScheme.surface;
 
     // 🔴 WP-612: "Toplam" ömür boyu özetten gelir; yalnız özet yoksa pencere
     // toplamına düşülür — ve o durumda kapsam etiketi bu döşemeye de asılır.
@@ -126,19 +129,19 @@ class StudyRecords extends ConsumerWidget {
     final tiles = <Widget>[
       _RecordTile(
         icon: Icons.timelapse,
-        color: subjectColor('chart-1'),
+        color: subjectColor('chart-1', on: surface),
         label: '${AppLocalizations.of(context).statsToplam}$totalScope',
         value: formatHuman(total),
       ),
       _RecordTile(
         icon: Icons.local_fire_department,
-        color: subjectColor('chart-5'),
+        color: subjectColor('chart-5', on: surface),
         label: '${AppLocalizations.of(context).statsRekorSeri}$windowScope',
         value: AppLocalizations.of(context).statsStreakGun(longest.toString()),
       ),
       _RecordTile(
         icon: Icons.emoji_events_outlined,
-        color: subjectColor('chart-3'),
+        color: subjectColor('chart-3', on: surface),
         label: '${AppLocalizations.of(context).statsEnVerimliGun}$windowScope',
         value: bestDay == null
             ? '—'
@@ -146,7 +149,7 @@ class StudyRecords extends ConsumerWidget {
       ),
       _RecordTile(
         icon: Icons.calendar_month_outlined,
-        color: subjectColor('chart-2'),
+        color: subjectColor('chart-2', on: surface),
         label: '${AppLocalizations.of(context).statsAktifGun}$windowScope',
         value: AppLocalizations.of(
           context,
@@ -154,7 +157,7 @@ class StudyRecords extends ConsumerWidget {
       ),
       _RecordTile(
         icon: Icons.menu_book_outlined,
-        color: subjectColor('chart-4'),
+        color: subjectColor('chart-4', on: surface),
         label: '${AppLocalizations.of(context).statsEnCokDers}$windowScope',
         value: topSubject,
       ),

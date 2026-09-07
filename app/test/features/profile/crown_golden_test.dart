@@ -116,7 +116,10 @@ void main() {
             height: 160,
             child: CustomPaint(
               painter: AvatarAuraPainter(
-                color: tierColorFor(6),
+                // WP-804: zemin zorunlu. Bu sondanın zemini `_probe`'un
+                // sabit `Scaffold.backgroundColor`'ıdır, o yüzden ölçüm de
+                // ona karşı yapılır.
+                color: tierColorFor(6, on: const Color(0xFF14101E)),
                 intensity: 1.0,
                 base: 48,
                 center: const Offset(80, 90),

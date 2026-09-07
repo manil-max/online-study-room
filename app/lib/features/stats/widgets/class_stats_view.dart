@@ -877,7 +877,7 @@ class _AllTimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fire = subjectColor('chart-5');
+    final fire = subjectColor('chart-5', on: theme.colorScheme.surface);
 
     return Card(
       child: Padding(

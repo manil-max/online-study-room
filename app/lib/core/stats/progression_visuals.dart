@@ -34,7 +34,18 @@ Color _tierBaseColor(int tier) {
   }
 }
 
-/// Kademe 1→6 rengi. [on] verilirse renk **o zeminin fonksiyonudur**.
+/// Kademe 1→6 **ham** marka tonu — zeminden tamamen bağımsız.
+///
+/// 🔴 Bu kaçış yolu **istisnadır**, varsayılan değildir. Yalnız rengin üstüne
+/// çizildiği zemin uygulamanın tema yüzeyi OLMADIĞI yerde kullanılır: sahnenin
+/// kendi boyalı zemini gibi. Her çağrının yanına NEDEN ham olduğu yazılır.
+///
+/// Kapı `theme_contrast_gate_wp627_test.dart` `lib/` içindeki ham kullanımların
+/// **tam listesini** kilitler: yeni bir kaçış eklenirse kırmızıya düşer. Yoksa
+/// zorunlu zemin parametresi bir gün topluca `Raw`a çevrilerek boşa çıkarılır.
+Color tierColorRaw(int tier) => _tierBaseColor(tier);
+
+/// Kademe 1→6 rengi — renk **[on] zemininin fonksiyonudur** (zorunlu).
 ///
 /// 🔴 WP-797: bu palet zeminden bağımsız sabitti ve 15 hazır temada ölçüldüğünde
 /// 90 ölçümün 22'si `kMinSurfaceContrast` (3.0) altındaydı — açık temalarda gümüş
@@ -48,14 +59,13 @@ Color _tierBaseColor(int tier) {
 /// ton korunur, açıklık [accentOn] ile zemine karşı eşiğe kilitlenir. Kural
 /// `member_chart_colors.dart` / `series_palette.dart` ile aynı yerdedir.
 ///
-/// [on] **yalnız** renk bir dolgu/alfa katmanı olarak kullanılırken atlanabilir
-/// (ör. `color.withValues(alpha: 0.12)` zemini). Metin, ikon, çizgi veya nokta
-/// olarak çiziyorsan zemini geçmek zorunludur — kapı
-/// `theme_contrast_gate_wp627_test.dart` bunu 15 temada ölçer.
-Color tierColorFor(int tier, {Color? on}) {
-  final base = _tierBaseColor(tier);
-  return on == null ? base : accentOn(on, preferred: base);
-}
+/// 🔴 WP-804: [on] artık **zorunlu**. WP-797 onu opsiyonel bırakmıştı ve ~20
+/// çağrı yeri sessizce ham renk almaya devam etti — kapı yalnız zemin
+/// farkındalı biçimi ölçtüğü için bunu göremiyordu. Zorunlu parametreyle
+/// derleyicinin kendisi kapıya dönüşür: zemin vermeyen yeni bir çağrı yeri
+/// eklenemez. Gerçekten ham renk gereken yer [tierColorRaw] kullanır.
+Color tierColorFor(int tier, {required Color on}) =>
+    accentOn(on, preferred: tierColorRaw(tier));
 
 String tierLabel(int tier, AppLocalizations l10n) {
   switch (tier.clamp(1, 6)) {
@@ -156,13 +166,18 @@ String crownLabel(String rank, AppLocalizations l10n) {
   }
 }
 
-/// Taç rengi. [scheme] verilirse renk temanın yüzeyine göre çözülür.
+/// Taç rengi — [scheme] **zorunlu**, renk o temanın yüzeyine göre çözülür.
 ///
 /// 🔴 WP-797: ikinci parametre daha önce alınıyor ama **hiç kullanılmıyordu**
 /// (`[ColorScheme? _]`). Çağıran şemayı geçtiğinde renginin zemine uyarlandığını
 /// sanıyordu; uyarlanmıyordu. Artık gerçek etkisi var (ölü anahtar yok).
-Color crownColorFor(String rank, [ColorScheme? scheme]) {
-  return tierColorFor(crownTierNumber(rank), on: scheme?.surface);
+///
+/// 🔴 WP-804: opsiyonel kaldığı sürece bu fonksiyon [tierColorFor]'un zorunlu
+/// zemin kuralının etrafından dolaşan bir kaçış yoluydu — `crowned_avatar.dart`
+/// tam olarak öyle kullanıyordu (şemasız çağrı → ham immortal kırmızısı koyu
+/// temada 2.7). Zorunlu hâle getirildi.
+Color crownColorFor(String rank, ColorScheme scheme) {
+  return tierColorFor(crownTierNumber(rank), on: scheme.surface);
 }
 
 /// XP → bir sonraki taç eşiği (0..1 progress).
@@ -360,19 +375,17 @@ class CrownXpHeader extends StatelessWidget {
 
 /// Rozet rengi: gizli kilit → koyu mor; gizli açık → eflatun; normal → kademe.
 ///
-/// [scheme] verildiğinde kademe rengi o temanın yüzeyine göre çözülür (WP-797);
-/// verilmezse ham marka tonu döner.
+/// Kademe rengi [scheme]'in yüzeyine göre çözülür (WP-797). WP-804: [scheme]
+/// **zorunlu** — opsiyonel kaldığı sürece zemin kuralının kaçış yoluydu.
 Color badgeVisualColor({
   required int tier,
   required bool unlocked,
   required bool isSecret,
   required bool secretLocked,
-  ColorScheme? scheme,
+  required ColorScheme scheme,
 }) {
   if (secretLocked) return kSecretLockedColor;
   if (isSecret && unlocked) return kSecretAchievementColor;
-  if (!unlocked) {
-    return scheme?.outline ?? const Color(0xFF6B7280);
-  }
-  return tierColorFor(tier, on: scheme?.surface);
+  if (!unlocked) return scheme.outline;
+  return tierColorFor(tier, on: scheme.surface);
 }

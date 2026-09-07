@@ -99,7 +99,8 @@ class SessionScatterChart extends ConsumerWidget {
     Color colorOf(String? subjectId) {
       final token = colorBySubject[subjectId];
       return token != null
-          ? subjectColor(token)
+          // WP-804: nokta grafik yüzeyinde çiziliyor → zemin zorunlu.
+          ? subjectColor(token, on: theme.colorScheme.surface)
           : theme.colorScheme.onSurfaceVariant;
     }
 

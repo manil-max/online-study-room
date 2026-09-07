@@ -253,7 +253,12 @@ class CrownedAvatar extends StatelessWidget {
     final hasCrown = rank != null && rank.isNotEmpty;
     // 🔴 Kademe → renk eşlemesi WP-292'de DEĞİŞMEDİ: renk hâlâ yalnız
     // `crownColorFor` üzerinden, o da `crownRankForXp` eşiklerinden türer.
-    final color = hasCrown ? crownColorFor(rank) : null;
+    // WP-804: şema artık zorunlu geçiliyor. Taç dolu bir şekil olarak TEMA
+    // yüzeyinin üstüne çiziliyor; şemasız çağrıda immortal kırmızısı koyu
+    // temada 2.7 oranıyla zemine gömülüyordu (siyah kontur kaybı gizliyordu).
+    final color = hasCrown
+        ? crownColorFor(rank, Theme.of(context).colorScheme)
+        : null;
 
     Widget avatar = UserAvatar(
       displayName: displayName,

@@ -365,7 +365,11 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
                   ChoiceChip(
                     avatar: CircleAvatar(
                       radius: 6,
-                      backgroundColor: subjectColor(s.color),
+                      // WP-804: çip avatarı diyalog yüzeyinde → zemin zorunlu.
+                      backgroundColor: subjectColor(
+                        s.color,
+                        on: Theme.of(context).colorScheme.surface,
+                      ),
                     ),
                     label: Text(s.name),
                     selected: _subjectId == s.id,

@@ -209,7 +209,11 @@ class _SubjectTile extends ConsumerWidget {
     return ListTile(
       leading: CircleAvatar(
         radius: 10,
-        backgroundColor: subjectColor(subject.color),
+        // WP-804: nokta liste yüzeyinde → zemin zorunlu.
+        backgroundColor: subjectColor(
+          subject.color,
+          on: Theme.of(context).colorScheme.surface,
+        ),
       ),
       title: Text(subject.name),
       trailing: PopupMenuButton<String>(
@@ -347,7 +351,11 @@ class _SubjectDialogState extends State<_SubjectDialog> {
             children: [
               for (final token in kSubjectColorTokens)
                 _ColorDot(
-                  color: subjectColor(token),
+                  // WP-804: seçim noktaları diyalog yüzeyinde.
+                  color: subjectColor(
+                    token,
+                    on: Theme.of(context).colorScheme.surface,
+                  ),
                   selected: token == _color,
                   onTap: () => setState(() => _color = token),
                 ),

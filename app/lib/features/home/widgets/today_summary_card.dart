@@ -146,7 +146,11 @@ class TodaySummaryCard extends ConsumerWidget {
                     final name =
                         subject?.name ?? AppLocalizations.of(context).homeGenel;
                     final color = subject != null
-                        ? subjectColor(subject.color)
+                        // WP-804: nokta kart yüzeyinde → zemin zorunlu.
+                        ? subjectColor(
+                            subject.color,
+                            on: theme.colorScheme.surface,
+                          )
                         : theme.colorScheme.onSurfaceVariant;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),

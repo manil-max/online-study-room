@@ -70,14 +70,29 @@ void main() {
     tester,
   ) async {
     // Görsel yenilendi ama hangi rütbenin hangi rengi aldığı değişmedi.
+    // WP-804: renk artık zeminin fonksiyonu; beklenti de aynı zeminden
+    // (pump edilen temanın şeması) türetilir — sabit kopya değil.
     for (final rank in kCrownRanks) {
       final painter = await _pumpAndReadPainter(tester, rank: rank);
-      expect(painter.color, crownColorFor(rank), reason: '$rank rengi kaydı');
-      expect(painter.color, tierColorFor(crownTierNumber(rank)));
+      final scheme = Theme.of(
+        tester.element(find.byType(CrownedAvatar)),
+      ).colorScheme;
+      expect(
+        painter.color,
+        crownColorFor(rank, scheme),
+        reason: '$rank rengi kaydı',
+      );
+      expect(
+        painter.color,
+        tierColorFor(crownTierNumber(rank), on: scheme.surface),
+      );
     }
     // Sunucudan gelen eski rütbe hâlâ Elmas'a normalize ediliyor.
     final legacy = await _pumpAndReadPainter(tester, rank: 'platinum_scholar');
-    expect(legacy.color, tierColorFor(4));
+    final legacyScheme = Theme.of(
+      tester.element(find.byType(CrownedAvatar)),
+    ).colorScheme;
+    expect(legacy.color, tierColorFor(4, on: legacyScheme.surface));
   });
 
   test('WP-292 kabul: aynı XP → aynı kademe (eşiklere dokunulmadı)', () {

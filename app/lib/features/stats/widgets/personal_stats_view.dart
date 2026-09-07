@@ -939,7 +939,8 @@ class _WeekComparisonCard extends StatelessWidget {
                   color: flat
                       ? theme.colorScheme.onSurfaceVariant
                       : improved
-                      ? subjectColor('chart-2')
+                      // WP-804: ikon kart yüzeyinde → zemin zorunlu.
+                      ? subjectColor('chart-2', on: theme.colorScheme.surface)
                       : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 4),
@@ -954,7 +955,10 @@ class _WeekComparisonCard extends StatelessWidget {
                       color: flat
                           ? theme.colorScheme.onSurfaceVariant
                           : improved
-                          ? subjectColor('chart-2')
+                          ? subjectColor(
+                              'chart-2',
+                              on: theme.colorScheme.surface,
+                            )
                           : theme.colorScheme.error,
                     ),
                   ),
@@ -1113,7 +1117,8 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
           return SubjectDonutSlice(
             label: subject?.name ?? AppLocalizations.of(context).statsGenel,
             color: subject != null
-                ? subjectColor(subject.color)
+                // WP-804: dilim etiketi/lejantı kart yüzeyinde → zemin zorunlu.
+                ? subjectColor(subject.color, on: theme.colorScheme.surface)
                 : theme.colorScheme.onSurfaceVariant,
             seconds: entry.value,
           );

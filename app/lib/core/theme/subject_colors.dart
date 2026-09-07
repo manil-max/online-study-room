@@ -15,10 +15,20 @@ const Map<String, Color> _subjectColors = <String, Color>{
   'chart-5': Color(0xFFF3625D), // mercan / kırmızı
 };
 
-/// Token'a karşılık gelen renk (bilinmeyen token → paletin ilk rengi).
+/// Token'a karşılık gelen **ham** marka rengi — zeminden tamamen bağımsız
+/// (bilinmeyen token → paletin ilk rengi).
 ///
-/// [on] verilirse renk **o zeminin fonksiyonudur**: ton korunur, açıklık
-/// [accentOn] ile eşiğe (3.0) kilitlenir.
+/// 🔴 Bu kaçış yolu **istisnadır**. Yalnız rengin üstüne çizildiği zemin
+/// uygulamanın tema yüzeyi OLMADIĞI yerde kullanılır — kamp ateşi sahnesinin
+/// kendi boyalı zemini gibi. Her çağrının yanına NEDEN ham olduğu yazılır.
+///
+/// Kapı `theme_contrast_gate_wp627_test.dart` `lib/` içindeki ham kullanımların
+/// **tam listesini** kilitler; yeni bir kaçış eklenirse kırmızıya düşer.
+Color subjectColorRaw(String token) =>
+    _subjectColors[token] ?? _subjectColors[kSubjectColorTokens.first]!;
+
+/// Token'a karşılık gelen renk — **[on] zemininin fonksiyonudur** (zorunlu):
+/// ton korunur, açıklık [accentOn] ile eşiğe (3.0) kilitlenir.
 ///
 /// 🔴 WP-797: palet zeminden bağımsız sabitti. 15 hazır temada ölçüldüğünde
 /// 75 ölçümün 11'i 3.0 altındaydı — `nordic_snow`/`paper_ink`/`pastel_day`/
@@ -28,11 +38,9 @@ const Map<String, Color> _subjectColors = <String, Color>{
 /// Yani kayıp sessizdi — kullanıcı işaretin olmadığını değil, hedefin
 /// tamamlanmadığını sanıyordu.
 ///
-/// Zemin geçmeyen çağrı **yalnız** dolgu/alfa katmanı içindir (ör. sahnenin
-/// kendi koyu zemini üstüne çizilen kamp ateşi etiketi). Kapı
-/// `theme_contrast_gate_wp627_test.dart` zemin farkındalı biçimi 15 temada ölçer.
-Color subjectColor(String token, {Color? on}) {
-  final base =
-      _subjectColors[token] ?? _subjectColors[kSubjectColorTokens.first]!;
-  return on == null ? base : accentOn(on, preferred: base);
-}
+/// 🔴 WP-804: [on] artık **zorunlu**. WP-797 onu opsiyonel bırakınca ~20 çağrı
+/// yeri ham renk almaya devam etti ve kapı bunu göremedi (kapı yalnız zemin
+/// farkındalı biçimi ölçüyor). Zorunlu parametreyle derleyici kapıya dönüşür.
+/// Gerçekten ham renk gereken yer [subjectColorRaw] kullanır.
+Color subjectColor(String token, {required Color on}) =>
+    accentOn(on, preferred: subjectColorRaw(token));

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -294,14 +295,14 @@ void main() {
 
       for (var tier = 1; tier <= 6; tier++) {
         assertFixed(
-          tierColorFor(tier),
+          tierColorRaw(tier),
           tierColorFor(tier, on: light),
           'rütbe $tier',
         );
       }
       for (final token in kSubjectColorTokens) {
         assertFixed(
-          subjectColor(token),
+          subjectColorRaw(token),
           subjectColor(token, on: light),
           'ders $token',
         );
@@ -322,6 +323,94 @@ void main() {
         };
         expect(colors, hasLength(6), reason: preset.id);
       }
+    });
+  });
+
+  group('zemin parametresi ZORUNLU — kaçış yolu kilitli (WP-804)', () {
+    // 🔴 WP-797 zemin parametresini **opsiyonel** bıraktı ve ~20 çağrı yeri
+    // ham renk almaya devam etti; kapı yalnız `on:` verilen biçimi ölçtüğü
+    // için bunu göremedi. WP-804 parametreyi zorunlu yaptı: artık derleyicinin
+    // kendisi kapıdır. Ama zorunluluk, kaçış yolu (`…Raw`) serbestse erir —
+    // herkes `Raw` yazıp kurtulur. Bu grup kaçış yolunu ada ada kilitler.
+
+    /// `Raw` yolunun `lib/` içindeki **TAM** kullanım haritası: dosya → adet.
+    ///
+    /// Yeni bir satır eklemek bilinçli bir karardır ve buraya **gerekçesiyle**
+    /// yazılır. Gerekçe tek bir şey olabilir: rengin üstüne çizildiği zemin
+    /// uygulamanın tema yüzeyi DEĞİLDİR.
+    const rawAllowlist = <String, int>{
+      // campfire_scene.dart: rozet (amber) ve kamperin ad/süre etiketi (yeşil)
+      // sahnenin KENDİ boyalı zemininde durur — siyah %34 örtü + gölgeli beyaz
+      // yazı. `theme.colorScheme.surface` oraya çizilmiyor, o yüzden geçilecek
+      // doğru bir zemin yok. WP-797 bunu ölçüp bilerek ham bıraktı.
+      'lib/features/classroom/widgets/campfire_scene.dart': 2,
+    };
+
+    /// Ham yolun **tanımlandığı** dosyalar: kendi gövdelerinde adı geçer,
+    /// çağrı yeri sayılmaz.
+    const definitionFiles = <String>{
+      'lib/core/stats/progression_visuals.dart',
+      'lib/core/theme/subject_colors.dart',
+    };
+
+    final rawCall = RegExp(r'\b(tierColorRaw|subjectColorRaw)\s*\(');
+
+    test('ham yol yalnız izin listesindeki yerlerde kullanılır', () {
+      final found = <String, int>{};
+      for (final entity in Directory('lib').listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final rel = entity.path.replaceAll('\\', '/');
+        if (definitionFiles.contains(rel)) continue;
+        final n = rawCall.allMatches(entity.readAsStringSync()).length;
+        if (n > 0) found[rel] = n;
+      }
+      // Eşitlik iki yönde de bağlar: yeni bir kaçış eklenirse de, izin
+      // listesindeki gerekçeli kullanım sessizce yok olursa da kırmızı.
+      expect(
+        found,
+        rawAllowlist,
+        reason:
+            'Ham palet yolu (`tierColorRaw`/`subjectColorRaw`) izin listesinin '
+            'dışında kullanılmış ya da liste bayatlamış.\n'
+            'Bulunan: $found\nBeklenen: $rawAllowlist',
+      );
+    });
+
+    test('ham yol gerçekten var ve kapı boşa dönmüyor', () {
+      // Regex ya da fonksiyon adı değişirse yukarıdaki test "hiçbir yerde
+      // kullanılmıyor" diye sessizce yeşile dönebilirdi.
+      for (final path in definitionFiles) {
+        final src = File(path).readAsStringSync();
+        expect(
+          RegExp(r'Color (tierColorRaw|subjectColorRaw)\(').hasMatch(src),
+          isTrue,
+          reason: '$path içinde ham yol bildirimi yok — kapı ölçmüyor',
+        );
+      }
+      expect(rawAllowlist.values.reduce((a, b) => a + b), 2);
+    });
+
+    test('zemin parametresi opsiyonele geri dönmemiş', () {
+      // Derleyici kapısının kaynağı: imzadaki `required`. Biri onu tekrar
+      // `Color? on` yaparsa mevcut testler yeşil kalırdı — imza ölçülür.
+      expect(
+        File('lib/core/stats/progression_visuals.dart').readAsStringSync(),
+        contains('Color tierColorFor(int tier, {required Color on})'),
+      );
+      expect(
+        File('lib/core/theme/subject_colors.dart').readAsStringSync(),
+        contains('Color subjectColor(String token, {required Color on})'),
+      );
+      // Aynı kaçış yolu bu iki sarmalayıcıdan da geçiyordu (WP-797'de
+      // `crownColorFor(rank)` şemasız çağrılabiliyordu).
+      final visuals = File(
+        'lib/core/stats/progression_visuals.dart',
+      ).readAsStringSync();
+      expect(
+        visuals,
+        contains('Color crownColorFor(String rank, ColorScheme scheme)'),
+      );
+      expect(visuals, contains('required ColorScheme scheme,'));
     });
   });
 

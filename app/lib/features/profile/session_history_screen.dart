@@ -478,7 +478,11 @@ class _SessionTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 5,
-                  backgroundColor: subjectColor(subject.color),
+                  // WP-804: nokta liste yüzeyinde → zemin zorunlu.
+                  backgroundColor: subjectColor(
+                    subject.color,
+                    on: theme.colorScheme.surface,
+                  ),
                 ),
                 SizedBox(width: 6),
                 Flexible(

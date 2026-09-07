@@ -303,8 +303,13 @@ class LeaderboardCard extends ConsumerWidget {
                   value: groupGoalPct,
                   minHeight: 7,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  // WP-804: çubuk kendi zemininin (surfaceContainerHighest)
+                  // üstünde duruyor; zemin o rol, `surface` değil.
                   color: groupGoalPct >= 1.0
-                      ? subjectColor('chart-2')
+                      ? subjectColor(
+                          'chart-2',
+                          on: theme.colorScheme.surfaceContainerHighest,
+                        )
                       : theme.colorScheme.primary,
                 ),
               ),

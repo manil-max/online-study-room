@@ -408,7 +408,8 @@ class SessionScheduleCard extends ConsumerWidget {
 
   Color _colorOf(ThemeData theme, Subject? subject) => subject == null
       ? theme.colorScheme.onSurfaceVariant
-      : subjectColor(subject.color);
+      // WP-804: nokta kart yüzeyinde çiziliyor → zemin zorunlu.
+      : subjectColor(subject.color, on: theme.colorScheme.surface);
 }
 
 /// "Rekorlar" kartı (yalnız "Tümü"): tüm zaman metrikleri — ilk çalışma günü,
@@ -442,6 +443,8 @@ class PersonalRecordsCard extends ConsumerWidget {
       if (firstDay == null || entry.key.isBefore(firstDay)) firstDay = entry.key;
     }
     final peak = peakDay(totals);
+    // WP-804: döşeme ikonları kart yüzeyinde → zemin zorunlu.
+    final surface = Theme.of(context).colorScheme.surface;
     // Hedef AÇIKÇA geçilir: `longestStudyStreak` hedefsiz çağrıyı derlemez
     // (WP-639), çünkü sessiz varsayılan sahibin reddettiği kurala düşerdi.
     final longest = longestStudyStreak(
@@ -455,13 +458,13 @@ class PersonalRecordsCard extends ConsumerWidget {
     final tiles = <Widget>[
       _RecordTile(
         icon: Icons.flag_outlined,
-        color: subjectColor('chart-3'),
+        color: subjectColor('chart-3', on: surface),
         label: l10n.statsIlkCalismaGunu,
         value: firstDay == null ? '—' : dayLabel(firstDay),
       ),
       _RecordTile(
         icon: Icons.emoji_events_outlined,
-        color: subjectColor('chart-1'),
+        color: subjectColor('chart-1', on: surface),
         label: l10n.statsEnYogunGun,
         value: peak == null
             ? '—'
@@ -469,7 +472,7 @@ class PersonalRecordsCard extends ConsumerWidget {
       ),
       _RecordTile(
         icon: Icons.local_fire_department,
-        color: subjectColor('chart-5'),
+        color: subjectColor('chart-5', on: surface),
         label: l10n.statsRekorSeri,
         value: l10n.statsStreakGun(longest.toString()),
       ),
