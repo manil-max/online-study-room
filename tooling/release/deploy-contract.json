@@ -3,13 +3,13 @@
   "local_migration_head": "0140",
   "staging": {
     "migration_head": "0140",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "OPEN 2026-09-07 for 0140 (revoke_dead_rpc_grants). Grant-only: three uncalled RPCs lose their authenticated grant; bodies stay. 🔴 Never run anywhere (Docker blocked on this host), so staging executes it first and is deliberately not skipped. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-07 after the 0140 staging apply SUCCEEDED: run 34151001908, post-check printed 0140|0140|0140. Two of the four candidate grants were removed; the dry-run rejected the other two on evidence (run 34137055615 showed revoke-from-authenticated is a no-op while PUBLIC still holds EXECUTE; run 34137437787 showed record_goal_completion is exercised as authenticated by three pgTAP files that prove its guards)."
   },
   "production": {
-    "migration_head": "0139",
-    "deploy_enabled": false,
+    "migration_head": "0140",
+    "deploy_enabled": true,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED 2026-09-07 after the 0139 production apply SUCCEEDED: run 34133833524, post-check printed 0139|0139|0139 on jiphfrpzvkpzubbkhrwb. Three sweepers that had NEVER run are now scheduled: moderation-evidence-purge (daily 03:20 UTC), multi-group-presence-lease-sweeper (every minute), push-device-stale-pruner (daily 03:40 UTC). The first one closes a documented-but-unenforced promise: 0106 claimed evidence stops being retained, and it never was. Staging was proven first: dry-run 34133111179, apply 34133465652. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. release_enabled stays OPEN; the release GO string is separate and must be typed fresh."
+    "hold_reason": "OPEN 2026-09-07 for 0140 (revoke_dead_rpc_grants). Grant-only, two revokes. Staging is PROVEN first, deliberately, and it paid twice: the first dry-run showed the revoke did nothing, the second showed a third revoke would break three security tests. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
   }
 }
