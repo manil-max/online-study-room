@@ -90,11 +90,14 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     super.dispose();
   }
 
-  /// Faz geçişi/bitişinde geri bildirim: ses + titreşim + (ekran öndeyse) uyarı.
+  /// Faz geçişi/bitişinde geri bildirim: ses + (ekran öndeyse) uyarı.
   /// Kalıcı bildirim §5'e ait; burada yalnız uygulama-içi tetik (state machine
   /// olayı dışarı veriyor, UI tepki veriyor).
+  ///
+  /// 🔴 WP-808: faz bitişi titreşimi buradan `StudyTimerNotifier._completePhase`
+  /// içine taşındı. Burada kalsaydı yalnız bu kart EKRANDAYKEN hissedilirdi —
+  /// oysa pomodoro molası çoğunlukla kullanıcı başka bir ekrandayken biter.
   void _onTimerEvent(TimerEvent event) {
-    HapticFeedback.mediumImpact();
     SystemSound.play(SystemSoundType.alert);
     final l10n = AppLocalizations.of(context);
     final msg = switch (event) {
@@ -335,7 +338,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   ),
                   onPressed: timer.isStopping
                       ? null
-                      : () => stopTimerFromSurface(context, ref),
+                      // WP-808: durdur daha "ağır" bir olaydır, başlat hafif.
+                      // Ekrana bakmadan hangisine bastığın anlaşılsın.
+                      : () {
+                          HapticFeedback.mediumImpact();
+                          stopTimerFromSurface(context, ref);
+                        },
                   // WP-507: durdurma zinciri (native uzlaşma + sunucu finalize)
                   // bazen saniyeler sürüyor. Buton yalnız griye düşünce
                   // kullanıcı "tuş öldü" sanıyordu; ilerleme görünür olmalı.
@@ -354,7 +362,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   ),
                 )
               : FilledButton.icon(
-                  onPressed: notifier.start,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    notifier.start();
+                  },
                   icon: const Icon(Icons.play_arrow),
                   label: Text(
                     AppLocalizations.of(context).classroomCalismayaBasla,

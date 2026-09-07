@@ -4,12 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/animated_stat_number.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
 enum _Period { today, week, month, year }
+
+/// Aktif gün sayısı biçimsizdir; süre biçimleyicisiyle aynı imzayı taşısın
+/// diye ayrı bir fonksiyon (kapanış yazmak her karede yeni nesne üretirdi).
+String _plainCount(int value) => '$value';
 
 extension on _Period {
   String label(BuildContext context) => switch (this) {
@@ -109,19 +114,22 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
                   children: [
                     _Stat(
                       label: AppLocalizations.of(context).homeToplam,
-                      value: formatHuman(total),
+                      value: total,
+                      format: formatHuman,
                       color: theme.colorScheme.primary,
                     ),
                     const SizedBox(height: 8),
                     _Stat(
                       label: AppLocalizations.of(context).homeGunlukOrt,
-                      value: formatHuman(avg),
+                      value: avg,
+                      format: formatHuman,
                       color: theme.colorScheme.secondary,
                     ),
                     const SizedBox(height: 8),
                     _Stat(
                       label: AppLocalizations.of(context).homeAktifGun,
-                      value: '$activeDays',
+                      value: activeDays,
+                      format: _plainCount,
                       color: theme.colorScheme.tertiary,
                     ),
                   ],
@@ -131,21 +139,24 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
                     Expanded(
                       child: _Stat(
                         label: AppLocalizations.of(context).homeToplam,
-                        value: formatHuman(total),
+                        value: total,
+                        format: formatHuman,
                         color: theme.colorScheme.primary,
                       ),
                     ),
                     Expanded(
                       child: _Stat(
                         label: AppLocalizations.of(context).homeGunlukOrt,
-                        value: formatHuman(avg),
+                        value: avg,
+                        format: formatHuman,
                         color: theme.colorScheme.secondary,
                       ),
                     ),
                     Expanded(
                       child: _Stat(
                         label: AppLocalizations.of(context).homeAktifGun,
-                        value: '$activeDays',
+                        value: activeDays,
+                        format: _plainCount,
                         color: theme.colorScheme.tertiary,
                       ),
                     ),
@@ -192,10 +203,19 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, required this.color});
+  const _Stat({
+    required this.label,
+    required this.value,
+    required this.format,
+    required this.color,
+  });
 
   final String label;
-  final String value;
+
+  /// WP-808: döşeme artık hazır metni değil **sayıyı** alır; biçimleme her
+  /// ara karede yeniden yapılır, böylece değer eskiden yeniye geçebilir.
+  final int value;
+  final String Function(int value) format;
   final Color color;
 
   @override
@@ -211,8 +231,9 @@ class _Stat extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          value,
+        AnimatedStatNumber(
+          value: value,
+          format: format,
           style: theme.textTheme.titleMedium?.copyWith(
             color: color,
             fontWeight: FontWeight.w700,

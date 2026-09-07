@@ -23,6 +23,7 @@ import '../../core/observability/timer_diagnostic_journal.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/canonical_stats_projection.dart';
 import '../../core/stats/study_stats.dart';
+import '../../core/theme/motion_tokens.dart';
 import '../../features/android_widgets/android_widget_service.dart';
 import '../models/daily_stat.dart';
 import '../models/global_timer.dart';
@@ -2613,6 +2614,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     }
   }
 
+  /// Faz bitişinin dokunsal imzası: **çift** darbe.
+  ///
+  /// 🔴 WP-808: tek darbe başlat/durdur ile karışıyordu. Çift darbe "bir şey
+  /// bitti, sıradakine geçildi" demektir ve kullanıcı telefona bakmadan
+  /// molaya geçtiğini anlar. Titreşim erişilebilirlikteki "animasyonları
+  /// azalt" ayarına bağlanmaz — o ayrı bir ayardır.
+  Future<void> _pulsePhaseEndHaptic() async {
+    await HapticFeedback.mediumImpact();
+    await Future<void>.delayed(MotionTokens.hapticPulseGap);
+    await HapticFeedback.mediumImpact();
+  }
+
   /// Mevcut faz hedefe ulaştı: saf karara göre kaydet/geçiş yap.
   Future<void> _completePhase(int targetSeconds) async {
     await _verifiedStartFuture;
@@ -2627,6 +2640,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       cycle: state.cycle,
       cycles: state.cycles,
     );
+    unawaited(_pulsePhaseEndHaptic());
 
     if (state.liveRunToken case final token?) {
       try {

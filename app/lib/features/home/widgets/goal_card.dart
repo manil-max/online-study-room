@@ -1,7 +1,9 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/motion_tokens.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/goal_streak.dart';
@@ -13,13 +15,89 @@ import 'card_scaffold.dart';
 
 /// Günlük hedef ilerlemesi + güncel seri (§3.11 kart). Hedefe ulaşılan oran bir
 /// halka göstergede; seri büyük "🔥 N gün" rozetinde gösterilir.
-class GoalCard extends ConsumerWidget {
+class GoalCard extends ConsumerStatefulWidget {
   const GoalCard({super.key, this.size = DashboardCardSize.medium});
 
   final DashboardCardSize size;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GoalCard> createState() => _GoalCardState();
+}
+
+class _GoalCardState extends ConsumerState<GoalCard>
+    with SingleTickerProviderStateMixin {
+  // WP-808: günlük hedef bu uygulamanın TEK kutlama anı. Kart durumsuzken
+  // kutlama her rebuild'de yeniden oynardı (pano kartları sık rebuild olur),
+  // o yüzden animasyon kartın kendi state'inde durur.
+  late final AnimationController _celebration = AnimationController(
+    vsync: this,
+    duration: MotionTokens.celebration,
+  );
+
+  /// ✓ işaretinin kısa ölçek darbesi: büyür, yerine oturur.
+  late final Animation<double> _pulse = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 1,
+        end: 1.35,
+      ).chain(CurveTween(curve: MotionTokens.enter)),
+      weight: 40,
+    ),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 1.35,
+        end: 1,
+      ).chain(CurveTween(curve: MotionTokens.enter)),
+      weight: 60,
+    ),
+  ]).animate(_celebration);
+
+  @override
+  void dispose() {
+    _celebration.dispose();
+    super.dispose();
+  }
+
+  /// Hedef **az önce** tutturuldu: bir kez oynat.
+  ///
+  /// 🔴 Tetik `ref.listen` ile kaydedilen süre DEĞİŞTİĞİNDE gelir, `build`
+  /// içinden değil: build sırasında `forward()` çağırmak çizim sırasında
+  /// `markNeedsBuild` demektir. Uygulama hedef zaten tutmuşken açıldığında da
+  /// kutlama oynamaz — kullanıcı o anı yaşamadı, sadece uygulamayı açtı.
+  void _celebrate() {
+    // Titreşim ayrı bir ayardır; "animasyonları azalt"a bağlanmaz.
+    HapticFeedback.mediumImpact();
+    if (MotionTokens.reduced(context)) return;
+    _celebration.forward(from: 0);
+  }
+
+  /// Kutlama parçalarını hareket kapalıyken de doğru çizen sarmalayıcı:
+  /// denetleyici hiç ilerlemediği için ölçek 1.0'da kalır.
+  Widget _pulsed(Widget child) => ScaleTransition(scale: _pulse, child: child);
+
+  /// Halkanın dışına doğru açılıp sönen vurgu halkası.
+  Widget _ringHalo(Color color) => AnimatedBuilder(
+    animation: _celebration,
+    builder: (context, _) {
+      final t = _celebration.value;
+      if (t == 0) return const SizedBox.shrink();
+      return Transform.scale(
+        scale: 1 + 0.18 * t,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: color.withValues(alpha: (1 - t) * 0.7),
+              width: 3,
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final recorded = ref.watch(todayRecordedSecondsProvider);
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
@@ -35,6 +113,12 @@ class GoalCard extends ConsumerWidget {
         ? 0.0
         : (recorded / goalSeconds).clamp(0.0, 1.0);
     final reached = recorded >= goalSeconds && goalSeconds > 0;
+    // Yalnız eşiğin ALTINDAN ÜSTÜNE geçişte kutlanır; hedef tutmuşken gelen
+    // her yeni kayıt kutlamayı tekrar oynatmaz.
+    ref.listen<int>(todayRecordedSecondsProvider, (previous, next) {
+      if (goalSeconds <= 0 || previous == null) return;
+      if (previous < goalSeconds && next >= goalSeconds) _celebrate();
+    });
     // WP-797: yeşil ton zeminden bağımsız sabitti; açık temalarda (soft_cream,
     // pastel_day) halka ve ✓ işareti 2.2–2.4 ile eşiğin altındaydı. Hedefin
     // tamamlandığını söyleyen TEK görsel sinyal buydu.
@@ -52,7 +136,11 @@ class GoalCard extends ConsumerWidget {
             height: ringSize,
             child: Stack(
               alignment: Alignment.center,
+              // Vurgu halkası halkanın DIŞINA taşar; kırpılırsa kutlama
+              // görünmez olur. Taşma payı kartın 16 px iç boşluğunun altında.
+              clipBehavior: Clip.none,
               children: [
+                SizedBox.expand(child: _ringHalo(doneGreen)),
                 SizedBox.expand(
                   child: CircularProgressIndicator(
                     value: pct,
@@ -100,7 +188,13 @@ class GoalCard extends ConsumerWidget {
                         ),
                         const Spacer(),
                         if (reached)
-                          Icon(Icons.check_circle, color: doneGreen, size: 16),
+                          _pulsed(
+                            Icon(
+                              Icons.check_circle,
+                              color: doneGreen,
+                              size: 16,
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -148,7 +242,8 @@ class GoalCard extends ConsumerWidget {
                         ),
                       ),
                       const Spacer(),
-                      if (reached) Icon(Icons.check_circle, color: doneGreen),
+                      if (reached)
+                        _pulsed(Icon(Icons.check_circle, color: doneGreen)),
                     ],
                   ),
                   const SizedBox(height: 12),

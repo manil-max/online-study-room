@@ -6,6 +6,7 @@ import '../../../core/stats/session_window.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/animated_stat_number.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
@@ -131,35 +132,47 @@ class StudyRecords extends ConsumerWidget {
         icon: Icons.timelapse,
         color: subjectColor('chart-1', on: surface),
         label: '${AppLocalizations.of(context).statsToplam}$totalScope',
-        value: formatHuman(total),
+        // WP-808: oturum kaydedilince toplam tek karede zıplıyordu.
+        value: AnimatedStatNumber(
+          value: total,
+          format: formatHuman,
+          style: _tileValueStyle(context),
+        ),
       ),
       _RecordTile(
         icon: Icons.local_fire_department,
         color: subjectColor('chart-5', on: surface),
         label: '${AppLocalizations.of(context).statsRekorSeri}$windowScope',
-        value: AppLocalizations.of(context).statsStreakGun(longest.toString()),
+        value: Text(
+          AppLocalizations.of(context).statsStreakGun(longest.toString()),
+          style: _tileValueStyle(context),
+        ),
       ),
       _RecordTile(
         icon: Icons.emoji_events_outlined,
         color: subjectColor('chart-3', on: surface),
         label: '${AppLocalizations.of(context).statsEnVerimliGun}$windowScope',
-        value: bestDay == null
-            ? '—'
-            : '${formatHuman(bestSeconds)}\n${bestDay!.day} ${months[bestDay!.month - 1]}',
+        value: Text(
+          bestDay == null
+              ? '—'
+              : '${formatHuman(bestSeconds)}\n${bestDay!.day} ${months[bestDay!.month - 1]}',
+          style: _tileValueStyle(context),
+        ),
       ),
       _RecordTile(
         icon: Icons.calendar_month_outlined,
         color: subjectColor('chart-2', on: surface),
         label: '${AppLocalizations.of(context).statsAktifGun}$windowScope',
-        value: AppLocalizations.of(
-          context,
-        ).statsStreakGun(activeDays.toString()),
+        value: Text(
+          AppLocalizations.of(context).statsStreakGun(activeDays.toString()),
+          style: _tileValueStyle(context),
+        ),
       ),
       _RecordTile(
         icon: Icons.menu_book_outlined,
         color: subjectColor('chart-4', on: surface),
         label: '${AppLocalizations.of(context).statsEnCokDers}$windowScope',
-        value: topSubject,
+        value: Text(topSubject, style: _tileValueStyle(context)),
       ),
     ];
 
@@ -178,6 +191,13 @@ class StudyRecords extends ConsumerWidget {
   }
 }
 
+/// Döşeme değerinin ortak yazı biçimi. WP-808'de değer `String`ten `Widget`e
+/// döndü (biri artık [AnimatedStatNumber]); biçim burada TEK yerde durur ki
+/// beş döşeme birbirinden ayrışmasın.
+TextStyle? _tileValueStyle(BuildContext context) => Theme.of(
+  context,
+).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
+
 class _RecordTile extends StatelessWidget {
   const _RecordTile({
     required this.icon,
@@ -189,7 +209,7 @@ class _RecordTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label;
-  final String value;
+  final Widget value;
 
   @override
   Widget build(BuildContext context) {
@@ -217,12 +237,7 @@ class _RecordTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                value,
               ],
             ),
           ),

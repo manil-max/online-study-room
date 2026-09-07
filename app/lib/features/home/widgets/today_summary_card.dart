@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/animated_stat_number.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
@@ -76,8 +77,11 @@ class TodaySummaryCard extends ConsumerWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    formatHuman(total),
+                  // WP-808: kartın tek sayısı oturum bitince tek karede
+                  // zıplıyordu; artık eski değerden yenisine geçer.
+                  child: AnimatedStatNumber(
+                    value: total,
+                    format: formatHuman,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       color: theme.colorScheme.primary,
                     ),
@@ -229,8 +233,9 @@ class TodaySummaryCard extends ConsumerWidget {
                       // Toplam süre esnek DEĞİL: kısaltılırsa kartın tek sayısal
                       // bilgisi ("2s 30dk" → "2s…") yalan söyler. Yer daralınca
                       // kısalan başlıktır.
-                      Text(
-                        formatHuman(total),
+                      AnimatedStatNumber(
+                        value: total,
+                        format: formatHuman,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.primary,
                         ),

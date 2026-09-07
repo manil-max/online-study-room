@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'container_roles.dart';
+import 'motion_tokens.dart';
 import 'theme_presets.dart';
 import 'theme_tokens.dart';
 
@@ -468,6 +469,16 @@ class AppTheme {
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: colors.scaffold,
+      // WP-808: özel sayfa geçişi YOKTU — her ekran Android'in varsayılan
+      // yakınlaştırmasıyla açılıyordu, Windows'ta da aynısı. Geçiş **tek
+      // yerde** tanımlanır; ekran başına `PageRouteBuilder` yazılmaz. Gerekçe
+      // ve süre sınırı `motion_tokens.dart`'ta.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+        },
+      ),
       extensions: <ThemeExtension<dynamic>>[
         colors,
         typography,
