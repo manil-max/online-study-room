@@ -647,6 +647,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             goalSeconds: goalSeconds,
                             pct: pct,
                             reached: reached,
+                            known: todayKnown,
                             onEdit: () => _editGoal(context, goalMinutes),
                           ),
                           const SizedBox(height: 16),
@@ -989,12 +990,20 @@ Widget _subjectMenuRow(
 
 /// Günlük hedef ilerleme çubuğu — bugünkü süre / hedef + yüzde; hedefe ulaşınca
 /// yeşile döner. Dokununca hedef düzenlenir (§3.7).
+///
+/// 🔴 WP-819: WP-817 kartın ÜST satırındaki "Bugün" değerini dürüst yaptı ama
+/// bu blok aynı yalanı sürdürüyordu — `%0` ve `0sn / 4sa`, üstelik dolu bir
+/// ilerleme çubuğu iddiasıyla. Blok yalnız [showSecondary] (hücre yüksekliği
+/// yeterli) iken çizilir, yani DAR telefonda görünmez; **masaüstünde ve geniş
+/// kartta görünür**. Düzeltmenin oraya uğramaması, kusurun tam olarak sahibin
+/// kullandığı yüzeyde açık kalması demekti.
 class _GoalProgress extends StatelessWidget {
   const _GoalProgress({
     required this.todaySeconds,
     required this.goalSeconds,
     required this.pct,
     required this.reached,
+    required this.known,
     required this.onEdit,
   });
 
@@ -1002,6 +1011,11 @@ class _GoalProgress extends StatelessWidget {
   final int goalSeconds;
   final double pct;
   final bool reached;
+
+  /// Bugünkü süre GERÇEKTEN ölçüldü mü? `false` iken hiçbir sayı iddia
+  /// edilmez: yüzde ve süre [kUnknownMetric], çubuk da belirsizdir.
+  final bool known;
+
   final VoidCallback onEdit;
 
   @override
@@ -1037,9 +1051,9 @@ class _GoalProgress extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '%${(pct * 100).round()}',
+                  known ? '%${(pct * 100).round()}' : kUnknownMetric,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: reached ? barColor : null,
+                    color: reached && known ? barColor : null,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1051,7 +1065,9 @@ class _GoalProgress extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
-                value: pct,
+                // `null` = BELIRSIZ. Yukleme sirasinda `0` yazmak "bugun hic
+                // calismadin" demektir; bos bir cubuk da ayni iddiayi tasir.
+                value: known ? pct : null,
                 minHeight: 8,
                 backgroundColor: theme.colorScheme.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation<Color>(barColor),
@@ -1061,7 +1077,11 @@ class _GoalProgress extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${formatHumanSeconds(todaySeconds)} / ${formatHumanSeconds(goalSeconds)}',
+                // Hedef BILINIR (kullanicinin kendi ayari); bugunku sure
+                // olculmemis olabilir. Satirin yalniz bilinmeyen yarisi
+                // isarete duser -- hedefi de gizlemek bilgi kaybi olurdu.
+                '${known ? formatHumanSeconds(todaySeconds) : kUnknownMetric}'
+                ' / ${formatHumanSeconds(goalSeconds)}',
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
             ),
