@@ -48,7 +48,10 @@ import 'package:online_study_room/features/desktop/desktop_home_shell.dart';
 import 'package:online_study_room/features/home/home_screen.dart';
 import 'package:online_study_room/features/profile/profile_screen.dart';
 import 'package:online_study_room/features/stats/stats_screen.dart';
+import 'package:online_study_room/core/tour/tour_prefs.dart';
+import 'package:online_study_room/features/tours/app_tours.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final _me = Profile(
@@ -225,7 +228,19 @@ Map<String, Object> _emptyDashboardPrefs() => {
 /// görülmemişse `TourHost` ekranın üstüne modal bir balon serer ve **jesti
 /// yutar**. Tur bayrağı olmadan Ana Sayfa ölçümü sarmalayıcıyı değil turu
 /// ölçerdi. Diğer sekmelerin turları `navIndexProvider` 0'da tetiklenmez.
-const _homeTourSeenKey = 'tour.home.v2.${'me-1'}';
+/// 🔴 WP-801/3: bu anahtar `'tour.home.v2.me-1'` diye SABIT yazilmisti ve
+/// WP-799 turu v2 -> v3'e cikarinca sessizce bayatladi: bayrak artik baska
+/// bir anahtara yaziliyordu, tur yeniden gorunur oldu ve balonun opak
+/// bariyeri jesti yuttu. Iki test "yenileme kumesi bos" diye dustu; kusur
+/// urunde degil, TESTIN SABITINDEYDI.
+///
+/// Surum artik KAYNAKTAN turetiliyor. Bir sonraki tur surumu bu dosyayi
+/// kirmiyor -- ama tur GERCEKTEN kaldirilirsa `storageId` degisir ve kirar,
+/// ki dogrusu budur.
+final _homeTourSeenKey = tourSeenKey(
+  storageId: AppTours.home(AppLocalizationsTr(), isEmpty: false).storageId,
+  userId: 'me-1',
+);
 
 Future<SharedPreferences> _prefs([Map<String, Object>? values]) async {
   SharedPreferences.setMockInitialValues({_homeTourSeenKey: true, ...?values});
