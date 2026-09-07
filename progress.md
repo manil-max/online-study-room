@@ -12083,3 +12083,17 @@ toplu seçimden hızlı. Hacim artarsa gelir.
 Arşiv segmentinin gerçek telefonda kullanımı; iç not yazma akışı; zaman
 çizelgesinin gerçek `moderation_audit_events` satırlarıyla dolması (bellek
 içi depo tohumlu ölçüldü, **sunucudan okunuşu ölçülmedi**).
+
+### v82 YAYINDA + Play alpha 82 completed
+
+| Adım | Kanıt |
+|---|---|
+| release commit / tag | `03a1e179`, `v82` |
+| Release Orchestrator | `34113711763` 6/6, Release 11:14:14Z |
+| Play upload | `34117748127` → `alpha` **completed** |
+| Play verify | `34117874475` → `alpha = 82` |
+| Veritabanı | değişmedi, head `0138` |
+
+Mağaza notu `release_notes.json`'dan türedi (TR 359 / EN 358 karakter,
+sınır 500) ve yüklemeyle birlikte gitti. Kanıt:
+`docs/qa/V82-STABLE-RELEASE-EVIDENCE.md`.
