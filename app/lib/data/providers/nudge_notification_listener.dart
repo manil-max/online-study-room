@@ -1,16 +1,54 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../models/nudge.dart';
+import '../repositories/nudge_repository.dart';
 import 'auth_providers.dart';
 import 'nudge_providers.dart';
 
 /// Bildirimi gösterilmiş dürtme id'lerinin kalıcı anahtarı.
 const _kNotifiedNudgeIdsKey = 'notified_nudge_ids';
+
+/// WP-811 — dürtmeyi sunucuda "işlendi" olarak işaretler.
+///
+/// 🔴 `read_at`'in bu uygulamadaki GERÇEK anlamı: **bir istemci bu dürtmeyi
+/// teslim alıp işledi.** "Kullanıcı gözüyle okudu" DEĞİL — ortada bir dürtme
+/// gelen kutusu ekranı yok; `receivedNudgesProvider`'ın tek tüketicisi bu
+/// dinleyicidir. Bu farkı gizlemiyoruz: sütun adı "read" ama semantiği
+/// "delivered & processed by a client".
+///
+/// Neden gerekli: `markRead` bugüne kadar `lib/` içinde hiç çağrılmıyordu,
+/// yani her dürtme satırı sunucuda ömür boyu `read_at = null` kalıyordu. Üç
+/// somut sonucu vardı — (1) dinleyicideki `readAt == null` süzgeci etkisizdi,
+/// (2) `notified_nudge_ids` seti `SharedPreferences`'te yani CİHAZ BAŞINA
+/// olduğu için aynı hesabın ikinci cihazı (Windows + Android) aynı dürtmeyi
+/// bir daha bildiriyordu, (3) `SupabaseNudgeRepository.kNudgeWindow` bu
+/// eksiğin telafisi olarak konmuştu.
+///
+/// Ateş-et-unut: UI hiçbir zaman bunu beklemez. Hata **yutulmaz ama
+/// kullanıcıya patlamaz** — bu bir hijyen işlemidir, başarısızlığı için
+/// snackbar göstermek anlamsız olurdu (kullanıcı zaten bildirimi aldı);
+/// yine de sessizce kaybolmasın diye depodaki mevcut desenle
+/// (`SupabaseAdminRepository._debugLogFeedback`) günlüğe yazılır.
+/// `async` gövde sayesinde senkron fırlatan bir implementasyon da yakalanır.
+Future<void> _markProcessedOnServer(
+  NudgeRepository repository,
+  String nudgeId,
+) async {
+  try {
+    await repository.markRead(nudgeId);
+  } catch (error, stackTrace) {
+    // NudgeException(NudgeErrorCode.markReadFailed) dahil her hata buraya düşer.
+    if (!kDebugMode) return;
+    debugPrint('WP-811: nudge markRead basarisiz ($nudgeId): $error');
+    debugPrint('$stackTrace');
+  }
+}
 
 /// Dinleyicinin kurulduğu an.
 ///
@@ -26,10 +64,12 @@ final _nudgeListeningStartedAtProvider = Provider<DateTime>(
 /// Her dürtme **yalnızca bir kez** bildirilir. Daha önce bu iş geçici stream
 /// snapshot'ına (`previous.value`) dayanıyordu; Supabase realtime yeniden
 /// bağlanınca ya da provider yeniden kurulunca `previous` boş gelir, o an
-/// okunmamış olan (ve `markRead` hiç çağrılmadığı için hep okunmamış kalan)
-/// dürtme "yeni" sanılıp tekrar tekrar bildirilirdi ("kimse dürtmese bile sürekli
-/// dürtme"). Artık bildirilen id'ler `SharedPreferences`'te tutulur; stream
-/// tazelense veya uygulama yeniden açılsa da aynı dürtme yeniden bildirilmez.
+/// okunmamış olan (ve o gün `markRead` hiç çağrılmadığı için hep okunmamış
+/// kalan) dürtme "yeni" sanılıp tekrar tekrar bildirilirdi ("kimse dürtmese bile
+/// sürekli dürtme"). Artık bildirilen id'ler `SharedPreferences`'te tutulur;
+/// stream tazelense veya uygulama yeniden açılsa da aynı dürtme yeniden
+/// bildirilmez. WP-811'den beri ayrıca sunucuya da `markRead` gönderilir —
+/// cihaz başına tutulan set, ikinci cihazı tek başına koruyamıyordu.
 final nudgeNotificationListenerProvider = Provider<void>((ref) {
   final user = ref.watch(authStateProvider).value;
   final preferences = ref.watch(notificationPreferencesProvider);
@@ -70,16 +110,30 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
     for (final nudge in unread) {
       // Uygulama açılmadan önce oluşmuş eski bir dürtme asla açılış bildirimi
       // üretmez; yalnızca gelecekteki tekrarları önlemek için tanınır.
-      if (!nudge.createdAt.toUtc().isAfter(listeningStartedAt)) {
-        if (notified.add(nudge.id)) {
-          addedThisSession.add(nudge.id);
-          changed = true;
-        }
-        continue;
-      }
-      if (!notified.add(nudge.id)) continue; // zaten bildirildi
+      final isHistory = !nudge.createdAt.toUtc().isAfter(listeningStartedAt);
+      if (!notified.add(nudge.id)) continue; // zaten işlendi
       addedThisSession.add(nudge.id);
       changed = true;
+      // 🔴 WP-811 — `markRead` TAM BURADA çağrılır: kalıcı `notified` setinin
+      // BÜYÜDÜĞÜ an. Set zaten "bu id işlendi" demektir, dolayısıyla aynı
+      // dürtme için ikinci bir sunucu çağrısı asla çıkmaz. Her karede çağırmak
+      // (set büyümese de) akış her tazelendiğinde gereksiz RPC üretirdi.
+      //
+      // Çağrı sessiz saatten, susturma süzgecinden ve `isHistory` dalından
+      // ÖNCEDİR; üçü de bilinçli kararlardır:
+      //  • Sessiz saat: bildirim gösterilmez ama dürtme işlenmiştir. Aksi
+      //    halde sessiz saati biten kullanıcının İKİNCİ cihazı aynı dürtmeyi
+      //    patlatırdı.
+      //  • Susturma: bildirim üretilmez ama satırın sonsuza dek okunmamış
+      //    kalmasının hiçbir faydası yok.
+      //  • Geçmiş (dinleyici kurulmadan önce oluşmuş): kullanıcı onları zaten
+      //    kaçırdı, bir daha bildirim üretmeyecekler; sunucuda okunmamış
+      //    durmaları yalnızca pencereyi kirletir.
+      // `readAt != null` gelen dürtmeler bu döngüye zaten girmez (`unread`).
+      unawaited(
+        _markProcessedOnServer(ref.read(nudgeRepositoryProvider), nudge.id),
+      );
+      if (isHistory) continue;
       if (quiet) continue;
       // WP-444: susturulan kişinin dürtmesi bildirim üretmez. Sohbet, profil ve
       // grup erişimi etkilenmez — bu yalnız dürtme kanalıdır.
@@ -90,8 +144,9 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
     //
     // Eski hali her bildirilen id'yi ekleyip TAMAMINI diske yaziyordu ve hic
     // silmiyordu: yillar sonra bu liste kullanicinin aldigi her durtmeyi
-    // tasir, her degisimde bastan yazilirdi. `markRead` hicbir yerden
-    // cagrilmadigi icin de sunucu tarafi hic kuculmuyor.
+    // tasir, her degisimde bastan yazilirdi. O gun `markRead` hicbir yerden
+    // cagrilmadigi icin sunucu tarafi da hic kuculmuyordu; WP-811'den beri
+    // cagriliyor (yukaridaki `_markProcessedOnServer`).
     //
     // Budama kurali guvenli: akis artik en yeni N durtmeyi tasiyor
     // (`SupabaseNudgeRepository.kNudgeWindow`). Pencereden dusen bir durtme
