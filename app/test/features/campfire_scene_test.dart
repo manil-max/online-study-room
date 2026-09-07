@@ -167,7 +167,16 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('Henüz grup yok'), findsOneWidget);
+    // 🔴 WP-797 — IDDIA YON DEGISTIRDI. Bu rozet YALNIZ grubu OLAN
+    // kullaniciya cizilir; "Henuz grup yok" orada yanlis bilgiydi (grubunu
+    // yeni kuran kullanici, grubunun icinde "grup yok" okuyordu). Olculen
+    // sey ayni: kimse calismiyorken sonuk ates ipucu.
+    expect(find.text('Şu an kimse çalışmıyor'), findsOneWidget);
+    expect(
+      find.text('Henüz grup yok'),
+      findsNothing,
+      reason: 'Grubu olan kullaniciya "grup yok" denmemeli.',
+    );
     expect(find.text('Çalışmaya başla'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());

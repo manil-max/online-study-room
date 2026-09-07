@@ -290,17 +290,27 @@ void main() {
             reason: 'istatistik bos durumu tasti: $errors',
           );
 
+          // 🔴 WP-799 — IDDIA YON DEGISTIRDI. Bos durum ayni seyi IKI KEZ
+          // soyluyordu ("Henuz calisma kaydin yok" + "Bu donemde calisma
+          // kaydin yok.") ve hicbir eylem sunmuyordu. Ikinci cumle kalkti,
+          // yerine cikis dugmesi geldi.
+          //
+          // Bu dosyanin amaci DEGISMEDI: buyuk yazida bos durumun
+          // ULASILABILIR oldugunu olcer. Artik olculen sey, kullaniciyi
+          // oradan cikaran DUGMENIN ulasilabilirligi -- daha sert bir
+          // iddia, cunku bir metin okunamasa da zarar sinirlidir, ama
+          // ulasilamayan bir dugme olu uctur.
           await _expectReachable(
             tester,
-            find.text('Bu dönemde çalışma kaydın yok.'),
+            find.byKey(const Key('stats-personal-empty-start')),
             height,
-            'Bos durum aciklamasi',
+            'Bos durum cikis dugmesi',
           );
 
           expect(
             _verticalScrollAncestors(
               tester,
-              find.text('Bu dönemde çalışma kaydın yok.'),
+              find.byKey(const Key('stats-personal-empty-start')),
             ),
             greaterThan(0),
             reason: 'istatistik bos durumunda dikey kaydirici yok',
