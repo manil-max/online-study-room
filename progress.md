@@ -12578,3 +12578,36 @@ vakasıydı — birincisi WP-820'de çıktı.
 - Aynı sessizlik deseni WP-610/617/619'da altı yüzeyde kapatılmıştı; bu dosya o
   turların SAHİP yollarında değildi. Desen tek tek kapatıldığı sürece bir
   sonraki dosyada tekrar doğar.
+
+## 2026-09-08 — v83 YAYINLANDI (1.0.83+83)
+
+Sahip GO: *"v83 çıkar"*, ardından *"gönder hepsini, sonra pc'yi kapat"*.
+
+| adım | kanıt |
+|---|---|
+| Etiket | `v83` → commit `1cfcf2f6` |
+| Release orkestratörü | run `34166386717` — preflight ✅, android ✅, finalize_android ✅ |
+| GitHub Release | yayımlandı (draft değil); `app-play-release.aab` 75,8 MB |
+| Play alpha | run `34168099776` ✅ — `upload`, iz `alpha`, durum `completed` |
+| Mağaza notu | TR 484 / EN 414 karakter (sınır 500) |
+| Veritabanı | **değişmedi**; head `0140`, iki ortam da orada |
+
+**Yayından ÖNCE ve bağımsız olarak inen:** yönetim edge fonksiyonları
+(`34158924034` staging, `34158977501` production). WP-813'ün "Geri al gerçekten
+adı geri yükler" düzeltmesi bu yüzden uygulama sürümünü beklemedi.
+
+### 🔴 Ölçülmeyen tek şey
+Release orkestratörünün **Windows derleme işi** ben bilgisayarı kapatırken
+hâlâ koşuyordu. Android yolu bitmiş, Play'e inmiş ve GitHub Release
+yayımlanmıştı; Windows paketi ayrı bir varlıktır ve sonucu sabah
+`gh run view 34166386717` ile okunmalı. Kırmızıysa Android yayını etkilenmez,
+yalnız Windows paketi eksik kalır.
+
+### Cihazda doğrulanacak (v83 sonrası ilk açılış)
+1. Hedefini tutmuş hesapla uygulamayı **soğuk aç** → titreşim/halka/✓ darbesi
+   **olmamalı**. Sonra o gün hedefi gerçekten aş → kutlama **oynamalı**.
+2. Uçak moduna al, panoyu aç → sayaç kartında "Bugün" altında `—` ve
+   "Veriler yüklenemedi" görünmeli, **BAŞLAT çalışmalı**.
+3. Geniş kartta/masaüstünde hedef çubuğu yüklenirken `%0` değil `—` demeli.
+4. İki cihazda aynı hesap → bir dürtme yalnız birinde bildirilmeli.
+5. Yönetimde bir hesaba ad sıfırlama uygula → "Geri al" → ad **geri gelmeli**.
