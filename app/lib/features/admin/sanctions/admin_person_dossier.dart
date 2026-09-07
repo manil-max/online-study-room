@@ -8,15 +8,17 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import 'admin_active_restriction_card.dart';
 import 'admin_sanction_actions.dart';
 import 'admin_sanction_dialogs.dart';
 import 'sanction_ladder.dart';
 
+// WP-809: aktif kisit karti ile geri alma anahtari ortak widget'a tasindi;
+// bu dosyayi import eden yuzeyler anahtari buradan gormeye devam etsin.
+export 'admin_active_restriction_card.dart' show kAdminSanctionRevokeKey;
+
 /// Kisi dosyasinin govdesi.
 const Key kAdminPersonDossierKey = Key('admin-person-dossier');
-
-/// Aktif kisitin yanindaki kalici geri alma yolu (PLAN §4.4/4).
-const Key kAdminSanctionRevokeKey = Key('admin-sanction-revoke');
 
 /// Ceza gecmisi bloku (PLAN §1.3(b): saglayici vardi, hic cizilmiyordu).
 const Key kAdminSanctionHistoryKey = Key('admin-sanction-history');
@@ -255,63 +257,13 @@ class _SanctionBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final now = DateTime.now();
-    ModerationSanction? active;
-    for (final sanction in sanctions) {
-      if (sanction.isActive(now)) {
-        active = sanction;
-        break;
-      }
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (active == null)
-          Text(
-            l10n.adminSanctionNoActiveRestriction,
-            style: theme.textTheme.bodyMedium,
-          )
-        else
-          Card(
-            color: theme.colorScheme.errorContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.adminModerationSanctionActive(
-                      adminSanctionLabel(l10n, active.action),
-                    ),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    active.expiresAt == null
-                        ? l10n.adminSanctionNoExpiry
-                        : l10n.adminSanctionExpiresAt(_stamp(active.expiresAt!)),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    key: kAdminSanctionRevokeKey,
-                    onPressed: () => AdminSanctionActions.revoke(
-                      context,
-                      ref,
-                      sanction: active!,
-                    ),
-                    icon: const Icon(Icons.undo, size: 20),
-                    label: Text(l10n.adminSanctionLiftRestriction),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        // WP-809: aktif kisit + kaldirma yolu artik ortak widget. Vakadan
+        // acilan moderasyon profili ayni karti cizer; iki yuzey ayrilamaz.
+        AdminActiveRestrictionCard(sanctions: sanctions),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           key: kAdminSanctionApplyMenuKey,
@@ -359,7 +311,7 @@ class _SanctionBlock extends ConsumerWidget {
                       Text(
                         sanction.appliedAt == null
                             ? sanction.reason
-                            : '${_stamp(sanction.appliedAt!)} · ${sanction.reason}',
+                            : '${adminSanctionStamp(sanction.appliedAt!)} · ${sanction.reason}',
                       ),
                     ],
                   ),
@@ -370,8 +322,4 @@ class _SanctionBlock extends ConsumerWidget {
       ],
     );
   }
-
-  /// Depoda kayitli desen: tarih bicimi tek satirda, gomulu metin yok.
-  static String _stamp(DateTime value) =>
-      value.toLocal().toString().substring(0, 16);
 }

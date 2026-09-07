@@ -10,6 +10,7 @@ import 'package:online_study_room/data/models/moderation_sanction.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../sanctions/admin_active_restriction_card.dart';
 import '../sanctions/admin_sanction_actions.dart';
 import '../sanctions/sanction_ladder.dart';
 
@@ -202,8 +203,8 @@ class _ProfileBody extends StatelessWidget {
             _UsageBlock(insight: insight),
             const SizedBox(height: 20),
 
-            // 5) Ceza gecmisi.
-            _SanctionHistoryBlock(userId: userId),
+            // 4.5) Aktif kisit + 5) ceza gecmisi. Ikisi tek okumadan cizilir.
+            _SanctionSection(userId: userId),
           ],
         ),
       ),
@@ -447,8 +448,21 @@ class _UsageBlock extends StatelessWidget {
   }
 }
 
-class _SanctionHistoryBlock extends ConsumerWidget {
-  const _SanctionHistoryBlock({required this.userId});
+/// 4.5) Aktif kisit ve 5) ceza gecmisi — **tek** saglayici okumasi.
+///
+/// 🔴 WP-809 olcumu: bu ekran yaptirim UYGULUYOR (`kAdminUserSanctionApplyKey`)
+/// ve gecmisi cizIYOR ama yururlukteki kisiti hic gostermiyor, kaldirma yolu
+/// da sunmuyordu. Kaldirma yalniz kisi dosyasindaydi ve oraya baska bir
+/// sekmeden gidiliyordu: yikici yon vakadan tek dokunus, kurtarma yonu uc
+/// dokunus oteda. [AdminActiveRestrictionCard] o asimetriyi kapatir.
+///
+/// Iki blok saglayiciyi ayri ayri da izleyebilirdi (Riverpod'da sorun degil),
+/// ama o zaman iki ayri `.when` dali olurdu: biri cozulup digeri cozulmeyince
+/// ekran kendi icinde celisebilirdi ("aktif kisit yok" yazarken gecmiste
+/// yururlukteki yasagin durmasi). Tek okuma bunu yapisal olarak imkansiz
+/// kilar; yukleniyor/hata halleri de tek yerde, sessizce yutulmadan.
+class _SanctionSection extends ConsumerWidget {
+  const _SanctionSection({required this.userId});
 
   final String userId;
 
@@ -456,32 +470,65 @@ class _SanctionHistoryBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    // `watch`, `read` DEGIL: dinleyicisiz bir family saglayiciyi `read` etmek
+    // Riverpod 3'te sonsuza kadar `AsyncLoading` dondururdu ve kart hic
+    // cizilmezdi (depoda kayitli `riverpod3-autodispose-test-trap`).
     final sanctions = ref.watch(moderationSanctionsProvider(userId));
+
+    return sanctions.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => Column(
+        key: kAdminUserSanctionsKey,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionLabel(context, l10n.adminSanctionHistoryTitle),
+          Text(
+            l10n.adminUserProfileSanctionsFailed,
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
+      ),
+      data: (items) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AdminActiveRestrictionCard(sanctions: items),
+          const SizedBox(height: 20),
+          _SanctionHistoryBlock(sanctions: items),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ceza gecmisi listesi. Veriyi [_SanctionSection] okur, bu blok yalniz cizer.
+class _SanctionHistoryBlock extends StatelessWidget {
+  const _SanctionHistoryBlock({required this.sanctions});
+
+  final List<ModerationSanction> sanctions;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
 
     return Column(
       key: kAdminUserSanctionsKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sectionLabel(context, l10n.adminSanctionHistoryTitle),
-        sanctions.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => Text(
-            l10n.adminUserProfileSanctionsFailed,
+        if (sanctions.isEmpty)
+          Text(
+            l10n.adminSanctionHistoryEmpty,
             style: theme.textTheme.bodySmall,
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final sanction in sanctions)
+                _SanctionRow(sanction: sanction),
+            ],
           ),
-          data: (items) => items.isEmpty
-              ? Text(
-                  l10n.adminSanctionHistoryEmpty,
-                  style: theme.textTheme.bodySmall,
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final sanction in items)
-                      _SanctionRow(sanction: sanction),
-                  ],
-                ),
-        ),
       ],
     );
   }
