@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0139",
   "staging": {
-    "migration_head": "0138",
-    "deploy_enabled": false,
+    "migration_head": "0139",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED 2026-09-05 after the 0137+0138 staging apply SUCCEEDED: run 33977602736, post-check printed 0138|0138|0138 for local|remote|file and the purge health row read configured / 0 queued / 0 stuck. Dry-run 33976795633 was green first. Migration 0137_admin_user_insight.sql and 0138_case_conversation_and_message_photo.sql are live on rskiuyjabyzelqododpa."
+    "hold_reason": "OPEN 2026-09-07 for 0139 (unscheduled_sweepers). Three sweepers written but never scheduled; the evidence-redaction one also needed a cron-safe guard, so the migration is not a pure cron entry. 🔴 This SQL has NEVER run anywhere - local replay is blocked by Docker on this host - so staging is where it executes for the first time and is deliberately not skipped. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0138",
