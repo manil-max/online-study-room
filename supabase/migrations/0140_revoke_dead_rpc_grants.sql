@@ -49,8 +49,20 @@ comment on function public.achievement_legacy_audit(uuid) is
 -- 3) Hedef tamamlama yazımı `0120`de sunucu tetikleyicisine taşındı
 --    (`_record_goal_completion`). Genel RPC'yi kimse çağırmıyor; AGENTS §2
 --    "server-authoritative" gereği gereksiz yazma yüzeyi.
+-- 🔴 BURADA `authenticated`tan almak YETMEZ ve bunu staging kuru kosusu
+-- yakaladi (run 34137055615, "Failed test 3"). PostgreSQL bir fonksiyon
+-- yaratildiginda `EXECUTE`i VARSAYILAN OLARAK `PUBLIC`e verir. `0112` ve
+-- `0120` bu fonksiyonda `revoke ... from public` yapmamis; dolayisiyla
+-- `authenticated` yetkiyi kendi grant'indan degil PUBLIC'ten MIRAS aliyordu
+-- ve yalniz ondan revoke etmek hicbir sey degistirmiyordu.
+--
+-- Ust iki fonksiyon bu tuzaga dusmedi cunku kendi migration'larinda
+-- (`0047:415`, `0050:497`) PUBLIC revoke'u zaten vardi.
+--
+-- Ders: "revoke yazdim" ile "yetki kalkti" ayni sey degildir; olculmeden
+-- bilinmez. Testin `has_function_privilege` ile OKUYARAK olcmesi bu yuzden.
 revoke execute on function public.record_goal_completion(text, uuid, date)
-  from authenticated;
+  from public, anon, authenticated;
 comment on function public.record_goal_completion(text, uuid, date) is
   'WP-807: gövde durur (0120 rollback yolu ona dayanır), `authenticated` '
   'grant''ı kaldırıldı — üretim yazıcısı artık tetikleyicidir.';
