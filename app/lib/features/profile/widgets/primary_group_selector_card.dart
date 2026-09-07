@@ -48,6 +48,20 @@ class _PrimaryGroupSelectorCardState
 
   @override
   Widget build(BuildContext context) {
+    // 🔴 WP-818 - SONUC KULLANILMIYOR AMA BU SATIR GEREKLI VE SILINEMEZ.
+    //
+    // `authStateProvider`i CANLI tutar. Onsuz, bir satira dokunuldugunda
+    // `_select` icindeki `ref.read(authStateProvider).value` dinleyicisiz bir
+    // saglayici yaratir; saglayici okumadan hemen sonra dusurulur, `.value`
+    // `AsyncLoading` yuzunden `null` doner ve fonksiyon `user == null`
+    // dalindan SESSIZCE cikar. Onay diyalogu acilir, kullanici onaylar,
+    // hicbir sey olmaz -- hata da yok, mesaj da yok.
+    //
+    // Depoda kayitli tuzak (`riverpod3-autodispose-test-trap`) ve ayni
+    // aciklama `admin_case_detail_page.dart` icinde de var. WP-818'in testi
+    // bunu once kendi kirmizisiyla ortaya cikardi: sahte depo hic
+    // cagrilmiyordu.
+    ref.watch(authStateProvider);
     final groups = ref.watch(userGroupsProvider);
     final preference = ref.watch(primaryGroupPreferenceProvider);
     final theme = Theme.of(context);
@@ -195,15 +209,42 @@ class _PrimaryGroupSelectorCardState
         ).showSnackBar(SnackBar(content: Text(l10n.primaryGroupUpdated)));
       }
     } on GroupException {
-      if (mounted) {
-        ref.invalidate(primaryGroupPreferenceProvider);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.primaryGroupChangeFailed)));
-      }
+      _reportSelectionFailure(l10n);
+    } catch (_) {
+      // 🔴 WP-818 — BU DAL YOKTU ve yoklugu SESSIZDI.
+      //
+      // `SupabaseGroupRepository.setPrimaryGroup` yalniz `PostgrestException`i
+      // `GroupException`a sarar. Ag kopmasi (`SocketException`,
+      // `ClientException`, `TimeoutException`) sarilmadan yukari cikar,
+      // ustteki `on GroupException` dalinin YANINDAN gecer ve cagri yeri
+      // (`onTap: () => _select(...)`) bir `VoidCallback` oldugu icin dusen
+      // `Future` hicbir yere ulasmaz. Kullanicinin gordugu: gosterge doner,
+      // durur, ne onay ne hata cikar.
+      //
+      // Zarari bu ekranda normalden agir, cunku secimin bir SOGUMA PENCERESI
+      // var (`primaryGroupLockedUntil`): kullanici "degistirdim" sanip birakir,
+      // oysa secim yokken grup ilerlemesi hicbir gruba yazilmaz (WP-352) ve
+      // bu kayip baska hicbir yuzeyde gorunmez.
+      //
+      // Genis yakalama BILEREK: kullanicinin yapacagi sey her iki halde de
+      // ayni (tekrar dene), ve "hangi hata sinifi sarilmis" sorusunun cevabi
+      // depo katmaninda degisirse bu ekran yine sessiz kalmamali.
+      _reportSelectionFailure(l10n);
     } finally {
       if (mounted) setState(() => _savingGroupId = null);
     }
+  }
+
+  /// Secim yazilamadi: tercihi tazele ve kullaniciya SOYLE.
+  ///
+  /// Iki `catch` dali da buraya duser; mesajin tek yerde yasamasi birinin
+  /// sessiz kalmasini yapisal olarak imkansiz kilar.
+  void _reportSelectionFailure(AppLocalizations l10n) {
+    if (!mounted) return;
+    ref.invalidate(primaryGroupPreferenceProvider);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.primaryGroupChangeFailed)));
   }
 
   void _retry() {
