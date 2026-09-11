@@ -63,17 +63,40 @@ Locale _fromSystem(Locale? systemLocale) {
 /// kod testte cihaz dili ayarlanamaz hale gelir ve "sistem dili" davranisi
 /// hic sinanamaz. WP-526'da tam bu oldu: sistem+Turkce testi, kod dogru olsa
 /// bile host dilini okuyup kirmizi dustu.
+///
+/// 🔴 WP-826: `.locale` DEGIL `.locales.first` okunur. Sebep olculdu.
+/// `activeAppLocale` globalini IKI yazar besliyor ve ikisi ayri yerden
+/// okuyordu: `main.dart` `localeResolutionCallback` (Flutter'in `.locales`
+/// listesinden cozdugu, yani EKRANDA cizilen dil) ve buradaki
+/// `platformLocale()` (`.locale` tekili). Gercek cihazda ikisi aynidir, ama
+/// ayni deger olmalari bir TESADUFTUR, sozlesme degil: test binding'inde
+/// ikisi ayri ayri ezilebilir ve ayrilinca globali hangisinin SON yazdigi
+/// derleme sirasina kaliyordu. Olculdu (WP-825, `group_cards_wp690_test`):
+///   active=en ... target=android  -> sureler "2h 22m"  (arayuz Turkce!)
+///   active=tr ... target=windows  -> sureler "2sa 22dk"
+/// Yani ayni ekranda baslik Turkce, sure Ingilizce olabiliyordu. Tek kaynak
+/// arayuzun kendi cozdugu liste oldugu icin burasi da onu okur; boylece
+/// `formatHuman` ile `AppLocalizations` ayni dili konusmak ZORUNDA kalir.
 Locale platformLocale() {
   try {
-    return WidgetsBinding.instance.platformDispatcher.locale;
+    return _preferred(WidgetsBinding.instance.platformDispatcher);
   } catch (_) {
     // Binding hic kurulmamis olabilir: saf `test()` govdesi ya da arka plan
     // isolate'i. `WidgetsBinding.instance` o durumda "Binding has not yet been
     // initialized" ile duser -- WP-526'nin ilk halinde tam bu oldu ve dort
     // test kirildi. Burada platforma dogrudan dusmek dogru davranistir:
     // test binding'i yoksa ezilecek bir deger de yoktur.
-    return PlatformDispatcher.instance.locale;
+    return _preferred(PlatformDispatcher.instance);
   }
+}
+
+/// Arayuzun cozdugu birincil dil: `locales` listesinin ilki.
+///
+/// Liste bos kalirsa (platform hic dil bildirmemis) tekil `locale`'e dusulur;
+/// `locales.first` orada exception atardi.
+Locale _preferred(PlatformDispatcher dispatcher) {
+  final locales = dispatcher.locales;
+  return locales.isEmpty ? dispatcher.locale : locales.first;
 }
 
 bool isRtlLocale(Locale locale) => false;
