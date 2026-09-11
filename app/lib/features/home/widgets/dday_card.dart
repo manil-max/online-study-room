@@ -40,6 +40,10 @@ class DDayCard extends ConsumerWidget {
     final list = ref.watch(examListProvider);
 
     return CardScaffold(
+      // WP-822: 48 dp başlık hedefinin ek 24 px yüksekliği mevcut üst
+      // dolgudan (12) ve başlık aralığından (12) gelir; gövde alanı korunur.
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      headerGap: 0,
       header: Row(
         children: [
           Expanded(child: cardTitle(context, l10n.homeSinavGeriSayimi)),

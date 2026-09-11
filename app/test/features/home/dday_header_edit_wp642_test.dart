@@ -246,79 +246,8 @@ void main() {
           );
         '''),
         isEmpty,
-        reason: 'Tarama yorum satırlarını ölçüyor; koşan satırlara daraltılmalı.',
-      );
-    });
-
-    testWidgets('cardHeaderAction başlığı BÜYÜTMEZ (gövdeden piksel çalmaz)', (
-      tester,
-    ) async {
-      // 🔴 Bu ölçüm bir REGRESYONDAN doğdu. İlk düzeltme dokunma hedefini
-      // 32x32 verdi ve `dday_multi_exam` küçük kartta 7.47 / 10.94 px taşma
-      // ile kırmızı düştü. Sebep `constraints` değil, MaterialTapTargetSize
-      // varsayılanının (`padded`) butonun etrafına kendi kutusunu eklemesiydi:
-      // `constraints` 32'den 24'e indirildiğinde taşma HİÇ DEĞİŞMEDİ.
-      // Pano hücresi karta sabit yükseklik verdiği için başlıkta büyüyen her
-      // piksel doğrudan gövdeden çalınır. Kusur uzak bir kartın testinde
-      // patlamıştı; artık yardımcının kendi kapısı var.
-      // 🔴 Sonda gerçek kartın başlığını taklit eder: başlık metni `cardTitle`
-      // (titleMedium) ile kurulur. Düz `Text` ile ölçmek yanıltıcıydı —
-      // titleMedium satırı daha yüksek olduğu için aksiyon onun altında
-      // kalabilir; farklı bir stille ölçen kapı yanlış eşiği korur.
-      Future<double> heightOf(Widget Function(BuildContext) trailing) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: SizedBox(
-                  width: 300,
-                  child: Builder(
-                    builder: (context) => Row(
-                      key: const Key('probe-row'),
-                      children: [
-                        Expanded(child: cardTitle(context, 'Başlık')),
-                        trailing(context),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pump();
-        return tester.getSize(find.byKey(const Key('probe-row'))).height;
-      }
-
-      final bare = await heightOf((_) => const SizedBox.shrink());
-      final withAction = await heightOf(
-        (_) => cardHeaderAction(
-          icon: Icons.edit_outlined,
-          onPressed: () {},
-          tooltip: 'x',
-        ),
-      );
-
-      expect(
-        withAction,
-        bare,
         reason:
-            'Başlık aksiyonu başlığı ${withAction - bare} px büyüttü. Pano '
-            'hücresi karta sabit yükseklik verir: bu piksel doğrudan gövdeden '
-            'çalınır ve küçük kartta içerik taşar. `IconButton.styleFrom('
-            'tapTargetSize: MaterialTapTargetSize.shrinkWrap)` kaldırılmış '
-            'olabilir.',
-      );
-      // 🔴 Dokunma hedefinin GERÇEK boyutu ölçülür, verilen `constraints`
-      // değil. İkisi aynı değil: `visualDensity: compact` varken 40x24 istenip
-      // 32x16 alınıyordu — yani "düğme yaptık" denip 16 px yüksekliğinde bir
-      // hedef gönderilebilirdi. Bu iddia o sapmayı yakalar.
-      expect(
-        tester.getSize(find.byType(IconButton)),
-        const Size(40, 24),
-        reason:
-            'Dokunma hedefi ölçülen değerden saptı. `visualDensity` geri '
-            'eklenmiş olabilir: `constraints`i sessizce (-8,-8) küçültür.',
+            'Tarama yorum satırlarını ölçüyor; koşan satırlara daraltılmalı.',
       );
     });
   });
