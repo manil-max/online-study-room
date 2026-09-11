@@ -94,7 +94,7 @@ jobs:
             'PRODUCTION_SUPABASE_PROJECT_REF':os.environ['PRODUCTION_SUPABASE_PROJECT_REF'],
             'GIT_COMMIT_SHA':'${{ inputs.expected_git_sha }}',
             'MIGRATION_HEAD':'${{ inputs.expected_migration_head }}',
-            'APP_VERSION_NAME':'1.0.49','APP_BUILD_NUMBER':'49','DISTRIBUTION_CHANNEL':'github',
+            'APP_VERSION_NAME':'1.0.49','APP_BUILD_NUMBER':'49','DISTRIBUTION_CHANNEL':'githubStable',
             'FIREBASE_PROJECT_ID':os.environ['FIREBASE_PROJECT_ID'],
             'FIREBASE_ANDROID_API_KEY':os.environ['FIREBASE_ANDROID_API_KEY'],
             'FIREBASE_ANDROID_APP_ID':os.environ['FIREBASE_ANDROID_APP_ID'],
@@ -105,7 +105,10 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
-      - run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+      # WP-827: aday da `--flavor stable` derler, yani define `githubStable`
+      # olmali. WP-614 kapisi bunu burada da dogrular (eskiden gecersiz
+      # `github` yaziliyordu ve hicbir kapi bakmiyordu).
+      - run: flutter test test/core/current_build_manifest_gate_test.dart test/core/config/distribution_define_wp614_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
       - run: flutter build apk --release --flavor stable --build-name=1.0.49 --build-number=49 --dart-define-from-file=env.json
       - name: Write public candidate manifest
         shell: bash

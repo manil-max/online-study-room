@@ -133,13 +133,13 @@ jobs:
           FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID }}
           FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
         run: |
-          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then ENV=staging; URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; REF="$STAGING_SUPABASE_PROJECT_REF"; FLAVOR=beta; SRC=app-beta-release.apk; OUT=app-beta-release.apk; else ENV=production; URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; REF="$PRODUCTION_SUPABASE_PROJECT_REF"; FLAVOR=stable; SRC=app-stable-release.apk; OUT=app-release.apk; fi
+          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then ENV=staging; URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; REF="$STAGING_SUPABASE_PROJECT_REF"; FLAVOR=beta; DIST=githubBeta; SRC=app-beta-release.apk; OUT=app-beta-release.apk; else ENV=production; URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; REF="$PRODUCTION_SUPABASE_PROJECT_REF"; FLAVOR=stable; DIST=githubStable; SRC=app-stable-release.apk; OUT=app-release.apk; fi
           for required in FIREBASE_PROJECT_ID FIREBASE_ANDROID_API_KEY FIREBASE_ANDROID_APP_ID FIREBASE_MESSAGING_SENDER_ID; do
             if [ -z "${!required}" ]; then echo "Missing required environment variable: $required"; exit 1; fi
           done
           python - <<PY
           import json
-          json.dump({'CHANNEL':'${{ needs.preflight.outputs.channel }}','APP_ENVIRONMENT':'$ENV','ALLOW_IN_MEMORY':'false','SUPABASE_URL':'$URL','SUPABASE_ANON_KEY':'$KEY','SUPABASE_PROJECT_REF':'$REF','STAGING_SUPABASE_PROJECT_REF':'$STAGING_SUPABASE_PROJECT_REF','PRODUCTION_SUPABASE_PROJECT_REF':'$PRODUCTION_SUPABASE_PROJECT_REF','GIT_COMMIT_SHA':'${{ needs.preflight.outputs.git_sha }}','MIGRATION_HEAD':'${{ needs.preflight.outputs.migration_head }}','APP_VERSION_NAME':'${{ needs.preflight.outputs.version_name }}','APP_BUILD_NUMBER':'${{ needs.preflight.outputs.build_number }}','DISTRIBUTION_CHANNEL':'github','LEGAL_BASE_URL':'https://manil-max.github.io/online-study-room','FIREBASE_PROJECT_ID':'$FIREBASE_PROJECT_ID','FIREBASE_ANDROID_API_KEY':'$FIREBASE_ANDROID_API_KEY','FIREBASE_ANDROID_APP_ID':'$FIREBASE_ANDROID_APP_ID','FIREBASE_MESSAGING_SENDER_ID':'$FIREBASE_MESSAGING_SENDER_ID'}, open('env.json','w'))
+          json.dump({'CHANNEL':'${{ needs.preflight.outputs.channel }}','APP_ENVIRONMENT':'$ENV','ALLOW_IN_MEMORY':'false','SUPABASE_URL':'$URL','SUPABASE_ANON_KEY':'$KEY','SUPABASE_PROJECT_REF':'$REF','STAGING_SUPABASE_PROJECT_REF':'$STAGING_SUPABASE_PROJECT_REF','PRODUCTION_SUPABASE_PROJECT_REF':'$PRODUCTION_SUPABASE_PROJECT_REF','GIT_COMMIT_SHA':'${{ needs.preflight.outputs.git_sha }}','MIGRATION_HEAD':'${{ needs.preflight.outputs.migration_head }}','APP_VERSION_NAME':'${{ needs.preflight.outputs.version_name }}','APP_BUILD_NUMBER':'${{ needs.preflight.outputs.build_number }}','DISTRIBUTION_CHANNEL':'$DIST','LEGAL_BASE_URL':'https://manil-max.github.io/online-study-room','FIREBASE_PROJECT_ID':'$FIREBASE_PROJECT_ID','FIREBASE_ANDROID_API_KEY':'$FIREBASE_ANDROID_API_KEY','FIREBASE_ANDROID_APP_ID':'$FIREBASE_ANDROID_APP_ID','FIREBASE_MESSAGING_SENDER_ID':'$FIREBASE_MESSAGING_SENDER_ID'}, open('env.json','w'))
           PY
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV; echo "SRC=$SRC" >> $GITHUB_ENV; echo "OUT=$OUT" >> $GITHUB_ENV
       - run: flutter pub get
@@ -147,7 +147,12 @@ jobs:
       # Golden baseline'ları Windows'ta üretildi; Android runner yalnızca
       # platformdan bağımsız fonksiyonel paketi çalıştırır.
       - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
-      - run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+      # 🔴 WP-827: `distribution_define_wp614_test.dart` YILLARDIR yalniz
+      # `windows-release.yml`e bagliydi; Android yayin yolu tam da o testin
+      # uyardigi hataya dustu (gecersiz `github` define'i sessizce eski
+      # CHANNEL cikarimina duser). Kapi artik derlemeye giren define'i burada
+      # da dogrular: bilinmeyen bir deger yazilirsa is akisi KIRMIZI duser.
+      - run: flutter test test/core/current_build_manifest_gate_test.dart test/core/config/distribution_define_wp614_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
       - run: flutter build apk --release --flavor "$FLAVOR" --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.json
       - name: Android artefaktını paketle
         run: |
@@ -176,7 +181,10 @@ jobs:
           python - <<'PY'
           import json, pathlib
           base = json.loads(pathlib.Path('env.json').read_text())
-          assert base['DISTRIBUTION_CHANNEL'] == 'github', base['DISTRIBUTION_CHANNEL']
+          # WP-827: bu adim yalniz `channel == stable` kolunda kosar, yani APK
+          # env.json'i `githubStable` tasimak ZORUNDA. Eskiden burada gecersiz
+          # `github` bekleniyordu; asagidaki Play kopyasi yine `play` olur.
+          assert base['DISTRIBUTION_CHANNEL'] == 'githubStable', base['DISTRIBUTION_CHANNEL']
           assert base['LEGAL_BASE_URL'], 'LEGAL_BASE_URL Play derlemesinde de zorunlu'
           play = dict(base, DISTRIBUTION_CHANNEL='play')
           pathlib.Path('env.play.json').write_text(json.dumps(play))
