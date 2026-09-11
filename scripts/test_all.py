@@ -257,6 +257,12 @@ def build_gates() -> list[Gate]:
         # girdiyle sinar; lcov istemedigi icin saniyeler surer.
         Gate("coverage-self", "Kapsam kapisi kendini sinar", 0,
              [py, "scripts/coverage_audit.py", "--self-test"]),
+        # 🔴 WP-824: `env.local.example.json` kanali pinliyordu ve belgelenen
+        # kurulum o degeri test paketine geciriyordu -- dort test kod saglamken
+        # kirmizi dusuyordu. CI bu sinifi GOREMEZ (kendi iki anahtarlik sahte
+        # env.json'unu yazar), yani tek koruma bu kapidir.
+        Gate("test-env", "Test env.json kanali pinlemiyor", 0,
+             [py, "scripts/test_all.py", "--internal-test-env-contract"]),
 
         # T1 — bagimsiz araclar; birbirinin dosyasina dokunmaz.
         Gate("analyze", "flutter analyze", 1,
@@ -487,6 +493,78 @@ def internal_flutter_pin() -> int:
     print(
         f"OK: {checked} flutter-action adimi da {expected} surumune pinli "
         "(.flutter-version)."
+    )
+    return 0
+
+
+def internal_test_env_contract() -> int:
+    r"""Test paketini kosturan `env.json` kanali PINLEMEMELIDIR.
+
+    🔴 WP-824 — olculdu. Bu kapi bir saat kaybettirdikten sonra dogdu.
+    `env.local.example.json` `DISTRIBUTION_CHANNEL: "play"` tasiyordu ve
+    belgelenen kurulum (`cp env.local.example.json env.json`) o degeri test
+    paketine gecirıyordu. Sonuc: DORT test, kod tamamen saglamken kirmizi.
+
+      * `test/core/distribution_channel_test.dart` — "varsayilan kanal"i
+        olcuyor ama define varken varsayilan hic olculmuyor.
+      * `test/features/updater/windows_zip_update_flow_wp578_test.dart` (x3) —
+        kanal `play` olunca `UpdaterDialog._downloadAndInstall` fail-closed
+        donuyor (dogru davranis), indirme akisi hic cizilmiyor.
+
+    ⚠️ **CI bu sinifi ASLA goremez** — `ci.yml` test isinde iki anahtarlik
+    sahte bir `env.json` yazar, bu anahtari hic koymaz. Yani CI yesil kalirken
+    yerel kapi herkeste kirmizi acilir. Tek koruma bu kapidir.
+
+    Neden pinlemek gereksiz: `distribution_channel.dart` `resolve()` icinde
+    flavor kontrolu define'dan ONCE kosar (`flavor == 'play' || 'local'` ->
+    play). Yani `--flavor local` derlemesinde define'in hicbir etkisi yok;
+    Gradle `validateEnvironmentIdentity` de bu anahtari zorunlu tutmaz
+    (CHANNEL / APP_ENVIRONMENT / GIT_COMMIT_SHA / MIGRATION_HEAD ister).
+    Anahtarin TEK gercek etkisi `flutter test`i bozmaktir.
+
+    Kapsam: yalniz test paketini besleyen iki dosya. `env.staging/production/
+    ci.example.json` bilerek disarida — onlar yayin artefaktinin manifestini
+    yansitir, test girdisi degildir.
+    """
+    import json
+
+    targets = [
+        (APP / "env.local.example.json", "belgelenen yerel sablon"),
+        (APP / "env.json", "test paketini kosturan dosya"),
+    ]
+    problems: list[str] = []
+    checked = 0
+    for path, role in targets:
+        if not path.exists():
+            # `env.json` her makinede yok; sablonun yoklugu ise gercek hata.
+            if path.name == "env.json":
+                continue
+            problems.append(f"{path.name} yok — yerel kurulumun sablonu bu dosyadir")
+            continue
+        checked += 1
+        try:
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError) as err:
+            problems.append(f"{path.name} okunamadi: {err}")
+            continue
+        if "DISTRIBUTION_CHANNEL" in data:
+            problems.append(
+                f"{path.name} ({role}) `DISTRIBUTION_CHANNEL` pinliyor: "
+                f"{data['DISTRIBUTION_CHANNEL']!r}. Bu anahtar yerel derlemede "
+                "etkisiz (flavor kazanir) ama `flutter test`te kanalin TEK "
+                "kaynagi olur ve distribution_channel_test + "
+                "windows_zip_update_flow_wp578_test (x3) kirmiziya duser. "
+                "Anahtari kaldir; CI de yazmiyor."
+            )
+
+    if problems:
+        print(f"FAIL ({len(problems)}):")
+        for problem in problems:
+            print(f"  - {problem}")
+        return 1
+    print(
+        f"OK: {checked} env dosyasi da kanali pinlemiyor — "
+        "`flutter test` varsayilan cozumleyiciyi olcuyor."
     )
     return 0
 
@@ -1253,6 +1331,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-flutter-pin", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-test-env-contract", action="store_true",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-firebase", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-manifest", action="store_true",
@@ -1271,6 +1351,8 @@ def main() -> int:
         return internal_migration_head()
     if args.internal_flutter_pin:
         return internal_flutter_pin()
+    if args.internal_test_env_contract:
+        return internal_test_env_contract()
     if args.internal_play_firebase:
         return internal_play_firebase()
     if args.internal_play_manifest:
