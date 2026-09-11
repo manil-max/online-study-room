@@ -6,21 +6,38 @@
 
 ## Kodda doğrulanmış açık
 
-- **Yerel kapı, belgelenen kurulumla kırmızı açılıyor (2026-09-11 ölçüldü):**
-  [`env.local.example.json`](app/env.local.example.json) `DISTRIBUTION_CHANNEL: "play"`
-  veriyor; CI'ın ürettiği sahte `env.json` bu anahtarı hiç yazmıyor
-  ([ci.yml](.github/workflows/ci.yml)). Sonuç: `cp env.local.example.json env.json`
-  diyen herkeste `distribution_channel_test` (1) ve
-  `windows_zip_update_flow_wp578_test` (3) düşüyor — kanal `play` olunca sideload
-  güncelleme kolu kapandığı için Windows ZIP akışı hiç çizilmiyor. Anahtar kaldırılıp
-  koşulunca dördü de yeşile döndü. Ürün hatası değil; ortam sözleşmesi hatası.
-  Karar gerekiyor: yerel örneğin varsayılan kanalı ne olmalı, yoksa bu testler
-  kanaldan bağımsız mı kurulmalı. **Düzeltme bu turda yapılmadı.**
-- **`group_cards_wp690_test` 390 px kolu kırmızı (2026-09-11 ölçüldü):** üç test
-  yalnız 390 px'te düşüyor, 1920 px yeşil; `LeaderboardCard` içinde "1sa" metni ve
-  seri rozeti bulunamıyor. `DISTRIBUTION_CHANNEL` ile ilgisi yok. Bu, bir hunter
-  turudur: önce 390 px'te neyin çizilmediğini ölçen kırmızı test, sonra düzeltme.
-  Sebep bu turda ölçülmedi; ürün regresyonu mu, fikstür/viewport sorunu mu bilinmiyor.
+- **`release.yml` Android yoluna GEÇERSİZ kanal define'ı yazıyor (2026-09-11 ölçüldü):**
+  [release.yml](.github/workflows/release.yml) yayın `env.json`'ına
+  `DISTRIBUTION_CHANNEL: 'github'` yazıyor. Bu değer `distribution_channel.dart`
+  `_parseDefine` tarafından **tanınmıyor** (geçerli olanlar: `play`, `githubStable`,
+  `githubBeta`, `windows`, `microsoftStore`); tanınmayan define sessizce eski
+  `CHANNEL` + platform çıkarımına düşüyor. Bugün kullanıcıya yansıyan hata **yok**:
+  fallback `CHANNEL=beta → githubBeta`, `stable → githubStable` ile aynı yere varıyor
+  ve Play AAB zaten hem `play` define'ı hem `--flavor play` ile iki kat korunuyor.
+  Ama garanti **kazara**: `CHANNEL` define'ı kalkarsa beta APK sessizce stable
+  akışını dinler. Tam olarak WP-614'ün sınıfı, bu kez Android tarafında.
+  **Kapı var ama bağlı değil:** `distribution_define_wp614_test.dart` yalnız
+  `windows-release.yml`de koşuyor; `release.yml` ve `stable-candidate.yml` sadece
+  `current_build_manifest_gate_test.dart` koşuyor. Düzeltme iki parçalı: define'ı
+  kanala göre (`githubBeta`/`githubStable`) yaz ve WP-614 testini bu iki iş akışına
+  da bağla. **Yayın hattı olduğu için bu turda değiştirilmedi — sahip kararı.**
+- **Aynı yarım dil fikstürü 12 test dosyasında daha var (2026-09-11 ölçüldü):**
+  WP-825'in kök nedeni (`localesTestValue` ezilip `localeTestValue` bırakılması)
+  şu dosyalarda da duruyor: `classroom/desktop_groups_layout_wp675`,
+  `clock/clock_desktop_layout`, `desktop/desktop_component_ceiling_contract`,
+  `desktop/desktop_panel_wp684`, `desktop/desktop_stretch_contract`,
+  `home/desktop_dashboard_layout_wp676`, `profile/desktop_profile_layout_wp674`,
+  `profile/desktop_settings_master_detail_wp686`, `profile/desktop_settings_wp679`,
+  `profile/reward_banner_overlap_wp682`, `v8_critical_flows`, `l10n/l10n_bootstrap`.
+  Hepsi şu an **yeşil** — yani kazara doğru sırayı yakalamışlar; host dili veya
+  derleme sırası değişince aynı sınıf kırmızı geri gelir. Toplu düzeltme ayrı WP.
+- **`activeAppLocale` globalinin iki yazarı var (2026-09-11 ölçüldü):**
+  `main.dart:252` `localeResolutionCallback` (`.locales`'ten) ve
+  `app_locale.dart:167/178` + `system_localizations.dart:69` (`.locale`'den) aynı
+  globali yazıyor. Production'da `.locale == .locales.first` olduğu için kullanıcıya
+  yansımıyor; ama "son yazan kazanır" kuralı testleri platforma bağımlı yapıyor.
+  Tek kaynağa indirmek gerçek bir sadeleştirme — `main.dart` sıcak dosya (§1.4),
+  ayrı WP ister.
 - **Günlük hedefin geçmişe uygulanması:** `weekend_goal_days` ve `perfect_months`
   hesabı bugünkü `daily_goal_minutes` ile geçmişi değerlendiriyor.
   Kaynak: [0025](supabase/migrations/0025_achievements_social_metrics.sql),

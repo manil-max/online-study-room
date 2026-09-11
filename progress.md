@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-823** | Bu turun WP-822 ve WP-823 kartları aşağıda |
+| Son ayrılan WP | **WP-825** | Bu turun WP-822…WP-825 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -26,8 +26,12 @@
 
 ### Faz — Küçük kart erişimi ve güncel notlar (2026-09-11)
 
-Sahip talebi: genel incelemenin **4 ve 5. maddelerini dikkatli uygulamak**.
-İki ayrık iş; ürün kodu WP-822, belgeler WP-823. Tam test kapısı liderde tek merkezden.
+Sahip talebi: genel incelemenin **4 ve 5. maddelerini dikkatli uygulamak**; ardından
+sahip "sana kalmış, karar ver ve durma" diyerek turu ajana bıraktı (onay alınamaz).
+Ajan kararı: kapıyı yeşile döndüren iki kırmızıyı da kapatmak, yayın hattına dokunmamak.
+
+Dört ayrık iş: ürün kodu **WP-822**, belgeler **WP-823**, ortam sözleşmesi **WP-824**,
+test fikstürü **WP-825**. Tam test kapısı liderde tek merkezden.
 
 #### WP-822 — Küçük kart başlık eylemine erişim
 
@@ -81,28 +85,90 @@ Sahip talebi: genel incelemenin **4 ve 5. maddelerini dikkatli uygulamak**.
   `1cfcf2f6` = v83 etiketi), `34168099776` success.
 - **Geri alma:** belge commit'i geri alınabilir; arşivler eski metni korur.
 
-### Birleşik kapı sonucu — 2026-09-11 (`python scripts/test_all.py`)
+### İlk birleşik kapı — 2026-09-11, WP-822/823 sonrası
 
-**Kapı KIRMIZI, ama kırmızılık bu turun işinden gelmiyor.** 20 kapıdan 18'i geçti,
+**Kapı KIRMIZI açtı ve kırmızılık bu turun işinden gelmiyordu.** 20 kapıdan 18 geçti,
 1 atlandı (Android JVM — Gradle wrapper yok), 1 kırmızı: Flutter test paketi, **7 düşen test**.
 
 **Kanıt:** Aynı 7 test, iki lib dosyası geçici olarak `HEAD` haline döndürülüp
-koşulduğunda da **aynı şekilde düştü**. Yani WP-822 öncesi de kırmızıydı; dosyalar
-yedekten birebir geri kondu. Kırmızı kapı, bu iki WP'nin kabulü için gerekçe sayılmaz
-ama **yeşil kapı iddiası da yoktur** — aşağıdaki iki bulgu kapanmadan kapı yeşile dönmez.
+koşulduğunda da **aynı şekilde düştü**; dosyalar yedekten birebir geri kondu.
+Yedisi de teşhis edildi ve WP-824 + WP-825 ile kapatıldı (aşağıda).
 
-| Bulgu | Ölçüm |
-|---|---|
-| **7 düşenin 4'ü yerel `env.json` kaynaklı** | `env.local.example.json` `DISTRIBUTION_CHANNEL: "play"` veriyor; CI'ın sahte `env.json`'ı bu anahtarı **hiç yazmıyor** (`ci.yml`). Anahtar kaldırılıp koşulunca `distribution_channel_test` (1) ve `windows_zip_update_flow_wp578_test` (3) **yeşile döndü**. Yani belgelenen yerel kurulumu (`cp env.local.example.json env.json`) izleyen herkeste kapı kırmızı açılıyor; ürün hatası değil, ortam sözleşmesi hatası |
-| **Kalan 3'ü `group_cards_wp690_test`** | Yalnız **390 px** kolunda düşüyor, 1920 px yeşil. `LeaderboardCard` içinde "1sa" metni ve rozet bulunamıyor. `DISTRIBUTION_CHANNEL` ile ilgisi yok (anahtarsız koşumda da düştü). Nedeni bu turda ölçülmedi |
+#### WP-824 — Yerel kapıyı herkeste kırmızı açan env sözleşmesi
 
-Bu iki bulgu **kapsam dışı bırakıldı, düzeltilmedi** (`.agents/AGENTS.md §2` — ilgisiz
-sorunu düzeltme, bildir). Adayları [backlog](backlog.md) içinde.
+**Durum: Otomatik test geçti.**
+
+- **SAHİP:** `app/env.local.example.json`, `scripts/test_all.py`.
+- **DOKUNMA:** yayın iş akışları, ürün kodu, diğer env şablonları.
+- **Bulgu:** `env.local.example.json` `DISTRIBUTION_CHANNEL: "play"` taşıyordu ve
+  belgelenen kurulum (`cp env.local.example.json env.json`) o değeri test paketine
+  geçiriyordu. Dört test, **ürün kodu tamamen sağlamken** kırmızıydı:
+  `distribution_channel_test` (varsayılanı ölçüyor ama define varken varsayılan hiç
+  ölçülmüyor) ve `windows_zip_update_flow_wp578_test` (x3 — kanal `play` olunca
+  `UpdaterDialog._downloadAndInstall` fail-closed dönüyor; bu **doğru** davranış,
+  indirme akışı hiç çizilmiyor).
+- **Kaldırmanın güvenli olduğu kodda doğrulandı:** `distribution_channel.dart`
+  `resolve()` içinde flavor kontrolü define'dan **önce** koşar
+  (`flavor 'local'|'play' → play`), yani `--flavor local` derlemesinde define'ın
+  hiçbir etkisi yok. Gradle `validateEnvironmentIdentity` de bu anahtarı zorunlu
+  tutmaz (CHANNEL / APP_ENVIRONMENT / GIT_COMMIT_SHA / MIGRATION_HEAD ister).
+  Anahtarın tek gerçek etkisi `flutter test`i bozmaktı.
+- **Yeni kapı:** `test-env` (T0, `--internal-test-env-contract`).
+  **CI bu sınıfı asla göremez:** `ci.yml` test işinde
+  iki anahtarlık sahte `env.json` yazar ve bu anahtarı hiç koymaz; yani CI yeşil
+  kalırken yerel kapı herkeste kırmızı açılıyordu. Tek koruma bu kapıdır.
+- **Sabotaj kanıtı:** kapı önce bu makinedeki bozuk `env.json`'u yakalayıp FAIL
+  döndü, anahtar kaldırılınca OK'e geçti. Ardından üç dosyadaki **23 test yeşil**.
+- **Geri alma:** tek commit; veri/şema etkisi yok.
+
+#### WP-825 — 390 px kolundaki üç kırmızı
+
+**Durum: Otomatik test geçti.**
+
+- **SAHİP:** `app/test/features/group_cards_wp690_test.dart`.
+- **DOKUNMA:** ürün kodu (`main.dart`, `app_locale.dart`), diğer test dosyaları.
+- **Bulgu:** üç test yalnız **390/android** kolunda düşüyordu, 1920 yeşildi.
+  Sebep üründe değil fikstürdeydi: `activeAppLocale` globalini **iki ayrı kaynak**
+  yazıyor ve ikisi ayrı yerden okuyor — `main.dart` `localeResolutionCallback`
+  `.locales` listesinden, `app_locale.dart` `platformLocale()` `.locale` tekilinden.
+  Fikstür yalnız `localesTestValue`'yu ezdiği için tekil, host makinenin dilinde
+  (`en`) kalıyordu; globali hangisinin **son** yazdığı derleme sırasına, o da
+  platforma bağlıydı. Ölçüldü:
+
+  ```
+  TANI-LOCALE | active=en ... target=android  →  "3h 22m / 6h", "2h 22m", "1h"
+  TANI-LOCALE | active=tr ... target=windows  →  "3sa 22dk / 6sa", "2sa 22dk"
+  ```
+
+  Yani test, ürünü değil **host makinenin dilini** ölçüyordu.
+- **Düzeltme:** `localeTestValue` da sabitlendi. Gerçek cihazda `.locale` ile
+  `.locales.first` **aynıdır**; fikstür cihaza benzetildi, ürün davranışı gizlenmedi.
+  Dosyadaki 9 test yeşil.
+- **Geri alma:** tek commit; yalnız test fikstürü.
+
+**Kapsam dışı bırakılan, bildirilen bulgular** (`.agents/AGENTS.md §2`):
+`release.yml` Android yoluna geçersiz `DISTRIBUTION_CHANNEL='github'` yazıyor ·
+aynı yarım dil fikstürü 12 test dosyasında daha var · `activeAppLocale`in iki
+yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
+
+### Kapanış kapısı — 2026-09-11, WP-822…825 sonrası
+
+`python scripts/test_all.py` · **21 kapı · 0 kırmızı · 1 atlandı** · 294s.
+Flutter test paketi (+ kapsam) 275s **GEÇTİ**; yeni `test-env` kapısı listede
+ve geçiyor. Turun başındaki 7 düşen testin tamamı kapandı.
+
+**Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
+Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;
+o kapının asıl evi CI'daki Android işidir. Bu turda hiçbir native/Kotlin dosyası
+değişmedi, yani atlanan kapının kapsamına giren bir değişiklik de yok.
+
+**Bu yeşil ne demek değildir:** cihaz kabulü verilmedi, Play/Store kabulü
+sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmadı.
 
 ## 🗺️ Yol Haritası
 
-1. Yerel kapıyı yeşile döndüren iki bulgu: `env.json` kanal sözleşmesi ve
-   `group_cards_wp690_test` 390 px kolu. İkisi de ayrı WP ister.
+1. `release.yml` geçersiz kanal define'ı (`'github'`) + WP-614 kapısının bu iş
+   akışına bağlanması. **Yayın hattı — sahip kararı bekliyor.**
 2. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
 3. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
 4. Play production / Windows Store: güncel mağaza kanıtı ve ayrı sahip kararı.
