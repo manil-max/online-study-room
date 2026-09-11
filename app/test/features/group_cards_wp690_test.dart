@@ -117,6 +117,20 @@ void main() {
   }) async {
     tester.binding.platformDispatcher.localesTestValue = const [Locale('tr')];
     addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+    // 🔴 WP-825: `localesTestValue` TEK BASINA YETMEZ — olculdu. Uygulamada
+    // `activeAppLocale` globalini IKI ayri kaynak yaziyor ve ikisi ayri yerden
+    // okuyor:
+    //   * `main.dart` `localeResolutionCallback` -> `.locales` listesinden
+    //   * `app_locale.dart` `platformLocale()` -> `.locale` tekilinden
+    // Yalniz listeyi ezince tekil host'un dilinde (`en`) kaliyor ve globali
+    // hangisinin SON yazdigi derleme sirasina, o da platforma bagli kaliyordu:
+    // 390/android kolunda `activeAppLocale=en` cikip sureler "2h 22m" olarak,
+    // 1920/windows kolunda `tr` cikip "2sa 22dk" olarak ciziliyordu. Yani uc
+    // test, urun kodu saglamken YALNIZ dar kolda kirmizi dusuyordu.
+    // Gercek cihazda `.locale` ile `.locales.first` AYNIDIR; burada ikisini de
+    // sabitlemek fikstur'u cihaza benzetir, urun davranisini gizlemez.
+    tester.binding.platformDispatcher.localeTestValue = const Locale('tr');
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = window;
     addTearDown(tester.view.reset);
