@@ -5,7 +5,11 @@
 > İlerleme takibi → `progress.md`. Ajan kuralları → `.agents/AGENTS.md`.
 > **Kalite programı (vizyon + teknik + kalite kapıları) → `docs/KALITE-PROGRAMI.md` (kanonik).**
 >
-> Son güncelleme: 2026-07-22
+> Teknik taban: 2026-07-22 · Durum ayrımı: 2026-09-11 (WP-823).
+> Bu dosyadaki eski sürüm/plan ifadeleri canlı durum değildir. Güncel yayın,
+> migration head ve kabul borcu [progress.md](progress.md) içindedir.
+> Aşağıdaki teknoloji tablosu tarihsel hedefleri de içerir; örneğin Drift/Sentry
+> satırları tek başına kurulmuş ve çalışan entegrasyon kanıtı sayılmaz.
 
 ---
 
@@ -17,8 +21,9 @@ durumunu** görür, çalışma sürelerini takip eder ve **detaylı istatistikle
 
 **Temel motivasyon:** Birlikte çalışma hissi, motivasyon ve sağlıklı dayanışma/rekabet.
 
-**Kapsam sınırı:** Kapalı, özel bir kullanıcı grubu için. Büyük ölçeklenebilirlik öncelik
-değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
+**Kapsam:** İlk tasarım küçük özel gruplar içindi; ürün artık açık/özel grup
+keşfi ve Play kapalı test dağıtımını da içerir. Güncel sınırlar
+[Ürün Politikaları](docs/URUN-POLITIKALARI.md) içindedir.
 
 ---
 

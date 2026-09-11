@@ -133,9 +133,16 @@ Bu istisnanın sınırı da orada: geri sayım bir **tarih gösterir**, ders pro
 ## 8. Backlog — proje sahibi 2026-08-09'da hepsini tek tek karara bağladı
 
 Bu liste eskiden "yayın sonrasına kabul edilenler" diye altı madde taşıyordu.
-Sahip hepsini gözden geçirdi; geriye **bir** yapılacak madde kaldı.
+Sahip hepsini gözden geçirdi. Güncel uygulama ve kabul durumu
+[progress.md](../progress.md) içindedir; aşağıdaki kapsam kararları korunur.
 
-### 8.1 YAPILACAK — Sınav geri sayımı (ana ekran kartı)
+### 8.1 UYGULANDI — Sınav geri sayımı (ana ekran kartı)
+
+**Kodda doğrulandı (2026-09-11):** WP-632 üç kayıt desteğini, WP-694 hesap
+senkronunu getirdi. [Kart](../app/lib/features/home/widgets/dday_card.dart)
+ve [kayıt modeli](../app/lib/features/home/dday_prefs.dart) mevcut; yeni özellik
+olarak tekrar sıraya alınmaz. WP-822 yalnız başlık eyleminin erişimini iyileştirir.
+Bu not yeni bir cihaz kabulü iddiası değildir.
 
 **Sahip kararı ve kapsamı (2026-08-09):**
 

@@ -102,7 +102,14 @@ yasaktır — kalite koşumunu **yalnız lider, dalga bitince, tek merkezden** y
 **Saat, Tema ve Başarım aynı anda açılamaz** — üçü de ortak
 theme/navigation/profile/provider yüzeylerine dokunur, büyük çakışma yaratır.
 
-### Program durumu
+### Program durumu — tarihsel özet
+
+> **2026-09-11 düzeltmesi:** Aşağıdaki tablo ve §8.7/8.9/8.10, eski
+> programların yazıldıkları tarihteki durumunu anlatır; güncel iş ataması veya
+> migration talimatı değildir. Güncel yayın, ortam, açık işler ve kabul kuyruğu
+> yalnız [progress.md](../progress.md) içindedir. Eski “planlandı”, “açık” ve
+> “production HOLD” etiketleri oradaki güncel kanıtın yerine kullanılamaz.
+> Çalışma sistemi, güvenlik ve kalite kuralları geçerliliğini korur.
 
 | Program | Durum |
 |---|---|
@@ -124,7 +131,7 @@ theme/navigation/profile/provider yüzeylerine dokunur, büyük çakışma yarat
 
 ---
 
-## 8.7 Proje Kurtarma ve Güvenli Teslim Programı (WP-225–232 · AÇIK)
+## 8.7 Proje Kurtarma ve Güvenli Teslim Programı (WP-225–232 · tarihsel plan)
 
 Amaç production verisini koruyarak mevcut istemci/DB/migration drift'ini kaldırmak ve aynı sınıf hatanın tekrarını sistemsel olarak engellemektir.
 
@@ -168,7 +175,7 @@ Canlı mağaza beyanı ve kapısı: `docs/play-store/DATA-SAFETY.md` ve `docs/pl
 
 ---
 
-## 8.9 Post-v43 Release ve Bildirim Kurtarması (WP-269–274 · PRODUCTION HOLD)
+## 8.9 Post-v43 Release ve Bildirim Kurtarması (WP-269–274 · tarihsel plan)
 
 - **Kanıtlı taban:** Stable `v43/fa771ce` production `0065`te korunur. Beta deney tabanı `beta-v4303/3bdf8bb`, staging `0068`dir; Android artefaktı yayımlanmış, Windows artefaktı eksiktir.
 - **Eski işlerin sınıfı:** WP-265 rapordur. WP-266/267/268'in kod, local/staging ve beta yayın adımları büyük ölçüde yapılmıştır; gerçek cihaz kabulü, retry worker ve kabul edilmiş timer presentation kontratı olmadığı için “tamamlandı” değildir.
@@ -182,7 +189,7 @@ Canlı mağaza beyanı ve kapısı: `docs/play-store/DATA-SAFETY.md` ve `docs/pl
 - **Release kapısı:** Gerçek FCM, retry, timer action, Samsung cihaz kabulü, Windows artefaktı ve beta soak olmadan stable çıkmaz. Production migration/Edge/release ayrıca backup+dry-run ve somut kullanıcı GO ister.
 - **Kanonik güncel durum:** `progress.md` Proje Gerçekleri ve QA kuyruğu.
 
-## 8.10 Global Timer, Çoklu Grup Presence ve Çoklu Cihaz V3 (WP-336–346 · PLANLANDI)
+## 8.10 Global Timer, Çoklu Grup Presence ve Çoklu Cihaz V3 (WP-336–346 · tarihsel plan)
 
 - **Ürün semantiği:** Aktif çalışma bütün aktif grup üyeliklerinde görünür. Primary grup yalnız görev/hedef/grup progression attribution'ını belirler; direct grup bildirimleri ve timer-sync sinyalleri primary ile filtrelenmez.
 - **Otorite modeli:** Yerel native timer anında ve çevrimdışı çalışmaya devam eder. Sunucu hesap-geneli uzlaştırma otoritesidir; run-başına `run_revision` ile kullanıcı-geneli `state_version` ayrı tutulur.
@@ -198,9 +205,11 @@ Zorunlu senaryolar (her kalite kapısında koşulur): cold start · force stop �
 
 ---
 
-## 11. Açık Kararlar (`Ürün kararı gerekiyor`)
+## 11. Karar başlıkları — tarihsel kontrol listesi
 
-> Tamamlanan büyük programlara ait eski kararlar (sürüm çerçevesi, Faz 0 başlangıç, native onayı, istatistik sırası, tema derinliği, Saat kapsamı, sosyal profil gizliliği) **çözüldü ve uygulandı** → tarihsel detay arşivde. Kalan açık kararlar:
+> Tamamlanan büyük programlara ait eski kararlar (sürüm çerçevesi, Faz 0 başlangıç, native onayı, istatistik sırası, tema derinliği, Saat kapsamı, sosyal profil gizliliği) **çözüldü ve uygulandı** → tarihsel detay arşivde. Aşağıdakiler o tarihteki karar başlıklarıdır; otomatik olarak güncel açık iş sayılmaz.
+> Güncel adaylar [backlog.md](../backlog.md), aktif iş ve kabul [progress.md](../progress.md) içindedir.
+> Yeni bir işlem öncesi ilgili karar belgesi ve son kanıt okunur:
 
 1. **Hesap silme/retention:** geri alma süresi, kullanıcı export'u, mesaj silme/anonimleşme, admin audit saklama (WP-113 canlı ops önkoşulu).
 2. **Play yasal kimliği:** Privacy/Terms domaini, destek e-postası, veri sorumlusu/işletme adı.

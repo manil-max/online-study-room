@@ -1,5 +1,17 @@
 # Play Release Gate
 
+> **2026-09-11 durum ayrımı (WP-823):** Aşağıdaki 2026-08-08 tablosu tarihsel
+> değerlendirmedir; bugünün yapılacak listesi değildir. AAB yolu artık vardır:
+> [release workflow](../../.github/workflows/release.yml) `play` appbundle üretir
+> ve `LEGAL_BASE_URL` ister. Son kayıtlı dağıtım v83 / Play alpha 83'tür;
+> v83 release koşumu `34166386717` bu tur `success` olarak doğrulandı.
+> Güncel kanıt ve eksik kabul [progress.md](../../progress.md) içindedir.
+> Console, yasal URL erişimi ve production kabulü bu tur yeniden ölçülmedi;
+> geçmişteki eksik satırlar güncel kanıtla yeniden doğrulanmadan kapanmış
+> sayılmaz. Yapıldığı kanıtlanan işler de eski tablo yüzünden tekrar açılmaz.
+
+## Tarihsel değerlendirme — 2026-08-08
+
 > **Durum tazelendi: 2026-08-08 (v60 sonrası).** Aşağıdaki tablo WP-124'ten
 > beri boş şablon olarak duruyordu; bu tur her satır **kodda doğrulanarak**
 > güncellendi. Tik atılan satırın yanında dayanağı yazılıdır. Tik atılmayan
