@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-826** | Bu turun WP-822…WP-826 kartları aşağıda |
+| Son ayrılan WP | **WP-827** | Bu turun WP-822…WP-827 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -149,7 +149,7 @@ Yedisi de teşhis edildi ve WP-824 + WP-825 ile kapatıldı (aşağıda).
 - **Geri alma:** tek commit; yalnız test fikstürü.
 
 **Kapsam dışı bırakılan, bildirilen bulgular** (`.agents/AGENTS.md §2`):
-`release.yml` Android yoluna geçersiz `DISTRIBUTION_CHANNEL='github'` yazıyor ·
+`release.yml` geçersiz kanal define'ı (**sahip emriyle WP-827'de düzeltildi**) ·
 aynı yarım dil fikstürü 12 test dosyasında daha var · `activeAppLocale`in iki
 yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 
@@ -180,6 +180,39 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
   kırmızısını, son koşumda **kendi** kırmızımı yakaladı.
 - **Kalıcı etki:** yok; ürün kodu ve test ağacı WP-825 sonrası hâline döndü.
 
+#### WP-827 — Yayın hattındaki geçersiz kanal define'ı (sahip emri)
+
+**Durum: Otomatik test geçti.** Gerçek yayın koşumunda doğrulanmalı.
+
+- **SAHİP:** `.github/workflows/release.yml`, `.github/workflows/stable-candidate.yml`,
+  `app/env.ci.example.json`, `docs/denetim/DENETIM-masaustu-surum.md`.
+- **DOKUNMA:** ürün kodu, `windows-release.yml`, deploy sözleşmesi, gizli dosyalar.
+- **Bulgu:** yayın `env.json`'ına `DISTRIBUTION_CHANNEL: 'github'` yazılıyordu.
+  Bu değer `_parseDefine` tarafından tanınmıyor; define sessizce eski `CHANNEL` +
+  platform çıkarımına düşüyordu. Sonuç kazara doğruydu, garanti değil.
+  **Bu bulgu yeni değil:** `DENETIM-masaustu-surum.md` §T5'te zaten yazılıydı ve
+  düzeltilmemişti — rapor edilmiş ama kapıya bağlanmamış bir bulgunun ne kadar
+  yaşadığının örneği.
+- **Düzeltme:** define artık kanaldan türetiliyor — `beta → githubBeta`,
+  `stable → githubStable` (kabuk zaten `FLAVOR`ı aynı dalda seçiyordu, yanına
+  `DIST` eklendi). Play adımının `assert`i `githubStable` bekliyor; Play kopyası
+  hâlâ `play` alıyor. `stable-candidate.yml` ve aday şablonu `githubStable` oldu.
+- **Asıl kalıcı önlem:** `distribution_define_wp614_test.dart` artık `release.yml`
+  ve `stable-candidate.yml` enforce adımlarına da bağlı. O test repoda **vardı**
+  ama yalnız `windows-release.yml`e bağlıydı; Android yayın yolu tam da onun
+  uyardığı hataya bu yüzden düşmüştü.
+- **Doğrulama (ölçüldü):**
+  - `githubStable` ve `githubBeta` ile WP-614 kapısı **yeşil** (5 test).
+  - Eski `github` ile **kırmızı**: *"Verilen define (`github`) kod tarafından
+    tanınmadı; derleme sessizce `githubStable` kanalına düştü."* — sabotaj kanıtı.
+  - Dört iş akışının YAML'ı ayrıştırıldı, `env.ci.example.json` geçerli JSON (18 anahtar).
+  - Kabuk dalı koşturuldu: `beta → DIST=githubBeta`, `stable → DIST=githubStable`.
+  - `env.json` yazımı + Play adımı **uçtan uca simüle edildi**; assert geçti,
+    `env.play.json` kanalı `play` kaldı, APK `env.json`'ı değişmedi.
+- **Cihazda/koşumda doğrulanmalı:** yerelde GitHub Actions koşturulamaz. İlk
+  `beta-v*`/`v*` etiketinde kanal adımı ve WP-614 kapısı izlenmeli.
+- **Geri alma:** tek commit; artefakt veya veri etkisi yok.
+
 ### Kapanış kapıları — 2026-09-11
 
 **1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
@@ -190,8 +223,12 @@ testin tamamı kapandı.
 **2. koşum (WP-826 denemesi sonrası): KIRMIZI.** `faq_content_locale_wp526_test`
 düştü — kırmızıyı bu kez **ajanın kendi değişikliği** çıkardı. WP-826 geri alındı.
 
-**3. koşum (revert sonrası): YEŞİL.** **21 kapı · 0 kırmızı · 1 atlandı** · 396s.
-Flutter test paketi (+ kapsam) 292s GEÇTİ. Turun kapandığı durum budur.
+**3. koşum (revert sonrası): YEŞİL.** 21 kapı · 0 kırmızı · 1 atlandı · 396s.
+
+**4. koşum (WP-827 sonrası): YEŞİL.** **21 kapı · 0 kırmızı · 1 atlandı** · 330s.
+Flutter test paketi (+ kapsam) 314s GEÇTİ. Turun kapandığı durum budur.
+Not: bu kapı iş akışı dosyalarını **koşturmaz**; WP-827'nin yayın kanıtı ilk
+gerçek etiket koşumundadır.
 
 **Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
 Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;
@@ -203,8 +240,8 @@ sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmad
 
 ## 🗺️ Yol Haritası
 
-1. `release.yml` geçersiz kanal define'ı (`'github'`) + WP-614 kapısının bu iş
-   akışına bağlanması. **Yayın hattı — sahip kararı bekliyor.**
+1. WP-827 sonrası ilk yayın koşumunda kanal kapısını izle: `beta-v*` etiketi
+   `githubBeta`, `v*` etiketi `githubStable` yazmalı ve WP-614 adımı yeşil geçmeli.
 2. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
 3. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
 4. Play production / Windows Store: güncel mağaza kanıtı ve ayrı sahip kararı.

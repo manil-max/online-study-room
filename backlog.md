@@ -6,21 +6,6 @@
 
 ## Kodda doğrulanmış açık
 
-- **`release.yml` Android yoluna GEÇERSİZ kanal define'ı yazıyor (2026-09-11 ölçüldü):**
-  [release.yml](.github/workflows/release.yml) yayın `env.json`'ına
-  `DISTRIBUTION_CHANNEL: 'github'` yazıyor. Bu değer `distribution_channel.dart`
-  `_parseDefine` tarafından **tanınmıyor** (geçerli olanlar: `play`, `githubStable`,
-  `githubBeta`, `windows`, `microsoftStore`); tanınmayan define sessizce eski
-  `CHANNEL` + platform çıkarımına düşüyor. Bugün kullanıcıya yansıyan hata **yok**:
-  fallback `CHANNEL=beta → githubBeta`, `stable → githubStable` ile aynı yere varıyor
-  ve Play AAB zaten hem `play` define'ı hem `--flavor play` ile iki kat korunuyor.
-  Ama garanti **kazara**: `CHANNEL` define'ı kalkarsa beta APK sessizce stable
-  akışını dinler. Tam olarak WP-614'ün sınıfı, bu kez Android tarafında.
-  **Kapı var ama bağlı değil:** `distribution_define_wp614_test.dart` yalnız
-  `windows-release.yml`de koşuyor; `release.yml` ve `stable-candidate.yml` sadece
-  `current_build_manifest_gate_test.dart` koşuyor. Düzeltme iki parçalı: define'ı
-  kanala göre (`githubBeta`/`githubStable`) yaz ve WP-614 testini bu iki iş akışına
-  da bağla. **Yayın hattı olduğu için bu turda değiştirilmedi — sahip kararı.**
 - **Cihaz dilini sabitleyen testler YARIM sabitliyor (2026-09-11 ölçüldü):**
   Test binding'inde `.locale` (tekil) ve `.locales` (liste) ayrı ayrı ezilebilir;
   gerçek cihazda ikisi aynı değerdir. Yalnız birini ezen test, diğerini **host
