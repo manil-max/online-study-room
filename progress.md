@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-825** | Bu turun WP-822…WP-825 kartları aşağıda |
+| Son ayrılan WP | **WP-826** | Bu turun WP-822…WP-826 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -30,8 +30,9 @@ Sahip talebi: genel incelemenin **4 ve 5. maddelerini dikkatli uygulamak**; ard�
 sahip "sana kalmış, karar ver ve durma" diyerek turu ajana bıraktı (onay alınamaz).
 Ajan kararı: kapıyı yeşile döndüren iki kırmızıyı da kapatmak, yayın hattına dokunmamak.
 
-Dört ayrık iş: ürün kodu **WP-822**, belgeler **WP-823**, ortam sözleşmesi **WP-824**,
-test fikstürü **WP-825**. Tam test kapısı liderde tek merkezden.
+Beş ayrık iş: ürün kodu **WP-822**, belgeler **WP-823**, ortam sözleşmesi **WP-824**,
+test fikstürü **WP-825**. **WP-826** denendi ve geri alındı (aşağıda, teşhis yanlıştı).
+Kapı liderde tek merkezden.
 
 #### WP-822 — Küçük kart başlık eylemine erişim
 
@@ -143,7 +144,8 @@ Yedisi de teşhis edildi ve WP-824 + WP-825 ile kapatıldı (aşağıda).
   Yani test, ürünü değil **host makinenin dilini** ölçüyordu.
 - **Düzeltme:** `localeTestValue` da sabitlendi. Gerçek cihazda `.locale` ile
   `.locales.first` **aynıdır**; fikstür cihaza benzetildi, ürün davranışı gizlenmedi.
-  Dosyadaki 9 test yeşil.
+  Dosyadaki 9 test yeşil. (WP-826 bunu "yüzeysel" sayıp geri almayı denedi ve
+  **yanıldı** — aşağıdaki karta bak; yama doğru çözümmüş.)
 - **Geri alma:** tek commit; yalnız test fikstürü.
 
 **Kapsam dışı bırakılan, bildirilen bulgular** (`.agents/AGENTS.md §2`):
@@ -151,11 +153,45 @@ Yedisi de teşhis edildi ve WP-824 + WP-825 ile kapatıldı (aşağıda).
 aynı yarım dil fikstürü 12 test dosyasında daha var · `activeAppLocale`in iki
 yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 
-### Kapanış kapısı — 2026-09-11, WP-822…825 sonrası
+#### WP-826 — DENENDİ ve GERİ ALINDI (teşhis yanlıştı)
 
-`python scripts/test_all.py` · **21 kapı · 0 kırmızı · 1 atlandı** · 294s.
-Flutter test paketi (+ kapsam) 275s **GEÇTİ**; yeni `test-env` kapısı listede
-ve geçiyor. Turun başındaki 7 düşen testin tamamı kapandı.
+**Durum: Geri alındı.** Commit `b7a2df26`, revert `ef65f915`.
+
+- **Hipotez:** WP-825'in fikstür yaması yüzeyseldi; asıl kusur `activeAppLocale`
+  globalini iki yazarın iki ayrı kaynaktan (`.locales` / `.locale`) beslemesiydi.
+  `platformLocale()` `.locales.first` okusun, tuzak tümden kalksın.
+- **İlk kanıt ikna ediciydi:** `group_cards_wp690_test`, WP-825 yaması
+  **kaldırılmış** hâlde bile 9/9 yeşil koştu; sabotaj testi de düzeltmeyi geri
+  alınca kırmızı düştü. Buraya kadar her şey hipotezi destekliyordu.
+- **🔴 Kapı yanlışı gösterdi:** birleşik kapıda `faq_content_locale_wp526_test`
+  kırmızı düştü — *"sistem dili seçili + cihaz Türkçe → içerik TR istenir"*.
+  O test **tam tersini** sabitliyor: yalnız `.locale` tekilini. Yani iki test
+  dosyası madalyonun iki ayrı yüzünü tutturuyor ve değişiklik kırılmayı
+  **çözmedi, yer değiştirdi**.
+- **Doğru sonuç:** ayrışma yalnız **test binding'inde** var; üründe `.locale` ile
+  `.locales.first` aynı değerdir ve ikisini okumak da meşrudur. `.locale` ayrıca
+  "cihazın dili" için Flutter'ın belgelenmiş, niyeti daha açık API'sidir.
+  Yani bu bir ürün kusuru **değil**, fikstür kuralıdır: *cihaz dilini sabitleyen
+  test her iki yarıyı da sabitlemeli.* `build_config_error_wp594_test` zaten öyle.
+  WP-825'in yaması bu kurala uyuyordu — yani baştan doğruymuş.
+- **Ders:** "yamayı kaldırınca da yeşil" tek başına kök nedenin kapandığını
+  kanıtlamaz; yalnız o dosyadaki belirtinin sustuğunu gösterir. Kanıt birleşik
+  kapıdır. Bu tur kapının değerini iki kez gösterdi: ilk koşumda başkasının
+  kırmızısını, son koşumda **kendi** kırmızımı yakaladı.
+- **Kalıcı etki:** yok; ürün kodu ve test ağacı WP-825 sonrası hâline döndü.
+
+### Kapanış kapıları — 2026-09-11
+
+**1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
+**21 kapı · 0 kırmızı · 1 atlandı** · 294s. Flutter test paketi (+ kapsam) 275s
+**GEÇTİ**; yeni `test-env` kapısı listede ve geçiyor. Turun başındaki 7 düşen
+testin tamamı kapandı.
+
+**2. koşum (WP-826 denemesi sonrası): KIRMIZI.** `faq_content_locale_wp526_test`
+düştü — kırmızıyı bu kez **ajanın kendi değişikliği** çıkardı. WP-826 geri alındı.
+
+**3. koşum (revert sonrası): YEŞİL.** **21 kapı · 0 kırmızı · 1 atlandı** · 396s.
+Flutter test paketi (+ kapsam) 292s GEÇTİ. Turun kapandığı durum budur.
 
 **Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
 Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;

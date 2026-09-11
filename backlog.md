@@ -21,23 +21,20 @@
   `current_build_manifest_gate_test.dart` koşuyor. Düzeltme iki parçalı: define'ı
   kanala göre (`githubBeta`/`githubStable`) yaz ve WP-614 testini bu iki iş akışına
   da bağla. **Yayın hattı olduğu için bu turda değiştirilmedi — sahip kararı.**
-- **Aynı yarım dil fikstürü 12 test dosyasında daha var (2026-09-11 ölçüldü):**
-  WP-825'in kök nedeni (`localesTestValue` ezilip `localeTestValue` bırakılması)
-  şu dosyalarda da duruyor: `classroom/desktop_groups_layout_wp675`,
-  `clock/clock_desktop_layout`, `desktop/desktop_component_ceiling_contract`,
-  `desktop/desktop_panel_wp684`, `desktop/desktop_stretch_contract`,
-  `home/desktop_dashboard_layout_wp676`, `profile/desktop_profile_layout_wp674`,
-  `profile/desktop_settings_master_detail_wp686`, `profile/desktop_settings_wp679`,
-  `profile/reward_banner_overlap_wp682`, `v8_critical_flows`, `l10n/l10n_bootstrap`.
-  Hepsi şu an **yeşil** — yani kazara doğru sırayı yakalamışlar; host dili veya
-  derleme sırası değişince aynı sınıf kırmızı geri gelir. Toplu düzeltme ayrı WP.
-- **`activeAppLocale` globalinin iki yazarı var (2026-09-11 ölçüldü):**
-  `main.dart:252` `localeResolutionCallback` (`.locales`'ten) ve
-  `app_locale.dart:167/178` + `system_localizations.dart:69` (`.locale`'den) aynı
-  globali yazıyor. Production'da `.locale == .locales.first` olduğu için kullanıcıya
-  yansımıyor; ama "son yazan kazanır" kuralı testleri platforma bağımlı yapıyor.
-  Tek kaynağa indirmek gerçek bir sadeleştirme — `main.dart` sıcak dosya (§1.4),
-  ayrı WP ister.
+- **Cihaz dilini sabitleyen testler YARIM sabitliyor (2026-09-11 ölçüldü):**
+  Test binding'inde `.locale` (tekil) ve `.locales` (liste) ayrı ayrı ezilebilir;
+  gerçek cihazda ikisi aynı değerdir. Yalnız birini ezen test, diğerini **host
+  makinenin dilinde** bırakır ve sonuç derleme sırasına/platforma bağlı hâle gelir.
+  İki yönü de sahada görüldü: `group_cards_wp690_test` yalnız listeyi eziyordu
+  (WP-825'te düzeltildi), `faq_content_locale_wp526_test` yalnız tekili eziyor.
+  Doğru kural: **ikisini birlikte ez** — `build_config_error_wp594_test` örnektir.
+  Yalnız listeyi ezen 11 dosya daha var (`desktop_*`, `clock_desktop_layout`,
+  `v8_critical_flows`, `reward_banner_overlap_wp682`); hepsi şu an yeşil, yani
+  kazara doğru sırayı yakalamışlar. `l10n_bootstrap_test` bilerek dışarıda:
+  o test sistem dilini değiştirerek çözümleme sözleşmesini ölçüyor.
+  **Ürün kodunu değiştirerek çözmeyi denemek WP-826'da başarısız oldu** — kırılmayı
+  çözmedi, bir dosyadan diğerine taşıdı. Doğru çözüm fikstür tarafındadır; asıl
+  kalıcı önlem, eşleşmeyi zorunlu kılan bir kapıdır.
 - **Günlük hedefin geçmişe uygulanması:** `weekend_goal_days` ve `perfect_months`
   hesabı bugünkü `daily_goal_minutes` ile geçmişi değerlendiriyor.
   Kaynak: [0025](supabase/migrations/0025_achievements_social_metrics.sql),
