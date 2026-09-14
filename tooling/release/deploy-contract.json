@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0141",
   "staging": {
-    "migration_head": "0140",
-    "deploy_enabled": false,
+    "migration_head": "0141",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED 2026-09-07 after the 0140 staging apply SUCCEEDED: run 34151001908, post-check printed 0140|0140|0140. Two of the four candidate grants were removed; the dry-run rejected the other two on evidence (run 34137055615 showed revoke-from-authenticated is a no-op while PUBLIC still holds EXECUTE; run 34137437787 showed record_goal_completion is exercised as authenticated by three pgTAP files that prove its guards)."
+    "hold_reason": "OPEN 2026-09-14 for 0141 (goal_frozen_on_completion, WP-828). Owner order: yukle. Schema: one nullable column + function bodies; migration has NO DML, earned badges and rewards are untouched. Proven locally first: red without 0141, then 71 files / 1031 pgTAP assertions PASS. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0140",
