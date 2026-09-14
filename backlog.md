@@ -11,17 +11,18 @@
   `activeAppLocale`in iki yazarı olması ürün kusuru değil (WP-826 dersi).
 - **Günlük hedefin geçmişe uygulanması — sunucuda KAPANDI (WP-828, 0141):**
   yerelde kırmızı→yeşil kanıtlı; 2026-09-14 staging ve production'a uygulandı.
-  Kalan iki sınır: (1) Dart çevrimdışı ayna `achievement_ledger_engine.dart`
-  geçmişi hâlâ tek (bugünkü) hedefle hesaplıyor — sunucu otoriter olduğu için
-  rozet vermez ama çevrimdışı önizleme farklı sayı gösterebilir; ölçülmeden iş
-  açılmaz. (2) 0141 öncesi `goal_progress_events` satırlarında dondurulmuş hedef
+  Kalan iki sınır: (1) Dart aynası `achievement_ledger_engine.dart` geçmişi
+  hâlâ tek hedefle hesaplıyor — **ölçüldü, kullanıcı etkisi yok:** yalnız
+  `InMemoryAchievementRepository` kullanıyor ve o yalnız Supabase yapılandırılmamış
+  demo/test derlemesinde seçiliyor (`achievement_provider.dart:17`). (2) 0141 öncesi `goal_progress_events` satırlarında dondurulmuş hedef
   yok (null) — bu satırlar "sınır yok" sırrını yeni açamaz; bilinçli seçim.
 
 ## Ölçüm / kabul açığı — hata olduğu henüz kanıtlanmış değil
 
-- **Beklenmeyen asenkron işlemler:** son tur `discarded_futures` için 149 aday
-  kaydetti; sayı bu tur yeniden ölçülmedi ve 149 hata demek değil. Öncelik
-  kullanıcı verisi yazan işlemler. Toplu `unawaited` eklemek çözüm sayılmaz.
+- **Beklenmeyen asenkron işlemler — veri yazan yol KAPANDI (WP-830):** 2026-09-14
+  yeniden ölçüldü, `lib`'de 152 çağrı. Sunucuya yazıp hatayı yakalamayan tek yol
+  vitrin rozetiydi, düzeltildi. Kalanlar yerel tercih yazımı / animasyon /
+  gezinme; hata olarak kanıtlanmış değil. Toplu `unawaited` eklemek çözüm sayılmaz.
 - **WP-760 `_refreshPromotionVerdict`:** native yazımdan sonra `prefs.reload()`
   davranışını gerçekten bozulunca düşen testle ölçme borcu. Önceki teşhis ve
   deneyler [backlog tarihçesinin son bölümünde](backlog-history-2026-09-11.md).

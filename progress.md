@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-829** | Bu turun WP-822…WP-829 kartları aşağıda |
+| Son ayrılan WP | **WP-830** | Bu turun WP-822…WP-830 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -273,6 +273,29 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
   kırmızı düştü; sonra OK (14 dosya). Değişen 12 dosya birlikte **148 test yeşil**.
 - **Geri alma:** tek commit; yalnız test fikstürü ve kapı.
 
+#### WP-830 — Vitrin rozeti yazması ağ hatasında sessizce kayboluyordu (2026-09-14)
+
+**Durum: Otomatik test geçti.** Cihaz kabulü yok.
+
+- **SAHİP:** `app/lib/features/profile/social_profile_screen.dart`, `app_en.arb` /
+  `app_tr.arb` (tek anahtar `profileVitrinKaydedilemedi`),
+  `app/test/features/profile/showcase_toggle_feedback_wp830_test.dart`.
+- **DOKUNMA:** depo katmanı, sunucu, diğer ekranlar.
+- **Ölçüm (backlog'daki 149 aday):** `discarded_futures` + `unawaited_futures`
+  geçici açıldı, `lib`'de **152 çağrı** (ayar dosyası geri kondu). Çoğu yerel
+  tercih yazımı, animasyon, titreşim, gezinme. Kullanıcı verisini **sunucuya**
+  yazıp hatayı kendi içinde **yakalamayan** tek yol vitrin rozetiydi. Alarm
+  kaydı (`finally` + `invalidateSelf`, WP-611) ve sayaç durdurma (iç `try`)
+  zaten korunuyor; toplu `unawaited` eklenmedi.
+- **Düzeltme:** yazma beklenir; hata olursa "Vitrin kaydedilemedi" SnackBar'ı
+  (WP-610 kalıbı). Başarıda ek mesaj yok — değişiklik vitrinde görünür.
+- **Doğrulama (ölçüldü):** yeni test **önce kırmızı** (yazma yapıldı, hata
+  atıldı, mesaj yok) → düzeltme sonrası 2/2 yeşil. Iskalanan dokunuş testi yanlış
+  sebeple geçirmesin diye hit-test uyarısı ölümcül yapıldı. Bu ekrana dokunan
+  14 test dosyası 122 test yeşil; l10n kapıları yeşil.
+- **Cihazda doğrulanmalı:** uçak modunda vitrin rozetine uzun bas → uyarı çıkar.
+- **Geri alma:** tek commit; veri etkisi yok.
+
 ### Kapanış kapıları — 2026-09-11
 
 **1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
@@ -296,6 +319,9 @@ Bu kapı pgTAP koşturmaz; WP-828'in SQL kanıtı yukarıdaki yerel baseline'dı
 
 **6. koşum (WP-829 sonrası, 2026-09-14): YEŞİL.** **22 kapı · 0 kırmızı · 1 atlandı** · 318s.
 Yeni `test-locale-pin` kapısı listede ve geçiyor; Flutter test paketi 304s GEÇTİ.
+
+**7. koşum (WP-830 sonrası, 2026-09-14): YEŞİL.** **22 kapı · 0 kırmızı · 1 atlandı** · 288s.
+GitHub CI da WP-828/829 yayın commit'inde (`23b6fb87`, run `34855985526`) tamamen yeşil.
 
 **Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
 Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;
