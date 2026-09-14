@@ -13,7 +13,7 @@
 | Son kayıtlı yayın | **v83 · 1.0.83+83**, etiket commit'i `1cfcf2f6` | 2026-09-08 yayın kaydı; [tarihçe](progress-history-2026-09-11.md) son bölümü |
 | v83 release koşumu | **34166386717: completed / success** | 2026-09-11 `gh run view` ile salt okunur doğrulandı: preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı |
 | Play | Son kayıtlı kapalı test **alpha 83, completed** | Koşum `34168099776`; bu tur Play Console yeniden sorgulanmadı. Production mağaza kabulü demek değildir |
-| Veritabanı | Repo / yerel sözleşme head **0141** (WP-828); son kayıtlı staging/production head **0140** | [Sözleşme](tooling/release/deploy-contract.json); 0141 uzak DB'ye **uygulanmadı**, bu tur uzak DB sorgulanmadı |
+| Veritabanı | Repo, staging ve production head **0141** (WP-828) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-14 staging apply `34854599457`, production apply `34855466018`, ikisinde de post-check `0141\|0141\|0141`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
@@ -215,7 +215,7 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 
 #### WP-828 — Günlük hedef geçmişi yeniden yargılamasın (sahip emri, 2026-09-14)
 
-**Durum: Otomatik test geçti.** Uzak DB'ye uygulanmadı.
+**Durum: Production'a uygulandı (2026-09-14, sahip emri "yükle").** Cihaz kabulü yok.
 
 - **Sahip emri:** "Kusursuz Ay'da hata varsa düzelt; bug'ları kapat ama **kimsenin
   verisini, rozetini silme**."
@@ -245,8 +245,15 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 - **Kapsam dışı:** manuel eklenen geçmiş kayıtlar (hedef olayı üretme kuralı
   değişmedi); Dart çevrimdışı ayna (`achievement_ledger_engine.dart`) tek hedefle
   hesaplıyor — sunucu otoriter, fark [backlog](backlog.md)'da.
-- **Yayın için ayrı sahip GO gerekir:** staging dry-run → apply → gözlem →
-  yedek → production dry-run → GO. Sözleşmede staging/production 0140 kaldı.
+- **Yayın (sahip emri "yükle", 2026-09-14), her adım `database-gates`:**
+  - staging dry-run `34854178057` — CI'da tam pgTAP replay yeşil, yalnız 0141 listelendi.
+  - staging apply `34854599457` — post-check `0141|0141|0141`; kapı kilitlendi.
+  - production dry-run `34855061227` — yalnız 0141 listelendi.
+  - production apply `34855466018` — post-check `0141|0141|0141` (jiphfrpzvkpzubbkhrwb);
+    kapı yeniden kilitlendi. Yedeksiz (Free plan; sahibin 2026-07-27 kalıcı kabulü).
+  - Uygulanan SQL veri silmez; mevcut rozet/ödül satırlarına dokunmaz.
+- **Canlıda doğrulanmalı:** hedefi değiştiren bir hesapta hafta sonu / Kusursuz Ay
+  sayılarının geçmişe göre oynamadığı. Bu kayıtta canlı kullanıcı verisi sorgulanmadı.
 - **Geri alma:** 0132/0058/0135 gövdeleri yeniden uygulanır, iki yardımcı
   fonksiyon düşürülür; `goal_seconds` kolonu zararsız kalabilir.
 
@@ -302,7 +309,7 @@ sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmad
 
 1. WP-827 sonrası ilk yayın koşumunda kanal kapısını izle: `beta-v*` etiketi
    `githubBeta`, `v*` etiketi `githubStable` yazmalı ve WP-614 adımı yeşil geçmeli.
-2. WP-828 (0141) için sahip GO'su: staging dry-run/apply ve gözlem, ardından production.
+2. WP-828 (0141) canlıda: hedefi değiştiren hesapta geçmiş sayıların sabit kaldığını gözle.
 3. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
 4. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
 5. Play production / Windows Store: güncel mağaza kanıtı ve ayrı sahip kararı.

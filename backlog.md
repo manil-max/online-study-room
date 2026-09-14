@@ -10,7 +10,7 @@
   düzeltildi, `test-locale-pin` kapısı eşleşmeyi zorunlu kılıyor.
   `activeAppLocale`in iki yazarı olması ürün kusuru değil (WP-826 dersi).
 - **Günlük hedefin geçmişe uygulanması — sunucuda KAPANDI (WP-828, 0141):**
-  yerelde kırmızı→yeşil kanıtlı; uzak DB'ye uygulanması ayrı sahip GO'su bekliyor.
+  yerelde kırmızı→yeşil kanıtlı; 2026-09-14 staging ve production'a uygulandı.
   Kalan iki sınır: (1) Dart çevrimdışı ayna `achievement_ledger_engine.dart`
   geçmişi hâlâ tek (bugünkü) hedefle hesaplıyor — sunucu otoriter olduğu için
   rozet vermez ama çevrimdışı önizleme farklı sayı gösterebilir; ölçülmeden iş
