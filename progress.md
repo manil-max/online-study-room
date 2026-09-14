@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-09-11** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-09-14** · Saat dilimi: **Europe/Istanbul**
 > Güncel durum, aktif iş ve kabul kuyruğunun tek kaynağı bu dosyadır.
 > Kurallar: [.agents/AGENTS.md](.agents/AGENTS.md) + [Kalite Programı](docs/KALITE-PROGRAMI.md).
 > Önceki WP kartları, kanıtlar ve yayın kayıtları kayıpsız [tarihçede](progress-history-2026-09-11.md).
@@ -10,13 +10,13 @@
 
 | Konu | Doğrulanmış durum | Kanıt / sınır |
 |---|---|---|
-| Son kayıtlı yayın | **v83 · 1.0.83+83**, etiket commit'i `1cfcf2f6` | 2026-09-08 yayın kaydı; [tarihçe](progress-history-2026-09-11.md) son bölümü |
-| v83 release koşumu | **34166386717: completed / success** | 2026-09-11 `gh run view` ile salt okunur doğrulandı: preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı |
-| Play | Son kayıtlı kapalı test **alpha 83, completed** | Koşum `34168099776`; bu tur Play Console yeniden sorgulanmadı. Production mağaza kabulü demek değildir |
+| Son kayıtlı yayın | **v84 · 1.0.84+84**, etiket commit'i `c2ad8a6e` | 2026-09-14 sahip GO "çıkartsana"; aşağıdaki v84 yayın kaydı. Önceki v83 `1cfcf2f6` |
+| v84 release koşumu | **34861451047: completed / success** | preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı; GitHub Release draft değil (AAB 75,8 MB, APK 81,1 MB, Windows zip 19,8 MB) |
+| Play | Son kayıtlı kapalı test **alpha 84, completed** | Koşum `34866744677` ("iz güncellendi: alpha (completed)"). Production mağaza kabulü demek değildir |
 | Veritabanı | Repo, staging ve production head **0141** (WP-828) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-14 staging apply `34854599457`, production apply `34855466018`, ikisinde de post-check `0141\|0141\|0141`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
-| Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
+| Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
 | Son ayrılan WP | **WP-830** | Bu turun WP-822…WP-830 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
@@ -296,6 +296,26 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 - **Cihazda doğrulanmalı:** uçak modunda vitrin rozetine uzun bas → uyarı çıkar.
 - **Geri alma:** tek commit; veri etkisi yok.
 
+### v84 yayını — 2026-09-14 (sahip GO: "çıkartsana")
+
+| adım | kanıt |
+|---|---|
+| Sürüm commit'i | `c2ad8a6e` — `1.0.84+84`, CHANGELOG + uygulama notu + teknik not |
+| Yerel kapı | 22 kapı · 0 kırmızı · 1 atlandı (Android JVM, ortam) · 349s |
+| GitHub CI | run `34859357035` 7/7 yeşil (analiz+tüm testler, 2 Android emülatör, Windows golden + entegrasyon, SQL sözleşmesi, Edge) |
+| Etiket | `v84` → `c2ad8a6e` |
+| Release orkestratörü | run `34861451047` 6/6 yeşil; WP-827 kanal yolundan çıkan **ilk** etiket |
+| Play alpha | run `34866744677` — iz `alpha`, durum `completed` |
+| Mağaza notu | TR 360 / EN 348 karakter (sınır 500) |
+| Veritabanı | 0141, yayından **önce** iki ortama uygulanmıştı (WP-828) |
+
+İçerik: WP-822 (küçük kart kalemi), WP-828 (rozet hedef düzeltmesi, sunucuda zaten
+canlı), WP-830 (vitrin hata uyarısı), WP-827 (yayın kanalı define'ı).
+
+**Cihazda doğrulanacak (v84):** küçük kart kalemi rahat dokunuluyor; uçak modunda
+vitrin rozetine uzun basınca uyarı çıkıyor; hedefi değiştirince hafta sonu /
+Kusursuz Ay sayıları geçmişe göre oynamıyor; Windows güncelleyici v84'ü görüyor.
+
 ### Kapanış kapıları — 2026-09-11
 
 **1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
@@ -333,8 +353,8 @@ sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmad
 
 ## 🗺️ Yol Haritası
 
-1. WP-827 sonrası ilk yayın koşumunda kanal kapısını izle: `beta-v*` etiketi
-   `githubBeta`, `v*` etiketi `githubStable` yazmalı ve WP-614 adımı yeşil geçmeli.
+1. WP-827 kanal yolu `v*` için v84'te yeşil geçti (run `34861451047`); `beta-v*`
+   etiketi henüz bu yoldan çıkmadı, ilk beta etiketinde `githubBeta` izlenmeli.
 2. WP-828 (0141) canlıda: hedefi değiştiren hesapta geçmiş sayıların sabit kaldığını gözle.
 3. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
 4. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
