@@ -3,13 +3,13 @@
   "local_migration_head": "0141",
   "staging": {
     "migration_head": "0141",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "OPEN 2026-09-14 for 0141 (goal_frozen_on_completion, WP-828). Owner order: yukle. Schema: one nullable column + function bodies; migration has NO DML, earned badges and rewards are untouched. Proven locally first: red without 0141, then 71 files / 1031 pgTAP assertions PASS. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-14 after the 0141 staging apply SUCCEEDED: run 34854599457, post-check printed 0141|0141|0141. Dry-run 34854178057 was green first and listed only 0141_goal_frozen_on_completion.sql; both runs replayed the full local pgTAP suite in CI before touching staging."
   },
   "production": {
-    "migration_head": "0140",
-    "deploy_enabled": false,
+    "migration_head": "0141",
+    "deploy_enabled": true,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED 2026-09-07 after the 0140 production apply SUCCEEDED: run 34151269937, post-check printed 0140|0140|0140 on jiphfrpzvkpzubbkhrwb. Two uncalled RPC grants closed. Staging paid for itself twice on this one migration: the first dry-run proved revoke-from-authenticated is a no-op while PUBLIC still holds EXECUTE, and the second proved a third revoke would have broken three security tests that exercise record_goal_completion as authenticated. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. release_enabled stays OPEN; the release GO string is separate and must be typed fresh."
+    "hold_reason": "OPEN 2026-09-14 for 0141 (goal_frozen_on_completion, WP-828). Owner order: yukle. One nullable column + function bodies, NO DML: earned badges and rewards are untouched. Staging PROVEN first: dry-run 34854178057, apply 34854599457, post-check 0141|0141|0141. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
   }
 }
