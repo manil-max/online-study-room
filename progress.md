@@ -13,11 +13,11 @@
 | Son kayıtlı yayın | **v83 · 1.0.83+83**, etiket commit'i `1cfcf2f6` | 2026-09-08 yayın kaydı; [tarihçe](progress-history-2026-09-11.md) son bölümü |
 | v83 release koşumu | **34166386717: completed / success** | 2026-09-11 `gh run view` ile salt okunur doğrulandı: preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı |
 | Play | Son kayıtlı kapalı test **alpha 83, completed** | Koşum `34168099776`; bu tur Play Console yeniden sorgulanmadı. Production mağaza kabulü demek değildir |
-| Veritabanı | Repo ve deploy sözleşmesi **0140**; son kayıtlı staging/production head **0140** | [Sözleşme](tooling/release/deploy-contract.json); bu tur uzak DB sorgulanmadı |
+| Veritabanı | Repo / yerel sözleşme head **0141** (WP-828); son kayıtlı staging/production head **0140** | [Sözleşme](tooling/release/deploy-contract.json); 0141 uzak DB'ye **uygulanmadı**, bu tur uzak DB sorgulanmadı |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-827** | Bu turun WP-822…WP-827 kartları aşağıda |
+| Son ayrılan WP | **WP-828** | Bu turun WP-822…WP-828 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -213,6 +213,43 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
   `beta-v*`/`v*` etiketinde kanal adımı ve WP-614 kapısı izlenmeli.
 - **Geri alma:** tek commit; artefakt veya veri etkisi yok.
 
+#### WP-828 — Günlük hedef geçmişi yeniden yargılamasın (sahip emri, 2026-09-14)
+
+**Durum: Otomatik test geçti.** Uzak DB'ye uygulanmadı.
+
+- **Sahip emri:** "Kusursuz Ay'da hata varsa düzelt; bug'ları kapat ama **kimsenin
+  verisini, rozetini silme**."
+- **SAHİP:** `supabase/migrations/0141_goal_frozen_on_completion.sql`,
+  `supabase/tests/067_goal_frozen_on_completion_wp828.test.sql`, migration head
+  sabitleri (`001_schema_contract.test.sql`, `deploy-contract.json` yalnız
+  `local_migration_head`).
+- **DOKUNMA:** kullanıcı verisi (DML yok), ödül tabloları, staging/production head
+  ve deploy/release bayrakları, Dart kodu.
+- **Hata (gerçek PostgreSQL'de ölçüldü):** hafta sonu hedef günleri, Kusursuz Ay,
+  "son saniye" ve "sınır yok" geçmişi **bugünkü** `daily_goal_minutes` ile
+  yeniden hesaplıyordu. Hedefi düşürmek geçmişi şişiriyor (test: hafta sonu 2 → 12,
+  hiç tutulmamış Şubat → Kusursuz Ay 1), yükseltmek ise düzenlenen geçmiş günün
+  hedef kaydını **siliyordu** (retract bugünkü hedefle karar veriyordu).
+- **Düzeltme:** `goal_progress_events` tamamlanma anındaki hedefi `goal_seconds`
+  olarak dondurur. Dört sayım bu kayıtlardan yapılır (0136 ateş serisiyle aynı tek
+  kaynak). Geri alma dondurulmuş hedefe bakar; eski (null) satırlarda 60 sn taban.
+- **Rozet/veri korunması:** migration hiçbir satır silmez/güncellemez. İlerleme
+  projeksiyonu `cumulative` → `greatest` olduğundan kazanılmış kademe düşmez;
+  ödül anahtarları tekildir (`URUN-POLITIKALARI §3`). Eski null satırlar yeni
+  "sınır yok" açamaz — bilinçli, yanlış pozitif yerine eksik.
+- **Doğrulama (ölçüldü):**
+  - **Önce kırmızı:** 0141 geçici çıkarılıp yerel baseline koşuldu → 067'de
+    A3/A4/A5/B3/B4/C1 tam eski değerlerle düştü; diğer 69 dosya yeşil.
+  - **Sonra yeşil:** 0141 ile `tooling/supabase/local.ps1 -Action baseline` →
+    **71 dosya · 1031 kontrol · PASS** (067'nin 17 kontrolü dahil).
+- **Kapsam dışı:** manuel eklenen geçmiş kayıtlar (hedef olayı üretme kuralı
+  değişmedi); Dart çevrimdışı ayna (`achievement_ledger_engine.dart`) tek hedefle
+  hesaplıyor — sunucu otoriter, fark [backlog](backlog.md)'da.
+- **Yayın için ayrı sahip GO gerekir:** staging dry-run → apply → gözlem →
+  yedek → production dry-run → GO. Sözleşmede staging/production 0140 kaldı.
+- **Geri alma:** 0132/0058/0135 gövdeleri yeniden uygulanır, iki yardımcı
+  fonksiyon düşürülür; `goal_seconds` kolonu zararsız kalabilir.
+
 ### Kapanış kapıları — 2026-09-11
 
 **1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
@@ -230,6 +267,10 @@ Flutter test paketi (+ kapsam) 314s GEÇTİ. Turun kapandığı durum budur.
 Not: bu kapı iş akışı dosyalarını **koşturmaz**; WP-827'nin yayın kanıtı ilk
 gerçek etiket koşumundadır.
 
+**5. koşum (WP-828 sonrası, 2026-09-14): YEŞİL.** **21 kapı · 0 kırmızı · 1 atlandı** · 352s.
+"Migration head BEŞ yerde pinli" 0141 ile geçti; Flutter test paketi 339s GEÇTİ.
+Bu kapı pgTAP koşturmaz; WP-828'in SQL kanıtı yukarıdaki yerel baseline'dır.
+
 **Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
 Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;
 o kapının asıl evi CI'daki Android işidir. Bu turda hiçbir native/Kotlin dosyası
@@ -242,9 +283,10 @@ sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmad
 
 1. WP-827 sonrası ilk yayın koşumunda kanal kapısını izle: `beta-v*` etiketi
    `githubBeta`, `v*` etiketi `githubStable` yazmalı ve WP-614 adımı yeşil geçmeli.
-2. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
-3. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
-4. Play production / Windows Store: güncel mağaza kanıtı ve ayrı sahip kararı.
+2. WP-828 (0141) için sahip GO'su: staging dry-run/apply ve gözlem, ardından production.
+3. Aşağıdaki v83 ve kart cihaz kabulü; bulgu varsa ayrı düzeltme kartı.
+4. [Backlog](backlog.md) içindeki açık adaylar; bu tur kendiliğinden uygulanmaz.
+5. Play production / Windows Store: güncel mağaza kanıtı ve ayrı sahip kararı.
 
 ## Test için bekleyenler
 

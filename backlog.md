@@ -20,13 +20,13 @@
   **Ürün kodunu değiştirerek çözmeyi denemek WP-826'da başarısız oldu** — kırılmayı
   çözmedi, bir dosyadan diğerine taşıdı. Doğru çözüm fikstür tarafındadır; asıl
   kalıcı önlem, eşleşmeyi zorunlu kılan bir kapıdır.
-- **Günlük hedefin geçmişe uygulanması:** `weekend_goal_days` ve `perfect_months`
-  hesabı bugünkü `daily_goal_minutes` ile geçmişi değerlendiriyor.
-  Kaynak: [0025](supabase/migrations/0025_achievements_social_metrics.sql),
-  [0058](supabase/migrations/0058_perfect_month_28.sql), 0135 wrapper'ı.
-  İlk adım gerçek PostgreSQL'de hedef değişimini ölçen kırmızı test; ardından
-  günün hedef kaydına dayalı ileri düzeltme. Backfill ve kazanılmış ödüllerin
-  korunması birlikte değerlendirilir. **Bu tur SQL testi veya düzeltmesi yapılmadı.**
+- **Günlük hedefin geçmişe uygulanması — sunucuda KAPANDI (WP-828, 0141):**
+  yerelde kırmızı→yeşil kanıtlı; uzak DB'ye uygulanması ayrı sahip GO'su bekliyor.
+  Kalan iki sınır: (1) Dart çevrimdışı ayna `achievement_ledger_engine.dart`
+  geçmişi hâlâ tek (bugünkü) hedefle hesaplıyor — sunucu otoriter olduğu için
+  rozet vermez ama çevrimdışı önizleme farklı sayı gösterebilir; ölçülmeden iş
+  açılmaz. (2) 0141 öncesi `goal_progress_events` satırlarında dondurulmuş hedef
+  yok (null) — bu satırlar "sınır yok" sırrını yeni açamaz; bilinçli seçim.
 
 ## Ölçüm / kabul açığı — hata olduğu henüz kanıtlanmış değil
 
