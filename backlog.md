@@ -6,20 +6,9 @@
 
 ## Kodda doğrulanmış açık
 
-- **Cihaz dilini sabitleyen testler YARIM sabitliyor (2026-09-11 ölçüldü):**
-  Test binding'inde `.locale` (tekil) ve `.locales` (liste) ayrı ayrı ezilebilir;
-  gerçek cihazda ikisi aynı değerdir. Yalnız birini ezen test, diğerini **host
-  makinenin dilinde** bırakır ve sonuç derleme sırasına/platforma bağlı hâle gelir.
-  İki yönü de sahada görüldü: `group_cards_wp690_test` yalnız listeyi eziyordu
-  (WP-825'te düzeltildi), `faq_content_locale_wp526_test` yalnız tekili eziyor.
-  Doğru kural: **ikisini birlikte ez** — `build_config_error_wp594_test` örnektir.
-  Yalnız listeyi ezen 11 dosya daha var (`desktop_*`, `clock_desktop_layout`,
-  `v8_critical_flows`, `reward_banner_overlap_wp682`); hepsi şu an yeşil, yani
-  kazara doğru sırayı yakalamışlar. `l10n_bootstrap_test` bilerek dışarıda:
-  o test sistem dilini değiştirerek çözümleme sözleşmesini ölçüyor.
-  **Ürün kodunu değiştirerek çözmeyi denemek WP-826'da başarısız oldu** — kırılmayı
-  çözmedi, bir dosyadan diğerine taşıdı. Doğru çözüm fikstür tarafındadır; asıl
-  kalıcı önlem, eşleşmeyi zorunlu kılan bir kapıdır.
+- **Cihaz dilini yarım sabitleyen testler — KAPANDI (WP-829):** 12 dosya
+  düzeltildi, `test-locale-pin` kapısı eşleşmeyi zorunlu kılıyor.
+  `activeAppLocale`in iki yazarı olması ürün kusuru değil (WP-826 dersi).
 - **Günlük hedefin geçmişe uygulanması — sunucuda KAPANDI (WP-828, 0141):**
   yerelde kırmızı→yeşil kanıtlı; uzak DB'ye uygulanması ayrı sahip GO'su bekliyor.
   Kalan iki sınır: (1) Dart çevrimdışı ayna `achievement_ledger_engine.dart`

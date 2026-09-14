@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; push/tag/deploy bu turun kapsamında değil |
-| Son ayrılan WP | **WP-828** | Bu turun WP-822…WP-828 kartları aşağıda |
+| Son ayrılan WP | **WP-829** | Bu turun WP-822…WP-829 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -250,6 +250,22 @@ yazarı olması. Üçü de [backlog](backlog.md) içinde, ölçümleriyle.
 - **Geri alma:** 0132/0058/0135 gövdeleri yeniden uygulanır, iki yardımcı
   fonksiyon düşürülür; `goal_seconds` kolonu zararsız kalabilir.
 
+#### WP-829 — Cihaz dilini sabitleyen testler iki yarıyı birlikte ezsin (2026-09-14)
+
+**Durum: Otomatik test geçti.** Ürün kodu değişmedi.
+
+- **SAHİP:** `scripts/test_all.py` (yeni kapı), yarım sabitleme yapan 12 test dosyası.
+- **DOKUNMA:** `app/lib`, `l10n_bootstrap_test.dart` (bilerek istisna), diğer testler.
+- **Bulgu:** WP-825/826'nın sınıfı — `localeTestValue` ile `localesTestValue`
+  test binding'inde ayrı, cihazda aynı. Yalnız birini ezen test diğerini host
+  makinenin dilinde bırakır. 11 dosya yalnız listeyi, `faq_content_locale_wp526`
+  yalnız tekili eziyordu; hepsi kazara yeşildi.
+- **Düzeltme:** her dosyaya eksik yarı, aynı değerle eklendi (cihaz davranışı).
+- **Kalıcı önlem:** T0 kapısı `test-locale-pin` — yarım sabitleme varsa FAIL.
+- **Doğrulama (ölçüldü):** kapı düzeltmeden önce **tam bu 12 dosyayı** yakalayıp
+  kırmızı düştü; sonra OK (14 dosya). Değişen 12 dosya birlikte **148 test yeşil**.
+- **Geri alma:** tek commit; yalnız test fikstürü ve kapı.
+
 ### Kapanış kapıları — 2026-09-11
 
 **1. koşum (WP-822…825 sonrası):** `python scripts/test_all.py` ·
@@ -270,6 +286,9 @@ gerçek etiket koşumundadır.
 **5. koşum (WP-828 sonrası, 2026-09-14): YEŞİL.** **21 kapı · 0 kırmızı · 1 atlandı** · 352s.
 "Migration head BEŞ yerde pinli" 0141 ile geçti; Flutter test paketi 339s GEÇTİ.
 Bu kapı pgTAP koşturmaz; WP-828'in SQL kanıtı yukarıdaki yerel baseline'dır.
+
+**6. koşum (WP-829 sonrası, 2026-09-14): YEŞİL.** **22 kapı · 0 kırmızı · 1 atlandı** · 318s.
+Yeni `test-locale-pin` kapısı listede ve geçiyor; Flutter test paketi 304s GEÇTİ.
 
 **Atlanan kapı yeşil değildir:** *Android native JVM testleri* — bu makinede
 Android Gradle wrapper kurulu değil. Bu bir kod iddiası değil, ortam sınırıdır;
