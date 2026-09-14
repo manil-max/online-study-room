@@ -6906,6 +6906,8 @@
   "@profileGorunenAdGuncellendi": {"description": "Confirmation shown after the display name is saved."},
   "profileGorunenAdKaydedilemedi": "The display name could not be saved. Check your connection and try again.",
   "@profileGorunenAdKaydedilemedi": {"description": "Error shown when saving the display name fails (network or server)."},
+  "profileVitrinKaydedilemedi": "The showcase could not be saved. Check your connection and try again.",
+  "@profileVitrinKaydedilemedi": {"description": "Error shown when pinning or unpinning a showcase badge fails (network or server)."},
   "profileProfilFotografiYuklenemedi": "The profile photo could not be uploaded. Check your connection and try again.",
   "@profileProfilFotografiYuklenemedi": {"description": "Error shown when uploading the profile photo fails (network or server)."},
   "clockAlarmMasaustundeCalmaz": "Alarms do not ring in the desktop build: you can create and edit them here, but the sound and the notification only happen in the phone app.",

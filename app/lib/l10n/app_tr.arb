@@ -2094,6 +2094,7 @@
   "profileKampHayvaniKaydedilemedi": "Kamp hayvanı kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
   "profileGorunenAdGuncellendi": "Görünen adın güncellendi.",
   "profileGorunenAdKaydedilemedi": "Görünen ad kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+  "profileVitrinKaydedilemedi": "Vitrin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
   "profileProfilFotografiYuklenemedi": "Profil fotoğrafı yüklenemedi. Bağlantını kontrol edip tekrar dene.",
   "clockAlarmMasaustundeCalmaz": "Alarmlar masaüstü sürümünde çalmaz: burada oluşturup düzenleyebilirsin ama saati geldiğinde ses ve bildirim yalnız telefondaki uygulamada verilir.",
   "clockZamanlayiciMasaustundeBildirimYok": "Masaüstü sürümünde zamanlayıcı yalnız uygulama açıkken sayar; süre bitince sistem bildirimi gösterilmez.",

@@ -282,11 +282,13 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                               : null,
                           onRetryRewards: isSelf ? _retryRewards : null,
                           onToggleShowcaseBadge: isSelf
-                              ? (badgeId) => _toggleBadge(
-                                  context,
-                                  ref,
-                                  gamification,
-                                  badgeId,
+                              ? (badgeId) => unawaited(
+                                  _toggleBadge(
+                                    context,
+                                    ref,
+                                    gamification,
+                                    badgeId,
+                                  ),
                                 )
                               : null,
                           titleUpdating: _titleUpdating,
@@ -501,12 +503,12 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
     );
   }
 
-  void _toggleBadge(
+  Future<void> _toggleBadge(
     BuildContext context,
     WidgetRef ref,
     GamificationProfile gamification,
     String badgeId,
-  ) {
+  ) async {
     final selected = List<String>.from(gamification.selectedBadges);
     final isSelected = selected.contains(badgeId);
     if (isSelected) {
@@ -522,8 +524,18 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
       }
       selected.add(badgeId);
     }
-    ref
-        .read(gamificationRepositoryProvider)
-        .updateProfile(gamification.copyWith(selectedBadges: selected));
+    // 🔴 WP-830: yazma beklenmeden bırakılıyordu; ağ/sunucu hatası global
+    // yutucuya gidiyor, kullanıcı ne hata ne değişiklik görüyordu (WP-610 sınıfı).
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref
+          .read(gamificationRepositoryProvider)
+          .updateProfile(gamification.copyWith(selectedBadges: selected));
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.profileVitrinKaydedilemedi)),
+      );
+    }
   }
 }
