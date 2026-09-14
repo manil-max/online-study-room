@@ -3,6 +3,36 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.84",
+      "buildNumber": 84,
+      "channel": "stable",
+      "date": "2026-09-14",
+      "title": "v84: adil rozetler, rahat dokunuş",
+      "highlights": [
+        "Hafta sonu, Kusursuz Ay ve gizli rozetler artık günlük hedefini değiştirdiğinde geçmişine göre yeniden hesaplanmıyor.",
+        "Küçük kartlardaki düzenleme kalemi büyütüldü; parmakla rahatça dokunuluyor."
+      ],
+      "fixes": [
+        "Hedefi düşürmek eski günleri “tutuldu” saymıyor; yükseltmek kazanılmış günleri silmiyor.",
+        "Vitrine rozet eklerken bağlantı koparsa uygulama artık bunu söylüyor."
+      ],
+      "notes": [
+        "Kazanılmış hiçbir rozet ve ödül silinmedi."
+      ],
+      "titleEn": "v84: fair badges, easier taps",
+      "highlightsEn": [
+        "Weekend, Perfect Month and secret badges no longer recount your past when you change your daily goal.",
+        "The edit pencil on small cards is larger and easy to tap."
+      ],
+      "fixesEn": [
+        "Lowering your goal no longer counts old days as reached; raising it no longer erases days you earned.",
+        "If the connection drops while pinning a showcase badge, the app now tells you."
+      ],
+      "notesEn": [
+        "No earned badge or reward was removed."
+      ]
+    },
+    {
       "versionName": "1.0.83",
       "buildNumber": 83,
       "channel": "stable",

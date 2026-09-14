@@ -4,6 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v84 / 1.0.84+84] - 2026-09-14
+
+### Öne çıkanlar
+
+- Hafta sonu, Kusursuz Ay ve iki gizli rozet artık günlük hedefini değiştirdiğinde geçmişine göre yeniden hesaplanmıyor; bir gün hedefini tuttuysan o gün tutulmuş kalıyor.
+- Küçük kartlardaki düzenleme kalemi büyütüldü; parmakla rahatça dokunuluyor.
+
+### Düzeltmeler
+
+- Hedefi düşürmek hiç tutulmamış eski günleri artık "tutuldu" saymıyor; hedefi yükseltmek kazanılmış günleri silmiyor.
+- Vitrine rozet eklerken ya da çıkarırken bağlantı koparsa uygulama artık bunu söylüyor.
+- Kazanılmış hiçbir rozet ve ödül silinmedi.
+
+### Doğrulama sınırı
+
+- Rozet düzeltmesi sunucu tarafıdır ve bu sürümden bağımsız olarak zaten yayında (veritabanı 0141).
+- Küçük kart kalemi ve vitrin uyarısı gerçek telefonda henüz ölçülmedi.
+
 ## [v83 / 1.0.83+83] - 2026-09-08
 
 ### Öne çıkanlar

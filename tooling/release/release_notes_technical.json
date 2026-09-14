@@ -3,6 +3,26 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.84",
+      "buildNumber": 84,
+      "channel": "stable",
+      "date": "2026-09-14",
+      "title": "v84: WP-822..WP-830 frozen goal days, honest showcase writes, gate hardening",
+      "highlights": [
+        "WP-828 (0141): goal_progress_events freezes goal_seconds at completion. weekend_goal_days, perfect_months, secret last_second and no_limits now count those rows instead of re-judging history with today's daily_goal_minutes; retraction decides with the frozen goal (60 s floor for legacy null rows). No DML; the cumulative greatest projection keeps earned tiers. Red first without 0141, then 71 pgTAP files / 1031 assertions; staging 34854599457 and production 34855466018 post-check 0141.",
+        "WP-822: the small-card header action is a real 48x48 target without stealing body pixels.",
+        "WP-830: the showcase badge toggle left updateProfile unawaited, so network errors went to the global swallower with no feedback. Measured 152 discarded/unawaited futures in lib; this was the only server write without its own error handling."
+      ],
+      "fixes": [
+        "WP-827: release.yml wrote DISTRIBUTION_CHANNEL 'github', which the parser does not recognise; the define is now githubBeta/githubStable per channel and distribution_define_wp614_test covers release.yml and stable-candidate.yml. v84 is the first tag through that path.",
+        "WP-824/825/829: the local gate went red for everyone because env.local.example.json pinned the channel, and locale fixtures pinned only half of locale/locales. New T0 gates test-env and test-locale-pin."
+      ],
+      "notes": [
+        "Database head 0141 in both environments, applied before this release.",
+        "WP-826 was tried and reverted; the recorded lesson is that a symptom going quiet in one file does not prove the root cause."
+      ]
+    },
+    {
       "versionName": "1.0.83",
       "buildNumber": 83,
       "channel": "stable",
