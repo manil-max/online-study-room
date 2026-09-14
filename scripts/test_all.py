@@ -263,6 +263,10 @@ def build_gates() -> list[Gate]:
         # env.json'unu yazar), yani tek koruma bu kapidir.
         Gate("test-env", "Test env.json kanali pinlemiyor", 0,
              [py, "scripts/test_all.py", "--internal-test-env-contract"]),
+        # 🔴 WP-829: yalniz `.locales` ya da yalniz `.locale` ezen test host
+        # makinenin dilini olcer (WP-825'in kirmizisi). Eslesmeyi zorunlu kilar.
+        Gate("test-locale-pin", "Test dil sabitlemesi tam", 0,
+             [py, "scripts/test_all.py", "--internal-test-locale-pin"]),
 
         # T1 — bagimsiz araclar; birbirinin dosyasina dokunmaz.
         Gate("analyze", "flutter analyze", 1,
@@ -566,6 +570,59 @@ def internal_test_env_contract() -> int:
         f"OK: {checked} env dosyasi da kanali pinlemiyor — "
         "`flutter test` varsayilan cozumleyiciyi olcuyor."
     )
+    return 0
+
+
+# WP-829: yalniz birini ezmeyi bilerek olcen testler.
+_LOCALE_PIN_EXEMPT = {
+    # Sistem dilini degistirerek cozumleme sozlesmesini olcer; yarim pin kasitli.
+    "test/l10n/l10n_bootstrap_test.dart",
+}
+
+
+def internal_test_locale_pin() -> int:
+    r"""Cihaz dilini sabitleyen test `.locale` ve `.locales`i BIRLIKTE ezmeli.
+
+    🔴 WP-825/826 — olculdu. Test binding'inde `localeTestValue` (tekil) ve
+    `localesTestValue` (liste) ayri ayri ezilir; gercek cihazda ikisi aynidir.
+    Uygulama ikisini de okuyor (`main.dart` listeyi, `platformLocale()`
+    tekili). Yalniz birini ezen test digerini HOST makinenin dilinde birakir;
+    sonuc derleme sirasina/platforma baglanir. `group_cards_wp690_test` yalniz
+    listeyi ezdigi icin 390/android kolunda `en` metinle kirmiziya dustu.
+    Urun kodunu degistirerek cozmek (WP-826) kirilmayi yalniz yer degistirdi.
+    """
+    import re
+
+    set_one = re.compile(r"\.localeTestValue\s*=")
+    set_many = re.compile(r"\.localesTestValue\s*=")
+    problems: list[str] = []
+    pinned = 0
+    for path in sorted((APP / "test").rglob("*.dart")):
+        rel = path.relative_to(APP).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        one = bool(set_one.search(text))
+        many = bool(set_many.search(text))
+        if not (one or many):
+            continue
+        if rel in _LOCALE_PIN_EXEMPT:
+            continue
+        pinned += 1
+        if one != many:
+            missing = "localesTestValue" if one else "localeTestValue"
+            problems.append(f"{rel}: yalniz yarisini eziyor, `{missing}` eksik")
+
+    stale = [rel for rel in _LOCALE_PIN_EXEMPT if not (APP / rel).exists()]
+    for rel in stale:
+        problems.append(f"istisna listesinde olmayan dosya: {rel}")
+
+    if problems:
+        print(f"FAIL ({len(problems)}):")
+        for problem in problems:
+            print(f"  - {problem}")
+        print("Cihaz dilini sabitleyen test ikisini de ezmeli: "
+              "build_config_error_wp594_test ornektir.")
+        return 1
+    print(f"OK: dil sabitleyen {pinned} test dosyasi tekil ve listeyi birlikte eziyor.")
     return 0
 
 
@@ -1333,6 +1390,8 @@ def main() -> int:
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-test-env-contract", action="store_true",
                         help=argparse.SUPPRESS)
+    parser.add_argument("--internal-test-locale-pin", action="store_true",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-firebase", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-play-manifest", action="store_true",
@@ -1353,6 +1412,8 @@ def main() -> int:
         return internal_flutter_pin()
     if args.internal_test_env_contract:
         return internal_test_env_contract()
+    if args.internal_test_locale_pin:
+        return internal_test_locale_pin()
     if args.internal_play_firebase:
         return internal_play_firebase()
     if args.internal_play_manifest:

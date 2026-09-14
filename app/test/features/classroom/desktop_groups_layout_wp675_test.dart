@@ -132,6 +132,8 @@ void main() {
   }) async {
     tester.binding.platformDispatcher.localesTestValue = const [Locale('tr')];
     addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+    tester.binding.platformDispatcher.localeTestValue = const Locale('tr');
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = window;
     addTearDown(tester.view.reset);

@@ -36,6 +36,8 @@ void main() {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     binding.platformDispatcher.localeTestValue = deviceLocale;
     addTearDown(binding.platformDispatcher.clearLocaleTestValue);
+    binding.platformDispatcher.localesTestValue = [deviceLocale];
+    addTearDown(binding.platformDispatcher.clearLocalesTestValue);
 
     SharedPreferences.setMockInitialValues(
       languagePreference == null

@@ -41,6 +41,8 @@ void main() {
       (tester) async {
         tester.binding.platformDispatcher.localesTestValue = [labels.locale];
         addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+        tester.binding.platformDispatcher.localeTestValue = labels.locale;
+        addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
 
         final preferences = await v8SharedPreferences();
         final auth = await signedInV8AuthRepository(prefs: preferences);
