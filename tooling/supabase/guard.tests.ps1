@@ -218,7 +218,7 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 Assert-Equal $contract.production.migration_head '0142' 'production hedefi 0142: Google adi profile + kayit tetikleyicisi cokmez (WP-832)'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0142 production apply icin kapi ACIK; staging ONCE kanitlandi (run 35090616502)'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0142 production apply KOSTU (run 35091309659, post-check 0142|0142|0142) ve kapi yeniden kilitlendi'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a

@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-09-14** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-09-16** · Saat dilimi: **Europe/Istanbul**
 > Güncel durum, aktif iş ve kabul kuyruğunun tek kaynağı bu dosyadır.
 > Kurallar: [.agents/AGENTS.md](.agents/AGENTS.md) + [Kalite Programı](docs/KALITE-PROGRAMI.md).
 > Önceki WP kartları, kanıtlar ve yayın kayıtları kayıpsız [tarihçede](progress-history-2026-09-11.md).
@@ -13,16 +13,58 @@
 | Son kayıtlı yayın | **v84 · 1.0.84+84**, etiket commit'i `c2ad8a6e` | 2026-09-14 sahip GO "çıkartsana"; aşağıdaki v84 yayın kaydı. Önceki v83 `1cfcf2f6` |
 | v84 release koşumu | **34861451047: completed / success** | preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı; GitHub Release draft değil (AAB 75,8 MB, APK 81,1 MB, Windows zip 19,8 MB) |
 | Play | Son kayıtlı kapalı test **alpha 84, completed** | Koşum `34866744677` ("iz güncellendi: alpha (completed)"). Production mağaza kabulü demek değildir |
-| Veritabanı | Repo, staging ve production head **0141** (WP-828) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-14 staging apply `34854599457`, production apply `34855466018`, ikisinde de post-check `0141\|0141\|0141`; kapılar yeniden kilitli |
+| Veritabanı | Repo, staging ve production head **0142** (WP-832) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-16 staging dry-run `35090284985` (72 pgTAP / 1052 PASS), apply `35090616502`; production dry-run `35090984847`, apply `35091309659`; post-check `0142\|0142\|0142`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-830** | Bu turun WP-822…WP-830 kartları aşağıda |
+| Son ayrılan WP | **WP-832** | WP-831/832 kartları aşağıda (Google ile devam et) |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### Faz — Google ile devam et (2026-09-16)
+
+Sahip talebi: e-posta doğrulaması/SMTP yükü yerine Android'de "Google ile devam et";
+"her şeyi seri yapalım bugün bitsin", ardından "ikisini de yap" (DB apply + yayın).
+Sahip kararı: beta ve GitHub dağıtımı kalmayacak → yalnız Play imza anahtarı için
+Android OAuth istemcisi; staging Supabase'de Google sağlayıcısı açılmadı.
+
+**Sahip/konsol yapılandırması (lider adım adım yürüttü):**
+- Google Cloud projesi `focus-camp-505116`: Branding (logo yok → doğrulama yok),
+  Audience External + **In production**; Web istemcisi `1094303444274-0ge35…`
+  (redirect: iki Supabase callback), Android istemcisi `com.manilmax.online_study_room`
+  + Play uygulama imzalama SHA-1 `71:43:AA:…:F4:7E`.
+- Supabase production: Google sağlayıcısı açık, Skip nonce açık.
+- GitHub repo variable `GOOGLE_WEB_CLIENT_ID` lider tarafından `gh` ile yazıldı.
+- 🔴 Web client secret sahip ekran görüntüsüyle sohbete düştü; sahip döndürmeyi
+  istemedi ("iş çıkarma"). Açık risk olarak kayıtlı.
+
+#### WP-831 — Google ile devam et (Android, fail-closed)
+
+**Durum: Otomatik test geçti.** Cihaz kabulü yok.
+
+- **Commit:** `2bae1c6d` (alt ajan). `git show --stat` denetlendi: yalnız SAHİP yollar.
+- `google_sign_in` 7.2.0 → `signInWithIdToken` (nonce yok). Düğme yalnız Android +
+  `GOOGLE_WEB_CLIENT_ID` dolu + Supabase deposu iken çizilir. İptal sessiz;
+  çıkışta Google oturumu da kapanır. Yeni testler: depo 10/10, düğme 9/9.
+- **Sınır:** yalnız Play imzalı derlemede çalışır (debug/yükleme anahtarı istemcisi yok).
+- **Cihazda doğrulanmalı:** hesap seçici, iptal, ilk girişte adın gelmesi, çıkış → seçici tekrar.
+
+#### WP-832 (0142) — Google adı profile, kayıt tetikleyicisi çökmez
+
+**Durum: Otomatik test geçti + iki ortama uygulandı.** Cihaz kabulü yok.
+
+- **Commit:** `69494227` (alt ajan) + lider `5d1cd787` (local head).
+- `handle_new_user`: `display_name → full_name → name`, boşluk sıkıştırma, 24 sınırı;
+  yalnız `public_name_not_allowed` boş ada çevrilir (0094 filtresi ve 0122 uzunluk
+  kısıtı artık `auth.users` insert'ini düşüremez). DML yok.
+- pgTAP 068 yerelde koşmadı (Docker yok); ilk replay CI: 72 dosya / 1052 PASS.
+- staging `35090616502`, production `35091309659`, post-check `0142|0142|0142`.
+
+**Birleşik kapı (lider, WP-831+832 sonrası):** 22 kapı · 0 kırmızı · 1 atlandı
+(Android native JVM: Gradle wrapper yok) · 294s.
 
 ### Faz — Küçük kart erişimi ve güncel notlar (2026-09-11)
 
