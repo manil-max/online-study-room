@@ -2465,5 +2465,7 @@
   "adminVakaYazismaOkunamadi": "Yazışma okunamadı.",
   "adminVakaYazismaGirdiIpucu": "Mesajını yaz",
   "adminVakaYazismaFotoEkle": "Fotoğraf ekle (1 adet)",
-  "adminVakaYazismaGonderilemedi": "Mesaj gönderilemedi."
+  "adminVakaYazismaGonderilemedi": "Mesaj gönderilemedi.",
+  "authVeya": "veya",
+  "authGoogleIleDevamEt": "Google ile devam et"
 }

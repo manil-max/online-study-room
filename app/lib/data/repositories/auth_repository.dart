@@ -60,6 +60,10 @@ class AuthErrorCode {
 
   /// Yeni e-posta başka bir hesaba bağlı.
   static const String emailAlreadyInUse = 'email_already_in_use';
+
+  /// WP-831: kullanıcı harici giriş akışını (Google hesap seçici) **kendisi**
+  /// kapattı. Bu bir hata değildir: ekran hiçbir şey göstermez.
+  static const String cancelled = 'cancelled';
 }
 
 /// WP-319-G: [AuthRepository.changePassword] sonucu.
@@ -118,6 +122,15 @@ abstract class AuthRepository {
   });
 
   Future<Profile> signIn({required String email, required String password});
+
+  /// WP-831: "Google ile devam et" — Google ID token'ı ile oturum açar.
+  ///
+  /// Hesap yoksa sunucu oluşturur (görünen adı Google metadata'sından DB
+  /// trigger'ı yazar; istemci `display_name` yazmaz). Kullanıcı hesap
+  /// seçiciyi kapatırsa [AuthErrorCode.cancelled] kodlu [AuthException]
+  /// atılır ve ekran bunu hata olarak göstermez. Google girişi olmayan
+  /// backend/platformda çağrı kodsuz [AuthException] ile düşer.
+  Future<Profile> signInWithGoogle();
 
   /// WP-587: kayıt doğrulama e-postasını **yeniden** gönderir.
   ///

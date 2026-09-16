@@ -2,9 +2,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/config/google_sign_in_config.dart';
 import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
@@ -45,6 +47,58 @@ Profile offlineProfileFallback({
   );
 }
 
+/// WP-831: Google hesabından **ID token** alan dikiş.
+///
+/// Depo `google_sign_in` eklentisine doğrudan bağlanmaz: eklenti platform
+/// kanalı ister ve birim testte çalışmaz. Üretimde [PluginGoogleIdTokenSource],
+/// testte sahte bir kaynak verilir.
+abstract class GoogleIdTokenSource {
+  /// Hesap seçiciyi açar ve ID token döndürür (token yoksa null).
+  ///
+  /// Kullanıcı seçiciyi kapatırsa [GoogleSignInException] (`canceled`) atar.
+  Future<String?> fetchIdToken();
+
+  /// Cihazdaki Google oturumunu kapatır; bir sonraki girişte hesap seçici
+  /// yeniden görünür.
+  Future<void> signOut();
+}
+
+/// Gerçek `google_sign_in` 7.x eklentisi üzerinden kaynak.
+class PluginGoogleIdTokenSource implements GoogleIdTokenSource {
+  PluginGoogleIdTokenSource({required this.serverClientId});
+
+  /// Web türündeki OAuth istemci kimliği (`GOOGLE_WEB_CLIENT_ID`).
+  final String serverClientId;
+
+  /// `GoogleSignIn.instance.initialize` süreç başına **tam bir kez**
+  /// çağrılmalı (eklenti sözleşmesi). Sağlayıcı depoyu yeniden kurabildiği
+  /// için bayrak örnekte değil, sınıfta tutulur.
+  static Future<void>? _initialized;
+
+  Future<void> _ensureInitialized() {
+    return _initialized ??= GoogleSignIn.instance
+        .initialize(serverClientId: serverClientId)
+        .catchError((Object error, StackTrace stack) {
+          // Başarısız başlatma önbelleğe alınmaz; sonraki deneme yeniden dener.
+          _initialized = null;
+          Error.throwWithStackTrace(error, stack);
+        });
+  }
+
+  @override
+  Future<String?> fetchIdToken() async {
+    await _ensureInitialized();
+    final account = await GoogleSignIn.instance.authenticate();
+    return account.authentication.idToken;
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _ensureInitialized();
+    await GoogleSignIn.instance.signOut();
+  }
+}
+
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository(
@@ -52,11 +106,26 @@ class SupabaseAuthRepository implements AuthRepository {
     RecoveryRedirectResolver? recoveryRedirect,
     Profile? Function()? cachedProfile,
     void Function(Profile profile)? onServerProfile,
+    GoogleIdTokenSource? googleIdTokenSource,
   }) : _recoveryRedirect = recoveryRedirect ?? (() async => null),
        _cachedProfile = cachedProfile ?? (() => null),
-       _onServerProfile = onServerProfile ?? ((_) {});
+       _onServerProfile = onServerProfile ?? ((_) {}),
+       _google = googleIdTokenSource ?? _defaultGoogleIdTokenSource();
+
+  /// WP-831: yapılandırma yoksa (kimlik boş / Android değil) kaynak **null**
+  /// kalır — Google girişi fail-closed kapalıdır ve çıkışta eklentiye
+  /// hiç dokunulmaz.
+  static GoogleIdTokenSource? _defaultGoogleIdTokenSource() {
+    if (!GoogleSignInConfig.platformEnabled) return null;
+    return PluginGoogleIdTokenSource(
+      serverClientId: GoogleSignInConfig.webClientId,
+    );
+  }
 
   final supa.SupabaseClient _client;
+
+  /// WP-831: Google ID token kaynağı; Google girişi kapalıysa null.
+  final GoogleIdTokenSource? _google;
 
   /// 🔴 WP-609: ağ yolu başarısız olduğunda dönülecek **son gerçek** profil.
   ///
@@ -350,6 +419,57 @@ class SupabaseAuthRepository implements AuthRepository {
       // oluştu."ya düşüyordu.
     } on supa.AuthException catch (e) {
       throw AuthException(_translate(e.message), code: _authCode(e));
+    }
+  }
+
+  /// WP-831: Google hesabıyla giriş (Android, native hesap seçici).
+  ///
+  /// Akış: eklentiden ID token → `signInWithIdToken(provider: google)`.
+  /// Nonce **verilmez**: token nonce taşımadığında Supabase nonce kontrolünü
+  /// atlar; tek başına nonce eklemek ise token'daki hash ile eşleşmediği için
+  /// girişi kırar.
+  ///
+  /// Profil yolu e-posta girişiyle **aynıdır** ([_profileFor]). Görünen ad
+  /// istemciden yazılmaz; ilk girişte DB trigger'ı Google metadata'sından
+  /// (`full_name`/`name`) üretir.
+  ///
+  /// Mesajlar teknik ve İngilizcedir; kullanıcı metnini ekran `code`dan
+  /// üretir (WP-539 sözleşmesi).
+  @override
+  Future<Profile> signInWithGoogle() async {
+    final google = _google;
+    if (google == null) {
+      throw const AuthException('google_sign_in_unavailable');
+    }
+    final String? idToken;
+    try {
+      idToken = await google.fetchIdToken();
+    } on GoogleSignInException catch (e) {
+      // Kullanıcının kendi vazgeçişi hata değildir: ekran sessiz kalır.
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const AuthException(
+          'google_sign_in_cancelled',
+          code: AuthErrorCode.cancelled,
+        );
+      }
+      throw AuthException('google_sign_in_failed_${e.code.name}');
+    }
+    if (idToken == null || idToken.isEmpty) {
+      throw const AuthException('google_id_token_missing');
+    }
+    try {
+      final res = await _client.auth.signInWithIdToken(
+        provider: supa.OAuthProvider.google,
+        idToken: idToken,
+      );
+      final profile = await _profileFor(res.session);
+      if (profile == null) {
+        throw const AuthException('google_sign_in_no_session');
+      }
+      _current = profile;
+      return profile;
+    } on supa.AuthException catch (e) {
+      throw AuthException(e.message, code: _authCode(e));
     }
   }
 
@@ -789,6 +909,15 @@ class SupabaseAuthRepository implements AuthRepository {
         );
       }
     } catch (_) {}
+    // WP-831: Google oturumu da kapatılır, yoksa sonraki girişte hesap seçici
+    // atlanıp aynı hesap sessizce seçilebilir. En iyi çaba: bu adımın hatası
+    // Supabase çıkışını ENGELLEMEZ.
+    final google = _google;
+    if (google != null) {
+      try {
+        await google.signOut();
+      } catch (_) {}
+    }
     await _client.auth.signOut();
     _current = null;
   }

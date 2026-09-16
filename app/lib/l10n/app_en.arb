@@ -7407,5 +7407,9 @@
   "adminVakaYazismaFotoEkle": "Attach a photo (1 only)",
   "@adminVakaYazismaFotoEkle": {"description": "WP-778: tooltip of the composer attach button; a message carries at most one photo."},
   "adminVakaYazismaGonderilemedi": "The message could not be sent.",
-  "@adminVakaYazismaGonderilemedi": {"description": "WP-778: fallback when the failure carries no server message."}
+  "@adminVakaYazismaGonderilemedi": {"description": "WP-778: fallback when the failure carries no server message."},
+  "authVeya": "or",
+  "@authVeya": {"description": "WP-831: divider label between the email login button and the Google sign-in button."},
+  "authGoogleIleDevamEt": "Continue with Google",
+  "@authGoogleIleDevamEt": {"description": "WP-831: Google sign-in button on the login/register screen (Android only)."}
 }

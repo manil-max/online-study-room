@@ -7,6 +7,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../support/faq_screen.dart';
 import 'entry_desktop_layout.dart';
+import 'google_sign_in_availability.dart';
 import 'password_reset_platform.dart';
 import 'reset_with_code_screen.dart';
 
@@ -131,6 +132,38 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await _showAccountCreatedDialog(l10n, accountCreated);
     }
     // Başarılıysa AuthGate otomatik olarak ana uygulamaya geçer.
+    if (signedIn && mounted) ref.invalidate(authStateProvider);
+  }
+
+  /// WP-831: "Google ile devam et".
+  ///
+  /// Form doğrulaması **çalışmaz**: e-posta/şifre alanları bu yolda
+  /// kullanılmaz. Başarı yolu e-posta girişiyle aynıdır
+  /// (`authStateProvider` tazelenir, AuthGate ana uygulamaya geçer).
+  ///
+  /// Kullanıcı hesap seçiciyi kapatırsa ([AuthErrorCode.cancelled]) ekran
+  /// **hiçbir şey** göstermez: vazgeçmek hata değildir.
+  Future<void> _continueWithGoogle() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+      _emailNotConfirmed = false;
+    });
+    var signedIn = false;
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+      signedIn = true;
+    } on AuthException catch (e) {
+      if (e.code != AuthErrorCode.cancelled && mounted) {
+        setState(() => _error = _localizedAuthError(l10n, e));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
     if (signedIn && mounted) ref.invalidate(authStateProvider);
   }
 
@@ -260,6 +293,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final googleEnabled = ref.watch(googleSignInEnabledProvider);
 
     // 🔴 WP-680 / SPEC §3 A3 uyarisi + §7 — ekran IKI bagimsiz blok tasir.
     //
@@ -387,6 +421,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 _isRegister ? l10n.authKaytOl : l10n.authGirisYap,
               ),
       ),
+      // WP-831: Google girişi iki modda da çizilir (giriş ve kayıt aynı
+      // akıştır: hesap yoksa sunucu oluşturur). Yapılandırma eksikse
+      // `googleEnabled` false kalır ve bu blok hiç çizilmez (fail-closed).
+      if (googleEnabled) ...[
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                l10n.authVeya,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          key: const Key('auth-google-sign-in'),
+          onPressed: _loading ? null : _continueWithGoogle,
+          icon: const Icon(Icons.account_circle_outlined),
+          label: Text(l10n.authGoogleIleDevamEt),
+        ),
+      ],
       const SizedBox(height: 8),
       if (!_isRegister) ...[
         TextButton.icon(

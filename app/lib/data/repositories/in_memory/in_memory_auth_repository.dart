@@ -94,6 +94,15 @@ class InMemoryAuthRepository implements AuthRepository {
     return account.profile;
   }
 
+  /// WP-831: bu backend'de Google kimliğini doğrulayacak sunucu **yok**;
+  /// giriş taklit edilmez. Ekran bu modda düğmeyi zaten çizmez
+  /// (`GoogleSignInConfig.resolveEnabled`), çağrı yine de gelirse kodsuz
+  /// istisna ile dürüstçe düşer.
+  @override
+  Future<Profile> signInWithGoogle() async {
+    throw const AuthException('google_sign_in_unavailable');
+  }
+
   /// WP-587: bu backend'in e-posta sağlayıcısı yok, bu yüzden gönderim
   /// **taklit edilmez** — çağrı sayılır. Sayaç, giriş ekranındaki
   /// "yeniden gönder" düğmesinin ölü anahtar olmadığını ölçen tek uçtur;
