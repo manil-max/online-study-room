@@ -196,6 +196,11 @@ void main() {
         );
         expect(wire.calls, isEmpty);
       },
+      // CI release koşumu GOOGLE_WEB_CLIENT_ID'yi doldurur ve flutter_test
+      // platformu Android'dir: orada "yapılandırma yok" durumu kurulamaz.
+      skip: GoogleSignInConfig.platformEnabled
+          ? 'GOOGLE_WEB_CLIENT_ID dolu (CI define); fail-closed yolu kurulamaz'
+          : false,
     );
   });
 

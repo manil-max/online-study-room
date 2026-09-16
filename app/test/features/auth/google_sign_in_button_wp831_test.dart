@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/config/supabase_config.dart';
 import 'package:online_study_room/core/config/google_sign_in_config.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
@@ -79,19 +80,26 @@ OutlinedButton _button(WidgetTester tester) =>
 
 void main() {
   group('WP-831 fail-closed gorunurluk', () {
-    testWidgets('bellek-ici depoda dugme cizilmez', (tester) async {
-      _useTallPhone(tester);
-      await tester.pumpWidget(
-        _app([
-          authRepositoryProvider.overrideWithValue(_GoogleAuthRepository()),
-        ]),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'bellek-ici depoda dugme cizilmez',
+      (tester) async {
+        _useTallPhone(tester);
+        await tester.pumpWidget(
+          _app([
+            authRepositoryProvider.overrideWithValue(_GoogleAuthRepository()),
+          ]),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byKey(_googleButton), findsNothing);
-      expect(find.text('Google ile devam et'), findsNothing);
-      expect(find.text('veya'), findsNothing);
-    });
+        expect(find.byKey(_googleButton), findsNothing);
+        expect(find.text('Google ile devam et'), findsNothing);
+        expect(find.text('veya'), findsNothing);
+      },
+      // Arka uç kararı derleme bayrağından okunur (SupabaseConfig). Release
+      // koşumu Supabase + Google define'larını doldurur; orada bellek-içi
+      // durum kurulamaz.
+      skip: SupabaseConfig.isConfigured,
+    );
 
     // Widget testi değil: gotrue istemcisinin tazeleme zamanlayıcısı sahte
     // saatte kapanmıyor (ölçüldü: `client.dispose()` 10 dk askıda kaldı).
