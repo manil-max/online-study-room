@@ -7,13 +7,13 @@ select plan(57);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  141,
-  'all 141 migrations are recorded'
+  142,
+  'all 142 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0141',
-  '0141 is the migration head'
+  '0142',
+  '0142 is the migration head'
 );
 select ok(
   exists(
