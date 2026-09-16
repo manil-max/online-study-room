@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v85 / 1.0.85+85] - 2026-09-16
+
+### Öne çıkanlar
+
+- Android'de "Google ile devam et": şifre ve e-posta doğrulaması olmadan tek dokunuşla giriş ya da kayıt.
+
+### Düzeltmeler
+
+- Google hesabıyla gelen kullanıcının adı profile otomatik yazılıyor; ad uzunsa kısaltılıyor, uygunsuz sayılırsa boş bırakılıyor ve kayıt artık bu yüzden başarısız olmuyor.
+
+### Doğrulama sınırı
+
+- Google girişi gerçek telefonda henüz denenmedi; yalnız Play'den inen sürümde çalışır (imza anahtarı).
+- Windows'ta Google girişi yok; e-posta ve şifre aynen duruyor.
+
 ## [v84 / 1.0.84+84] - 2026-09-14
 
 ### Öne çıkanlar

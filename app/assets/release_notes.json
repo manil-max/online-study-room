@@ -3,6 +3,32 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.85",
+      "buildNumber": 85,
+      "channel": "stable",
+      "date": "2026-09-16",
+      "title": "v85: Google ile devam et",
+      "highlights": [
+        "Android'de Google hesabınla tek dokunuşla giriş yapabilir ya da kayıt olabilirsin."
+      ],
+      "fixes": [
+        "Google ile gelen adın profile yazılması; kayıt artık uzun ya da uygunsuz bir ad yüzünden başarısız olmuyor."
+      ],
+      "notes": [
+        "E-posta ve şifreyle giriş aynen duruyor."
+      ],
+      "titleEn": "v85: Continue with Google",
+      "highlightsEn": [
+        "On Android you can sign in or sign up with your Google account in one tap."
+      ],
+      "fixesEn": [
+        "Your Google name is filled into your profile; sign-up no longer fails because of a long or disallowed name."
+      ],
+      "notesEn": [
+        "Email and password sign-in still works as before."
+      ]
+    },
+    {
       "versionName": "1.0.84",
       "buildNumber": 84,
       "channel": "stable",

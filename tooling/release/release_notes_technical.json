@@ -3,6 +3,20 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.85",
+      "buildNumber": 85,
+      "channel": "stable",
+      "date": "2026-09-16",
+      "title": "v85: WP-831/WP-832 Continue with Google (Android) + handle_new_user hardening",
+      "highlights": [
+        "WP-831: google_sign_in 7.2.0 + signInWithIdToken (no nonce). Fail-closed: button only on Android with GOOGLE_WEB_CLIENT_ID (repo variable) and the Supabase backend. Cancel is silent; sign-out also clears the Google session."
+      ],
+      "fixes": [
+        "WP-832 (0142): handle_new_user reads display_name -> full_name -> name, collapses whitespace, caps at 24 and turns only public_name_not_allowed into an empty name instead of aborting the auth.users insert."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.84",
       "buildNumber": 84,
       "channel": "stable",
