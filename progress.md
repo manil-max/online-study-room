@@ -10,9 +10,9 @@
 
 | Konu | Doğrulanmış durum | Kanıt / sınır |
 |---|---|---|
-| Son kayıtlı yayın | **v84 · 1.0.84+84**, etiket commit'i `c2ad8a6e` | 2026-09-14 sahip GO "çıkartsana"; aşağıdaki v84 yayın kaydı. Önceki v83 `1cfcf2f6` |
+| Son kayıtlı yayın | **v85 · 1.0.85+85**, etiket commit'i `c4196127` | 2026-09-16 sahip GO "ikisini de yap"; aşağıdaki v85 yayın kaydı. Önceki v84 `c2ad8a6e` |
 | v84 release koşumu | **34861451047: completed / success** | preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı; GitHub Release draft değil (AAB 75,8 MB, APK 81,1 MB, Windows zip 19,8 MB) |
-| Play | Son kayıtlı kapalı test **alpha 84, completed** | Koşum `34866744677` ("iz güncellendi: alpha (completed)"). Production mağaza kabulü demek değildir |
+| Play | **production 85, draft** (koşum `35103828308`); alpha 84 completed | Taslak sahip tarafından Console'da ülke seçimi + incelemeye gönderimle açılır; mağaza kabulü değildir |
 | Veritabanı | Repo, staging ve production head **0142** (WP-832) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-16 staging dry-run `35090284985` (72 pgTAP / 1052 PASS), apply `35090616502`; production dry-run `35090984847`, apply `35091309659`; post-check `0142\|0142\|0142`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
@@ -62,6 +62,19 @@ Android OAuth istemcisi; staging Supabase'de Google sağlayıcısı açılmadı.
   kısıtı artık `auth.users` insert'ini düşüremez). DML yok.
 - pgTAP 068 yerelde koşmadı (Docker yok); ilk replay CI: 72 dosya / 1052 PASS.
 - staging `35090616502`, production `35091309659`, post-check `0142|0142|0142`.
+
+### v85 yayını — 2026-09-16 (sahip GO: "ikisini de yap")
+
+| adım | kanıt |
+|---|---|
+| Sürüm commit'i | `b837d2d1` notlar; etiket son hâli `c4196127` |
+| Deneme 1 | `35091694752` KIRMIZI — CI define'larıyla 10 giriş ekranı testi `Supabase.instance`'a düştü; düzeltme `fe91c089` (karar `SupabaseConfig.isConfigured`) |
+| Deneme 2 | `35094590403` KIRMIZI — play-manifest kapısı: `google_sign_in` `USE_FINGERPRINT` sızdırdı; play manifestinde düşürüldü |
+| Deneme 3 | `35098855508` 6/6 yeşil; etiket v85 iki kez zorla taşındı (önceki koşumlar Release üretmemişti) |
+| Play | `35103828308` — iz `production`, durum `draft` |
+
+🔴 Ders: yerel kapı `GOOGLE_WEB_CLIENT_ID`/`SUPABASE_*` boşken koşuyor; define'a bağlı
+UI dalları yalnız release koşumunda çalıştı. Yerelde CI define'larıyla yeniden ölçüldü.
 
 **Birleşik kapı (lider, WP-831+832 sonrası):** 22 kapı · 0 kırmızı · 1 atlandı
 (Android native JVM: Gradle wrapper yok) · 294s.
