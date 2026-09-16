@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0142",
   "staging": {
-    "migration_head": "0141",
-    "deploy_enabled": false,
+    "migration_head": "0142",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED 2026-09-14 after the 0141 staging apply SUCCEEDED: run 34854599457, post-check printed 0141|0141|0141. Dry-run 34854178057 was green first and listed only 0141_goal_frozen_on_completion.sql; both runs replayed the full local pgTAP suite in CI before touching staging."
+    "hold_reason": "OPEN 2026-09-16 for 0142 (google_display_name, WP-832). Owner order: ikisini de yap. Function body only (handle_new_user), NO DML, no schema change. pgTAP 068 written but NOT run locally (no Docker on this host); first real replay is the CI validate job of the staging dry-run. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0141",
