@@ -103,6 +103,19 @@
         android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN"
         tools:node="remove" />
 
+    <!--
+      WP-831: `google_sign_in_android` (Credential Manager + androidx.biometric
+      transitifi) `USE_FINGERPRINT` sizdiriyor; v85 release koşumu
+      35094590403 bu kapıda düştü. "Google ile devam et" yalnız Google ID
+      token ister; parmak izi/biyometrik hiçbir akışta yok. Credential
+      Manager'ın Google kimliği için manifest izni gerekmez, bu yüzden
+      yukarıdaki USE_CREDENTIALS / CREDENTIAL_MANAGER_SET_ORIGIN düşürmesi de
+      Google girişini etkilemez (SET_ORIGIN yalnız ayrıcalıklı tarayıcılar içindir).
+    -->
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        tools:node="remove" />
+
     <application>
         <meta-data
             android:name="com.manilmax.online_study_room.DISTRIBUTION_CHANNEL"
