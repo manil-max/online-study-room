@@ -16,11 +16,45 @@ class AuthErrorCode {
   /// Mevcut şifre yanlış — **işlem yapılmadı**.
   static const String invalidCurrentPassword = 'invalid_current_password';
 
-  /// Yeni şifre kural sınırının altında.
+  /// Yeni şifre kural sınırının altında; sunucu **sebep bildirmedi**.
+  ///
+  /// Sebep bildirdiyse aşağıdaki üç alt koddan biri gelir; bu kod yalnız
+  /// tanınmayan/boş sebep için kalan gerideki kovadır.
   static const String weakPassword = 'weak_password';
 
+  /// 🔴 WP-834: `weak_password` **alt sebebi** — şifre çok kısa.
+  ///
+  /// Neden alt kodlar gerekti: sahip v85'te sıfırlama bağlantısından gelip
+  /// şifre yazdı, "Beklenmeyen bir hata oluştu." gördü; **tek harf** değiştirince
+  /// kabul edildi. Yani sunucu somut bir sebep söylemişti ve arayüz onu yuttu.
+  /// gotrue sebebi `AuthWeakPasswordException.reasons` içinde taşır
+  /// (gotrue-2.22.0 `lib/src/types/auth_exception.dart:93-105`); tek bir "zayıf
+  /// şifre" cümlesi kullanıcıya **neyi** düzelteceğini söylemiyordu.
+  static const String weakPasswordLength = 'weak_password_length';
+
+  /// WP-834: `weak_password` alt sebebi — karakter çeşidi yetersiz.
+  static const String weakPasswordCharacters = 'weak_password_characters';
+
+  /// WP-834: `weak_password` alt sebebi — şifre bilinen veri sızıntılarında
+  /// geçiyor (Supabase'in sızmış şifre kontrolü).
+  ///
+  /// Bu sebep ötekilerden farklıdır: şifre kurallara **uyuyor** olabilir,
+  /// yine de reddedilir. "En az 6 karakter" demek kullanıcıyı yanlış yere
+  /// bakmaya iter; ekran ayrı bir cümle kurar.
+  static const String weakPasswordPwned = 'weak_password_pwned';
+
   /// Yeni şifre mevcut şifreyle aynı.
+  ///
+  /// WP-834: bu kod vardı ama **yalnız istemci ön kontrolünden** üretiliyordu
+  /// (`changePassword` içindeki `newPassword == currentPassword`). Sunucunun
+  /// `same_password` kodu (gotrue `lib/src/types/error_code.dart:61`) hiçbir
+  /// yerde eşlenmiyordu; mevcut şifreyi bilmeyen kurtarma ekranı bu reddi
+  /// "beklenmeyen hata" olarak gösteriyordu.
   static const String samePassword = 'same_password';
+
+  /// WP-834: e-postadaki 6 haneli sıfırlama kodu geçersiz veya süresi dolmuş
+  /// (gotrue `otp_expired`, `lib/src/types/error_code.dart:63`).
+  static const String otpExpired = 'otp_expired';
 
   /// Ağ/sunucuya ulaşılamadı — **şifre hakkında hiçbir şey söylemez**.
   ///

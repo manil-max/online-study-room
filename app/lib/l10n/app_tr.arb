@@ -2467,5 +2467,11 @@
   "adminVakaYazismaFotoEkle": "Fotoğraf ekle (1 adet)",
   "adminVakaYazismaGonderilemedi": "Mesaj gönderilemedi.",
   "authVeya": "veya",
-  "authGoogleIleDevamEt": "Google ile devam et"
+  "authGoogleIleDevamEt": "Google ile devam et",
+  "authSifreCokKisa": "Şifre çok kısa. En az 6 karakter olmalı.",
+  "authSifreKarakterCesidiYetersiz": "Şifre yeterince çeşitli değil. Büyük harf, küçük harf, rakam ve sembol karıştır.",
+  "authSifreVeriSizintisindaGorulmus": "Bu şifre veri sızıntılarında görülmüş, başka bir şifre seç.",
+  "authYeniSifrenEskisiyleAyniOlamaz": "Yeni şifren eskisiyle aynı olamaz.",
+  "authKodGecersizVeyaSuresiDolmus": "Kod geçersiz veya süresi dolmuş. Yeni kod iste.",
+  "authSifreKurallari": "En az 6 karakter. Eski şifrenle aynı olamaz."
 }

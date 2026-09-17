@@ -9,6 +9,7 @@ import '../../data/models/account_deletion_status.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../auth/password_reset_platform.dart';
+import '../auth/password_rules.dart';
 // WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
 import 'settings_screen.dart';
 
@@ -918,19 +919,14 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
 
   /// Sunucudan gelen nedeni yerelleştirir. Mesaj metnine bakmak yerine
   /// [AuthErrorCode] kullanılır — mesaj düzenlenince dal sessizce kaymasın.
-  String _messageFor(AppLocalizations l10n, Object error) {
-    if (error is! AuthException) return l10n.profileBeklenmeyenBirHataOlustu;
-    return switch (error.code) {
-      AuthErrorCode.invalidCurrentPassword => l10n.profileMevcutSifreHatali,
-      AuthErrorCode.weakPassword => l10n.profileSifreEnAz6,
-      AuthErrorCode.samePassword => l10n.profileYeniSifreEskisiyleAyni,
-      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
-      // WP-536: ag hatasi sifre hakkinda hukum vermez.
-      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
-      AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
-      _ => l10n.profileBeklenmeyenBirHataOlustu,
-    };
-  }
+  ///
+  /// 🔴 WP-834: burası kendi beşli listesini taşıyordu, kurtarma ekranı da
+  /// kendi dörtlüsünü. Aynı sunucu reddi ekrandan ekrana başka cümle
+  /// veriyordu ve zayıf şifrenin alt sebepleri (sızmış şifre / karakter
+  /// çeşidi) hiçbirinde yoktu. Eşleme artık tek yerde:
+  /// [passwordErrorMessage].
+  String _messageFor(AppLocalizations l10n, Object error) =>
+      passwordErrorMessage(l10n, error);
 
   Future<void> _submit() async {
     if (_busy) return;
@@ -1041,6 +1037,8 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
                   return null;
                 },
               ),
+              // WP-834: kural metni kalıcı — hata beklemeden görünür.
+              const PasswordRulesText(),
               const SizedBox(height: 4),
               Align(
                 alignment: AlignmentDirectional.centerStart,

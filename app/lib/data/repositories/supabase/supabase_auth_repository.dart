@@ -531,13 +531,19 @@ class SupabaseAuthRepository implements AuthRepository {
     final safeEmail = email.trim();
     final safeCode = code.trim();
     if (safeEmail.isEmpty || !safeEmail.contains('@')) {
-      throw const AuthException('Geçerli bir e-posta girin.');
+      throw const AuthException(
+        'Geçerli bir e-posta girin.',
+        code: AuthErrorCode.invalidEmail,
+      );
     }
     if (safeCode.isEmpty) {
-      throw const AuthException('Kodu gir.');
+      throw const AuthException('Kodu gir.', code: AuthErrorCode.otpExpired);
     }
     if (newPassword.length < 6) {
-      throw const AuthException('Şifre en az 6 karakter olmalı.');
+      throw const AuthException(
+        'Şifre en az 6 karakter olmalı.',
+        code: AuthErrorCode.weakPassword,
+      );
     }
     try {
       // Kod recovery oturumu kurar, ardından yeni şifre yazılır.
@@ -547,8 +553,12 @@ class SupabaseAuthRepository implements AuthRepository {
         type: supa.OtpType.recovery,
       );
       await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+      // 🔴 WP-834: burada `code` HİÇ verilmiyordu ve ekran mesajı olduğu gibi
+      // basıyordu. Sunucu "aynı şifre" ya da "sızmış şifre" dediğinde
+      // `_translateRecovery` bunların hiçbirini tanımıyor, İngilizce ham mesaj
+      // ekrana düşüyordu.
     } on supa.AuthException catch (e) {
-      throw AuthException(_translateRecovery(e.message));
+      throw AuthException(_translateRecovery(e.message), code: _authCode(e));
     }
   }
 
@@ -615,11 +625,11 @@ class SupabaseAuthRepository implements AuthRepository {
 
     try {
       await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+      // 🔴 WP-834: burası yalnız hız sınırını tanıyordu; şifre reddinin gerçek
+      // sebepleri (zayıf şifre alt sebepleri, `same_password`) **kodsuz**
+      // geçiyor ve diyalog onları "Beklenmeyen bir hata oluştu."ya düşürüyordu.
     } on supa.AuthException catch (e) {
-      throw AuthException(
-        _translate(e.message),
-        code: _isRateLimit(e.message) ? AuthErrorCode.rateLimited : null,
-      );
+      throw AuthException(_translate(e.message), code: _authCode(e));
     }
 
     // Buradan sonra şifre **değişmiştir**. Diğer cihazların oturumu kapatılamazsa
@@ -1013,11 +1023,44 @@ class SupabaseAuthRepository implements AuthRepository {
   /// "şifremi unuttum" hız sınırı.
   String? _authCode(supa.AuthException error) {
     if (error is supa.AuthRetryableFetchException) return AuthErrorCode.network;
+    // 🔴 WP-834: zayıf şifrenin **alt sebebi** burada kayboluyordu. gotrue
+    // sunucunun `weak_password.reasons` dizisini ayrı bir tiple taşır
+    // (`fetch.dart:97-108` → `AuthWeakPasswordException`), ama bu metot onu
+    // sıradan bir `AuthApiException` gibi ele alıp tek `weak_password` koduna
+    // düşürüyordu. Tip kontrolü `AuthApiException` dalından **önce** olmalı:
+    // `AuthWeakPasswordException` `AuthApiException` değildir, yani aşağıdaki
+    // `apiCode` onun için her zaman null kalır ve yalnız mesaj metnine bakan
+    // "at least" taraması devreye girerdi — sızmış şifre reddinde o metin
+    // yoktur ve kod **null** dönerdi. Sahibin gördüğü "Beklenmeyen bir hata"
+    // tam olarak bu yol.
+    if (error is supa.AuthWeakPasswordException) {
+      return _weakPasswordCode(error.reasons);
+    }
+    // WP-834: oturum yoksa gotrue mesaj yerine ayrı bir tip atar
+    // (`AuthSessionMissingException`, `types/auth_exception.dart:44`).
+    if (error is supa.AuthSessionMissingException) {
+      return AuthErrorCode.noSession;
+    }
     if (_isRateLimit(error.message)) return AuthErrorCode.rateLimited;
     final apiCode = error is supa.AuthApiException
         ? error.code?.toLowerCase()
         : null;
     final m = error.message.toLowerCase();
+    // WP-834: sunucunun şifre yazma reddine özel kodları. Kod dizeleri
+    // gotrue'nun `ErrorCode` enum'undan birebir alındı
+    // (`lib/src/types/error_code.dart:15,61,63,67-68`).
+    if (apiCode == 'same_password') return AuthErrorCode.samePassword;
+    if (apiCode == 'over_request_rate_limit' ||
+        apiCode == 'over_email_send_rate_limit') {
+      return AuthErrorCode.rateLimited;
+    }
+    if (apiCode == 'session_not_found') return AuthErrorCode.noSession;
+    // Kod dizesi olmayan eski sunucularda aynı red düz metinle gelir.
+    if (apiCode == 'otp_expired' ||
+        m.contains('token has expired') ||
+        (m.contains('otp') && m.contains('expired'))) {
+      return AuthErrorCode.otpExpired;
+    }
     if (apiCode == 'email_not_confirmed' ||
         (m.contains('email') && m.contains('confirm'))) {
       return AuthErrorCode.emailNotConfirmed;
@@ -1044,6 +1087,29 @@ class SupabaseAuthRepository implements AuthRepository {
       return AuthErrorCode.noSession;
     }
     return null;
+  }
+
+  /// WP-834: `weak_password` sebep dizisini alt koda çevirir.
+  ///
+  /// ⚠️ Sebep **değerleri** Dart paketinde tanımlı değildir: gotrue onları
+  /// sunucudan geldiği gibi taşır (`types/auth_exception.dart:94`,
+  /// `final List<String> reasons`). Bu yüzden eşleme tam eşitlik değil alt
+  /// dize aramasıdır — sunucu sebebi hangi biçimde yazarsa yazsın kod üretilir,
+  /// tanınmayan sebep genel [AuthErrorCode.weakPassword]a düşer (sessiz
+  /// "beklenmeyen hata" yerine en azından uzunluk cümlesi).
+  ///
+  /// Sızıntı sebebi önce bakılır: şifre kurallara uysa bile reddedilebilir,
+  /// o yüzden "en az 6 karakter" cümlesi kullanıcıyı yanlış yere baktırır.
+  String _weakPasswordCode(List<String> reasons) {
+    final joined = reasons.join(' ').toLowerCase();
+    if (joined.contains('pwned') || joined.contains('leaked')) {
+      return AuthErrorCode.weakPasswordPwned;
+    }
+    if (joined.contains('length')) return AuthErrorCode.weakPasswordLength;
+    if (joined.contains('characters')) {
+      return AuthErrorCode.weakPasswordCharacters;
+    }
+    return AuthErrorCode.weakPassword;
   }
 
   String? _emailChangeCode(String message) {

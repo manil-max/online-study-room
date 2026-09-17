@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
 import 'entry_desktop_layout.dart';
+import 'password_rules.dart';
 
 class RecoveryScreen extends ConsumerStatefulWidget {
   const RecoveryScreen({super.key});
@@ -47,7 +48,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) {
-        setState(() => _error = _messageFor(l10n, e));
+        setState(() => _error = passwordErrorMessage(l10n, e, recovery: true));
       }
     } catch (_) {
       if (mounted) {
@@ -56,23 +57,6 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  /// Hatanın nedenini kullanıcı metnine çevirir.
-  ///
-  /// 🔴 WP-539: burası eskiden `on AuthException {` idi — istisna **hiç
-  /// bağlanmıyordu**, yani içine bakılmadan üç farklı sebep (süresi dolmuş
-  /// sıfırlama oturumu, zayıf şifre, ağ hatası) tek bir "Beklenmeyen bir hata
-  /// oluştu." cümlesine düşüyordu. Kullanıcı hangisini düzelteceğini
-  /// bilemediği için ekranda takılı kalıyordu.
-  String _messageFor(AppLocalizations l10n, AuthException error) {
-    return switch (error.code) {
-      AuthErrorCode.weakPassword => l10n.authSifreEnAz6SifreEnAz6KarakterOlmal,
-      AuthErrorCode.noSession => l10n.authSifirlamaBaglantisiGecersiz,
-      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
-      AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
-      _ => l10n.authBeklenmeyenBirHataOlustu,
-    };
   }
 
   @override
@@ -124,6 +108,10 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                       return null;
                     },
                   ),
+                  // 🔴 WP-834: kural metni **kalıcı**. Eskiden kural yalnız
+                  // hata olarak görünürdü; yani kullanıcı kuralı ancak
+                  // reddedildikten sonra öğrenebiliyordu.
+                  const PasswordRulesText(),
                   if (_error != null) ...[
                     const SizedBox(height: 16),
                     Text(

@@ -7411,5 +7411,17 @@
   "authVeya": "or",
   "@authVeya": {"description": "WP-831: divider label between the email login button and the Google sign-in button."},
   "authGoogleIleDevamEt": "Continue with Google",
-  "@authGoogleIleDevamEt": {"description": "WP-831: Google sign-in button on the login/register screen (Android only)."}
+  "@authGoogleIleDevamEt": {"description": "WP-831: Google sign-in button on the login/register screen (Android only)."},
+  "authSifreCokKisa": "This password is too short. It must be at least 6 characters.",
+  "@authSifreCokKisa": {"description": "WP-834: gotrue weak_password reason 'length'. Used to collapse into the generic unexpected-error sentence."},
+  "authSifreKarakterCesidiYetersiz": "This password is not varied enough. Mix upper case, lower case, digits and symbols.",
+  "@authSifreKarakterCesidiYetersiz": {"description": "WP-834: gotrue weak_password reason 'characters' - the server asks for more character classes."},
+  "authSifreVeriSizintisindaGorulmus": "This password has appeared in data breaches. Pick a different one.",
+  "@authSifreVeriSizintisindaGorulmus": {"description": "WP-834: gotrue weak_password reason 'pwned'. The password may satisfy every rule and still be rejected, so the length sentence would send the user to the wrong place."},
+  "authYeniSifrenEskisiyleAyniOlamaz": "Your new password cannot be the same as your old one.",
+  "@authYeniSifrenEskisiyleAyniOlamaz": {"description": "WP-834: gotrue same_password. The recovery screen has no current-password field, so the sentence talks about the old password rather than the typed one."},
+  "authKodGecersizVeyaSuresiDolmus": "The code is invalid or has expired. Request a new one.",
+  "@authKodGecersizVeyaSuresiDolmus": {"description": "WP-834: gotrue otp_expired on the reset-with-code screen."},
+  "authSifreKurallari": "At least 6 characters. Cannot be the same as your current password.",
+  "@authSifreKurallari": {"description": "WP-834: permanent rules line under every new-password field; shown before any error, not only after one."}
 }

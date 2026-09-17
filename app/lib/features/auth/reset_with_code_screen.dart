@@ -7,6 +7,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
 import 'entry_desktop_layout.dart';
+import 'password_rules.dart';
 
 /// WP-287: E-postadaki 6 haneli kod ile şifre sıfırlama.
 ///
@@ -64,8 +65,15 @@ class _ResetWithCodeScreenState extends ConsumerState<ResetWithCodeScreen> {
         );
         Navigator.of(context).pop();
       }
+      // 🔴 WP-834: burada `e.message` doğrudan ekrana basılıyordu. O metin depo
+      // katmanının `_translateRecovery` çıktısıdır ve yalnız süresi dolmuş
+      // kodu tanır; "aynı şifre" / "sızmış şifre" reddinde sunucunun HAM
+      // İngilizce cümlesi kullanıcıya gösteriliyordu. Artık diğer iki şifre
+      // ekranıyla aynı eşleme kullanılır (WP-539 sözleşmesi: depo kod atar).
     } on AuthException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = passwordErrorMessage(l10n, e, recovery: true));
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
@@ -150,6 +158,8 @@ class _ResetWithCodeScreenState extends ConsumerState<ResetWithCodeScreen> {
                     validator: (v) =>
                         (v == null || v.length < 6) ? l10n.authSifreEnAz6 : null,
                   ),
+                  // WP-834: kural metni kalıcı — hata beklemeden görünür.
+                  const PasswordRulesText(),
                   if (_error != null) ...[
                     const SizedBox(height: 16),
                     Text(
