@@ -65,7 +65,7 @@ class TourState {
     return def.steps[index];
   }
 
-  int get total => definition?.steps.length ?? 0;
+  // WP-837: `total` kaldırıldı — tek okuyucusu balondaki adım sayacıydı.
   bool get isLast =>
       definition != null && index == definition!.steps.length - 1;
 }

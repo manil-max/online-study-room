@@ -16,34 +16,54 @@ abstract final class AppTours {
   /// bir hedef yok; `TourStep.anchor` null iken balon ekranın ortasında
   /// hedefsiz çizilir.
   ///
-  /// 🔴 WP-799 (sürüm 2 → 3): onboarding'in hemen ardından yeni kullanıcıya
-  /// söylenen İLK cümle *"Karta uzun bas: düzenleme açılır"* idi — yani
-  /// uygulamanın ilk öğrettiği şey kart düzenlemekti. WP-417 sayaç turunu
-  /// kaldırırken yerine bir şey koymamıştı; onboarding'in son sayfası ise
-  /// zaten *"Ana sayfada sayacı başlatarak…"* diyordu. Balon artık o cümleyi
-  /// sürdürür (*Hazırsın → Sayacı başlat*) ve sayaç varsayılan panonun ilk
-  /// kartıdır (`defaultDashboardLayout`), yani işaret ettiği şey gerçekten
-  /// orada. Sürüm artışı şart: metin davranışı değişti, turu bir kez daha
-  /// görmek doğrudur.
-  ///
-  /// Metinler MEVCUT anahtarlardan seçildi (bu WP `l10n/**`e dokunmuyor) ve
-  /// balon iki satır sınırına uymak zorunda (`app_tours_test.dart`):
-  /// `onboardingReadyBody` üç satıra taşıyordu, ölçülüp elendi.
-  ///
-  /// [isEmpty] ölü bir anahtar değil: pano boşken ekranda sayaç kartı YOKTUR
-  /// (`home_screen.dart` `_EmptyDashboard`), o yüzden o dalda balon kart
-  /// eklemeyi söyler — ekranın kendi düğmesiyle aynı sözü.
-  static TourDefinition home(
-    AppLocalizations l10n, {
-    required bool isEmpty,
-  }) => TourDefinition(
+  /// 🔴 WP-837 (sürüm 3 → 4, sahip): balon ekranın **ne olduğunu** söylesin,
+  /// tek bir eylemi (sayacı başlat) değil. WP-799'un `isEmpty` çatalı da
+  /// düştü: tek cümle iki durumda da doğru — pano boşken "kart ekle",
+  /// doluyken "yerlerini değiştir" aynı cümlenin içinde. Sürüm artışı şart,
+  /// metin değişti.
+  static TourDefinition home(AppLocalizations l10n) => TourDefinition(
     id: 'home',
-    version: 3,
+    version: 4,
     steps: [
       TourStep(
-        id: isEmpty ? 'add' : 'start',
-        title: isEmpty ? l10n.homeAnaSayfanBos : l10n.onboardingReadyTitle,
-        text: isEmpty ? l10n.homeKartEkle : l10n.statsKisiselBosEylem,
+        id: 'overview',
+        title: l10n.homeAnaSayfa,
+        text: l10n.tourHomeOverview,
+      ),
+    ],
+  );
+
+  /// Pano düzenleme modu turu — **tek adım**, WP-837 (sahip).
+  ///
+  /// Karta uzun basınca açılan mod bugüne dek hiç tanıtılmıyordu: kullanıcı
+  /// kendini ızgaralı, tutamaçlı bir ekranın içinde buluyordu. Balon çapasız:
+  /// mod ekranın tamamını değiştiriyor, işaret edilecek tek bir öğe yok.
+  static TourDefinition dashboardEdit(AppLocalizations l10n) => TourDefinition(
+    id: 'dashboard_edit',
+    version: 1,
+    steps: [
+      TourStep(
+        id: 'arrange',
+        title: l10n.homePanoyuDuzenle,
+        text: l10n.tourDashboardEditOverview,
+      ),
+    ],
+  );
+
+  /// İstatistik turu — **tek adım**, WP-837 (sahip).
+  ///
+  /// 🔴 Sürüm **2**'den başlar, 1'den değil. `stats.v1` tarihte gerçekten
+  /// kullanıldı (WP-324 dönem tanıtımı) ve WP-417'de kaldırıldı; o turu görmüş
+  /// kullanıcının cihazında `tour.stats.v1.<uid>` anahtarı hâlâ duruyor. v1
+  /// denseydi bu WP'nin balonu tam da eski kullanıcılara hiç görünmezdi.
+  static TourDefinition stats(AppLocalizations l10n) => TourDefinition(
+    id: 'stats',
+    version: 2,
+    steps: [
+      TourStep(
+        id: 'overview',
+        title: l10n.statsIstatistik,
+        text: l10n.tourStatsOverview,
       ),
     ],
   );
@@ -91,10 +111,10 @@ abstract final class AppTours {
     ],
   );
 
-  // 🔴 WP-417: istatistik dönem tanıtımı **tamamen kaldırıldı**. Sahip bunu
-  // v55'te kendisi istemişti, cihazda görünce isteğini geri aldı. Tur tanımı,
-  // ekrandaki çıpası ve dört dildeki metin anahtarları birlikte silindi;
-  // yarısı duran bir tur ölü anahtar bırakır.
+  // 🔴 WP-417: istatistik **dönem** tanıtımı kaldırılmıştı (sahip isteğini geri
+  // aldı). WP-837'de geri gelen şey o değil: dönem seçicisini işaret eden
+  // çapalı adım değil, ekranın ne olduğunu söyleyen tek çapasız balon.
+  // Tanımı için yukarıdaki [stats].
 
   static TourDefinition profile(
     AppLocalizations l10n, {

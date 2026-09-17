@@ -238,7 +238,7 @@ Map<String, Object> _emptyDashboardPrefs() => {
 /// kirmiyor -- ama tur GERCEKTEN kaldirilirsa `storageId` degisir ve kirar,
 /// ki dogrusu budur.
 final _homeTourSeenKey = tourSeenKey(
-  storageId: AppTours.home(AppLocalizationsTr(), isEmpty: false).storageId,
+  storageId: AppTours.home(AppLocalizationsTr()).storageId,
   userId: 'me-1',
 );
 

@@ -115,36 +115,31 @@ void main() {
     expect(find.byType(FilledButton), findsWidgets);
   });
 
-  group('tanıtım turu çapasız ve uzun basmayı söylüyor', () {
+  group('tanıtım turu çapasız ve ekranı tanıtıyor', () {
     test('ana ekran adımının çapası yok', () {
-      final tour = AppTours.home(AppLocalizationsTr(), isEmpty: false);
+      final tour = AppTours.home(AppLocalizationsTr());
       expect(tour.steps.single.anchor, isNull);
     });
 
-    // 🔴 WP-799 — IDDIA YON DEGISTIRDI ve sebebi olculmustu.
+    // 🔴 WP-837 — IDDIA IKINCI KEZ YON DEGISTIRDI, sahip emriyle.
     //
-    // Bu tur, onboarding'den cikan kullaniciya gosterilen TEK balondu ve
-    // "karta uzun bas: duzenleme acilir" diyordu. Yani yeni kullaniciya
-    // ogretilen ilk ve tek sey KART DUZENLEMEKTI; sayac turu WP-417'de
-    // kaldirilmis, yerine bir sey konmamisti.
-    //
-    // Artik balon kullaniciyi ilk deger anina goturuyor: sayaci baslat.
-    // Olculen sey "hangi kelime gectigi" degil, turun DOGRU ISI isaret
-    // ettigi.
-    test('iki dilde de metin sayaci baslatmayi isaret ediyor', () {
-      final tr = AppTours.home(AppLocalizationsTr(), isEmpty: false);
-      final en = AppTours.home(AppLocalizationsEn(), isEmpty: false);
-      expect(tr.steps.single.text, contains('Sayac'));
-      expect(en.steps.single.text, contains('timer'));
-      // Eski davranis geri gelmesin: duzenleme artik ilk ogretilen sey degil.
-      expect(tr.steps.single.text, isNot(contains('uzun bas')));
-      expect(en.steps.single.text, isNot(contains('hold')));
+    // WP-799 balonu "sayaci baslat"a cevirmisti. Sahip v86 geri bildiriminde
+    // ana ekran icin bunu istedi: ekranin NE OLDUGU + kartlarin
+    // duzenlenebildigi. Yani olculen sey artik tek bir eylem degil, ekranin
+    // tanimi. `isEmpty` catali da dustu: tek cumle iki durumda da dogru.
+    test('iki dilde de metin panoyu ve kart düzenlemeyi anlatıyor', () {
+      final tr = AppTours.home(AppLocalizationsTr());
+      final en = AppTours.home(AppLocalizationsEn());
+      expect(tr.steps.single.text, contains('panon'));
+      expect(tr.steps.single.text, contains('Kart'));
+      expect(en.steps.single.text, contains('board'));
+      expect(en.steps.single.text, contains('cards'));
     });
 
     test('tur sürümü ilerledi: metin değiştiği için yeniden gösterilir', () {
-      // v2 -> v3: metin degisti, turu daha once gormus kullanici yenisini
+      // v3 -> v4: metin degisti, turu daha once gormus kullanici yenisini
       // gormeli.
-      expect(AppTours.home(AppLocalizationsTr(), isEmpty: false).version, 3);
+      expect(AppTours.home(AppLocalizationsTr()).version, 4);
     });
   });
 }

@@ -17,7 +17,9 @@ void main() {
     final primary = GlobalKey();
     final secondary = GlobalKey();
     return [
-      AppTours.home(l10n, isEmpty: !hasContent),
+      AppTours.home(l10n),
+      AppTours.dashboardEdit(l10n),
+      AppTours.stats(l10n),
       AppTours.groups(
         l10n,
         contentAnchor: primary,
@@ -39,23 +41,31 @@ void main() {
   // 🔴 WP-417: sahip ana ekran turunu tek adıma indirdi ve istatistik dönem
   // turunu tamamen kaldırdı. Sayı burada sabit; yeni bir tur sessizce eklenirse
   // ya da geri gelirse bu test kırılır.
-  test('four tours have stable versioned ids and short readable steps', () {
+  //
+  // 🔴 WP-837 (sahip): dört tur altı oldu — pano düzenleme modu ve istatistik
+  // ekranı birer balon kazandı. Her yeni tur **tek adım**; sayı hâlâ sabit.
+  test('six tours have stable versioned ids and short readable steps', () {
     final overflowingSteps = <String>[];
     for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
       for (final hasContent in [true, false]) {
         final tours = definitions(l10n, hasContent: hasContent);
         // WP-488: ana ekran turu metni davranış değiştirdiği için v2.
         // WP-799: ilk balon artık kart düzenlemeyi değil sayacı öğretiyor → v3.
+        // 🔴 `stats` sürüm 2'den başlar: `stats.v1` WP-324'te gerçekten
+        // yayınlanmış ve WP-417'de kaldırılmıştı, o anahtar hâlâ cihazlarda.
         expect(tours.map((tour) => tour.storageId), [
-          'home.v3',
+          'home.v4',
+          'dashboard_edit.v1',
+          'stats.v2',
           'groups.v1',
           'campfire.v1',
           'profile.v1',
         ]);
-        // Ana ekran turu tek adım; dolu panoda sayacı, boş panoda kart
-        // eklemeyi işaret eder (ekranın kendi düğmesiyle aynı söz).
-        expect(tours.first.steps, hasLength(1));
-        expect(tours.first.steps.single.id, hasContent ? 'start' : 'add');
+        // 🔴 WP-837 sahip şartı: üç yüzeyin her birinde **tek** kart.
+        for (final single in tours.take(3)) {
+          expect(single.steps, hasLength(1), reason: single.storageId);
+        }
+        expect(tours.first.steps.single.id, 'overview');
         expect(tours.map((tour) => tour.id).toSet(), hasLength(tours.length));
 
         for (final tour in tours) {
@@ -69,6 +79,20 @@ void main() {
             expect(step.text.trim(), isNotEmpty);
             expect(step.text, isNot(contains('\n')));
             expect(step.text.length, lessThanOrEqualTo(110));
+            // 🔴 WP-837 — ÖLÇÜM GENİŞLİĞİ KALİBRE EDİLDİ (288 → 576).
+            //
+            // Balonun gerçek içerik genişliği 360 dp ekranda 288 dp'dir
+            // (`_TourBubbleLayout` 328 dp tavan − 2×20 dp iç boşluk) ve bu
+            // sayı DOĞRU. Yanlış olan fonttu: `flutter test` her glifi
+            // `fontSize` kadar KARE çizer, yani 14 px'te satır başına ~20
+            // karakter sayar; cihazdaki orantılı font (Roboto 14 sp, ortalama
+            // ~7 dp) aynı 288 dp'ye ~41 karakter sığdırır. Kapı bu yüzden
+            // cihazda iki satıra rahat sığan metni "taştı" diye reddediyordu
+            // ve turları telgraf üslubuna zorluyordu.
+            //
+            // Ölçüm genişliği iki katına alınarak font farkı düzeltilir;
+            // iddia hâlâ "gövde CİHAZDA iki satırı geçmesin"dir. Üstteki 110
+            // karakterlik sert tavan da yerinde duruyor.
             final bodyLayout = TextPainter(
               text: TextSpan(
                 text: step.text,
@@ -76,7 +100,7 @@ void main() {
               ),
               textDirection: TextDirection.ltr,
               maxLines: 2,
-            )..layout(maxWidth: 288);
+            )..layout(maxWidth: 288 * 2);
             if (bodyLayout.didExceedMaxLines) {
               overflowingSteps.add(
                 '${l10n.localeName}:${tour.storageId}/${step.id}',
@@ -104,7 +128,7 @@ void main() {
         .toList();
     expect(
       names,
-      hasLength(4),
+      hasLength(6),
       reason:
           'Tur tanimlari taranamadi ya da sayi degisti; kapi bos olcum '
           'yapmasin diye burasi bilerek sabit.',
@@ -114,9 +138,7 @@ void main() {
         .listSync(recursive: true)
         .whereType<File>()
         .where((file) => file.path.endsWith('.dart'))
-        .where(
-          (file) => !file.path.replaceAll(r'\', '/').endsWith(defsPath),
-        )
+        .where((file) => !file.path.replaceAll(r'\', '/').endsWith(defsPath))
         .map((file) => (path: file.path, text: file.readAsStringSync()))
         .toList();
     expect(sources.length, greaterThan(100), reason: 'lib/ taramasi bos.');
@@ -147,7 +169,7 @@ void main() {
   test('empty states never point at content that does not exist', () {
     final l10n = AppLocalizationsTr();
 
-    final home = AppTours.home(l10n, isEmpty: true);
+    final home = AppTours.home(l10n);
     final campfire = AppTours.campfire(
       l10n,
       campfireAnchor: GlobalKey(),
@@ -197,11 +219,9 @@ void main() {
                   text: original.text,
                 ),
                 index: index,
-                total: definition.steps.length,
                 strings: const TourOverlayStrings(
                   skip: 'Atla / Skip',
                   next: 'İleri / Next',
-                  stepCounter: _stepCounter,
                 ),
                 onNext: _noop,
                 onSkip: _noop,
@@ -222,7 +242,5 @@ void main() {
     }
   });
 }
-
-String _stepCounter(int current, int total) => '$current/$total';
 
 void _noop() {}

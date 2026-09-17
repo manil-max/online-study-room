@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/nav_index.dart';
 import '../../core/navigation/tab_action_bar.dart';
+import '../../core/tour/tour_host.dart';
 import '../../core/widgets/app_pull_to_refresh.dart';
 
 import '../../data/models/study_group.dart';
@@ -14,6 +16,7 @@ import '../../data/providers/study_providers.dart';
 import '../classroom/widgets/class_switcher.dart';
 import '../classroom/widgets/group_discovery_screen.dart';
 import '../desktop/desktop_page_scaffold.dart';
+import '../tours/app_tours.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
@@ -112,7 +115,20 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
 
     // 🔴 WP-417: dönem tanıtım turu kaldırıldı (sahip isteğini geri aldı).
-    return page;
+    // 🔴 WP-837 (sahip): geri gelen o tur değil — dönem seçicisini işaret eden
+    // çapalı adım yok; ekranın ne olduğunu söyleyen **tek** balon var ve
+    // yalnız ilk açılışta çıkar (`tour_prefs` "görüldü" anahtarı).
+    //
+    // Koşul, sekmeden başka bir yerde (ör. masaüstü derin bağlantısı) kurulan
+    // ağacın turu sessizce tüketmesini önler: balon yalnız İstatistik sekmesi
+    // seçiliyken başlar.
+    if (ref.watch(navIndexProvider) != AppTab.stats.index) return page;
+    final definition = AppTours.stats(l10n);
+    return TourHost(
+      key: ValueKey(definition.storageId),
+      definition: definition,
+      child: page,
+    );
   }
 }
 

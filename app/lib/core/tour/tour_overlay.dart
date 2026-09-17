@@ -9,17 +9,14 @@ import 'tour_models.dart';
 ///
 /// Tur adımlarının içeriği çağıran ekrana (WP-324) aittir; bu küçük yapı yalnız
 /// motorun her turda ortak olan kontrol metinlerini taşır.
+/// 🔴 WP-837 (sahip): balonda **adım sayacı yok**. "2 adımın 2. adımı" satırı
+/// kullanıcıya hiçbir şey öğretmiyordu; turlar zaten tek balona indirildi.
 @immutable
 class TourOverlayStrings {
-  const TourOverlayStrings({
-    required this.skip,
-    required this.next,
-    required this.stepCounter,
-  });
+  const TourOverlayStrings({required this.skip, required this.next});
 
   final String skip;
   final String next;
-  final String Function(int current, int total) stepCounter;
 }
 
 /// Tam ekran spotlight ve tanıtım balonu.
@@ -36,7 +33,6 @@ class TourOverlay extends StatefulWidget {
     super.key,
     required this.step,
     required this.index,
-    required this.total,
     required this.strings,
     required this.onNext,
     required this.onSkip,
@@ -46,7 +42,6 @@ class TourOverlay extends StatefulWidget {
 
   final TourStep step;
   final int index;
-  final int total;
   final TourOverlayStrings strings;
   final VoidCallback onNext;
   final VoidCallback onSkip;
@@ -244,23 +239,14 @@ class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
                       ],
                       Text(widget.step.text),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.strings.stepCounter(
-                                widget.index + 1,
-                                widget.total,
-                              ),
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                          ),
-                          FilledButton(
-                            key: const Key('tour-next-button'),
-                            onPressed: widget.onNext,
-                            child: Text(widget.strings.next),
-                          ),
-                        ],
+                      // Sayaç kalktığı için satırda tek şey var: devam düğmesi.
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: FilledButton(
+                          key: const Key('tour-next-button'),
+                          onPressed: widget.onNext,
+                          child: Text(widget.strings.next),
+                        ),
                       ),
                     ],
                   ),

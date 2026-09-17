@@ -6175,14 +6175,6 @@
   "@tourDevam": {
     "description": "Tour engine: advance to the next introduction step."
   },
-  "tourAdim": "Step {current} of {total}",
-  "@tourAdim": {
-    "description": "Tour engine: current step counter.",
-    "placeholders": {
-      "current": { "type": "int" },
-      "total": { "type": "int" }
-    }
-  },
   "profileTanitimTurlariniSifirla": "Reset introductions",
   "@profileTanitimTurlariniSifirla": {
     "description": "Settings action that clears completed onboarding and introduction tours."
@@ -6353,6 +6345,18 @@
   "tourHomeEdit": "Press and hold a card to edit.",
   "@tourHomeEdit": {
     "description": "Home introduction tour edit-card guidance."
+  },
+  "tourHomeOverview": "This is your own board. Add cards and move them around.",
+  "@tourHomeOverview": {
+    "description": "Home introduction tour: what the home screen is and that cards can be arranged."
+  },
+  "tourDashboardEditOverview": "Drag a card to move it. Pull its corners to resize.",
+  "@tourDashboardEditOverview": {
+    "description": "Dashboard edit mode introduction tour: how to move and resize cards."
+  },
+  "tourStatsOverview": "Your study time collects here. Pick a period to see your progress.",
+  "@tourStatsOverview": {
+    "description": "Statistics introduction tour: what the statistics screen shows."
   },
   "tourGroupsOverview": "Campfire, goal, and ranking are here.",
   "@tourGroupsOverview": {

@@ -99,23 +99,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _withIntroductionTours(
-    BuildContext context,
-    List<DashboardCardConfig> layout,
-    Widget child,
-  ) {
+  Widget _withIntroductionTours(BuildContext context, Widget child) {
     if (ref.watch(navIndexProvider) != AppTab.home.index) return child;
 
-    // 🔴 WP-417 (sahip): ana ekranda tek bir şey tanıtılır — kartları düzenleme.
-    // Önceden Home turu bitince Sayaç turu zincirleniyordu; sahip *"sadece edit
-    // kısmını gösterelim"* dedi, zincir kaldırıldı.
+    // 🔴 WP-417 (sahip): ana ekranda tek bir şey tanıtılır.
     // WP-488: çapa kalktı. `TourStep.anchor` nullable ve `null` iken balon
     // ekranın ortasında hedefsiz gösteriliyor; sahibin "tanıtım turunda ana
     // ekrana yazsak yeter" dediği şey tam olarak bu.
-    final definition = AppTours.home(
-      AppLocalizations.of(context),
-      isEmpty: layout.isEmpty,
-    );
+    //
+    // 🔴 WP-837: düzenleme modunun kendi balonu var ve ekranın **hangi** turu
+    // vereceği moda bakılarak seçilir — iki `TourHost` üst üste yığılmaz
+    // (motor zaten aynı anda tek tur çalıştırır, `TourBlockReason
+    // .otherTourRunning`). `_editing` değişince `ValueKey` değişir, eski host
+    // düşer, yenisi düzenleme turunu başlatır; mod kapanınca aynı yoldan ana
+    // ekran turuna dönülür. Ana ekran turu balondayken karta uzun basılamaz
+    // (balonun tam ekran bariyeri dokunuşu yutar), o yüzden iki tur yarışmaz.
+    final l10n = AppLocalizations.of(context);
+    final definition = _editing
+        ? AppTours.dashboardEdit(l10n)
+        : AppTours.home(l10n);
 
     return TourHost(
       key: ValueKey(definition.storageId),
@@ -299,7 +301,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
         child: _withIntroductionTours(
           context,
-          layout,
           stickyPanelBelow(body, sizeSheet),
         ),
       );
@@ -350,7 +351,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return _withIntroductionTours(
       context,
-      layout,
       Scaffold(
         appBar: appBar,
         body: appBar == null

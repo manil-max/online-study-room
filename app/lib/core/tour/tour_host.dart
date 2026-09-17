@@ -102,14 +102,12 @@ class _TourHostState extends ConsumerState<TourHost>
           TourOverlay(
             step: step,
             index: state.index,
-            total: state.total,
             remeasure: _remeasure,
             onAnchorLost: () =>
                 unawaited(ref.read(tourControllerProvider.notifier).next()),
             strings: TourOverlayStrings(
               skip: l10n.tourAtla,
               next: l10n.tourDevam,
-              stepCounter: l10n.tourAdim,
             ),
             onNext: () =>
                 unawaited(ref.read(tourControllerProvider.notifier).next()),

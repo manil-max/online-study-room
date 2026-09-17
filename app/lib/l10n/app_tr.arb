@@ -1776,7 +1776,6 @@
   "profileDigerCihazlarKapatilamadi": "Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene.",
   "tourAtla": "Atla",
   "tourDevam": "Devam",
-  "tourAdim": "{total} adımın {current}. adımı",
   "profileTanitimTurlariniSifirla": "Tanıtımları sıfırla",
   "profileTanitimTurlariAciklama": "İlk açılış ve ekran tanıtımlarını yeniden göster",
   "profileTanitimTurlariSifirlandi": "Tanıtımlar sıfırlandı.",
@@ -1853,6 +1852,9 @@
     }
   },
   "tourHomeEdit": "Karta uzun bas: düzenleme açılır.",
+  "tourHomeOverview": "Burası senin panon. Kart ekleyip yerlerini değiştirebilirsin.",
+  "tourDashboardEditOverview": "Kartı tutup sürükleyerek taşı. Köşelerinden çekerek boyutlandır.",
+  "tourStatsOverview": "Çalışmaların burada toplanır. Dönem seçip ilerlemeni görebilirsin.",
   "tourGroupsOverview": "Ateş, hedef ve sıralama burada.",
   "tourGroupsEmpty": "Grup oluştur, katıl veya keşfet.",
   "tourGroupsSwitch": "Başka grubuna buradan geç.",
