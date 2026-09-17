@@ -186,6 +186,14 @@ jobs:
           # `github` bekleniyordu; asagidaki Play kopyasi yine `play` olur.
           assert base['DISTRIBUTION_CHANNEL'] == 'githubStable', base['DISTRIBUTION_CHANNEL']
           assert base['LEGAL_BASE_URL'], 'LEGAL_BASE_URL Play derlemesinde de zorunlu'
+          # 🔴 WP-833: Google girisi fail-closed'dir — kimlik bossa dugme HIC
+          # cizilmez ve derleme yine yesil biter. Yani `vars.GOOGLE_WEB_CLIENT_ID`
+          # silinir/bosalirsa magazaya SESSIZCE Google girisi olmayan bir surum
+          # cikar. Stable kolunda bu artik derlemeyi durdurur.
+          assert base.get('GOOGLE_WEB_CLIENT_ID'), (
+              'GOOGLE_WEB_CLIENT_ID bos: Play surumu Google girisi olmadan cikamaz '
+              '(repo variable GOOGLE_WEB_CLIENT_ID)'
+          )
           play = dict(base, DISTRIBUTION_CHANNEL='play')
           pathlib.Path('env.play.json').write_text(json.dumps(play))
           again = json.loads(pathlib.Path('env.json').read_text())
