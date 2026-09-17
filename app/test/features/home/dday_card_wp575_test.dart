@@ -296,6 +296,18 @@ void main() {
             'eklenemez olur.',
       );
 
+      // 🔴 WP-836: seçicideki döşemeler artık birer önizleme kutusu taşıyor
+      // (sahip isteği: "kartların nasıl bir şey olduğunu önizleme gibi
+      // görse"). Döşeme ~80 px uzadığı için 800×600'lük test penceresinde
+      // "Özetler" kategorisi görünür alanın ALTINA düşüyor ve `tap` ekran
+      // dışında bir noktaya vuruyordu.
+      //
+      // Değişen şey testin İDDİASI değil, ona ulaşma yolu: gerçek kullanıcı da
+      // listeyi kaydırıp dokunuyor. `ensureVisible` kaydırmayı listenin kendi
+      // kuralıyla yapar; döşeme yüksekliği bir daha değişirse test yine doğru
+      // yeri bulur (sabit bir kaydırma miktarı yazsaydık bulamazdı).
+      await tester.ensureVisible(find.text(l10n.homeSinavGeriSayimi));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.homeSinavGeriSayimi));
       await tester.pumpAndSettle();
 

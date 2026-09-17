@@ -27,27 +27,37 @@ String _profileKey(int columns) => '$_kLayoutProfilePrefix$columns';
 
 List<DashboardCardConfig> defaultDashboardLayout(int columns) {
   final left = columns ~/ 2;
+  // 🔴 WP-836 — sayacın ilk boyu artık tek kaynaktan gelir
+  // ([DashboardCardDefaultCells]), elle yazılmış `4 × columns / 6`dan değil.
+  // Eski değer 32-ızgarada 21 satırdı; dar telefonda 212.5 px eder ve
+  // `kTimerCoreMaxHeight` (240 px) eşiğinin ALTINDA kalır — yani sayaç ilk
+  // açılışta yalnız çekirdek düzeniyle ("Bugün" toplamı ve faz satırı
+  // olmadan) geliyordu. Sahibin "ilk hali az" dediği şey budur.
+  final timer = DashboardCardType.timer.defaultCells(columns);
+  // Yan yana duran "Bugün özeti" + "Grup sıralaması" çifti bu WP'de KASTEN
+  // değişmiyor: şikâyet ilk düzenin bu iki kartı değil, sayacın boyuydu.
+  final pairRows = (3 * columns / kDefaultGridColumns).round();
   return [
     DashboardCardConfig(
       DashboardCardType.timer,
       x: 0,
       y: 0,
       w: columns,
-      h: (4 * columns / kDefaultGridColumns).round(),
+      h: timer.h,
     ),
     DashboardCardConfig(
       DashboardCardType.today,
       x: 0,
-      y: (4 * columns / kDefaultGridColumns).round(),
+      y: timer.h,
       w: left,
-      h: (3 * columns / kDefaultGridColumns).round(),
+      h: pairRows,
     ),
     DashboardCardConfig(
       DashboardCardType.leaderboard,
       x: left,
-      y: (4 * columns / kDefaultGridColumns).round(),
+      y: timer.h,
       w: columns - left,
-      h: (3 * columns / kDefaultGridColumns).round(),
+      h: pairRows,
     ),
   ];
 }
@@ -59,8 +69,10 @@ List<DashboardCardConfig> defaultDashboardLayout(int columns) {
 /// kart 116.0 px boyanıyor; aynı genişlikte ızgara hücresi 2.5 px ve boşluk
 /// 8 px, yani `h` satır = `10.5·h − 8` px. **12 satır = 118.0 px** — kartın
 /// istediğini geçen en küçük satır sayısı (11 satır 107.5 px'te kalır ve kart
-/// içinde kaydırma doğar). Varsayılan sayaç kartı 21 satır = 212.5 px'ti, yani
-/// hücrenin 94.5 px'i boş alandı.
+/// içinde kaydırma doğar). Varsayılan sayaç kartı o turda 21 satır = 212.5
+/// px'ti, yani hücrenin 94.5 px'i boş alandı. (WP-836 varsayılanı 28 satıra
+/// çıkardı; kompakt hedefi 12 satır olarak AYNI kaldı — kompaktın amacı kartı
+/// kısaltmaktır, varsayılanı izlemek değil.)
 ///
 /// ⚠️ Sınır kontrolü: `kMaxGridColumns` (32) **genişlik/x** tavanıdır ve bu WP
 /// yalnız `h`ye dokunur; `DashboardCardConfig` yükseklik için `h >= 1` dışında
@@ -379,18 +391,23 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   void addCard(DashboardCardType type) {
     if (_indexOf(type) >= 0) return;
     final columns = ref.read(dashboardGridColumnsProvider);
-    // WP-186: 32-grid'de h=3 minnacık kalıyordu — 6-sütun medium (3×3)
-    // oranını ölçekle (32'de ≈16×16 hücre; kullanışlı w×h).
-    final defaultW = DashboardCardConfig.defaultAddWidth(columns);
-    final defaultH = DashboardCardConfig.defaultAddHeight(columns);
+    // 🔴 WP-836: boyut artık kartın TÜRÜNDEN gelir. Eskiden her kart aynı
+    // 16×16 hücreyle (dar telefonda 160×160 px) eklenirdi; sahip "hep bozuk
+    // geliyor, hepsini elle boyutlandırmak gerekiyor" dedi. Ölçüm ve tablo:
+    // `dashboard_card.dart` → [DashboardCardDefaultCells].
+    //
+    // ⚠️ Bu yol yalnız YENİ karta girer. Kaydedilmiş düzen [build] içinde
+    // diskteki hâliyle çözülür; oradan buraya çağrı yoktur, yani mevcut
+    // kullanıcının kartları bu değişiklikle yeniden boyutlanmaz.
+    final cells = type.defaultCells(columns);
     state = [
       ...state,
       DashboardCardConfig.firstAvailable(
         state,
         type,
         columns: columns,
-        w: defaultW,
-        h: defaultH,
+        w: cells.w,
+        h: cells.h,
       ),
     ];
     _save();

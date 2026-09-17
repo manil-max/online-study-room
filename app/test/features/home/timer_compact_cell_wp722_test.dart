@@ -45,7 +45,18 @@ const String _kLayoutKey = 'dashboard_layout_v2_32';
 const int _kColumns = 32;
 
 /// Varsayilan duzende sayac karti (bkz. `defaultDashboardLayout`).
-int get _defaultTimerRows => (4 * _kColumns / kDefaultGridColumns).round();
+///
+/// 🔴 WP-836: burada eskiden `(4 * _kColumns / kDefaultGridColumns).round()`
+/// yaziyordu, yani **21**. O sayi artik dogru degil: varsayilan sayac hucresi
+/// tek kaynaga (`DashboardCardType.timer.defaultCells`) tasindi ve 28 satira
+/// cikti — 21 satir dar telefonda 212.5 px eder ve `kTimerCoreMaxHeight`
+/// (240 px) esiginin altinda kalir, yani sayac ilk acilista yalniz cekirdek
+/// duzeniyle geliyordu (sahip: "ilk hali az").
+///
+/// Sabit YAZILMADI, yine TURETILIYOR: bu dosyanin olctugu sey kompakt kuralin
+/// varsayilana geri donebilmesidir, varsayilanin degeri degil. Elle yazilsaydi
+/// varsayilan bir daha degistiginde test sessizce yanlis sayiyi savunurdu.
+int get _defaultTimerRows => DashboardCardType.timer.defaultCells(_kColumns).h;
 
 Future<SharedPreferences> _freshPrefs({ClockStyle? style}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{

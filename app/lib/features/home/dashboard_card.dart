@@ -39,6 +39,7 @@ enum DashboardCardType {
   groupGoal,
   groupTrend,
   activeMembers,
+
   /// WP-188: günlük/haftalık görev listesi.
   tasks,
 
@@ -77,9 +78,7 @@ extension DashboardCardInfo on DashboardCardType {
       context,
     ).homeSuAnCalisanlar,
     DashboardCardType.tasks => AppLocalizations.of(context).taskListTitle,
-    DashboardCardType.dday => AppLocalizations.of(
-      context,
-    ).homeSinavGeriSayimi,
+    DashboardCardType.dday => AppLocalizations.of(context).homeSinavGeriSayimi,
   };
 
   String description(BuildContext context) => switch (this) {
@@ -267,6 +266,88 @@ double defaultCardHeight(DashboardCardSize size) => switch (size) {
   DashboardCardSize.medium => _kLegacyNominalRowHeight * 3,
   DashboardCardSize.large => _kLegacyNominalRowHeight * 4,
 };
+
+/// 🔴 WP-836 — HER KART TÜRÜNÜN KENDİ VARSAYILAN HÜCRESİ.
+///
+/// Sahip (gerçek cihaz, v85): *"kartları eklediğinde genelde hepsini elle
+/// boyutunu ayarlamak gerekiyor, hep bozuk geliyor"* ve *"sayaç widget'ının
+/// uzunluğu artsın, ilk hali az"*.
+///
+/// **ÖNCEKİ KURAL:** yeni kart, TÜRÜNDEN BAĞIMSIZ olarak
+/// [DashboardCardConfig.defaultAddWidth] / [DashboardCardConfig.defaultAddHeight]
+/// ile geliyordu (6-sütun 3×3 ölçeği → 32-ızgarada **16×16 hücre**). Dar
+/// telefonda (içerik 328 px, hücre 2.5 px, boşluk 8 px; `h` satır =
+/// `10.5·h − 8` px) bu **160×160 px**'lik bir kutudur.
+///
+/// O kutunun kartlara dar geldiği bu depoda zaten ÖLÇÜLMÜŞTÜ —
+/// `test/features/home/card_scroll_inventory_test.dart` `_budget` tablosu, dar
+/// telefon sütunu: `activeMembers` 98.8 px, `monthly` 56–84 px, `heatmap`
+/// 70 px, `goal` 34–50 px kart-İÇİ dikey kaydırma payı üretiyor. Aynı kartların
+/// hepsi 32×26 hücrede (265 px) 0'a iniyor. Yani "hep bozuk geliyor" bir
+/// izlenim değil, ölçülmüş bir artıktır: kullanıcı her eklediği kartı elle
+/// büyütmek zorunda kalıyor.
+///
+/// **Sayaç ayrıca bir EŞİK meselesi.** `study_timer_card.dart`
+/// `kTimerCoreMaxHeight` = 240 px: bunun altındaki hücrede yalnız kartın
+/// ÇEKİRDEĞİ (geçen süre + Başlat/Durdur) çizilir; "Bugün" toplamı, büyük saat
+/// ve faz satırı gizlenir. Varsayılan düzendeki 21 satır dar telefonda
+/// **212.5 px**'tir — yani sayaç ilk açılışta çekirdek modda geliyordu.
+/// 28 satır = **286 px** o eşiği aşar ve kart "az" görünmekten çıkar. Bir üst
+/// eşik (`kTimerFullMinHeight` = 400 px) KASTEN hedeflenmedi: tam kartın
+/// içeriği 328 px genişlikte ~600 px istiyor, 400 px'lik hücre eşiği geçer ama
+/// karta yeniden kart-içi kaydırma sokar (WP-662'nin kapattığı kusur).
+///
+/// ⚠️ Tablo yalnız **YENİ EKLENEN** karta uygulanır. Kullanıcının kaydedilmiş
+/// düzeni `DashboardLayoutNotifier.build()` içinde diskteki hâliyle çözülür ve
+/// bu tabloya hiç uğramaz — mevcut kullanıcının kartları küçülüp büyümez.
+extension DashboardCardDefaultCells on DashboardCardType {
+  /// 32 sütunluk ızgara ölçüsünde `w × h` hücre.
+  ///
+  /// Genişlik iki değerden birini alır: 32 (tam) veya 16 (yarım). Yükseklikler
+  /// yukarıdaki envanter ölçümünden türer — kartın içeriğinin dar telefonda
+  /// kaydırıcı doğurmadan sığdığı en küçük makul satır.
+  ({int w, int h}) get _cells32 => switch (this) {
+    // Sayaç: çekirdek eşiğini (240 px) aşan ilk makul boy.
+    DashboardCardType.timer => (w: 32, h: 28),
+    // Hedef halkası + düzenleme satırı: 32×16'da 50 px taşıyordu.
+    DashboardCardType.goal => (w: 32, h: 22),
+    // Dört küçük sayı; yarım döşemede ölçülen taşma 0 (envanterde satırı yok).
+    // Varsayılan düzendeki kutusuyla da aynı kalsın diye 16×16.
+    DashboardCardType.today => (w: 16, h: 16),
+    DashboardCardType.weekly => (w: 32, h: 20),
+    DashboardCardType.line => (w: 32, h: 20),
+    // 32×16'da 56 px taşıyordu.
+    DashboardCardType.monthly => (w: 32, h: 24),
+    DashboardCardType.weekdayWeekend => (w: 32, h: 18),
+    DashboardCardType.hours => (w: 32, h: 18),
+    DashboardCardType.rhythm => (w: 32, h: 20),
+    DashboardCardType.scatter => (w: 32, h: 18),
+    // 🔴 Bilinen borç: rekor kartı 32×26'da bile 211 px taşıyor (envanter
+    // notu: yoğunluk kararı ayrı bir WP). Buradaki boy taşmayı AZALTIR,
+    // bitirmez; `records_card.dart` bu WP'nin SAHİP yolu değil.
+    DashboardCardType.records => (w: 32, h: 26),
+    // İçerik boyu sabit (~154 px) + başlık; 32×16'da 70 px taşıyordu.
+    DashboardCardType.heatmap => (w: 32, h: 24),
+    DashboardCardType.leaderboard => (w: 32, h: 22),
+    DashboardCardType.groupGoal => (w: 32, h: 18),
+    DashboardCardType.groupTrend => (w: 32, h: 18),
+    // 32×16'da 98.8 px taşıyordu; 32×26'da 0.
+    DashboardCardType.activeMembers => (w: 32, h: 26),
+    DashboardCardType.tasks => (w: 32, h: 22),
+    DashboardCardType.dday => (w: 16, h: 16),
+  };
+
+  /// [_cells32]'yi aktif sütun sayısına ölçekler. Runtime ızgara WP-186'dan
+  /// beri sabit 32 olduğu için bu pratikte birebir kopyadır; ölçekleme yalnız
+  /// 6-sütun tabanlı eski testleri/çağrıları bozmamak için var.
+  ({int w, int h}) defaultCells(int columns) {
+    final cells = _cells32;
+    return (
+      w: (cells.w * columns / kFixedGridColumns).round().clamp(1, columns),
+      h: (cells.h * columns / kFixedGridColumns).round().clamp(1, 99),
+    );
+  }
+}
 
 class _DecodedDashboardCard {
   const _DecodedDashboardCard(this.config, {required this.isLegacy});
