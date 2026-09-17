@@ -15,6 +15,16 @@ enum ThemeColorSource { family, palette }
 
 enum ThemeSaveResult { saved, failed, rejected }
 
+/// WP-835: hiç tema kaydı olmayan ilk kurulumun karşılama ailesi.
+///
+/// Uygulamanın kendi kimliği ateş: launcher ikonu kamp ateşi, Android widget
+/// paleti `widget_ember_flame` (#FF8A3D) / `widget_ember_glow` (#FFC46B).
+/// `campfire_night` bu kimliğin tema karşılığıdır (#F97316 turuncu, 0.45 glow).
+/// Eski davranış tasarlanmış bir karşılama değildi: tema kaydı yokken palet
+/// `navy`'ye düşüyor, `migratePaletteIdToPreset` onu soğuk `ocean_glass`'e
+/// çeviriyordu — sahibin "varsayılan tema kötü" geri bildirimi buradan geldi.
+const String kFirstRunFamilyId = 'campfire_night';
+
 /// Tema tercihleri: sanat ailesi (preset) + eski palet + açık/koyu/sistem.
 class ThemeSettings {
   const ThemeSettings({
@@ -95,17 +105,40 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   static const _kCustomThemesMigrated = 'custom_themes_migrated_v1';
   static const _kPaletteSourceMigrated = 'palette_source_migrated_v1';
 
+  /// WP-835: "hiç tema kaydı yok" ölçütü. Bu anahtarlardan biri bile varsa
+  /// kullanıcı ya da eski bir göç tema tarafına dokunmuştur; o kurulumun
+  /// görüntüsü değiştirilmez.
+  static const _kThemeKeys = <String>[
+    _kFamily,
+    _kPalette,
+    _kMode,
+    _kColorSource,
+    _kCustomPalettes,
+    _kCustomThemes,
+    _kActiveCustomTheme,
+    _kCustomThemesMigrated,
+    _kPaletteSourceMigrated,
+  ];
+
   @override
   ThemeSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
+    final isFirstRun = !_kThemeKeys.any(prefs.containsKey);
     final paletteId = prefs.getString(_kPalette) ?? kAppPalettes.first.id;
     final storedFamily = prefs.getString(_kFamily);
-    final familyId = storedFamily ?? migratePaletteIdToPreset(paletteId);
+    final familyId =
+        storedFamily ??
+        (isFirstRun ? kFirstRunFamilyId : migratePaletteIdToPreset(paletteId));
 
     final mode = switch (prefs.getString(_kMode)) {
       'light' => ThemeMode.light,
       'system' => ThemeMode.system,
-      _ => ThemeMode.dark,
+      // İlk kurulumda mod ailenin parlaklığıdır (`setFamily` ile aynı kural);
+      // yoksa açık bir karşılama ailesi koyu karşılığıyla açılırdı.
+      _ =>
+        isFirstRun && themePresetById(familyId).brightness == Brightness.light
+            ? ThemeMode.light
+            : ThemeMode.dark,
     };
 
     final storedSource = prefs.getString(_kColorSource);
@@ -119,11 +152,20 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
             : ThemeColorSource.family,
     };
 
+    // WP-835: ilk kurulum aileyle başlar ve seçim KALICI yazılır. Yazılmazsa
+    // ikinci açılışta kayıt "var" sayılır ama `theme_family` boş olduğu için
+    // `migratePaletteIdToPreset('navy')` yine soğuk `ocean_glass`'e düşerdi.
+    if (isFirstRun) {
+      colorSource = ThemeColorSource.family;
+      unawaited(_persistFirstRunTheme(prefs, familyId, mode));
+    }
+
     // WP-302: "Hazır Paletler" listesi arayüzden kaldırıldı. Yerleşik bir
     // palete bağlı kalan kurulumlar aileye taşınır; yoksa Görünüm ekranında
     // hiçbir kart seçili görünmez ve kullanıcı seçimini geri alamaz.
     // ⚠️ `custom_*` paletlere DOKUNULMAZ: onlar WP-288 göçüyle özel temaya
     // dönüşür, buradan geçerlerse iki göç birbirini ezer.
+    // İlk kurulumda kaynak yukarıda aileye ayarlandığı için bu blok çalışmaz.
     if (colorSource == ThemeColorSource.palette &&
         !paletteId.startsWith('custom_') &&
         prefs.getBool(_kPaletteSourceMigrated) != true) {
@@ -247,6 +289,18 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       atmosphere: base.extension<AppAtmosphere>()!,
       feel: base.extension<AppFeel>()!,
     );
+  }
+
+  /// WP-835: ilk açılışta hesaplanan karşılama teması diske yazılır; sonraki
+  /// açılışlar bu kaydı okur, yeniden türetmeye çalışmaz.
+  Future<void> _persistFirstRunTheme(
+    SharedPreferences prefs,
+    String familyId,
+    ThemeMode mode,
+  ) async {
+    await prefs.setString(_kFamily, familyId);
+    await prefs.setString(_kMode, mode.name);
+    await prefs.setString(_kColorSource, 'family');
   }
 
   Future<void> _persistPaletteSourceMigration(SharedPreferences prefs) async {
