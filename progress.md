@@ -406,6 +406,13 @@ değişmedi, yani atlanan kapının kapsamına giren bir değişiklik de yok.
 **Bu yeşil ne demek değildir:** cihaz kabulü verilmedi, Play/Store kabulü
 sorgulanmadı, uzak DB ve deploy bu turun kapsamında değil, push/tag yapılmadı.
 
+### v86 turu — sahip geri bildirimi (2026-09-17)
+
+Plan: [docs/V86-PLAN.md](docs/V86-PLAN.md). Yedi WP: WP-833 (Google düğmesi cihazda yok),
+WP-834 (şifre ekranı opak hata), WP-837 (tanıtım kartları), WP-836 (ana ekran varsayılanları),
+WP-835 (varsayılan tema — sahip onayı gerekir), WP-838 (tema tercihi hesapta, 0143),
+WP-839 (Play TR mağaza metinleri).
+
 ## 🗺️ Yol Haritası
 
 1. WP-827 kanal yolu `v*` için v84'te yeşil geçti (run `34861451047`); `beta-v*`
