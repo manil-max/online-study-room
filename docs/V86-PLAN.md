@@ -125,3 +125,23 @@ Ekran görüntülerinin üstündeki yazılar da Türkçe üretilecek.
 3. WP-835 — tema kararı (sahip onayı gerekir).
 4. WP-838 — senkron (migration).
 5. WP-839 — mağaza metinleri (sahip yapıştırır, kod gerekmez).
+
+---
+
+## Sahip kararı 2026-09-18 (ekran görüntüleri sonrası)
+
+Sahip üç adayı gördü: "bu tasarımı beğenmedim, açık tema gelsin 3. seçenekteki gibi ama
+logodaki turuncu renkte olsun", "default'ta başka ek widget'lar da olsun", ayrıca
+"her şey bitmeden v86 çıkmayacak — tek güncellemede hepsi".
+
+- **WP-841** — İlk açılış teması AÇIK: krem zemin + logo turuncusu (yeni `campfire_day`
+  preset'i). WP-835'in koyu kamp ateşi varsayılanı bunun yerine geçer; `soft_cream` ve
+  `campfire_night` listede kalır.
+- **WP-842** — Varsayılan ana ekran düzeni genişler. Bugün yalnız üç kart var
+  (`dashboard_providers.dart:38-60`: sayaç + Bugün + Grup sıralaması). Yeni kullanıcı daha
+  dolu bir pano görecek; kartlar WP-836'daki kendi varsayılan boylarıyla yerleşecek.
+- **WP-843** — Küçük karttaki düğme yazısı kesiliyor ("Grup oluştur", WP-835 ekran
+  görüntüsünde ölçüldü). Yazı sığmadığında kırpılmak yerine küçülmeli/sarmalı.
+- **WP-838** — Tema tercihi hesapta saklanacak (migration `0143`). v86'ya dâhil.
+
+Yayın sırası: WP-841 → WP-842 + WP-843 → WP-838 → tam kapı → v86.
