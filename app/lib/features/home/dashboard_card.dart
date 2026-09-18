@@ -322,9 +322,8 @@ extension DashboardCardDefaultCells on DashboardCardType {
     DashboardCardType.hours => (w: 32, h: 18),
     DashboardCardType.rhythm => (w: 32, h: 20),
     DashboardCardType.scatter => (w: 32, h: 18),
-    // 🔴 Bilinen borç: rekor kartı 32×26'da bile 211 px taşıyor (envanter
-    // notu: yoğunluk kararı ayrı bir WP). Buradaki boy taşmayı AZALTIR,
-    // bitirmez; `records_card.dart` bu WP'nin SAHİP yolu değil.
+    // WP-858: bu boyda rekor kartı artık kart-içi kaydırmasız (dar telefonda
+    // 211 px → 0; yoğun karo + sığan kadar kayıt). Önce taşıyordu (WP-836).
     DashboardCardType.records => (w: 32, h: 26),
     // İçerik boyu sabit (~154 px) + başlık; 32×16'da 70 px taşıyordu.
     DashboardCardType.heatmap => (w: 32, h: 24),
