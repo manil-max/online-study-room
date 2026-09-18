@@ -115,6 +115,9 @@ class _StoreFrame extends ConsumerWidget {
                         caption,
                         textAlign: TextAlign.center,
                         style: TextStyle(
+                          // Bant `MaterialApp`in home agacinin DISINDA cizilir;
+                          // oradaki varsayilan stil sari alt cizgi koyar.
+                          decoration: TextDecoration.none,
                           fontFamily: 'Roboto',
                           fontSize: 30,
                           height: 1.2,

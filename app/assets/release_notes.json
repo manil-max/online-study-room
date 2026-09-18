@@ -3,6 +3,38 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.86",
+      "buildNumber": 86,
+      "channel": "stable",
+      "date": "2026-09-18",
+      "title": "v86: sıcak açılış, dolu pano",
+      "highlights": [
+        "Yeni açılış teması: krem zemin, uygulamanın turuncusu.",
+        "Tema tercihin ve özel temaların hesabına kaydediliyor, yeni cihazda geliyor.",
+        "Ana ekran ilk açılışta altı kartla geliyor; eklediğin kart kendi boyutuyla ekleniyor."
+      ],
+      "fixes": [
+        "Şifre belirleme ekranı hatanın nedenini söylüyor ve kuralları sürekli gösteriyor.",
+        "Sayaç kartı ve grup kartındaki düğme artık kırpılmıyor."
+      ],
+      "notes": [
+        "Seçtiğin tema varsa değişmedi."
+      ],
+      "titleEn": "v86: a warm start, a fuller board",
+      "highlightsEn": [
+        "New welcome theme: cream background with the app's own orange.",
+        "Your theme and custom themes are saved to your account and follow you to a new device.",
+        "The home board starts with six cards, and every card you add arrives at the right size."
+      ],
+      "fixesEn": [
+        "The password screen now says why a password was rejected and shows the rules up front.",
+        "The timer card and the group card button are no longer clipped."
+      ],
+      "notesEn": [
+        "If you had picked a theme, it did not change."
+      ]
+    },
+    {
       "versionName": "1.0.85",
       "buildNumber": 85,
       "channel": "stable",

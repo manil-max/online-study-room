@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.86",
+      "buildNumber": 86,
+      "channel": "stable",
+      "date": "2026-09-18",
+      "title": "v86: WP-833..WP-843 owner feedback round",
+      "highlights": [
+        "WP-841: new light preset campfire_day (#FDF8F1 paper, #F97316 primary, dark ink on orange - white would be 2.80) is the first-run family; WP-835's campfire_night default replaced. Existing prefs untouched.",
+        "WP-838 (0143): profiles.theme_prefs jsonb carries family/palette/mode/colorSource/custom themes with an updated_at; last write wins, prefs stay the render source and a failed push never reaches the widget tree.",
+        "WP-842: default board is six cards (timer, today+leaderboard pair, goal, weekly, tasks); heights come from the WP-836 table. Group-gated cards deliberately excluded."
+      ],
+      "fixes": [
+        "WP-834: AuthWeakPasswordException is not an AuthApiException, so weak_password reasons lost their code and every rejection fell to the generic sentence. Reasons now map to length/characters/pwned, plus same_password, otp_expired and session_not_found.",
+        "WP-843: GroupCardShell dropped the blurb under 220px so the invite buttons stop being clipped.",
+        "WP-833: stable/Play build now fails when GOOGLE_WEB_CLIENT_ID is empty.",
+        "WP-840: study_repository_test used fixed June dates that fell out of the 90-day hot window on 2026-09-18."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.85",
       "buildNumber": 85,
       "channel": "stable",

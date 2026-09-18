@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v86 / 1.0.86+86] - 2026-09-18
+
+### Öne çıkanlar
+
+- Yeni açılış teması: krem zemin ve uygulamanın turuncusu. İlk kurulumda artık sıcak bir ekranla karşılaşıyorsun; seçtiğin tema varsa değişmiyor.
+- Tema tercihin ve kendi oluşturduğun temalar hesabına kaydediliyor; yeni cihazda giriş yapınca geliyor.
+- Ana ekran ilk açılışta daha dolu geliyor: sayaç, bugün özeti, grup sıralaması, günlük hedef, haftalık grafik ve görevler.
+- Eklediğin her kart kendi doğru boyutuyla geliyor; artık elle boyutlandırmak gerekmiyor. Kart eklerken kartın önizlemesini görüyorsun.
+- Tanıtım balonları sadeleşti: ana ekran, pano düzenleme ve istatistiklerde birer kısa kart.
+
+### Düzeltmeler
+
+- Şifre belirleme ekranı artık nedenini söylüyor: şifre eskisiyle aynıysa, çok kısaysa ya da veri sızıntılarında görüldüyse ayrı ayrı yazıyor. Kurallar kutunun altında sürekli görünüyor.
+- Sayaç kartı ilk açılışta kırpılmış görünmüyor.
+- Grup kartındaki "Grup oluştur" düğmesinin yazısı dar alanda kesilmiyor.
+
+### Doğrulama sınırı
+
+- Google ile giriş v85'te geldi; bu sürümde değişmedi.
+- Tema senkronu ve yeni pano gerçek telefonda ölçülmedi; otomatik testlerle doğrulandı.
+
 ## [v85 / 1.0.85+85] - 2026-09-16
 
 ### Öne çıkanlar
