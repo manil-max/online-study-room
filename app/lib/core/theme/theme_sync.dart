@@ -12,6 +12,12 @@ abstract class ThemePrefsGateway {
   /// Oturum açık mı? `false` iken hiçbir ağ çağrısı yapılmaz.
   bool get isSignedIn;
 
+  /// WP-860: oturumdaki hesabın kimliği; oturum yoksa `null`. Yerel damga bu
+  /// kimlikle etiketlenir — aynı cihazda hesap değişince bir hesabın teması
+  /// ötekinin sunucu kopyasıyla yarışmasın. Kimliği bilmeyen kapı `null`
+  /// döner; o zaman damga sahipsiz kalır (WP-838 davranışı).
+  String? get userId => null;
+
   /// Her oturum açılışında (kalıcı oturumun geri yüklenmesi dahil) bir olay.
   Stream<void> get signIns;
 
@@ -52,6 +58,9 @@ class SupabaseThemePrefsGateway extends ThemePrefsGateway {
 
   @override
   bool get isSignedIn => _client.auth.currentUser != null;
+
+  @override
+  String? get userId => _client.auth.currentUser?.id;
 
   @override
   Stream<void> get signIns => _client.auth.onAuthStateChange

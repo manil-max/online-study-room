@@ -147,6 +147,14 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   /// şikâyetin ta kendisi). Damgası olmayan kurulum her zaman "eski" sayılır.
   static const _kUpdatedAt = 'theme_prefs_updated_at';
 
+  /// WP-860: damgayı atan hesabın kimliği. Çıkışta damga silinmez; aynı
+  /// cihazda başka hesap girince damga ONUN değildir ve "damga yok" sayılır.
+  /// Yoksa A'nın yerel seçimi B'nin hesabına itilir, B'nin teması cihaza inip
+  /// damgayı ilerletince de A geri girdiğinde B'nin teması A'nın hesabına
+  /// yazılırdı. Oturumsuz seçimde sahip yazılmaz (cihazın seçimi, eski
+  /// davranış); sahipsiz eski damga da oturumdaki hesabınki sayılır.
+  static const _kUpdatedBy = 'theme_prefs_updated_by';
+
   /// Tema Stüdyosu'nda kaydırıcı oynarken her karede sunucuya yazmamak için:
   /// son değişiklikten sonra bu kadar beklenir, sonra tek bir itiş yapılır.
   @visibleForTesting
@@ -406,7 +414,10 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
         return;
       }
       final remoteAt = themePrefsUpdatedAt(remote);
-      final localAt = _localUpdatedAt();
+      final owner = ref.read(sharedPreferencesProvider).getString(_kUpdatedBy);
+      final localAt = owner == null || owner == gateway.userId
+          ? _localUpdatedAt()
+          : null;
       if (remote != null &&
           remoteAt != null &&
           (localAt == null || remoteAt.isAfter(localAt))) {
@@ -431,9 +442,9 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   void _touchAndSchedulePush() {
     // Damga oturumdan bağımsız yazılır: çıkış yapmışken seçilen tema da
     // sonraki uzlaşmada doğru tarihle yarışmalı.
-    ref
-        .read(sharedPreferencesProvider)
-        .setString(_kUpdatedAt, DateTime.now().toUtc().toIso8601String());
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setString(_kUpdatedAt, DateTime.now().toUtc().toIso8601String());
+    _stampOwner(prefs, ref.read(themePrefsGatewayProvider).userId);
     // Oturum yoksa itilecek bir şey de yok. Zamanlayıcıyı burada hiç kurmamak
     // ölü bir bekleyişi önler; `flutter_test` sahte saati "hâlâ bekleyen
     // zamanlayıcı" diye haklı olarak hata sayar.
@@ -448,6 +459,8 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final updatedAt = _localUpdatedAt() ?? DateTime.now().toUtc();
     try {
       await gateway.push(state.toRemoteMap(updatedAt));
+      // Yerel küme artık bu hesabın sunucu kopyasıdır.
+      _stampOwner(ref.read(sharedPreferencesProvider), gateway.userId);
     } catch (_) {
       // Ağ hatası kullanıcıya yansımaz; sonraki değişiklik yeniden dener.
     }
@@ -486,7 +499,16 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     await prefs.setBool(_kCustomThemesMigrated, true);
     await prefs.setBool(_kPaletteSourceMigrated, true);
     await prefs.setString(_kUpdatedAt, remoteAt.toUtc().toIso8601String());
+    _stampOwner(prefs, ref.read(themePrefsGatewayProvider).userId);
     state = settings;
+  }
+
+  void _stampOwner(SharedPreferences prefs, String? userId) {
+    if (userId == null) {
+      prefs.remove(_kUpdatedBy);
+    } else {
+      prefs.setString(_kUpdatedBy, userId);
+    }
   }
 
   /// Sunucu JSON'undan tercih kümesi. Tek bir bozuk alan yüzünden tüm kayıt
@@ -508,7 +530,9 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final palettes = <AppPalette>[];
     for (final item in remote['customPalettes'] as List? ?? const []) {
       try {
-        palettes.add(AppPalette.fromMap(Map<String, dynamic>.from(item as Map)));
+        palettes.add(
+          AppPalette.fromMap(Map<String, dynamic>.from(item as Map)),
+        );
       } catch (_) {}
     }
     while (palettes.length < 3) {
