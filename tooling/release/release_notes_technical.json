@@ -3,6 +3,19 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.86-beta.1",
+      "buildNumber": 8601,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8601: GitHub becomes the beta channel (WP-844)",
+      "highlights": [
+        "Owner decision 2026-09-18: Play is the stable channel, GitHub is beta. First beta since beta-v4402; same code as v86 plus the beta env change.",
+        "release.yml writes an empty GOOGLE_WEB_CLIENT_ID for beta: staging has no Google provider and there is no Android OAuth client for the .beta package."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.86",
       "buildNumber": 86,
       "channel": "stable",

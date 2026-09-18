@@ -3,6 +3,34 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.86-beta.1",
+      "buildNumber": 8601,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8601: v86 beta kanalında",
+      "highlights": [
+        "v86'nın bütün yenilikleri beta kanalında: açık karşılama teması, altı kartlı pano, düzgün boyutla eklenen kartlar."
+      ],
+      "fixes": [
+        "Şifre ekranı hatanın sebebini söylüyor; kırpılan kart düğmeleri düzeldi."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; hesabın Play sürümünden ayrıdır.",
+        "Beta'da Google ile giriş kapalı; e-posta ve şifreyle gir."
+      ],
+      "titleEn": "beta-v8601: v86 on the beta channel",
+      "highlightsEn": [
+        "Everything in v86 on the beta channel: the light welcome theme, the six-card board and cards that arrive at the right size."
+      ],
+      "fixesEn": [
+        "The password screen explains why a password was rejected; clipped card buttons are fixed."
+      ],
+      "notesEn": [
+        "Beta uses the test server; your account is separate from the Play version.",
+        "Google sign-in is off on beta; sign in with email and password."
+      ]
+    },
+    {
       "versionName": "1.0.86",
       "buildNumber": 86,
       "channel": "stable",

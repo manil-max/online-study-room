@@ -143,7 +143,7 @@ Assert-Equal $contract.staging.migration_head '0143' 'staging hedefi 0143: tema 
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0143 staging apply KOSTU (run 35299629071, post-check 0143|0143|0143) ve kapi yeniden kilitlendi'
-Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
+Assert-Equal ([bool]$contract.staging.release_enabled) $true 'WP-844: GitHub kanali beta oldu (sahip karari 2026-09-18); beta staging uzerinden yayinlanir'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
 # saglik satiri configured / 0 kuyruk / 0 takili. Hata production'da CANLI:

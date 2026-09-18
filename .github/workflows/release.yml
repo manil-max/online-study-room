@@ -134,12 +134,17 @@ jobs:
           FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
         run: |
           if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then ENV=staging; URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; REF="$STAGING_SUPABASE_PROJECT_REF"; FLAVOR=beta; DIST=githubBeta; SRC=app-beta-release.apk; OUT=app-beta-release.apk; else ENV=production; URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; REF="$PRODUCTION_SUPABASE_PROJECT_REF"; FLAVOR=stable; DIST=githubStable; SRC=app-stable-release.apk; OUT=app-release.apk; fi
+          # WP-844: beta (staging) derlemesinde Google girisi KAPALI. Staging
+          # Supabase'de Google saglayicisi acik degil ve `.beta` paketi icin
+          # Android OAuth istemcisi yok; kimlik verilirse dugme cizilir ama
+          # her denemede hata verir. Bos kimlik = dugme hic cizilmez (fail-closed).
+          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then GWC=''; else GWC='${{ vars.GOOGLE_WEB_CLIENT_ID }}'; fi
           for required in FIREBASE_PROJECT_ID FIREBASE_ANDROID_API_KEY FIREBASE_ANDROID_APP_ID FIREBASE_MESSAGING_SENDER_ID; do
             if [ -z "${!required}" ]; then echo "Missing required environment variable: $required"; exit 1; fi
           done
           python - <<PY
           import json
-          json.dump({'CHANNEL':'${{ needs.preflight.outputs.channel }}','APP_ENVIRONMENT':'$ENV','ALLOW_IN_MEMORY':'false','SUPABASE_URL':'$URL','SUPABASE_ANON_KEY':'$KEY','SUPABASE_PROJECT_REF':'$REF','STAGING_SUPABASE_PROJECT_REF':'$STAGING_SUPABASE_PROJECT_REF','PRODUCTION_SUPABASE_PROJECT_REF':'$PRODUCTION_SUPABASE_PROJECT_REF','GIT_COMMIT_SHA':'${{ needs.preflight.outputs.git_sha }}','MIGRATION_HEAD':'${{ needs.preflight.outputs.migration_head }}','APP_VERSION_NAME':'${{ needs.preflight.outputs.version_name }}','APP_BUILD_NUMBER':'${{ needs.preflight.outputs.build_number }}','DISTRIBUTION_CHANNEL':'$DIST','LEGAL_BASE_URL':'https://manil-max.github.io/online-study-room','FIREBASE_PROJECT_ID':'$FIREBASE_PROJECT_ID','FIREBASE_ANDROID_API_KEY':'$FIREBASE_ANDROID_API_KEY','FIREBASE_ANDROID_APP_ID':'$FIREBASE_ANDROID_APP_ID','FIREBASE_MESSAGING_SENDER_ID':'$FIREBASE_MESSAGING_SENDER_ID','GOOGLE_WEB_CLIENT_ID':'${{ vars.GOOGLE_WEB_CLIENT_ID }}'}, open('env.json','w'))
+          json.dump({'CHANNEL':'${{ needs.preflight.outputs.channel }}','APP_ENVIRONMENT':'$ENV','ALLOW_IN_MEMORY':'false','SUPABASE_URL':'$URL','SUPABASE_ANON_KEY':'$KEY','SUPABASE_PROJECT_REF':'$REF','STAGING_SUPABASE_PROJECT_REF':'$STAGING_SUPABASE_PROJECT_REF','PRODUCTION_SUPABASE_PROJECT_REF':'$PRODUCTION_SUPABASE_PROJECT_REF','GIT_COMMIT_SHA':'${{ needs.preflight.outputs.git_sha }}','MIGRATION_HEAD':'${{ needs.preflight.outputs.migration_head }}','APP_VERSION_NAME':'${{ needs.preflight.outputs.version_name }}','APP_BUILD_NUMBER':'${{ needs.preflight.outputs.build_number }}','DISTRIBUTION_CHANNEL':'$DIST','LEGAL_BASE_URL':'https://manil-max.github.io/online-study-room','FIREBASE_PROJECT_ID':'$FIREBASE_PROJECT_ID','FIREBASE_ANDROID_API_KEY':'$FIREBASE_ANDROID_API_KEY','FIREBASE_ANDROID_APP_ID':'$FIREBASE_ANDROID_APP_ID','FIREBASE_MESSAGING_SENDER_ID':'$FIREBASE_MESSAGING_SENDER_ID','GOOGLE_WEB_CLIENT_ID':'$GWC'}, open('env.json','w'))
           PY
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV; echo "SRC=$SRC" >> $GITHUB_ENV; echo "OUT=$OUT" >> $GITHUB_ENV
       - run: flutter pub get

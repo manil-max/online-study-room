@@ -4,6 +4,17 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8601 / 1.0.86-beta.1+8601] - 2026-09-18
+
+### Öne çıkanlar
+
+- GitHub kanalı artık beta kanalı: v86'nın içeriğiyle aynı, test sunucusuna bağlı ayrı bir uygulama olarak kurulur (Play sürümünün yanında durur).
+
+### Notlar
+
+- Beta test sunucusunu kullanır; hesabın ve verilerin Play sürümünden ayrıdır.
+- Beta'da Google ile giriş kapalı; e-posta ve şifreyle giriş yapılır.
+
 ## [v86 / 1.0.86+86] - 2026-09-18
 
 ### Öne çıkanlar

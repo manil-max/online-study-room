@@ -4,7 +4,7 @@
   "staging": {
     "migration_head": "0143",
     "deploy_enabled": false,
-    "release_enabled": false,
+    "release_enabled": true,
     "hold_reason": "RE-LOCKED 2026-09-18 after the 0143 staging apply SUCCEEDED: run 35299629071, post-check printed 0143|0143|0143. First dry-run 35299032541 caught pgTAP 069's anon-grant assertion (Supabase default privileges), fixed in 7fdb9d6d; dry-run 35299387516 then replayed 73 files / 1069 assertions green."
   },
   "production": {
