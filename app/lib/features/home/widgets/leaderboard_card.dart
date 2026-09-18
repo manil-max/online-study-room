@@ -660,6 +660,14 @@ class _RenderFullOrFallback extends RenderBox
   Size computeDryLayout(BoxConstraints constraints) =>
       _pick(constraints.maxWidth).getDryLayout(constraints);
 
+  // WP-863: yoksa taban çizgisine hizalı bir ebeveynin kuru düzeni (ör.
+  // `CrossAxisAlignment.baseline` Row) debug'da onaylamayla düşer.
+  @override
+  double? computeDryBaseline(
+    BoxConstraints constraints,
+    TextBaseline baseline,
+  ) => _pick(constraints.maxWidth).getDryBaseline(constraints, baseline);
+
   @override
   void performLayout() {
     _useFull = !(constraints.maxWidth.isFinite && !_fits(constraints.maxWidth));
