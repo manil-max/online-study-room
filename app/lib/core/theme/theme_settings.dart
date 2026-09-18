@@ -539,17 +539,29 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       palettes.add(_defaultCustomPalette(palettes.length + 1));
     }
 
-    final themes = <CustomTheme>[];
+    // WP-861: her tema kimliğinin yuvasına oturur. Sırayla dizilseydi tek bir
+    // okunamayan tema komşularını bir yuva kaydırır, `saveCustomTheme` (yuvayı
+    // kimlikten değil liste konumundan bulur) başka bir temanın üstüne yazardı.
+    final themes = [
+      for (var slot = 1; slot <= 3; slot++) _emptyCustomTheme(slot),
+    ];
+    final filled = <int>{};
     for (final item in remote['customThemes'] as List? ?? const []) {
       try {
         final parsed = CustomTheme.tryParse(
           Map<String, dynamic>.from(item as Map),
         );
-        if (parsed != null) themes.add(parsed);
+        final slot = int.tryParse(parsed?.id.split('_').last ?? '');
+        if (parsed == null ||
+            parsed.id != 'custom_$slot' ||
+            slot == null ||
+            slot < 1 ||
+            slot > 3 ||
+            !filled.add(slot)) {
+          continue;
+        }
+        themes[slot - 1] = parsed;
       } catch (_) {}
-    }
-    while (themes.length < 3) {
-      themes.add(_emptyCustomTheme(themes.length + 1));
     }
 
     final active = remote['activeCustomTheme'];
