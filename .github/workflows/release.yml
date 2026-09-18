@@ -316,7 +316,14 @@ jobs:
             release-assets/android/*.sha1
             release-assets/android/*.sha256
             release-assets/release-manifest.json
+      # 🔴 WP-850: "Yeni sürüm indirilmeye hazır" bildirimi artık YALNIZ beta
+      # kanalında gider. Stable kolu production'daki HERKESE push atıyordu —
+      # Play'den kuranlar dahil. Sahip v86'da bildirimi telefonunda gördü:
+      # Play kullanıcısı için yanlış, çünkü güncellemesi Play'den ve Google
+      # incelemesi bitince gelir; bildirim APK'yi GitHub'da hazır ilan ediyor.
+      # GitHub artık yalnız beta kanalı (WP-844), bildirim de onunla sınırlı.
       - name: Tamamlanan Android sürüm bildirimini kuyruğa al
+        if: needs.preflight.outputs.channel == 'beta'
         shell: bash
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
