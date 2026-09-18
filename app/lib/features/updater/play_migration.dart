@@ -3,12 +3,6 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:shared_preferences/shared_preferences.dart';
-// 🔴 WP-847: `url_launcher` pubspec'te DOĞRUDAN değil, `supabase_flutter`
-// üzerinden geçişli bağımlılık (Android/Windows eklentisi zaten kayıtlı).
-// Kod tabanında hazır bir bağlantı açıcı yoktu; pubspec sıcak dosya olduğu
-// için bu WP'ye verilmedi. Lider pubspec'e `url_launcher` ekleyince bu
-// `ignore` satırı silinmeli.
-// ignore: depend_on_referenced_packages
 import 'package:url_launcher/url_launcher.dart' as launcher;
 
 import '../../core/config/app_build_manifest.dart';

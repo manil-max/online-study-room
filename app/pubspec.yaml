@@ -72,6 +72,8 @@ dependencies:
   timezone: ^0.11.1
   # WP-831: "Google ile devam et" (yalniz Android; ID token -> Supabase).
   google_sign_in: ^7.2.0
+  # WP-847: Play'e gecis dugmesi magaza sayfasini acar.
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
