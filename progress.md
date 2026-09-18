@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-855** | beta-v8702 turu: WP-851…WP-855 aşağıda |
+| Son ayrılan WP | **WP-857** | beta-v8703: WP-856/857 |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -41,6 +41,13 @@ Kapı: 22 kapı · 0 kırmızı · 1 atlandı + `release-defines` 412s yeşil.
 sayaç kartı ve odak ekranı da aynı kuralı çağırıyor (formül kopyaları silindi). Kaba kartlar
 yalnız gösterilen değer değişeceği saniyede yenilenir; sayaç dururken zamanlayıcı yok.
 Kapı: 22 kapı yeşil + `release-defines` 414s yeşil.
+
+**WP-857:** dar sıralama kartında "(sen)" eki kendi adını kesiyordu. İlk çözüm `LayoutBuilder`
+idi ve tam kapı 20 kırmızıyla durdurdu: satır içsel yükseklikle ölçülüyor (WP-662),
+LayoutBuilder içsel boyut vermez — uygulamada da aynı onaylama. `FullLabelOrFallback`
+render nesnesiyle çözüldü (içsel ölçümü destekler). Test önce 27 ölçümün 5'inde kırmızıydı.
+Kapı: 22 yeşil + `release-defines` 415s yeşil. **beta-v8703** run `35377314763`.
+Açık: `class_stats_view.dart:1135` aynı "(sen)" etiketini kullanıyor, aynı düzeltme bekliyor.
 **Bilinen borç (dokunulmadı):** dar hücrede sıralamada
 "Deniz (s…" kısalıyor; rekorlar kartı yoğunluğu (WP-836 envanteri).
 
