@@ -80,4 +80,10 @@ create policy user_theme_prefs_update on public.user_theme_prefs
 
 -- Istemci yalniz kendi satirini okur/yazar; silme yolu YOK (hesap silme
 -- cascade ile temizler), bu yuzden `delete` grant'i de verilmez.
+-- 🔴 Supabase'in varsayilan ayricaliklari yeni public tablolarini `anon` ve
+-- `authenticated` rollerine ACIK dogar; olculdu: dry-run 35299032541,
+-- `069` testi 4. iddiada dustu cunku `anon` SELECT yetkisiyle geliyordu.
+-- RLS satirlari yine korurdu, ama yetki tablosu niyeti yansitmali: oturumsuz
+-- rolun bu tabloda isi yok. `0094` ayni kalibi kullaniyor.
+revoke all on table public.user_theme_prefs from anon, authenticated;
 grant select, insert, update on public.user_theme_prefs to authenticated;
