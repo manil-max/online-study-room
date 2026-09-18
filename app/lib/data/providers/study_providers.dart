@@ -45,6 +45,7 @@ import 'presence_providers.dart';
 import 'global_timer_providers.dart';
 import 'goal_streak_providers.dart';
 import 'subject_providers.dart';
+import '../../core/stats/istanbul_calendar.dart';
 
 SupabaseClient? _supabaseClientOrNull() {
   if (!SupabaseConfig.isConfigured) return null;
@@ -224,9 +225,27 @@ final dailyTotalsProvider = Provider<Map<DateTime, int>>((ref) {
 /// (canlı kısım UI'da anlık eklenir).
 final todayRecordedSecondsProvider = Provider<int>((ref) {
   final totals = ref.watch(dailyTotalsProvider);
-  final today = dayOf(DateTime.now());
+  final now = DateTime.now();
+  final today = dayOf(now);
+  // 🔴 WP-865: gün yalnız oturum listesi değişince yeniden okunuyordu.
+  // Uygulama gece yarısını açık geçirirse "bugün" dünün toplamında kalıyor,
+  // canlı kısım ise yeni güne kırpılıyordu: kart dünün toplamı + bugünün
+  // dakikalarını gösterirdi (avcı İDDİA 1). Sağlayıcı artık bir sonraki
+  // İstanbul gece yarısında kendini yeniler; bu değeri okuyan her yüzey
+  // (sayaç kartı, hedef/bugün kartları, odak ekranı, varlık) birlikte döner.
+  final wait = durationUntilNextIstanbulDay(now);
+  final rollover = Timer(wait, ref.invalidateSelf);
+  ref.onDispose(rollover.cancel);
   return totals[today] ?? 0;
 });
+
+/// WP-865: [now]dan bir sonraki İstanbul gün başlangıcına kalan süre (+1 sn
+/// pay: tam sınırda okunan saat hâlâ dünde kalmasın).
+Duration durationUntilNextIstanbulDay(DateTime now) {
+  final start = istanbulDayStart(now);
+  final next = istanbulDayStart(start.add(const Duration(hours: 36)));
+  return next.difference(now) + const Duration(seconds: 1);
+}
 
 /// Kullanıcının günlük hedefi (dakika). Profil yoksa varsayılan (§3.7).
 final dailyGoalMinutesProvider = Provider<int>((ref) {

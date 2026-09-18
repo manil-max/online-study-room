@@ -80,6 +80,8 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  # WP-865: gece yarısı yenileme zamanlayıcısını sahte saatle ölçmek için.
+  fake_async: ^1.3.3
 
 
   # The "flutter_lints" package below contains a set of recommended lints to
