@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../prefs/app_prefs.dart';
 import 'app_theme.dart';
 import 'custom_theme.dart';
+import 'theme_sync.dart';
 
 /// Tema rengi nereden uygulanıyor?
 /// - [family]: Tema Stüdyosu atmosfer ailesi (tam UI havası)
@@ -29,6 +30,19 @@ enum ThemeSaveResult { saved, failed, rejected }
 /// turuncusu. Aile açık olduğu için mod da açık başlar (aşağıdaki `build`
 /// kuralı `setFamily` ile birebir aynı: mod ailenin parlaklığıdır).
 const String kFirstRunFamilyId = 'campfire_day';
+
+/// WP-838: sunucuya yazılan tercih kümesinin biçim sürümü. İleride alan
+/// eklenirse eski istemcinin okumayı reddetmesi değil, bilmediği alanı
+/// görmezden gelmesi beklenir; bu yüzden sürüm yalnız teşhis içindir.
+const int kThemePrefsVersion = 1;
+
+/// Sunucu kopyasının istemci tarafından yazılmış ISO-8601/UTC damgası.
+/// Okunamıyorsa `null` döner ve o kopya "eski" sayılır (yerel kazanır).
+DateTime? themePrefsUpdatedAt(Map<String, dynamic>? prefs) {
+  final raw = prefs?['updatedAt'];
+  if (raw is! String) return null;
+  return DateTime.tryParse(raw)?.toUtc();
+}
 
 /// Tema tercihleri: sanat ailesi (preset) + eski palet + açık/koyu/sistem.
 class ThemeSettings {
@@ -77,6 +91,21 @@ class ThemeSettings {
       colorSource == ThemeColorSource.palette ||
       paletteId.startsWith('custom_');
 
+  /// WP-838: sunucuya giden **tam** tercih kümesi. Alan alan birleştirme yok —
+  /// çatışma `updatedAt` ile son-yazan-kazanır olarak çözülür, bu yüzden küme
+  /// her zaman bütün halinde gönderilir.
+  Map<String, dynamic> toRemoteMap(DateTime updatedAt) => {
+    'version': kThemePrefsVersion,
+    'family': familyId,
+    'palette': paletteId,
+    'mode': mode.name,
+    'colorSource': colorSource.name,
+    'customPalettes': customPalettes.map((p) => p.toMap()).toList(),
+    'customThemes': customThemes.map((t) => t.toMap()).toList(),
+    'activeCustomTheme': activeCustomThemeId,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
+
   ThemeSettings copyWith({
     String? familyId,
     String? paletteId,
@@ -109,6 +138,22 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   static const _kActiveCustomTheme = 'active_custom_theme_id';
   static const _kCustomThemesMigrated = 'custom_themes_migrated_v1';
   static const _kPaletteSourceMigrated = 'palette_source_migrated_v1';
+
+  /// WP-838: son YEREL tema değişikliğinin ISO-8601/UTC damgası. Çatışma
+  /// kuralı buna bakar. Bilerek `_kThemeKeys` dışında tutuldu: ilk kurulumun
+  /// karşılama teması (`_persistFirstRunTheme`) bir kullanıcı seçimi DEĞİLDİR
+  /// ve damgalanmaz — damgalansaydı yeni cihazdaki varsayılan, hesaptaki
+  /// gerçek tercihten "daha yeni" sayılıp onu ezerdi (bu WP'nin düzelttiği
+  /// şikâyetin ta kendisi). Damgası olmayan kurulum her zaman "eski" sayılır.
+  static const _kUpdatedAt = 'theme_prefs_updated_at';
+
+  /// Tema Stüdyosu'nda kaydırıcı oynarken her karede sunucuya yazmamak için:
+  /// son değişiklikten sonra bu kadar beklenir, sonra tek bir itiş yapılır.
+  @visibleForTesting
+  static const Duration pushDebounce = Duration(milliseconds: 800);
+
+  Timer? _pushTimer;
+  bool _syncing = false;
 
   /// WP-835: "hiç tema kaydı yok" ölçütü. Bu anahtarlardan biri bile varsa
   /// kullanıcı ya da eski bir göç tema tarafına dokunmuştur; o kurulumun
@@ -191,17 +236,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     }
     final legacyPalettes = List<AppPalette>.from(customPalettes);
     while (customPalettes.length < 3) {
-      final idx = customPalettes.length + 1;
-      customPalettes.add(
-        AppPalette(
-          id: 'custom_$idx',
-          name: 'Custom $idx',
-          primary: const Color(0xFF8B5CF6),
-          onPrimary: const Color(0xFFFFFFFF),
-          accent: const Color(0xFF12C281),
-          onAccent: const Color(0xFFFFFFFF),
-        ),
-      );
+      customPalettes.add(_defaultCustomPalette(customPalettes.length + 1));
     }
 
     var customThemes = _readCustomThemes(prefs);
@@ -220,6 +255,20 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
                 )
             ? paletteId
             : null);
+
+    // WP-838: tercihler hesapta da durur. Oturum açılışında (kalıcı oturumun
+    // geri yüklenmesi dahil) sunucu kopyasıyla uzlaşılır. Kapı kapalıysa
+    // (bellek-içi mod, Supabase kurulmamış) tek satır ağ trafiği olmaz.
+    final gateway = ref.watch(themePrefsGatewayProvider);
+    final signIns = gateway.signIns.listen((_) => unawaited(syncWithServer()));
+    ref.onDispose(signIns.cancel);
+    ref.onDispose(() => _pushTimer?.cancel());
+    if (gateway.isSignedIn) {
+      // Oturum bu sağlayıcı kurulmadan ÖNCE geri yüklenmiş olabilir; o
+      // durumda `initialSession` olayı kaçırılır, ilk uzlaşma buradan başlar.
+      Future.microtask(syncWithServer);
+    }
+
     return ThemeSettings(
       familyId: familyId,
       paletteId: paletteId,
@@ -230,6 +279,15 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       activeCustomThemeId: activeCustomThemeId,
     );
   }
+
+  AppPalette _defaultCustomPalette(int slot) => AppPalette(
+    id: 'custom_$slot',
+    name: 'Custom $slot',
+    primary: const Color(0xFF8B5CF6),
+    onPrimary: const Color(0xFFFFFFFF),
+    accent: const Color(0xFF12C281),
+    onAccent: const Color(0xFFFFFFFF),
+  );
 
   List<CustomTheme> _readCustomThemes(SharedPreferences prefs) {
     final stored = prefs.getStringList(_kCustomThemes);
@@ -323,6 +381,168 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     }
   }
 
+  /// WP-838: yerel kayıt ile hesaptaki kopyayı uzlaştırır.
+  ///
+  /// Kural **son-yazan-kazanır**, alan alan birleştirme yoktur: sunucudaki
+  /// `updatedAt` yereldekinden yeniyse sunucu kopyası uygulanır ve diske
+  /// yazılır; aksi halde (yerel daha yeni ya da sunucuda kayıt yok) yerel
+  /// kopya yukarı itilir.
+  ///
+  /// Çevrimdışı çalışmayı bozmaz: çizim her zaman yereldeki kayıttan sürer,
+  /// ağ hatası yutulur ve widget ağacına sızmaz. Başarısız bir yazma bir
+  /// sonraki tema değişikliğinde kendiliğinden yeniden denenir, çünkü her itiş
+  /// tam kümeyi gönderir.
+  Future<void> syncWithServer() async {
+    final gateway = ref.read(themePrefsGatewayProvider);
+    // Oturumu olmayan kullanıcı ağa hiç çıkmaz.
+    if (!gateway.isSignedIn || _syncing) return;
+    _syncing = true;
+    try {
+      Map<String, dynamic>? remote;
+      try {
+        remote = await gateway.fetch();
+      } catch (_) {
+        // Çevrimdışı/sunucu hatası: yerel kayıt olduğu gibi kalır.
+        return;
+      }
+      final remoteAt = themePrefsUpdatedAt(remote);
+      final localAt = _localUpdatedAt();
+      if (remote != null &&
+          remoteAt != null &&
+          (localAt == null || remoteAt.isAfter(localAt))) {
+        await _applyRemote(remote, remoteAt);
+        return;
+      }
+      await _pushNow();
+    } finally {
+      _syncing = false;
+    }
+  }
+
+  DateTime? _localUpdatedAt() {
+    final raw = ref.read(sharedPreferencesProvider).getString(_kUpdatedAt);
+    if (raw == null) return null;
+    return DateTime.tryParse(raw)?.toUtc();
+  }
+
+  /// Her yerel tema değişikliği damgalanır ve tek bir gecikmeli itiş planlanır.
+  /// Damga **hemen** yazılır: uygulama itiş olmadan kapansa bile o cihazın
+  /// değişikliği sonraki uzlaşmada doğru tarihle yarışır.
+  void _touchAndSchedulePush() {
+    // Damga oturumdan bağımsız yazılır: çıkış yapmışken seçilen tema da
+    // sonraki uzlaşmada doğru tarihle yarışmalı.
+    ref
+        .read(sharedPreferencesProvider)
+        .setString(_kUpdatedAt, DateTime.now().toUtc().toIso8601String());
+    // Oturum yoksa itilecek bir şey de yok. Zamanlayıcıyı burada hiç kurmamak
+    // ölü bir bekleyişi önler; `flutter_test` sahte saati "hâlâ bekleyen
+    // zamanlayıcı" diye haklı olarak hata sayar.
+    if (!ref.read(themePrefsGatewayProvider).isSignedIn) return;
+    _pushTimer?.cancel();
+    _pushTimer = Timer(pushDebounce, () => unawaited(_pushNow()));
+  }
+
+  Future<void> _pushNow() async {
+    final gateway = ref.read(themePrefsGatewayProvider);
+    if (!gateway.isSignedIn) return;
+    final updatedAt = _localUpdatedAt() ?? DateTime.now().toUtc();
+    try {
+      await gateway.push(state.toRemoteMap(updatedAt));
+    } catch (_) {
+      // Ağ hatası kullanıcıya yansımaz; sonraki değişiklik yeniden dener.
+    }
+  }
+
+  /// Sunucu kopyasını hem duruma hem diske yazar. Diske yazılmazsa sonraki
+  /// açılış yine eski temayı okur ve uzlaşma sessizce geri alınmış olurdu.
+  Future<void> _applyRemote(
+    Map<String, dynamic> remote,
+    DateTime remoteAt,
+  ) async {
+    final settings = _settingsFromRemote(remote);
+    // Bozuk/eksik kayıt: kullanıcının yerel teması korunur.
+    if (settings == null) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setString(_kFamily, settings.familyId);
+    await prefs.setString(_kPalette, settings.paletteId);
+    await prefs.setString(_kMode, settings.mode.name);
+    await prefs.setString(_kColorSource, settings.colorSource.name);
+    await prefs.setStringList(
+      _kCustomPalettes,
+      settings.customPalettes.map((p) => jsonEncode(p.toMap())).toList(),
+    );
+    await prefs.setStringList(
+      _kCustomThemes,
+      settings.customThemes.map((t) => jsonEncode(t.toMap())).toList(),
+    );
+    final active = settings.activeCustomThemeId;
+    if (active == null) {
+      await prefs.remove(_kActiveCustomTheme);
+    } else {
+      await prefs.setString(_kActiveCustomTheme, active);
+    }
+    // Sunucudan gelen küme zaten göçmüş bir kümedir; WP-288/WP-302 göçleri
+    // bunun üstünde bir daha koşmamalı.
+    await prefs.setBool(_kCustomThemesMigrated, true);
+    await prefs.setBool(_kPaletteSourceMigrated, true);
+    await prefs.setString(_kUpdatedAt, remoteAt.toUtc().toIso8601String());
+    state = settings;
+  }
+
+  /// Sunucu JSON'undan tercih kümesi. Tek bir bozuk alan yüzünden tüm kayıt
+  /// atılmaz; aile/palet kimliği okunamıyorsa kayıt kullanılamaz sayılır.
+  ThemeSettings? _settingsFromRemote(Map<String, dynamic> remote) {
+    final familyId = remote['family'];
+    final paletteId = remote['palette'];
+    if (familyId is! String || paletteId is! String) return null;
+
+    final mode = switch (remote['mode']) {
+      'light' => ThemeMode.light,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
+    };
+    final colorSource = remote['colorSource'] == 'palette'
+        ? ThemeColorSource.palette
+        : ThemeColorSource.family;
+
+    final palettes = <AppPalette>[];
+    for (final item in remote['customPalettes'] as List? ?? const []) {
+      try {
+        palettes.add(AppPalette.fromMap(Map<String, dynamic>.from(item as Map)));
+      } catch (_) {}
+    }
+    while (palettes.length < 3) {
+      palettes.add(_defaultCustomPalette(palettes.length + 1));
+    }
+
+    final themes = <CustomTheme>[];
+    for (final item in remote['customThemes'] as List? ?? const []) {
+      try {
+        final parsed = CustomTheme.tryParse(
+          Map<String, dynamic>.from(item as Map),
+        );
+        if (parsed != null) themes.add(parsed);
+      } catch (_) {}
+    }
+    while (themes.length < 3) {
+      themes.add(_emptyCustomTheme(themes.length + 1));
+    }
+
+    final active = remote['activeCustomTheme'];
+    return ThemeSettings(
+      familyId: familyId,
+      paletteId: paletteId,
+      mode: mode,
+      colorSource: colorSource,
+      customPalettes: palettes,
+      customThemes: themes,
+      activeCustomThemeId:
+          active is String && themes.any((t) => t.id == active && t.isDefined)
+          ? active
+          : null,
+    );
+  }
+
   Future<ThemeSaveResult> saveCustomTheme(CustomTheme theme) async {
     final index = int.tryParse(theme.id.split('_').last);
     if (index == null || index < 1 || index > 3 || theme.isReadOnly) {
@@ -344,6 +564,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       return ThemeSaveResult.failed;
     }
     state = state.copyWith(customThemes: next);
+    _touchAndSchedulePush();
     return ThemeSaveResult.saved;
   }
 
@@ -376,6 +597,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       activeCustomThemeId: active,
       clearActiveCustomTheme: active == null,
     );
+    _touchAndSchedulePush();
     return ThemeSaveResult.saved;
   }
 
@@ -395,6 +617,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       activeCustomThemeId: id,
       clearActiveCustomTheme: id == null,
     );
+    _touchAndSchedulePush();
     return ThemeSaveResult.saved;
   }
 
@@ -416,6 +639,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final prefs = ref.read(sharedPreferencesProvider);
     final jsonList = updatedList.map((p) => jsonEncode(p.toMap())).toList();
     prefs.setStringList(_kCustomPalettes, jsonList);
+    _touchAndSchedulePush();
   }
 
   void setFamily(String id) {
@@ -433,6 +657,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     prefs.setString(_kFamily, id);
     prefs.setString(_kMode, mode.name);
     prefs.setString(_kColorSource, 'family');
+    _touchAndSchedulePush();
   }
 
   void setPalette(String id) {
@@ -445,11 +670,13 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(_kPalette, id);
     prefs.setString(_kColorSource, 'palette');
+    _touchAndSchedulePush();
   }
 
   void setMode(ThemeMode mode) {
     state = state.copyWith(mode: mode);
     ref.read(sharedPreferencesProvider).setString(_kMode, mode.name);
+    _touchAndSchedulePush();
   }
 }
 
