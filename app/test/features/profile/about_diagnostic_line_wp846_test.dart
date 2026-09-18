@@ -76,8 +76,12 @@ void main() {
     await tester.pumpAndSettle();
     final finder = find.byKey(const Key('about-diagnostic-line'));
     expect(finder, findsOneWidget);
-    // Kopyalanabilir: düz Text değil, SelectableText.
-    return tester.widget<SelectableText>(finder).data!;
+    // Kopyalanabilir: `SelectionArea` içindeki `Text` (ek `Scrollable` yok).
+    expect(
+      find.ancestor(of: finder, matching: find.byType(SelectionArea)),
+      findsOneWidget,
+    );
+    return tester.widget<Text>(finder).data!;
   }
 
   testWidgets('Play + canlı + Google açık', (tester) async {

@@ -265,7 +265,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
 
   /// 🔴 WP-846 — tek satır teşhis. Sahip "düğme yok" dediğinde bu satırın
   /// ekran görüntüsü nedenini söyler: hangi kanal, hangi sunucu, Google
-  /// girişi bu derlemede açık mı. Kopyalanabilir olsun diye `SelectableText`.
+  /// girişi bu derlemede açık mı. Kopyalanabilir: `SelectionArea` + `Text`.
   String _diagnosticLine(AppLocalizations l10n, AppBuildManifest? manifest) {
     final isDev =
         manifest == null || manifest.channel == AppReleaseChannel.local;
@@ -386,17 +386,29 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                   manifest: manifest,
                   onVersionTap: _onVersionTap,
                 ),
+                // Satır kimlik kartına yapışık durur (üst boşluk 4) ve altındaki
+                // bölüm aralığı 24→20 kısalır: WP-764'ün "geliştirici kartının
+                // son satırı telefon ekranında kalır" bütçesi (2000 dp) bu satır
+                // eklenince 1 dp aşılmıştı (ölçüldü: 2001.0).
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                  child: SelectableText(
-                    _diagnosticLine(l10n, manifest),
-                    key: const Key('about-diagnostic-line'),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  // 🔴 `SelectableText` DEĞİL: içinde kendi `Scrollable`ı var
+                  // ve ekranın ana kaydırıcısıyla iki `Scrollable` doğuyordu.
+                  // Ölçüldü: `scrollUntilVisible` kullanan 12 ayar testi
+                  // "Too many elements" ile düştü — aynı belirsizlik ekran
+                  // okuyucunun kaydırma hedefinde de var. `SelectionArea`
+                  // seçimi kaydırıcı eklemeden verir.
+                  child: SelectionArea(
+                    child: Text(
+                      _diagnosticLine(l10n, manifest),
+                      key: const Key('about-diagnostic-line'),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 _AboutSection(
                   title: l10n.profileSurumVeGuncellemeler,
                   child: Card(
