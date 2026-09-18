@@ -117,6 +117,8 @@ jobs:
             | jq '{site_url, uri_allow_list, mailer_otp_length,
                    mailer_autoconfirm, external_email_enabled,
                    rate_limit_email_sent,
+                   password_min_length, password_required_characters,
+                   password_hibp_enabled,
                    custom_smtp_configured: ((.smtp_host // "") != ""),
                    confirmation_template_has_link:
                      ((.mailer_templates_confirmation_content // "") | contains("{{ .ConfirmationURL }}")),
