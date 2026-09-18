@@ -17,12 +17,37 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-843** | v86 turu: WP-833…WP-843 kartları [docs/V86-PLAN.md](docs/V86-PLAN.md) |
+| Son ayrılan WP | **WP-850** | v87 turu: WP-844…WP-850 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### v87 turu — GitHub beta kanalı + izinler (2026-09-18)
+
+Sahip emri: "GitHub'daki normal sistemi beta yap; normal kullanıcılar Play'den. Beta'yı v86'ya
+eşitle, telefonuma indiririm", ardından izin istekleri ve "bunları v87'de çıkar", ayrıca
+"yeni sürüm bildirimi telefona geliyor, Play'den indirenlere gönderme".
+
+| WP | İş | Durum |
+|---|---|---|
+| WP-844 | GitHub = beta kanalı. `staging.release_enabled=true`; beta derlemesine boş `GOOGLE_WEB_CLIENT_ID` (staging'de Google sağlayıcısı ve `.beta` OAuth istemcisi yok). beta-v8601 = v86 içeriği, run `35340885508` 7/7 | Yayında |
+| WP-845 | Veri dışa aktarma `user_theme_prefs` (0143) okumuyordu; eklendi | Otomatik test geçti |
+| WP-846 | Hakkında ekranında teşhis satırı (sürüm · kanal · sunucu · Google girişi). İlk hâli `SelectableText` idi → ikinci `Scrollable` 12 ayar testini düşürdü; `SelectionArea` + WP-764 2000 dp bütçesi korundu | Otomatik test geçti |
+| WP-847 | `githubStable` kurulumlarına Play'e geçiş diyaloğu + kalıcı satır (imzalar farklı: önce kaldır). Sideload güncelleyici artık stable APK önermiyor; **v87 GitHub'daki son stable APK** — bildirimin onlara ulaşması için | Otomatik test geçti |
+| WP-848 | Bildirim izni ilk ana ekranda bir kez otomatik (Android 13+, redde tekrar yok); ayrı İzinler ekranı; bildirim merkezindeki kart bağlantıya döndü | Otomatik test geçti |
+| WP-849 | Ayarlar tanıtımı `settings.v1` (iki balon; uzunluk kapısı) | Otomatik test geçti |
+| WP-850 | "Yeni sürüm hazır" push'u yalnız beta; stable kolu Play kurulumları dahil herkese gidiyordu | Kodda doğrulandı |
+
+**Açık kalan:** `clock/clock_widgets_screen.dart` (bildirim merkezinin widget sekmesi) hâlâ
+kendi dört izin satırını taşıyor — WP-848 kapsamı dışında kaldı; İzinler ekranına bağlantıya
+çevrilmeli. Sonraki stable'dan itibaren GitHub Release'e stable APK eklenmemeli (v87 son).
+
+**Cihazda doğrulanmalı (v87):** Android 13+ temiz kurulumda izin penceresi bir kez; İzinler
+ekranında sistem sayfasından dönünce durumun "Verildi"ye geçmesi; Ayarlar balonlarının bir kez
+çıkması; GitHub stable kurulumunda geçiş diyaloğu.
+
 
 ### v86 turu — sahip geri bildirimi (2026-09-17/18)
 
