@@ -3,6 +3,21 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.4",
+      "buildNumber": 8704,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8704: WP-857..WP-859",
+      "highlights": [
+        "WP-858: StudyRecords opt-in dense/maxTiles; RecordsCard fits its 32x26 default with 0 in-card scroll on a 328px phone (was 211px). Enlarged text never drops records, it scrolls."
+      ],
+      "fixes": [
+        "WP-857: class_stats_view uses FullLabelOrFallback too.",
+        "WP-859: two timer tests skip in the first 10/20 minutes of the Istanbul day (window too short to measure; red at 00:01, green at 00:13)."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.3",
       "buildNumber": 8703,
       "channel": "beta",

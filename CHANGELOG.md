@@ -4,6 +4,13 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8704 / 1.0.87-beta.4+8704] - 2026-09-19
+
+### Düzeltmeler
+
+- Rekorlar kartı kendi boyunda içeride kaydırma gerektirmiyor: en önemli rekorlar önce, kart büyüyünce hepsi.
+- İstatistik ekranındaki grup listesinde de kendi adın "(sen)" eki yüzünden kesilmiyor.
+
 ## [beta-v8703 / 1.0.87-beta.3+8703] - 2026-09-18
 
 ### Düzeltmeler
