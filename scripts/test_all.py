@@ -306,6 +306,17 @@ def build_gates() -> list[Gate]:
              [py, "scripts/coverage_audit.py"]),
 
         # T3 — yalniz --full. Dakikalar surer.
+        # 🔴 WP-851: RELEASE DEFINE'LARIYLA TAM PAKET. Yerel `test` kapisi
+        # env.json'la (bos Supabase/Google, `local` manifest) kosar; release
+        # koşumu ise gercek manifest + Supabase + GOOGLE_WEB_CLIENT_ID verir.
+        # Define'a bagli dallar YALNIZ orada calisiyordu ve iki yayin ust uste
+        # CI'da kirmiziya dustu: v85 (10 giris testi, Supabase.instance) ve v87
+        # (teshis satiri: manifest testi + Windows form tavani 760.6 > 760).
+        # Bu kapi ayni paketi Android (githubStable) ve Windows kanal
+        # define'lariyla yerelde kosturur.
+        Gate("release-defines", "Flutter paketi release define'lariyla", 3,
+             [py, "scripts/test_all.py", "--internal-release-defines"],
+             precondition=_needs_env_json),
         Gate("golden", "Golden testleri", 3,
              [flutter, "test", "--tags=golden",
               "--dart-define-from-file=env.json", "--concurrency=1"],
@@ -1365,6 +1376,59 @@ def run_gate(gate: Gate) -> Result:
     return Result(gate, status, elapsed, output=output, tail=tail)
 
 
+def internal_release_defines() -> int:
+    """WP-851: flutter test paketini release koşumunun define'lariyla kosturur.
+
+    Degerler SAHTE ama `AppBuildManifest.resolve` sozlesmesini gecer (ref ↔ URL
+    eslesmesi, publishable anahtar bicimi, 40 haneli SHA): ama gercek bir
+    production kimligi TASIMAZ. Iki kanal kosulur, cunku v87'de Windows'a ozgu
+    bir yerlesim hatasi yalniz `windows` kanalinda gorundu.
+    """
+    import json
+    import tempfile
+
+    migrations = sorted((ROOT / "supabase" / "migrations").glob("[0-9][0-9][0-9][0-9]_*.sql"))
+    head = migrations[-1].name[:4] if migrations else None
+    base = json.loads((APP / "env.json").read_text(encoding="utf-8"))
+    prod_ref = "jiphfrpzvkpzubbkhrwb"
+    base.update({
+        "CHANNEL": "stable",
+        "APP_ENVIRONMENT": "production",
+        "ALLOW_IN_MEMORY": "false",
+        "SUPABASE_URL": f"https://{prod_ref}.supabase.co",
+        "SUPABASE_ANON_KEY": "sb_publishable_releasedefinegate000",
+        "SUPABASE_PROJECT_REF": prod_ref,
+        "STAGING_SUPABASE_PROJECT_REF": "rskiuyjabyzelqododpa",
+        "PRODUCTION_SUPABASE_PROJECT_REF": prod_ref,
+        "GIT_COMMIT_SHA": "0" * 40,
+        "MIGRATION_HEAD": head or base.get("MIGRATION_HEAD", "0000"),
+        "APP_VERSION_NAME": "1.0.999",
+        "APP_BUILD_NUMBER": "999",
+        "GOOGLE_WEB_CLIENT_ID": "release-define-gate.apps.googleusercontent.com",
+    })
+    flutter = shutil.which("flutter") or "flutter"
+    worst = 0
+    for channel in ("githubStable", "windows"):
+        env = dict(base, DISTRIBUTION_CHANNEL=channel)
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(env, handle)
+            env_path = handle.name
+        print(f"--- release define'lari: DISTRIBUTION_CHANNEL={channel}")
+        code = subprocess.call(
+            [flutter, "test", "--exclude-tags=golden",
+             f"--dart-define-from-file={env_path}"],
+            cwd=str(APP),
+            shell=(os.name == "nt"),
+        )
+        os.unlink(env_path)
+        if code != 0:
+            print(f"KIRMIZI: {channel} kanal define'lariyla paket dustu")
+            worst = 1
+    return worst
+
+
 def main() -> int:
     # Windows konsolu cp1254; kapi ciktisinda Turkce/ok karakteri gecerse
     # UnicodeEncodeError ile duserdi ve "kapi kirmizi" gibi gorunurdu.
@@ -1387,6 +1451,8 @@ def main() -> int:
     parser.add_argument("--internal-migration-head", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-flutter-pin", action="store_true",
+                        help=argparse.SUPPRESS)
+    parser.add_argument("--internal-release-defines", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--internal-test-env-contract", action="store_true",
                         help=argparse.SUPPRESS)
@@ -1412,6 +1478,8 @@ def main() -> int:
         return internal_flutter_pin()
     if args.internal_test_env_contract:
         return internal_test_env_contract()
+    if args.internal_release_defines:
+        return internal_release_defines()
     if args.internal_test_locale_pin:
         return internal_test_locale_pin()
     if args.internal_play_firebase:
