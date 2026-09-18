@@ -172,7 +172,10 @@ msix_config:
   identity_name: OdakKampi.App
   publisher: CN=OdakKampiTest
   msix_version: 1.0.0.8
-  logo_path: windows/runner/resources/app_icon.ico
+  # WP-833: Store sertifikasyonu 10.1.1.11 "On Device Tiles" ile reddetti
+  # (2026-09-18): 256x256 .ico buyuk kutucuklara 5-10x buyutuluyordu.
+  # Kaynak 3072x3072 cizimden uretilen 2048x2048 seffaf PNG.
+  logo_path: windows/runner/resources/store_logo.png
   capabilities: internetClient
   # 🔴 WP-606: uygulama TR **ve** EN destekliyor (AppLocalizations
   # .supportedLocales) ama paket kendini yalniz Turkce ilan ediyordu.
