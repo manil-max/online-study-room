@@ -53,7 +53,13 @@ Kapı: 22 yeşil + `release-defines` 415s yeşil. **beta-v8703** run `3537731476
 opt-in `dense`/`maxTiles`; öncelik Toplam → Rekor seri → Aktif gün → En verimli gün → En çok ders).
 Büyük yazıda kayıt düşmez, kart kayar. **WP-859:** iki sayaç testi İstanbul gününün ilk 10/20
 dakikasında atlanır (00:01'de kırmızı, 00:13'te yeşil; pencere ölçüme yetmiyor).
-Kapı: 22 yeşil + `release-defines` 463s yeşil. **beta-v8704** run `35397032160`.
+**WP-859 kök neden (sonradan):** beta-v8704'ün ilk koşumu (`35397032160`, İstanbul 00:36,
+UTC koşucu) aynı testte düştü — pencere değil, **saat iki kez okunuyordu**:
+`backWithinIstanbulToday` `now` verilmeden çağrılınca kendi `DateTime.now()`u birkaç ms sonra
+okuyor, kurulan an gece yarısının ms'ler öncesine (düne) düşüyordu. Yardımcı artık saati
+kendisi okurken 2 sn pay bırakıyor (`now` verilince tam kırpma, WP-565 iddiaları aynı).
+Yardımcıyı kullanan 17 dosya / 183 test yeşil. Kapı 22 yeşil + `release-defines` 422s.
+**beta-v8704** yeniden: run `35401310347` 7/7.
 **Bilinen borç (dokunulmadı):** dar hücrede sıralamada
 "Deniz (s…" kısalıyor; rekorlar kartı yoğunluğu (WP-836 envanteri).
 
