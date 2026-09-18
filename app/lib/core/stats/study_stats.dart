@@ -139,6 +139,41 @@ int resolveTodayDisplayTotal({
   return (base > settled ? base : settled) + live;
 }
 
+/// WP-856: canlı "bugün" toplamını gösteren KABA kartların (günlük hedef,
+/// bugünün özeti) bir sonraki yenilemesine kaç saniye var.
+///
+/// Sabit bir periyot (ör. 30 sn) yerine kartların gösterdiği şeyin DEĞİŞECEĞİ
+/// ilk saniye seçilir; böylece kart, saniyelik sayaç kartıyla aynı dakikayı ve
+/// aynı yüzdeyi gösterir ama saniyede bir çizilmez:
+///
+/// - `formatHuman` toplamı: 1 dk altında saniyelik, üstünde dakika sınırı,
+/// - "Hedefe kalan" (`goal - total`) için aynı biçim sınırı,
+/// - `%${(pct * 100).round()}` yüzdesinin bir sonraki tam değeri,
+/// - hedef eşiği (kutlama tam o anda tetiklensin).
+///
+/// Sonuç 1..60 aralığındadır: dakikada en çok birkaç yenileme.
+int secondsUntilTodayDisplayChange({
+  required int totalSeconds,
+  required int goalSeconds,
+}) {
+  final total = totalSeconds < 0 ? 0 : totalSeconds;
+  var next = total < 60 ? 1 : 60 - total % 60;
+  if (goalSeconds > 0 && total < goalSeconds) {
+    final left = goalSeconds - total;
+    final leftStep = left < 60 ? 1 : left % 60 + 1;
+    if (leftStep < next) next = leftStep;
+    // `round()` bir sonraki tam yüzdeye (k + 0.5) eşiğinde geçer.
+    final k = (total * 100 / goalSeconds).round();
+    if (k < 100) {
+      final boundary = ((2 * k + 1) * goalSeconds + 199) ~/ 200;
+      final pctStep = boundary - total;
+      if (pctStep > 0 && pctStep < next) next = pctStep;
+    }
+    if (left < next) next = left;
+  }
+  return next < 1 ? 1 : next;
+}
+
 /// WP-561: Süregelen (henüz kaydedilmemiş) bir koşunun **yalnız bugüne düşen**
 /// saniyesi: `now - max(startedAt, bugünün İstanbul 00:00'ı)`.
 ///

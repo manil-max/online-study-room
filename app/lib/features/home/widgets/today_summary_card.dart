@@ -13,6 +13,19 @@ import '../dashboard_card.dart';
 import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
+/// WP-856: kaydedilmemiş (canlı + yerleşmeyi bekleyen) süreyi sayacın dersine
+/// ekler, sırayı korur.
+List<MapEntry<String?, int>> _withUnrecorded(
+  List<MapEntry<String?, int>> breakdown,
+  TodayLiveTotal? live,
+) {
+  if (live == null || live.unrecordedSeconds <= 0) return breakdown;
+  final totals = <String?, int>{for (final e in breakdown) e.key: e.value};
+  totals[live.subjectId] =
+      (totals[live.subjectId] ?? 0) + live.unrecordedSeconds;
+  return totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+}
+
 /// Bugünün özeti: toplam süre + ders bazında oransal dağılım (§3.9 kart).
 /// Küçük boyutta yalnızca toplamı, orta/büyükte ders dağılımını gösterir.
 class TodaySummaryCard extends ConsumerWidget {
@@ -40,8 +53,15 @@ class TodaySummaryCard extends ConsumerWidget {
     // geri kalanı (`secondsOnDay`, `inRange`, `session_history_screen`) zaten
     // iki tarafı da İstanbul gününe indirgiyordu, bu kart tek istisnaydı.
     final today = sessionsOnDay(sessions, now);
-    final total = totalSeconds(today);
-    final breakdown = subjectBreakdown(today);
+    // 🔴 WP-856: toplam yalnız KAYDEDİLMİŞ oturumlardı; sayaç 47 dk
+    // çalışırken aynı ekranda sayaç kartı "3sa 22dk", bu kart "2sa 35dk"
+    // yazıyordu. Artık sayaç kartıyla aynı kural ([todayDisplayTotalFor]),
+    // süregelen koşu dahil. Kaydedilmemiş kısım sayacın dersine eklenir ki
+    // başlık ile ders satırları birbirini yalanlamasın. Yenileme ritmi
+    // sağlayıcıda: sayaç dururken zamanlayıcı yok.
+    final live = ref.watch(todayLiveTotalProvider);
+    final breakdown = _withUnrecorded(subjectBreakdown(today), live);
+    final total = live?.seconds ?? totalSeconds(today);
 
     Subject? subjectFor(String? id) {
       for (final s in subjects) {

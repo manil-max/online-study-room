@@ -934,6 +934,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     });
     _startGlobalTimerForegroundRefresh();
     _startGlobalTimerHeartbeat();
+    // WP-856: canlı "bugün" sağlayıcısı sayacı kendisi kurmaz, yalnız varsa
+    // izler; sayaç şimdi doğduğu için onu bir kez yeniden hesaplat. Build
+    // sırasında başka sağlayıcıya dokunulmaz → microtask.
+    scheduleMicrotask(() {
+      if (!_disposed) ref.invalidate(todayLiveTotalProvider);
+    });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
     final mode = TimerMode.values.firstWhere(
@@ -3186,3 +3192,106 @@ final studyTimerProvider =
     NotifierProvider<StudyTimerNotifier, StudyTimerState>(
       StudyTimerNotifier.new,
     );
+
+/// WP-856: "bugün toplam, süregelen koşu DAHİL" kuralının TEK yazıldığı yer.
+///
+/// Mağaza karesinde ölçüldü: sayaç kartı "%84 — 3sa 22dk" (kayıt + canlı koşu),
+/// aynı ekrandaki günlük hedef kartı "%65 — 2sa 35dk" (yalnız kayıt) yazıyordu.
+/// Kullanıcı hangisinin doğru olduğunu bilemiyordu. Artık sayaç kartı
+/// (saniyelik) ve [todayLiveTotalProvider] (kaba kartlar) bu fonksiyonu
+/// çağırır; iki ayrı formül yok, sürüklenemezler.
+///
+/// Kural `resolveTodayDisplayTotal`'ın kendisidir: yalnız ÇALIŞMA fazının canlı
+/// süresi eklenir (mola hariç); durdurma başladığı an (`isStopping`) canlı akış
+/// kesilir ve aradaki saniyeler WP-250 settling* alanlarıyla taşınır (ne
+/// zıplama ne düşme); canlı terim gece yarısında bugüne düşen kısma kırpılır
+/// (WP-561).
+int todayDisplayTotalFor({
+  required int recordedToday,
+  required StudyTimerState timer,
+  required DateTime now,
+}) {
+  final elapsed = (timer.isRunning && timer.startedAt != null)
+      ? now.difference(timer.startedAt!).inSeconds
+      : 0;
+  final liveWork =
+      (timer.isRunning && !timer.isStopping && timer.phase == TimerPhase.work)
+      ? elapsed
+      : 0;
+  return resolveTodayDisplayTotal(
+    recordedToday: recordedToday,
+    liveWorkSeconds: liveWork,
+    settlingSeconds: timer.settlingSeconds,
+    settlingBaseline: timer.settlingBaseline,
+    settlingDay: timer.settlingDay,
+    liveStartedAt: timer.startedAt,
+    nowInstant: now,
+    today: dayOf(now),
+  );
+}
+
+/// WP-856: kaba kartların okuduğu canlı "bugün" değeri.
+///
+/// - [seconds]: [todayDisplayTotalFor] sonucu — sayaç kartıyla AYNI sayı.
+/// - [unrecordedSeconds]: bunun henüz oturum listesine yazılmamış kısmı
+///   (canlı koşu + yerleşmeyi bekleyen kayıt). Ders dağılımında sayacın
+///   seçili dersine eklenir; başlık ile satırlar ayrışmasın diye.
+/// - [subjectId]: o kısmın dersi (null = derssiz/Genel).
+typedef TodayLiveTotal = ({
+  int seconds,
+  int unrecordedSeconds,
+  String? subjectId,
+});
+
+/// WP-856: günlük hedef + bugünün özeti kartlarının "bugün" kaynağı.
+///
+/// 🔴 WP-817: oturumlar henüz yüklenmemişse ya da akış hatadaysa `null` döner.
+/// Kayıtlı kısım bilinmiyorken canlı kısmı eklemek, bilinmeyen bir toplamı
+/// sahte bir sayıya çevirirdi ("0 + 47 dk"). Kartların kendi kapısı zaten önce
+/// koşar; bu ikinci bir emniyettir.
+///
+/// Yenileme ritmi (Windows perf kuralı, bkz. `study_timer_card.dart`
+/// `_syncTicker`): sağlayıcı yalnız olaylarda (başlat/durdur/duraklat/faz,
+/// oturum listesi, hedef değişimi) ve sayaç ÇALIŞIRKEN kartların gösterdiği
+/// şeyin değişeceği ilk saniyede ([secondsUntilTodayDisplayChange], ≤ 60 sn)
+/// yeniden hesaplanır. Sayaç durmuşken hiçbir zamanlayıcı kurulmaz.
+final todayLiveTotalProvider = Provider<TodayLiveTotal?>((ref) {
+  if (!ref.watch(userSessionsProvider).hasValue) return null;
+  final recorded = ref.watch(todayRecordedSecondsProvider);
+  // 🔴 Sayaç notifier'ı buradan KURULMAZ, yalnız varsa izlenir. Kurulumu
+  // platform kanalı, yaşam döngüsü dinleyicisi, heartbeat zamanlayıcısı ve grup
+  // akışları demektir; bilgilendirici bir kartın bunları ayağa kaldırması hem
+  // yanlış sahiplik hem de kartı tek başına çizen her yüzeyde (testler dahil)
+  // yan etkidir. Sayaç sonradan kurulursa kendi `build`i bu sağlayıcıyı bir
+  // kez geçersiz kılar (bkz. [StudyTimerNotifier.build]); kurulmamış sayaç
+  // çalışmıyor demektir — o durumda doğru değer zaten kayıtlı toplamdır.
+  if (!ref.exists(studyTimerProvider)) {
+    return (seconds: recorded, unrecordedSeconds: 0, subjectId: null);
+  }
+  final timer = ref.watch(studyTimerProvider);
+  final now = DateTime.now();
+  final total = todayDisplayTotalFor(
+    recordedToday: recorded,
+    timer: timer,
+    now: now,
+  );
+  final liveWorking =
+      timer.isRunning &&
+      !timer.isStopping &&
+      timer.phase == TimerPhase.work &&
+      timer.startedAt != null;
+  if (liveWorking) {
+    final wait = secondsUntilTodayDisplayChange(
+      totalSeconds: total,
+      goalSeconds: ref.watch(dailyGoalMinutesProvider) * 60,
+    );
+    final tick = Timer(Duration(seconds: wait), ref.invalidateSelf);
+    ref.onDispose(tick.cancel);
+  }
+  final pending = total - recorded;
+  return (
+    seconds: total,
+    unrecordedSeconds: pending > 0 ? pending : 0,
+    subjectId: timer.subjectId,
+  );
+});

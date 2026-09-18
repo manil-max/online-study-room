@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/notifications/timer_notification_service.dart';
 import '../../../core/widgets/error_retry_view.dart';
-import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
@@ -189,7 +188,6 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final sessionsAsync = ref.watch(userSessionsProvider);
     final todayKnown = sessionsAsync.hasValue;
     final todayFailed = sessionsAsync.hasError;
-    final todayKey = dayOf(DateTime.now());
 
     // Faz geçişinde ses/titreşim/uyarı (§2H).
     // WP-250: "durdurmada ekranı dondur" bloğu KALDIRILDI. Dondurulan değer
@@ -238,30 +236,21 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         ? now.difference(timer.startedAt!).inSeconds
         : 0;
     final target = timer.phaseTargetSeconds;
-    final inWork = timer.phase == TimerPhase.work;
     // Büyük saat: kronometre yukarı sayar; geri sayım/pomodoro kalanı geri sayar
     // (dururken hedefin tamamını gösterir).
     final displaySeconds = target == null
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
-    // Bugünün toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
-    // WP-250: durdurma başladığı an (isStopping) canlı akış kesilir; aradaki
-    // saniyeler settling* alanlarıyla taşınır → ne zıplama ne düşme.
-    final liveWork = (timer.isRunning && !timer.isStopping && inWork)
-        ? elapsed
-        : 0;
-    final todayTotal = resolveTodayDisplayTotal(
+    // 🔴 WP-856: "bugün" kuralı (yalnız çalışma fazı, WP-250 settling, WP-561
+    // gece yarısı kırpması) artık [todayDisplayTotalFor] içinde TEK yerde.
+    // Günlük hedef ve bugünün özeti kartları aynı fonksiyonu
+    // [todayLiveTotalProvider] üzerinden okur; bu kart kendi saniyelik
+    // ticker'ıyla çağırır. İki formül yok → aynı ekranda %84 / %65 çelişkisi
+    // bir daha çıkamaz.
+    final todayTotal = todayDisplayTotalFor(
       recordedToday: recorded,
-      liveWorkSeconds: liveWork,
-      settlingSeconds: timer.settlingSeconds,
-      settlingBaseline: timer.settlingBaseline,
-      settlingDay: timer.settlingDay,
-      // WP-561: gece yarısını aşan koşuda canlı terim bugüne düşen kısma
-      // kırpılır — yoksa 23:00'da başlayan koşu 01:30'da "Bugün 2 sa 30 dk"
-      // gösterip Durdur'da 0'a düşüyordu.
-      liveStartedAt: timer.startedAt,
-      nowInstant: now,
-      today: todayKey,
+      timer: timer,
+      now: now,
     );
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];

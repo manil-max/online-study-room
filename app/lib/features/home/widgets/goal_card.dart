@@ -128,7 +128,7 @@ class _GoalCardState extends ConsumerState<GoalCard>
     final theme = Theme.of(context);
     // 🔴 WP-817 — KAPI, `ref.listen`DEN **ÖNCE** VE ERKEN DÖNÜŞLE.
     //
-    // Kart bugünkü süreyi `todayRecordedSecondsProvider` üzerinden okur; o
+    // Kart bugünkü süreyi `todayRecordedSecondsProvider` üzerinden okurdu; o
     // sağlayıcı oturumları `.value ?? const []` ile okuduğu için yükleme ve
     // hata karelerinde **0** döner — "henüz bilmiyorum" ile "hiç çalışmamış"
     // aynı sayıya düşer. Bunun iki ayrı sonucu vardı:
@@ -156,7 +156,16 @@ class _GoalCardState extends ConsumerState<GoalCard>
     );
     if (gate != null) return gate;
 
-    final recorded = ref.watch(todayRecordedSecondsProvider);
+    // 🔴 WP-856: kart eskiden yalnız KAYDEDİLMİŞ süreyi okuyordu; sayaç
+    // 47 dk çalışırken aynı ekranda sayaç kartı "%84", bu kart "%65" yazıyordu.
+    // Artık sayaç kartıyla aynı kural ([todayDisplayTotalFor]) üzerinden,
+    // süregelen koşu DAHİL. Sağlayıcı sayaç çalışırken yalnız gösterilen
+    // dakika/yüzde değişeceği saniyede yenilenir, dururken hiç yenilenmez.
+    // `null` yalnız veri bilinmiyorken gelir; yukarıdaki kapı o durumda zaten
+    // erken döndü (WP-817); bu dal yalnız emniyettir, sahte sayı çizilmez.
+    final live = ref.watch(todayLiveTotalProvider);
+    if (live == null) return const SizedBox.shrink();
+    final recorded = live.seconds;
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
     // WP-481: kişisel seri kanonik projeksiyondan okunur.
@@ -173,8 +182,15 @@ class _GoalCardState extends ConsumerState<GoalCard>
     // Yalnız eşiğin ALTINDAN ÜSTÜNE geçişte kutlanır; hedef tutmuşken gelen
     // her yeni kayıt kutlamayı tekrar oynatmaz. Yükleme karesindeki sahte 0'a
     // karşı koruma burada DEĞİL, yukarıdaki kapıdadır (WP-817).
-    ref.listen<int>(todayRecordedSecondsProvider, (previous, next) {
-      if (goalSeconds <= 0 || previous == null) return;
+    // WP-856: eşik canlı koşuyla da geçilebilir. Sağlayıcı yalnız değer
+    // DEĞİŞİNCE bildirir ve tam eşik saniyesinde bir yenileme kurar; geçiş bir
+    // kez olur, hedef üstündeki sonraki her yenileme `previous >= goal` olduğu
+    // için kutlamayı tekrar oynatmaz.
+    ref.listen<int?>(todayLiveTotalProvider.select((t) => t?.seconds), (
+      previous,
+      next,
+    ) {
+      if (goalSeconds <= 0 || previous == null || next == null) return;
       if (previous < goalSeconds && next >= goalSeconds) _celebrate();
     });
     // WP-797: yeşil ton zeminden bağımsız sabitti; açık temalarda (soft_cream,
