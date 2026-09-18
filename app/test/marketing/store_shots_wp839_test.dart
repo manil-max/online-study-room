@@ -12,6 +12,9 @@ library;
 // Kare üstüne Türkçe kısa bir başlık bandı çizilir — mağaza karelerinde
 // alışılmış biçim budur; kullanıcı listede kayarken ne gördüğünü okur.
 //
+// WP-853: kareler boş hesapla değil, `store_seed.dart`taki örnek hesapla
+// (3 haftalık oturum, 4 ders, koşan sayaç, grup, rozetler) çekilir.
+//
 // Normal pakette koşmaz: `golden` etiketli ve ayrıca `STORE_SHOT_DIR` ortam
 // değişkeni verilmedikçe atlanır.
 //
@@ -26,14 +29,18 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/l10n/app_locale.dart';
 import 'package:online_study_room/core/theme/app_theme.dart';
 import 'package:online_study_room/core/theme/theme_settings.dart';
+import 'package:online_study_room/features/classroom/classroom_screen.dart';
 import 'package:online_study_room/features/home/home_screen.dart';
 import 'package:online_study_room/features/profile/appearance_screen.dart';
+import 'package:online_study_room/features/profile/social_profile_screen.dart';
 import 'package:online_study_room/features/stats/stats_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'store_seed.dart';
 
 const _shotKey = ValueKey('store-shot');
 const _homeWidgetChannel = MethodChannel('home_widget');
@@ -58,6 +65,16 @@ Future<void> _loadFonts() async {
     await _loadFont('MaterialIcons', '$root/$dir/materialicons-regular.otf');
   }
   await _loadFont('Inter', 'assets/fonts/Inter-Variable.ttf');
+  // WP-853: kamp ateşi rozetindeki ve kamp hayvanı satırındaki emoji'ler test
+  // fontunda kutu çiziliyordu. Android'in kendi emoji fontu (Noto) Flutter
+  // kaynağında var; yoksa Windows'unki denenir.
+  if (root != null && root.isNotEmpty) {
+    await _loadFont(
+      'EmojiFallback',
+      '$root/engine/src/flutter/txt/third_party/fonts/NotoColorEmoji.ttf',
+    );
+  }
+  await _loadFont('EmojiFallback', r'C:\Windows\Fonts\seguiemj.ttf');
 }
 
 Future<SharedPreferences> _prefs() async {
@@ -71,10 +88,18 @@ Future<SharedPreferences> _prefs() async {
   return SharedPreferences.getInstance();
 }
 
+const _fallback = ['Inter', 'EmojiFallback'];
+
 ThemeData _readable(ThemeData theme) => theme.copyWith(
   textTheme: theme.textTheme.apply(
     fontFamily: 'Roboto',
-    fontFamilyFallback: const ['Inter'],
+    fontFamilyFallback: _fallback,
+  ),
+  // WP-853: uygulama çubuğu başlığı `textTheme`den değil kendi stilinden
+  // okunur; ailesi boş kalınca test fontu (siyah kutular) çiziliyordu.
+  appBarTheme: theme.appBarTheme.copyWith(
+    titleTextStyle: (theme.appBarTheme.titleTextStyle ?? const TextStyle())
+        .copyWith(fontFamily: 'Roboto', fontFamilyFallback: _fallback),
   ),
 );
 
@@ -150,12 +175,13 @@ class _StoreFrame extends ConsumerWidget {
 Future<void> _pump(
   WidgetTester tester,
   SharedPreferences prefs,
+  StoreSeed seed,
   String caption,
   Widget screen,
 ) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: seed.overrides(prefs),
       child: _StoreFrame(caption: caption, screen: screen),
     ),
   );
@@ -208,14 +234,28 @@ void main() {
     Directory(outDir!).createSync(recursive: true);
 
     final prefs = await _prefs();
+    // WP-853: süre biçimleyicisi (`formatHuman`) `BuildContext` değil
+    // uygulamanın etkin dilini okur; ayarlanmazsa Türkçe arayüzde "2h 35m"
+    // gibi İngilizce birimler çiziliyordu.
+    setActiveAppLocale(const Locale('tr'));
+    addTearDown(() => setActiveAppLocale(const Locale('en')));
+    final seed = StoreSeed.build(DateTime.now());
+    seed.markToursSeen(prefs);
 
-    await _pump(tester, prefs, 'Süreni ölç, panonu kendin kur', const HomeScreen());
-    await _shoot(tester, '$outDir/01-ana-ekran.png');
-
-    await _pump(tester, prefs, 'İlerlemeni gör', const StatsScreen());
-    await _shoot(tester, '$outDir/02-istatistik.png');
-
-    await _pump(tester, prefs, 'Kendine göre ayarla', const AppearanceScreen());
-    await _shoot(tester, '$outDir/03-tema.png');
+    final frames = <(String, String, Widget)>[
+      ('01-ana-ekran', 'Süreni ölç, panonu kendin kur', const HomeScreen()),
+      ('02-kamp-atesi', 'Birlikte çalış', const ClassroomScreen()),
+      ('03-istatistik', 'İlerlemeni gör', const StatsScreen()),
+      (
+        '04-rozetler',
+        'Emeğin kayıtlı kalsın',
+        SocialProfileScreen(profile: seed.me),
+      ),
+      ('05-tema', 'Kendine göre ayarla', const AppearanceScreen()),
+    ];
+    for (final (file, caption, screen) in frames) {
+      await _pump(tester, prefs, seed, caption, screen);
+      await _shoot(tester, '$outDir/$file.png');
+    }
   }, skip: skip);
 }

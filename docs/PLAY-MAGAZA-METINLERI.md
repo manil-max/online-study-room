@@ -107,21 +107,17 @@ kendisi tutarlı oluyor. Yeniden üretmek için (app/ içinde):
 STORE_SHOT_DIR=<klasör> flutter test test/marketing/store_shots_wp839_test.dart   --dart-define-from-file=env.json --tags=golden
 ```
 
-Çıkan dosyalar 1080x1920: `01-ana-ekran.png` (Süreni ölç, panonu kendin kur),
-`02-istatistik.png` (İlerlemeni gör), `03-tema.png` (Kendine göre ayarla).
+Çıkan dosyalar 1080x1920 (masaüstünde `focus-camp-magaza-kareleri` klasörü), yükleme sırası:
 
-🔴 Sınır: kareler **boş hesapla** çekiliyor (sayaç 0s, grafikler boş). Gerçek veriyle daha
-çekici olurdu; bunun için harness'a örnek oturum yükleyen bir kurulum gerekir — ayrı WP.
+1. `01-ana-ekran.png` — "Süreni ölç, panonu kendin kur": çalışan sayaç, bugünün toplamı, hedef çubuğu, grup sıralaması.
+2. `02-kamp-atesi.png` — "Birlikte çalış": kamp ateşi sahnesi, çalışan üyeler ve süreleri, grup hedefi.
+3. `03-istatistik.png` — "İlerlemeni gör": haftalık toplamlar, saat dağılımı, ders bazında pasta grafik.
+4. `04-rozetler.png` — "Emeğin kayıtlı kalsın": seri, aktif gün, rekor, taç ve XP ilerlemesi.
+5. `05-tema.png` — "Kendine göre ayarla": hazır temalar, seçili karşılama teması başta.
 
-Önerilen 5 kare (sıra önemlidir, ilk iki kare indirme kararını verir):
-1. Sayaç çalışırken ana ekran.
-2. Kamp ateşi — grupta çalışan üyeler.
-3. İstatistikler — haftalık grafik ve ısı haritası.
-4. Rozetler / seri.
-5. Tema seçimi.
-
-Karelerin üstündeki kısa yazılar Türkçe olmalı: "Süreni ölç", "Birlikte çalış",
-"İlerlemeni gör", "Emeğin kayıtlı kalsın", "Kendine göre ayarla".
+Kareler **örnek hesapla** çekilir (WP-853, `app/test/marketing/store_seed.dart`): yaklaşık 3 haftalık
+oturum, 4 ders (Matematik, Fizik, Türkçe, İngilizce), koşan bir sayaç, bir grup. Gerçek kişisel veri yok;
+örnek veriler çekim anına göre üretilir.
 
 ---
 
@@ -130,6 +126,6 @@ Karelerin üstündeki kısa yazılar Türkçe olmalı: "Süreni ölç", "Birlikt
 1. Play Console → **Mağazada görünme → Mağaza girişi**.
 2. Dil listesinden **Türkçe (tr-TR)** ekle.
 3. Yukarıdaki üç metni yapıştır, kaydet.
-4. Ekran görüntüleri Türkçe üretildiğinde aynı sayfadan yükle.
+4. Aynı sayfada **Telefon ekran görüntüleri** bölümüne yukarıdaki 5 kareyi sırayla yükle.
 5. Değişiklikler **Yayın özeti** sayfasından incelemeye gönderilir; mağaza metni değişikliği
    uygulama sürümünden bağımsızdır, yeni bir sürüm gerektirmez.
