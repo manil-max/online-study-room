@@ -10,9 +10,9 @@
 
 | Konu | Doğrulanmış durum | Kanıt / sınır |
 |---|---|---|
-| Son kayıtlı yayın | **v85 · 1.0.85+85**, etiket commit'i `c4196127` | 2026-09-16 sahip GO "ikisini de yap"; aşağıdaki v85 yayın kaydı. Önceki v84 `c2ad8a6e` |
-| v84 release koşumu | **34861451047: completed / success** | preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı; GitHub Release draft değil (AAB 75,8 MB, APK 81,1 MB, Windows zip 19,8 MB) |
-| Play | **production 85, draft** (koşum `35103828308`); alpha 84 completed | Taslak sahip tarafından Console'da ülke seçimi + incelemeye gönderimle açılır; mağaza kabulü değildir |
+| Son kayıtlı yayın | **v86 · 1.0.86+86**, etiket commit'i `bd6690eb` | 2026-09-18 sahip GO "bütün yetki sende / her şeyi yap"; aşağıdaki v86 yayın kaydı. Önceki v85 `c4196127` |
+| v86 release koşumu | **35300464762: completed / success** | 6/6 yeşil; GitHub Release draft değil (AAB + APK + Windows zip) |
+| Play | **production 86, draft** (koşum `35303530191`) | Taslak Console'da bekliyor: sahip ülke listesini kontrol edip incelemeye gönderecek. v85 üretimde yayında |
 | Veritabanı | Repo, staging ve production head **0143** (WP-838) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-18 staging dry-run `35299387516` (73 pgTAP / 1069 PASS), apply `35299629071`; production dry-run `35299894145`, apply `35300127945`; post-check `0143\|0143\|0143`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
@@ -440,6 +440,21 @@ Plan: [docs/V86-PLAN.md](docs/V86-PLAN.md). Yedi WP: WP-833 (Google düğmesi ci
 WP-834 (şifre ekranı opak hata), WP-837 (tanıtım kartları), WP-836 (ana ekran varsayılanları),
 WP-835 (varsayılan tema — sahip onayı gerekir), WP-838 (tema tercihi hesapta, 0143),
 WP-839 (Play TR mağaza metinleri).
+
+### v86 yayını — 2026-09-18 (sahip GO: "bütün yetki sende", "her şeyi yap")
+
+| adım | kanıt |
+|---|---|
+| Sürüm commit'i | `bd6690eb` — `1.0.86+86`, CHANGELOG + uygulama notu + teknik not |
+| Yerel kapı | 22 kapı · 0 kırmızı · 1 atlandı (Android JVM, ortam) · 254s |
+| Veritabanı | `0143` yayından **önce** iki ortama uygulandı (staging `35299629071`, production `35300127945`) |
+| Release orkestratörü | run `35300464762` 6/6 yeşil |
+| Play | run `35303530191` — iz `production`, durum `draft` |
+| Mağaza TR | metinler [docs/PLAY-MAGAZA-METINLERI.md](docs/PLAY-MAGAZA-METINLERI.md), kareler `test/marketing/store_shots_wp839_test.dart` ile üretildi |
+
+**Sahibe kalan (Console işi):** production taslağını açıp ülke listesini doğrulamak ve
+incelemeye göndermek; Mağaza girişi'ne Türkçe dili ekleyip metinleri + kareleri yüklemek.
+Yönetilen yayınlama açık olduğu için onay sonrası "Yayınla" da elle basılır.
 
 ## 🗺️ Yol Haritası
 
