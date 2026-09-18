@@ -68,6 +68,30 @@ abstract final class AppTours {
     ],
   );
 
+  /// Ayarlar turu — **iki adım**, WP-849 (sahip).
+  ///
+  /// Sahip "tek kart; sığmazsa 2. kart olabilir" dedi. Anlatılacak üç yer var
+  /// (görünüm, izinler, hesap/veri dışa aktarma) ve üçü tek balonun iki satır
+  /// kapısına (`app_tours_test.dart`) sığmadı; bu yüzden iki balon. Çapasız:
+  /// Ayarlar masaüstünde de mobilde de farklı dizilir, işaret edilecek sabit
+  /// bir öğe yok.
+  static TourDefinition settings(AppLocalizations l10n) => TourDefinition(
+    id: 'settings',
+    version: 1,
+    steps: [
+      TourStep(
+        id: 'overview',
+        title: l10n.profileAyarlar,
+        text: l10n.tourSettingsOverview,
+      ),
+      TourStep(
+        id: 'account',
+        title: l10n.settingsSectionAccount,
+        text: l10n.tourSettingsAccount,
+      ),
+    ],
+  );
+
   static TourDefinition groups(
     AppLocalizations l10n, {
     required GlobalKey contentAnchor,

@@ -7495,5 +7495,9 @@
   "permissionsNotNeeded": "Nothing to allow on this device.",
   "@permissionsNotNeeded": {"description": "WP-848: shown on desktop/web where no phone permission exists."},
   "permissionsUnknown": "Couldn't read permission status right now. It's checked again when you come back to the app.",
-  "@permissionsUnknown": {"description": "WP-848: permission status could not be read."}
+  "@permissionsUnknown": {"description": "WP-848: permission status could not be read."},
+  "tourSettingsOverview": "Theme is in Appearance. Permissions keep timers and alarms on time.",
+  "@tourSettingsOverview": {"description": "WP-849: settings tour, where appearance and permissions are."},
+  "tourSettingsAccount": "Manage your account and download your data in the Account section.",
+  "@tourSettingsAccount": {"description": "WP-849: settings tour, where account and data export are."}
 }

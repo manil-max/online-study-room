@@ -28,6 +28,7 @@ void main() {
       ),
       AppTours.campfire(l10n, campfireAnchor: primary, hasGroup: hasContent),
       AppTours.profile(l10n, identityAnchor: primary, actionsAnchor: secondary),
+      AppTours.settings(l10n),
     ];
   }
 
@@ -44,7 +45,11 @@ void main() {
   //
   // 🔴 WP-837 (sahip): dört tur altı oldu — pano düzenleme modu ve istatistik
   // ekranı birer balon kazandı. Her yeni tur **tek adım**; sayı hâlâ sabit.
-  test('six tours have stable versioned ids and short readable steps', () {
+  //
+  // 🔴 WP-849 (sahip): yedinci tur Ayarlar. Sahip "tek kart, sığmazsa 2. kart"
+  // dedi; üç yer (görünüm, izinler, hesap) aşağıdaki iki satır kapısına tek
+  // balonda sığmadı, bu yüzden tam olarak iki adım.
+  test('seven tours have stable versioned ids and short readable steps', () {
     final overflowingSteps = <String>[];
     for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
       for (final hasContent in [true, false]) {
@@ -60,7 +65,9 @@ void main() {
           'groups.v1',
           'campfire.v1',
           'profile.v1',
+          'settings.v1',
         ]);
+        expect(tours.last.steps, hasLength(2));
         // 🔴 WP-837 sahip şartı: üç yüzeyin her birinde **tek** kart.
         for (final single in tours.take(3)) {
           expect(single.steps, hasLength(1), reason: single.storageId);
@@ -128,7 +135,7 @@ void main() {
         .toList();
     expect(
       names,
-      hasLength(6),
+      hasLength(7),
       reason:
           'Tur tanimlari taranamadi ya da sayi degisti; kapi bos olcum '
           'yapmasin diye burasi bilerek sabit.',

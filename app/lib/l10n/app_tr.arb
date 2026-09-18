@@ -2510,5 +2510,7 @@
   "permissionsStatusGranted": "Verildi",
   "permissionsStatusMissing": "Eksik",
   "permissionsNotNeeded": "Bu cihazda ayrıca izin vermen gerekmiyor.",
-  "permissionsUnknown": "İzin durumu şu an okunamadı. Uygulamaya geri dönünce yeniden denenir."
+  "permissionsUnknown": "İzin durumu şu an okunamadı. Uygulamaya geri dönünce yeniden denenir.",
+  "tourSettingsOverview": "Tema Görünüm'de. Sayaç ve alarm zamanında çalışsın diye İzinler'e bak.",
+  "tourSettingsAccount": "Hesabını yönetmek ve verilerini indirmek için Hesap bölümüne gir."
 }

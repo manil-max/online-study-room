@@ -4,6 +4,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/l10n/app_locale.dart';
 import '../../core/tour/tour_controller.dart';
+import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/auth_providers.dart';
@@ -20,6 +21,7 @@ import '../permissions/permissions_screen.dart';
 import '../safety/blocked_users_screen.dart';
 import '../safety/muted_nudges_screen.dart';
 import '../support/faq_screen.dart';
+import '../tours/app_tours.dart';
 import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
@@ -471,10 +473,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           )
         : flow();
 
-    if (widget.embedded) return body;
+    // WP-849 (sahip): Ayarlar ilk açıldığında tek seferlik tanıtım —
+    // görünüm, izinler, hesap/veri dışa aktarma nerede. "Görüldü" anahtarı
+    // kullanıcı başına ve sürümlü (`settings.v1`, `tour_prefs.dart`).
+    final tour = AppTours.settings(l10n);
+    final toured = TourHost(
+      key: ValueKey(tour.storageId),
+      definition: tour,
+      child: body,
+    );
+    if (widget.embedded) return toured;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileAyarlar)),
-      body: body,
+      body: toured,
     );
   }
 }
