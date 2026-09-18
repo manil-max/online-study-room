@@ -2484,5 +2484,18 @@
   "playMigrationOpenPlay": "Google Play'i aç",
   "playMigrationTileTitle": "Google Play'e geç",
   "playMigrationTileSubtitle": "Bu sürüm artık güncellenmiyor. Kaldırıp Google Play'den kur; hesabın ve çalışma verilerin sunucuda, kaybolmaz.",
-  "playMigrationOpenFailed": "Google Play açılamadı. Bağlantı panoya kopyalandı."
+  "playMigrationOpenFailed": "Google Play açılamadı. Bağlantı panoya kopyalandı.",
+  "aboutDiagLine": "Sürüm {version} ({build}) · {channel} · Sunucu: {backend} · Google girişi: {google}",
+  "aboutDiagChannelPlay": "Play",
+  "aboutDiagChannelGithubBeta": "GitHub beta",
+  "aboutDiagChannelGithubLegacy": "GitHub (eski)",
+  "aboutDiagChannelWindows": "Windows",
+  "aboutDiagChannelMicrosoftStore": "Microsoft Store",
+  "aboutDiagChannelDev": "geliştirme",
+  "aboutDiagBackendLive": "canlı",
+  "aboutDiagBackendTest": "test",
+  "aboutDiagBackendLocal": "yerel",
+  "aboutDiagUnknown": "bilinmiyor",
+  "aboutDiagOn": "açık",
+  "aboutDiagOff": "kapalı"
 }

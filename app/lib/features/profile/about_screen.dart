@@ -12,6 +12,7 @@ import '../../core/notifications/timer_promotion_verdict.dart';
 import '../../core/theme/warning_tokens.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
+import '../auth/google_sign_in_availability.dart';
 import '../updater/play_migration.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/release_notes_service.dart';
@@ -262,6 +263,40 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
         (widget.buildManifest ?? AppBuildManifest.currentOrNull)?.channel,
   );
 
+  /// 🔴 WP-846 — tek satır teşhis. Sahip "düğme yok" dediğinde bu satırın
+  /// ekran görüntüsü nedenini söyler: hangi kanal, hangi sunucu, Google
+  /// girişi bu derlemede açık mı. Kopyalanabilir olsun diye `SelectableText`.
+  String _diagnosticLine(AppLocalizations l10n, AppBuildManifest? manifest) {
+    final isDev =
+        manifest == null || manifest.channel == AppReleaseChannel.local;
+    final channel = isDev
+        ? l10n.aboutDiagChannelDev
+        : switch (widget.distributionChannel ?? DistributionConfig.current) {
+            DistributionChannel.play => l10n.aboutDiagChannelPlay,
+            DistributionChannel.githubBeta => l10n.aboutDiagChannelGithubBeta,
+            DistributionChannel.githubStable =>
+              l10n.aboutDiagChannelGithubLegacy,
+            DistributionChannel.windows => l10n.aboutDiagChannelWindows,
+            DistributionChannel.microsoftStore =>
+              l10n.aboutDiagChannelMicrosoftStore,
+          };
+    final backend = switch (manifest?.environment) {
+      AppEnvironment.production => l10n.aboutDiagBackendLive,
+      AppEnvironment.staging => l10n.aboutDiagBackendTest,
+      AppEnvironment.local => l10n.aboutDiagBackendLocal,
+      null => l10n.aboutDiagUnknown,
+    };
+    return l10n.aboutDiagLine(
+      manifest?.versionName ?? l10n.aboutDiagUnknown,
+      manifest?.buildNumber.toString() ?? l10n.aboutDiagUnknown,
+      channel,
+      backend,
+      ref.watch(googleSignInEnabledProvider)
+          ? l10n.aboutDiagOn
+          : l10n.aboutDiagOff,
+    );
+  }
+
   /// WP-847: geçiş gösterilen kurulumda GitHub denetimi de kapalıdır; satır
   /// "mağaza üzerinden yönetilir" der ve dokunulamaz.
   bool get _allowsSideloadUpdates =>
@@ -316,6 +351,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final developerMode = ref.watch(developerModeProvider);
+    final manifest = widget.buildManifest ?? AppBuildManifest.currentOrNull;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileSurumVeGuncellemeler)),
@@ -347,9 +383,18 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                   ),
                 ),
                 BuildIdentityCard(
-                  manifest:
-                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
+                  manifest: manifest,
                   onVersionTap: _onVersionTap,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                  child: SelectableText(
+                    _diagnosticLine(l10n, manifest),
+                    key: const Key('about-diagnostic-line'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 _AboutSection(
