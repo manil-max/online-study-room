@@ -142,7 +142,7 @@ Assert-Equal $contract.staging.migration_head '0143' 'staging hedefi 0143: tema 
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0143 staging apply icin kapi ACIK (sahip emri: her seyi yap); pgTAP 069 ilk kez CI dry-run icinde kosar'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0143 staging apply KOSTU (run 35299629071, post-check 0143|0143|0143) ve kapi yeniden kilitlendi'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release istenmedi'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -215,10 +215,10 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 # staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
-Assert-Equal $contract.production.migration_head '0142' 'production hedefi 0142: Google adi profile + kayit tetikleyicisi cokmez (WP-832)'
+Assert-Equal $contract.production.migration_head '0143' 'production hedefi 0143: tema tercihi hesapta (WP-838)'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0142 production apply KOSTU (run 35091309659, post-check 0142|0142|0142) ve kapi yeniden kilitlendi'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0143 production apply icin kapi ACIK; staging ONCE kanitlandi (run 35299629071)'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a

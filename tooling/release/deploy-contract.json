@@ -3,13 +3,13 @@
   "local_migration_head": "0143",
   "staging": {
     "migration_head": "0143",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "OPEN 2026-09-18 for 0143 (user_theme_prefs, WP-838). Owner order: 'her seyi yap', overnight round. New owner-locked table only; public.profiles is NOT touched and there is no DML. pgTAP 069 was written but NOT run locally (no Docker on this host); first real replay is the CI validate job of the staging dry-run. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-18 after the 0143 staging apply SUCCEEDED: run 35299629071, post-check printed 0143|0143|0143. First dry-run 35299032541 caught pgTAP 069's anon-grant assertion (Supabase default privileges), fixed in 7fdb9d6d; dry-run 35299387516 then replayed 73 files / 1069 assertions green."
   },
   "production": {
-    "migration_head": "0142",
-    "deploy_enabled": false,
+    "migration_head": "0143",
+    "deploy_enabled": true,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RE-LOCKED 2026-09-16 after the 0142 production apply SUCCEEDED: run 35091309659, post-check printed 0142|0142|0142 on jiphfrpzvkpzubbkhrwb. Staging proven first (dry-run 35090284985, apply 35090616502); production dry-run 35090984847 listed only 0142. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. release_enabled stays OPEN; the release GO string is separate and must be typed fresh."
+    "hold_reason": "OPEN 2026-09-18 for 0143 (user_theme_prefs, WP-838). Owner order: 'her seyi yap', overnight round. New owner-locked table only; public.profiles untouched, NO DML. Staging PROVEN first: dry-run 35299387516, apply 35299629071, post-check 0143|0143|0143. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
   }
 }
