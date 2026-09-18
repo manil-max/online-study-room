@@ -90,6 +90,16 @@ class GroupCardShell extends StatelessWidget {
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // 🔴 WP-843: dar hücrede (varsayılan düzenin yarım genişlikli grup
+          // kartı) açıklama cümlesi + iki düğme sığmıyordu. İç kaydırma açılıp
+          // "Grup oluştur" düğmesi **ortadan kesiliyordu** — sahibin ilk açılış
+          // ekran görüntüsünde ölçüldü (WP-835 kareleri, kart 160 px).
+          // Kesik düğme "bozuk" görünür; davetin kendisi cümleden daha
+          // önemlidir, o yüzden dar olan cümleyi düşürür.
+          final tight =
+              constraints.maxHeight.isFinite && constraints.maxHeight < 220;
+          final showBlurb =
+              !(tight && (onCreateGroup != null || onJoinGroup != null));
           final column = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -98,26 +108,29 @@ class GroupCardShell extends StatelessWidget {
               // ellipsis) atliyordu; uzun grup adi + buyuk yazi olcusu tasiyordu.
               cardTitle(context, title),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.group_add_outlined,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      AppLocalizations.of(context).homeBirGrubaKatilincaBurada,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+              if (showBlurb)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.group_add_outlined,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).homeBirGrubaKatilincaBurada,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               if (onCreateGroup != null || onJoinGroup != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: showBlurb ? 16 : 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,

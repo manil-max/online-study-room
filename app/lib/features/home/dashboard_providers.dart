@@ -34,32 +34,89 @@ List<DashboardCardConfig> defaultDashboardLayout(int columns) {
   // açılışta yalnız çekirdek düzeniyle ("Bugün" toplamı ve faz satırı
   // olmadan) geliyordu. Sahibin "ilk hali az" dediği şey budur.
   final timer = DashboardCardType.timer.defaultCells(columns);
-  // Yan yana duran "Bugün özeti" + "Grup sıralaması" çifti bu WP'de KASTEN
-  // değişmiyor: şikâyet ilk düzenin bu iki kartı değil, sayacın boyuydu.
+  // Yan yana duran "Bugün özeti" + "Grup sıralaması" çifti: dar hücrede grup
+  // kartının daveti WP-843'te kısaldığı için bu boy artık kesmiyor.
   final pairRows = (3 * columns / kDefaultGridColumns).round();
-  return [
+
+  // 🔴 WP-842 — varsayılan pano artık ÜÇ kart değil ALTI kart.
+  //
+  // Sahip (gerçek cihaz, v86 hazırlığı): *"default'ta başka ek widget'lar da
+  // olsun"*. Önceki düzen sayaç + Bugün + Grup sıralamasıydı; WP-835 ekran
+  // görüntüsünde panonun alt yarısı **boştu** ve yeni kullanıcı uygulamanın ne
+  // sunduğunu görmüyordu — kart eklemeyi bilmesi gerekiyordu.
+  //
+  // Seçim gerekçesi (hepsi hesap açar açmaz anlamlı, grup ŞARTI yok):
+  //   - `goal`   — günlük hedef, sayacın hemen altında en doğal ikinci adım.
+  //   - `weekly` — haftalık grafik; ilk haftada bile dolmaya başlar.
+  //   - `tasks`  — görev listesi, cihaz içi; boşken bile çalışır (WP-188).
+  // Grup gerektiren kartlar (`groupGoal`, `groupTrend`, `activeMembers`)
+  // BİLEREK yok: grubu olmayanda üçü de davet yer tutucusu çizer, yani pano
+  // aynı cümleyi üç kez tekrar ederdi. `leaderboard` zaten o daveti taşıyor.
+  //
+  // Boylar `DashboardCardDefaultCells`ten gelir (WP-836): elle yazılmış boy
+  // ikinci bir doğruluk kaynağı olurdu ve kart yoğunluğu değişince kaçardı.
+  final goal = DashboardCardType.goal.defaultCells(columns);
+  final weekly = DashboardCardType.weekly.defaultCells(columns);
+  final tasks = DashboardCardType.tasks.defaultCells(columns);
+
+  var y = 0;
+  final layout = <DashboardCardConfig>[
     DashboardCardConfig(
       DashboardCardType.timer,
       x: 0,
-      y: 0,
+      y: y,
       w: columns,
       h: timer.h,
     ),
+  ];
+  y += timer.h;
+  layout.addAll([
     DashboardCardConfig(
       DashboardCardType.today,
       x: 0,
-      y: timer.h,
+      y: y,
       w: left,
       h: pairRows,
     ),
     DashboardCardConfig(
       DashboardCardType.leaderboard,
       x: left,
-      y: timer.h,
+      y: y,
       w: columns - left,
       h: pairRows,
     ),
-  ];
+  ]);
+  y += pairRows;
+  layout.add(
+    DashboardCardConfig(
+      DashboardCardType.goal,
+      x: 0,
+      y: y,
+      w: columns,
+      h: goal.h,
+    ),
+  );
+  y += goal.h;
+  layout.add(
+    DashboardCardConfig(
+      DashboardCardType.weekly,
+      x: 0,
+      y: y,
+      w: columns,
+      h: weekly.h,
+    ),
+  );
+  y += weekly.h;
+  layout.add(
+    DashboardCardConfig(
+      DashboardCardType.tasks,
+      x: 0,
+      y: y,
+      w: columns,
+      h: tasks.h,
+    ),
+  );
+  return layout;
 }
 
 /// 🔴 WP-722 — kompakt saat görünümünde sayaç kartının ızgarada kapladığı
