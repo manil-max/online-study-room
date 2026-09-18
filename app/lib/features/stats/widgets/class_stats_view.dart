@@ -27,6 +27,7 @@ import 'member_chart_colors.dart';
 import 'stats_desktop_layout.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
+import '../../home/widgets/leaderboard_card.dart' show FullLabelOrFallback;
 
 /// WP-746: bir dönemin çizeceği kart kümesi.
 ///
@@ -102,9 +103,11 @@ int _customSpanDays(StatsPeriodSelection sel, {DateTime? now}) {
   final (from, to) = sel.range(now: now);
   final a = dayOf(from);
   final b = dayOf(to);
-  return DateTime.utc(b.year, b.month, b.day)
-          .difference(DateTime.utc(a.year, a.month, a.day))
-          .inDays +
+  return DateTime.utc(
+        b.year,
+        b.month,
+        b.day,
+      ).difference(DateTime.utc(a.year, a.month, a.day)).inDays +
       1;
 }
 
@@ -293,8 +296,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     // Aynı grup değiştirici WP-743'te sekme başlığına taşınmıştı; ekranda iki
     // çağrı yeri kalmıştı ve alttaki, tarih aralığı seçicisinin hemen altında
     // duruyordu. Sahip kararı: alttaki kalkar.
-    final periodHeading =
-    Text(
+    final periodHeading = Text(
       statsPeriodLabel(AppLocalizations.of(context), period),
       style: theme.textTheme.labelMedium?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
@@ -302,70 +304,72 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     );
 
     final leaderboard = <Widget>[
-    if (rows.isEmpty)
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: Text(
-            AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      if (rows.isEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: Text(
+              AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-        ),
-      )
-    else
-      for (var i = 0; i < rows.length; i++)
-        _LeaderboardRow(
-          rank: i + 1,
-          name: blocked.contains(rows[i].member.id)
-              ? AppLocalizations.of(context).safetyBlockedUserFallbackName
-              : rows[i].member.displayName,
-          avatarUrl: blocked.contains(rows[i].member.id)
-              ? null
-              : rows[i].member.avatarUrl,
-          seconds: rows[i].seconds,
-          maxSeconds: maxSeconds,
-          alphaWins: alphaWins[rows[i].member.id] ?? 0,
-          isMe: rows[i].member.id == currentUserId,
-          profile:
-              rows[i].member.isActive &&
-                  !blocked.contains(rows[i].member.id)
-              ? rows[i].member
-              : null,
-        ),
+        )
+      else
+        for (var i = 0; i < rows.length; i++)
+          _LeaderboardRow(
+            rank: i + 1,
+            name: blocked.contains(rows[i].member.id)
+                ? AppLocalizations.of(context).safetyBlockedUserFallbackName
+                : rows[i].member.displayName,
+            avatarUrl: blocked.contains(rows[i].member.id)
+                ? null
+                : rows[i].member.avatarUrl,
+            seconds: rows[i].seconds,
+            maxSeconds: maxSeconds,
+            alphaWins: alphaWins[rows[i].member.id] ?? 0,
+            isMe: rows[i].member.id == currentUserId,
+            profile:
+                rows[i].member.isActive && !blocked.contains(rows[i].member.id)
+                ? rows[i].member
+                : null,
+          ),
     ];
 
     final gaugeRow =
-    // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur
-    // (katılım / hedefe kalan / bugünün lideri). Önceden ortalanmış tek kart
-    // iki yanda boş alan bırakıyordu.
-    IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 150,
-            child: _GroupGaugeCard(
-              progress: goalSeconds <= 0 ? 0 : dayGroupTotal / goalSeconds,
-              daySeconds: dayGroupTotal,
-              goalSeconds: goalSeconds,
-            ),
+        // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur
+        // (katılım / hedefe kalan / bugünün lideri). Önceden ortalanmış tek kart
+        // iki yanda boş alan bırakıyordu.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: 150,
+                child: _GroupGaugeCard(
+                  progress: goalSeconds <= 0 ? 0 : dayGroupTotal / goalSeconds,
+                  daySeconds: dayGroupTotal,
+                  goalSeconds: goalSeconds,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _GroupTodaySummaryCard(
+                  participants: totals.values.where((v) => v > 0).length,
+                  totalMembers: members.length,
+                  remainingSeconds: (goalSeconds - dayGroupTotal).clamp(
+                    0,
+                    1 << 30,
+                  ),
+                  goalReached: goalSeconds > 0 && dayGroupTotal >= goalSeconds,
+                  topName: topDayName,
+                  topSeconds: topDaySeconds,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _GroupTodaySummaryCard(
-              participants: totals.values.where((v) => v > 0).length,
-              totalMembers: members.length,
-              remainingSeconds: (goalSeconds - dayGroupTotal).clamp(0, 1 << 30),
-              goalReached: goalSeconds > 0 && dayGroupTotal >= goalSeconds,
-              topName: topDayName,
-              topSeconds: topDaySeconds,
-            ),
-          ),
-        ],
-      ),
-    );
+        );
 
     // SPEC §2.3 "Tek sayilik istatistik dosemesi": tavan 320 px. Mobilde
     // asagida yine `Row(Expanded, Expanded)` ile ikiye bolunur.
@@ -380,8 +384,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       ),
     ];
 
-    final donutCard =
-    contribAsync.when(
+    final donutCard = contribAsync.when(
       loading: () => const Card(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -396,9 +399,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       // bağlanan düğme ölü olurdu.
       error: (_, _) => Card(
         child: ErrorRetryView(
-          message: AppLocalizations.of(
-            context,
-          ).statsUyeKatkisiYuklenemedi,
+          message: AppLocalizations.of(context).statsUyeKatkisiYuklenemedi,
           onRetry: () => ref.invalidate(
             analyticsGroupContributionProvider(analyticsPeriod),
           ),
@@ -446,10 +447,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 5,
-                                backgroundColor: s.color,
-                              ),
+                              CircleAvatar(radius: 5, backgroundColor: s.color),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -479,8 +477,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       },
     );
 
-    final historyCard =
-    Card(
+    final historyCard = Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: LeaderboardRankChart(
@@ -502,55 +499,52 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           // kuyruk donemin ilk aylarini yok sayiyordu.
           startDay: from,
           currentUserId: currentUserId,
-          emptyLabel: AppLocalizations.of(
-            context,
-          ).statsBuDonemdeHenuzCalisma,
+          emptyLabel: AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
           namelessLabel: AppLocalizations.of(context).statsIsimsiz,
         ),
       ),
     );
 
     final trendCard =
-    // Grup eğilimi — master dönemle hizalı çizgi penceresi.
-    Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              // 🔴 WP-746: başlık üç şeyi aynı anda iddia ediyordu — "son 30
-              // gün", "7 gün" ve dönem adı. Pencerenin uzunluğu TEK sayıdır;
-              // hangi dönemde olunduğunu üstteki gezinme çubuğu yazar.
-              child: Text(
-                '${AppLocalizations.of(context).homeGrupGunlukTrendi} · '
-                '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())}',
-                style: theme.textTheme.titleSmall,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 160,
-              // 🔴 WP-746: pencerenin SONU dönemin sonuna bağlandı. `lastNDays`
-              // varsayılanı `DateTime.now()`tur: "Geçen ay"da başlık geçen ayı
-              // yazarken grafik bu ayı çiziyordu.
-              child: DailyLineChart(
-                days: lastNDays(
-                  const [],
-                  trendDays,
-                  today: to,
-                  totals: groupDay,
+        // Grup eğilimi — master dönemle hizalı çizgi penceresi.
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  // 🔴 WP-746: başlık üç şeyi aynı anda iddia ediyordu — "son 30
+                  // gün", "7 gün" ve dönem adı. Pencerenin uzunluğu TEK sayıdır;
+                  // hangi dönemde olunduğunu üstteki gezinme çubuğu yazar.
+                  child: Text(
+                    '${AppLocalizations.of(context).homeGrupGunlukTrendi} · '
+                    '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())}',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 160,
+                  // 🔴 WP-746: pencerenin SONU dönemin sonuna bağlandı. `lastNDays`
+                  // varsayılanı `DateTime.now()`tur: "Geçen ay"da başlık geçen ayı
+                  // yazarken grafik bu ayı çiziyordu.
+                  child: DailyLineChart(
+                    days: lastNDays(
+                      const [],
+                      trendDays,
+                      today: to,
+                      totals: groupDay,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
 
-    final allTimeCard =
-    _AllTimeCard(
+    final allTimeCard = _AllTimeCard(
       total: allTimeTotal,
       activeDays: activeDays,
       peak: peak,
@@ -1130,14 +1124,31 @@ class _LeaderboardRow extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text(
-                        isMe
-                            ? AppLocalizations.of(context).commonSenEtiketi(name)
-                            : name,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: isMe ? FontWeight.w700 : FontWeight.w500,
-                        ),
+                      // WP-857: "(sen)" eki sığmıyorsa düşer; kesik ek kendi
+                      // adını da kısaltıyordu. Satır kalın yazıyla zaten
+                      // "bu sensin" diyor. Ana sayfa sıralamasıyla aynı nesne.
+                      child: Builder(
+                        builder: (context) {
+                          Text line(String text) => Text(
+                            text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: isMe
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          );
+                          if (!isMe) return line(name);
+                          return FullLabelOrFallback(
+                            full: line(
+                              AppLocalizations.of(
+                                context,
+                              ).commonSenEtiketi(name),
+                            ),
+                            fallback: line(name),
+                          );
+                        },
                       ),
                     ),
                     Row(
