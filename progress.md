@@ -10,9 +10,9 @@
 
 | Konu | Doğrulanmış durum | Kanıt / sınır |
 |---|---|---|
-| Son kayıtlı yayın | **v86 · 1.0.86+86**, etiket commit'i `bd6690eb` | 2026-09-18 sahip GO "bütün yetki sende / her şeyi yap"; aşağıdaki v86 yayın kaydı. Önceki v85 `c4196127` |
-| v86 release koşumu | **35300464762: completed / success** | 6/6 yeşil; GitHub Release draft değil (AAB + APK + Windows zip) |
-| Play | **production 86, draft** (koşum `35303530191`) | Taslak Console'da bekliyor: sahip ülke listesini kontrol edip incelemeye gönderecek. v85 üretimde yayında |
+| Son kayıtlı yayın | **v87 · 1.0.87+87** + **beta-v8701**, etiket commit'i `3ab99b46` | 2026-09-18 sahip GO "bunları v87'de çıkar"; aşağıdaki v87 yayın kaydı. Önceki v86 `bd6690eb` |
+| v87 release koşumu | **35351214943** (stable) + **35351213314** (beta): ikisi de 6/6 | İlk deneme 35346868347 KIRMIZI (WP-846 satırı CI manifestinde); düzeltme `3ab99b46` |
+| Play | **production 87, draft** (koşum `35357009125`) | Sahip Console'da incelemeye gönderecek. v86 taslağı/incelemesi v87 ile değişir |
 | Veritabanı | Repo, staging ve production head **0143** (WP-838) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-18 staging dry-run `35299387516` (73 pgTAP / 1069 PASS), apply `35299629071`; production dry-run `35299894145`, apply `35300127945`; post-check `0143\|0143\|0143`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
@@ -480,6 +480,21 @@ WP-839 (Play TR mağaza metinleri).
 **Sahibe kalan (Console işi):** production taslağını açıp ülke listesini doğrulamak ve
 incelemeye göndermek; Mağaza girişi'ne Türkçe dili ekleyip metinleri + kareleri yüklemek.
 Yönetilen yayınlama açık olduğu için onay sonrası "Yayınla" da elle basılır.
+
+### v87 yayını — 2026-09-18
+
+| adım | kanıt |
+|---|---|
+| Deneme 1 | `35346868347` KIRMIZI: WP-846 teşhis satırı gerçek manifestle uzadı (WP-679 form tavanı 760.6 > 760) + "manifest çözülemezse" testi define'lı koşumda kurulamaz |
+| Düzeltme | `3ab99b46` — satır iç boşluğu 16, test define'lı koşumda atlanır |
+| 🔴 Yeni ölçüm | Tam paket **CI benzeri define'larla** yerelde: Android kanal 4191 geçti, Windows kanal 4191 geçti. Yerel kapı define'sız koştuğu için bu sınıf hata (v85'te 10 test, v87'de 3 test) yalnız release'te görünüyordu |
+| Stable | `35351214943` 6/6 — **GitHub'daki son stable Android APK** (WP-847 bildirimi eski kurulumlara bununla gider) |
+| Beta | `35351213314` 6/6 — beta-v8701 |
+| Play | `35357009125` — `production` / `draft` |
+| Şifre politikası (production) | auth-config dry-run `35347282824`: `password_min_length=6`, `required_characters=null`, `hibp=false` → WP-834 kural metni doğru; sahibin "bir harf değişince geçti"si `same_password` |
+
+**Sonraki iş (önerilen kapı):** `scripts/test_all.py`'ye release define'larıyla koşan bir
+Flutter paketi turu (en azından `--full` modunda). İki yayında üst üste aynı sınıf kırmızı çıktı.
 
 ## 🗺️ Yol Haritası
 
