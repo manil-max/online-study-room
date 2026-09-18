@@ -24,8 +24,8 @@ void main() {
   });
 
   group('resolveWarningColors', () {
-    test('15 hazır temanın hepsinde zemine karşı AA sınırını tutturur', () {
-      expect(kThemePresets.length, 15, reason: 'preset sayısı değiştiyse bu testi gözden geçir');
+    test('16 hazır temanın hepsinde zemine karşı AA sınırını tutturur', () {
+      expect(kThemePresets.length, 16, reason: 'preset sayısı değiştiyse bu testi gözden geçir');
 
       final failures = <String>[];
       for (final preset in kThemePresets) {

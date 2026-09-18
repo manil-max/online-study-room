@@ -4,7 +4,7 @@ library;
 // WP-835 — SAHİP SEÇSİN DİYE ÜRETİLEN ADAY TEMA KARELERİ.
 //
 // Bu bir golden karşılaştırması DEĞİLDİR: hiçbir şeyi sabitlemez, hiçbir
-// fixture üretmez. Üç aday karşılama temasını aynı iki ekranda (ana ekran +
+// fixture üretmez. Karşılama tema adaylarını aynı iki ekranda (ana ekran +
 // giriş ekranı) gerçek PNG olarak yazar; sahip bakıp karar verir.
 //
 // Normal test paketinde koşmaz: dosya `golden` etiketli (paket
@@ -31,8 +31,13 @@ import 'package:online_study_room/features/home/home_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Sahibe sunulan üç sıcak aday (`theme_presets.dart`).
-const _candidates = <String>['campfire_night', 'coffee_library', 'soft_cream'];
+/// Kare üretilecek aile(ler) (`theme_presets.dart`).
+///
+/// WP-835'te üç sıcak aday vardı (`campfire_night`, `coffee_library`,
+/// `soft_cream`); sahip üçünü de beğenmedi ve **açık** bir karşılama istedi:
+/// "3. seçenekteki gibi ama logodaki turuncu renkte olsun." WP-841 bunun
+/// karşılığı olan `campfire_day`'i üretti; karesi de artık onun.
+const _candidates = <String>['campfire_day'];
 
 const _shotKey = ValueKey('wp835-shot');
 

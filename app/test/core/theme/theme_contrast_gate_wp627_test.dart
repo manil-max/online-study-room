@@ -501,6 +501,45 @@ void main() {
       );
     });
 
+    test('Kamp Ateşi Gündüz: açık krem zemin + logonun turuncusu (WP-841)', () {
+      // Sahip kararı ölçülebilir hâliyle: zemin krem ve AÇIK, ana renk gece
+      // temasıyla aynı turuncu, hiçbir rolde soğuk ton yok.
+      final day = AppTheme.fromPreset(themePresetById('campfire_day'));
+      final s = day.colorScheme;
+
+      expect(s.brightness, Brightness.light);
+      expect(s.primary, const Color(0xFFF97316));
+      expect(
+        s.primary,
+        themePresetById('campfire_night').colors.primary,
+        reason: 'gündüz/gece aynı marka turuncusunu taşımalı',
+      );
+      expect(s.surfaceContainerLowest.computeLuminance(), greaterThan(0.85));
+      expect(s.surface.computeLuminance(), greaterThan(0.85));
+
+      // 🔴 Bu temanın kolay hatası: turuncunun üstüne beyaz yazmak (2.80).
+      // Etiket koyu kor mürekkebi olmalı ve AA metin eşiğini geçmeli.
+      expect(s.onPrimary.computeLuminance(), lessThan(0.1));
+      expect(
+        contrastRatio(s.onPrimary, s.primary),
+        greaterThanOrEqualTo(kMinTextContrast),
+      );
+
+      // Sıcaklık: ana/ikincil/üçüncül tonların hepsi ateş kuşağında (0–70°).
+      for (final entry in <String, Color>{
+        'primary': s.primary,
+        'secondary': s.secondary,
+        'tertiary': s.tertiary,
+      }.entries) {
+        final hue = HSLColor.fromColor(entry.value).hue;
+        expect(
+          hue,
+          lessThan(70),
+          reason: '${entry.key} soğumuş: ${hue.toStringAsFixed(0)}°',
+        );
+      }
+    });
+
     test('container zemini ana renk kadar doygun DEĞİL', () {
       // Bulgunun tanımı buydu: container == primary. Bir daha olmasın.
       for (final preset in kThemePresets) {

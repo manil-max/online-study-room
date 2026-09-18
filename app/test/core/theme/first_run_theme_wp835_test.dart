@@ -8,8 +8,13 @@
 // #64FFDA turkuaz) veriyordu. Yani ilk kullanıcı tasarlanmış bir karşılama
 // değil, bir göç eşlemesinin yan ürününü görüyordu.
 //
+// WP-841 (sahip kararı, aday karelerine bakarak): karşılama **açık** olsun —
+// "3. seçenekteki (`soft_cream`) gibi ama logodaki turuncu renkte". Karşılama
+// ailesi bu yüzden koyu `campfire_night` değil açık `campfire_day`; mod da
+// ailenin parlaklığını izlediği için artık `light` başlar.
+//
 // Bu dosyanın ölçtüğü iki şey:
-//   1. Temiz kurulum sıcak `campfire_night` ailesiyle, aile renk kaynağıyla
+//   1. Temiz kurulum sıcak `campfire_day` ailesiyle, aile renk kaynağıyla
 //      açılır ve bu seçim diske yazılır (ikinci açılışta geri dönmez).
 //   2. 🔴 Tema tarafına tek bir kayıt bile yazmış kurulumda HİÇBİR ŞEY
 //      değişmez: yalnız palet, aile+palet, aktif özel tema ve "yalnız göç
@@ -64,16 +69,28 @@ void main() {
       final settings = install.container.read(themeSettingsProvider);
 
       expect(settings.familyId, kFirstRunFamilyId);
-      expect(settings.familyId, 'campfire_night');
+      expect(settings.familyId, 'campfire_day');
       expect(settings.colorSource, ThemeColorSource.family);
       // Eski hata tam buradaydı: aile yerine palet renkleri uygulanıyordu.
       expect(settings.usePaletteColors, isFalse);
-      // Karşılama gerçekten ateş rengi: kamp ateşi turuncusu + kehribar vurgu.
+      // Karşılama gerçekten ateş rengi: logodaki turuncu + kor vurgu.
       expect(settings.family.colors.primary, const Color(0xFFF97316));
-      expect(settings.family.colors.accent, const Color(0xFFE69825));
-      expect(settings.family.colors.scaffold, const Color(0xFF07090E));
+      expect(settings.family.colors.accent, const Color(0xFFC2410C));
+      // ...ve WP-841'den beri AÇIK: krem kağıt zemin, koyu değil.
+      expect(settings.family.brightness, Brightness.light);
+      expect(settings.family.colors.scaffold, const Color(0xFFFDF8F1));
+      expect(
+        settings.family.colors.scaffold.computeLuminance(),
+        greaterThan(0.8),
+      );
       // Soğuk eski varsayılan geri gelmesin.
       expect(settings.familyId, isNot('ocean_glass'));
+      // Sahibin beğenmediği koyu aday da geri gelmesin.
+      expect(settings.familyId, isNot('campfire_night'));
+      // `soft_cream` ezilmedi: sahip onun iskeletini istedi, rengini değil.
+      final softCream = themePresetById('soft_cream');
+      expect(softCream.colors.primary, const Color(0xFFC4A484));
+      expect(softCream.colors.accent, const Color(0xFFB8A9C9));
     });
 
     test('mod ailenin parlaklığını izler', () async {
@@ -87,6 +104,10 @@ void main() {
         settings.mode,
         brightness == Brightness.light ? ThemeMode.light : ThemeMode.dark,
       );
+      // WP-841: karşılama ailesi açık, dolayısıyla kural gerçekten açık modu
+      // üretiyor. (Yukarıdaki koşullu ifade aile koyuyken de yeşil kalırdı.)
+      expect(brightness, Brightness.light);
+      expect(settings.mode, ThemeMode.light);
     });
 
     test('seçim diske yazılır; ikinci açılışta aynı tema gelir', () async {
@@ -101,7 +122,8 @@ void main() {
 
       expect(install.prefs.getString('theme_family'), kFirstRunFamilyId);
       expect(install.prefs.getString('theme_color_source'), 'family');
-      expect(install.prefs.getString('theme_mode'), ThemeMode.dark.name);
+      // Mod ailenin parlaklığı: açık aile koyu modda açılmaz (WP-841).
+      expect(install.prefs.getString('theme_mode'), ThemeMode.light.name);
 
       // İkinci açılış: aynı prefs, yeni container. Kayıt yazılmasaydı burada
       // `migratePaletteIdToPreset('navy')` yine ocean_glass döndürürdü.

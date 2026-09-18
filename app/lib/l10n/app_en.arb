@@ -2289,6 +2289,10 @@
   "@coreGunBatimi": {
     "description": "Core user-facing text. Source: Gün Batımı"
   },
+  "coreGunduzKampAtesi": "Daylight Campfire",
+  "@coreGunduzKampAtesi": {
+    "description": "Core user-facing text. Source: Gündüz Kamp Ateşi"
+  },
   "coreHaftaSonuSavascisi": "Weekend Warrior",
   "@coreHaftaSonuSavascisi": {
     "description": "Core user-facing text. Source: Hafta Sonu Savaşçısı"

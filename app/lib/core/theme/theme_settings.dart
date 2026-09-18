@@ -15,15 +15,20 @@ enum ThemeColorSource { family, palette }
 
 enum ThemeSaveResult { saved, failed, rejected }
 
-/// WP-835: hiç tema kaydı olmayan ilk kurulumun karşılama ailesi.
+/// WP-835/WP-841: hiç tema kaydı olmayan ilk kurulumun karşılama ailesi.
 ///
 /// Uygulamanın kendi kimliği ateş: launcher ikonu kamp ateşi, Android widget
 /// paleti `widget_ember_flame` (#FF8A3D) / `widget_ember_glow` (#FFC46B).
-/// `campfire_night` bu kimliğin tema karşılığıdır (#F97316 turuncu, 0.45 glow).
 /// Eski davranış tasarlanmış bir karşılama değildi: tema kaydı yokken palet
 /// `navy`'ye düşüyor, `migratePaletteIdToPreset` onu soğuk `ocean_glass`'e
 /// çeviriyordu — sahibin "varsayılan tema kötü" geri bildirimi buradan geldi.
-const String kFirstRunFamilyId = 'campfire_night';
+///
+/// WP-835 karşılamayı koyu `campfire_night`e aldı; sahip üç adayın karesine
+/// bakıp **açık** tema istedi ("3. seçenekteki gibi ama logodaki turuncu
+/// renkte"). Karşılama artık `campfire_day`: krem kağıt zemin + aynı #F97316
+/// turuncusu. Aile açık olduğu için mod da açık başlar (aşağıdaki `build`
+/// kuralı `setFamily` ile birebir aynı: mod ailenin parlaklığıdır).
+const String kFirstRunFamilyId = 'campfire_day';
 
 /// Tema tercihleri: sanat ailesi (preset) + eski palet + açık/koyu/sistem.
 class ThemeSettings {

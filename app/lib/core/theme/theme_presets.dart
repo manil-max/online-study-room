@@ -32,6 +32,7 @@ class ThemePreset {
 
   String localizedName(AppLocalizations l10n) => switch (id) {
     'campfire_night' => l10n.coreKampAtesi,
+    'campfire_day' => l10n.coreGunduzKampAtesi,
     'deep_amoled' => l10n.coreKeskinModern,
     'nordic_snow' => l10n.coreNordikKar,
     'ocean_glass' => l10n.coreOkyanusCam,
@@ -505,6 +506,49 @@ final List<ThemePreset> kThemePresets = [
       blurSigma: 4,
     ),
     motion: AppMotion.snappy,
+  ),
+  // 16. Ateş — Kamp Ateşi Gündüz (WP-841, ilk açılışın karşılama teması)
+  //
+  // Sahip kararı: "açık tema gelsin, 3. seçenekteki (`soft_cream`) gibi ama
+  // logodaki turuncu renkte olsun." Bu yüzden `soft_cream`'in yumuşak krem
+  // iskeleti (bubble şekiller, kağıt yüzeyler) korunur; ten/lavanta ikilisi
+  // launcher ikonunun kendi ateş renkleriyle değişir. `soft_cream`'e
+  // DOKUNULMAZ — onu seçmiş kurulumlar var.
+  //
+  // Renkler ikondan ölçüldü (`references/app icon/…campfire drawing…png`,
+  // baskın iki ton: alev çekirdeği #F74A2F ≈ 8°, sıcak parıltı #FBC278 ≈ 34°):
+  //   - primary #F97316 — ikisinin arasındaki kanonik uygulama turuncusu;
+  //     `campfire_night` primary'si ve widget `widget_ember_flame` ailesiyle
+  //     aynı kimlik.
+  //   - accent #C2410C — alev çekirdeğinin kor hâli; ham #F74A2F krem üstünde
+  //     3.63 ile AA'yı tutturamıyordu, ton korunup koyulaştırıldı.
+  // 🔴 Turuncu ÜSTÜNE beyaz yazı yasak: #F97316/beyaz = 2.80. Bu yüzden
+  // `onPrimary` koyu kor mürekkebidir (#2A1004 → 6.38).
+  ThemePreset(
+    id: 'campfire_day',
+    brightness: Brightness.light,
+    colors: _c(
+      scaffold: const Color(0xFFFDF8F1),
+      surface1: const Color(0xFFFFFCF8),
+      surface2: const Color(0xFFF7EADC),
+      primary: const Color(0xFFF97316),
+      onPrimary: const Color(0xFF2A1004),
+      accent: const Color(0xFFC2410C),
+      onAccent: const Color(0xFFFFF7F2),
+      textPrimary: const Color(0xFF33251C),
+      textSecondary: const Color(0xFF6E5A49),
+      border: const Color(0xFFECDCC9),
+    ),
+    shapes: AppShapes.bubble,
+    atmosphere: const AppAtmosphere(
+      gradientStart: Color(0xFFFDF8F1),
+      gradientEnd: Color(0xFFFDEBD8),
+      glowColor: Color(0xFFF97316),
+      glowStrength: 0.16,
+      blurSigma: 0,
+    ),
+    motion: AppMotion.fallback,
+    monospaceClock: false,
   ),
 ];
 
