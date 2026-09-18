@@ -157,25 +157,32 @@ void main() {
     );
   });
 
-  testWidgets('manifest çözülemezse satır yine görünür, "bilinmiyor" der', (
-    tester,
-  ) async {
-    expect(
-      await pumpLine(
-        tester,
-        build: null,
-        channel: DistributionChannel.githubStable,
-        google: false,
-      ),
-      // Test ortamında env.json CHANNEL=local ise manifest yerel çözülür;
-      // her iki durumda da kanal "geliştirme"dir.
-      anyOf(
-        'Sürüm bilinmiyor (bilinmiyor) · geliştirme · Sunucu: bilinmiyor · '
-        'Google girişi: kapalı',
-        startsWith('Sürüm 0.0.0-local (0) · geliştirme · Sunucu: yerel'),
-      ),
-    );
-  });
+  testWidgets(
+    'manifest çözülemezse satır yine görünür, "bilinmiyor" der',
+    (tester) async {
+      expect(
+        await pumpLine(
+          tester,
+          build: null,
+          channel: DistributionChannel.githubStable,
+          google: false,
+        ),
+        // Test ortamında env.json CHANNEL=local ise manifest yerel çözülür;
+        // her iki durumda da kanal "geliştirme"dir.
+        anyOf(
+          'Sürüm bilinmiyor (bilinmiyor) · geliştirme · Sunucu: bilinmiyor · '
+          'Google girişi: kapalı',
+          startsWith('Sürüm 0.0.0-local (0) · geliştirme · Sunucu: yerel'),
+        ),
+      );
+    },
+    // 🔴 Release koşumu gerçek manifest define'larını verir (v87 run
+    // 35346868347): orada manifest HER ZAMAN çözülür ve "çözülemeyen
+    // manifest" durumu kurulamaz. Ölçüm yalnız define'sız koşumda anlamlı.
+    skip:
+        AppBuildManifest.currentOrNull?.channel != null &&
+        AppBuildManifest.currentOrNull?.channel != AppReleaseChannel.local,
+  );
 
   testWidgets('İngilizce', (tester) async {
     expect(

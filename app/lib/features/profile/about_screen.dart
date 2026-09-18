@@ -69,7 +69,6 @@ class AboutScreen extends ConsumerStatefulWidget {
 
 class _AboutScreenState extends ConsumerState<AboutScreen>
     with WidgetsBindingObserver {
-
   bool _checking = false;
 
   UpdateCheckOutcome? _updateOutcome;
@@ -390,8 +389,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                 // bölüm aralığı 24→20 kısalır: WP-764'ün "geliştirici kartının
                 // son satırı telefon ekranında kalır" bütçesi (2000 dp) bu satır
                 // eklenince 1 dp aşılmıştı (ölçüldü: 2001.0).
+                // Yatay iç boşluk 16: satır kartların metin hizasıyla aynı
+                // sütunda durur. 4 iken uzun satır (CI manifestiyle "Sürüm
+                // 1.0.87 (87) · Windows · Sunucu: canlı · …") masaüstünde form
+                // tavanını 0.6 px aştı (WP-679, 760.6 > 760; v87 run
+                // 35346868347).
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                   // 🔴 `SelectableText` DEĞİL: içinde kendi `Scrollable`ı var
                   // ve ekranın ana kaydırıcısıyla iki `Scrollable` doğuyordu.
                   // Ölçüldü: `scrollUntilVisible` kullanan 12 ayar testi
