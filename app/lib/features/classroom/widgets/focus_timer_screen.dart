@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
@@ -226,32 +225,18 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
         ? now.difference(timer.startedAt!).inSeconds
         : 0;
     final target = timer.phaseTargetSeconds;
-    final inWork = timer.phase == TimerPhase.work;
     // Geri sayım/pomodoro kalanı geri sayar; kronometre yukarı.
     final displaySeconds = target == null
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
-    // WP-250: kart ile birebir aynı kural (iki ekranın farklı sayı göstermesi
-    // bug'dı). Durdurma başlayınca canlı akış kesilir; bekleyen kayıt settling*
-    // alanlarıyla taşınır.
-    final liveWork = (timer.isRunning && !timer.isStopping && inWork)
-        ? elapsed
-        : 0;
-    final todayTotal = resolveTodayDisplayTotal(
+    // WP-250 / WP-613 / WP-856: kart ile birebir aynı kural. Eskiden burada
+    // formülün ikinci bir kopyası duruyordu (canlı çalışma + settling +
+    // gece yarısı kırpması); WP-856 onu `todayDisplayTotalFor`da tekledi.
+    // Kopya kalsaydı iki ekranın sürüklenmesi yine serbest olurdu.
+    final todayTotal = todayDisplayTotalFor(
       recordedToday: recorded,
-      liveWorkSeconds: liveWork,
-      settlingSeconds: timer.settlingSeconds,
-      settlingBaseline: timer.settlingBaseline,
-      settlingDay: timer.settlingDay,
-      // 🔴 WP-613 — WP-561'in bu yüzeye uygulanmamış yarısı. Kırpma tam olarak
-      // bu iki argümana bağlıdır (`study_stats.dart`: `live > 0 &&
-      // liveStartedAt != null && nowInstant != null`). Argümansız çağrıda
-      // 23:00'da başlayan koşuda kart "Bugün 1 sa 30 dk" derken odak ekranı
-      // 01:30'da "2 sa 30 dk" diyor, Durdur'da ise sayı çöküyordu — çünkü
-      // oturum `dayOf(start)` ile DÜNE yazılır.
-      liveStartedAt: timer.startedAt,
-      nowInstant: now,
-      today: dayOf(now),
+      timer: timer,
+      now: now,
     );
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     final goalPct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
