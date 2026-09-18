@@ -8,6 +8,7 @@ import '../../core/time_engine/clock_permissions.dart';
 import '../../data/providers/alarm_providers.dart';
 import '../android_widgets/published_home_widgets.dart';
 import '../android_widgets/widget_deep_link.dart';
+import '../permissions/permissions_screen.dart';
 import 'platform_limit_banner.dart';
 
 /// 🔴 WP-687: bu ekranın **iki yarısı da** Android'e özgüdür, ama ekran
@@ -24,6 +25,8 @@ import 'platform_limit_banner.dart';
 ///    (`clock_permissions.dart:152-188`). "Aç" düğmesi basılıyor, hiçbir şey
 ///    olmuyor, sebebi de söylenmiyordu — WP-611'in adını koyduğu **bozuk
 ///    düğme**. Düğmeler artık devre dışı, sınır da şeritte yazılı.
+///    (WP-852: satırlar bu ekrandan tamamen kalktı; izinler İzinler
+///    ekranında yönetilir. Masaüstünde oraya giden düğme de çizilmez.)
 ///
 /// Platform `defaultTargetPlatform` üzerinden okunur (`dart:io Platform`
 /// değil): testte `debugDefaultTargetPlatformOverride` ile enjekte edilebilir.
@@ -262,6 +265,16 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
     ref.invalidate(exactAlarmStatusProvider);
   }
 
+  /// WP-852: izinler İzinler ekranında yönetilir. Dönüşte özet yeniden
+  /// okunur — `Navigator.pop` bir `resumed` yaşam döngüsü olayı üretmez, o
+  /// yüzden yalnız gözlemciye güvenilemez.
+  Future<void> _openPermissions() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()));
+    await _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -322,6 +335,12 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
               spec: homeWidgetCardSpec(provider, AppLocalizations.of(context)),
             ),
         const SizedBox(height: 20),
+        // 🔴 WP-852 (sahip kararı): izinler tek yerde yaşar — Ayarlar →
+        // İzinler (`PermissionsScreen`, WP-848). Bu sekme eskiden dört izin
+        // satırını, bir geri alma rehberini, "Eksik izinleri aç" ve "İzinleri
+        // yenile" düğmelerini KENDİSİ çiziyordu; aynı izin iki ekranda iki ayrı
+        // dille ve iki ayrı akışla yönetiliyordu. Burada artık yalnız bir bakışta
+        // durum (eksik var mı) ve o ekrana giden TEK eylem durur.
         Text(
           AppLocalizations.of(context).clockAlarmIcinGerekliIzinler,
           style: theme.textTheme.titleMedium?.copyWith(
@@ -329,9 +348,10 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
           ),
         ),
         const SizedBox(height: 4),
+        // Açıklama Ayarlar'daki İzinler satırıyla aynı cümledir: kullanıcı
+        // iki yerde aynı şeyi aynı adla görür.
         Text(
-          '${AppLocalizations.of(context).clockAppKapaliykenAlarmCalmasi} '
-          '${AppLocalizations.of(context).clockIzinlerGuvenlikNedeniyleYalniz}',
+          AppLocalizations.of(context).permissionsSettingsSubtitle,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -339,103 +359,24 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         const SizedBox(height: 12),
         if (_loading)
           const Center(child: CircularProgressIndicator())
-        else ...[
+        else
           _PermissionStatusSummary(snapshot: _perms),
-          const SizedBox(height: 8),
-          _PermTile(
-            enabled: androidSurfaces,
-            title: AppLocalizations.of(context).clockBildirimler,
-            ok: _perms.notifications,
-            detail: AppLocalizations.of(
-              context,
-            ).clockSaatUygulamasiKalitesiIcin,
-            onManage: () async {
-              if (!_perms.notifications) {
-                await ClockPermissions.instance.requestNotifications();
-              }
-              await ClockPermissions.instance.openNotificationSettings();
-              await _refresh();
-            },
-          ),
-          _PermTile(
-            enabled: androidSurfaces,
-            title: AppLocalizations.of(context).clockKesinAlarmExact,
-            ok: _perms.exactAlarm,
-            detail: AppLocalizations.of(context).clockKesinAlarmIzniKapali,
-            onManage: () async {
-              await ClockPermissions.instance.openExactAlarmSettings();
-              await _refresh();
-            },
-          ),
-          _PermTile(
-            enabled: androidSurfaces,
-            title: AppLocalizations.of(context).clockPilKisitlamasiYok,
-            ok: _perms.batteryUnrestricted,
-            detail: AppLocalizations.of(context).clockPilKisitlamasiYok,
-            onManage: () async {
-              await ClockPermissions.instance
-                  .openBatteryOptimizationManagementSettings();
-              await _refresh();
-            },
-          ),
-          _PermTile(
-            enabled: androidSurfaces,
-            title: AppLocalizations.of(context).coreTamEkranAlarm,
-            ok: _perms.fullScreenIntent,
-            detail: AppLocalizations.of(context).clockKilitEkranindaAlarmYuzeyi,
-            onManage: () async {
-              await ClockPermissions.instance.openFullScreenSettings();
-              await _refresh();
-            },
-          ),
-          const _PermissionRevocationGuide(),
-          if (_perms.availability == ClockPermissionAvailability.available &&
-              !_perms.allOk) ...[
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: () async {
-                await ClockPermissions.instance.requestNotifications();
-                if (!_perms.exactAlarm) {
-                  await ClockPermissions.instance.openExactAlarmSettings();
-                }
-                if (!_perms.batteryUnrestricted) {
-                  await ClockPermissions.instance.openBatterySettings();
-                }
-                if (!_perms.fullScreenIntent) {
-                  await ClockPermissions.instance.openFullScreenSettings();
-                }
-                await _refresh();
-              },
-              icon: const Icon(Icons.security),
-              label: Text(AppLocalizations.of(context).clockEksikIzinleriAc),
-            ),
-          ] else if (_perms.allOk)
-            Card(
-              color: theme.colorScheme.primaryContainer,
-              child: ListTile(
-                leading: const Icon(Icons.check_circle),
-                title: Text(AppLocalizations.of(context).clockTumIzinlerTamam),
-                subtitle: Text(
-                  AppLocalizations.of(context).clockAppKapaliAlarmIcin,
-                ),
-              ),
-            ),
-        ],
-        // 🔴 WP-688: masaüstünde bu düğme **kaldırılır**, devre dışı
-        // bırakılmaz. Dört izin satırı bilgi taşır (Android'de hangi izin
-        // gerekiyor), o yüzden onlar gri düğmeyle yerinde durur — ama bu
-        // düğme yalnız EYLEMDEN ibarettir ve eylemi bu platformda hiçbir
-        // zaman bir şey değiştiremez: `snapshot()` `Platform.isAndroid ==
-        // false` iken kanala hiç gitmeden `unsupported` döner
-        // (`clock_permissions.dart:127`). Devre dışı gri bir düğme
-        // "şimdilik olmuyor" der; doğrusu "bu platformda böyle bir şey yok"
-        // ve o cümle zaten şeritte yazılı.
+        // 🔴 WP-688 niyeti korunur: masaüstünde eylem düğmesi **çizilmez**.
+        // `snapshot()` `Platform.isAndroid == false` iken kanala hiç gitmeden
+        // `unsupported` döner (`clock_permissions.dart:127`) ve İzinler ekranı
+        // orada yalnız "izin gerekmiyor" der — gidilecek bir yer yok. Devre
+        // dışı gri bir düğme "şimdilik olmuyor" derdi; doğrusu "bu platformda
+        // böyle bir şey yok" ve o cümle zaten şeritte yazılı.
         if (androidSurfaces) ...[
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh),
-            label: Text(AppLocalizations.of(context).clockIzinleriYenile),
+          const SizedBox(height: 12),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton.tonalIcon(
+              key: const Key('clock_widgets_open_permissions'),
+              onPressed: _openPermissions,
+              icon: const Icon(Icons.admin_panel_settings_outlined),
+              label: Text(AppLocalizations.of(context).clockIzinlerEkraniniAc),
+            ),
           ),
         ],
       ],
@@ -458,16 +399,13 @@ class _PermissionStatusSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isAvailable =
-        snapshot.availability == ClockPermissionAvailability.available;
     final isUnknown =
         snapshot.availability == ClockPermissionAvailability.unknown;
     // WP-296: `unsupported` (masaüstü/web) kendi dalını alır. Öncesinde bu durum
     // "eksik izin" dalına düşüyordu: Windows'ta kart kırmızı görünüp "4 Eksik
     // izinleri aç" diyordu — o platformda var olmayan izinler için yanlış bir
-    // iddia. Alt satır da ekranın başlığındaki cümleyi (`:107`) aynen tekrar
-    // ediyordu. Aynı dosyadaki "eksikleri aç" düğmesi (`:161`) zaten yalnız
-    // `available` durumunda çiziliyor; kart artık onunla tutarlı.
+    // iddia. Alt satır da ekranın başlığındaki cümleyi aynen tekrar
+    // ediyordu.
     final isUnsupported =
         snapshot.availability == ClockPermissionAvailability.unsupported;
     final allOk = snapshot.allOk;
@@ -478,21 +416,20 @@ class _PermissionStatusSummary extends StatelessWidget {
         : isUnknown
         ? theme.colorScheme.tertiaryContainer
         : theme.colorScheme.errorContainer;
+    // WP-852: başlık artık bir DURUM cümlesidir, eylem değil. Eskiden eksik
+    // dalı "2 Eksik izinleri aç", bilinmeyen dalı "İzinleri yenile" diyordu —
+    // ikisi de bu kartta olmayan bir düğmenin adıydı. Eylem, kartın altındaki
+    // tek düğmedir (İzinler ekranı).
     final title = allOk
         ? l10n.clockTumIzinlerTamam
         : isUnsupported
         ? l10n.clockIzinlerYalnizAndroid
         : isUnknown
-        ? l10n.clockIzinleriYenile
-        : '${snapshot.missingCount} ${l10n.clockEksikIzinleriAc}';
-    final String? subtitle = allOk
-        ? l10n.clockAppKapaliAlarmIcin
-        : isUnsupported
-        ? null
-        : isAvailable
-        ? l10n.clockEksikIzinleriAc
-        : l10n.clockIzinlerGuvenlikNedeniyleYalniz;
+        ? l10n.permissionsUnknown
+        : l10n.clockIzinEksikSayisi(snapshot.missingCount);
+    final String? subtitle = allOk ? l10n.clockAppKapaliAlarmIcin : null;
     return Card(
+      key: const Key('clock_widgets_permission_summary'),
       color: color,
       child: ListTile(
         leading: Icon(
@@ -563,120 +500,4 @@ class _WidgetCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PermTile extends StatelessWidget {
-  const _PermTile({
-    required this.title,
-    required this.ok,
-    required this.detail,
-    required this.onManage,
-    required this.enabled,
-  });
-
-  final String title;
-  final bool ok;
-  final String detail;
-  final VoidCallback onManage;
-
-  /// 🔴 WP-687: `false` → bu platformda [ClockPermissions] hiçbir sistem
-  /// ekranı açamaz (`clock_permissions.dart:152-188` erkenden döner). Satır
-  /// bilgi olarak durur, düğme **basılamaz**; sebebi ekranın başındaki
-  /// `PlatformLimitBanner`da yazılıdır.
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          ok ? Icons.check_circle : Icons.warning_amber_rounded,
-          // WP-141: palette bağlama; durum hem ikon hem renk ile (yalnız renk değil).
-          color: ok
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.tertiary,
-          semanticLabel: title,
-        ),
-        title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-        subtitle: Text(detail, maxLines: 3, overflow: TextOverflow.ellipsis),
-        trailing: TextButton(
-          onPressed: enabled ? onManage : null,
-          // Android izinleri uygulama tarafından geri alınamaz. İzin zaten
-          // verildiyse bu düğme doğrudan ilgili sistem ekranını açar; kullanıcı
-          // oradan kapatır. Verilmemişse aynı ekran/istem açma akışına gider.
-          child: Text(
-            ok
-                ? AppLocalizations.of(context).homeKapat
-                : AppLocalizations.of(context).clockAc,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// OEM isimleri değişse de kullanıcıyı uygulamadan doğrudan doğru ayara
-/// götüren dört izin için kısa geri alma rehberi.
-class _PermissionRevocationGuide extends StatelessWidget {
-  const _PermissionRevocationGuide();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 8),
-      child: ExpansionTile(
-        leading: const Icon(Icons.manage_accounts_outlined),
-        title: Text(AppLocalizations.of(context).clockIzniGeriAlmakIster),
-        subtitle: Text(
-          AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          Text(
-            AppLocalizations.of(context).clockIzinlerGuvenlikNedeniyleYalniz,
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: 12),
-          _PermissionGuideStep(
-            title: AppLocalizations.of(context).clockBildirimleriKapat,
-            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
-          ),
-          _PermissionGuideStep(
-            title: AppLocalizations.of(context).clockKesinAlarmiKapat,
-            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
-          ),
-          _PermissionGuideStep(
-            title: AppLocalizations.of(context).clockPilIstisnasiniKaldir,
-            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
-          ),
-          _PermissionGuideStep(
-            title: AppLocalizations.of(context).clockTamEkranAlarmiKapat,
-            body: AppLocalizations.of(context).clockAcilanTamEkranBildirimler,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PermissionGuideStep extends StatelessWidget {
-  const _PermissionGuideStep({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 2),
-        Text(body, style: Theme.of(context).textTheme.bodySmall),
-      ],
-    ),
-  );
 }

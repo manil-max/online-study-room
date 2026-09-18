@@ -156,6 +156,20 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           granted: snapshot.fullScreenIntent,
           onTap: () => _run(permissions.openFullScreenSettings),
         ),
+        // WP-852: Widget sekmesindeki "İzni geri almak ister misin?"
+        // rehberinin özü buraya taşındı. O rehber dört ayrı adımda aynı
+        // cümleyi ("Kapat düğmesi ilgili Android ayarını açar") tekrarlıyor ve
+        // artık var olmayan bir "Kapat" düğmesini anlatıyordu. Buradaki satır
+        // izin verilmişken de dokunulabilir ve aynı sistem ayarını açar; tek
+        // cümle bunu söylemeye yeter.
+        const SizedBox(height: 4),
+        Text(
+          key: const Key('permissions-revoke-hint'),
+          l10n.permissionsRevokeHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ];
     }
 

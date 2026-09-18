@@ -7,7 +7,7 @@ import 'package:online_study_room/core/time_engine/clock_permissions.dart';
 import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 
 Future<void> _pumpScreen(WidgetTester tester) async {
-    // 🔴 WP-708: yukseklik 6000 -> 14000 (mantiksal 2000 -> ~4667).
+  // 🔴 WP-708: yukseklik 6000 -> 14000 (mantiksal 2000 -> ~4667).
   // WP-707 dort widget'i yayina alinca katalog 3 karttan 7 karta cikti
   // ve IZIN satirlari 2000 px'in altina dustu. `ListView(children:)`
   // gorunmeyen cocugun ELEMENTINI kurmaz, yani satirlar agacta hic
@@ -43,22 +43,25 @@ void main() {
   // o yüzden anlık görüntü test içinde `ok` olarak sabitlenir.
   tearDown(() => ClockPermissions.debugSnapshotOverride = null);
 
-  testWidgets('izinler açıldıktan sonra sistem ayarından kapatılabilir', (
+  // 🔴 WP-852 (sahip kararı): bu test eskiden dört "Kapat" düğmesini ve
+  // "İzni geri almak ister misin?" rehberinin dört adımını ölçüyordu. İzinler
+  // artık yalnız Ayarlar → İzinler ekranında yönetilir; bu sekme durumu özetler
+  // ve oraya tek düğmeyle götürür. Geri alma bilgisi İzinler ekranına taşındı
+  // (`permissions-revoke-hint`). Niyet aynı kalır: izinler VERİLMİŞKEN ekran
+  // doğru durumu söyler — ama satırları kendisi çizmez.
+  testWidgets('WP-852 izinler verilmişken özet + İzinler düğmesi, satır yok', (
     tester,
   ) async {
     ClockPermissions.debugSnapshotOverride = ClockPermissionSnapshot.ok;
     await _pumpScreen(tester);
 
-    expect(find.textContaining('Android sistem ayarlarından'), findsOneWidget);
-    expect(find.text('Kapat'), findsNWidgets(4));
-
-    await tester.tap(find.text('İzni geri almak ister misin?'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Bildirimleri kapat:'), findsOneWidget);
-    expect(find.text('Kesin alarmı kapat:'), findsOneWidget);
-    expect(find.text('Pil istisnasını kaldır:'), findsOneWidget);
-    expect(find.text('Tam ekran alarmı kapat:'), findsOneWidget);
+    expect(find.text('Tüm izinler tamam'), findsOneWidget);
+    expect(
+      find.byKey(const Key('clock_widgets_open_permissions')),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Kapat'), findsNothing);
+    expect(find.text('İzni geri almak ister misin?'), findsNothing);
   });
 
   // 🔴 WP-688 madde 4: bu test kendini "Masaüstü/web" diye tanıtıyordu ama
@@ -92,10 +95,15 @@ void main() {
           findsOneWidget,
         );
         expect(find.textContaining('Eksik izinleri aç'), findsNothing);
-        // Cümle yalnız ekran başlığında geçer, kart onu tekrarlamaz.
+        expect(find.textContaining('izin eksik'), findsNothing);
+        // WP-852: "İzinler güvenlik nedeniyle yalnız Android sistem
+        // ayarlarından" cümlesi bu ekrandan kalktı (izin satırlarıyla birlikte
+        // İzinler ekranına ait); eski "yalnız başlıkta bir kez" iddiası artık
+        // ölçülecek bir metin bulamaz. Masaüstünde İzinler'e giden düğme de
+        // çizilmez — orada verilecek izin yok (WP-688 niyeti).
         expect(
-          find.textContaining('Android sistem ayarlarından'),
-          findsOneWidget,
+          find.byKey(const Key('clock_widgets_open_permissions')),
+          findsNothing,
         );
         // WP-688: Windows kolu gerçekten çizildiyse şerit de oradadır. Bu
         // satır olmadan test yine sessizce Android'e kayabilir.

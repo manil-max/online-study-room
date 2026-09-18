@@ -23,6 +23,11 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// Bu testler ekranın Windows kolunu kilitler; son test Android kolunun
 /// **birebir** korunduğunu ölçer (işlev kaybı yok).
 ///
+/// WP-852 (sahip kararı): dört izin satırı bu ekrandan kalktı; izinler yalnız
+/// Ayarlar → İzinler ekranında yönetilir. Bu sekme durumu özetler ve Android'de
+/// oraya TEK düğmeyle götürür. Satır/düğme sayan iddialar bu yeni biçime göre
+/// yeniden yazıldı; şerit, katalog ve başlık iddiaları aynen kalır.
+///
 /// Platform `debugDefaultTargetPlatformOverride` ile enjekte edilir ve test
 /// gövdesi bitmeden `finally` içinde geri alınır; aksi hâlde flutter_test'in
 /// `debugAssertAllFoundationVarsUnset` denetimi patlar ve — daha kötüsü —
@@ -33,7 +38,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 const _windowsSnapshot = ClockPermissionSnapshot.unsupported;
 
 /// Android'de kanal cevap verdiğinde oluşan gerçek durum: izinler sorulabilir
-/// ve henüz verilmemiş. Dört satır da "Aç" düğmesiyle çizilir.
+/// ve henüz verilmemiş. (WP-852'den beri özet "4 izin eksik" der.)
 const _androidMissingSnapshot = ClockPermissionSnapshot(
   availability: ClockPermissionAvailability.available,
   notifications: false,
@@ -58,7 +63,7 @@ void main() {
   }
 
   Future<void> pump(WidgetTester tester, {String locale = 'tr'}) async {
-        // 🔴 WP-708: yukseklik 6000 -> 14000 (mantiksal 2000 -> ~4667).
+    // 🔴 WP-708: yukseklik 6000 -> 14000 (mantiksal 2000 -> ~4667).
     // WP-707 dort widget'i yayina alinca katalog 3 karttan 7 karta cikti
     // ve IZIN satirlari 2000 px'in altina dustu. `ListView(children:)`
     // gorunmeyen cocugun ELEMENTINI kurmaz, yani satirlar agacta hic
@@ -120,32 +125,34 @@ void main() {
     });
   });
 
+  // 🔴 WP-852: bu test eskiden dört "Aç" düğmesinin Windows'ta DEVRE DIŞI
+  // çizildiğini ölçüyordu (satır bilgi taşısın, düğme basılamasın). Sahip
+  // kararıyla satırlar bu ekrandan tamamen kalktı. Bozuk düğmeye karşı
+  // korumanın niyeti aynı: Windows'ta basılıp hiçbir şey yapmayan bir izin
+  // düğmesi YOK — ne satır düğmesi ne de İzinler ekranına giden düğme.
   testWidgets(
-    'WP-687 Windows: dört izin düğmesi devre dışı (bozuk düğme yok)',
+    'WP-687/852 Windows: izin düğmesi yok, özet platform sınırını söyler',
     (tester) async {
       await onPlatform(TargetPlatform.windows, () async {
         ClockPermissions.debugSnapshotOverride = _windowsSnapshot;
         await pump(tester);
 
-        final buttons = tester
-            .widgetList<TextButton>(find.widgetWithText(TextButton, 'Aç'))
-            .toList();
+        expect(find.widgetWithText(TextButton, 'Aç'), findsNothing);
         expect(
-          buttons.length,
-          4,
+          find.byKey(const Key('clock_widgets_open_permissions')),
+          findsNothing,
           reason:
-              'Dört izin satırı da çizilmeye devam etmeli (bilgi kaybı yok).',
+              'Windows\'ta verilecek izin yok; İzinler ekranı orada yalnız '
+              '"izin gerekmiyor" der. Eylem düğmesi çizilmemeli (WP-688).',
         );
-        for (final button in buttons) {
-          expect(
-            button.onPressed,
-            isNull,
-            reason:
-                'Windows\'ta ClockPermissions.open*Settings() erkenden döner; '
-                'etkin düğme kullanıcıya hiçbir şey söylemeden hiçbir şey '
-                'yapmaz.',
-          );
-        }
+        expect(
+          find.byKey(const Key('clock_widgets_permission_summary')),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Bu izinler yalnız Android\'de geçerli'),
+          findsOneWidget,
+        );
       });
     },
   );
@@ -167,19 +174,20 @@ void main() {
         findsOneWidget,
         reason: 'Yayındaki widget kartı Android\'de görünmeye devam etmeli.',
       );
-      final buttons = tester
-          .widgetList<TextButton>(find.widgetWithText(TextButton, 'Aç'))
-          .toList();
-      expect(buttons.length, 4);
-      for (final button in buttons) {
-        expect(
-          button.onPressed,
-          isNotNull,
-          reason: 'Android\'de dört düğme de bugünkü gibi ETKİN kalmalı.',
-        );
-      }
-      // WP-296 dalı: `available` + eksik izin varken toplu düğme de durur.
-      expect(find.textContaining('Eksik izinleri aç'), findsWidgets);
+      // 🔴 WP-852: eskiden dört ETKİN "Aç" düğmesi ve toplu "Eksik izinleri
+      // aç" düğmesi ölçülüyordu. Sahip kararıyla izinler İzinler ekranına
+      // taşındı; Android kolunun işlevi artık "eksik sayısı görünür + İzinler
+      // ekranına giden düğme ETKİN" demektir.
+      expect(find.widgetWithText(TextButton, 'Aç'), findsNothing);
+      expect(find.text('4 izin eksik'), findsOneWidget);
+      final open = tester.widget<ButtonStyleButton>(
+        find.byKey(const Key('clock_widgets_open_permissions')),
+      );
+      expect(
+        open.onPressed,
+        isNotNull,
+        reason: 'Android\'de İzinler ekranına giden düğme ETKİN olmalı.',
+      );
     });
   });
 
@@ -295,25 +303,32 @@ void main() {
     });
   });
 
-  testWidgets('WP-688 Android kolu birebir korunur (başlık + yenile düğmesi)', (
-    tester,
-  ) async {
-    await onPlatform(TargetPlatform.android, () async {
-      ClockPermissions.debugSnapshotOverride = _androidMissingSnapshot;
-      await pump(tester);
+  testWidgets(
+    'WP-688/852 Android kolu: başlık korunur, izin eylemi tek düğme',
+    (tester) async {
+      await onPlatform(TargetPlatform.android, () async {
+        ClockPermissions.debugSnapshotOverride = _androidMissingSnapshot;
+        await pump(tester);
 
-      expect(
-        find.text('Widget ve izinler'),
-        findsNWidgets(2),
-        reason: 'Android başlığı bugünkü gibi kalmalı (AppBar + gövde).',
-      );
-      expect(find.text('Android izin bilgisi'), findsNothing);
-      expect(
-        find.widgetWithText(OutlinedButton, 'İzinleri yenile'),
-        findsOneWidget,
-        reason: 'Android\'de yenile düğmesi gerçekten çalışır; kaldırılamaz.',
-      );
-      expect(find.text(trBanner), findsNothing);
-    });
-  });
+        expect(
+          find.text('Widget ve izinler'),
+          findsNWidgets(2),
+          reason: 'Android başlığı bugünkü gibi kalmalı (AppBar + gövde).',
+        );
+        expect(find.text('Android izin bilgisi'), findsNothing);
+        // 🔴 WP-852: "İzinleri yenile" Android'de de kalktı (sahip kararı: tek
+        // eylem). Yenileme kaybolmadı: özet uygulama öne döndüğünde ve İzinler
+        // ekranından geri gelindiğinde kendiliğinden yeniden okunur.
+        expect(
+          find.widgetWithText(OutlinedButton, 'İzinleri yenile'),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('clock_widgets_open_permissions')),
+          findsOneWidget,
+        );
+        expect(find.text(trBanner), findsNothing);
+      });
+    },
+  );
 }

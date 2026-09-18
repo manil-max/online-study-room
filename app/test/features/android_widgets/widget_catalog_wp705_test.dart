@@ -124,8 +124,10 @@ void main() {
   /// almak GEC kalirdi — flutter_test foundation degiskenlerini tearDown'dan
   /// ONCE denetler ve testi alakasiz bir hatayla dusururdu.
   Future<void> pumpCatalog(WidgetTester tester) async {
-    // Katalog + dort izin satiri uzun bir liste; kisa bir gorunum penceresinde
+    // Katalog + izin ozeti uzun bir liste; kisa bir gorunum penceresinde
     // ListView alt ogeleri hic MONTE ETMEZ ve "yok" iddiasi bedavaya gecerdi.
+    // (WP-852: dort izin satiri bu ekrandan kalkti, sahip karari; alan
+    // buyuklugu katalog icin yine gerekli, degismedi.)
     tester.view.physicalSize = const Size(1080, 9000);
     tester.view.devicePixelRatio = 3;
     addTearDown(() {
@@ -240,7 +242,10 @@ void main() {
           find.descendant(
             of: card,
             matching: find.text(
-              l10n.clockWidgetVarsayilanBoyut(spec.cellWidth!, spec.cellHeight!),
+              l10n.clockWidgetVarsayilanBoyut(
+                spec.cellWidth!,
+                spec.cellHeight!,
+              ),
             ),
           ),
           findsOneWidget,
@@ -305,7 +310,9 @@ void main() {
   group('WP-705 · vaat kodla dogrulanir (uydurma yok)', () {
     test('beyan edilen hucre boyutu odak_*_widget_info.xml ile ayni', () {
       for (final provider in HomeWidgetProvider.values) {
-        final xml = _read('$_xmlDir/odak_${_infoXmlName[provider]}_widget_info.xml');
+        final xml = _read(
+          '$_xmlDir/odak_${_infoXmlName[provider]}_widget_info.xml',
+        );
         final spec = homeWidgetCardSpec(provider, l10n);
         final declaredWidth = _attr(xml, 'targetCellWidth');
         final declaredHeight = _attr(xml, 'targetCellHeight');
@@ -320,7 +327,8 @@ void main() {
         expect(
           spec.cellHeight?.toString(),
           declaredHeight,
-          reason: '${provider.name}: kart varsayilan YUKSEKLIGI XML ile ayrisiyor',
+          reason:
+              '${provider.name}: kart varsayilan YUKSEKLIGI XML ile ayrisiyor',
         );
         if (spec.minimumCellWidth != null || spec.minimumCellHeight != null) {
           expect(
@@ -372,7 +380,8 @@ void main() {
           continue;
         }
 
-        final constant = 'WidgetDeepLink.ROUTE_${route.nativeName.toUpperCase()}';
+        final constant =
+            'WidgetDeepLink.ROUTE_${route.nativeName.toUpperCase()}';
         expect(
           body.contains(constant),
           isTrue,

@@ -1406,21 +1406,9 @@
   "@clockSonrakiniAtla": {
     "description": "Clock user-facing text. Source: Sonrakini atla"
   },
-  "clockAcilanTamEkranBildirimler": "On the full-screen notifications page that opens, turn off the Focus Camp switch. This setting may not be available before Android 14.",
-  "@clockAcilanTamEkranBildirimler": {
-    "description": "Clock user-facing text. Source: Açılan tam ekran bildirimler sayfasında Odak Kampı anahtarını kapat. Android 14 öncesinde bu ayar olmayabilir."
-  },
   "clockBaslat": "Start",
   "@clockBaslat": {
     "description": "Clock user-facing text. Source: Başlat"
-  },
-  "clockBildirimler": "Notifications",
-  "@clockBildirimler": {
-    "description": "Clock user-facing text. Source: Bildirimler"
-  },
-  "clockBildirimleriKapat": "Disable notifications:",
-  "@clockBildirimleriKapat": {
-    "description": "Clock user-facing text. Source: Bildirimleri kapat:"
   },
   "clockBirKez": "Once",
   "@clockBirKez": {
@@ -1576,14 +1564,6 @@
   "@clockKapat": {
     "description": "Clock user-facing text. Source: Kapat"
   },
-  "clockKapatDugmesiIlgiliAndroid": "Close button opens corresponding Android setting",
-  "@clockKapatDugmesiIlgiliAndroid": {
-    "description": "Clock user-facing text. Source: Kapat düğmesi ilgili Android ayarını açar"
-  },
-  "clockAc": "Enable",
-  "@clockAc": {
-    "description": "Clock user-facing text. Source: Aç"
-  },
   "clockKapatmakIcinMatematikSorusu": "Math question to close",
   "@clockKapatmakIcinMatematikSorusu": {
     "description": "Clock user-facing text. Source: Kapatmak için matematik sorusu"
@@ -1599,14 +1579,6 @@
   "clockKesinAlarmIzniKapali": "Exact alarm permission is disabled. Alarms may be delayed.",
   "@clockKesinAlarmIzniKapali": {
     "description": "Clock user-facing text. Source: Kesin alarm izni kapalı. Alarmlar gecikebilir."
-  },
-  "clockKesinAlarmiKapat": "Disable exact alarms:",
-  "@clockKesinAlarmiKapat": {
-    "description": "Clock user-facing text. Source: Kesin alarmı kapat:"
-  },
-  "clockKilitEkranindaAlarmYuzeyi": "Alarm screen on the lock screen",
-  "@clockKilitEkranindaAlarmYuzeyi": {
-    "description": "Clock user-facing text. Source: Kilit ekranında alarm yüzeyi"
   },
   "clockKisiselAlarmlar": "Personal alarms",
   "@clockKisiselAlarmlar": {
@@ -1643,10 +1615,6 @@
   "clockPer": "Thu",
   "@clockPer": {
     "description": "Clock user-facing text. Source: Per"
-  },
-  "clockPilIstisnasiniKaldir": "Remove battery optimization exemption:",
-  "@clockPilIstisnasiniKaldir": {
-    "description": "Clock user-facing text. Source: Pil istisnasını kaldır:"
   },
   "clockPilKisitlamasiYok": "No battery restrictions",
   "@clockPilKisitlamasiYok": {
@@ -1699,10 +1667,6 @@
   "clockTamEkranAlarm": "Full-screen alarm",
   "@clockTamEkranAlarm": {
     "description": "Clock user-facing text. Source: Tam ekran alarm"
-  },
-  "clockTamEkranAlarmiKapat": "Disable full-screen alarms:",
-  "@clockTamEkranAlarmiKapat": {
-    "description": "Clock user-facing text. Source: Tam ekran alarmı kapat:"
   },
   "clockTekrar": "Repeat",
   "@clockTekrar": {
@@ -1816,21 +1780,9 @@
   "@clockIzinVer": {
     "description": "Clock user-facing text. Source: İzin ver"
   },
-  "clockIzinlerGuvenlikNedeniyleYalniz": "Permissions can only be set in Android system settings for security reasons.",
-  "@clockIzinlerGuvenlikNedeniyleYalniz": {
-    "description": "Clock user-facing text. Source: İzinler güvenlik nedeniyle yalnız Android sistem ayarlarından"
-  },
   "clockIzinleriAc": "Enable permissions",
   "@clockIzinleriAc": {
     "description": "Clock user-facing text. Source: İzinleri aç"
-  },
-  "clockIzinleriYenile": "Refresh permissions",
-  "@clockIzinleriYenile": {
-    "description": "Clock user-facing text. Source: İzinleri yenile"
-  },
-  "clockIzniGeriAlmakIster": "Do you want to withdraw consent?",
-  "@clockIzniGeriAlmakIster": {
-    "description": "Clock user-facing text. Source: İzni geri almak ister misin?"
   },
   "clockSehirEkle": "Add city",
   "@clockSehirEkle": {
@@ -7496,6 +7448,12 @@
   "@permissionsNotNeeded": {"description": "WP-848: shown on desktop/web where no phone permission exists."},
   "permissionsUnknown": "Couldn't read permission status right now. It's checked again when you come back to the app.",
   "@permissionsUnknown": {"description": "WP-848: permission status could not be read."},
+  "clockIzinEksikSayisi": "{count, plural, =1 {1 permission missing} other {{count} permissions missing}}",
+  "@clockIzinEksikSayisi": {"description": "WP-852: widget tab permission summary when permissions are missing.", "placeholders": {"count": {"type": "int"}}},
+  "clockIzinlerEkraniniAc": "Open permissions",
+  "@clockIzinlerEkraniniAc": {"description": "WP-852: widget tab button that opens the Permissions screen."},
+  "permissionsRevokeHint": "To take back a permission, tap its row and turn it off in the Android setting that opens. Android only lets you revoke permissions there.",
+  "@permissionsRevokeHint": {"description": "WP-852: how to revoke a permission (moved from the widget tab guide)."},
   "tourSettingsOverview": "Theme is in Appearance. Permissions keep timers and alarms on time.",
   "@tourSettingsOverview": {"description": "WP-849: settings tour, where appearance and permissions are."},
   "tourSettingsAccount": "Manage your account and download your data in the Account section.",
