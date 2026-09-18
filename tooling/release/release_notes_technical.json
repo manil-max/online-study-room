@@ -3,6 +3,20 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.3",
+      "buildNumber": 8703,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8703: WP-856/857",
+      "highlights": [
+        "WP-856: todayDisplayTotalFor + todayLiveTotalProvider; timer card, focus screen, goal card and today summary share one rule (formula copies removed). Coarse cards refresh only at the next displayed-value boundary; no timer while stopped."
+      ],
+      "fixes": [
+        "WP-857: leaderboard drops the '(sen)' suffix when it would be ellipsized (5 of 27 measured layouts before)."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.2",
       "buildNumber": 8702,
       "channel": "beta",

@@ -3,6 +3,32 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.87-beta.3",
+      "buildNumber": 8703,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8703: tek bir bugün",
+      "highlights": [
+        "Sayaç çalışırken bütün kartlar aynı süreyi ve yüzdeyi gösteriyor."
+      ],
+      "fixes": [
+        "Dar sıralama kartında kendi adın kesilmiyor."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı."
+      ],
+      "titleEn": "beta-v8703: one today",
+      "highlightsEn": [
+        "While the timer runs, every card shows the same time and percentage."
+      ],
+      "fixesEn": [
+        "Your name is no longer cut off in a narrow ranking card."
+      ],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta."
+      ]
+    },
+    {
       "versionName": "1.0.87-beta.2",
       "buildNumber": 8702,
       "channel": "beta",

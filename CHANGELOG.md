@@ -4,6 +4,13 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8703 / 1.0.87-beta.3+8703] - 2026-09-18
+
+### Düzeltmeler
+
+- Sayaç çalışırken günlük hedef, bugün özeti ve odak ekranı artık sayaçla aynı süreyi ve yüzdeyi gösteriyor.
+- Dar sıralama kartında kendi adın "(sen)" eki yüzünden kesilmiyor.
+
 ## [beta-v8702 / 1.0.87-beta.2+8702] - 2026-09-18
 
 ### Düzeltmeler
