@@ -321,7 +321,10 @@ class _GoalCardState extends ConsumerState<GoalCard>
                             Text(
                               reached
                                   ? AppLocalizations.of(context).homeBitti
-                                  : '${AppLocalizations.of(context).homeGunlukHedef}: '
+                                  // 🔴 WP-854: etiket "Günlük hedef" idi ama değer
+                                  // KALAN süreydi (hedef 4 sa iken "Günlük hedef:
+                                  // 1h 25m"). Mağaza karesinde ölçüldü.
+                                  : '${AppLocalizations.of(context).statsHedefeKalan}: '
                                         '${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,

@@ -215,4 +215,18 @@ void main() {
       reason: 'Açılış bir kutlama anı değildir.',
     );
   });
+
+  // 🔴 WP-854: alt satırın etiketi "Günlük hedef" idi ama değer KALAN süreydi
+  // (hedef 4 sa, kayıt 2 sa 35 dk iken "Günlük hedef: 1h 25m"). Mağaza
+  // karesinde ölçüldü; etiket artık değerin ne olduğunu söylüyor.
+  testWidgets('kalan süre "Hedefe kalan" etiketiyle yazılır', (tester) async {
+    final controller = StreamController<List<StudySession>>();
+    addTearDown(controller.close);
+    await _pumpGoalCard(tester, controller.stream);
+    controller.add([_session('s1', 2 * 3600 + 35 * 60)]);
+    await _settleAfterEmission(tester);
+
+    expect(find.textContaining('Hedefe kalan: 1sa 25dk'), findsOneWidget);
+    expect(find.textContaining('Günlük hedef: 1sa 25dk'), findsNothing);
+  });
 }
