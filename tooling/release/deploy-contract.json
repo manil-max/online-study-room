@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0142",
+  "local_migration_head": "0143",
   "staging": {
-    "migration_head": "0142",
-    "deploy_enabled": false,
+    "migration_head": "0143",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "RE-LOCKED 2026-09-16 after the 0142 staging apply SUCCEEDED: run 35090616502, post-check printed 0142|0142|0142. Dry-run 35090284985 was green first, listed only 0142_google_display_name.sql and replayed 72 pgTAP files / 1052 assertions (068 included) in CI."
+    "hold_reason": "OPEN 2026-09-18 for 0143 (user_theme_prefs, WP-838). Owner order: 'her seyi yap', overnight round. New owner-locked table only; public.profiles is NOT touched and there is no DML. pgTAP 069 was written but NOT run locally (no Docker on this host); first real replay is the CI validate job of the staging dry-run. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0142",
