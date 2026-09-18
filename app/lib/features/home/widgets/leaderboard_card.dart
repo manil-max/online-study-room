@@ -499,22 +499,45 @@ class _Row extends StatelessWidget {
               SizedBox(width: dense ? 6 : 8),
               if (!isCompact) ...[
                 Expanded(
-                  child: Text(
-                    isMe
-                        ? AppLocalizations.of(context).commonSenEtiketi(name)
-                        : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    // WP-662: sıkıştırılmış satırda ad da küçülür; yoksa yazı
-                    // ölçeği 1.6'da tek başına satırı 34 px'in üstüne çıkarır.
-                    style:
-                        (dense
-                                ? theme.textTheme.bodySmall
-                                : theme.textTheme.bodyMedium)
-                            ?.copyWith(
-                              fontWeight: isMe ? FontWeight.w600 : null,
-                              color: isMe ? theme.colorScheme.primary : null,
-                            ),
+                  // 🔴 WP-857: yarım genişlikli sıralama kartında kendi adın
+                  // "Deniz (s…" diye kesiliyordu (mağaza karesinde ölçüldü).
+                  // "(sen)" eki sığmıyorsa düşer: satır zaten vurgu rengi ve
+                  // kalın yazıyla "bu sensin" diyor; kesik ek hiçbir şey
+                  // söylemiyor, ad da kısalıyordu.
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // WP-662: sıkıştırılmış satırda ad da küçülür; yoksa yazı
+                      // ölçeği 1.6'da tek başına satırı 34 px'in üstüne çıkarır.
+                      final style =
+                          (dense
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                                fontWeight: isMe ? FontWeight.w600 : null,
+                                color: isMe ? theme.colorScheme.primary : null,
+                              );
+                      var label = name;
+                      if (isMe) {
+                        final tagged = AppLocalizations.of(
+                          context,
+                        ).commonSenEtiketi(name);
+                        final painter = TextPainter(
+                          text: TextSpan(text: tagged, style: style),
+                          maxLines: 1,
+                          textDirection: Directionality.of(context),
+                          textScaler: MediaQuery.textScalerOf(context),
+                        )..layout();
+                        final fits = painter.width <= constraints.maxWidth;
+                        painter.dispose();
+                        if (fits) label = tagged;
+                      }
+                      return Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: style,
+                      );
+                    },
                   ),
                 ),
                 if (alphaWins > 0) ...[

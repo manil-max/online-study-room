@@ -19,6 +19,7 @@
 // gerçekten sığdığını ölçer, böylece düzeltme "3 yerine 2 gösterelim" gibi bir
 // ÜRÜN kararına dönüşmeden doğrulanabilir.
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `Override` tipi ana pakette değil (Riverpod 3).
 import 'package:flutter_riverpod/misc.dart';
@@ -356,6 +357,45 @@ void main() {
                     '${rows.first.toStringAsFixed(2)} px) ama kart '
                     '${rows.length} satır paketledi.',
               );
+            }
+          });
+        }
+      }
+    }
+  });
+
+  // 🔴 WP-857: dar hücrede "(sen)" eki kendi adını kesiyordu ("Deniz (s…",
+  // mağaza karesi). Ölçüm: çizilen HİÇBİR "(sen)" metni kısaltılmaz; ek
+  // sığmıyorsa hiç yazılmaz ve ad tek başına kalır.
+  group('WP-857 — "(sen)" eki kesik çizilmez', () {
+    for (final screen in _screens) {
+      for (final box in _boxes) {
+        for (final scale in _textScales) {
+          testWidgets('${screen.name} · ${box.name} · ×$scale', (tester) async {
+            tester.view.physicalSize = const Size(1200, 2400);
+            tester.view.devicePixelRatio = 1;
+            addTearDown(tester.view.reset);
+            await _pump(tester, screen: screen, box: box, textScale: scale);
+
+            final paragraphs = tester
+                .renderObjectList<RenderParagraph>(
+                  find.descendant(
+                    of: find.byKey(_cardKey),
+                    matching: find.byType(RichText),
+                  ),
+                )
+                .toList();
+            final mine = paragraphs.where(
+              (p) => p.text.toPlainText().contains('Üye 1'),
+            );
+            for (final p in mine) {
+              if (p.text.toPlainText().contains('(sen)')) {
+                expect(
+                  p.didExceedMaxLines,
+                  isFalse,
+                  reason: '"(sen)" eki kesik çizildi: ${p.text.toPlainText()}',
+                );
+              }
             }
           });
         }
