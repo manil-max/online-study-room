@@ -1,5 +1,6 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
@@ -208,9 +209,8 @@ class LeaderboardCard extends ConsumerWidget {
             return null;
           }
 
-          final ranked =
-              todayByUser.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value));
+          final ranked = todayByUser.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
 
           // WP-253: üye başına seri rozeti kaldırıldı — bkz. class_stats_view.
           // Bu karttaki ateş ikonu artık YALNIZ grup hedef serisini
@@ -255,45 +255,45 @@ class LeaderboardCard extends ConsumerWidget {
               cardLabelValueRow(
                 context,
                 child: Row(
-                children: [
-                  Icon(
-                    Icons.flag_outlined,
-                    size: 15,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  // 🔴 WP-659 — bu etiket çıplak `Text` idi ve `Spacer` ile
-                  // birlikte satırı taşırıyordu: yazı ölçeği 1.3'te
-                  // `RenderFlex overflowed by 70–78 pixels on the right`.
-                  // Yani "Grup hedefi" yazısının sağı, rozet ve yüzde
-                  // KIRPILIYORDU — kaydırıcı yok, kullanıcı hiç göremiyor.
-                  // Kusuru bu turda liderlik kartının satır aritmetiğini
-                  // ölçerken yeni test yakaladı (1.0 ölçeğinde görünmüyor).
-                  Flexible(
-                    child: Text(
-                      AppLocalizations.of(context).homeGrupHedefi,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  children: [
+                    Icon(
+                      Icons.flag_outlined,
+                      size: 15,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    // 🔴 WP-659 — bu etiket çıplak `Text` idi ve `Spacer` ile
+                    // birlikte satırı taşırıyordu: yazı ölçeği 1.3'te
+                    // `RenderFlex overflowed by 70–78 pixels on the right`.
+                    // Yani "Grup hedefi" yazısının sağı, rozet ve yüzde
+                    // KIRPILIYORDU — kaydırıcı yok, kullanıcı hiç göremiyor.
+                    // Kusuru bu turda liderlik kartının satır aritmetiğini
+                    // ölçerken yeni test yakaladı (1.0 ölçeğinde görünmüyor).
+                    Flexible(
+                      child: Text(
+                        AppLocalizations.of(context).homeGrupHedefi,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // Rozet koşulsuz çizilir (WP-481 sahip kararı): seri 0 iken
-                  // kaybolan gösterge "veri yok" ile "seri yok"u karıştırıyordu.
-                  GoalStreakBadge(
-                    scope: streakScope,
-                    size: GoalStreakFlameSize.compact,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '%${(groupGoalPct * 100).round()}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    const Spacer(),
+                    // Rozet koşulsuz çizilir (WP-481 sahip kararı): seri 0 iken
+                    // kaybolan gösterge "veri yok" ile "seri yok"u karıştırıyordu.
+                    GoalStreakBadge(
+                      scope: streakScope,
+                      size: GoalStreakFlameSize.compact,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      '%${(groupGoalPct * 100).round()}',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 6),
@@ -464,136 +464,227 @@ class _Row extends StatelessWidget {
             ? () => openMemberProfile(context, member!)
             : null,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: dense ? 2 : 4,
-            horizontal: 4,
-          ),
+          padding: EdgeInsets.symmetric(vertical: dense ? 2 : 4, horizontal: 4),
           // WP-676 / SPEC KURAL 2.2: ad ↔ süre bir etiket–değer satırıdır.
           // Masaüstünde 496'da durur; tıklama/hover hedefi ([InkWell]) tam
           // genişlikte kalır, yani hiçbir etkileşim daralmaz.
           child: cardLabelValueRow(
             context,
             child: Row(
-            children: [
-              SizedBox(
-                width: dense ? 16 : 22,
-                child: Text(
-                  '$rank',
-                  maxLines: 1,
-                  style:
-                      (dense
-                              ? theme.textTheme.labelMedium
-                              : theme.textTheme.titleSmall)
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-              ),
-              if (member != null)
-                LiveCrownedAvatar(
-                  userId: member!.id,
-                  displayName: name,
-                  avatarUrl: member!.avatarUrl,
-                  radius: dense ? 8 : 14,
-                )
-              else
-                CrownedAvatar(displayName: name, radius: dense ? 8 : 14),
-              SizedBox(width: dense ? 6 : 8),
-              if (!isCompact) ...[
-                Expanded(
-                  // 🔴 WP-857: yarım genişlikli sıralama kartında kendi adın
-                  // "Deniz (s…" diye kesiliyordu (mağaza karesinde ölçüldü).
-                  // "(sen)" eki sığmıyorsa düşer: satır zaten vurgu rengi ve
-                  // kalın yazıyla "bu sensin" diyor; kesik ek hiçbir şey
-                  // söylemiyor, ad da kısalıyordu.
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // WP-662: sıkıştırılmış satırda ad da küçülür; yoksa yazı
-                      // ölçeği 1.6'da tek başına satırı 34 px'in üstüne çıkarır.
-                      final style =
-                          (dense
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                                fontWeight: isMe ? FontWeight.w600 : null,
-                                color: isMe ? theme.colorScheme.primary : null,
-                              );
-                      var label = name;
-                      if (isMe) {
-                        final tagged = AppLocalizations.of(
-                          context,
-                        ).commonSenEtiketi(name);
-                        final painter = TextPainter(
-                          text: TextSpan(text: tagged, style: style),
-                          maxLines: 1,
-                          textDirection: Directionality.of(context),
-                          textScaler: MediaQuery.textScalerOf(context),
-                        )..layout();
-                        final fits = painter.width <= constraints.maxWidth;
-                        painter.dispose();
-                        if (fits) label = tagged;
-                      }
-                      return Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: style,
-                      );
-                    },
+              children: [
+                SizedBox(
+                  width: dense ? 16 : 22,
+                  child: Text(
+                    '$rank',
+                    maxLines: 1,
+                    style:
+                        (dense
+                                ? theme.textTheme.labelMedium
+                                : theme.textTheme.titleSmall)
+                            ?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                   ),
                 ),
-                if (alphaWins > 0) ...[
-                  const Text('🐺', style: TextStyle(fontSize: 12)),
-                  const SizedBox(width: 2),
+                if (member != null)
+                  LiveCrownedAvatar(
+                    userId: member!.id,
+                    displayName: name,
+                    avatarUrl: member!.avatarUrl,
+                    radius: dense ? 8 : 14,
+                  )
+                else
+                  CrownedAvatar(displayName: name, radius: dense ? 8 : 14),
+                SizedBox(width: dense ? 6 : 8),
+                if (!isCompact) ...[
+                  Expanded(
+                    // 🔴 WP-857: yarım genişlikli sıralama kartında kendi adın
+                    // "Deniz (s…" diye kesiliyordu (mağaza karesinde ölçüldü).
+                    // "(sen)" eki sığmıyorsa düşer: satır zaten vurgu rengi ve
+                    // kalın yazıyla "bu sensin" diyor; kesik ek hiçbir şey
+                    // söylemiyor, ad da kısalıyordu.
+                    child: Builder(
+                      builder: (context) {
+                        // WP-662: sıkıştırılmış satırda ad da küçülür; yoksa yazı
+                        // ölçeği 1.6'da tek başına satırı 34 px'in üstüne çıkarır.
+                        final style =
+                            (dense
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                                  fontWeight: isMe ? FontWeight.w600 : null,
+                                  color: isMe
+                                      ? theme.colorScheme.primary
+                                      : null,
+                                );
+                        Text line(String text) => Text(
+                          text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: style,
+                        );
+                        if (!isMe) return line(name);
+                        // `LayoutBuilder` DEĞİL: satır içsel yükseklikle
+                        // ölçülüyor (WP-662) ve LayoutBuilder içsel boyut
+                        // vermez — ilk denemede 20 test onaylamayla düştü.
+                        return FullLabelOrFallback(
+                          full: line(
+                            AppLocalizations.of(context).commonSenEtiketi(name),
+                          ),
+                          fallback: line(name),
+                        );
+                      },
+                    ),
+                  ),
+                  if (alphaWins > 0) ...[
+                    const Text('🐺', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 2),
+                    Text(
+                      '$alphaWins',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
-                    '$alphaWins',
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    formatHuman(seconds),
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  formatHuman(seconds),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ] else
-                // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
-                // küçülerek taşmayı önler.
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (alphaWins > 0) ...[
-                            const Text('🐺', style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 2),
+                ] else
+                  // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
+                  // küçülerek taşmayı önler.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (alphaWins > 0) ...[
+                              const Text('🐺', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 2),
+                              Text(
+                                '$alphaWins',
+                                style: theme.textTheme.labelSmall,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
                             Text(
-                              '$alphaWins',
-                              style: theme.textTheme.labelSmall,
+                              formatHuman(seconds),
+                              maxLines: 1,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                            const SizedBox(width: 6),
                           ],
-                          Text(
-                            formatHuman(seconds),
-                            maxLines: 1,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// 🔴 WP-857: [full] genişliğe TAM sığıyorsa onu, sığmıyorsa [fallback]i çizer.
+///
+/// `LayoutBuilder` ile yazılamaz: sıralama satırı içsel yükseklikle ölçülüyor
+/// ve LayoutBuilder içsel boyut desteklemez. Bu nesne iki çocuğu da gerçek
+/// kısıtla düzenler, hangisinin çizileceğine `full`un en geniş içsel
+/// genişliğine bakarak karar verir; içsel ölçümleri de kendisi yanıtlar.
+class FullLabelOrFallback extends MultiChildRenderObjectWidget {
+  FullLabelOrFallback({
+    super.key,
+    required Widget full,
+    required Widget fallback,
+  }) : super(children: [full, fallback]);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderFullOrFallback();
+}
+
+class _FullOrFallbackParentData extends ContainerBoxParentData<RenderBox> {}
+
+class _RenderFullOrFallback extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _FullOrFallbackParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _FullOrFallbackParentData> {
+  bool _useFull = true;
+
+  RenderBox get _full => firstChild!;
+  RenderBox get _fallback => lastChild!;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _FullOrFallbackParentData) {
+      child.parentData = _FullOrFallbackParentData();
+    }
+  }
+
+  bool _fits(double maxWidth) =>
+      _full.getMaxIntrinsicWidth(double.infinity) <= maxWidth;
+
+  RenderBox _pick(double maxWidth) =>
+      maxWidth.isFinite && !_fits(maxWidth) ? _fallback : _full;
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      _fallback.getMinIntrinsicWidth(height);
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      _full.getMaxIntrinsicWidth(height);
+
+  @override
+  double computeMinIntrinsicHeight(double width) =>
+      _pick(width).getMinIntrinsicHeight(width);
+
+  @override
+  double computeMaxIntrinsicHeight(double width) =>
+      _pick(width).getMaxIntrinsicHeight(width);
+
+  @override
+  double? computeDistanceToActualBaseline(TextBaseline baseline) =>
+      (_useFull ? _full : _fallback).getDistanceToActualBaseline(baseline);
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) =>
+      _pick(constraints.maxWidth).getDryLayout(constraints);
+
+  @override
+  void performLayout() {
+    _useFull = !(constraints.maxWidth.isFinite && !_fits(constraints.maxWidth));
+    // Çizilmeyen tam etiket genişlik sınırı OLMADAN düzenlenir: ağaçta
+    // "kısaltılmış (sen)" diye bir paragraf hiç oluşmasın (ölçümler ve
+    // erişilebilirlik ağacı gerçekte çizileni görsün).
+    _full.layout(
+      _useFull ? constraints : constraints.copyWith(maxWidth: double.infinity),
+      parentUsesSize: true,
+    );
+    _fallback.layout(constraints, parentUsesSize: true);
+    size = (_useFull ? _full : _fallback).size;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    context.paintChild(_useFull ? _full : _fallback, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      (_useFull ? _full : _fallback).hitTest(result, position: position);
+
+  @override
+  void visitChildrenForSemantics(RenderObjectVisitor visitor) {
+    visitor(_useFull ? _full : _fallback);
   }
 }
