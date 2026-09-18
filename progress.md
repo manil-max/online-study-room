@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-833** | WP-831…833 kartları aşağıda |
+| Son ayrılan WP | **WP-859** | beta-v8704: WP-857…WP-859. ⚠️ WP-833 iki kez kullanıldı: Google yayın kapısı (bu oturum) ve Store logosu (paralel oturum) — ikisi ayrı işler |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -47,7 +47,13 @@ idi ve tam kapı 20 kırmızıyla durdurdu: satır içsel yükseklikle ölçül�
 LayoutBuilder içsel boyut vermez — uygulamada da aynı onaylama. `FullLabelOrFallback`
 render nesnesiyle çözüldü (içsel ölçümü destekler). Test önce 27 ölçümün 5'inde kırmızıydı.
 Kapı: 22 yeşil + `release-defines` 415s yeşil. **beta-v8703** run `35377314763`.
-Açık: `class_stats_view.dart:1135` aynı "(sen)" etiketini kullanıyor, aynı düzeltme bekliyor.
+İstatistik grup listesi de `FullLabelOrFallback`e geçti (`27643457`).
+
+**WP-858:** rekorlar kartı 32×26'da dar telefonda 211 px → 0 kart-içi kaydırma (`StudyRecords`
+opt-in `dense`/`maxTiles`; öncelik Toplam → Rekor seri → Aktif gün → En verimli gün → En çok ders).
+Büyük yazıda kayıt düşmez, kart kayar. **WP-859:** iki sayaç testi İstanbul gününün ilk 10/20
+dakikasında atlanır (00:01'de kırmızı, 00:13'te yeşil; pencere ölçüme yetmiyor).
+Kapı: 22 yeşil + `release-defines` 463s yeşil. **beta-v8704** run `35397032160`.
 **Bilinen borç (dokunulmadı):** dar hücrede sıralamada
 "Deniz (s…" kısalıyor; rekorlar kartı yoğunluğu (WP-836 envanteri).
 
