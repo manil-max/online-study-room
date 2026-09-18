@@ -39,3 +39,19 @@ DateTime agoWithinIstanbulToday(Duration desired, {DateTime? now}) {
   final t = now ?? DateTime.now();
   return t.subtract(backWithinIstanbulToday(desired, now: t));
 }
+
+/// 🔴 İstanbul gününün ilk [window] kadarında mıyız?
+///
+/// [backWithinIstanbulToday] geriye gidişi bugüne sığdırır; ama bazı testlerin
+/// iddiası pencerenin EN AZ belli bir uzunlukta olmasına dayanır (ör. 15 dk'lık
+/// canlı kısım hedefi aşsın; ya da canlı süre sapma payından büyük olsun ki
+/// "iki kez sayıldı" ayırt edilebilsin). Gün yeni başladıysa pencere o kadar
+/// uzun OLAMAZ ve test hatasız kodu suçlar — 2026-09-19 00:01'de tam kapıda
+/// iki test böyle kırmızıya düştü, 00:13'te aynı kod yeşildi.
+/// Bu testler o aralıkta ölçüm yapamaz; açık gerekçeyle atlanır.
+String? skipNearIstanbulMidnight(Duration window, {DateTime? now}) {
+  final since = sinceIstanbulMidnight(now ?? DateTime.now());
+  if (since >= window) return null;
+  return 'İstanbul günü yeni başladı (${since.inSeconds} sn); '
+      'test en az ${window.inMinutes} dk geçmiş gün ister';
+}

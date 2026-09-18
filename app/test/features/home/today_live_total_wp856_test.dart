@@ -363,50 +363,54 @@ void main() {
     expect(find.textContaining('%'), findsNothing);
   });
 
-  testWidgets('canlı kısımla eşik geçilince kutlama BİR kez oynar', (
-    tester,
-  ) async {
-    final haptics = _recordHaptics(tester);
-    final timer = _PushTimer(const StudyTimerState());
-    final container = await _pump(
-      tester,
-      // Hedefin 10 dk altı kayıtlı.
-      sessions: Stream.value([_session('r1', _goalSeconds - 600)]),
-      timer: timer,
-      withTimerCard: false,
-    );
-    await _settle(tester);
-    expect(find.byIcon(Icons.check_circle), findsNothing);
-    expect(haptics, isEmpty);
-
-    // Sayaç başladı; 15 dk'lık canlı kısım eşiği aşıyor.
-    timer.push(
-      StudyTimerState(
-        isRunning: true,
-        startedAt: DateTime.now().subtract(
-          backWithinIstanbulToday(const Duration(minutes: 15)),
-        ),
-      ),
-    );
-    await _settle(tester);
-    expect(
-      container.read(todayLiveTotalProvider)!.seconds,
-      greaterThanOrEqualTo(_goalSeconds),
-    );
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
-    expect(haptics, ['HapticFeedbackType.mediumImpact']);
-
-    // Hedef üstünde sağlayıcı birkaç kez yenilenir (gerçek saat ilerlesin ki
-    // değer gerçekten değişsin): kutlama tekrar OYNAMAZ.
-    for (var i = 0; i < 3; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+  testWidgets(
+    'canlı kısımla eşik geçilince kutlama BİR kez oynar',
+    (tester) async {
+      final haptics = _recordHaptics(tester);
+      final timer = _PushTimer(const StudyTimerState());
+      final container = await _pump(
+        tester,
+        // Hedefin 10 dk altı kayıtlı.
+        sessions: Stream.value([_session('r1', _goalSeconds - 600)]),
+        timer: timer,
+        withTimerCard: false,
       );
-      await tester.pump(const Duration(seconds: 61));
-      await tester.pump();
-    }
-    expect(haptics, hasLength(1), reason: 'Her yenilemede kutlama olmaz.');
-  });
+      await _settle(tester);
+      expect(find.byIcon(Icons.check_circle), findsNothing);
+      expect(haptics, isEmpty);
+
+      // Sayaç başladı; 15 dk'lık canlı kısım eşiği aşıyor.
+      timer.push(
+        StudyTimerState(
+          isRunning: true,
+          startedAt: DateTime.now().subtract(
+            backWithinIstanbulToday(const Duration(minutes: 15)),
+          ),
+        ),
+      );
+      await _settle(tester);
+      expect(
+        container.read(todayLiveTotalProvider)!.seconds,
+        greaterThanOrEqualTo(_goalSeconds),
+      );
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(haptics, ['HapticFeedbackType.mediumImpact']);
+
+      // Hedef üstünde sağlayıcı birkaç kez yenilenir (gerçek saat ilerlesin ki
+      // değer gerçekten değişsin): kutlama tekrar OYNAMAZ.
+      for (var i = 0; i < 3; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+        );
+        await tester.pump(const Duration(seconds: 61));
+        await tester.pump();
+      }
+      expect(haptics, hasLength(1), reason: 'Her yenilemede kutlama olmaz.');
+      // Gün başında pencere kısalır ve iddia ölçülemez (bkz.
+      // `skipNearIstanbulMidnight`); o aralıkta atlanır, gün içinde tam koşar.
+    },
+    skip: skipNearIstanbulMidnight(const Duration(minutes: 20)) != null,
+  );
 
   testWidgets('eşik sayaç çalışırken ZAMANLA geçilirse de bir kez kutlanır', (
     tester,
