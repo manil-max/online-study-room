@@ -99,6 +99,20 @@ YOUR HOME SCREEN · CLOCK AND TASKS · WORKS OFFLINE · ACCOUNT. Yasal bağlant�
 Türkçe mağaza sayfasında **Türkçe arayüzlü** ekran görüntüleri görünmeli. Şu an yüklü olanlar
 İngilizce ise Play onları Türkçe sayfada da gösterir; bu, TR kullanıcıda ilk izlenimi düşürür.
 
+**Üretildi (v86, WP-839).** Kareler uygulamanın **gerçek** ekranlarından, Türkçe arayüzle ve
+yeni karşılama temasıyla (`campfire_day`) çekiliyor; böylece mağazadaki görsel ile uygulamanın
+kendisi tutarlı oluyor. Yeniden üretmek için (app/ içinde):
+
+```
+STORE_SHOT_DIR=<klasör> flutter test test/marketing/store_shots_wp839_test.dart   --dart-define-from-file=env.json --tags=golden
+```
+
+Çıkan dosyalar 1080x1920: `01-ana-ekran.png` (Süreni ölç, panonu kendin kur),
+`02-istatistik.png` (İlerlemeni gör), `03-tema.png` (Kendine göre ayarla).
+
+🔴 Sınır: kareler **boş hesapla** çekiliyor (sayaç 0s, grafikler boş). Gerçek veriyle daha
+çekici olurdu; bunun için harness'a örnek oturum yükleyen bir kurulum gerekir — ayrı WP.
+
 Önerilen 5 kare (sıra önemlidir, ilk iki kare indirme kararını verir):
 1. Sayaç çalışırken ana ekran.
 2. Kamp ateşi — grupta çalışan üyeler.
