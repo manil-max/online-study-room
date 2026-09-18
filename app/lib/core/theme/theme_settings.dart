@@ -424,6 +424,11 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
         await _applyRemote(remote, remoteAt);
         return;
       }
+      // 🔴 WP-864: cihazdaki tercih BAŞKA bir hesaba aitse ve bu hesabın
+      // sunucuda kaydı yoksa yukarı hiçbir şey itilmez. Eskiden A'nın teması,
+      // kaydı olmayan B'nin hesabına "B'nin ilk teması" diye yazılıyordu. B
+      // bir şey seçtiğinde damga B'ye geçer ve normal akış başlar.
+      if (owner != null && owner != gateway.userId) return;
       await _pushNow();
     } finally {
       _syncing = false;
@@ -450,12 +455,19 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     // zamanlayıcı" diye haklı olarak hata sayar.
     if (!ref.read(themePrefsGatewayProvider).isSignedIn) return;
     _pushTimer?.cancel();
-    _pushTimer = Timer(pushDebounce, () => unawaited(_pushNow()));
+    // WP-864: bekleyen itiş KURULDUĞU hesaba bağlıdır. Bekleme dolmadan hesap
+    // değişirse eski hesabın teması yeni hesaba yazılmaz.
+    final scheduledFor = ref.read(themePrefsGatewayProvider).userId;
+    _pushTimer = Timer(
+      pushDebounce,
+      () => unawaited(_pushNow(expectedUserId: scheduledFor)),
+    );
   }
 
-  Future<void> _pushNow() async {
+  Future<void> _pushNow({String? expectedUserId}) async {
     final gateway = ref.read(themePrefsGatewayProvider);
     if (!gateway.isSignedIn) return;
+    if (expectedUserId != null && gateway.userId != expectedUserId) return;
     final updatedAt = _localUpdatedAt() ?? DateTime.now().toUtc();
     try {
       await gateway.push(state.toRemoteMap(updatedAt));

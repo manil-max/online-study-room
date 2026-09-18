@@ -200,4 +200,92 @@ void main() {
 
     expect(gateway.rows['user-a']!['family'], 'deep_amoled');
   });
+
+  // WP-864: gecikmeli itiş (800 ms) kurulduğu hesaba bağlı değildi. A temayı
+  // değiştirip bekleme dolmadan çıkarsa ve B girerse, bekleyen itiş B'nin
+  // oturumuyla A'nın temasını B'nin hesabına yazıyordu (avcı İDDİA 2).
+  test('bekleyen itiş hesap değişince eski hesabın temasını YENİ hesaba yazmaz',
+      () async {
+    final gateway = _AccountsGateway({
+      'user-b': _row('forest_study', DateTime.utc(2026, 1, 1)),
+    })..currentUser = 'user-a';
+    addTearDown(gateway.dispose);
+    SharedPreferences.setMockInitialValues({
+      'theme_family': 'nordic_snow',
+      'theme_palette': 'navy',
+      'theme_color_source': 'family',
+      'theme_mode': 'dark',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        themePrefsGatewayProvider.overrideWithValue(gateway),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(themeSettingsProvider);
+    await _drain();
+    // A değiştirir ve bekleme DOLMADAN hesap B'ye geçer.
+    container.read(themeSettingsProvider.notifier).setFamily('deep_amoled');
+    gateway.signOut();
+    gateway.signIn('user-b');
+    await Future<void>.delayed(
+      ThemeSettingsNotifier.pushDebounce + const Duration(milliseconds: 120),
+    );
+    await _drain();
+
+    expect(
+      gateway.pushed
+          .where((p) => p.user == 'user-b')
+          .map((p) => p.prefs['family']),
+      isNot(contains('deep_amoled')),
+      reason: "A için kurulmuş bekleyen itiş B'nin hesabına yazdı",
+    );
+    expect(gateway.rows['user-b']!['family'], 'forest_study');
+  });
+
+  // WP-864: B'nin sunucuda HİÇ kaydı yokken A'nın cihazdaki teması B'nin
+  // hesabına "B'nin ilk teması" diye yazılmamalı. B bu cihazda hiçbir şey
+  // seçmedi; cihazdaki tema A'nın.
+  test('sunucu kaydı olmayan B, cihazdaki A temasını kendi hesabına almaz',
+      () async {
+    final gateway = _AccountsGateway({})..currentUser = 'user-a';
+    addTearDown(gateway.dispose);
+    SharedPreferences.setMockInitialValues({
+      'theme_family': 'nordic_snow',
+      'theme_palette': 'navy',
+      'theme_color_source': 'family',
+      'theme_mode': 'dark',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        themePrefsGatewayProvider.overrideWithValue(gateway),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(themeSettingsProvider);
+    await _drain();
+    container.read(themeSettingsProvider.notifier).setFamily('deep_amoled');
+    await Future<void>.delayed(
+      ThemeSettingsNotifier.pushDebounce + const Duration(milliseconds: 80),
+    );
+    await _drain();
+    gateway.signOut();
+    gateway.signIn('user-b');
+    await Future<void>.delayed(
+      ThemeSettingsNotifier.pushDebounce + const Duration(milliseconds: 120),
+    );
+    await _drain();
+
+    expect(
+      gateway.pushed.where((p) => p.user == 'user-b').map((p) => p.prefs['family']),
+      isNot(contains('deep_amoled')),
+      reason: "A'nın teması, kaydı olmayan B'nin hesabına ilk tema diye yazıldı",
+    );
+  });
 }
