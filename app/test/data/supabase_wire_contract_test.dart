@@ -143,6 +143,44 @@ void main() {
       expect(summary!['lifetime_seconds'], 3600);
     });
 
+    // 🔴 WP-845: `0143` tema tercihini sunucuya tasidi ama disa aktarim o
+    // tabloyu okumuyordu; kullanicinin kendi adlandirdigi ozel temalar
+    // "verilerimi indir" ciktisinda yoktu.
+    test('disa aktarim sunucudaki tema tercihini ve ozel temalari tasir',
+        () async {
+      wire.respond('profiles', {
+        'id': 'u1',
+        'display_name': 'Ada',
+        'daily_goal_minutes': 60,
+        'animal': 'fox',
+        'monthly_report_opt_in': false,
+        'created_at': '2026-01-01T00:00:00Z',
+      });
+      wire.respond('user_theme_prefs', {
+        'prefs': {
+          'family': 'campfire_day',
+          'customThemes': [
+            {'id': 'custom_1', 'name': 'Sabah'},
+          ],
+          'updatedAt': '2026-09-18T00:00:00Z',
+        },
+      });
+
+      final repo = SupabaseDataExportRepository(wire.client());
+      final bundle = await repo.buildExport(
+        userId: 'u1',
+        range: DataExportRange.all,
+      );
+
+      final tables = wire.calls.map((c) => c.table).whereType<String>();
+      expect(tables, contains('user_theme_prefs'),
+          reason: 'tema tablosu kabloda okunmali');
+      final theme = bundle.payload['theme_prefs'] as Map?;
+      expect(theme, isNotNull);
+      expect(theme!['family'], 'campfire_day');
+      expect((theme['customThemes'] as List).single['name'], 'Sabah');
+    });
+
     test('disa aktarim e-posta ve token sizdirmaz', () async {
       wire.respond('profiles', {
         'id': 'u1',

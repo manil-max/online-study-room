@@ -66,6 +66,26 @@ class SupabaseDataExportRepository implements DataExportRepository {
       achievements = const [];
     }
 
+    // 🔴 WP-845: `0143` (WP-838) tema tercihini ve kullanıcının kendi
+    // oluşturduğu temaları sunucuya taşıdı, ama bu dışa aktarma o tabloyu
+    // okumuyordu — kullanıcının kendi adlandırdığı özel temalar, "verilerimi
+    // indir" çıktısında hiç görünmüyordu. Veri hakkı gereği sunucuda tutulan
+    // kişisel içerik dışa aktarmada da bulunmalı. Satır yoksa (hiç senkron
+    // olmamış kullanıcı) alan `null` kalır; okuma hatası dışa aktarmayı
+    // düşürmez, kardeş alanlar gibi isteğe bağlıdır.
+    Map<String, dynamic>? themePrefs;
+    try {
+      final row = await _client
+          .from('user_theme_prefs')
+          .select('prefs')
+          .eq('user_id', userId)
+          .maybeSingle();
+      final prefs = row?['prefs'];
+      if (prefs is Map) themePrefs = Map<String, dynamic>.from(prefs);
+    } catch (_) {
+      themePrefs = null;
+    }
+
     int? xp;
     try {
       final gp = await _client
@@ -96,6 +116,7 @@ class SupabaseDataExportRepository implements DataExportRepository {
       'subjects': [for (final s in subjects) s.toMap()],
       'sessions': [for (final s in sessions) s.toMap()],
       'achievements': achievements,
+      'theme_prefs': themePrefs,
       'range': range.name,
     };
 
