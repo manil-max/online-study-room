@@ -17,12 +17,28 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-850** | v87 turu: WP-844…WP-850 kartları aşağıda |
+| Son ayrılan WP | **WP-855** | beta-v8702 turu: WP-851…WP-855 aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### beta-v8702 turu (2026-09-18, sahip: "devam et, durma")
+
+| WP | İş | Durum |
+|---|---|---|
+| WP-851 | `--full` T3 kapısı `release-defines`: Flutter paketi release define'larıyla (githubStable + windows). İlk koşum 487s yeşil | Kodda doğrulandı |
+| WP-852 | Widget sekmesindeki dört izin satırı → durum özeti + "İzinler ekranını aç"; geri alma ipucu İzinler ekranına taşındı; 12 ölü l10n anahtarı silindi | Otomatik test geçti |
+| WP-853 | Mağaza kareleri örnek hesapla (5 kare). `formatHuman` etkin dili okuduğu için harness `setActiveAppLocale('tr')` veriyor | Kareler masaüstünde |
+| WP-854 | Hedef kartında kalan süre "Günlük hedef:" etiketiyle yazılıyordu → "Hedefe kalan:" (mağaza karesinde ölçüldü) | Otomatik test geçti |
+| WP-855 | Karşılama teması Görünüm ızgarasında 16.'ydı → ilk sırada; `kThemePresets`/`themePresetById` yedeği dokunulmadı | Otomatik test geçti |
+
+Kapı: 22 kapı · 0 kırmızı · 1 atlandı + `release-defines` 412s yeşil.
+**Bilinen borç (dokunulmadı):** sayaç kartı "Bugün" canlı sayıyı gösterirken hedef/bugün
+kartları yalnız kaydedilmişi gösteriyor (aynı ekranda %84 ↔ %65); dar hücrede sıralamada
+"Deniz (s…" kısalıyor; rekorlar kartı yoğunluğu (WP-836 envanteri).
+
 
 ### v87 turu — GitHub beta kanalı + izinler (2026-09-18)
 
