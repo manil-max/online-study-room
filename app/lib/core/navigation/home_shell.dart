@@ -18,6 +18,7 @@ import '../../features/classroom/widgets/class_switcher.dart';
 import '../../features/clock/clock_screen.dart';
 import '../../features/desktop/desktop_home_shell.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/permissions/notification_auto_ask.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
@@ -127,6 +128,10 @@ class HomeShell extends ConsumerWidget {
     ref.watch(taskWidgetBridgeStarterProvider);
     // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).
     ref.watch(reminderSyncListenerProvider);
+    // WP-848 (sahip): bildirim izninin sistem penceresi kabuğa ilk girişte
+    // bir kez, kendiliğinden açılır (yalnız Android 13+, reddedildiyse bir
+    // daha kendiliğinden sorulmaz). Kurallar `notification_auto_ask.dart`da.
+    ref.watch(notificationAutoAskProvider);
 
     // 🔴 WP-682 — ODUL BANNERI ARTIK KABUGUN USTUNE BINMIYOR.
     //

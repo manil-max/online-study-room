@@ -10,6 +10,7 @@ import '../../core/prefs/app_prefs.dart';
 import '../auth/entry_desktop_layout.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import '../classroom/widgets/class_switcher.dart';
+import '../permissions/notification_auto_ask.dart';
 import 'onboarding_prefs.dart';
 
 /// Masaustu olcum tutamaklari (WP-680): kaynakta `maxWidth: 600` yazmasi kanit
@@ -74,6 +75,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _error = null;
     });
     try {
+      // WP-848: pencere burada açıldıysa kabuk onu bir daha kendiliğinden
+      // açmaz — "İzin verme" diyen kullanıcıya aynı soru ikinci kez gelmesin.
+      await markNotificationAutoAskDone(ref.read(sharedPreferencesProvider));
       await ReminderNotificationService.instance.requestPermissionIfNeeded();
       if (mounted) _next();
     } catch (_) {

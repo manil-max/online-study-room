@@ -11,6 +11,7 @@ import '../../data/providers/notification_providers.dart';
 import '../../data/providers/push_notification_providers.dart';
 import '../../data/models/push_notification.dart';
 import '../../l10n/app_localizations.dart';
+import '../permissions/permissions_screen.dart';
 
 /// WP-683 — masaüstünde bir bildirim bloğunun genişlik tavanı.
 ///
@@ -361,7 +362,14 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-/// Cihaz izin durumunu açıkça gösterir (§WP-36 kabul: sınırlar görünür olmalı).
+/// Cihaz izinlerine giden bağlantı kartı.
+///
+/// 🔴 WP-848 (sahip): izinler Bildirim Merkezi'nden **ayrıldı** ve kendi
+/// ekranına taşındı (`permissions/permissions_screen.dart`, Ayarlar'da ayrı
+/// satır). Burada eskiden bildirim iznini isteyen bir düğme vardı; sayaç ve
+/// alarmın ihtiyaç duyduğu öteki üç izin ise hiç görünmüyordu. Buraya bakan
+/// kullanıcı hiçbir şey kaybetmesin diye kart kalır, ama artık yalnız yol
+/// gösterir.
 class _PermissionCard extends ConsumerWidget {
   const _PermissionCard();
 
@@ -369,10 +377,7 @@ class _PermissionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    // 🔴 WP-611: bu düğme masaüstünde "bozuk düğme"ydi. `initialize()` FLN'e
-    // Android-only ayar veriyor, Windows `ArgumentError` atıyor ve `granted`
-    // hiç hesaplanmadığı için SnackBar satırına gelinmiyordu: basıyorsun,
-    // hiçbir şey olmuyor. Masaüstünde kontrol edilecek bir izin YOK — düğmeyi
+    // 🔴 WP-611: masaüstünde kontrol edilecek bir izin YOK — düğmeyi
     // göstermek yerine nedenini yazıyoruz.
     final supported = ref
         .watch(reminderNotificationServiceProvider)
@@ -386,7 +391,10 @@ class _PermissionCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.admin_panel_settings_outlined,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -413,25 +421,13 @@ class _PermissionCard extends ConsumerWidget {
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: FilledButton.tonalIcon(
-                  onPressed: () async {
-                    final granted = await ref
-                        .read(reminderNotificationServiceProvider)
-                        .requestPermissionIfNeeded();
-                    await ref
-                        .read(pushHealthProvider.notifier)
-                        .synchronize(force: true);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          granted
-                              ? l10n.notificationsBildirimIzniVerildi
-                              : l10n.notificationsBildirimIzniVerilmediSistem,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.notifications_active_outlined),
+                  key: const Key('notification-open-permissions'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PermissionsScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.chevron_right),
                   label: Text(l10n.notificationsBildirimIzniniKontrolEt),
                 ),
               ),

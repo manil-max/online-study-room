@@ -3163,15 +3163,7 @@
   "@notificationsBildirimMerkezi": {
     "description": "Notifications user-facing text. Source: Bildirim Merkezi"
   },
-  "notificationsBildirimIzniVerildi": "Notification permission granted.",
-  "@notificationsBildirimIzniVerildi": {
-    "description": "Notifications user-facing text. Source: Bildirim izni verildi."
-  },
-  "notificationsBildirimIzniVerilmediSistem": "Notification permission not granted. You can turn it on from system settings.",
-  "@notificationsBildirimIzniVerilmediSistem": {
-    "description": "Notifications user-facing text. Source: Bildirim izni verilmedi. Sistem ayarlarından açabilirsin."
-  },
-  "notificationsBildirimIzniniKontrolEt": "Check notification permission",
+  "notificationsBildirimIzniniKontrolEt": "Open permissions",
   "@notificationsBildirimIzniniKontrolEt": {
     "description": "Notifications user-facing text. Source: Bildirim iznini kontrol et"
   },
@@ -3179,7 +3171,7 @@
   "@notificationsBildirimTurleri": {
     "description": "Notifications user-facing text. Source: Bildirim türleri"
   },
-  "notificationsBildirimlerCihazIznineBaglidir": "Notifications depend on device permission. Alarms and reminders alone",
+  "notificationsBildirimlerCihazIznineBaglidir": "Notifications depend on device permission. See each permission's status on the Permissions screen.",
   "@notificationsBildirimlerCihazIznineBaglidir": {
     "description": "Notifications user-facing text. Source: Bildirimler cihaz iznine bağlıdır. Alarm ve hatırlatıcılar yalnız"
   },
@@ -7473,5 +7465,35 @@
   "aboutDiagOn": "on",
   "@aboutDiagOn": {"description": "WP-846: feature enabled."},
   "aboutDiagOff": "off",
-  "@aboutDiagOff": {"description": "WP-846: feature disabled."}
+  "@aboutDiagOff": {"description": "WP-846: feature disabled."},
+  "permissionsTitle": "Permissions",
+  "@permissionsTitle": {"description": "WP-848: title of the permissions screen and its settings row."},
+  "permissionsSettingsSubtitle": "Phone permissions the timer and alarms need",
+  "@permissionsSettingsSubtitle": {"description": "WP-848: settings row subtitle for the permissions screen."},
+  "permissionsIntro": "The timer and alarms need these to work correctly, even when the phone is locked. Tap a row to open its setting.",
+  "@permissionsIntro": {"description": "WP-848: intro line on the permissions screen."},
+  "permissionsNotificationsTitle": "Notifications",
+  "@permissionsNotificationsTitle": {"description": "WP-848: notification permission row title."},
+  "permissionsNotificationsImpact": "Without it, timer, alarm and reminder notifications don't appear.",
+  "@permissionsNotificationsImpact": {"description": "WP-848: what breaks without notification permission."},
+  "permissionsExactAlarmTitle": "Exact alarms",
+  "@permissionsExactAlarmTitle": {"description": "WP-848: exact alarm permission row title."},
+  "permissionsExactAlarmImpact": "Without it, alarms don't ring on the exact second and may be a few minutes late.",
+  "@permissionsExactAlarmImpact": {"description": "WP-848: what breaks without exact alarm permission."},
+  "permissionsBatteryTitle": "Unrestricted battery use",
+  "@permissionsBatteryTitle": {"description": "WP-848: battery optimization exemption row title."},
+  "permissionsBatteryImpact": "Without it, the phone may stop the app in the background and the timer or alarms can slip.",
+  "@permissionsBatteryImpact": {"description": "WP-848: what breaks while battery optimization restricts the app."},
+  "permissionsFullScreenTitle": "Full-screen alarm",
+  "@permissionsFullScreenTitle": {"description": "WP-848: full-screen intent permission row title."},
+  "permissionsFullScreenImpact": "Without it, the alarm doesn't open full screen on the lock screen, only as a notification.",
+  "@permissionsFullScreenImpact": {"description": "WP-848: what breaks without full-screen intent permission."},
+  "permissionsStatusGranted": "Granted",
+  "@permissionsStatusGranted": {"description": "WP-848: permission status, granted."},
+  "permissionsStatusMissing": "Missing",
+  "@permissionsStatusMissing": {"description": "WP-848: permission status, not granted."},
+  "permissionsNotNeeded": "Nothing to allow on this device.",
+  "@permissionsNotNeeded": {"description": "WP-848: shown on desktop/web where no phone permission exists."},
+  "permissionsUnknown": "Couldn't read permission status right now. It's checked again when you come back to the app.",
+  "@permissionsUnknown": {"description": "WP-848: permission status could not be read."}
 }

@@ -16,6 +16,7 @@ import '../notifications/announcements_screen.dart';
 import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../onboarding/onboarding_prefs.dart';
+import '../permissions/permissions_screen.dart';
 import '../safety/blocked_users_screen.dart';
 import '../safety/muted_nudges_screen.dart';
 import '../support/faq_screen.dart';
@@ -147,6 +148,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 MaterialPageRoute(
                   builder: (_) => const NotificationPermissionsScreen(),
                 ),
+              ),
+            ),
+          ),
+          // WP-848 (sahip): izinler Bildirim Merkezi'nin içinden çıkarıldı;
+          // sayaç ve alarmın ihtiyaç duyduğu dört izin burada kendi satırında.
+          _SettingsCard(
+            child: ListTile(
+              key: const Key('settings-permissions'),
+              leading: const Icon(Icons.admin_panel_settings_outlined),
+              title: Text(l10n.permissionsTitle),
+              subtitle: Text(l10n.permissionsSettingsSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PermissionsScreen()),
               ),
             ),
           ),
