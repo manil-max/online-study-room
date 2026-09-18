@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-857** | beta-v8703: WP-856/857 |
+| Son ayrılan WP | **WP-833** | WP-831…833 kartları aşağıda |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -156,6 +156,20 @@ Android OAuth istemcisi; staging Supabase'de Google sağlayıcısı açılmadı.
 
 🔴 Ders: yerel kapı `GOOGLE_WEB_CLIENT_ID`/`SUPABASE_*` boşken koşuyor; define'a bağlı
 UI dalları yalnız release koşumunda çalıştı. Yerelde CI define'larıyla yeniden ölçüldü.
+
+#### WP-833 — Microsoft Store kutucuk logosu (sertifikasyon reddi 10.1.1.11)
+
+**Durum: Otomatik test geçti; yeniden gönderim sahipte.**
+
+- Store ilk gönderimi (Partner Center, 9PCS5SRM93CX) 2026-09-18'de yalnız
+  **10.1.1.11 On Device Tiles** ile reddedildi: msix `logo_path` 256x256 `.ico`
+  idi, LargeTile 1240px 5x büyütülüyordu.
+- Düzeltme `f02b7ad3`: `references/app icon` 3072px çizimden
+  `app/windows/runner/resources/store_logo.png` (2048px, şeffaf); `.exe` ikonu
+  değişmedi. `windows_packaging_wp568` + `windows_store_mode_wp597` 40/40.
+- Paket: `windows-release.yml` elle koşum `35389241810` (sürüm yayınlamaz),
+  `1.0.85.0`. Ölçüm: LargeTile.scale-400 kenar varyansı **203 → 2615**.
+- Açık risk: aynı sürüm numarası Partner Center'da reddedilirse 1.0.86 gerekir.
 
 **Birleşik kapı (lider, WP-831+832 sonrası):** 22 kapı · 0 kırmızı · 1 atlandı
 (Android native JVM: Gradle wrapper yok) · 294s.
