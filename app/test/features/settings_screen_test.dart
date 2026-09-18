@@ -21,6 +21,8 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({
       'onboarding.completed_v1.u1': true,
+      // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
+      'tour.settings.v1.u1': true,
     });
     final prefs = await SharedPreferences.getInstance();
     final adminRepo = InMemoryAdminRepository();

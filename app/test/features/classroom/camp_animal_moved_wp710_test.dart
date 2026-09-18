@@ -78,6 +78,8 @@ Future<InMemoryAuthRepository> _pumpSettings(WidgetTester tester) async {
   // calismadigi bir kodda da yesil kalirdi.
   SharedPreferences.setMockInitialValues({
     onboardingCompletedKeyFor(auth.currentUser!.id): true,
+    // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
+    tourSeenKey(storageId: 'settings.v1', userId: auth.currentUser!.id): true,
   });
   final prefs = await SharedPreferences.getInstance();
 

@@ -16,7 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// içinde kaybolup fark edilmiyordu.
 void main() {
   Future<void> pump(WidgetTester tester, Widget home) async {
-    SharedPreferences.setMockInitialValues({});
+    // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
+    SharedPreferences.setMockInitialValues({'tour.settings.v1.u1': true});
     final prefs = await SharedPreferences.getInstance();
     tester.view.physicalSize = const Size(1080, 12000);
     tester.view.devicePixelRatio = 3.0;
