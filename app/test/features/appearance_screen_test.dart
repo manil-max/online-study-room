@@ -151,6 +151,10 @@ void main() {
     await _pumpScreen(tester, container);
 
     expect(container.read(themeSettingsProvider).activeCustomTheme, isNotNull);
+    // WP-855: karşılama teması listenin başına alındı; kart bir satır aşağı
+    // kaydı ve test penceresinde görünür alanın dışına düşebiliyor.
+    await tester.ensureVisible(find.text('Nordik Kar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Nordik Kar'));
     await tester.pumpAndSettle();
 

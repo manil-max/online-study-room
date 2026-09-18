@@ -17,6 +17,22 @@ import 'theme_builder/theme_builder_screen.dart';
 /// WP-290 düzeni: en üstte **Kendi Temanı Oluştur**, altında kullanıcının
 /// temaları (en yeni en üstte), ince ayraç (başlık metni yok), sonra hazır
 /// temalar. Boş yuvalar liste olarak **gösterilmez** (sahip kararı).
+
+/// 🔴 WP-855: ekranda gösterilen hazır tema SIRASI.
+///
+/// WP-841 karşılama temasını (`kFirstRunFamilyId`, `campfire_day`) listenin
+/// SONUNA eklemişti: yeni kullanıcı Görünüm'ü açınca kendi seçili temasını ilk
+/// ekranda göremiyordu (mağaza karesinde ölçüldü, 16 temanın 16.'sı).
+/// `kThemePresets`in kendisi DEĞİŞMEZ — `themePresetById` bilinmeyen kimlikte
+/// `kThemePresets.first`e düşer; o sırayı oynatmak eski kurulumların yedek
+/// temasını sessizce değiştirirdi. Yalnız görünüm sırası değişir.
+final List<ThemePreset> kAppearancePresetOrder = [
+  for (final p in kThemePresets)
+    if (p.id == kFirstRunFamilyId) p,
+  for (final p in kThemePresets)
+    if (p.id != kFirstRunFamilyId) p,
+];
+
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
 
@@ -209,9 +225,9 @@ class AppearanceScreen extends ConsumerWidget {
                         crossAxisSpacing: 10,
                         childAspectRatio: desktop ? 2.15 : 1.75,
                       ),
-                      itemCount: kThemePresets.length,
+                      itemCount: kAppearancePresetOrder.length,
                       itemBuilder: (context, i) {
-                        final preset = kThemePresets[i];
+                        final preset = kAppearancePresetOrder[i];
                         return _PresetCard(
                           preset: preset,
                           selected:
