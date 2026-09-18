@@ -162,17 +162,27 @@ int secondsUntilTodayDisplayChange({
     final left = goalSeconds - total;
     final leftStep = left < 60 ? 1 : left % 60 + 1;
     if (leftStep < next) next = leftStep;
-    // `round()` bir sonraki tam yüzdeye (k + 0.5) eşiğinde geçer.
-    final k = (total * 100 / goalSeconds).round();
-    if (k < 100) {
-      final boundary = ((2 * k + 1) * goalSeconds + 199) ~/ 200;
-      final pctStep = boundary - total;
-      if (pctStep > 0 && pctStep < next) next = pctStep;
-    }
+    // 🔴 WP-862: yüzde sınırı kartların KENDİ ifadesiyle aranır. Eski hâl
+    // `(total * 100 / goal).round()` ile tam sayı sınırı hesaplıyordu; kart
+    // ise `((total / goal).clamp(0, 1) * 100).round()` çiziyor ve kayan
+    // noktada tam yarımlarda (ör. hedef 600, toplam 87: 14,5 ↔ 14,4999…) iki
+    // ifade ayrışıyor, kartın geçişi 5 sn'ye kadar kaçıyordu. En çok 59 adım.
     if (left < next) next = left;
+    final shown = _goalPercentShown(total, goalSeconds);
+    for (var step = 1; step < next; step++) {
+      if (_goalPercentShown(total + step, goalSeconds) != shown) {
+        next = step;
+        break;
+      }
+    }
   }
   return next < 1 ? 1 : next;
 }
+
+/// Günlük hedef yüzdesi, kartların çizdiği ifadeyle birebir
+/// (`goal_card.dart`, `study_timer_card.dart`: `'%${(pct * 100).round()}'`).
+int _goalPercentShown(int total, int goalSeconds) =>
+    ((total / goalSeconds).clamp(0.0, 1.0) * 100).round();
 
 /// WP-561: Süregelen (henüz kaydedilmemiş) bir koşunun **yalnız bugüne düşen**
 /// saniyesi: `now - max(startedAt, bugünün İstanbul 00:00'ı)`.
@@ -440,7 +450,10 @@ int longestStudyStreak(
   // "en uzun seri" iken güncel seri ondan büyük çıkabiliyordu: rozet tek
   // kaçırmayı affediyor, rekor affetmiyordu.
   return longestGoalStreakDays(
-    goalMetDays(totals: totals ?? dailyTotals(sessions), goalSeconds: goalSeconds),
+    goalMetDays(
+      totals: totals ?? dailyTotals(sessions),
+      goalSeconds: goalSeconds,
+    ),
   );
 }
 
