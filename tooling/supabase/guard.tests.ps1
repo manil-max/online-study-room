@@ -218,7 +218,7 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release i
 Assert-Equal $contract.production.migration_head '0143' 'production hedefi 0143: tema tercihi hesapta (WP-838)'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0143 production apply icin kapi ACIK; staging ONCE kanitlandi (run 35299629071)'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0143 production apply KOSTU (run 35300127945, post-check 0143|0143|0143) ve kapi yeniden kilitlendi'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a
