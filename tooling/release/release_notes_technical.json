@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.2",
+      "buildNumber": 8702,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8702: WP-851..WP-855",
+      "highlights": [
+        "WP-851: --full gate runs the Flutter suite with release defines (githubStable + windows).",
+        "WP-852: clock widgets tab links to PermissionsScreen; revocation hint moved there.",
+        "WP-853: store screenshots from a seeded in-memory account."
+      ],
+      "fixes": [
+        "WP-854: goal card remaining-time label.",
+        "WP-855: first-run preset first in the Appearance grid (kThemePresets order untouched)."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87",
       "buildNumber": 87,
       "channel": "stable",

@@ -4,6 +4,14 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8702 / 1.0.87-beta.2+8702] - 2026-09-18
+
+### Düzeltmeler
+
+- Günlük hedef kartında kalan süre artık "Hedefe kalan" diye yazıyor; eskiden "Günlük hedef" yazıyordu.
+- Varsayılan tema Görünüm ekranında listenin başında ve seçili görünüyor.
+- Bildirim merkezinin widget sekmesindeki izin listesi İzinler ekranına taşındı; orada yalnız özet ve tek düğme kaldı.
+
 ## [v87 / 1.0.87+87] - 2026-09-18
 
 ### Öne çıkanlar
