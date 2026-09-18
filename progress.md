@@ -35,8 +35,13 @@
 | WP-855 | Karşılama teması Görünüm ızgarasında 16.'ydı → ilk sırada; `kThemePresets`/`themePresetById` yedeği dokunulmadı | Otomatik test geçti |
 
 Kapı: 22 kapı · 0 kırmızı · 1 atlandı + `release-defines` 412s yeşil.
-**Bilinen borç (dokunulmadı):** sayaç kartı "Bugün" canlı sayıyı gösterirken hedef/bugün
-kartları yalnız kaydedilmişi gösteriyor (aynı ekranda %84 ↔ %65); dar hücrede sıralamada
+
+**WP-856 (sonradan):** sayaç çalışırken hedef/bugün kartları yalnız kaydedilmişi gösteriyordu
+(aynı ekranda %84 ↔ %65). Ortak kaynak `todayDisplayTotalFor` + `todayLiveTotalProvider`;
+sayaç kartı ve odak ekranı da aynı kuralı çağırıyor (formül kopyaları silindi). Kaba kartlar
+yalnız gösterilen değer değişeceği saniyede yenilenir; sayaç dururken zamanlayıcı yok.
+Kapı: 22 kapı yeşil + `release-defines` 414s yeşil.
+**Bilinen borç (dokunulmadı):** dar hücrede sıralamada
 "Deniz (s…" kısalıyor; rekorlar kartı yoğunluğu (WP-836 envanteri).
 
 
