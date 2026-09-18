@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-09-16** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-09-18** · Saat dilimi: **Europe/Istanbul**
 > Güncel durum, aktif iş ve kabul kuyruğunun tek kaynağı bu dosyadır.
 > Kurallar: [.agents/AGENTS.md](.agents/AGENTS.md) + [Kalite Programı](docs/KALITE-PROGRAMI.md).
 > Önceki WP kartları, kanıtlar ve yayın kayıtları kayıpsız [tarihçede](progress-history-2026-09-11.md).
@@ -13,16 +13,44 @@
 | Son kayıtlı yayın | **v85 · 1.0.85+85**, etiket commit'i `c4196127` | 2026-09-16 sahip GO "ikisini de yap"; aşağıdaki v85 yayın kaydı. Önceki v84 `c2ad8a6e` |
 | v84 release koşumu | **34861451047: completed / success** | preflight, android, windows / build, finalize_android, release_status, finalize_complete başarılı; GitHub Release draft değil (AAB 75,8 MB, APK 81,1 MB, Windows zip 19,8 MB) |
 | Play | **production 85, draft** (koşum `35103828308`); alpha 84 completed | Taslak sahip tarafından Console'da ülke seçimi + incelemeye gönderimle açılır; mağaza kabulü değildir |
-| Veritabanı | Repo, staging ve production head **0142** (WP-832) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-16 staging dry-run `35090284985` (72 pgTAP / 1052 PASS), apply `35090616502`; production dry-run `35090984847`, apply `35091309659`; post-check `0142\|0142\|0142`; kapılar yeniden kilitli |
+| Veritabanı | Repo, staging ve production head **0143** (WP-838) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-18 staging dry-run `35299387516` (73 pgTAP / 1069 PASS), apply `35299629071`; production dry-run `35299894145`, apply `35300127945`; post-check `0143\|0143\|0143`; kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-832** | WP-831/832 kartları aşağıda (Google ile devam et) |
+| Son ayrılan WP | **WP-843** | v86 turu: WP-833…WP-843 kartları [docs/V86-PLAN.md](docs/V86-PLAN.md) |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### v86 turu — sahip geri bildirimi (2026-09-17/18)
+
+Sahip v85'i kullandı ve altı başlık verdi; ardından "bütün yetki sende, bana v86 hazır de"
+ve gece "her şeyi yap, sabah hazır olsun" dedi. Plan: [docs/V86-PLAN.md](docs/V86-PLAN.md).
+
+| WP | İş | Durum |
+|---|---|---|
+| WP-833 | Google düğmesi cihazda yoktu → **sebep: telefondaki sürüm v84'tü**, kod doğru. Kalıcı önlem: stable/Play derlemesi `GOOGLE_WEB_CLIENT_ID` boşken durur | Kodda doğrulandı |
+| WP-834 | Şifre ekranlarında opak hata. `AuthWeakPasswordException` `AuthApiException` **değil**, bu yüzden `weak_password.reasons` kodsuz kalıp generic cümleye düşüyordu. Artık uzunluk/çeşitlilik/sızmış + `same_password` + `otp_expired` ayrı cümleler; kural satırı hatadan önce görünür | Otomatik test geçti |
+| WP-835 | İlk kurulum tasarlanmış tema almıyordu: `ocean_glass`'a (lacivert) düşüyordu — göç haritasının yan ürünü | Yerini WP-841 aldı |
+| WP-836 | Her kart türüne kendi varsayılan boyu; sayaç `kTimerCoreMaxHeight` eşiğini aşıyor; kart ekleme önizlemesi | Otomatik test geçti |
+| WP-837 | Tanıtım kartları: sayaç metni (`tourAdim`) kalktı; ana ekran / pano düzenleme / istatistik birer kart | Otomatik test geçti |
+| WP-838 | Tema + özel temalar hesapta (`0143`, sahibine kilitli `user_theme_prefs`). Kolon yolu reddedildi: `profiles` satırını ortak grup üyeleri okuyabiliyor ve RLS kolon maskeleyemez | İki ortama uygulandı |
+| WP-839 | Play TR mağaza metinleri + kareleri uygulamanın gerçek ekranlarından üreten koşum | Sahip Console'a yapıştıracak |
+| WP-840 | `study_repository_test` sabit Haziran tarihleri 90 günlük sıcak pencereden düştü; tarihler göreli | Otomatik test geçti |
+| WP-841 | Karşılama teması **açık**: `campfire_day` (krem `#FDF8F1`, turuncu `#F97316`, turuncu üstü koyu mürekkep — beyaz 2.80 ile AA'yı tutmuyor) | Sahip onayladı |
+| WP-842 | Varsayılan pano altı kart: sayaç, Bugün + Grup sıralaması, günlük hedef, haftalık grafik, görevler. Grup şartlı kartlar bilerek yok | Otomatik test geçti |
+| WP-843 | Dar hücrede "Grup oluştur" düğmesi kesiliyordu (WP-835 karesinde ölçüldü); dar hücrede açıklama cümlesi düşer | Otomatik test geçti |
+
+🔴 **Ders (WP-841 turunda ikinci kez):** yerel kapı `GOOGLE_WEB_CLIENT_ID`/`SUPABASE_*`
+boşken koşuyor; define'a bağlı dallar yalnız release koşumunda çalışıyor. v85'te 10 test
+bu yüzden ancak CI'da kırmızıya düştü.
+
+**Cihazda doğrulanmalı (v86):** temiz kurulumda krem/turuncu karşılama; altı kartlı pano;
+yeni cihazda giriş yapınca temanın gelmesi; şifre sıfırlamada gerçek sebebin yazması;
+üç tanıtım kartının birer kez çıkması.
+
 
 ### Faz — Google ile devam et (2026-09-16)
 
