@@ -4,6 +4,34 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v87 / 1.0.87+87] - 2026-09-18
+
+### Öne çıkanlar
+
+- Bildirim izni artık kendiliğinden soruluyor: uygulamayı ilk açtığında telefonun izin penceresi bir kez çıkıyor.
+- Ayarlar'da ayrı bir İzinler ekranı: her iznin durumu ve eksikse neyin aksayacağı tek yerde.
+- Ayarlar'ı ilk açtığında temanın, izinlerin ve hesabının nerede olduğunu anlatan kısa bir tanıtım.
+- Hakkında ekranında sürümü, kanalı ve Google girişinin durumunu gösteren tek satır.
+
+### Düzeltmeler
+
+- Verilerini indirdiğinde hesabına kayıtlı tema ve kendi temaların da çıktıda yer alıyor.
+- GitHub'dan kurulan eski sürümlere Google Play'e geçiş yolu gösteriliyor.
+
+### Doğrulama sınırı
+
+- İzin penceresi ve İzinler ekranı gerçek telefonda ölçülmedi; otomatik testlerle doğrulandı.
+
+## [beta-v8701 / 1.0.87-beta.1+8701] - 2026-09-18
+
+### Öne çıkanlar
+
+- v87'nin bütün yenilikleri beta kanalında: otomatik bildirim izni, İzinler ekranı, Ayarlar tanıtımı.
+
+### Notlar
+
+- Beta test sunucusunu kullanır; hesabın Play sürümünden ayrıdır. Google ile giriş beta'da kapalı.
+
 ## [beta-v8601 / 1.0.86-beta.1+8601] - 2026-09-18
 
 ### Öne çıkanlar

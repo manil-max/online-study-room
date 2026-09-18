@@ -3,6 +3,36 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87",
+      "buildNumber": 87,
+      "channel": "stable",
+      "date": "2026-09-18",
+      "title": "v87: WP-845..WP-850 permissions, GitHub-to-Play migration, diagnostics",
+      "highlights": [
+        "WP-848: POST_NOTIFICATIONS asked once from home_shell after onboarding (flag permissions.notification_auto_ask.v1, never after denial, never off Android); dedicated Permissions screen replaces the notification-center card.",
+        "WP-847: githubStable installs get a one-time dialog + persistent About row pointing to Play (uninstall first: signatures differ); the sideload updater no longer offers stable APKs. v87 is the last stable APK on GitHub so the notice can reach them.",
+        "WP-849: settings.v1 tour, two balloons (length gate)."
+      ],
+      "fixes": [
+        "WP-845: data export reads user_theme_prefs (0143).",
+        "WP-846: About diagnostic line via SelectionArea (SelectableText added a second Scrollable and broke 12 settings tests; WP-764 2000dp budget kept).",
+        "WP-850: release push notification only on beta; stable pushed to every production user, Play installs included."
+      ],
+      "notes": []
+    },
+    {
+      "versionName": "1.0.87-beta.1",
+      "buildNumber": 8701,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8701: v87 on beta",
+      "highlights": [
+        "Same commit as v87; beta env writes an empty GOOGLE_WEB_CLIENT_ID (WP-844)."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.86-beta.1",
       "buildNumber": 8601,
       "channel": "beta",

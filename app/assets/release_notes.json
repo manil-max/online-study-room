@@ -3,6 +3,64 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.87",
+      "buildNumber": 87,
+      "channel": "stable",
+      "date": "2026-09-18",
+      "title": "v87: izinler tek yerde",
+      "highlights": [
+        "Bildirim izni ilk açılışta kendiliğinden soruluyor.",
+        "Ayarlar'da ayrı bir İzinler ekranı: her iznin durumu ve eksikse neyin aksayacağı.",
+        "Ayarlar'ı ilk açtığında kısa bir tanıtım."
+      ],
+      "fixes": [
+        "Veri dışa aktarma hesabına kayıtlı temaları da içeriyor.",
+        "GitHub'dan kurulan eski sürümlere Google Play'e geçiş yolu gösteriliyor."
+      ],
+      "notes": [
+        "Hakkında ekranında sürüm, kanal ve Google girişi durumu tek satırda."
+      ],
+      "titleEn": "v87: permissions in one place",
+      "highlightsEn": [
+        "Notification permission is asked automatically on first launch.",
+        "A separate Permissions screen in Settings shows each permission and what breaks without it.",
+        "A short introduction the first time you open Settings."
+      ],
+      "fixesEn": [
+        "Data export now includes the themes saved to your account.",
+        "Older GitHub installs are shown how to move to Google Play."
+      ],
+      "notesEn": [
+        "About shows version, channel and Google sign-in status on one line."
+      ]
+    },
+    {
+      "versionName": "1.0.87-beta.1",
+      "buildNumber": 8701,
+      "channel": "beta",
+      "date": "2026-09-18",
+      "title": "beta-v8701: v87 beta kanalında",
+      "highlights": [
+        "Otomatik bildirim izni, İzinler ekranı ve Ayarlar tanıtımı beta kanalında."
+      ],
+      "fixes": [
+        "Veri dışa aktarma hesabına kayıtlı temaları da içeriyor."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı."
+      ],
+      "titleEn": "beta-v8701: v87 on the beta channel",
+      "highlightsEn": [
+        "Automatic notification permission, the Permissions screen and the Settings introduction on beta."
+      ],
+      "fixesEn": [
+        "Data export now includes the themes saved to your account."
+      ],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta."
+      ]
+    },
+    {
       "versionName": "1.0.86-beta.1",
       "buildNumber": 8601,
       "channel": "beta",
