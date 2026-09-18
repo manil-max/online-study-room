@@ -7431,5 +7431,21 @@
   "authKodGecersizVeyaSuresiDolmus": "The code is invalid or has expired. Request a new one.",
   "@authKodGecersizVeyaSuresiDolmus": {"description": "WP-834: gotrue otp_expired on the reset-with-code screen."},
   "authSifreKurallari": "At least 6 characters. Cannot be the same as your current password.",
-  "@authSifreKurallari": {"description": "WP-834: permanent rules line under every new-password field; shown before any error, not only after one."}
+  "@authSifreKurallari": {"description": "WP-834: permanent rules line under every new-password field; shown before any error, not only after one."},
+  "playMigrationTitle": "Odak Kampı is now on Google Play",
+  "@playMigrationTitle": {"description": "WP-847: one-time dialog title for users who installed the GitHub stable APK."},
+  "playMigrationBody": "From now on the app is updated through Google Play. This version, installed from GitHub, will no longer receive updates.",
+  "@playMigrationBody": {"description": "WP-847: dialog body; GitHub stable channel is retired."},
+  "playMigrationSteps": "To switch: first uninstall this version from your phone, then install Odak Kampı from Google Play. Android does not allow installing one version over the other, so you need to uninstall first.",
+  "@playMigrationSteps": {"description": "WP-847: switch steps; signatures differ so uninstall is required."},
+  "playMigrationDataSafe": "Your account and study data are stored on the server and will not be lost. Just sign in with the same account in the Play version. Only some settings kept on this device may be reset.",
+  "@playMigrationDataSafe": {"description": "WP-847: reassurance that server data survives the uninstall."},
+  "playMigrationOpenPlay": "Open Google Play",
+  "@playMigrationOpenPlay": {"description": "WP-847: button that opens the Play Store listing."},
+  "playMigrationTileTitle": "Switch to Google Play",
+  "@playMigrationTileTitle": {"description": "WP-847: persistent row in About and updates screen."},
+  "playMigrationTileSubtitle": "This version no longer gets updates. Uninstall it and install from Google Play; your account and study data are on the server and will not be lost.",
+  "@playMigrationTileSubtitle": {"description": "WP-847: persistent row subtitle."},
+  "playMigrationOpenFailed": "Could not open Google Play. The link was copied to the clipboard.",
+  "@playMigrationOpenFailed": {"description": "WP-847: snackbar when the Play listing cannot be opened."}
 }

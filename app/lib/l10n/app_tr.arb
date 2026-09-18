@@ -2476,5 +2476,13 @@
   "authSifreVeriSizintisindaGorulmus": "Bu şifre veri sızıntılarında görülmüş, başka bir şifre seç.",
   "authYeniSifrenEskisiyleAyniOlamaz": "Yeni şifren eskisiyle aynı olamaz.",
   "authKodGecersizVeyaSuresiDolmus": "Kod geçersiz veya süresi dolmuş. Yeni kod iste.",
-  "authSifreKurallari": "En az 6 karakter. Eski şifrenle aynı olamaz."
+  "authSifreKurallari": "En az 6 karakter. Eski şifrenle aynı olamaz.",
+  "playMigrationTitle": "Odak Kampı artık Google Play'de",
+  "playMigrationBody": "Uygulama bundan sonra Google Play üzerinden güncellenecek. GitHub'dan kurduğun bu sürüm artık güncelleme almayacak.",
+  "playMigrationSteps": "Geçmek için: önce bu sürümü telefonundan kaldır, sonra Odak Kampı'nı Google Play'den kur. Android iki sürümü üst üste kurmaya izin vermediği için önce kaldırman gerekiyor.",
+  "playMigrationDataSafe": "Hesabın ve çalışma verilerin sunucuda duruyor, kaybolmaz. Play sürümünde aynı hesapla giriş yapman yeterli. Yalnız bu cihazda tutulan bazı ayarlar sıfırlanabilir.",
+  "playMigrationOpenPlay": "Google Play'i aç",
+  "playMigrationTileTitle": "Google Play'e geç",
+  "playMigrationTileSubtitle": "Bu sürüm artık güncellenmiyor. Kaldırıp Google Play'den kur; hesabın ve çalışma verilerin sunucuda, kaybolmaz.",
+  "playMigrationOpenFailed": "Google Play açılamadı. Bağlantı panoya kopyalandı."
 }

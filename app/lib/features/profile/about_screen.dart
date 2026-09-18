@@ -12,6 +12,7 @@ import '../../core/notifications/timer_promotion_verdict.dart';
 import '../../core/theme/warning_tokens.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../l10n/app_localizations.dart';
+import '../updater/play_migration.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/release_notes_service.dart';
 import '../updater/updater_dialog.dart';
@@ -45,6 +46,8 @@ class AboutScreen extends ConsumerStatefulWidget {
     this.allowsSideloadUpdates,
     this.releaseNotesService,
     this.releaseNotesChannel,
+    this.distributionChannel,
+    this.playStoreOpener,
   });
 
   final AppBuildManifest? buildManifest;
@@ -52,6 +55,12 @@ class AboutScreen extends ConsumerStatefulWidget {
   final bool? allowsSideloadUpdates;
   final ReleaseNotesService? releaseNotesService;
   final String? releaseNotesChannel;
+
+  /// Test tohumu: dağıtım kanalı derleme zamanı define'ından gelir.
+  final DistributionChannel? distributionChannel;
+
+  /// Test tohumu: Play bağlantısı gerçek platform kanalı yerine buraya gider.
+  final ExternalUrlOpener? playStoreOpener;
 
   @override
   ConsumerState<AboutScreen> createState() => _AboutScreenState();
@@ -245,8 +254,20 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
       ..showSnackBar(SnackBar(content: Text(l10n.developerModeDisabled)));
   }
 
+  /// WP-847: GitHub stable kurulumu Play'e yönlendirilir. Bu satır diyalog
+  /// kapatıldıktan sonra da bilginin ulaşılabilir kaldığı kalıcı yerdir.
+  bool get _showsPlayMigration => PlayMigration.appliesTo(
+    channel: widget.distributionChannel ?? DistributionConfig.current,
+    releaseChannel:
+        (widget.buildManifest ?? AppBuildManifest.currentOrNull)?.channel,
+  );
+
+  /// WP-847: geçiş gösterilen kurulumda GitHub denetimi de kapalıdır; satır
+  /// "mağaza üzerinden yönetilir" der ve dokunulamaz.
   bool get _allowsSideloadUpdates =>
-      widget.allowsSideloadUpdates ?? DistributionConfig.allowsSideloadUpdates;
+      !_showsPlayMigration &&
+      (widget.allowsSideloadUpdates ??
+          DistributionConfig.allowsSideloadUpdates);
 
   Future<void> _checkForUpdates() async {
     if (!_allowsSideloadUpdates || _checking) return;
@@ -337,6 +358,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
+                        if (_showsPlayMigration) ...[
+                          PlayMigrationTile(opener: widget.playStoreOpener),
+                          const Divider(height: 1),
+                        ],
                         ListTile(
                           key: const Key('about-check-for-updates'),
                           leading: const Icon(Icons.system_update_outlined),

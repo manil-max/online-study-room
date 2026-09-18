@@ -10,13 +10,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/distribution_channel.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../l10n/app_localizations.dart';
+import 'play_migration.dart';
 import 'release_notes_service.dart';
 import 'updater_service.dart';
 
 /// Açılışta çağrılır: yeni sürüm varsa güncelleme penceresini gösterir.
 /// Sessizdir; güncelleme yoksa veya hata olursa hiçbir şey yapmaz.
 /// WP-110: Play kanalında hiç çalışmaz (sideload updater kapalı).
+///
+/// WP-847: GitHub stable kurulumunda güncelleme yerine **bir kez** Play'e geçiş
+/// diyaloğu gösterilir; stable APK artık önerilmez (`UpdaterService`).
 Future<void> maybeShowUpdateDialog(BuildContext context) async {
+  if (PlayMigration.appliesToCurrent) {
+    await maybeShowPlayMigrationDialog(context, applies: true);
+    return;
+  }
   if (!DistributionConfig.allowsSideloadUpdates) return;
 
   final l10n = AppLocalizations.of(context);

@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/config/distribution_channel.dart';
@@ -9,7 +9,9 @@ import '../../core/config/distribution_channel.dart';
 /// GitHub Releases üzerinden in-app güncelleme kontrolü.
 ///
 /// - **Play (`DISTRIBUTION_CHANNEL=play`):** kapalı (WP-110) — ağ isteği yok.
-/// - **Android GitHub sideload:** sabit isimli APK + SHA-256.
+/// - **Android GitHub sideload:** sabit isimli APK + SHA-256. WP-847'den beri
+///   yalnız **beta**: GitHub stable kurulumlara stable APK önerilmez (Play'e
+///   yönlendirilirler, bkz. `play_migration.dart`).
 /// - **Windows (WP-578):** sabit isimli **taşınabilir ZIP** + SHA-256. MSIX
 ///   üretilmeye devam ediyor ama imzasız olduğu için kullanıcıda hiç kurulmuyor
 ///   (`0x800B010A` — SmartScreen uyarısı değil, sert blok), bu yüzden uygulama
@@ -18,9 +20,20 @@ import '../../core/config/distribution_channel.dart';
 ///
 /// Etiket: `v<buildNumber>` / `beta-v<buildNumber>`.
 class UpdaterService {
-  UpdaterService({Dio? dio}) : _dio = dio ?? Dio();
+  UpdaterService({
+    Dio? dio,
+    @visibleForTesting this._channelOverride,
+    @visibleForTesting this._releaseChannelOverride,
+    @visibleForTesting this._isAndroidOverride,
+  }) : _dio = dio ?? Dio();
 
   final Dio _dio;
+
+  /// Test tohumları: kanal/dağıtım kararları derleme zamanı define'larından
+  /// gelir; testte ikisi de sabit olduğu için dışarıdan verilebilir.
+  final DistributionChannel? _channelOverride;
+  final String? _releaseChannelOverride;
+  final bool? _isAndroidOverride;
 
   /// GitHub deposu — release artefaktlarının yayınlandığı yer.
   static const String _owner = 'manil-max';
@@ -40,7 +53,23 @@ class UpdaterService {
 
   // Windows'ta DistributionChannel her iki kanal için `windows` olduğundan
   // beta/stable seçimi açık CHANNEL manifestinden okunur (WP-227).
-  static bool get _isBeta => channel == 'beta';
+  bool get _isBeta => (_releaseChannelOverride ?? channel) == 'beta';
+
+  /// WP-847: GitHub sideload bu kanala paket önerir mi?
+  ///
+  /// `githubStable` artık ölü kanaldır: stable APK önermek kullanıcıyı Play'e
+  /// geçemeyeceği eski imzada tutardı. Beta (`githubBeta`) ve Windows aynen
+  /// kalır. [DistributionConfig.allowsSideloadUpdatesFor] bilerek
+  /// değiştirilmedi — o, derleme/izin sözleşmesidir (WP-614 kapısı); bu ise
+  /// yalnız "hangi paketi önerelim" kararıdır.
+  static bool offersSideloadPackage({
+    required DistributionChannel channel,
+    required bool isBeta,
+  }) {
+    if (!DistributionConfig.allowsSideloadUpdatesFor(channel)) return false;
+    if (channel == DistributionChannel.githubStable && !isBeta) return false;
+    return true;
+  }
 
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).
@@ -56,14 +85,18 @@ class UpdaterService {
   /// karıştırmadan kullanıcıya gösterebilir.
   Future<UpdateCheckResult> checkForUpdateDetailed() async {
     // WP-110: Play Store build — GitHub APK yolu unreachable (yalnız UI gizle değil).
-    if (!DistributionConfig.allowsSideloadUpdates) {
+    // WP-847: GitHub stable kurulumu da artık Play'e bağlı — ağ isteği yok.
+    if (!offersSideloadPackage(
+      channel: _channelOverride ?? DistributionConfig.current,
+      isBeta: _isBeta,
+    )) {
       return const UpdateCheckResult.managedByStore();
     }
 
     // kIsWeb derleme-zamanı; web'de `Platform`'a hiç dokunulmaz.
     if (kIsWeb) return const UpdateCheckResult.unsupported();
-    final isAndroid = Platform.isAndroid;
-    final isWindows = Platform.isWindows;
+    final isAndroid = _isAndroidOverride ?? Platform.isAndroid;
+    final isWindows = _isAndroidOverride == null && Platform.isWindows;
     if (!isAndroid && !isWindows) {
       return const UpdateCheckResult.unsupported();
     }
@@ -142,17 +175,15 @@ class UpdaterService {
   static int? parseVersionCodeForTest(String? tag) => _parseVersionCode(tag);
 
   /// CI tarafından üretilen APK'nın sabit adı (release.yml ile aynı olmalı).
-  static String get _apkName =>
-      _isBeta ? 'app-beta-release.apk' : 'app-release.apk';
+  String get _apkName => _isBeta ? 'app-beta-release.apk' : 'app-release.apk';
 
   /// CI `windows-release.yml` ile hizalı **taşınabilir ZIP** adı (WP-578).
   ///
   /// İş akışı `prefix=odak-kampi-windows-$channel` üretip `$prefix.zip` yazar;
   /// buradaki iki dize onunla harfi harfine aynı olmak zorundadır. Sözleşme
   /// `test/features/updater/windows_packaging_wp568_test.dart` ile kilitli.
-  static String get _windowsZipName => _isBeta
-      ? 'odak-kampi-windows-beta.zip'
-      : 'odak-kampi-windows-stable.zip';
+  String get _windowsZipName =>
+      _isBeta ? 'odak-kampi-windows-beta.zip' : 'odak-kampi-windows-stable.zip';
 
   /// Beta kanalı için: prerelease + `beta` etiket + asset'i olan en yüksek build.
   static Map<String, dynamic>? _pickLatestBeta(
