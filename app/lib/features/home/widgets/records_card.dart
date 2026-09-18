@@ -8,8 +8,32 @@ import '../dashboard_card.dart';
 import 'card_data_gate.dart';
 import 'card_scaffold.dart';
 
+/// [StudyRecords]'un `Wrap` aralığı (satırlar arası).
+const double _kTileGap = 8;
+
+/// [StudyRecords]'un çizdiği döşeme sayısı.
+const int _kRecordTileCount = 5;
+
+/// Yazı ölçeğinin 1'den büyük olup olmadığını sormak için örnek punto.
+const double _kProbeFont = 14;
+
 /// "Rekorlar" kartı (§3.11): toplam, rekor seri, en verimli gün, aktif gün,
 /// en çok çalışılan ders — renkli stat döşemeleri.
+///
+/// 🔴 WP-858: kart döşemeleri HER ZAMAN yoğun modda çizer ve gövdeye kaç
+/// döşeme sığıyorsa o kadarını gösterir (önem sırasıyla: Toplam → Rekor
+/// seri → Aktif gün → En verimli gün → En çok ders).
+///
+/// Ölçüm (WP-836 envanteri, varsayılan 32×26, dar telefon, yazı 1.0): tam
+/// döşemeler ~400 px içerik üretiyordu, gövde ~189 px → 211 px KART İÇİ
+/// kaydırma. Tam modda 140 px genişliğindeki tek bir döşeme ("En verimli
+/// gün") 172 px'e uzuyordu; yani sorun hücre boyu değil döşeme biçimiydi.
+/// Yoğun döşemenin boy tavanı hesaplanabilir ([StudyRecords.denseTileHeight])
+/// olduğu için "kaç tane sığar" ölçüm yapmadan bilinir.
+///
+/// ⚠️ Büyütülmüş yazıda (ölçek > 1) döşeme DÜŞÜRÜLMEZ: büyük yazı seçen
+/// kullanıcıdan rekor gizlemek yerine kart kendi içinde kayar (WP-497 /
+/// WP-541 sözleşmesi — sığmayan içerik kaybolmaz, ulaşılır kalır).
 class RecordsCard extends ConsumerWidget {
   const RecordsCard({super.key, this.size = DashboardCardSize.medium});
 
@@ -51,6 +75,19 @@ class RecordsCard extends ConsumerWidget {
             final cols = constraints.maxWidth > 400
                 ? 3
                 : (constraints.maxWidth > 250 ? 2 : 1);
+            // WP-858: gövdeye kaç döşeme satırı sığar? Wrap'in satır aralığı
+            // [_kTileGap]; son satırın altında aralık yoktur (+gap payı).
+            final tileHeight = StudyRecords.denseTileHeight(context);
+            final rows = ((bodyHeight + _kTileGap) / (tileHeight + _kTileGap))
+                .floor();
+            final enlargedText =
+                MediaQuery.textScalerOf(context).scale(_kProbeFont) >
+                _kProbeFont;
+            // En az bir döşeme her zaman çizilir (sığmıyorsa kart kayar).
+            final fit = (rows < 1 ? 1 : rows) * cols;
+            final maxTiles = enlargedText || fit >= _kRecordTileCount
+                ? null
+                : fit;
             // WP-508: yalnız taşarsa kayar; sığdığında dış sayfa akar.
             return cardScrollIfOverflows(
               child: StudyRecords(
@@ -58,6 +95,8 @@ class RecordsCard extends ConsumerWidget {
                 columns: cols,
                 lifetimeSeconds: summary?.lifetimeSeconds,
                 windowLimited: windowLimited,
+                dense: true,
+                maxTiles: maxTiles,
               ),
             );
           },

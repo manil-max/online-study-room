@@ -390,15 +390,15 @@ const Map<String, double> _budget = {
   'heatmap|geniş telefon|yarım 16×16': 36.0,
   'heatmap|geniş telefon|tam 32×16': 36.0,
 
-  // 🔴 `records_card.dart` hücre BÜYÜTÜLDÜĞÜNDE de kaydırıcıda kalıyor;
-  // düzeltmesi yoğunluk (kaç döşeme) kararı gerektiriyor, yani sahibin
-  // önizleme göreceği bir iş. Ölçüler teslim raporunda; lider ayrı WP açacak.
-  'records|dar telefon|yarım 16×16': 648.0,
-  'records|dar telefon|tam 32×16': 316.0,
-  'records|dar telefon|büyütülmüş 32×26': 211.0,
-  'records|geniş telefon|yarım 16×16': 418.0,
-  'records|geniş telefon|tam 32×16': 210.0,
-  'records|geniş telefon|büyütülmüş 32×26': 83.8,
+  // ✅ `records` — artık HİÇBİR hücrede kart-içi kaydırma yok (WP-858). Altı
+  // satır vardı: dar 648 / 316 / 211, geniş 418 / 210 / 83.8 px. Kök neden
+  // hücre boyu değil DÖŞEME biçimiydi: tam modda 140 px genişliğindeki tek bir
+  // döşeme ("En verimli gün", iki satırlık değer + sarmalanan kapsam etiketi)
+  // 172 px'e uzuyordu. Kart artık yoğun döşeme çizer (tek satır değer, en çok
+  // iki satır etiket, boy tavanı hesaplanabilir) ve gövdeye sığan kadarını
+  // önem sırasıyla gösterir: dar 32×26 → 4 döşeme, 32×32 ve üstü → 5.
+  // Büyük yazıda döşeme düşürülmez, kart kayar (WP-497/541) — bu envanter
+  // yalnız 1.0 ölçeği ölçer. Bkz. `records_card_fit_wp858_test.dart`.
 
   // ✅ `leaderboard` — artık HİÇBİR hücrede kart-içi kaydırma yok. WP-659 dört
   // satırdan üçünü (22.9 / 18.3 / 42.3) düşürdü, WP-662 kalanı (17.0) kapattı:
