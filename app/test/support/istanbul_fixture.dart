@@ -30,7 +30,20 @@ Duration sinceIstanbulMidnight(DateTime instant) {
 /// [desired] kadar geriye gitmek bugünden çıkmıyorsa onu, çıkıyorsa bugüne
 /// sığan en büyük geri gidişi verir.
 Duration backWithinIstanbulToday(Duration desired, {DateTime? now}) {
-  final room = sinceIstanbulMidnight(now ?? DateTime.now());
+  // 🔴 WP-859: 2 sn güvenlik payı. Çağıranların çoğu kendi `now`unu ÖNCE
+  // yakalayıp sonra bu fonksiyonu `now` vermeden çağırıyor
+  // (`now.subtract(backWithinIstanbulToday(...))`). Buradaki `DateTime.now()`
+  // birkaç ms SONRA okunduğu için "gün başından beri" payı dışarıdaki
+  // `now`dan biraz uzun çıkıyor ve kurulan an gece yarısının milisaniyeler
+  // ÖNCESİNE, yani DÜNE düşüyordu. Ölçüldü: beta-v8704 CI koşumu
+  // (35397032160, İstanbul 00:36) — kayıtlı 1 saat "bugün"de hiç sayılmadı,
+  // ekranda yalnız canlı 36m 50s vardı. Gün içinde pay görünmez; yalnız
+  // İstanbul'un ilk saatinde fark eder.
+  // Pay YALNIZ saat burada okunduğunda gerekir; `now` veren çağıran tek bir
+  // anla çalışır ve kırpma tam gece yarısına iner (WP-565 iddiaları).
+  final margin = now == null ? const Duration(seconds: 2) : Duration.zero;
+  final since = sinceIstanbulMidnight(now ?? DateTime.now());
+  final room = since > margin ? since - margin : Duration.zero;
   return desired <= room ? desired : room;
 }
 
