@@ -4,6 +4,15 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8705 / 1.0.87-beta.5+8705] - 2026-09-19
+
+### Düzeltmeler
+
+- Aynı telefonda hesap değiştirince bir kişinin teması başka birinin hesabına kaydedilmiyor.
+- Uygulama gece yarısını açık geçirince "bugün" süresi yeni güne doğru geçiyor.
+- Hedef kartı yüzdesi sayaç kartıyla aynı anda değişiyor.
+- Sunucudaki bozuk bir özel tema diğer temaların üstüne yazılmıyor.
+
 ## [beta-v8704 / 1.0.87-beta.4+8704] - 2026-09-19
 
 ### Düzeltmeler

@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.5",
+      "buildNumber": 8705,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8705: hunter round WP-860..WP-865",
+      "highlights": [
+        "WP-860/864: theme stamp is owned by an account; another account's device theme is never pushed (incl. an account with no server row) and the debounced push is bound to the account it was scheduled for.",
+        "WP-865: todayRecordedSecondsProvider invalidates itself at the next Istanbul midnight."
+      ],
+      "fixes": [
+        "WP-861: remote custom themes land in their own id slot.",
+        "WP-862: coarse-card refresh boundary uses the exact percent expression the cards draw.",
+        "WP-863: FullLabelOrFallback computeDryBaseline."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.4",
       "buildNumber": 8704,
       "channel": "beta",

@@ -3,6 +3,34 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.87-beta.5",
+      "buildNumber": 8705,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8705: hata avı düzeltmeleri",
+      "highlights": [
+        "Aynı telefonda hesap değiştirince temalar karışmıyor."
+      ],
+      "fixes": [
+        "Gece yarısında \"bugün\" süresi yeni güne geçiyor.",
+        "Hedef kartı yüzdesi sayaç kartıyla aynı anda değişiyor."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı."
+      ],
+      "titleEn": "beta-v8705: bug hunt fixes",
+      "highlightsEn": [
+        "Switching accounts on the same phone no longer mixes up themes."
+      ],
+      "fixesEn": [
+        "\"Today\" rolls over to the new day at midnight.",
+        "The goal card percentage changes together with the timer card."
+      ],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta."
+      ]
+    },
+    {
       "versionName": "1.0.87-beta.4",
       "buildNumber": 8704,
       "channel": "beta",
