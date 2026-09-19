@@ -3,6 +3,18 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.7",
+      "buildNumber": 8707,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8707: WP-867 cancel pending Windows Google sign-in",
+      "highlights": [
+        "WP-867: LoopbackSession.cancel() frees the port; AuthRepository.cancelGoogleSignIn(); auth screen hint + Cancel while the browser flow is pending; late errors from a cancelled attempt are dropped."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.6",
       "buildNumber": 8706,
       "channel": "beta",
