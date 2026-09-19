@@ -158,8 +158,16 @@ class LoopbackSession {
   ///
   /// [signedIn] yalnız oturum **gerçekten** kurulduysa true verilir; aksi
   /// hâlde sayfa "tamamlanamadı" der (tarayıcıda yalancı başarı yok).
-  Future<void> finish({bool signedIn = false}) async {
-    if (_finished) return;
+  Future<void> finish({bool signedIn = false}) =>
+      // WP-875: ikinci çağıran (ör. zaman aşımı zamanlayıcısı kapatmayı
+      // başlattıktan sonra deponun `finally`si) aynı kapanışı BEKLER; yoksa
+      // port daha kapanmadan dönülür ve hemen yeniden deneme "port meşgul"
+      // alır (CI Linux'ta ölçüldü).
+      _finishing ??= _finish(signedIn: signedIn);
+
+  Future<void>? _finishing;
+
+  Future<void> _finish({required bool signedIn}) async {
     _finished = true;
     _timer.cancel();
     _complete(null);
