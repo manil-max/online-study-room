@@ -104,10 +104,10 @@ yeni karşılama temasıyla (`campfire_day`) çekiliyor; böylece mağazadaki g�
 kendisi tutarlı oluyor. Yeniden üretmek için (app/ içinde):
 
 ```
-STORE_SHOT_DIR=<klasör> flutter test test/marketing/store_shots_wp839_test.dart   --dart-define-from-file=env.json --tags=golden
+STORE_SHOT_DIR=../docs/magaza-kareleri flutter test test/marketing/store_shots_wp839_test.dart   --dart-define-from-file=env.json --tags=golden
 ```
 
-Çıkan dosyalar 1080x1920 (masaüstünde `focus-camp-magaza-kareleri` klasörü), yükleme sırası:
+Çıkan dosyalar 1080x1920 (repoda [`docs/magaza-kareleri/`](magaza-kareleri/) klasörü), yükleme sırası:
 
 1. `01-ana-ekran.png` — "Süreni ölç, panonu kendin kur": çalışan sayaç, bugünün toplamı, hedef çubuğu, grup sıralaması.
 2. `02-kamp-atesi.png` — "Birlikte çalış": kamp ateşi sahnesi, çalışan üyeler ve süreleri, grup hedefi.
