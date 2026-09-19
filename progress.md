@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-866** | beta-v8706: Windows Google girişi (tarayıcı + loopback 127.0.0.1:53682 + PKCE). ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| Son ayrılan WP | **WP-867** | Windows Google girişinde tarayıcı beklerken Vazgeç. Tam kapı yeşil; release-defines bir sonraki etiketten önce koşulacak. beta-v8706 run `35414683049` sabah kontrol. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -38,6 +38,7 @@ geri konunca yine kırmızı).
 | WP-864 | (lider) Kaydı olmayan B girince cihazdaki A teması B'ye "ilk tema" diye itiliyordu; 800 ms'lik itiş hesabına bağlı değildi | Düzeltildi `3a611c4d` |
 | WP-865 | (lider) `todayRecordedSecondsProvider` gece yarısını açık geçen uygulamada dünün toplamında kalıyordu | Düzeltildi `353d16e1` |
 | WP-866 | (alt ajan + lider) Windows'ta Google ile giriş: sistem tarayıcısı + sabit loopback `127.0.0.1:53682/auth-callback` + gotrue PKCE; izin listesi staging `35412272594` / prod `35412304560`; `windows-release.yml` env.json `GOOGLE_WEB_CLIENT_ID` (beta boş, stable zorunlu); kapı yeşil + release-defines yeşil; beta-v8706 run `35414683049`. Gerçek PC'de stable ile denenecek | Yapıldı `07bb81d3` `295d604e` `2c425a68` |
+| WP-867 | (alt ajan) Windows Google girişi beklerken ipucu + Vazgeç; `LoopbackSession.cancel()` portu serbest bırakır, `AuthRepository.cancelGoogleSignIn()`; geç gelen hata gösterilmez. Tam kapı yeşil (release-defines koşulmadı). Gerçek PC'de denenecek | Yapıldı `32520bcd` |
 
 Hunter ölçemedikleri: 0143 SQL (Docker yok; okumada RLS açığı yok — insert/update `with check`,
 delete grant yok, anon revoke), otomatik izin ve Play geçişinde bulgu yok (mevcut testler).
