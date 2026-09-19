@@ -63,6 +63,10 @@ class InMemoryDataExportRepository implements DataExportRepository {
       'subjects': [for (final s in subjects[userId] ?? const []) s.toMap()],
       'sessions': [for (final s in filtered) s.toMap()],
       'achievements': achievements[userId] ?? const [],
+      // WP-845 eşliği: Supabase deposu sunucudaki tema tercihini taşır;
+      // bellek-içi modda sunucu kopyası yoktur, alan yine de aynı şekilde
+      // bulunur (iki uygulamanın dışa aktarım şeması ayrışmasın).
+      'theme_prefs': null,
       'range': range.name,
     };
 
