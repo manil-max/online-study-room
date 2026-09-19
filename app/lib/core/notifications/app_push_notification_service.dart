@@ -36,8 +36,11 @@ const _lastPushTypeKey = 'push_last_type';
   Map<String, dynamic> data,
 ) {
   final version = (data['version_name'] ?? '').toString().trim();
+  // WP-874: beta bildirimi "Beta" diye söyler; aynı telefonda Play sürümü de
+  // olan kişi bildirimi normal sürümden sanmasın.
+  final isBeta = (data['target_channel'] ?? '').toString().trim() == 'beta';
   return (
-    title: l10n.pushUpdateTitle,
+    title: isBeta ? l10n.pushUpdateTitleBeta : l10n.pushUpdateTitle,
     body: version.isEmpty
         ? l10n.pushUpdateBodyGeneric
         : l10n.pushUpdateBody(version),

@@ -29,6 +29,15 @@ void main() {
     expect(turkish.title, 'Odak Kampı güncellendi');
     expect(turkish.body, '1.0.78 sürümü indirilmeye hazır.');
 
+    // WP-874: beta kanalı başlıkta "Beta" der; stable/boş değişmez.
+    final beta = {...data, 'target_channel': 'beta'};
+    expect(localizedUpdatePush(tr, beta).title, 'Odak Kampı Beta güncellendi');
+    expect(localizedUpdatePush(en, beta).title, 'Focus Camp Beta updated');
+    expect(
+      localizedUpdatePush(tr, {...data, 'target_channel': 'stable'}).title,
+      'Odak Kampı güncellendi',
+    );
+
     expect(
       localizedUpdatePush(en, <String, dynamic>{'version_name': '  '}).body,
       'A new version is ready to download.',

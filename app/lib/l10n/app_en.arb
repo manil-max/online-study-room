@@ -7296,6 +7296,8 @@
   "@adminKullaniciAramaIpucu": {"description": "WP-771: search field hint above the admin user list."},
   "pushUpdateTitle": "Focus Camp updated",
   "@pushUpdateTitle": {"description": "WP-773: title of the release push. Built on the device because the server payload carries fixed Turkish text."},
+  "pushUpdateTitleBeta": "Focus Camp Beta updated",
+  "@pushUpdateTitleBeta": {"description": "WP-874: title of the release push for the beta channel (target_channel=beta)."},
   "pushUpdateBody": "Version {version} is ready to download.",
   "@pushUpdateBody": {"description": "WP-773: body of the release push.", "placeholders": {"version": {"type": "String"}}},
   "pushUpdateBodyGeneric": "A new version is ready to download.",

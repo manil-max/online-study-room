@@ -2400,6 +2400,7 @@
   "adminEskiUye": "Gruptan ayrıldı",
   "adminKullaniciAramaIpucu": "E-posta veya kimlik ara",
   "pushUpdateTitle": "Odak Kampı güncellendi",
+  "pushUpdateTitleBeta": "Odak Kampı Beta güncellendi",
   "pushUpdateBody": "{version} sürümü indirilmeye hazır.",
   "pushUpdateBodyGeneric": "Yeni sürüm indirilmeye hazır.",
   "adminUserProfileTitle": "Kullanıcı profili",
