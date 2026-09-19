@@ -77,6 +77,9 @@ void main() {
     const allowed = {
       'lib/l10n/app_localizations.dart',
       'lib/core/l10n/app_locale.dart',
+      // WP-866: tarayicidaki giris sonucu sayfasi uygulama disinda; bilerek
+      // TR + EN iki dilli basilir (uygulama dili tarayiciya tasinamaz).
+      'lib/features/auth/windows_google_loopback.dart',
     };
     final pattern = RegExp(r"""Locale\(\s*['"](tr|en)['"]""");
     final offenders = <String>[];
