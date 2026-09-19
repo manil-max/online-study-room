@@ -610,6 +610,14 @@ class SupabaseAuthRepository implements AuthRepository {
       final url = await browser.authorizeUrl(
         redirectTo: windowsGoogleLoopbackRedirect,
       );
+      // WP-871: "Vazgeç" PKCE adresi hazırlanırken de gelebilir; dinleyici
+      // kapandıysa kullanıcı ölü bir dönüşe sahip Google sayfasına gönderilmez.
+      if (_googleCancelRequested) {
+        throw const AuthException(
+          'google_sign_in_cancelled',
+          code: AuthErrorCode.cancelled,
+        );
+      }
       if (!await browser.openExternal(url)) {
         throw const AuthException('google_browser_open_failed');
       }
