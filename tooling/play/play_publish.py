@@ -165,6 +165,10 @@ def upload(session, aab_path, track, notes, status):
             "track": track,
             "releases": [
                 {
+                    # Ad verilmezse Play onceki taslagin adini korur: v87
+                    # taslagi Console'da "1.0.86" gorundu. Stable surum kodu
+                    # = yama numarasi (v87 -> 87 -> 1.0.87).
+                    "name": "1.0.%d" % version_code,
                     "versionCodes": [str(version_code)],
                     "status": status,
                     "releaseNotes": notes,
