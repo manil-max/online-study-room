@@ -176,6 +176,12 @@ jobs:
             # Sideload kanali: updater ACIK olmali (ZIP kullanicisi guncellemeyi
             # baska yerden alamaz). Magaza paketi bu degeri KULLANMAZ.
             DISTRIBUTION_CHANNEL = 'windows'
+            # WP-866: Windows'ta Google girisi (tarayici + loopback). Beta/staging
+            # bos kalir -> buton gizli; stable dolu olmak zorunda.
+            GOOGLE_WEB_CLIENT_ID = if ($isBeta) { '' } else { '${{ vars.GOOGLE_WEB_CLIENT_ID }}' }
+          }
+          if (-not $isBeta -and [string]::IsNullOrWhiteSpace($manifest.GOOGLE_WEB_CLIENT_ID)) {
+            throw 'GOOGLE_WEB_CLIENT_ID bos: Windows stable Google girisi olmadan cikamaz (repo variable GOOGLE_WEB_CLIENT_ID)'
           }
           $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
 
