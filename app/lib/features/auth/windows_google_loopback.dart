@@ -126,7 +126,17 @@ class LoopbackSession {
       unawaited(request.response.close().catchError((Object _) {}));
       return;
     }
-    final query = request.uri.queryParameters;
+    // WP-868: geçersiz UTF-8 yüzde kodlaması (`%E0`) `queryParameters`ta
+    // FormatException atar; yakalanmazsa istek yanıtsız kalır ve hata
+    // dinleyiciden kaçar. Bozuk istek 400 alır, akışı tamamlamaz.
+    final Map<String, String> query;
+    try {
+      query = request.uri.queryParameters;
+    } on FormatException {
+      request.response.statusCode = HttpStatus.badRequest;
+      unawaited(request.response.close().catchError((Object _) {}));
+      return;
+    }
     _pending = request;
     _complete(LoopbackCallback(code: query['code'], error: query['error']));
   }
