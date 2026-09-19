@@ -17,12 +17,35 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-859** | beta-v8704: WP-857…WP-859. ⚠️ WP-833 iki kez kullanıldı: Google yayın kapısı (bu oturum) ve Store logosu (paralel oturum) — ikisi ayrı işler |
+| Son ayrılan WP | **WP-865** | beta-v8705: hunter turu WP-860…WP-865. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### Hunter turu — v86-v87 yeni kod (2026-09-19)
+
+Hunter rolüyle alt ajan; her bulgu önce kırmızı test, sonra düzeltme, sonra sabotaj (eski kod
+geri konunca yine kırmızı).
+
+| WP | Bulgu | Durum |
+|---|---|---|
+| WP-860 | Tema damgası hesaba bağlı değildi: aynı cihazda A çıkıp B girince A'nın teması B'nin hesabına yazılıyor, B'nin kaydı siliniyordu (ve tersi) | Düzeltildi `a64524ee` |
+| WP-861 | Sunucudaki bozuk özel tema listeyi kaydırıyor, `custom_2` kaydı `custom_3`ün üstüne yazılıyordu | Düzeltildi `7c336ac1` |
+| WP-862 | Kaba kartların yenileme anı `(t*100/g).round()`, kartların çizdiği `((t/g)*100).round()` — kayan noktada yarımlarda ayrışıyor; hedef kartı 1 puan / ~5 sn geride | Düzeltildi `ff8c1aab` |
+| WP-863 | `FullLabelOrFallback` kuru taban çizgisi yoktu (şu an erişilmiyor, gizli) | Düzeltildi `0129cd6e` |
+| WP-864 | (lider) Kaydı olmayan B girince cihazdaki A teması B'ye "ilk tema" diye itiliyordu; 800 ms'lik itiş hesabına bağlı değildi | Düzeltildi `3a611c4d` |
+| WP-865 | (lider) `todayRecordedSecondsProvider` gece yarısını açık geçen uygulamada dünün toplamında kalıyordu | Düzeltildi `353d16e1` |
+
+Hunter ölçemedikleri: 0143 SQL (Docker yok; okumada RLS açığı yok — insert/update `with check`,
+delete grant yok, anon revoke), otomatik izin ve Play geçişinde bulgu yok (mevcut testler).
+**Not (İDDİA 3):** gelecekteki her stable GitHub Release `app-release.apk` taşımaya devam
+etmeli — v86 stable kurulumları `releases/latest`e bakar, APK'sız bir release'te v87'ye
+(dolayısıyla Play geçiş bildirimine) hiç ulaşamazlar.
+
+Kapı: 22 yeşil + `release-defines` 468s yeşil. **beta-v8705** run `35407829187`.
+
 
 ### beta-v8702 turu (2026-09-18, sahip: "devam et, durma")
 
