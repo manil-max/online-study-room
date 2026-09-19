@@ -36,3 +36,22 @@ String? authRecoveryRedirectUrl(String packageName, {required bool isAndroid}) {
   final suffix = trimmed.substring(_appIdBase.length); // '', '.beta', '.local'
   return '$_schemeBase$suffix://$_callbackHost';
 }
+
+/// 🔴 WP-866: Windows'ta "Google ile devam et" akışının dönüş adresi.
+///
+/// `google_sign_in`in Windows uygulaması yok; giriş sistem tarayıcısında
+/// yapılır ve Supabase kullanıcıyı bu **loopback** adresine geri yollar
+/// (RFC 8252 §7.3). Uygulama aynı adreste kısa ömürlü bir HTTP dinleyicisi
+/// açar, gelen `code`u PKCE ile oturuma çevirir.
+///
+/// **Tek kaynak budur.** Aynı dize Supabase yönlendirme izin listesinde de
+/// birebir durur (`.github/workflows/supabase-auth-config.yml`, `allow_list`);
+/// liste joker taşımadığı için adres, port veya yol bir karakter bile farklı
+/// olursa Supabase dönüşü reddeder. Bu yüzden port meşgulse başka porta
+/// **düşülmez** — o port listede yoktur.
+const String windowsGoogleLoopbackRedirect =
+    'http://127.0.0.1:53682/auth-callback';
+
+/// [windowsGoogleLoopbackRedirect]'in ayrıştırılmış hâli (host/port/yol
+/// buradan okunur; ikinci bir sabit tutulmaz).
+final Uri windowsGoogleLoopbackUri = Uri.parse(windowsGoogleLoopbackRedirect);

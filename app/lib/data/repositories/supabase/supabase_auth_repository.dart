@@ -5,8 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/auth_redirect_config.dart';
 import '../../../core/config/google_sign_in_config.dart';
+import '../../../features/auth/windows_google_loopback.dart';
 import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
@@ -99,6 +102,58 @@ class PluginGoogleIdTokenSource implements GoogleIdTokenSource {
   }
 }
 
+/// WP-866: Windows tarayıcı akışının dış uçları — sağlayıcı adresi, sistem
+/// tarayıcısı ve PKCE kod değişimi.
+///
+/// Depo bunlara doğrudan bağlanmaz: gerçek tarayıcı ve gerçek gotrue PKCE
+/// deposu birim testte çalışmaz. Üretimde [SupabaseGoogleBrowserOAuth].
+abstract class GoogleBrowserOAuth {
+  /// Supabase `/authorize` adresi (PKCE doğrulayıcısı yerelde saklanır).
+  Future<Uri> authorizeUrl({required String redirectTo});
+
+  /// Adresi sistem tarayıcısında açar; açılamazsa false.
+  Future<bool> openExternal(Uri url);
+
+  /// Dönüşteki `code`u saklı doğrulayıcıyla oturuma çevirir.
+  Future<supa.Session> exchangeCode(String code);
+}
+
+/// gotrue 2.22.0 PKCE API'si + `url_launcher` üzerinden gerçek uçlar.
+class SupabaseGoogleBrowserOAuth implements GoogleBrowserOAuth {
+  SupabaseGoogleBrowserOAuth(this._client);
+
+  final supa.SupabaseClient _client;
+
+  @override
+  Future<Uri> authorizeUrl({required String redirectTo}) async {
+    // gotrue `getOAuthSignInUrl` (gotrue_client.dart:363) PKCE akışında
+    // doğrulayıcıyı `pkceAsyncStorage`a yazar ve `code_challenge`lı adresi
+    // döndürür; supabase_flutter varsayılan akış tipi PKCE'dir.
+    final response = await _client.auth.getOAuthSignInUrl(
+      provider: supa.OAuthProvider.google,
+      redirectTo: redirectTo,
+      // Android'de çıkış hesap seçiciyi sıfırlıyor; tarayıcıda Google çerezi
+      // kalır. Hesap seçimi her girişte sorulsun ki çıkış yapan kullanıcı
+      // sessizce aynı hesaba dönmesin.
+      queryParams: const {'prompt': 'select_account'},
+    );
+    return Uri.parse(response.url);
+  }
+
+  @override
+  Future<bool> openExternal(Uri url) =>
+      launchUrl(url, mode: LaunchMode.externalApplication);
+
+  @override
+  Future<supa.Session> exchangeCode(String code) async {
+    // gotrue `exchangeCodeForSession` (gotrue_client.dart:379): saklı
+    // doğrulayıcıyla `POST /token?grant_type=pkce`; oturumu kaydeder ve
+    // `signedIn` yayınlar.
+    final response = await _client.auth.exchangeCodeForSession(code);
+    return response.session;
+  }
+}
+
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository(
@@ -107,25 +162,58 @@ class SupabaseAuthRepository implements AuthRepository {
     Profile? Function()? cachedProfile,
     void Function(Profile profile)? onServerProfile,
     GoogleIdTokenSource? googleIdTokenSource,
+    GoogleBrowserOAuth? googleBrowserOAuth,
+    WindowsGoogleLoopback? googleLoopback,
   }) : _recoveryRedirect = recoveryRedirect ?? (() async => null),
        _cachedProfile = cachedProfile ?? (() => null),
        _onServerProfile = onServerProfile ?? ((_) {}),
-       _google = googleIdTokenSource ?? _defaultGoogleIdTokenSource();
+       // Dikişlerden biri verilirse yol odur; öteki varsayılana düşmez.
+       // (CI define'ı kimliği doldurduğunda testin Android varsayılanı
+       // gerçek eklentiye kaymasın.)
+       _google =
+           googleIdTokenSource ??
+           (googleBrowserOAuth == null ? _defaultGoogleIdTokenSource() : null),
+       _browserGoogle =
+           googleBrowserOAuth ??
+           (googleIdTokenSource == null
+               ? _defaultGoogleBrowserOAuth(_client)
+               : null),
+       _loopback = googleLoopback ?? WindowsGoogleLoopback();
 
   /// WP-831: yapılandırma yoksa (kimlik boş / Android değil) kaynak **null**
   /// kalır — Google girişi fail-closed kapalıdır ve çıkışta eklentiye
   /// hiç dokunulmaz.
   static GoogleIdTokenSource? _defaultGoogleIdTokenSource() {
-    if (!GoogleSignInConfig.platformEnabled) return null;
+    if (GoogleSignInConfig.flow != GoogleSignInFlow.nativeIdToken) {
+      return null;
+    }
     return PluginGoogleIdTokenSource(
       serverClientId: GoogleSignInConfig.webClientId,
     );
+  }
+
+  /// WP-866: yalnız Windows + dolu kimlikte kurulur; aksi hâlde null
+  /// (fail-closed, tarayıcı hiç açılmaz).
+  static GoogleBrowserOAuth? _defaultGoogleBrowserOAuth(
+    supa.SupabaseClient client,
+  ) {
+    if (GoogleSignInConfig.flow != GoogleSignInFlow.browserLoopback) {
+      return null;
+    }
+    return SupabaseGoogleBrowserOAuth(client);
   }
 
   final supa.SupabaseClient _client;
 
   /// WP-831: Google ID token kaynağı; Google girişi kapalıysa null.
   final GoogleIdTokenSource? _google;
+
+  /// WP-866: Windows tarayıcı akışının uçları; akış kapalıysa null.
+  final GoogleBrowserOAuth? _browserGoogle;
+
+  /// WP-866: Windows dönüş dinleyicisi. Kurulumu port almaz; port yalnız
+  /// giriş anında `open` ile alınır ve akış bitince bırakılır.
+  final WindowsGoogleLoopback _loopback;
 
   /// 🔴 WP-609: ağ yolu başarısız olduğunda dönülecek **son gerçek** profil.
   ///
@@ -439,6 +527,8 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<Profile> signInWithGoogle() async {
     final google = _google;
     if (google == null) {
+      final browser = _browserGoogle;
+      if (browser != null) return _signInWithGoogleInBrowser(browser);
       throw const AuthException('google_sign_in_unavailable');
     }
     final String? idToken;
@@ -470,6 +560,69 @@ class SupabaseAuthRepository implements AuthRepository {
       return profile;
     } on supa.AuthException catch (e) {
       throw AuthException(e.message, code: _authCode(e));
+    }
+  }
+
+  /// WP-866: Windows'ta Google girişi (RFC 8252 loopback + PKCE).
+  ///
+  /// Sıra **sözleşmedir**:
+  /// 1. Sabit porta dinleyici bağlanır — tarayıcıdan ÖNCE. Port meşgulse
+  ///    kullanıcı boşuna Google'a gönderilmez: [AuthErrorCode.loopbackPortBusy].
+  /// 2. gotrue PKCE adresi alınır (doğrulayıcı yerelde saklanır), sistem
+  ///    tarayıcısında açılır.
+  /// 3. Tek `GET /auth-callback` beklenir. `error` → kullanıcı vazgeçti /
+  ///    reddetti; zaman aşımı → vazgeçti. İkisi de [AuthErrorCode.cancelled]
+  ///    (ekran sessiz kalır).
+  /// 4. `code` oturuma çevrilir, profil e-posta girişiyle **aynı** yoldan
+  ///    ([_profileFor]) okunur.
+  /// 5. Tarayıcıya sonuç sayfası yazılır ve dinleyici kapanır — hata yolunda
+  ///    da (`finally`).
+  ///
+  /// Kod ve token hiçbir yerde loglanmaz; hata mesajları teknik ve kodsuzdur.
+  Future<Profile> _signInWithGoogleInBrowser(GoogleBrowserOAuth browser) async {
+    final LoopbackSession session;
+    try {
+      session = await _loopback.open();
+    } on LoopbackPortBusyException {
+      throw const AuthException(
+        'google_loopback_port_busy',
+        code: AuthErrorCode.loopbackPortBusy,
+      );
+    }
+    var signedIn = false;
+    try {
+      final url = await browser.authorizeUrl(
+        redirectTo: windowsGoogleLoopbackRedirect,
+      );
+      if (!await browser.openExternal(url)) {
+        throw const AuthException('google_browser_open_failed');
+      }
+      final callback = await session.waitForCallback();
+      if (callback == null || callback.denied) {
+        throw const AuthException(
+          'google_sign_in_cancelled',
+          code: AuthErrorCode.cancelled,
+        );
+      }
+      final code = callback.code;
+      if (code == null || code.isEmpty) {
+        throw const AuthException('google_oauth_code_missing');
+      }
+      final supa.Session authSession;
+      try {
+        authSession = await browser.exchangeCode(code);
+      } on supa.AuthException catch (e) {
+        throw AuthException(e.message, code: _authCode(e));
+      }
+      final profile = await _profileFor(authSession);
+      if (profile == null) {
+        throw const AuthException('google_sign_in_no_session');
+      }
+      _current = profile;
+      signedIn = true;
+      return profile;
+    } finally {
+      await session.finish(signedIn: signedIn);
     }
   }
 

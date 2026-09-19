@@ -232,7 +232,9 @@ void main() {
   });
 
   group('WP-831 GoogleSignInConfig karari', () {
-    test('yalniz Android + dolu kimlik + Supabase', () {
+    // WP-866: Windows artik tarayici + loopback yoluyla ACIK (eskiden
+    // `windows -> false` olculuyordu); kapali kalanlar web/iOS/macOS/Linux.
+    test('Android veya Windows + dolu kimlik + Supabase', () {
       bool enabled({
         String id = 'web-client.apps.googleusercontent.com',
         bool isWeb = false,
@@ -249,8 +251,10 @@ void main() {
       expect(enabled(id: ''), isFalse);
       expect(enabled(id: '   '), isFalse);
       expect(enabled(isWeb: true), isFalse);
-      expect(enabled(platform: TargetPlatform.windows), isFalse);
+      expect(enabled(platform: TargetPlatform.windows), isTrue);
       expect(enabled(platform: TargetPlatform.iOS), isFalse);
+      expect(enabled(platform: TargetPlatform.macOS), isFalse);
+      expect(enabled(platform: TargetPlatform.linux), isFalse);
       expect(enabled(supabase: false), isFalse);
     });
   });

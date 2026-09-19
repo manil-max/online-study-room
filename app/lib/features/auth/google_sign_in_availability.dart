@@ -6,9 +6,11 @@ import '../../core/config/supabase_config.dart';
 
 /// WP-831: giriş ekranında "Google ile devam et" düğmesi çizilsin mi?
 ///
-/// Üç koşulun **hepsi** gerekir (fail-closed): Android (web değil),
+/// Üç koşulun **hepsi** gerekir (fail-closed): Android veya Windows (web
+/// değil; WP-866 Windows'u tarayıcı + loopback akışıyla ekledi),
 /// `GOOGLE_WEB_CLIENT_ID` dolu ve depo Supabase deposu. Biri eksikse düğme
 /// hiç görünmez — yapılandırılmamış kurulumda çalışmayan düğme gösterilmez.
+/// Tam tablo: `GoogleSignInConfig` belge yorumu.
 ///
 /// Sağlayıcı olarak durur ki widget testleri kararı override edebilsin;
 /// kararın kendisi saftır ve `GoogleSignInConfig.resolveEnabled`da sınanır.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/auth_redirect_config.dart';
 import '../../core/validation/name_limits.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -586,6 +587,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       AuthErrorCode.weakPassword => l10n.authSifreEnAz6,
       AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
       AuthErrorCode.network => l10n.profileSunucuyaUlasilamadi,
+      // WP-866: Windows Google girişi sabit porta bağlanamadı.
+      AuthErrorCode.loopbackPortBusy => l10n.authGooglePortMesgul(
+        windowsGoogleLoopbackUri.port.toString(),
+      ),
       _ => l10n.authBeklenmeyenBirHataOlustu,
     };
   }

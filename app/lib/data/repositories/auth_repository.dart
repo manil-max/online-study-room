@@ -98,6 +98,11 @@ class AuthErrorCode {
   /// WP-831: kullanıcı harici giriş akışını (Google hesap seçici) **kendisi**
   /// kapattı. Bu bir hata değildir: ekran hiçbir şey göstermez.
   static const String cancelled = 'cancelled';
+
+  /// WP-866: Windows Google girişinin sabit loopback portu başka bir süreçte
+  /// açık. Başka porta düşülmez (Supabase izin listesinde yalnız o port var);
+  /// ekran portu adıyla söyler ki kullanıcı ne kapatacağını bilsin.
+  static const String loopbackPortBusy = 'loopback_port_busy';
 }
 
 /// WP-319-G: [AuthRepository.changePassword] sonucu.

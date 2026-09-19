@@ -128,14 +128,17 @@ void main() {
       skip: GoogleSignInConfig.webClientId.isNotEmpty,
     );
 
-    testWidgets('kimlik dolu + Supabase deposu ama Windows -> dugme cizilmez', (
+    // WP-866: Windows artik acik (tarayici + loopback); kapali masaustu
+    // ornegi olarak Linux olculur. Windows gorunurlugu
+    // windows_google_sign_in_wp866_test.dart'ta.
+    testWidgets('kimlik dolu + Supabase deposu ama Linux -> dugme cizilmez', (
       tester,
     ) async {
       _useTallPhone(tester);
       final enabled = GoogleSignInConfig.resolveEnabled(
         webClientId: 'web-client.apps.googleusercontent.com',
         isWeb: false,
-        platform: TargetPlatform.windows,
+        platform: TargetPlatform.linux,
         supabaseBackend: true,
       );
       await tester.pumpWidget(
