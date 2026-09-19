@@ -3,6 +3,19 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.6",
+      "buildNumber": 8706,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8706: WP-866 Windows Google sign-in",
+      "highlights": [
+        "WP-866: Windows Google sign-in via system browser + fixed loopback 127.0.0.1:53682/auth-callback + gotrue PKCE (prompt=select_account); port busy -> loopbackPortBusy, deny/timeout -> cancelled.",
+        "WP-866: windows-release.yml env.json carries GOOGLE_WEB_CLIENT_ID (empty on beta, required on stable); auth allow-list includes the loopback URL."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.5",
       "buildNumber": 8705,
       "channel": "beta",

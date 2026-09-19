@@ -4,6 +4,12 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8706 / 1.0.87-beta.6+8706] - 2026-09-19
+
+### Yenilikler
+
+- Windows'ta "Google ile devam et": giriş sistem tarayıcısında yapılır, uygulama oturumu kendisi açar (normal sürüm ve Microsoft Store; beta'da kapalı).
+
 ## [beta-v8705 / 1.0.87-beta.5+8705] - 2026-09-19
 
 ### Düzeltmeler
