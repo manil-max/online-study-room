@@ -215,6 +215,13 @@ class SupabaseAuthRepository implements AuthRepository {
   /// giriş anında `open` ile alınır ve akış bitince bırakılır.
   final WindowsGoogleLoopback _loopback;
 
+  /// WP-867: o an bekleyen tarayıcı girişinin dinleyicisi (yoksa null).
+  LoopbackSession? _googleSession;
+
+  /// WP-867: "Vazgeç" dinleyici henüz açılmadan geldiyse akış açılır
+  /// açılmaz kapatılsın diye tutulur.
+  bool _googleCancelRequested = false;
+
   /// 🔴 WP-609: ağ yolu başarısız olduğunda dönülecek **son gerçek** profil.
   ///
   /// Depo `OfflineCacheStore`u doğrudan tanımaz (katman sınırı); yalnız bir
@@ -580,6 +587,7 @@ class SupabaseAuthRepository implements AuthRepository {
   ///
   /// Kod ve token hiçbir yerde loglanmaz; hata mesajları teknik ve kodsuzdur.
   Future<Profile> _signInWithGoogleInBrowser(GoogleBrowserOAuth browser) async {
+    _googleCancelRequested = false;
     final LoopbackSession session;
     try {
       session = await _loopback.open();
@@ -589,8 +597,16 @@ class SupabaseAuthRepository implements AuthRepository {
         code: AuthErrorCode.loopbackPortBusy,
       );
     }
+    _googleSession = session;
     var signedIn = false;
     try {
+      // WP-867: "Vazgeç" port alınırken geldiyse tarayıcı hiç açılmaz.
+      if (_googleCancelRequested) {
+        throw const AuthException(
+          'google_sign_in_cancelled',
+          code: AuthErrorCode.cancelled,
+        );
+      }
       final url = await browser.authorizeUrl(
         redirectTo: windowsGoogleLoopbackRedirect,
       );
@@ -622,8 +638,22 @@ class SupabaseAuthRepository implements AuthRepository {
       signedIn = true;
       return profile;
     } finally {
+      if (identical(_googleSession, session)) _googleSession = null;
       await session.finish(signedIn: signedIn);
     }
+  }
+
+  /// WP-867: bekleyen Windows tarayıcı girişinden vazgeçer.
+  ///
+  /// Dinleyici açıksa bekleme `null` ile biter → [signInWithGoogle]
+  /// [AuthErrorCode.cancelled] atar ve port hemen bırakılır. Dönüş zaten
+  /// geldiyse (kod değişimi sürüyor) iptal no-op'tur: yarım oturum
+  /// bırakılmaz. Android'de ve bekleyen akış yokken hiçbir şey yapmaz.
+  @override
+  Future<void> cancelGoogleSignIn() async {
+    if (_browserGoogle == null) return;
+    _googleCancelRequested = true;
+    await _googleSession?.cancel();
   }
 
   /// WP-587: doğrulama e-postasını yeniden gönderir.

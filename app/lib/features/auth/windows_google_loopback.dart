@@ -131,6 +131,19 @@ class LoopbackSession {
     _complete(LoopbackCallback(code: query['code'], error: query['error']));
   }
 
+  /// WP-867: kullanıcı uygulamada "Vazgeç"e bastı.
+  ///
+  /// Dönüş henüz gelmediyse bekleme `null` ile biter (zaman aşımıyla aynı
+  /// sessiz yol) ve dinleyici hemen kapanır: port bırakılır, yeniden deneme
+  /// beklemeden bağlanabilir. Dönüş **zaten geldiyse** geç kalınmıştır —
+  /// kod değişimi sürer ve sonuç sayfasını [finish] yazar; iptal no-op'tur.
+  /// İdempotenttir.
+  Future<void> cancel() async {
+    if (_result.isCompleted || _finished) return;
+    _complete(null);
+    await finish();
+  }
+
   /// Tarayıcıya sonuç sayfasını yazar ve dinleyiciyi kapatır.
   ///
   /// [signedIn] yalnız oturum **gerçekten** kurulduysa true verilir; aksi

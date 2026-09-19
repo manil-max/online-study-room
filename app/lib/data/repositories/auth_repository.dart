@@ -171,6 +171,14 @@ abstract class AuthRepository {
   /// backend/platformda çağrı kodsuz [AuthException] ile düşer.
   Future<Profile> signInWithGoogle();
 
+  /// WP-867: bekleyen tarayıcı tabanlı Google girişinden (Windows) vazgeçer.
+  ///
+  /// Bekleyen [signInWithGoogle] çağrısı [AuthErrorCode.cancelled] ile
+  /// düşer (ekran sessiz kalır) ve dönüş dinleyicisinin portu hemen
+  /// bırakılır. Bekleyen akış yoksa veya akış tarayıcı kullanmıyorsa
+  /// (Android hesap seçici, bellek-içi arka uç) hiçbir şey yapmaz.
+  Future<void> cancelGoogleSignIn();
+
   /// WP-587: kayıt doğrulama e-postasını **yeniden** gönderir.
   ///
   /// 🔴 Neden sözleşmeye giriyor: e-posta doğrulaması açıkken kayıt bir

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/auth_redirect_config.dart';
+import '../../core/config/google_sign_in_config.dart';
 import '../../core/validation/name_limits.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -33,6 +36,16 @@ const bool kResetWithCodeEnabled = bool.fromEnvironment(
   'RESET_WITH_CODE_ENABLED',
 );
 
+/// WP-867: "Google ile devam et" sistem tarayıcısında mı tamamlanıyor?
+///
+/// Yalnız Windows akışında (tarayıcı + loopback) true'dur; o akış
+/// beklerken ekran "Vazgeç" gösterir. Android hesap seçicisi kendi
+/// kapatma yolunu taşır, orada false kalır ve ekran değişmez. Sağlayıcı
+/// olarak durur ki widget testleri kararı override edebilsin.
+final googleSignInInBrowserProvider = Provider<bool>(
+  (ref) => GoogleSignInConfig.flow == GoogleSignInFlow.browserLoopback,
+);
+
 /// Giriş ve kayıt ekranı (e-posta + şifre). Tek ekranda iki mod arası geçiş yapılır.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -50,6 +63,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isRegister = false;
   bool _loading = false;
   String? _error;
+
+  /// WP-867: Windows'ta Google girişi tarayıcıda tamamlanmayı bekliyor.
+  bool _googleBrowserPending = false;
+
+  /// WP-867: her Google denemesi yeni bir numara alır. "Vazgeç" numarayı
+  /// ilerletir; geç düşen eski denemenin hatası ekrana yazılmaz ve formun
+  /// kilidine dokunmaz.
+  int _googleAttempt = 0;
   String? _info;
 
   /// WP-587: hesap **var** ama e-postası doğrulanmamış.
@@ -146,26 +167,55 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   /// **hiçbir şey** göstermez: vazgeçmek hata değildir.
   Future<void> _continueWithGoogle() async {
     final l10n = AppLocalizations.of(context);
+    final attempt = ++_googleAttempt;
     setState(() {
       _loading = true;
+      _googleBrowserPending = ref.read(googleSignInInBrowserProvider);
       _error = null;
       _info = null;
       _emailNotConfirmed = false;
     });
+    bool current() => mounted && attempt == _googleAttempt;
     var signedIn = false;
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
       signedIn = true;
     } on AuthException catch (e) {
-      if (e.code != AuthErrorCode.cancelled && mounted) {
+      if (e.code != AuthErrorCode.cancelled && current()) {
         setState(() => _error = _localizedAuthError(l10n, e));
       }
     } catch (_) {
-      if (mounted) setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+      if (current()) setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (current()) {
+        setState(() {
+          _loading = false;
+          _googleBrowserPending = false;
+        });
+      }
     }
+    // Vazgeçten sonra bile oturum gerçekten kurulduysa (dönüş iptalden
+    // önce gelmişti) kullanıcı içeri alınır.
     if (signedIn && mounted) ref.invalidate(authStateProvider);
+  }
+
+  /// WP-867: tarayıcıdaki Google girişini bekleme — "Vazgeç".
+  ///
+  /// Form **hemen** ve sessizce açılır (hata/snackbar yok: vazgeçmek hata
+  /// değildir); depo dinleyiciyi kapatır, port bırakılır ve bir sonraki
+  /// deneme beklemeden başlar.
+  void _cancelGoogleInBrowser() {
+    _googleAttempt++;
+    setState(() {
+      _loading = false;
+      _googleBrowserPending = false;
+    });
+    unawaited(
+      ref
+          .read(authRepositoryProvider)
+          .cancelGoogleSignIn()
+          .catchError((Object _) {}),
+    );
   }
 
   /// WP-530: kayıt sonucunun **kaçırılamaz** onayı.
@@ -449,6 +499,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           icon: const Icon(Icons.account_circle_outlined),
           label: Text(l10n.authGoogleIleDevamEt),
         ),
+        // WP-867: tarayıcı sekmesi kapatılırsa kullanıcı 5 dakikalık
+        // zaman aşımına mahkûm kalmasın. Yalnız Windows tarayıcı akışı
+        // beklerken çizilir; Android'de hiç görünmez.
+        if (_googleBrowserPending)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.authGoogleTarayicidaTamamla,
+                    key: const Key('auth-google-browser-hint'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('auth-google-cancel'),
+                  onPressed: _cancelGoogleInBrowser,
+                  child: Text(l10n.authGoogleVazgec),
+                ),
+              ],
+            ),
+          ),
       ],
       const SizedBox(height: 8),
       if (!_isRegister) ...[

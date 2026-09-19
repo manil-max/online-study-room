@@ -103,6 +103,10 @@ class InMemoryAuthRepository implements AuthRepository {
     throw const AuthException('google_sign_in_unavailable');
   }
 
+  /// WP-867: bu arka uçta bekleyen tarayıcı akışı olmaz; no-op.
+  @override
+  Future<void> cancelGoogleSignIn() async {}
+
   /// WP-587: bu backend'in e-posta sağlayıcısı yok, bu yüzden gönderim
   /// **taklit edilmez** — çağrı sayılır. Sayaç, giriş ekranındaki
   /// "yeniden gönder" düğmesinin ölü anahtar olmadığını ölçen tek uçtur;
