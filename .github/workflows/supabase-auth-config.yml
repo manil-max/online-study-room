@@ -134,7 +134,11 @@ jobs:
 
           # Tek kaynak: auth_redirect_config.dart. Joker (*) veya üçüncü taraf domain
           # ASLA eklenmez — open-redirect riski.
-          allow_list='com.manilmax.onlinestudyroom://login-callback,com.manilmax.onlinestudyroom.beta://login-callback,com.manilmax.onlinestudyroom.local://login-callback'
+          # WP-866: Windows'ta Google girişi tarayıcıda yapılır ve uygulamanın kendi
+          # makinesinde dinlediği TEK sabit loopback adresine döner (RFC 8252 §7.3).
+          # Yine joker yok: tam adres, tam port. Adres app/lib/core/config/
+          # auth_redirect_config.dart ile birebir aynıdır.
+          allow_list='com.manilmax.onlinestudyroom://login-callback,com.manilmax.onlinestudyroom.beta://login-callback,com.manilmax.onlinestudyroom.local://login-callback,http://127.0.0.1:53682/auth-callback'
 
           # Web karşılama sayfası yok; Site URL'i stable derin bağlantısına çekiyoruz ki
           # redirectTo geçmeyen istemciler de localhost'a değil uygulamaya düşsün.
@@ -282,6 +286,7 @@ jobs:
           printf '%s' "$after" | jq -e '
             (.site_url | contains("localhost") or contains("127.0.0.1") | not) and
             (.uri_allow_list | contains("com.manilmax.onlinestudyroom.beta://login-callback")) and
+            (.uri_allow_list | contains("http://127.0.0.1:53682/auth-callback")) and
             (.uri_allow_list | contains("*") | not)
           ' > /dev/null
 
