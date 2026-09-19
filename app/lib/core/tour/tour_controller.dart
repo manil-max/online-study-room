@@ -94,6 +94,17 @@ class TourController extends Notifier<TourState> {
     state = const TourState.idle();
   }
 
+  /// WP-869: turu çizen `TourHost` yok oldu (kullanıcı tur açıkken ekrandan
+  /// geri çıktı). Tur **görüldü sayılmaz** — okunmadı; yalnız askıya alınır
+  /// ki başka ekranların turları `otherTourRunning` ile kilitli kalmasın.
+  /// Ekran yeniden açılınca tur baştan çıkar.
+  void suspend(TourDefinition definition) {
+    // Uygulama (ProviderScope) da söküldüyse yapılacak bir şey yok.
+    if (!ref.mounted) return;
+    if (state.definition?.storageId != definition.storageId) return;
+    state = const TourState.idle();
+  }
+
   /// Ayarlardaki "Tanıtım turlarını sıfırla". Silinen anahtar sayısını döner.
   Future<int> resetAll() async {
     final userId = _userId;

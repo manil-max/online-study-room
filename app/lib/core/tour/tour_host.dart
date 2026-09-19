@@ -33,16 +33,39 @@ class _TourHostState extends ConsumerState<TourHost>
   /// Ölçümü `build`'e değil olaya bağladığımız için her karede ölçüm yok.
   final _remeasure = ValueNotifier<int>(0);
 
+  /// WP-869: dispose'ta `ref` ve `context` kullanılamaz; askıya alma
+  /// kararı için saklanır.
+  late final TourController _controller;
+  ModalRoute<Object?>? _route;
+
   @override
   void initState() {
     super.initState();
+    _controller = ref.read(tourControllerProvider.notifier);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryStart());
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
+  }
+
+  @override
   void dispose() {
     _retryTimer?.cancel();
+    // WP-869: bu turun balonu açıkken ekranın rotası kapandıysa (geri
+    // tuşu) tur sahipsiz "çalışıyor" kalır ve diğer tüm turları kilitler.
+    // Yalnız rota gerçekten gittiyse askıya alınır; rota yerinde duruyorsa
+    // (sekme değişimi vb.) davranış değişmez. Durum ağaç sökülürken
+    // değiştirilemez; kare bitince askıya alınır.
+    final route = _route;
+    if (route != null && !route.isActive) {
+      final definition = widget.definition;
+      final controller = _controller;
+      scheduleMicrotask(() => controller.suspend(definition));
+    }
     _remeasure.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
