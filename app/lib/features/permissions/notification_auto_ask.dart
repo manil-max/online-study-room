@@ -5,23 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/notifications/notification_auto_ask_flag.dart';
 import '../../core/notifications/reminder_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/time_engine/clock_permissions.dart';
 import '../../data/providers/push_notification_providers.dart';
 
-/// WP-848: bildirim izninin sistem penceresi **bir kez, kendiliğinden** açıldı mı.
-///
-/// Cihaz geneli (kullanıcıya özel değil): izin telefona verilir, hesaba değil.
-/// Aynı telefonda hesap değiştiren ikinci kişiye pencereyi yeniden açmak
-/// yalnız ret edilmiş bir soruyu tekrar sormak olurdu.
-const kNotificationAutoAskKey = 'permissions.notification_auto_ask.v1';
-
-/// Onboarding'deki "Bildirimlere izin ver" düğmesi de pencereyi açar. O yol
-/// da bu bayrağı yazar; aksi hâlde onboarding'de "İzin verme" diyen kullanıcıya
-/// kabuğa girer girmez aynı pencere ikinci kez çıkardı.
-Future<void> markNotificationAutoAskDone(SharedPreferences prefs) =>
-    prefs.setBool(kNotificationAutoAskKey, true);
+export '../../core/notifications/notification_auto_ask_flag.dart';
 
 /// Sistem penceresini gerekiyorsa bir kez açar; açtıysa `true` döner.
 ///
@@ -41,9 +31,13 @@ Future<bool> maybeAutoAskNotificationPermission({
   required bool isAndroid,
   required Future<ClockPermissionSnapshot> Function() snapshot,
   required Future<bool> Function() request,
+  bool deferredThisSession = false,
 }) async {
   if (!isAndroid) return false;
-  if (prefs.getBool(kNotificationAutoAskKey) ?? false) return false;
+  // WP-873: onboarding'de "Şimdi değil" → bu açılışta sorma, bayrak da yazma;
+  // bir sonraki açılış bir kez sorar.
+  if (deferredThisSession) return false;
+  if (notificationAutoAskDone(prefs)) return false;
   final current = await snapshot();
   if (current.availability != ClockPermissionAvailability.available) {
     return false;
@@ -78,6 +72,7 @@ final notificationAutoAskProvider = Provider<void>((ref) {
       final asked = await maybeAutoAskNotificationPermission(
         prefs: prefs,
         isAndroid: isAndroid,
+        deferredThisSession: notificationAutoAskDeferredThisSession,
         snapshot: ClockPermissions.instance.snapshot,
         request: ref
             .read(reminderNotificationServiceProvider)

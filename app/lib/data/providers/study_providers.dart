@@ -15,6 +15,7 @@ import '../../core/config/supabase_config.dart';
 import '../../core/background/timer_foreground_service.dart';
 import '../../core/background/timer_v2_command_outbox.dart';
 import '../../core/l10n/system_localizations.dart';
+import '../../core/notifications/notification_auto_ask_flag.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/notifications/timer_sync_signal.dart';
@@ -3025,10 +3026,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _showTimerSurfaces({bool requestPermission = false}) async {
+    // WP-872: sayaç başlatma sistem penceresini yalnız hiç sorulmamışsa açar;
+    // ret eden kullanıcıya her başlatmada yeniden sorulmaz (yol İzinler
+    // ekranında). Açtığı pencere de "bir kez sorulan" sayılır.
     if (requestPermission) {
-      await ref
-          .read(timerNotificationServiceProvider)
-          .requestPermissionIfNeeded();
+      final prefs = ref.read(sharedPreferencesProvider);
+      if (!notificationAutoAskDone(prefs)) {
+        await markNotificationAutoAskDone(prefs);
+        await ref
+            .read(timerNotificationServiceProvider)
+            .requestPermissionIfNeeded();
+      }
     }
     await _syncTimerSurfaces();
   }

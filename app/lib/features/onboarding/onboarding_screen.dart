@@ -260,7 +260,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               button: true,
               label: l10n.onboardingNotNow,
               child: TextButton(
-                onPressed: _next,
+                // WP-873: "Şimdi değil" → kabuk bu açılışta pencereyi açmaz.
+                onPressed: () {
+                  deferNotificationAutoAskThisSession();
+                  _next();
+                },
                 style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
                 child: Text(l10n.onboardingNotNow),
               ),
