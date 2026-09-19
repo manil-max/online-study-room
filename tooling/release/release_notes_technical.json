@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.8",
+      "buildNumber": 8708,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8708: hunter round WP-868..WP-873",
+      "highlights": [
+        "WP-872: timer start requests notification permission only if the auto-ask flag is unset (flag moved to core/notifications).",
+        "WP-873: onboarding 'Not now' defers the shell auto-ask for this launch without writing the flag."
+      ],
+      "fixes": [
+        "WP-868: loopback returns 400 on malformed percent-encoded query instead of leaking FormatException.",
+        "WP-869: tour suspended when its screen is popped mid-tour; other tours no longer blocked.",
+        "WP-870: Windows Google callback errors other than access_denied surface as an error, not a silent cancel.",
+        "WP-871: cancel during PKCE URL preparation never opens the browser."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.7",
       "buildNumber": 8707,
       "channel": "beta",

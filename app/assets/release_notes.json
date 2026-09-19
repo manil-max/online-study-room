@@ -3,6 +3,34 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.87-beta.8",
+      "buildNumber": 8708,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8708: izin ve tanıtım düzeltmeleri",
+      "highlights": [
+        "Bildirim izni reddedilince her sayaç başlatmada yeniden sorulmuyor."
+      ],
+      "fixes": [
+        "Tanıtımda \"Şimdi değil\" sonrası izin penceresi hemen çıkmıyor.",
+        "Ayarlar tanıtımından geri çıkınca diğer tanıtımlar kilitlenmiyor."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı."
+      ],
+      "titleEn": "beta-v8708: permission and tour fixes",
+      "highlightsEn": [
+        "If notification permission was denied, starting the timer no longer asks again."
+      ],
+      "fixesEn": [
+        "\"Not now\" in onboarding no longer triggers the permission prompt right after.",
+        "Leaving the Settings tour no longer blocks other tours."
+      ],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta."
+      ]
+    },
+    {
       "versionName": "1.0.87-beta.7",
       "buildNumber": 8707,
       "channel": "beta",

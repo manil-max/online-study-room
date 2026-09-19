@@ -4,6 +4,15 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8708 / 1.0.87-beta.8+8708] - 2026-09-19
+
+### Düzeltmeler
+
+- Bildirim iznini reddedene sayaç her başlatıldığında izin yeniden sorulmuyor.
+- Tanıtımda "Şimdi değil" denince izin penceresi hemen ardından çıkmıyor; bir sonraki açılışta bir kez soruluyor.
+- Ayarlar tanıtımı açıkken geri çıkılınca diğer ekranların tanıtımları kilitlenmiyor.
+- Windows'ta Google girişinde sunucu hatası artık ekranda gösteriliyor; bozuk dönüş adresi tarayıcıyı asılı bırakmıyor.
+
 ## [beta-v8707 / 1.0.87-beta.7+8707] - 2026-09-19
 
 ### İyileştirmeler
