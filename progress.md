@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-873** | beta-v8708: hunter turu WP-868…WP-873 (Google loopback, tur kilidi, izin tekrar sorma). ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| Son ayrılan WP | **WP-875** | beta-v8709 (v8708 CI'da WP-866 testinde düştü, yayınlanmadı → WP-875). ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
@@ -44,6 +44,8 @@ geri konunca yine kırmızı).
 | WP-870 | (hunter) Windows Google dönüşünde `server_error` sessiz vazgeçiş sayılıyordu; yalnız `access_denied` sessiz | Düzeltildi `f312c0d5` |
 | WP-871 | (hunter) PKCE adresi hazırlanırken Vazgeç → tarayıcı yine açılıyordu | Düzeltildi `67d88adb` |
 | WP-872/873 | (lider) Ret eden kullanıcıya her sayaç başlatmada izin yeniden soruluyordu; onboarding 'Şimdi değil' sonrası kabuk hemen soruyordu (artık sonraki açılışta bir kez). Kapı 22 yeşil + release-defines 414s yeşil | Düzeltildi `56396e28` |
+| WP-874 | (lider) Beta sürüm bildirimi başlığı 'Odak Kampı Beta güncellendi' (sahip beta bildirimini Play'e gitti sandı; bildirim yalnız staging cihazlarına gider) | Yapıldı `28f9ce50` |
+| WP-875 | (lider) beta-v8708 CI `35444990404` WP-866 zaman aşımı testinde 'shared flag bind()' ile düştü: ikinci `finish()` kapanışı beklemiyordu. Kapanış geleceği paylaşıldı; yavaş kapanan sunucuyla deterministik test + sabotaj. Kapı 22 yeşil + release-defines 549s | Düzeltildi `f80a16df` |
 
 Hunter ölçemedikleri: 0143 SQL (Docker yok; okumada RLS açığı yok — insert/update `with check`,
 delete grant yok, anon revoke), otomatik izin ve Play geçişinde bulgu yok (mevcut testler).

@@ -3,6 +3,21 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.9",
+      "buildNumber": 8709,
+      "channel": "beta",
+      "date": "2026-09-19",
+      "title": "beta-v8709: WP-874/875 (+ unreleased beta-v8708 content)",
+      "highlights": [
+        "beta-v8708 CI (run 35444990404) failed on a WP-866 test and was never published; its content ships here."
+      ],
+      "fixes": [
+        "WP-874: beta update push title says Beta (target_channel=beta).",
+        "WP-875: LoopbackSession.finish() shares the close future so a second caller waits for the port to close."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.8",
       "buildNumber": 8708,
       "channel": "beta",

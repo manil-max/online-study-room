@@ -4,6 +4,15 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8709 / 1.0.87-beta.9+8709] - 2026-09-19
+
+beta-v8708 derleme testinde durdu ve yayınlanmadı; içeriği bu sürümdedir.
+
+### Düzeltmeler
+
+- Beta güncelleme bildirimi artık "Odak Kampı Beta güncellendi" diyor; normal sürümle karışmıyor.
+- Windows'ta Google girişi zaman aşımından sonra hemen yeniden denenince "port meşgul" hatası vermiyor.
+
 ## [beta-v8708 / 1.0.87-beta.8+8708] - 2026-09-19
 
 ### Düzeltmeler
