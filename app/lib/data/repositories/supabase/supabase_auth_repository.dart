@@ -614,11 +614,17 @@ class SupabaseAuthRepository implements AuthRepository {
         throw const AuthException('google_browser_open_failed');
       }
       final callback = await session.waitForCallback();
-      if (callback == null || callback.denied) {
+      if (callback == null || callback.error == 'access_denied') {
         throw const AuthException(
           'google_sign_in_cancelled',
           code: AuthErrorCode.cancelled,
         );
+      }
+      // WP-870: yalnız `access_denied` kullanıcının kendi reddidir. Başka
+      // her `error` (ör. `server_error`) sunucu/sağlayıcı hatasıdır: sessiz
+      // "vazgeçti" sayılırsa tarayıcı "tamamlanamadı" derken ekran boş kalır.
+      if (callback.denied) {
+        throw const AuthException('google_oauth_provider_error');
       }
       final code = callback.code;
       if (code == null || code.isEmpty) {
