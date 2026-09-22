@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# WP-910: macOS CI'da Swift Package Manager eklenti kaynaklarini
+# `build/ios/SourcePackages` altina indirir (kendi testleriyle, mockito vb.).
+# Derleme ciktisi analiz edilmez.
+analyzer:
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
