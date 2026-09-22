@@ -18,6 +18,7 @@
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
 | Son ayrılan WP | **WP-875** | beta-v8709 (v8708 CI'da WP-866 testinde düştü, yayınlanmadı → WP-875). ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| iOS bloğu (ayrı oturum) | **WP-900…WP-919** | 2026-09-22 App Store hazırlığı paralel oturumda; bu aralık yalnız iOS işlerine ayrıldı (numara çakışmasın). Genel sayaç WP-875'ten devam eder |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
