@@ -312,8 +312,8 @@ def build_gates() -> list[Gate]:
         # Define'a bagli dallar YALNIZ orada calisiyordu ve iki yayin ust uste
         # CI'da kirmiziya dustu: v85 (10 giris testi, Supabase.instance) ve v87
         # (teshis satiri: manifest testi + Windows form tavani 760.6 > 760).
-        # Bu kapi ayni paketi Android (githubStable) ve Windows kanal
-        # define'lariyla yerelde kosturur.
+        # Bu kapi ayni paketi Android (githubStable), Windows ve iOS (appStore,
+        # WP-908) kanal define'lariyla yerelde kosturur.
         Gate("release-defines", "Flutter paketi release define'lariyla", 3,
              [py, "scripts/test_all.py", "--internal-release-defines"],
              precondition=_needs_env_json),
@@ -1405,10 +1405,13 @@ def internal_release_defines() -> int:
         "APP_VERSION_NAME": "1.0.999",
         "APP_BUILD_NUMBER": "999",
         "GOOGLE_WEB_CLIENT_ID": "release-define-gate.apps.googleusercontent.com",
+        # WP-908: iOS (appStore) kanali da ayni pakete tabi; iOS Google akisi
+        # iki istemci kimligi ister.
+        "GOOGLE_IOS_CLIENT_ID": "release-define-gate-ios.apps.googleusercontent.com",
     })
     flutter = shutil.which("flutter") or "flutter"
     worst = 0
-    for channel in ("githubStable", "windows"):
+    for channel in ("githubStable", "windows", "appStore"):
         env = dict(base, DISTRIBUTION_CHANNEL=channel)
         with tempfile.NamedTemporaryFile(
             "w", suffix=".json", delete=False, encoding="utf-8"
