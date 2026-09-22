@@ -21,9 +21,19 @@ library;
 // Kullanım (app/ içinde):
 //   STORE_SHOT_DIR=<klasör> flutter test test/marketing/store_shots_wp839_test.dart \
 //     --dart-define-from-file=env.json --tags=golden
+//
+// WP-905 — App Store (iPhone 6.9") kareleri: aynı beş kare, 1320x2868 dikey,
+// iOS görünümüyle (`debugDefaultTargetPlatformOverride = TargetPlatform.iOS`):
+//   STORE_SHOT_TARGET=ios STORE_SHOT_DIR=../docs/app-store-kareleri \
+//     flutter test test/marketing/store_shots_wp839_test.dart \
+//     --dart-define-from-file=env.json --tags=golden
+// `STORE_SHOT_TARGET` verilmezse (ya da `play` ise) Play kareleri eskisi gibi
+// 1080x1920 üretilir.
 import 'dart:io';
 import 'dart:ui' show ImageByteFormat;
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -48,6 +58,10 @@ const _homeWidgetChannel = MethodChannel('home_widget');
 /// Mağaza karesinin ölçüsü: Play telefon karesi için 1080x1920 (9:16) yeterli.
 /// 540x960 dp × pixelRatio 2 tam bunu verir.
 const _frameSize = Size(540, 960);
+
+/// WP-905: App Store 6.9" iPhone karesi 1320x2868 ister; 660x1434 dp ×
+/// pixelRatio 2 tam bunu verir.
+const _iosFrameSize = Size(660, 1434);
 
 Future<void> _loadFont(String family, String path) async {
   final file = File(path);
@@ -213,6 +227,7 @@ Future<void> _shoot(WidgetTester tester, String path) async {
 void main() {
   final outDir = Platform.environment['STORE_SHOT_DIR'];
   final skip = outDir == null || outDir.isEmpty;
+  final ios = Platform.environment['STORE_SHOT_TARGET'] == 'ios';
 
   setUp(() {
     TestDefaultBinaryMessengerBinding
@@ -226,9 +241,9 @@ void main() {
         .setMockMethodCallHandler(_homeWidgetChannel, null);
   });
 
-  testWidgets('mağaza kareleri (tr)', (tester) async {
+  testWidgets('mağaza kareleri (tr${ios ? ', ios' : ''})', (tester) async {
     await tester.runAsync(_loadFonts);
-    tester.view.physicalSize = _frameSize;
+    tester.view.physicalSize = ios ? _iosFrameSize : _frameSize;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     Directory(outDir!).createSync(recursive: true);
@@ -253,9 +268,17 @@ void main() {
       ),
       ('05-tema', 'Kendine göre ayarla', const AppearanceScreen()),
     ];
-    for (final (file, caption, screen) in frames) {
-      await _pump(tester, prefs, seed, caption, screen);
-      await _shoot(tester, '$outDir/$file.png');
+    // iOS görünümü (Cupertino kaydırma/geçişler, platforma bağlı dallar).
+    // Test bitmeden sıfırlanmalı: çerçeve test sonunda foundation
+    // değişkenlerinin boş olduğunu doğrular.
+    if (ios) debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      for (final (file, caption, screen) in frames) {
+        await _pump(tester, prefs, seed, caption, screen);
+        await _shoot(tester, '$outDir/$file.png');
+      }
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
