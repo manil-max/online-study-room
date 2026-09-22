@@ -1,14 +1,19 @@
-
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/auth_redirect_config.dart';
 import '../../../core/config/google_sign_in_config.dart';
+import '../../../core/validation/name_limits.dart';
 import '../../../features/auth/windows_google_loopback.dart';
 import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
@@ -66,24 +71,81 @@ abstract class GoogleIdTokenSource {
   Future<void> signOut();
 }
 
+/// WP-902: ID token'ını bir **nonce** ile isteyen kaynak (iOS Google).
+///
+/// iOS Google SDK'sı (AppAuth) token'a nonce koyar; Supabase, token nonce
+/// taşıyorsa ham nonce'u ister ve özetini karşılaştırır. Bu yüzden iOS'ta
+/// eklentiye özet verilir, depo ham değeri `signInWithIdToken`a geçirir.
+/// Android kaynağı bunu uygulamaz (nonce yok, WP-831 davranışı aynen).
+abstract class GoogleIdTokenNonce {
+  /// `signInWithIdToken`a verilecek ham nonce; yoksa null.
+  String? get rawNonce;
+}
+
+/// WP-902: kriptografik rastgele ham nonce (Apple/Google ID token akışları).
+@visibleForTesting
+String generateRawNonce([int length = 32]) {
+  const charset =
+      '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+  final random = Random.secure();
+  return List.generate(
+    length,
+    (_) => charset[random.nextInt(charset.length)],
+  ).join();
+}
+
+/// WP-902: nonce'un SHA-256 özeti (onaltılık). Sağlayıcıya (Apple/Google)
+/// bu verilir; token bunu taşır, Supabase ham değeri özetleyip eşler.
+@visibleForTesting
+String sha256OfNonce(String rawNonce) =>
+    sha256.convert(utf8.encode(rawNonce)).toString();
+
 /// Gerçek `google_sign_in` 7.x eklentisi üzerinden kaynak.
-class PluginGoogleIdTokenSource implements GoogleIdTokenSource {
-  PluginGoogleIdTokenSource({required this.serverClientId});
+class PluginGoogleIdTokenSource
+    implements GoogleIdTokenSource, GoogleIdTokenNonce {
+  PluginGoogleIdTokenSource({
+    required this.serverClientId,
+    this.clientId,
+    this.useNonce = false,
+  });
 
   /// Web türündeki OAuth istemci kimliği (`GOOGLE_WEB_CLIENT_ID`).
   final String serverClientId;
+
+  /// WP-902: iOS türündeki istemci kimliği (`GOOGLE_IOS_CLIENT_ID`);
+  /// Android'de null (eklenti oradan okumaz).
+  final String? clientId;
+
+  /// WP-902: iOS'ta true — başlatmaya nonce özeti verilir.
+  final bool useNonce;
 
   /// `GoogleSignIn.instance.initialize` süreç başına **tam bir kez**
   /// çağrılmalı (eklenti sözleşmesi). Sağlayıcı depoyu yeniden kurabildiği
   /// için bayrak örnekte değil, sınıfta tutulur.
   static Future<void>? _initialized;
 
+  /// WP-902: başlatmaya verilen nonce'un ham hâli. Eklenti nonce'u yalnız
+  /// `initialize`da alır, yani süreç başına tek nonce olur.
+  static String? _rawNonce;
+
+  @override
+  String? get rawNonce => useNonce ? _rawNonce : null;
+
   Future<void> _ensureInitialized() {
-    return _initialized ??= GoogleSignIn.instance
-        .initialize(serverClientId: serverClientId)
+    final existing = _initialized;
+    if (existing != null) return existing;
+    final raw = useNonce ? generateRawNonce() : null;
+    _rawNonce = raw;
+    return _initialized = GoogleSignIn.instance
+        .initialize(
+          clientId: clientId,
+          serverClientId: serverClientId,
+          nonce: raw == null ? null : sha256OfNonce(raw),
+        )
         .catchError((Object error, StackTrace stack) {
           // Başarısız başlatma önbelleğe alınmaz; sonraki deneme yeniden dener.
           _initialized = null;
+          _rawNonce = null;
           Error.throwWithStackTrace(error, stack);
         });
   }
@@ -154,6 +216,47 @@ class SupabaseGoogleBrowserOAuth implements GoogleBrowserOAuth {
   }
 }
 
+/// WP-902: Apple kimlik bilgisini alan dikiş. Argüman, Apple'a verilecek
+/// **özetlenmiş** nonce'tur.
+///
+/// Depo `sign_in_with_apple` eklentisine doğrudan bağlanmaz (platform
+/// kanalı birim testte çalışmaz). Üretimde [pluginAppleIdCredential].
+/// Kullanıcı vazgeçerse [SignInWithAppleAuthorizationException]
+/// (`canceled`) atar.
+typedef AppleIdCredentialProvider =
+    Future<AuthorizationCredentialAppleID> Function(String hashedNonce);
+
+/// WP-902: gerçek eklenti — iOS'un yerel Apple sayfası.
+Future<AuthorizationCredentialAppleID> pluginAppleIdCredential(
+  String hashedNonce,
+) {
+  return SignInWithApple.getAppleIDCredential(
+    scopes: const [
+      AppleIDAuthorizationScopes.email,
+      AppleIDAuthorizationScopes.fullName,
+    ],
+    nonce: hashedNonce,
+  );
+}
+
+/// WP-902: Apple'ın (yalnız ilk girişte) verdiği addan profil adı.
+///
+/// Sunucu tetikleyicisiyle (`0142`) aynı normalizasyon: boşluklar teke
+/// iner, uçlar kırpılır, `0122` sınırına (24) kesilip yeniden kırpılır.
+/// Ad yoksa null.
+@visibleForTesting
+String? appleDisplayName(String? givenName, String? familyName) {
+  final joined = [
+    givenName,
+    familyName,
+  ].whereType<String>().join(' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (joined.isEmpty) return null;
+  final cut = joined.length > kDisplayNameMaxLength
+      ? joined.substring(0, kDisplayNameMaxLength)
+      : joined;
+  return cut.trim();
+}
+
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository(
@@ -164,6 +267,7 @@ class SupabaseAuthRepository implements AuthRepository {
     GoogleIdTokenSource? googleIdTokenSource,
     GoogleBrowserOAuth? googleBrowserOAuth,
     WindowsGoogleLoopback? googleLoopback,
+    AppleIdCredentialProvider? appleCredential,
   }) : _recoveryRedirect = recoveryRedirect ?? (() async => null),
        _cachedProfile = cachedProfile ?? (() => null),
        _onServerProfile = onServerProfile ?? ((_) {}),
@@ -178,7 +282,15 @@ class SupabaseAuthRepository implements AuthRepository {
            (googleIdTokenSource == null
                ? _defaultGoogleBrowserOAuth(_client)
                : null),
-       _loopback = googleLoopback ?? WindowsGoogleLoopback();
+       _loopback = googleLoopback ?? WindowsGoogleLoopback(),
+       _appleCredential = appleCredential ?? _defaultAppleCredential();
+
+  /// WP-902: yalnız iOS'ta (web değil) gerçek eklenti; aksi hâlde null
+  /// (fail-closed, Apple sayfası hiç açılmaz).
+  static AppleIdCredentialProvider? _defaultAppleCredential() {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return null;
+    return pluginAppleIdCredential;
+  }
 
   /// WP-831: yapılandırma yoksa (kimlik boş / Android değil) kaynak **null**
   /// kalır — Google girişi fail-closed kapalıdır ve çıkışta eklentiye
@@ -187,8 +299,13 @@ class SupabaseAuthRepository implements AuthRepository {
     if (GoogleSignInConfig.flow != GoogleSignInFlow.nativeIdToken) {
       return null;
     }
+    final ios = defaultTargetPlatform == TargetPlatform.iOS;
     return PluginGoogleIdTokenSource(
       serverClientId: GoogleSignInConfig.webClientId,
+      // WP-902: iOS eklentisi iOS istemci kimliğini ister; token'a nonce
+      // konur (bkz. [GoogleIdTokenNonce]).
+      clientId: ios ? GoogleSignInConfig.iosClientId : null,
+      useNonce: ios,
     );
   }
 
@@ -207,6 +324,9 @@ class SupabaseAuthRepository implements AuthRepository {
 
   /// WP-831: Google ID token kaynağı; Google girişi kapalıysa null.
   final GoogleIdTokenSource? _google;
+
+  /// WP-902: Apple kimlik bilgisi dikişi; Apple girişi kapalıysa null.
+  final AppleIdCredentialProvider? _appleCredential;
 
   /// WP-866: Windows tarayıcı akışının uçları; akış kapalıysa null.
   final GoogleBrowserOAuth? _browserGoogle;
@@ -270,6 +390,20 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   String? get currentUserEmail => _client.auth.currentUser?.email;
+
+  /// WP-902: gotrue `app_metadata.providers` listesi hesaba bağlı kimlik
+  /// sağlayıcılarını taşır; şifre kimliği `email`dir. Liste yoksa tekil
+  /// `provider` alanına, o da yoksa true'ya (şifre sor) düşülür.
+  @override
+  bool get currentUserHasPassword {
+    final user = _client.auth.currentUser;
+    if (user == null) return false;
+    final providers = user.appMetadata['providers'];
+    if (providers is List) return providers.contains('email');
+    final provider = user.appMetadata['provider'];
+    if (provider is String) return provider == 'email';
+    return true;
+  }
 
   @override
   Stream<void> get passwordRecoveryEvents => _recoveryController.stream;
@@ -554,10 +688,16 @@ class SupabaseAuthRepository implements AuthRepository {
     if (idToken == null || idToken.isEmpty) {
       throw const AuthException('google_id_token_missing');
     }
+    // WP-902: iOS kaynağı token'a nonce koydurur; ham hâli burada gider.
+    // Android kaynağı nonce taşımaz (null → alan hiç gönderilmez).
+    final nonce = google is GoogleIdTokenNonce
+        ? (google as GoogleIdTokenNonce).rawNonce
+        : null;
     try {
       final res = await _client.auth.signInWithIdToken(
         provider: supa.OAuthProvider.google,
         idToken: idToken,
+        nonce: nonce,
       );
       final profile = await _profileFor(res.session);
       if (profile == null) {
@@ -568,6 +708,75 @@ class SupabaseAuthRepository implements AuthRepository {
     } on supa.AuthException catch (e) {
       throw AuthException(e.message, code: _authCode(e));
     }
+  }
+
+  /// WP-902: Apple ile giriş (iOS, yerel Apple sayfası).
+  ///
+  /// Akış: ham nonce üret → Apple'a SHA-256 özeti → kimlik token'ı →
+  /// `signInWithIdToken(provider: apple, nonce: ham)`. Supabase ham nonce'u
+  /// özetleyip token'daki değerle eşler (tekrar oynatma koruması).
+  ///
+  /// Ad: Apple tam adı **yalnız ilk yetkilendirmede** verir ve Apple kimlik
+  /// token'ı adı taşımaz; sunucu tetikleyicisi (`0142`) profili bu yüzden
+  /// boş adla açar. Profilde ad yoksa Apple'ın verdiği ad
+  /// [updateDisplayName] (profil ekranıyla aynı yazma yolu) ile yazılır;
+  /// varsa **ezilmez**. Ad yazımı en iyi çabadır: ad filtresi
+  /// (`public_name_not_allowed`) veya ağ hatası girişi düşürmez, kullanıcı
+  /// adı sonra profilden koyar.
+  @override
+  Future<Profile> signInWithApple() async {
+    final provider = _appleCredential;
+    if (provider == null) {
+      throw const AuthException('apple_sign_in_unavailable');
+    }
+    final rawNonce = generateRawNonce();
+    final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await provider(sha256OfNonce(rawNonce));
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // Kullanıcının kendi vazgeçişi hata değildir: ekran sessiz kalır.
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw const AuthException(
+          'apple_sign_in_cancelled',
+          code: AuthErrorCode.cancelled,
+        );
+      }
+      throw AuthException('apple_sign_in_failed_${e.code.name}');
+    } on SignInWithAppleException catch (e) {
+      throw AuthException('apple_sign_in_failed_${e.runtimeType}');
+    }
+    final idToken = credential.identityToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw const AuthException('apple_id_token_missing');
+    }
+    final Profile profile;
+    try {
+      final res = await _client.auth.signInWithIdToken(
+        provider: supa.OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+      final loaded = await _profileFor(res.session);
+      if (loaded == null) {
+        throw const AuthException('apple_sign_in_no_session');
+      }
+      profile = loaded;
+    } on supa.AuthException catch (e) {
+      throw AuthException(e.message, code: _authCode(e));
+    }
+    _current = profile;
+    final appleName = appleDisplayName(
+      credential.givenName,
+      credential.familyName,
+    );
+    if (appleName != null && profile.displayName.trim().isEmpty) {
+      try {
+        await updateDisplayName(appleName);
+      } catch (_) {
+        // En iyi çaba (yukarıdaki not): giriş başarılıdır.
+      }
+    }
+    return _current ?? profile;
   }
 
   /// WP-866: Windows'ta Google girişi (RFC 8252 loopback + PKCE).

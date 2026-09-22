@@ -154,6 +154,13 @@ abstract class AuthRepository {
   /// O an giriş yapmış kullanıcının e-posta adresi (yoksa null).
   String? get currentUserEmail;
 
+  /// WP-902: giriş yapmış hesabın **şifresi var mı** (e-posta/şifre kimliği)?
+  ///
+  /// Yalnız Apple/Google ile açılmış hesabın şifresi yoktur; şifreyle
+  /// yeniden doğrulama isteyen yollar (hesap silme) o hesabı kilitlerdi.
+  /// Bilinmiyorsa true (eski davranış: şifre sorulur). Oturum yoksa false.
+  bool get currentUserHasPassword;
+
   Future<Profile> signUp({
     required String email,
     required String password,
@@ -178,6 +185,17 @@ abstract class AuthRepository {
   /// bırakılır. Bekleyen akış yoksa veya akış tarayıcı kullanmıyorsa
   /// (Android hesap seçici, bellek-içi arka uç) hiçbir şey yapmaz.
   Future<void> cancelGoogleSignIn();
+
+  /// WP-902: "Apple ile giriş yap" (iOS, App Store Kuralı 4.8).
+  ///
+  /// Apple kimlik token'ı + ham nonce ile oturum açar; Apple'a nonce'un
+  /// SHA-256 özeti verilir (token o özeti taşır, Supabase ham nonce'u
+  /// özetleyip karşılaştırır). Apple tam adı **yalnız ilk girişte** verir:
+  /// profilde ad yoksa o ad yazılır, varsa ezilmez. Kullanıcı Apple
+  /// sayfasını kapatırsa [AuthErrorCode.cancelled] kodlu [AuthException]
+  /// atılır (ekran sessiz kalır). Apple girişi olmayan backend/platformda
+  /// çağrı kodsuz [AuthException] ile düşer.
+  Future<Profile> signInWithApple();
 
   /// WP-587: kayıt doğrulama e-postasını **yeniden** gönderir.
   ///

@@ -288,21 +288,33 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     // after being disposed" istisnasını atıyordu; istisna asenkron akışı
     // kesiyor ve hata snackbar'ı **hiç görünmüyordu**. Denetleyici artık
     // diyalogun kendi `State`'inde yaşıyor ve orada dispose ediliyor.
+    // 🔴 WP-902: yalnız Apple/Google ile açılmış hesabın şifresi YOKTUR.
+    // Eskiden diyalog her hesaba şifre soruyor ve `signIn(email, şifre)` ile
+    // yeniden doğruluyordu; şifresiz hesap bu yolu hiç geçemiyor, "mevcut
+    // şifre hatalı" görüp hesabını silemiyordu (App Store 5.1.1(v): Apple ile
+    // giriş sunan uygulama hesap silmeyi uygulama içinde sunmalı). Şifresiz
+    // hesapta onay diyaloğu şifre alanı olmadan açılır; oturum zaten kimliği
+    // kanıtlıyor ve 14 günlük geri alma penceresi aynen geçerli.
+    final requirePassword = ref
+        .read(authRepositoryProvider)
+        .currentUserHasPassword;
     final password = await showDialog<String>(
       context: context,
-      builder: (_) => const _DeleteAccountDialog(),
+      builder: (_) => _DeleteAccountDialog(requirePassword: requirePassword),
     );
     if (password == null || !mounted) return;
 
     final email = ref.read(authRepositoryProvider).currentUserEmail;
-    if (email == null) return;
+    if (requirePassword && email == null) return;
 
     setState(() => _isLoading = true);
     try {
       // Yeniden doğrulama: aynı e-posta + şifre ile sign-in denemesi.
-      await ref
-          .read(authRepositoryProvider)
-          .signIn(email: email, password: password);
+      if (requirePassword) {
+        await ref
+            .read(authRepositoryProvider)
+            .signIn(email: email!, password: password);
+      }
       final status = await ref
           .read(authRepositoryProvider)
           .requestAccountDeletion();
@@ -644,7 +656,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
 /// 2. 🔴 **Dispose edilmiş denetleyici.** Denetleyici üst ekranda kuruluyor ve
 ///    diyalog kapanma animasyonu sürerken senkron `dispose()` ediliyordu.
 class _DeleteAccountDialog extends StatefulWidget {
-  const _DeleteAccountDialog();
+  const _DeleteAccountDialog({this.requirePassword = true});
+
+  /// WP-902: false ise (Apple/Google-yalnız hesap) şifre alanı çizilmez.
+  final bool requirePassword;
 
   @override
   State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -662,7 +677,10 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
 
   void _submit() {
     if (_formKey.currentState?.validate() != true) return;
-    Navigator.pop(context, _passwordController.text);
+    Navigator.pop(
+      context,
+      widget.requirePassword ? _passwordController.text : '',
+    );
   }
 
   @override
@@ -676,22 +694,28 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.accountSilmeOnayGovdesi),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('deleteAccountPassword'),
-              controller: _passwordController,
-              obscureText: true,
-              autofillHints: const [AutofillHints.password],
-              decoration: InputDecoration(labelText: l10n.authSifre),
-              onFieldSubmitted: (_) => _submit(),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return l10n.profileMevcutSifreniGir;
-                }
-                return null;
-              },
+            Text(
+              widget.requirePassword
+                  ? l10n.accountSilmeOnayGovdesi
+                  : l10n.accountSilmeOnayGovdesiSifresiz,
             ),
+            if (widget.requirePassword) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('deleteAccountPassword'),
+                controller: _passwordController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                decoration: InputDecoration(labelText: l10n.authSifre),
+                onFieldSubmitted: (_) => _submit(),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return l10n.profileMevcutSifreniGir;
+                  }
+                  return null;
+                },
+              ),
+            ],
           ],
         ),
       ),

@@ -30,6 +30,10 @@ class InMemoryAuthRepository implements AuthRepository {
   @override
   Profile? get currentUser => _current;
 
+  /// WP-902: bu arka uçta yalnız e-posta/şifre hesabı vardır.
+  @override
+  bool get currentUserHasPassword => _current != null;
+
   @override
   String? get currentUserEmail {
     if (_current == null) return null;
@@ -106,6 +110,14 @@ class InMemoryAuthRepository implements AuthRepository {
   /// WP-867: bu arka uçta bekleyen tarayıcı akışı olmaz; no-op.
   @override
   Future<void> cancelGoogleSignIn() async {}
+
+  /// WP-902: Google gibi — Apple kimliğini doğrulayacak sunucu yok; giriş
+  /// taklit edilmez, kodsuz istisna ile dürüstçe düşer (ekran bu modda
+  /// düğmeyi zaten çizmez).
+  @override
+  Future<Profile> signInWithApple() async {
+    throw const AuthException('apple_sign_in_unavailable');
+  }
 
   /// WP-587: bu backend'in e-posta sağlayıcısı yok, bu yüzden gönderim
   /// **taklit edilmez** — çağrı sayılır. Sayaç, giriş ekranındaki

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 
 /// WP-866: Google girişinin platforma göre **hangi yoldan** yapıldığı.
 enum GoogleSignInFlow {
-  /// Android: `google_sign_in` hesap seçicisi → ID token →
-  /// `signInWithIdToken` (WP-831).
+  /// Android (WP-831) ve iOS (WP-902): `google_sign_in` hesap seçicisi →
+  /// ID token → `signInWithIdToken`.
   nativeIdToken,
 
   /// Windows: sistem tarayıcısı → Supabase `/authorize` (PKCE) → loopback
@@ -29,8 +29,14 @@ enum GoogleSignInFlow {
 /// | platform        | kimlik dolu | kimlik boş |
 /// |-----------------|-------------|------------|
 /// | Android         | nativeIdToken | kapalı   |
+/// | iOS             | nativeIdToken (iOS kimliği de dolu) / kapalı | kapalı |
 /// | Windows         | browserLoopback | kapalı |
-/// | web/macOS/Linux/iOS | kapalı  | kapalı     |
+/// | web/macOS/Linux | kapalı      | kapalı     |
+///
+/// WP-902 iOS: eklenti iOS'ta **iOS türündeki** OAuth istemci kimliğini
+/// (`GOOGLE_IOS_CLIENT_ID`, `clientId`) ister; web kimliği yine
+/// `serverClientId` olarak verilir. İkisinden biri boşsa iOS'ta düğme gizli
+/// kalır (fail-closed; beta gibi).
 ///
 /// Windows akışı kimliği **kullanmaz** (istemci kimliği Supabase sunucusunda
 /// durur), yine de dolu olmasını şart koşar: yayın iş akışı beta (staging)
@@ -42,9 +48,15 @@ class GoogleSignInConfig {
 
   static const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 
+  /// WP-902: Google Cloud Console'daki **iOS** türündeki OAuth istemci
+  /// kimliği (paket kimliği `com.manilmax.focuscamp`). Yalnız iOS'ta
+  /// kullanılır; gizli değildir.
+  static const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+
   /// Bu derlemenin Google giriş yolu (arka uçtan bağımsız); kapalıysa null.
   static GoogleSignInFlow? get flow => resolveFlow(
     webClientId: webClientId,
+    iosClientId: iosClientId,
     isWeb: kIsWeb,
     platform: defaultTargetPlatform,
   );
@@ -56,6 +68,7 @@ class GoogleSignInConfig {
   /// Saf karar: hangi platformda hangi yol (yukarıdaki tablo).
   static GoogleSignInFlow? resolveFlow({
     required String webClientId,
+    String iosClientId = '',
     required bool isWeb,
     required TargetPlatform platform,
   }) {
@@ -63,18 +76,27 @@ class GoogleSignInConfig {
     if (webClientId.trim().isEmpty) return null;
     return switch (platform) {
       TargetPlatform.android => GoogleSignInFlow.nativeIdToken,
+      TargetPlatform.iOS =>
+        iosClientId.trim().isEmpty ? null : GoogleSignInFlow.nativeIdToken,
       TargetPlatform.windows => GoogleSignInFlow.browserLoopback,
       _ => null,
     };
   }
 
-  /// Saf karar: Android veya Windows (web değil) **ve** kimlik dolu.
+  /// Saf karar: Android, Windows veya (iOS kimliği de doluysa) iOS; web
+  /// değil **ve** kimlik dolu.
   static bool resolvePlatformEnabled({
     required String webClientId,
+    String iosClientId = '',
     required bool isWeb,
     required TargetPlatform platform,
   }) =>
-      resolveFlow(webClientId: webClientId, isWeb: isWeb, platform: platform) !=
+      resolveFlow(
+        webClientId: webClientId,
+        iosClientId: iosClientId,
+        isWeb: isWeb,
+        platform: platform,
+      ) !=
       null;
 
   /// Ekranın tam kararı: platform koşulu **ve** Supabase arka ucu.
@@ -83,6 +105,7 @@ class GoogleSignInConfig {
   /// yok; düğme orada da çizilmez.
   static bool resolveEnabled({
     required String webClientId,
+    String iosClientId = '',
     required bool isWeb,
     required TargetPlatform platform,
     required bool supabaseBackend,
@@ -90,6 +113,7 @@ class GoogleSignInConfig {
     if (!supabaseBackend) return false;
     return resolvePlatformEnabled(
       webClientId: webClientId,
+      iosClientId: iosClientId,
       isWeb: isWeb,
       platform: platform,
     );

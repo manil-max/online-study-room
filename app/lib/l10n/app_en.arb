@@ -5927,6 +5927,10 @@
   "@accountSilmeOnayGovdesi": {
     "description": "Account settings: delete-account confirmation body."
   },
+  "accountSilmeOnayGovdesiSifresiz": "Your account will be scheduled for permanent deletion in 14 days. You can cancel during that window.",
+  "@accountSilmeOnayGovdesiSifresiz": {
+    "description": "WP-902: delete-account confirmation body for accounts without a password (signed up with Apple or Google only); no password field is shown."
+  },
   "accountSilmeyiPlanla": "Schedule deletion",
   "@accountSilmeyiPlanla": {
     "description": "Account settings: confirm button of the delete-account dialog."
@@ -7366,6 +7370,8 @@
   "@authVeya": {"description": "WP-831: divider label between the email login button and the Google sign-in button."},
   "authGoogleIleDevamEt": "Continue with Google",
   "@authGoogleIleDevamEt": {"description": "WP-831/WP-866: Google sign-in button on the login/register screen (Android and Windows)."},
+  "authAppleIleDevamEt": "Continue with Apple",
+  "@authAppleIleDevamEt": {"description": "WP-902: Sign in with Apple button on the login/register screen (iOS only). Apple HIG title: 'Continue with Apple'."},
   "authGoogleTarayiciGirisTamamlandi": "Signed in, you can return to the app.",
   "@authGoogleTarayiciGirisTamamlandi": {"description": "WP-866: one line on the local browser page shown after Windows Google sign-in succeeded. Shown in TR and EN together."},
   "authGoogleTarayiciGirisTamamlanamadi": "Sign-in was not completed. Return to the app and try again.",

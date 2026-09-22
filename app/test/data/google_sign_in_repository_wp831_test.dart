@@ -237,11 +237,13 @@ void main() {
     test('Android veya Windows + dolu kimlik + Supabase', () {
       bool enabled({
         String id = 'web-client.apps.googleusercontent.com',
+        String iosId = '',
         bool isWeb = false,
         TargetPlatform platform = TargetPlatform.android,
         bool supabase = true,
       }) => GoogleSignInConfig.resolveEnabled(
         webClientId: id,
+        iosClientId: iosId,
         isWeb: isWeb,
         platform: platform,
         supabaseBackend: supabase,
@@ -252,7 +254,20 @@ void main() {
       expect(enabled(id: '   '), isFalse);
       expect(enabled(isWeb: true), isFalse);
       expect(enabled(platform: TargetPlatform.windows), isTrue);
+      // WP-902: iOS yalnız iOS istemci kimliği de doluysa açık.
       expect(enabled(platform: TargetPlatform.iOS), isFalse);
+      expect(
+        enabled(platform: TargetPlatform.iOS, iosId: 'ios.apps'),
+        isTrue,
+      );
+      expect(
+        enabled(platform: TargetPlatform.iOS, id: '', iosId: 'ios.apps'),
+        isFalse,
+      );
+      expect(
+        enabled(platform: TargetPlatform.macOS, iosId: 'ios.apps'),
+        isFalse,
+      );
       expect(enabled(platform: TargetPlatform.macOS), isFalse);
       expect(enabled(platform: TargetPlatform.linux), isFalse);
       expect(enabled(supabase: false), isFalse);

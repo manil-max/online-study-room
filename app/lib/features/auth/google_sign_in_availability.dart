@@ -24,6 +24,7 @@ import '../../core/config/supabase_config.dart';
 final googleSignInEnabledProvider = Provider<bool>((ref) {
   return GoogleSignInConfig.resolveEnabled(
     webClientId: GoogleSignInConfig.webClientId,
+    iosClientId: GoogleSignInConfig.iosClientId,
     isWeb: kIsWeb,
     platform: defaultTargetPlatform,
     supabaseBackend: SupabaseConfig.isConfigured,

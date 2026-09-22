@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/config/auth_redirect_config.dart';
 import '../../core/config/google_sign_in_config.dart';
@@ -10,6 +11,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../support/faq_screen.dart';
+import 'apple_sign_in_availability.dart';
 import 'entry_desktop_layout.dart';
 import 'google_sign_in_availability.dart';
 import 'password_reset_platform.dart';
@@ -199,6 +201,37 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     if (signedIn && mounted) ref.invalidate(authStateProvider);
   }
 
+  /// WP-902: "Apple ile devam et" (iOS).
+  ///
+  /// Google yoluyla aynı sözleşme: form doğrulaması çalışmaz, istek
+  /// sürerken bütün form kilitlidir (`_loading`; aynı anda tek akış),
+  /// kullanıcı Apple sayfasını kapatırsa ([AuthErrorCode.cancelled]) ekran
+  /// **hiçbir şey** göstermez, gerçek hata katalog cümlesine döner.
+  Future<void> _continueWithApple() async {
+    if (_loading) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+      _emailNotConfirmed = false;
+    });
+    var signedIn = false;
+    try {
+      await ref.read(authRepositoryProvider).signInWithApple();
+      signedIn = true;
+    } on AuthException catch (e) {
+      if (e.code != AuthErrorCode.cancelled && mounted) {
+        setState(() => _error = _localizedAuthError(l10n, e));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+    if (signedIn && mounted) ref.invalidate(authStateProvider);
+  }
+
   /// WP-867: tarayıcıdaki Google girişini bekleme — "Vazgeç".
   ///
   /// Form **hemen** ve sessizce açılır (hata/snackbar yok: vazgeçmek hata
@@ -345,6 +378,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final googleEnabled = ref.watch(googleSignInEnabledProvider);
+    // WP-902: App Store Kuralı 4.8 — iOS'ta Google'ın yanında Apple da.
+    final appleEnabled = ref.watch(appleSignInEnabledProvider);
 
     // 🔴 WP-680 / SPEC §3 A3 uyarisi + §7 — ekran IKI bagimsiz blok tasir.
     //
@@ -475,7 +510,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       // WP-831: Google girişi iki modda da çizilir (giriş ve kayıt aynı
       // akıştır: hesap yoksa sunucu oluşturur). Yapılandırma eksikse
       // `googleEnabled` false kalır ve bu blok hiç çizilmez (fail-closed).
-      if (googleEnabled) ...[
+      if (googleEnabled || appleEnabled) ...[
         const SizedBox(height: 12),
         Row(
           children: [
@@ -493,6 +528,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ],
         ),
         const SizedBox(height: 12),
+      ],
+      // WP-902: Apple düğmesi Google'ın ÜSTÜNDE ve Apple HIG'e uygun
+      // (siyah/beyaz zemin + Apple logosu, 44 dp). Açık temada siyah,
+      // koyu temada beyaz. Kilit Google ile ortak: `_loading`.
+      if (appleEnabled) ...[
+        SignInWithAppleButton(
+          key: const Key('auth-apple-sign-in'),
+          text: l10n.authAppleIleDevamEt,
+          height: 44,
+          style: theme.brightness == Brightness.dark
+              ? SignInWithAppleButtonStyle.white
+              : SignInWithAppleButtonStyle.black,
+          onPressed: _loading ? null : _continueWithApple,
+        ),
+        if (googleEnabled) const SizedBox(height: 12),
+      ],
+      if (googleEnabled) ...[
         OutlinedButton.icon(
           key: const Key('auth-google-sign-in'),
           onPressed: _loading ? null : _continueWithGoogle,

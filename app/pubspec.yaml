@@ -74,6 +74,8 @@ dependencies:
   google_sign_in: ^7.2.0
   # WP-847: Play'e gecis dugmesi magaza sayfasini acar.
   url_launcher: ^6.3.2
+  # WP-902: iOS "Apple ile devam et" (App Store 4.8; ID token -> Supabase).
+  sign_in_with_apple: ^8.2.0
 
 dev_dependencies:
   flutter_test:
