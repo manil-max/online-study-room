@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/config/app_build_manifest.dart';
+import 'package:online_study_room/core/config/distribution_channel.dart';
 import 'package:online_study_room/core/notifications/timer_panel_preference.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
@@ -64,6 +65,9 @@ void main() {
             buildManifest: build ?? manifest,
             updateCheck: updateCheck,
             allowsSideloadUpdates: allowsSideloadUpdates,
+            // WP-911: kanal derleme define'indan (appStore release-defines
+            // kosumu) gelmesin; bu dosya GitHub/Play satirini olcer.
+            distributionChannel: DistributionChannel.githubBeta,
             releaseNotesService: releaseNotesService,
             releaseNotesChannel: 'stable',
           ),
