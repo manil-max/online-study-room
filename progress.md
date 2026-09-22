@@ -13,7 +13,7 @@
 | Son kayıtlı yayın | **v87 · 1.0.87+87** + **beta-v8701**, etiket commit'i `3ab99b46` | 2026-09-18 sahip GO "bunları v87'de çıkar"; aşağıdaki v87 yayın kaydı. Önceki v86 `bd6690eb` |
 | v87 release koşumu | **35351214943** (stable) + **35351213314** (beta): ikisi de 6/6 | İlk deneme 35346868347 KIRMIZI (WP-846 satırı CI manifestinde); düzeltme `3ab99b46` |
 | Play | **production 87, draft** (koşum `35357009125`) | Sahip Console'da incelemeye gönderecek. v86 taslağı/incelemesi v87 ile değişir |
-| Veritabanı | Repo, staging ve production head **0143** (WP-838) | [Sözleşme](tooling/release/deploy-contract.json); 2026-09-18 staging dry-run `35299387516` (73 pgTAP / 1069 PASS), apply `35299629071`; production dry-run `35299894145`, apply `35300127945`; post-check `0143\|0143\|0143`; kapılar yeniden kilitli |
+| Veritabanı | Repo, staging ve production head **0144** (WP-906 iOS push) | Staging dry-run `35770109022`, apply `35770464584`; production dry-run `35770977433`, apply `35771413080` (0144|0144|0144); dispatcher staging `35770922445`, production `35771818079`. Kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
@@ -24,6 +24,27 @@
 üç Windows generated plugin dosyası zaten değişikti; bu işlerin kapsamına alınmadı.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+### iOS / App Store hazırlığı (2026-09-22, ayrı oturum, WP-900…919 bloğu)
+
+Sahip: "her şeyi hazırla, sadece gönderip test kalsın". Mac yok; derleme GitHub macOS'ta (`ios-release.yml`). Sahibin tarayıcı adımları: [docs/IOS-YOL-HARITASI.md](docs/IOS-YOL-HARITASI.md); mağaza metinleri [docs/APP-STORE-METINLERI.md](docs/APP-STORE-METINLERI.md), kareler `docs/app-store-kareleri/` (1320x2868).
+
+| WP | İş | Durum |
+|---|---|---|
+| WP-900 | `app/ios/` iskeleti: `com.manilmax.focuscamp`, iOS 15, TR/EN ad, foto izni metni, entitlements (aps + applesignin), PrivacyInfo.xcprivacy, ikon (alfasız) | `2e7c1b15` |
+| WP-901 | `DistributionChannel.appStore` (iOS her zaman; updater kapalı), Android'e özel yollar iOS'ta kapalı, iOS bildirim izni + otomatik soru, Firebase iOS seçenekleri define'dan | `a5e78b23` |
+| WP-902 | Apple ile giriş (nonce) + iOS Google istemcisi (`GOOGLE_IOS_CLIENT_ID`); şifresiz (Google/Apple) hesap silme artık şifre sormuyor — Android'de de bozuktu | `6d699693` |
+| WP-903 | `ios-release.yml` (build-check / testflight, API anahtarıyla imza + altool yükleme), `supabase-auth-config.yml` Apple sağlayıcı + Google iOS istemcisi girdileri | `b2925b53` |
+| WP-905 | App Store metinleri, sahip yol haritası, iPhone 6.9" kareleri | `f4b1bcf4` |
+| WP-906 | 0144: `push_devices.platform` 'ios', `register_push_device(p_platform default 'android')`, claim platform döner; dispatcher iOS'a `apns` bloğu; uygulama platformu gönderir. Staging+production uygulandı | `1e4201e2` |
+| WP-907 | iOS'ta widget sekmesi gizli, iOS izin ipucu, AppDelegate saat dilimi kanalı + FLN kayıt | `23a327b6` |
+| WP-908 | `release-defines` kapısı appStore kanalını da koşar | `5e0efac3` |
+| WP-909 | Sayaç başlatma izin bayrağı yalnız Android'de | `1d0bde0c` |
+| WP-910 | Analiz `build/` dışarıda (macOS SPM kaynakları) — build-check 35767121106 | `b9180735` |
+| WP-911 | Hakkında testi kanalı sabitler (appStore koşumu) | `047ad9a1` |
+
+Açık (sahip): Apple Developer üyeliği + yol haritası adımları; destek sayfasına iletişim e-postası kararı. Açık (lider): değerler gelince repo değişkenleri/secret'lar, `supabase-auth-config.yml` Apple+Google iOS apply, TestFlight yüklemesi, demo hesap. iOS ana ekran widget'ı v1 dışı.
+
 
 ### Hunter turu — v86-v87 yeni kod (2026-09-19)
 
