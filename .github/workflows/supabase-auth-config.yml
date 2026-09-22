@@ -10,6 +10,20 @@ name: Supabase Auth Config
 #   ve — YALNIZ açıkça istenirse — mailer_autoconfirm
 # Başka hiçbir auth ayarına dokunulmaz.
 #
+# WP-903 (iOS): iki alan daha, ikisi de YALNIZ açıkça istenirse (varsayılan keep):
+#   apple_provider=enable   -> external_apple_enabled=true ve
+#                              external_apple_client_id listesine bundle id
+#                              `com.manilmax.focuscamp` eklenir (yerli iOS Apple
+#                              girişinde id_token `aud` alanı bundle id'dir).
+#                              Yerli akış OAuth sırrı İSTEMEZ; external_apple_secret'a
+#                              dokunulmaz.
+#   google_ios_client=add   -> repo variable GOOGLE_IOS_CLIENT_ID,
+#                              external_google_additional_client_ids listesine
+#                              eklenir. Birincil web istemcisi
+#                              (external_google_client_id) ve sırrı değişmez.
+# Alan adları Supabase Management API şemasından (UpdateAuthConfigBody,
+# https://api.supabase.com/api/v1-json). Listelere EKLENİR, üzerine yazılmaz.
+#
 # 🔴 `mailer_autoconfirm` neden buraya girdi (2026-09-07): production okundu ve
 # `mailer_autoconfirm=false` + `custom_smtp_configured=false` +
 # `rate_limit_email_sent=2` çıktı. Yani doğrulama postası Supabase'in yerleşik
@@ -59,6 +73,26 @@ on:
           - keep
           - 'off'
           - 'on'
+      apple_provider:
+        description: >-
+          Apple ile giriş (iOS yerli). keep = dokunma (varsayılan) · enable =
+          sağlayıcıyı aç ve com.manilmax.focuscamp'ı Client IDs listesine ekle.
+        required: false
+        default: keep
+        type: choice
+        options:
+          - keep
+          - enable
+      google_ios_client:
+        description: >-
+          Google iOS istemcisi. keep = dokunma (varsayılan) · add = repo variable
+          GOOGLE_IOS_CLIENT_ID'yi Google sağlayıcısının ek Client ID listesine ekle.
+        required: false
+        default: keep
+        type: choice
+        options:
+          - keep
+          - add
 
 permissions:
   contents: read
@@ -81,6 +115,10 @@ jobs:
       CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
       DRY_RUN: ${{ inputs.dry_run }}
       MAILER_AUTOCONFIRM: ${{ inputs.mailer_autoconfirm }}
+      APPLE_PROVIDER: ${{ inputs.apple_provider }}
+      GOOGLE_IOS_CLIENT: ${{ inputs.google_ios_client }}
+      GOOGLE_IOS_CLIENT_ID: ${{ vars.GOOGLE_IOS_CLIENT_ID }}
+      APPLE_BUNDLE_ID: com.manilmax.focuscamp
     steps:
       - name: Verify target contract
         shell: bash
@@ -119,6 +157,8 @@ jobs:
                    rate_limit_email_sent,
                    password_min_length, password_required_characters,
                    password_hibp_enabled,
+                   external_apple_enabled, external_apple_client_id,
+                   external_google_enabled, external_google_additional_client_ids,
                    custom_smtp_configured: ((.smtp_host // "") != ""),
                    confirmation_template_has_link:
                      ((.mailer_templates_confirmation_content // "") | contains("{{ .ConfirmationURL }}")),
@@ -210,6 +250,58 @@ jobs:
 
           echo "mailer_autoconfirm=$autoconfirm patched on $TARGET (istek: $MAILER_AUTOCONFIRM)."
 
+      # WP-903: iOS yerli girişleri. Ayrı adım, ayrı kapı: yalnız `keep`
+      # DIŞINDA bir değer verilirse yazılır. Mevcut Client ID listeleri okunur
+      # ve eksik kimlik SONA eklenir; var olan kimlikler (ör. web Services ID)
+      # silinmez, sırlara dokunulmaz.
+      - name: Patch iOS native sign-in providers (only when explicitly requested)
+        if: ${{ inputs.dry_run == false && (inputs.apple_provider != 'keep' || inputs.google_ios_client != 'keep') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(curl --fail-with-body --silent --show-error \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN")"
+
+          # Virgüllü listeye tekrar etmeden ekle.
+          append() { # $1 = mevcut liste, $2 = eklenecek kimlik
+            jq -rn --arg list "$1" --arg id "$2" '
+              ($list | split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(. != ""))) as $ids
+              | (if ($ids | index($id)) then $ids else $ids + [$id] end) | join(",")'
+          }
+
+          patch='{}'
+          if [[ "$APPLE_PROVIDER" == "enable" ]]; then
+            apple_ids="$(append "$(printf '%s' "$current" | jq -r '.external_apple_client_id // ""')" "$APPLE_BUNDLE_ID")"
+            patch="$(jq -c --arg ids "$apple_ids" '. + {external_apple_enabled: true, external_apple_client_id: $ids}' <<<"$patch")"
+            echo "Apple: enabled, client ids -> $apple_ids"
+          elif [[ "$APPLE_PROVIDER" != "keep" ]]; then
+            echo "::error::Beklenmeyen apple_provider degeri: $APPLE_PROVIDER"; exit 1
+          fi
+
+          if [[ "$GOOGLE_IOS_CLIENT" == "add" ]]; then
+            [[ "$GOOGLE_IOS_CLIENT_ID" == *.apps.googleusercontent.com ]] || {
+              echo "::error::Repo variable GOOGLE_IOS_CLIENT_ID bos ya da bicimi yanlis (...apps.googleusercontent.com)."; exit 1; }
+            google_ids="$(append "$(printf '%s' "$current" | jq -r '.external_google_additional_client_ids // ""')" "$GOOGLE_IOS_CLIENT_ID")"
+            patch="$(jq -c --arg ids "$google_ids" '. + {external_google_additional_client_ids: $ids}' <<<"$patch")"
+            echo "Google: additional client ids -> $google_ids"
+          elif [[ "$GOOGLE_IOS_CLIENT" != "keep" ]]; then
+            echo "::error::Beklenmeyen google_ios_client degeri: $GOOGLE_IOS_CLIENT"; exit 1
+          fi
+
+          printf '%s' "$patch" > "$RUNNER_TEMP/native-providers.json"
+          curl --fail-with-body --silent --show-error \
+            -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @"$RUNNER_TEMP/native-providers.json" \
+            --output "$RUNNER_TEMP/native-providers-response.json" || {
+              echo "Management API rejected the native provider patch:"
+              cat "$RUNNER_TEMP/native-providers-response.json" || true
+              exit 1
+            }
+          echo "iOS native sign-in providers patched on $TARGET."
+
       - name: Patch recovery email template (needs paid plan or custom SMTP)
         if: ${{ inputs.dry_run == false }}
         shell: bash
@@ -262,6 +354,8 @@ jobs:
           printf '%s' "$after" \
             | jq '{site_url, uri_allow_list, mailer_autoconfirm,
                    rate_limit_email_sent,
+                   external_apple_enabled, external_apple_client_id,
+                   external_google_enabled, external_google_additional_client_ids,
                    custom_smtp_configured: ((.smtp_host // "") != ""),
                    recovery_template_has_token:
                      ((.mailer_templates_recovery_content // "") | contains("{{ .Token }}")),
@@ -279,6 +373,27 @@ jobs:
                 exit 1
               }
             echo "Verified: mailer_autoconfirm istenen degerde ($MAILER_AUTOCONFIRM)."
+          fi
+
+          # WP-903: istenen iOS sağlayıcı değerleri GERÇEKTEN yazıldı mı?
+          if [[ "$APPLE_PROVIDER" == "enable" ]]; then
+            printf '%s' "$after" | jq -e --arg id "$APPLE_BUNDLE_ID" '
+              .external_apple_enabled == true and
+              ((.external_apple_client_id // "") | split(",") | map(gsub("^\\s+|\\s+$"; "")) | index($id) != null)
+            ' > /dev/null || {
+              echo "::error::Apple saglayicisi acik degil ya da $APPLE_BUNDLE_ID Client ID listesinde yok."
+              exit 1
+            }
+            echo "Verified: Apple provider enabled for $APPLE_BUNDLE_ID."
+          fi
+          if [[ "$GOOGLE_IOS_CLIENT" == "add" ]]; then
+            printf '%s' "$after" | jq -e --arg id "$GOOGLE_IOS_CLIENT_ID" '
+              (.external_google_additional_client_ids // "") | split(",") | map(gsub("^\\s+|\\s+$"; "")) | index($id) != null
+            ' > /dev/null || {
+              echo "::error::GOOGLE_IOS_CLIENT_ID Google ek Client ID listesinde yok."
+              exit 1
+            }
+            echo "Verified: Google iOS client id accepted."
           fi
 
           # Sert kapı yalnız yönlendirme tarafı: şablon, ücretsiz projelerde

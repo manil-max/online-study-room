@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  WP-903: App Store Connect disa aktarim secenekleri. __TEAM_ID__ yer tutucusunu
+  tooling/ios/build_ipa.sh APPLE_TEAM_ID ile doldurur; bu dosya elle
+  kullanilmaz. Imza OTOMATIK: sertifika ve profil App Store Connect API
+  anahtariyla (xcodebuild -allowProvisioningUpdates) bulutta yonetilir, repoda
+  ne sertifika ne profil durur.
+  destination=export: once IPA uretilir (artefakt olarak saklanir), yukleme
+  ayri adimda altool ile yapilir. Boylece yukleme dusse bile IPA elde kalir.
+-->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>teamID</key>
+	<string>__TEAM_ID__</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+	<key>stripSwiftSymbols</key>
+	<true/>
+</dict>
+</plist>

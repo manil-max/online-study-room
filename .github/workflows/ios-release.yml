@@ -1,0 +1,322 @@
+name: iOS Release
+
+# WP-903 — Mac'SIZ iOS yayini. Sahibin Mac'i yok; derleme, imza ve TestFlight
+# yuklemesi tamamen bu macOS runner'inda yapilir. Sahip yalniz tarayicida
+# Apple hesabi adimlarini yapar (docs/IOS-YOL-HARITASI.md).
+#
+# Iki kip vardir ve `build-check` KASITLI olarak varsayilandir:
+#   build-check  Apple hesabi GEREKMEZ. iOS projesi + pod'lar + Dart kodu
+#                imzasiz (`--no-codesign`) derlenir. Eksik Supabase/Firebase/
+#                Google degerleri yalniz UYARI verir. Ilk kosulacak kip budur.
+#   testflight   Imzali IPA uretir ve App Store Connect'e yukler. Butun kimlik
+#                bilgileri ZORUNLU (fail-closed): eksik olan her biri adiyla
+#                `::error` basar ve derleme baslamadan durur.
+#
+# SURUM / DERLEME NUMARASI SEMASI (tek kaynak burasi):
+#   tag = vNN (stable etiketi, Android/Windows ile ayni)
+#   CFBundleShortVersionString (build-name) = 1.0.NN      (Android versionName ile ayni)
+#   CFBundleVersion           (build-number) = NN.<run>   <run> = bu is akisinin
+#                                                          github.run_number'i
+#   APP_BUILD_NUMBER define                  = NN         (AppBuildManifest: stable'da
+#                                                          1.0.NN ile birebir eslesmeli)
+#   Neden `NN.<run>`: Apple ayni surum adinda her yuklemede DAHA BUYUK bir
+#   CFBundleVersion ister; ayni etiketi ikinci kez yuklemek (imza hatasi sonrasi
+#   yeniden deneme) duz `NN` ile reddedilirdi. run_number bu dosya icin tekduze
+#   artar; `NN.<run>` Apple'in noktali karsilastirmasinda hem ayni NN icinde hem
+#   de gelecekteki v(NN+1) etiketlerine gore her zaman buyur (88.412 < 89.413).
+#   build-check'te etiket verilmezse NN = depodaki en buyuk vNN etiketi.
+#
+# Sirlar/degiskenler (production environment ya da repo duzeyi; ikisi de okunur):
+#   secrets: PRODUCTION_SUPABASE_URL, PRODUCTION_SUPABASE_ANON_KEY,
+#            APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
+#            APP_STORE_CONNECT_API_KEY_P8 (ham .p8 metni YA DA base64'u)
+#   vars:    PRODUCTION_SUPABASE_PROJECT_REF, STAGING_SUPABASE_PROJECT_REF,
+#            FIREBASE_PROJECT_ID, FIREBASE_MESSAGING_SENDER_ID,
+#            FIREBASE_IOS_API_KEY, FIREBASE_IOS_APP_ID,
+#            GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, APPLE_TEAM_ID
+#   (APPLE_TEAM_ID gizli degildir; secret olarak da girilirse o okunur.)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'build-check = imzasiz derleme (Apple hesabi gerekmez) · testflight = imzala + yukle'
+        required: true
+        type: choice
+        options: [build-check, testflight]
+        default: build-check
+      tag:
+        description: 'vNN stable etiketi (testflight icin ZORUNLU; build-check icin istege bagli)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-release-${{ inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    name: iOS ${{ inputs.mode }}
+    # Pinli imaj: macos-latest takma adi imaj degistiginde Xcode/Ruby/CocoaPods
+    # surumlerini sessizce degistirir. Xcode'u asagidaki adim acikca secer.
+    runs-on: macos-15
+    timeout-minutes: 120
+    environment: production
+    defaults:
+      run:
+        working-directory: app
+    env:
+      MODE: ${{ inputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.sha }}
+          fetch-depth: 0
+
+      # 🔴 WP-666/668: elle girilen etiket koda GOMULMEZ, env ile gecer.
+      - name: Surum ve derleme numarasi
+        id: meta
+        working-directory: .
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          if [ -n "$TAG" ]; then
+            [[ "$TAG" =~ ^v[0-9]+$ ]] || { echo "::error::Gecersiz etiket: '$TAG' (vNN bekleniyor; iOS yalniz stable kanaldan yayinlanir)"; exit 1; }
+            code="${TAG#v}"
+          elif [ "$MODE" = testflight ]; then
+            echo "::error::testflight kipi etiket ister (ornek: tag=v88)."; exit 1
+          else
+            latest="$(git tag -l 'v[0-9]*' | grep -E '^v[0-9]+$' | sed 's/^v//' | sort -n | tail -1 || true)"
+            code="${latest:-0}"
+            echo "::notice::build-check etiketsiz: NN=$code (en buyuk vNN etiketi)"
+          fi
+          code=$((10#$code))
+          head="$(python3 -c "import json;print(json.load(open('tooling/release/deploy-contract.json'))['production']['migration_head'])")"
+          [[ "$head" =~ ^[0-9]{4}$ ]] || { echo "::error::deploy-contract production.migration_head okunamadi"; exit 1; }
+          {
+            echo "version_name=1.0.$code"
+            echo "app_build_number=$code"
+            echo "ios_build_number=$code.$RUN_NUMBER"
+            echo "git_sha=$(git rev-parse HEAD)"
+            echo "migration_head=$head"
+          } >> "$GITHUB_OUTPUT"
+          echo "iOS surumu: 1.0.$code ($code.$RUN_NUMBER), commit $(git rev-parse --short HEAD), migration head $head"
+
+      # Fail-closed: testflight'ta her eksik deger ADIYLA hata verir. Degerler
+      # basilmaz; yalniz var/yok bilgisi basilir.
+      - name: Kimlik bilgisi kapisi
+        shell: bash
+        env:
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_IOS_API_KEY: ${{ vars.FIREBASE_IOS_API_KEY }}
+          FIREBASE_IOS_APP_ID: ${{ vars.FIREBASE_IOS_APP_ID }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ vars.GOOGLE_IOS_CLIENT_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || vars.APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          missing=0
+          check() { # $1 = ad, $2 = tur (secret/variable), $3 = neden
+            if [ -z "${!1:-}" ]; then
+              if [ "$MODE" = testflight ]; then
+                echo "::error title=$1 eksik::$2 '$1' bos — $3. Ayarla: gh $2 set $1 --env production"
+                missing=1
+              else
+                echo "::warning title=$1 eksik::$2 '$1' bos — $3 (build-check devam ediyor)."
+              fi
+            else
+              echo "var: $1"
+            fi
+          }
+          check PRODUCTION_SUPABASE_URL secret 'uygulama backend olmadan acilmaz'
+          check PRODUCTION_SUPABASE_ANON_KEY secret 'uygulama backend olmadan acilmaz'
+          check PRODUCTION_SUPABASE_PROJECT_REF variable 'build manifest ref eslesmesi'
+          check STAGING_SUPABASE_PROJECT_REF variable 'build manifest ortam ref listesi'
+          check FIREBASE_PROJECT_ID variable 'iOS push bildirimi'
+          check FIREBASE_MESSAGING_SENDER_ID variable 'iOS push bildirimi'
+          check FIREBASE_IOS_API_KEY variable 'iOS push bildirimi (GoogleService-Info.plist API_KEY)'
+          check FIREBASE_IOS_APP_ID variable 'iOS push bildirimi (GoogleService-Info.plist GOOGLE_APP_ID)'
+          check GOOGLE_WEB_CLIENT_ID variable 'Google ile giris (sunucu istemcisi)'
+          check GOOGLE_IOS_CLIENT_ID variable 'Google ile giris (iOS istemcisi + URL semasi)'
+          if [ "$MODE" = testflight ]; then
+            check APPLE_TEAM_ID variable 'imza icin Team ID'
+            check APP_STORE_CONNECT_KEY_ID secret 'App Store Connect API anahtari'
+            check APP_STORE_CONNECT_ISSUER_ID secret 'App Store Connect API anahtari'
+            check APP_STORE_CONNECT_API_KEY_P8 secret 'App Store Connect API anahtari (.p8)'
+          fi
+          [ "$missing" = 0 ] || exit 1
+
+      # Apple 2026-04-28'den beri App Store Connect'e yalniz Xcode 26 / iOS 26
+      # SDK ile derlenmis yukleme kabul ediyor. Imajdaki en yeni kararli Xcode
+      # secilir; 26 altindaysa uyarilir (Apple reddi zaten acik mesaj verir).
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Xcode surumu
+        shell: bash
+        run: |
+          xcodebuild -version
+          major="$(xcodebuild -version | awk 'NR==1{split($2,a,"."); print a[1]}')"
+          if [ "${major:-0}" -lt 26 ]; then
+            echo "::warning::Xcode $major secildi; App Store Connect Xcode 26+ ister. runs-on imajini (macos-26) yukseltmek gerekebilir."
+          fi
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # 🔴 WP-505: surum PINLI (tek kaynak `.flutter-version`,
+          # `scripts/test_all.py --internal-flutter-pin` dogrular).
+          flutter-version: 3.44.2
+          cache: true
+
+      # release.yml stable kolunun iOS karsiligi. Degerler Python'a ORTAM
+      # DEGISKENI olarak girer; kabuk kaynagina gomulmez.
+      - name: Kanal/backend manifestini uret (env.json)
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_IOS_API_KEY: ${{ vars.FIREBASE_IOS_API_KEY }}
+          FIREBASE_IOS_APP_ID: ${{ vars.FIREBASE_IOS_APP_ID }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ vars.GOOGLE_IOS_CLIENT_ID }}
+          GIT_COMMIT_SHA: ${{ steps.meta.outputs.git_sha }}
+          MIGRATION_HEAD: ${{ steps.meta.outputs.migration_head }}
+          APP_VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          APP_BUILD_NUMBER: ${{ steps.meta.outputs.app_build_number }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          e = os.environ.get
+          env = {
+              'CHANNEL': 'stable',
+              'APP_ENVIRONMENT': 'production',
+              'ALLOW_IN_MEMORY': 'false',
+              'SUPABASE_URL': e('SUPABASE_URL', ''),
+              'SUPABASE_ANON_KEY': e('SUPABASE_ANON_KEY', ''),
+              'SUPABASE_PROJECT_REF': e('PRODUCTION_SUPABASE_PROJECT_REF', ''),
+              'STAGING_SUPABASE_PROJECT_REF': e('STAGING_SUPABASE_PROJECT_REF', ''),
+              'PRODUCTION_SUPABASE_PROJECT_REF': e('PRODUCTION_SUPABASE_PROJECT_REF', ''),
+              'GIT_COMMIT_SHA': e('GIT_COMMIT_SHA'),
+              'MIGRATION_HEAD': e('MIGRATION_HEAD'),
+              'APP_VERSION_NAME': e('APP_VERSION_NAME'),
+              'APP_BUILD_NUMBER': e('APP_BUILD_NUMBER'),
+              # WP-901: App Store kanali — sideload updater kapali, magaza
+              # guncellemesi App Store'dan gelir.
+              'DISTRIBUTION_CHANNEL': 'appStore',
+              'LEGAL_BASE_URL': 'https://manil-max.github.io/online-study-room',
+              'FIREBASE_PROJECT_ID': e('FIREBASE_PROJECT_ID', ''),
+              'FIREBASE_MESSAGING_SENDER_ID': e('FIREBASE_MESSAGING_SENDER_ID', ''),
+              'FIREBASE_IOS_API_KEY': e('FIREBASE_IOS_API_KEY', ''),
+              'FIREBASE_IOS_APP_ID': e('FIREBASE_IOS_APP_ID', ''),
+              'GOOGLE_WEB_CLIENT_ID': e('GOOGLE_WEB_CLIENT_ID', ''),
+              'GOOGLE_IOS_CLIENT_ID': e('GOOGLE_IOS_CLIENT_ID', ''),
+          }
+          with open('env.json', 'w') as f:
+              json.dump(env, f)
+          print('env.json anahtarlari:', ', '.join(k for k, v in env.items() if v))
+          print('bos anahtarlar:', ', '.join(k for k, v in env.items() if not v) or '-')
+          PY
+
+      - run: flutter pub get
+      - run: flutter analyze
+      # Golden baseline'lari Windows'ta uretildi; burada yalniz platformdan
+      # bagimsiz fonksiyonel paket kosar (release.yml ile ayni).
+      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
+      # Android'de Gradle, Windows'ta windows-release.yml bu sozlesmeyi uygular;
+      # iOS'ta derleme oncesi TEK kapi budur. Supabase yoksa (yalniz
+      # build-check'te mumkun) manifest zaten gecersizdir, atlanir.
+      - name: Build manifest + dagitim kanali kapisi
+        shell: bash
+        env:
+          HAS_SUPABASE: ${{ secrets.PRODUCTION_SUPABASE_URL != '' }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_SUPABASE" != true ]; then
+            echo "::warning::Supabase yok: manifest kapisi atlandi (yalniz build-check)."; exit 0
+          fi
+          flutter test test/core/current_build_manifest_gate_test.dart test/core/config/distribution_define_wp614_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+
+      - name: Info.plist derleme degerleri (Google URL semasi, sifreleme beyani)
+        shell: bash
+        env:
+          GOOGLE_IOS_CLIENT_ID: ${{ vars.GOOGLE_IOS_CLIENT_ID }}
+        run: bash ../tooling/ios/inject_info_plist.sh ios/Runner/Info.plist
+
+      - name: iOS imzasiz derleme (build-check)
+        if: inputs.mode == 'build-check'
+        shell: bash
+        env:
+          BUILD_NAME: ${{ steps.meta.outputs.version_name }}
+          BUILD_NUMBER: ${{ steps.meta.outputs.ios_build_number }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ios-logs"
+          flutter build ios --release --no-codesign --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --dart-define-from-file=env.json 2>&1 | tee "$RUNNER_TEMP/ios-logs/flutter-build-ios.log"
+          test -d build/ios/iphoneos/Runner.app
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' build/ios/iphoneos/Runner.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/ios/iphoneos/Runner.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' build/ios/iphoneos/Runner.app/Info.plist
+
+      - name: Xcode projesini hazirla (testflight)
+        if: inputs.mode == 'testflight'
+        shell: bash
+        env:
+          BUILD_NAME: ${{ steps.meta.outputs.version_name }}
+          BUILD_NUMBER: ${{ steps.meta.outputs.ios_build_number }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ios-logs"
+          flutter build ios --release --config-only --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --dart-define-from-file=env.json 2>&1 | tee "$RUNNER_TEMP/ios-logs/flutter-config-only.log"
+
+      - name: Imzali IPA + TestFlight yuklemesi
+        if: inputs.mode == 'testflight'
+        shell: bash
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || vars.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+          EXPECTED_BUILD_NAME: ${{ steps.meta.outputs.version_name }}
+          EXPECTED_BUILD_NUMBER: ${{ steps.meta.outputs.ios_build_number }}
+          UPLOAD: 'true'
+        run: |
+          set -euo pipefail
+          OUT_DIR="$RUNNER_TEMP/ios-out" bash ../tooling/ios/build_ipa.sh 2>&1 | tee "$RUNNER_TEMP/ios-logs/xcodebuild-archive-export-upload.log"
+
+      - name: IPA artefakti
+        if: inputs.mode == 'testflight'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ steps.meta.outputs.version_name }}-${{ steps.meta.outputs.ios_build_number }}
+          path: |
+            ${{ runner.temp }}/ios-out/ipa/*.ipa
+            ${{ runner.temp }}/ios-out/ipa/*.sha256
+          if-no-files-found: error
+
+      - name: Derleme gunlukleri
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-logs-${{ inputs.mode }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/ios-logs/
+          if-no-files-found: ignore
