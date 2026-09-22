@@ -62,6 +62,10 @@ dependencies:
   share_plus: ^13.2.1         # WP-152: veri dışa aktarma dosya paylaşımı.
   open_filex: ^4.5.0          # APK'yı açıp Android kurulum ekranını tetikler.
   crypto: ^3.0.6              # İndirilen APK'nın SHA-256 bütünlük doğrulaması.
+  # WP-913: Play sürümünde Google'ın kendi "güncelleme var" akışı (flexible).
+  # YALNIZ `DistributionChannel.play` + Android'de çağrılır; GitHub sideload ve
+  # App Store yolları bu pakete hiç dokunmaz (features/updater/play_in_app_update.dart).
+  in_app_update: ^4.2.5
 
   # Masaüstü (WP-11): pencere boyutu/başlık + "üstte kalan mini pencere".
   # Yalnız Windows/macOS/Linux'ta kullanılır; web'de koşullu import ile devre dışı.

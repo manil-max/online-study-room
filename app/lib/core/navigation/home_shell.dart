@@ -22,6 +22,7 @@ import '../../features/permissions/notification_auto_ask.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
+import '../../features/updater/play_in_app_update.dart';
 import '../desktop/desktop_window.dart';
 import '../widgets/app_pull_to_refresh.dart';
 import 'nav_index.dart';
@@ -132,6 +133,23 @@ class HomeShell extends ConsumerWidget {
     // bir kez, kendiliğinden açılır (yalnız Android 13+, reddedildiyse bir
     // daha kendiliğinden sorulmaz). Kurallar `notification_auto_ask.dart`da.
     ref.watch(notificationAutoAskProvider);
+    // WP-913: Play sürümünde Google'ın kendi "güncelleme var" akışı süreç
+    // başına bir kez burada tetiklenir. Play dışı her kanalda (GitHub
+    // sideload, Windows, Microsoft Store, App Store) provider hiçbir şey
+    // yapmaz; kural `features/updater/play_in_app_update.dart`ta.
+    ref.watch(playInAppUpdateProvider);
+    // İndirme bitti ama Play uygulamayı yeniden başlatmadıysa kullanıcı
+    // neden beklediğini bilsin — tek satır, engellemez.
+    ref.listen<bool>(playUpdateRestartHintProvider, (_, ready) {
+      if (!ready) return;
+      ScaffoldMessenger.maybeOf(context)
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).playUpdateReadyRestart),
+          ),
+        );
+    });
 
     // 🔴 WP-682 — ODUL BANNERI ARTIK KABUGUN USTUNE BINMIYOR.
     //

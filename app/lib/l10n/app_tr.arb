@@ -2479,6 +2479,7 @@
   "playMigrationTileTitle": "Google Play'e geç",
   "playMigrationTileSubtitle": "Bu sürüm artık güncellenmiyor. Kaldırıp Google Play'den kur; hesabın ve çalışma verilerin sunucuda, kaybolmaz.",
   "playMigrationOpenFailed": "Google Play açılamadı. Bağlantı panoya kopyalandı.",
+  "playUpdateReadyRestart": "Güncelleme hazır, yeniden başlat.",
   "aboutDiagLine": "Sürüm {version} ({build}) · {channel} · Sunucu: {backend} · Google girişi: {google}",
   "aboutDiagChannelPlay": "Play",
   "aboutDiagChannelGithubBeta": "GitHub beta",
