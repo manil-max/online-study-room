@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -131,6 +132,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
   }
 
   final _developerGate = DeveloperGateCounter();
+
+  /// WP-907: gizli geliştirici bölümünün Android'e özgü satırları iOS'ta
+  /// çizilmez. `defaultTargetPlatform`: testte
+  /// `debugDefaultTargetPlatformOverride` ile enjekte edilir. Windows
+  /// davranışı değişmedi.
+  bool get _showsAndroidDeveloperRows =>
+      defaultTargetPlatform != TargetPlatform.iOS;
 
   /// Sürüm satırına dokunma. Kilit zaten açıksa sayaç hiç çalışmaz.
   Future<void> _onVersionTap() async {
@@ -278,9 +286,8 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
             DistributionChannel.windows => l10n.aboutDiagChannelWindows,
             DistributionChannel.microsoftStore =>
               l10n.aboutDiagChannelMicrosoftStore,
-            // WP-901: marka adı iki dilde aynıdır; `.arb` bu WP'nin SAHİP
-            // yollarında olmadığı için ayrı anahtar açılmadı.
-            DistributionChannel.appStore => _kAppStoreDiagLabel,
+            // WP-907: WP-901'in düz dizesi `.arb` anahtarına taşındı.
+            DistributionChannel.appStore => l10n.aboutDiagChannelAppStore,
           };
     final backend = switch (manifest?.environment) {
       AppEnvironment.production => l10n.aboutDiagBackendLive,
@@ -521,82 +528,87 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                               ),
                             ),
                           ),
-                          const Divider(height: 1),
-                          // 🔴 WP-759 KUSUR 4: `flutter.timer_panel_expanded`
-                          // native tarafta OKUNUYOR ama `app/lib` icinde YAZAN
-                          // yoktu. Live Update yolu bu yuzden ne kullanicinin
-                          // ne de bir cihaz testinin acabilecegi OLU bir dalda
-                          // duruyordu; v71'de varsayilan yapilinca da kimse
-                          // once denememisti. Anahtar burada -- gizli
-                          // gelistirici bolumunde -- cunku deneyseldir ve
-                          // sistem terfiyi vermezse native taraf zaten zengin
-                          // panele duser (bkz. `PromotionCapability`).
-                          // 🔴 WP-760: iki durumlu anahtar UC durumlu secime
-                          // dondu. Eskisi "otomatik"i ifade edemiyordu; bir
-                          // kez acip kapatan kullanici diske `true` yazdirip
-                          // dinamik paneli KALICI kapatiyordu ve geri donusu
-                          // yoktu. Ucuncu durum (anahtar yok = otomatik)
-                          // varsayilandir ve secilebilir kalmalidir.
-                          ListTile(
-                            key: const Key('developer-live-update-panel'),
-                            leading: const Icon(Icons.bolt_outlined),
-                            title: Text(l10n.devLiveUpdatePanelTitle),
-                            subtitle: Text(l10n.devLiveUpdatePanelSubtitle),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                            child: SegmentedButton<TimerPanelChoice>(
-                              key: const Key('developer-panel-choice'),
-                              segments: [
-                                ButtonSegment(
-                                  value: TimerPanelChoice.auto,
-                                  label: Text(l10n.devPanelChoiceAuto),
-                                ),
-                                ButtonSegment(
-                                  value: TimerPanelChoice.richPanel,
-                                  label: Text(l10n.devPanelChoiceRichPanel),
-                                ),
-                                ButtonSegment(
-                                  value: TimerPanelChoice.liveUpdate,
-                                  label: Text(l10n.devPanelChoiceLiveUpdate),
-                                ),
-                              ],
-                              selected: {ref.watch(timerPanelChoiceProvider)},
-                              onSelectionChanged: (selection) => ref
-                                  .read(timerPanelChoiceProvider.notifier)
-                                  .choose(selection.first),
+                          // 🔴 WP-907: aşağıdaki satırlar (Live Update paneli,
+                          // terfi kararı, yüzen şerit + izni) Android bildirim
+                          // ve pencere yüzeyleridir; iOS'ta karşılıkları yok.
+                          if (_showsAndroidDeveloperRows) ...[
+                            const Divider(height: 1),
+                            // 🔴 WP-759 KUSUR 4: `flutter.timer_panel_expanded`
+                            // native tarafta OKUNUYOR ama `app/lib` icinde YAZAN
+                            // yoktu. Live Update yolu bu yuzden ne kullanicinin
+                            // ne de bir cihaz testinin acabilecegi OLU bir dalda
+                            // duruyordu; v71'de varsayilan yapilinca da kimse
+                            // once denememisti. Anahtar burada -- gizli
+                            // gelistirici bolumunde -- cunku deneyseldir ve
+                            // sistem terfiyi vermezse native taraf zaten zengin
+                            // panele duser (bkz. `PromotionCapability`).
+                            // 🔴 WP-760: iki durumlu anahtar UC durumlu secime
+                            // dondu. Eskisi "otomatik"i ifade edemiyordu; bir
+                            // kez acip kapatan kullanici diske `true` yazdirip
+                            // dinamik paneli KALICI kapatiyordu ve geri donusu
+                            // yoktu. Ucuncu durum (anahtar yok = otomatik)
+                            // varsayilandir ve secilebilir kalmalidir.
+                            ListTile(
+                              key: const Key('developer-live-update-panel'),
+                              leading: const Icon(Icons.bolt_outlined),
+                              title: Text(l10n.devLiveUpdatePanelTitle),
+                              subtitle: Text(l10n.devLiveUpdatePanelSubtitle),
                             ),
-                          ),
-                          const Divider(height: 1),
-                          // 🔴 Alti turdur cevaplanamayan soru: "cihaz terfiyi
-                          // VERDI MI?" Olcum her Baslat'ta yapiliyordu ama
-                          // sonucunu kimse GOREMIYORDU; bu satir onu gorunur
-                          // kilar.
-                          _promotionVerdictTile(context, l10n),
-                          const Divider(height: 1),
-                          // 🔴 WP-764 — sistem yüzeyinden VAZGEÇİLDİ. Terfi
-                          // sahibin Galaxy S23'ünde veriliyor (üstteki satır
-                          // `GRANTED` diyor) ama Samsung ortada hiçbir şey
-                          // çizmiyor; altı turdur beklenen panel bu yüzden
-                          // gelmedi. Şerit artık bizim penceremiz.
-                          //
-                          // 🔴 Varsayılan KAPALI. Bu turda üç kez deneysel bir
-                          // yol varsayılan yapıldı ve çalışan bildirimi bozdu
-                          // (v71, v74). Sahip kuralı: "test ederken sadece biz
-                          // görelim, diğerlerinde normal olsun".
-                          SwitchListTile(
-                            key: const Key('developer-overlay-enabled'),
-                            secondary: const Icon(
-                              Icons.picture_in_picture_alt_outlined,
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                              child: SegmentedButton<TimerPanelChoice>(
+                                key: const Key('developer-panel-choice'),
+                                segments: [
+                                  ButtonSegment(
+                                    value: TimerPanelChoice.auto,
+                                    label: Text(l10n.devPanelChoiceAuto),
+                                  ),
+                                  ButtonSegment(
+                                    value: TimerPanelChoice.richPanel,
+                                    label: Text(l10n.devPanelChoiceRichPanel),
+                                  ),
+                                  ButtonSegment(
+                                    value: TimerPanelChoice.liveUpdate,
+                                    label: Text(l10n.devPanelChoiceLiveUpdate),
+                                  ),
+                                ],
+                                selected: {ref.watch(timerPanelChoiceProvider)},
+                                onSelectionChanged: (selection) => ref
+                                    .read(timerPanelChoiceProvider.notifier)
+                                    .choose(selection.first),
+                              ),
                             ),
-                            title: Text(l10n.devOverlayStripTitle),
-                            subtitle: Text(l10n.devOverlayStripSubtitle),
-                            value: ref.watch(timerOverlayEnabledProvider),
-                            onChanged: (value) => ref
-                                .read(timerOverlayEnabledProvider.notifier)
-                                .setEnabled(value),
-                          ),
-                          _overlayPermissionTile(context, l10n),
+                            const Divider(height: 1),
+                            // 🔴 Alti turdur cevaplanamayan soru: "cihaz terfiyi
+                            // VERDI MI?" Olcum her Baslat'ta yapiliyordu ama
+                            // sonucunu kimse GOREMIYORDU; bu satir onu gorunur
+                            // kilar.
+                            _promotionVerdictTile(context, l10n),
+                            const Divider(height: 1),
+                            // 🔴 WP-764 — sistem yüzeyinden VAZGEÇİLDİ. Terfi
+                            // sahibin Galaxy S23'ünde veriliyor (üstteki satır
+                            // `GRANTED` diyor) ama Samsung ortada hiçbir şey
+                            // çizmiyor; altı turdur beklenen panel bu yüzden
+                            // gelmedi. Şerit artık bizim penceremiz.
+                            //
+                            // 🔴 Varsayılan KAPALI. Bu turda üç kez deneysel bir
+                            // yol varsayılan yapıldı ve çalışan bildirimi bozdu
+                            // (v71, v74). Sahip kuralı: "test ederken sadece biz
+                            // görelim, diğerlerinde normal olsun".
+                            SwitchListTile(
+                              key: const Key('developer-overlay-enabled'),
+                              secondary: const Icon(
+                                Icons.picture_in_picture_alt_outlined,
+                              ),
+                              title: Text(l10n.devOverlayStripTitle),
+                              subtitle: Text(l10n.devOverlayStripSubtitle),
+                              value: ref.watch(timerOverlayEnabledProvider),
+                              onChanged: (value) => ref
+                                  .read(timerOverlayEnabledProvider.notifier)
+                                  .setEnabled(value),
+                            ),
+                            _overlayPermissionTile(context, l10n),
+                          ],
                           const Divider(height: 1),
                           ListTile(
                             key: const Key('developer-mode-disable'),
@@ -617,9 +629,6 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
     );
   }
 }
-
-/// WP-901: App Store kanal etiketi (marka adı; çevrilmez).
-const String _kAppStoreDiagLabel = 'App Store';
 
 class _AboutSection extends StatelessWidget {
   const _AboutSection({required this.title, required this.child});

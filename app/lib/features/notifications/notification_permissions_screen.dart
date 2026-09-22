@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../clock/clock_widgets_screen.dart';
+import '../permissions/permissions_screen.dart';
 import 'notification_center_screen.dart';
 
 /// WP-286: bildirim tercihleri, cihaz izinleri ve aylık rapor için tek giriş.
@@ -119,12 +121,69 @@ class _NotificationPermissionsScreenState
             // dışındadır; bu yüzden o dosya değiştirilmedi, yalnız BURADAN
             // aynı banda alındı. Sonuç kullanıcı için aynı: satır 632 px'te
             // durur.
-            const NotificationDesktopBand(
-              child: ClockWidgetsScreen(embedded: true),
-            ),
+            //
+            // 🔴 WP-907: iOS'ta o ekranın iki yarısı da yanlış yüzeydir —
+            // Android widget kataloğu çizilmez, başlık "masaüstü" der. iOS'ta
+            // sekme yalnız İzinler ekranına giden tek eylemi taşır (Android'de
+            // izinler de oradan yönetilir). Android/Windows değişmedi.
+            if (_isIos)
+              const NotificationDesktopBand(child: _IosPermissionsTab())
+            else
+              const NotificationDesktopBand(
+                child: ClockWidgetsScreen(embedded: true),
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// WP-907: platform `defaultTargetPlatform` üzerinden okunur; testte
+/// `debugDefaultTargetPlatformOverride = TargetPlatform.iOS` ile enjekte edilir.
+bool get _isIos => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+/// WP-907: iOS'ta ikinci sekme. Widget kataloğu ve Android izin özeti yok;
+/// yalnız İzinler ekranına giden düğme (iOS'ta orada bildirim izni yönetilir).
+class _IosPermissionsTab extends StatelessWidget {
+  const _IosPermissionsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return ListView(
+      key: const Key('notification-ios-permissions-tab'),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text(
+          l10n.permissionsTitle,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.permissionsSettingsSubtitle,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: FilledButton.tonalIcon(
+            key: const Key('notification-ios-open-permissions'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const PermissionsScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            label: Text(l10n.clockIzinlerEkraniniAc),
+          ),
+        ),
+      ],
     );
   }
 }

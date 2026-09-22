@@ -175,6 +175,18 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             ),
           ),
         ],
+        // WP-907: iOS'ta izin iOS Ayarlar'dan geri alınır; satır oraya
+        // götürür. Android cümlesi yerine iOS cümlesi.
+        if (snapshot.notificationsOnly) ...[
+          const SizedBox(height: 4),
+          Text(
+            key: const Key('permissions-revoke-hint-ios'),
+            l10n.permissionsRevokeHintIos,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ];
     }
 

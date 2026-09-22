@@ -179,4 +179,38 @@ void main() {
       expect(width, 1024);
     });
   });
+
+  group('WP-907 AppDelegate', () {
+    const appDelegatePath = 'ios/Runner/AppDelegate.swift';
+
+    test('flutter_local_notifications registrant callback kayitli', () {
+      final src = _read(appDelegatePath);
+      expect(src, contains('import flutter_local_notifications'));
+      expect(
+        src,
+        contains('FlutterLocalNotificationsPlugin.setPluginRegistrantCallback'),
+      );
+      // UIScene sablonu: kayit didInitializeImplicitFlutterEngine icinde.
+      final implicit = src.indexOf('func didInitializeImplicitFlutterEngine');
+      expect(implicit, greaterThan(0));
+      expect(
+        src.indexOf(
+          'FlutterLocalNotificationsPlugin.setPluginRegistrantCallback {',
+        ),
+        greaterThan(implicit),
+      );
+    });
+
+    test('saat dilimi kanali Dart tarafiyla ayni ad ve metot', () {
+      final src = _read(appDelegatePath);
+      final dart = _read('lib/core/time_engine/device_timezone.dart');
+      const channel = 'com.manilmax.online_study_room/exact_alarm';
+      expect(dart, contains(channel));
+      expect(dart, contains("'getLocalTimezoneId'"));
+      expect(src, contains('"$channel"'));
+      expect(src, contains('"getLocalTimezoneId"'));
+      expect(src, contains('TimeZone.current.identifier'));
+      expect(src, contains('FlutterMethodNotImplemented'));
+    });
+  });
 }

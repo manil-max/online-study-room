@@ -2485,6 +2485,7 @@
   "aboutDiagChannelGithubLegacy": "GitHub (eski)",
   "aboutDiagChannelWindows": "Windows",
   "aboutDiagChannelMicrosoftStore": "Microsoft Store",
+  "aboutDiagChannelAppStore": "App Store",
   "aboutDiagChannelDev": "geliştirme",
   "aboutDiagBackendLive": "canlı",
   "aboutDiagBackendTest": "test",
@@ -2510,6 +2511,7 @@
   "clockIzinEksikSayisi": "{count, plural, =1 {1 izin eksik} other {{count} izin eksik}}",
   "clockIzinlerEkraniniAc": "İzinler ekranını aç",
   "permissionsRevokeHint": "Verdiğin bir izni geri almak için satırına dokun ve açılan Android ayarından kapat. Android izinleri yalnız oradan geri alınır.",
+  "permissionsRevokeHintIos": "Verdiğin izni geri almak için satıra dokun ve iOS Ayarlar'dan kapat.",
   "tourSettingsOverview": "Tema Görünüm'de. Sayaç ve alarm zamanında çalışsın diye İzinler'e bak.",
   "tourSettingsAccount": "Hesabını yönetmek ve verilerini indirmek için Hesap bölümüne gir."
 }
