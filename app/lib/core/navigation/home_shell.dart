@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -138,15 +140,24 @@ class HomeShell extends ConsumerWidget {
     // sideload, Windows, Microsoft Store, App Store) provider hiçbir şey
     // yapmaz; kural `features/updater/play_in_app_update.dart`ta.
     ref.watch(playInAppUpdateProvider);
-    // İndirme bitti ama Play uygulamayı yeniden başlatmadıysa kullanıcı
-    // neden beklediğini bilsin — tek satır, engellemez.
+    // WP-914: indirme bitti; kurulum uygulamayı yeniden başlatacağı için
+    // KULLANICI başlatır. Koşan bir seansın ortasında kendiliğinden yeniden
+    // başlamak bu uygulamada veri değil, güven kaybıdır.
     ref.listen<bool>(playUpdateRestartHintProvider, (_, ready) {
       if (!ready) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.maybeOf(context)
         ?..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).playUpdateReadyRestart),
+            content: Text(l10n.playUpdateReadyRestart),
+            duration: const Duration(seconds: 12),
+            action: SnackBarAction(
+              label: l10n.playUpdateInstallNow,
+              onPressed: () => unawaited(
+                completePlayUpdate(ref.read(playInAppUpdateGatewayProvider)),
+              ),
+            ),
           ),
         );
     });

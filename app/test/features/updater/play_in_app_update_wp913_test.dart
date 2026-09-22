@@ -27,7 +27,7 @@ void main() {
           platform: TargetPlatform.android,
         );
         if (channel == DistributionChannel.play) {
-          expect(outcome, PlayUpdateOutcome.readyToRestart, reason: '$channel');
+          expect(outcome, PlayUpdateOutcome.downloaded, reason: '$channel');
           expect(gateway.checks, 1, reason: '$channel');
         } else {
           expect(outcome, PlayUpdateOutcome.notApplicable, reason: '$channel');
@@ -86,17 +86,30 @@ void main() {
       expect(gateway.completes, 0, reason: 'indirme bitmeden kurulum yok');
     });
 
-    test('indirme hazır olunca kurulum çağrılır', () async {
+    // 🔴 WP-914: kurulum indirme biter bitmez ÇAĞRILMAZ. Play kurarken
+    // uygulamayı yeniden başlatır; bu bir çalışma sayacı, koşan seansın
+    // ortasında yeniden başlamak kabul edilemez. Kurulumu kullanıcı başlatır.
+    test('indirme bitince kurulum KENDILIGINDEN cagrilmaz', () async {
       final gateway = _FakeGateway();
       expect(
         await runPlayInAppUpdate(
           gateway: gateway,
           channel: DistributionChannel.play,
         ),
-        PlayUpdateOutcome.readyToRestart,
+        PlayUpdateOutcome.downloaded,
       );
       expect(gateway.starts, 1);
-      expect(gateway.completes, 1);
+      expect(gateway.completes, 0, reason: 'kurulum kullanıcı onayı bekler');
+    });
+
+    test('completePlayUpdate kurulumu cagirir ve hatayi yutar', () async {
+      final ok = _FakeGateway();
+      await completePlayUpdate(ok);
+      expect(ok.completes, 1);
+
+      final broken = _FakeGateway(throwOn: _Step.complete);
+      await expectLater(completePlayUpdate(broken), completes);
+      expect(broken.completes, 1);
     });
 
     test('güncelleme yoksa indirme başlatılmaz', () async {
@@ -135,10 +148,11 @@ void main() {
     });
 
     test('eklenti hatası yutulur, yeniden fırlatılmaz', () async {
+      // WP-914: `complete` artık bu akışta çağrılmıyor; kurulum hatası
+      // `completePlayUpdate` testinde ölçülür.
       for (final gateway in [
         _FakeGateway(throwOn: _Step.check),
         _FakeGateway(throwOn: _Step.start),
-        _FakeGateway(throwOn: _Step.complete),
       ]) {
         expect(
           await runPlayInAppUpdate(
@@ -179,7 +193,7 @@ void main() {
       expect(gateway.checks, 1);
     });
 
-    test('indirme bittiğinde yeniden başlatma ipucu açılır', () async {
+    test('indirme bittiğinde kurulum şeridi açılır (kurulum yok)', () async {
       debugPlayInAppUpdatePlatform = TargetPlatform.android;
       debugPlayInAppUpdateChannel = DistributionChannel.play;
       final gateway = _FakeGateway();
@@ -192,7 +206,7 @@ void main() {
       container.read(playInAppUpdateProvider);
       await pumpEventQueue();
 
-      expect(gateway.completes, 1);
+      expect(gateway.completes, 0, reason: 'şerit çıkar, kurulum beklenir');
       expect(container.read(playUpdateRestartHintProvider), isTrue);
     });
 

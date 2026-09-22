@@ -104,8 +104,13 @@ enum PlayUpdateOutcome {
   /// Kullanıcı Google'ın sayfasında vazgeçti ya da indirme tamamlanmadı.
   declined,
 
-  /// İndirme bitti ve kurulum çağrıldı; Play yeniden başlatmayı üstlenir.
-  readyToRestart,
+  /// İndirme bitti; kurulum KULLANICI onayını bekler.
+  ///
+  /// 🔴 WP-914: kurulum indirme biter bitmez çağrılmıyor. Play kurarken
+  /// uygulamayı yeniden başlatır; bu bir çalışma sayacı ve yeniden başlatma
+  /// koşan seansın ortasına denk gelebilir. Karar kullanıcının: şerit çıkar,
+  /// "Kur"a basınca [completePlayUpdate] çağrılır.
+  downloaded,
 
   /// Eklenti hata attı (sideload APK, Play Services yok…) — yutuldu.
   failed,
@@ -132,8 +137,7 @@ Future<PlayUpdateOutcome> runPlayInAppUpdate({
     // İndirme bitmeden kurulum çağrılmaz: `completeFlexibleUpdate` indirilmiş
     // paket yokken hata atar ve kullanıcıyı boş yere yeniden başlatır.
     if (!await gateway.startFlexibleUpdate()) return PlayUpdateOutcome.declined;
-    await gateway.completeFlexibleUpdate();
-    return PlayUpdateOutcome.readyToRestart;
+    return PlayUpdateOutcome.downloaded;
   } catch (_) {
     return PlayUpdateOutcome.failed;
   }
@@ -144,7 +148,17 @@ final playInAppUpdateGatewayProvider = Provider<PlayInAppUpdateGateway>(
   (ref) => const PlayStoreInAppUpdateGateway(),
 );
 
-/// Kurulum yeniden başlatma bekliyor mu? (`true` ⇒ kabuk küçük bir şerit gösterir)
+/// WP-914: kullanıcı şeritteki "Kur"a bastı — indirilen paket şimdi kurulur.
+/// Play uygulamayı yeniden başlatır. Hiç `throw` etmez.
+Future<void> completePlayUpdate(PlayInAppUpdateGateway gateway) async {
+  try {
+    await gateway.completeFlexibleUpdate();
+  } catch (_) {
+    // Kurulum başarısızsa kullanıcı Play'den güncelleyebilir; hata gösterilmez.
+  }
+}
+
+/// Kurulum kullanıcı onayı bekliyor mu? (`true` ⇒ kabuk küçük bir şerit gösterir)
 class PlayUpdateRestartHint extends Notifier<bool> {
   @override
   bool build() => false;
@@ -198,9 +212,8 @@ final playInAppUpdateProvider = Provider<void>((ref) {
       isWeb: kIsWeb,
       platform: platform,
     );
-    // Play kurulumu üstlenince uygulama yeniden başlar ve bu şerit görünmez;
-    // başlatmadıysa kullanıcı neden beklediğini bilsin.
-    if (outcome == PlayUpdateOutcome.readyToRestart && ref.mounted) {
+    // İndirme bitti; kurulumu kullanıcı başlatır (WP-914).
+    if (outcome == PlayUpdateOutcome.downloaded && ref.mounted) {
       ref.read(playUpdateRestartHintProvider.notifier).markReady();
     }
   }());
