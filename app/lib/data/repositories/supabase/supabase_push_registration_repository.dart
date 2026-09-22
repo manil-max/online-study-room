@@ -1,19 +1,36 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/push_notification.dart';
 import '../push_registration_repository.dart';
 
+/// WP-906: `register_push_device`'in `p_platform` degeri (`0144`).
+///
+/// Sunucu yalniz `android`/`ios` kabul eder; iOS disindaki her sey `android`
+/// gider (0144 oncesi davranis, eski surumler de parametresiz 'android' yazar).
+/// Dispatcher bu degere bakip iOS mesajina `apns` blogu ekler; yanlis platform
+/// iOS'ta uygulama kapaliyken bildirimin hic gorunmemesi demektir.
+String pushPlatformName(TargetPlatform platform) =>
+    platform == TargetPlatform.iOS ? 'ios' : 'android';
+
 class SupabasePushRegistrationRepository implements PushRegistrationRepository {
-  SupabasePushRegistrationRepository(this._client);
+  SupabasePushRegistrationRepository(
+    this._client, {
+    TargetPlatform Function()? targetPlatform,
+  }) : _targetPlatform = targetPlatform ?? (() => defaultTargetPlatform);
 
   final SupabaseClient _client;
+  final TargetPlatform Function() _targetPlatform;
 
   @override
   Future<String?> registerDevice(PushDeviceRegistration registration) async {
     try {
       final raw = await _client.rpc(
         'register_push_device',
-        params: registration.toRpcParams(),
+        params: {
+          ...registration.toRpcParams(),
+          'p_platform': pushPlatformName(_targetPlatform()),
+        },
       );
       final rows = raw as List;
       if (rows.isEmpty) return null;

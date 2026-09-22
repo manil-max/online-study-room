@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
+import { withApns } from "./apns.ts"
+
 type ServiceAccount = {
   project_id: string
   client_email: string
@@ -21,6 +23,8 @@ type ClaimedDelivery = {
   quiet_start_minutes: number
   quiet_end_minutes: number
   attempt: number
+  /** WP-906 (`0144`): "android" | "ios"; eski sema dondurmezse Android sayilir. */
+  platform?: string | null
 }
 
 type DeliveryResult = {
@@ -254,7 +258,9 @@ async function sendToFcm(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        message: {
+        // WP-906: iOS cihazda `apns` blogu eklenir (`apns.ts`); Android'de
+        // `withApns` ayni nesneyi dondurur, istek byte-byte degismez.
+        message: withApns(delivery, content, {
           token: delivery.fcm_token,
           data: stringData(delivery, content),
           // 🔴 Burada `android.notification` OLMAMALI. Varlığı mesajı FCM
@@ -271,7 +277,7 @@ async function sendToFcm(
               ? { collapse_key: `timer_sync:${String(delivery.payload.run_id ?? delivery.outbox_id)}` }
               : {}),
           },
-        },
+        }),
       }),
     },
   )

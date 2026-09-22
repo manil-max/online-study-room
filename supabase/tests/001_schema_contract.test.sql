@@ -7,13 +7,13 @@ select plan(57);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  143,
-  'all 143 migrations are recorded'
+  144,
+  'all 144 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0143',
-  '0143 is the migration head'
+  '0144',
+  '0144 is the migration head'
 );
 select ok(
   exists(
@@ -158,15 +158,15 @@ select ok(
 );
 select ok(
   to_regprocedure(
-    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer)'
+    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer,text)'
   ) is not null
     and to_regprocedure('public.unregister_push_device(text)') is not null,
-  '0066 installs self-scoped device lifecycle RPCs'
+  '0066/0144 installs self-scoped device lifecycle RPCs'
 );
 select ok(
   has_function_privilege(
     'authenticated',
-    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer)',
+    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer,text)',
     'execute'
   ),
   'authenticated can call the guarded registration RPC'

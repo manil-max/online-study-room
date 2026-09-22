@@ -6,6 +6,7 @@
 // parametreleri en kalabalık olan iki yüzey. WP-373'te tam bu yüzeyde
 // Dart ucu ile SQL ucu sessizce ayrışmıştı.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:online_study_room/data/models/profile.dart';
@@ -58,6 +59,49 @@ void main() {
       expect(call.json['p_build_number'], 5701);
       expect(call.json['p_time_zone'], 'Europe/Istanbul');
       expect(call.json['p_quiet_hours_enabled'], false);
+    });
+
+    // WP-906 (`0144`): dispatcher iOS mesajina `apns` blogunu bu degere
+    // bakarak ekler. Yanlis/eksik giderse iOS'ta uygulama kapaliyken
+    // bildirim hic gorunmez.
+    test('iOS cihaz p_platform=ios gonderir', () async {
+      wire.respond('register_push_device', [
+        {'device_id': 'dev-ios'}
+      ]);
+      final repo = SupabasePushRegistrationRepository(
+        wire.client(),
+        targetPlatform: () => TargetPlatform.iOS,
+      );
+
+      await repo.registerDevice(_registration);
+
+      final call = wire.rpc('register_push_device');
+      expect(call.json['p_platform'], 'ios');
+      // Mevcut 13 parametre aynen korunur.
+      expect(call.json['p_installation_id'], 'inst-1');
+      expect(call.json['p_quiet_end_minutes'], 0);
+    });
+
+    test('Android cihaz p_platform=android gonderir', () async {
+      wire.respond('register_push_device', [
+        {'device_id': 'dev-and'}
+      ]);
+      final repo = SupabasePushRegistrationRepository(
+        wire.client(),
+        targetPlatform: () => TargetPlatform.android,
+      );
+
+      await repo.registerDevice(_registration);
+
+      expect(wire.rpc('register_push_device').json['p_platform'], 'android');
+    });
+
+    test('iOS disindaki her platform android olarak eslenir', () {
+      expect(pushPlatformName(TargetPlatform.iOS), 'ios');
+      for (final platform in TargetPlatform.values) {
+        if (platform == TargetPlatform.iOS) continue;
+        expect(pushPlatformName(platform), 'android', reason: '$platform');
+      }
     });
 
     // 🔴 FCM token'i bir sir. Hata mesaji ust katmana tasinirsa log'a ve
