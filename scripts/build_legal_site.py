@@ -247,6 +247,13 @@ def build(out_dir: Path) -> list[Path]:
     index_body.append('<li><a href="legal/community-en.html">Community Guidelines</a></li>')
     index_body.append('<li><a href="legal/data-deletion-en.html">Account and Data Deletion</a></li>')
     index_body.append("</ul>")
+    # WP-912: App Store "Support URL" bu sayfadir; Apple bir iletisim yolu
+    # bekler. Sahibin verdigi destek adresi (2026-09-22).
+    index_body.append("<h2>Destek / Support</h2>")
+    index_body.append(
+        '<p>Soru ve destek için / For questions and support: '
+        '<a href="mailto:anilozkan764@gmail.com">anilozkan764@gmail.com</a></p>'
+    )
     index = out_dir / "index.html"
     index.write_text(
         _page("Yasal / Legal", "tr", "\n".join(index_body), ""), encoding="utf-8"

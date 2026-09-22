@@ -179,10 +179,9 @@ Focus Camp is now on iPhone! Focus timer, study groups, the campfire, statistics
 | Privacy Policy URL (TR) | `https://manil-max.github.io/online-study-room/legal/privacy-tr.html` |
 | Privacy Policy URL (EN) | `https://manil-max.github.io/online-study-room/legal/privacy-en.html` |
 
-> `Ürün kararı gerekiyor`: Support URL şu an yasal belgeler dizinini açıyor ve
-> üzerinde **iletişim e-postası yok**. Apple destek sayfasında bir iletişim yolu
-> bekler; inceleme bu yüzden takılabilir. Öneri: yasal siteye bir destek
-> e-postası satırı eklemek (lider, `scripts/build_legal_site.py`).
+Destek sayfasında (Support URL) sahibin verdiği iletişim adresi yazılı:
+`anilozkan764@gmail.com` (WP-912). App Store Connect'teki iletişim/inceleme
+e-postası alanlarına da aynı adres yazılabilir.
 
 ## Kategori ve içerik hakları
 
