@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -100,5 +101,14 @@ void main() {
     await startStop(c, clock);
     await startStop(c, clock);
     expect(service.requests, 1);
+  });
+
+  test("WP-909: iOS'ta baslatma bayragi yazmaz (otomatik soru iOS'ta kalir)", () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final (c, service, prefs, clock) = await setUpTimer({});
+    await startStop(c, clock);
+    expect(service.requests, 0);
+    expect(notificationAutoAskDone(prefs), isFalse);
   });
 }

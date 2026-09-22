@@ -3029,7 +3029,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // WP-872: sayaç başlatma sistem penceresini yalnız hiç sorulmamışsa açar;
     // ret eden kullanıcıya her başlatmada yeniden sorulmaz (yol İzinler
     // ekranında). Açtığı pencere de "bir kez sorulan" sayılır.
-    if (requestPermission) {
+    // WP-909: yalnız Android — iOS'ta bu servis pencere açmaz; bayrak
+    // yazılırsa iOS otomatik sorusu ("Şimdi değil"den sonraki açılış) hiç
+    // gelmezdi.
+    if (requestPermission &&
+        !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android) {
       final prefs = ref.read(sharedPreferencesProvider);
       if (!notificationAutoAskDone(prefs)) {
         await markNotificationAutoAskDone(prefs);
