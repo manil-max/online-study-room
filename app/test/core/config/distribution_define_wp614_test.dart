@@ -56,6 +56,22 @@ void main() {
       }
     });
 
+    test('WP-901: iOS derlemesi define ne olursa olsun appStore', () {
+      // iOS'ta flavor zorlaması yok; tek güvence çözümleyicinin platform
+      // kuralıdır. `CHANNEL=beta` ve bilinmeyen define'lar da dahil.
+      for (final define in ['', 'appStore', 'githubBeta', 'bogus']) {
+        final channel = DistributionConfig.resolve(
+          distributionDefine: define,
+          legacyChannel: 'beta',
+          flutterAppFlavor: null,
+          isWeb: false,
+          platform: TargetPlatform.iOS,
+        );
+        expect(channel, DistributionChannel.appStore);
+        expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+      }
+    });
+
     test('tanınmayan define Windows varsayımına düşer (kapının varlık sebebi)', () {
       // Bu davranış BELGELENİYOR, savunulmuyor: yanlış yazılmış bir define
       // (`microsoft-store`, `MicrosoftStore`, ...) hata vermez, `windows`
@@ -103,6 +119,7 @@ void main() {
       const storeChannels = {
         DistributionChannel.play,
         DistributionChannel.microsoftStore,
+        DistributionChannel.appStore,
       };
       if (!storeChannels.contains(DistributionConfig.current)) return;
       expect(

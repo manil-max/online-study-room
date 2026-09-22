@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/config/distribution_channel.dart';
 import 'package:online_study_room/features/updater/updater_dialog.dart';
 import 'package:online_study_room/features/updater/updater_service.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -21,6 +22,18 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// Bu dosya ağ katmanını sahte bir `HttpClientAdapter` ile besler; metin
 /// aramaz, gerçek durum geçişlerini sürer.
 void main() {
+  // WP-901: dosya bir kez de mağaza define'ıyla (`DISTRIBUTION_CHANNEL=
+  // appStore`/`microsoftStore`) koşturulur. O derlemede indirme yolu
+  // tasarım gereği fail-closed'dur (`_downloadAndInstall` ilk satır); ZIP
+  // akışı ölçülemez, ölçülmesi de gerekmez.
+  if (!DistributionConfig.allowsSideloadUpdates) {
+    test(
+      'mağaza derlemesinde ZIP indirme akışı yok',
+      () {},
+      skip: 'sideload updater bu derlemede kapalı',
+    );
+    return;
+  }
   late Directory tempDir;
   late AppLocalizations l10n;
 

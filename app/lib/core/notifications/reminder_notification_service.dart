@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 
 import '../l10n/system_localizations.dart';
 import 'alarm_notification_service.dart' show localNotificationsSupported;
+import 'notification_platform.dart';
 import 'notification_preferences.dart';
 import 'smart_reminder_scheduler.dart';
 
@@ -57,9 +58,8 @@ class ReminderNotificationService {
       return;
     }
     tz.initializeTimeZones();
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
-    await _plugin.initialize(settings: settings);
+    // WP-901: Android alanı aynı; iOS alanı olmadan FLN iOS'ta fırlatır.
+    await _plugin.initialize(settings: kLocalNotificationInitSettings);
     _initialized = true;
   }
 
@@ -69,6 +69,9 @@ class ReminderNotificationService {
     // gösterir (bkz. `notification_center_screen.dart` devre dışı satırlar).
     if (!isSupported) return false;
     await initialize();
+    // 🔴 WP-901: aşağıdaki Android satırı iOS'ta `null ?? true` ile "izin
+    // verildi" diyordu — iOS'ta pencere HİÇ açılmaz, bildirim hiç gelmezdi.
+    if (isIosTarget) return requestDarwinNotificationPermission(_plugin);
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin

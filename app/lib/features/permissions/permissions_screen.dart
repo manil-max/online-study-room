@@ -126,50 +126,55 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           granted: snapshot.notifications,
           onTap: () => _manageNotifications(snapshot.notifications),
         ),
-        _PermissionRow(
-          key: const Key('permission-row-exact-alarm'),
-          icon: Icons.alarm_on_outlined,
-          title: l10n.permissionsExactAlarmTitle,
-          impact: l10n.permissionsExactAlarmImpact,
-          granted: snapshot.exactAlarm,
-          onTap: () => _run(permissions.openExactAlarmSettings),
-        ),
-        _PermissionRow(
-          key: const Key('permission-row-battery'),
-          icon: Icons.battery_charging_full_outlined,
-          title: l10n.permissionsBatteryTitle,
-          impact: l10n.permissionsBatteryImpact,
-          granted: snapshot.batteryUnrestricted,
-          // Eksikken doğrudan "arka planda çalışsın mı?" sistem sorusu;
-          // verilmişken kaldırmak için sistemin listesi.
-          onTap: () => _run(
-            snapshot.batteryUnrestricted
-                ? permissions.openBatteryOptimizationManagementSettings
-                : permissions.openBatterySettings,
+        // 🔴 WP-901: iOS'ta kesin alarm, pil ve tam ekran izni diye bir şey
+        // yok; üç satır da dokununca hiçbir şey yapmayan bozuk düğme olurdu.
+        // Geri alma ipucu da "Android ayarı" dediği için iOS'ta çizilmez.
+        if (!snapshot.notificationsOnly) ...[
+          _PermissionRow(
+            key: const Key('permission-row-exact-alarm'),
+            icon: Icons.alarm_on_outlined,
+            title: l10n.permissionsExactAlarmTitle,
+            impact: l10n.permissionsExactAlarmImpact,
+            granted: snapshot.exactAlarm,
+            onTap: () => _run(permissions.openExactAlarmSettings),
           ),
-        ),
-        _PermissionRow(
-          key: const Key('permission-row-full-screen'),
-          icon: Icons.fullscreen,
-          title: l10n.permissionsFullScreenTitle,
-          impact: l10n.permissionsFullScreenImpact,
-          granted: snapshot.fullScreenIntent,
-          onTap: () => _run(permissions.openFullScreenSettings),
-        ),
-        // WP-852: Widget sekmesindeki "İzni geri almak ister misin?"
-        // rehberinin özü buraya taşındı. O rehber dört ayrı adımda aynı
-        // cümleyi ("Kapat düğmesi ilgili Android ayarını açar") tekrarlıyor ve
-        // artık var olmayan bir "Kapat" düğmesini anlatıyordu. Buradaki satır
-        // izin verilmişken de dokunulabilir ve aynı sistem ayarını açar; tek
-        // cümle bunu söylemeye yeter.
-        const SizedBox(height: 4),
-        Text(
-          key: const Key('permissions-revoke-hint'),
-          l10n.permissionsRevokeHint,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          _PermissionRow(
+            key: const Key('permission-row-battery'),
+            icon: Icons.battery_charging_full_outlined,
+            title: l10n.permissionsBatteryTitle,
+            impact: l10n.permissionsBatteryImpact,
+            granted: snapshot.batteryUnrestricted,
+            // Eksikken doğrudan "arka planda çalışsın mı?" sistem sorusu;
+            // verilmişken kaldırmak için sistemin listesi.
+            onTap: () => _run(
+              snapshot.batteryUnrestricted
+                  ? permissions.openBatteryOptimizationManagementSettings
+                  : permissions.openBatterySettings,
+            ),
           ),
-        ),
+          _PermissionRow(
+            key: const Key('permission-row-full-screen'),
+            icon: Icons.fullscreen,
+            title: l10n.permissionsFullScreenTitle,
+            impact: l10n.permissionsFullScreenImpact,
+            granted: snapshot.fullScreenIntent,
+            onTap: () => _run(permissions.openFullScreenSettings),
+          ),
+          // WP-852: Widget sekmesindeki "İzni geri almak ister misin?"
+          // rehberinin özü buraya taşındı. O rehber dört ayrı adımda aynı
+          // cümleyi ("Kapat düğmesi ilgili Android ayarını açar") tekrarlıyor ve
+          // artık var olmayan bir "Kapat" düğmesini anlatıyordu. Buradaki satır
+          // izin verilmişken de dokunulabilir ve aynı sistem ayarını açar; tek
+          // cümle bunu söylemeye yeter.
+          const SizedBox(height: 4),
+          Text(
+            key: const Key('permissions-revoke-hint'),
+            l10n.permissionsRevokeHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ];
     }
 

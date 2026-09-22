@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart' as launcher;
+
+import '../notifications/notification_platform.dart';
 
 /// Alarm/timer için cihaz izin özeti (Android).
 enum ClockPermissionAvailability { available, unsupported, unknown }
@@ -16,7 +19,14 @@ class ClockPermissionSnapshot {
     required this.exactAlarm,
     required this.batteryUnrestricted,
     required this.fullScreenIntent,
+    this.notificationsOnly = false,
   });
+
+  /// WP-901: iOS'ta yalnız bildirim izni vardır; kesin alarm, pil ve tam ekran
+  /// Android kavramlarıdır. `true` iken o üç alan "sorun yok" (`true`) taşır —
+  /// sayım ve `allOk` yalnız bildirime bakar — ve İzinler ekranı yalnız
+  /// bildirim satırını çizer.
+  final bool notificationsOnly;
 
   final ClockPermissionAvailability availability;
   final bool notifications;
@@ -69,6 +79,17 @@ class ClockPermissionSnapshot {
     );
   }
 
+  /// WP-901: iOS anlık görüntüsü — tek gerçek izin bildirimdir.
+  const ClockPermissionSnapshot.notificationsOnly({required bool notifications})
+    : this(
+        availability: ClockPermissionAvailability.available,
+        notifications: notifications,
+        exactAlarm: true,
+        batteryUnrestricted: true,
+        fullScreenIntent: true,
+        notificationsOnly: true,
+      );
+
   static const ok = ClockPermissionSnapshot(
     availability: ClockPermissionAvailability.available,
     notifications: true,
@@ -111,6 +132,14 @@ class ClockPermissions {
 
   bool get _android => !kIsWeb && Platform.isAndroid;
 
+  /// WP-901: `defaultTargetPlatform` (test enjekte edebilir). Gerçek Android
+  /// cihazda asla true değildir, yani Android dalları etkilenmez.
+  bool get _ios => !_android && isIosTarget;
+
+  /// iOS uygulama ayarları (Ayarlar → Odak Kampı). `UIApplication
+  /// .openSettingsURLString` değeridir.
+  static final Uri iosAppSettingsUri = Uri.parse('app-settings:');
+
   /// Yalnız test: platform sorgusunu atlayıp sabit bir anlık görüntü döndürür.
   ///
   /// WP-296: `snapshot()` masaüstünde `Platform.isAndroid == false` olduğu için
@@ -124,6 +153,12 @@ class ClockPermissions {
   Future<ClockPermissionSnapshot> snapshot() async {
     final override = debugSnapshotOverride;
     if (override != null) return override;
+    if (_ios) {
+      // Android kanalı iOS'ta yok; izin durumu FLN'nin Darwin eklentisinden.
+      final enabled = await darwinNotificationsEnabled(_plugin);
+      if (enabled == null) return ClockPermissionSnapshot.unknown;
+      return ClockPermissionSnapshot.notificationsOnly(notifications: enabled);
+    }
     if (!_android) return ClockPermissionSnapshot.unsupported;
     try {
       final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
@@ -136,6 +171,7 @@ class ClockPermissions {
 
   /// Bildirim izni (Android 13+).
   Future<bool> requestNotifications() async {
+    if (_ios) return requestDarwinNotificationPermission(_plugin);
     if (!_android) return false;
     try {
       final android = _plugin
@@ -174,6 +210,14 @@ class ClockPermissions {
   }
 
   Future<void> openNotificationSettings() async {
+    if (_ios) {
+      // Kullanıcı bir kez reddettiyse iOS pencereyi bir daha açmaz; tek yol
+      // uygulamanın Ayarlar sayfasıdır.
+      try {
+        await launcher.launchUrl(iosAppSettingsUri);
+      } catch (_) {}
+      return;
+    }
     if (!_android) return;
     try {
       await _channel.invokeMethod<void>('openNotificationSettings');

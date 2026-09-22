@@ -13,6 +13,7 @@ import '../l10n/system_localizations.dart';
 import '../time_engine/device_timezone.dart';
 import '../time_engine/exact_alarm_permission.dart';
 import 'native_alarm_bridge.dart';
+import 'notification_platform.dart';
 
 final alarmNotificationServiceProvider = Provider<AlarmNotificationService>((
   ref,
@@ -90,10 +91,10 @@ class AlarmNotificationService {
       return;
     }
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
+    // WP-901: iOS'ta alarm, native AlarmManager olmadığı için FLN'nin
+    // planlanmış yerel bildirimine düşer (`_useNative` yalnız Android).
     await _plugin.initialize(
-      settings: settings,
+      settings: kLocalNotificationInitSettings,
       onDidReceiveNotificationResponse: onResponse,
       onDidReceiveBackgroundNotificationResponse: alarmNotificationBg,
     );

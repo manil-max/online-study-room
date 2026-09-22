@@ -16,8 +16,10 @@ export '../../core/notifications/notification_auto_ask_flag.dart';
 /// Sistem penceresini gerekiyorsa bir kez açar; açtıysa `true` döner.
 ///
 /// Kurallar (sırası anlamlı):
-///  1. Android değilse hiçbir şey yapma, bayrak da yazma (Windows/web'de
-///     sorulacak bir izin yok).
+///  1. Android veya iOS değilse hiçbir şey yapma, bayrak da yazma
+///     (Windows/web'de sorulacak bir izin yok). WP-901: iOS aynı kurallarla
+///     bir kez sorar; iOS'ta izin kurulumla GELMEZ, pencere açılmadan hiçbir
+///     bildirim görünmez.
 ///  2. Bayrak varsa hiç sorma — kullanıcı daha önce reddettiyse bir daha
 ///     **kendiliğinden** sorulmaz; yol İzinler ekranındadır.
 ///  3. Durum okunamadıysa (kanal hatası) bayrak yazmadan çık; bir sonraki
@@ -32,8 +34,9 @@ Future<bool> maybeAutoAskNotificationPermission({
   required Future<ClockPermissionSnapshot> Function() snapshot,
   required Future<bool> Function() request,
   bool deferredThisSession = false,
+  bool isIos = false,
 }) async {
-  if (!isAndroid) return false;
+  if (!isAndroid && !isIos) return false;
   // WP-873: onboarding'de "Şimdi değil" → bu açılışta sorma, bayrak da yazma;
   // bir sonraki açılış bir kez sorar.
   if (deferredThisSession) return false;
@@ -52,6 +55,10 @@ Future<bool> maybeAutoAskNotificationPermission({
 @visibleForTesting
 bool? debugNotificationAutoAskIsAndroid;
 
+/// Yalnız test (WP-901): iOS kararını ezmek için. `null` → gerçek platform.
+@visibleForTesting
+bool? debugNotificationAutoAskIsIos;
+
 /// WP-848: ana kabuk (`HomeShell`) ilk kez kurulduğunda izlenir.
 ///
 /// Neden o an: kabuk yalnız **oturum açık ve onboarding bitmiş** kullanıcıya
@@ -65,13 +72,15 @@ final notificationAutoAskProvider = Provider<void>((ref) {
   // çalışmamalı.
   final isAndroid =
       debugNotificationAutoAskIsAndroid ?? (!kIsWeb && Platform.isAndroid);
-  if (!isAndroid) return;
+  final isIos = debugNotificationAutoAskIsIos ?? (!kIsWeb && Platform.isIOS);
+  if (!isAndroid && !isIos) return;
   final prefs = ref.read(sharedPreferencesProvider);
   unawaited(() async {
     try {
       final asked = await maybeAutoAskNotificationPermission(
         prefs: prefs,
         isAndroid: isAndroid,
+        isIos: isIos,
         deferredThisSession: notificationAutoAskDeferredThisSession,
         snapshot: ClockPermissions.instance.snapshot,
         request: ref

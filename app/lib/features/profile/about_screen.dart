@@ -278,6 +278,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
             DistributionChannel.windows => l10n.aboutDiagChannelWindows,
             DistributionChannel.microsoftStore =>
               l10n.aboutDiagChannelMicrosoftStore,
+            // WP-901: marka adı iki dilde aynıdır; `.arb` bu WP'nin SAHİP
+            // yollarında olmadığı için ayrı anahtar açılmadı.
+            DistributionChannel.appStore => _kAppStoreDiagLabel,
           };
     final backend = switch (manifest?.environment) {
       AppEnvironment.production => l10n.aboutDiagBackendLive,
@@ -295,6 +298,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
           : l10n.aboutDiagOff,
     );
   }
+
+  /// 🔴 WP-901: App Store derlemesinde "güncellemeleri denetle" satırı hiç
+  /// çizilmez. Mağaza-yönetimli metinle gri satır bile App Store incelemesinde
+  /// "uygulama kendini güncelliyor mu?" sorusunu doğurur; güncelleme iOS'ta
+  /// yalnız App Store'dan gelir. Sürüm notları satırı kalır.
+  bool get _hidesUpdateCheck =>
+      (widget.distributionChannel ?? DistributionConfig.current) ==
+      DistributionChannel.appStore;
 
   /// WP-847: geçiş gösterilen kurulumda GitHub denetimi de kapalıdır; satır
   /// "mağaza üzerinden yönetilir" der ve dokunulamaz.
@@ -423,26 +434,28 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
                           PlayMigrationTile(opener: widget.playStoreOpener),
                           const Divider(height: 1),
                         ],
-                        ListTile(
-                          key: const Key('about-check-for-updates'),
-                          leading: const Icon(Icons.system_update_outlined),
-                          title: Text(l10n.updaterCheckForUpdates),
-                          subtitle: Text(_updateStatus(l10n)),
-                          trailing: _checking
-                              ? const SizedBox.square(
-                                  dimension: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : _allowsSideloadUpdates
-                              ? const Icon(Icons.refresh)
-                              : const Icon(Icons.store_outlined),
-                          onTap: _allowsSideloadUpdates && !_checking
-                              ? _checkForUpdates
-                              : null,
-                        ),
-                        const Divider(height: 1),
+                        if (!_hidesUpdateCheck) ...[
+                          ListTile(
+                            key: const Key('about-check-for-updates'),
+                            leading: const Icon(Icons.system_update_outlined),
+                            title: Text(l10n.updaterCheckForUpdates),
+                            subtitle: Text(_updateStatus(l10n)),
+                            trailing: _checking
+                                ? const SizedBox.square(
+                                    dimension: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : _allowsSideloadUpdates
+                                ? const Icon(Icons.refresh)
+                                : const Icon(Icons.store_outlined),
+                            onTap: _allowsSideloadUpdates && !_checking
+                                ? _checkForUpdates
+                                : null,
+                          ),
+                          const Divider(height: 1),
+                        ],
                         ListTile(
                           key: const Key('about-release-notes'),
                           leading: const Icon(Icons.new_releases_outlined),
@@ -604,6 +617,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
     );
   }
 }
+
+/// WP-901: App Store kanal etiketi (marka adı; çevrilmez).
+const String _kAppStoreDiagLabel = 'App Store';
 
 class _AboutSection extends StatelessWidget {
   const _AboutSection({required this.title, required this.child});

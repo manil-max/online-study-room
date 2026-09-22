@@ -73,13 +73,22 @@ enum DistributionChannel {
   /// paketi aynı kodla çıkarsa politika ihlali olur. Bu yüzden ayrı kanal:
   /// `allowsSideloadUpdates` burada **asla** true olmaz.
   microsoftStore,
+
+  /// Apple App Store (iOS) — mağaza dışı güncelleme **yasak** (WP-901).
+  ///
+  /// iOS'ta uygulamanın kendini indirip kurması hem imkânsız hem de App Store
+  /// İnceleme Kuralları 2.5.2 ihlalidir. iOS derlemesi define'dan ve eski
+  /// `CHANNEL` değerinden bağımsız **her zaman** bu kanala çözülür; yani
+  /// unutulmuş bir `CHANNEL=beta` bile GitHub denetimini açamaz.
+  appStore,
 }
 
 /// `DISTRIBUTION_CHANNEL` dart-define + flavor + platform / eski `CHANNEL`.
 class DistributionConfig {
   const DistributionConfig._();
 
-  /// Birincil define (WP-110). Değerler: play | githubStable | githubBeta | windows
+  /// Birincil define (WP-110). Değerler: play | githubStable | githubBeta |
+  /// windows | microsoftStore | appStore
   static const String _distributionDefine = String.fromEnvironment(
     'DISTRIBUTION_CHANNEL',
     defaultValue: '',
@@ -107,8 +116,10 @@ class DistributionConfig {
   /// Öncelik:
   /// 1. WP-128: `FLUTTER_APP_FLAVOR == play` → **her zaman** play
   ///    (define unutulsa veya yanlış github* yazılsa bile sideload açılmaz)
-  /// 2. Açık `DISTRIBUTION_CHANNEL` define (bilinen değerler)
-  /// 3. Platform / legacy CHANNEL çıkarımı
+  /// 2. WP-901: iOS (web değil) → **her zaman** appStore. Define ne derse
+  ///    desin (`githubStable`, `CHANNEL=beta`…) iOS'ta sideload yolu açılmaz.
+  /// 3. Açık `DISTRIBUTION_CHANNEL` define (bilinen değerler)
+  /// 4. Platform / legacy CHANNEL çıkarımı
   static DistributionChannel resolve({
     required String distributionDefine,
     required String legacyChannel,
@@ -121,6 +132,11 @@ class DistributionConfig {
     final flavor = flutterAppFlavor?.trim().toLowerCase();
     if (flavor == 'play' || flavor == 'local') {
       return DistributionChannel.play;
+    }
+
+    // WP-901: iOS'ta GitHub updater'ın düşebileceği hiçbir dal yok.
+    if (!isWeb && platform == TargetPlatform.iOS) {
+      return DistributionChannel.appStore;
     }
 
     final raw = distributionDefine.trim();
@@ -143,6 +159,7 @@ class DistributionConfig {
       'githubBeta' => DistributionChannel.githubBeta,
       'windows' => DistributionChannel.windows,
       'microsoftStore' => DistributionChannel.microsoftStore,
+      'appStore' => DistributionChannel.appStore,
       _ => null,
     };
   }
@@ -170,6 +187,7 @@ class DistributionConfig {
       DistributionChannel.githubBeta => true,
       DistributionChannel.windows => true,
       DistributionChannel.microsoftStore => false,
+      DistributionChannel.appStore => false,
     };
   }
 
@@ -195,7 +213,9 @@ class DistributionConfig {
   }) {
     // WP-322: Store paketi her zaman stable'dır. Unutulmuş bir `CHANNEL=beta`
     // define'ı Store build'ine beta sürüm notlarını gösteremez.
-    if (distributionChannel == DistributionChannel.microsoftStore) {
+    // WP-901: App Store paketi de aynı kurala tabidir.
+    if (distributionChannel == DistributionChannel.microsoftStore ||
+        distributionChannel == DistributionChannel.appStore) {
       return 'stable';
     }
     if (legacyChannel.trim().toLowerCase() == 'beta') return 'beta';

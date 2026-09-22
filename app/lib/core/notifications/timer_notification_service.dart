@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../time_engine/clock_permissions.dart';
+import 'notification_platform.dart';
 
 final timerNotificationServiceProvider = Provider<TimerNotificationGateway>(
   (ref) => TimerNotificationService.instance,
@@ -192,10 +193,8 @@ class TimerNotificationService
   Future<void> initialize() async {
     if (_initialized) return;
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
     await _plugin.initialize(
-      settings: settings,
+      settings: kLocalNotificationInitSettings,
       onDidReceiveNotificationResponse: dispatchResponse,
       onDidReceiveBackgroundNotificationResponse:
           timerNotificationBackgroundHandler,

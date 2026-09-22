@@ -8,10 +8,18 @@ import 'package:online_study_room/features/updater/updater_service.dart';
 /// Not: [DistributionConfig.current] derleme-zamanı define + FLUTTER_APP_FLAVOR okur.
 /// Bu dosya varsayılan (define yok, flavor yok) = githubStable/windows varsayar.
 /// Flavor zorlaması [DistributionConfig.resolve] ile birim test edilir.
+/// WP-901: dosya bir kez de `--dart-define=DISTRIBUTION_CHANNEL=appStore` ile
+/// koşturulur; o koşumda varsayılan iddiası define'ın kendisine bakar.
+const _define = String.fromEnvironment('DISTRIBUTION_CHANNEL');
+
 void main() {
   group('DistributionConfig (default / no define)', () {
     test('varsayilan githubStable veya platform (windows)', () {
       final c = DistributionConfig.current;
+      if (_define.isNotEmpty) {
+        expect(c.name, _define);
+        return;
+      }
       expect(
         c == DistributionChannel.githubStable ||
             c == DistributionChannel.windows ||
@@ -21,7 +29,9 @@ void main() {
     });
 
     test('allowsSideloadUpdates default true (play degilse)', () {
-      if (DistributionConfig.current == DistributionChannel.play) {
+      if (DistributionConfig.current == DistributionChannel.play ||
+          DistributionConfig.current == DistributionChannel.microsoftStore ||
+          DistributionConfig.current == DistributionChannel.appStore) {
         expect(DistributionConfig.allowsSideloadUpdates, isFalse);
       } else {
         expect(DistributionConfig.allowsSideloadUpdates, isTrue);
@@ -138,25 +148,29 @@ void main() {
       );
     });
 
-    test('🔴 define unutulursa Windows KAPALI kanala düşmez — Faz H kapısı', () {
-      // Android'deki `--flavor play` zorlamasının Windows karşılığı yoktur.
-      // Bu test o boşluğu belgeler: define yoksa updater AÇIK kalır, yani
-      // Store build'i CI'da define'ı set etmek zorundadır.
-      final channel = DistributionConfig.resolve(
-        distributionDefine: '',
-        legacyChannel: 'stable',
-        flutterAppFlavor: null,
-        isWeb: false,
-        platform: TargetPlatform.windows,
-      );
-      expect(channel, DistributionChannel.windows);
-      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isTrue);
-    });
+    test(
+      '🔴 define unutulursa Windows KAPALI kanala düşmez — Faz H kapısı',
+      () {
+        // Android'deki `--flavor play` zorlamasının Windows karşılığı yoktur.
+        // Bu test o boşluğu belgeler: define yoksa updater AÇIK kalır, yani
+        // Store build'i CI'da define'ı set etmek zorundadır.
+        final channel = DistributionConfig.resolve(
+          distributionDefine: '',
+          legacyChannel: 'stable',
+          flutterAppFlavor: null,
+          isWeb: false,
+          platform: TargetPlatform.windows,
+        );
+        expect(channel, DistributionChannel.windows);
+        expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isTrue);
+      },
+    );
 
     test('mağaza kanallarının hiçbirinde sideload açılmaz', () {
       const storeChannels = <DistributionChannel>[
         DistributionChannel.play,
         DistributionChannel.microsoftStore,
+        DistributionChannel.appStore,
       ];
       for (final channel in storeChannels) {
         expect(
@@ -165,6 +179,108 @@ void main() {
           reason: '$channel mağaza kanalı — mağaza dışı güncelleme yasak',
         );
       }
+    });
+  });
+
+  group('WP-901 App Store kanalı (iOS)', () {
+    test('iOS define yok → appStore, githubStable DEĞİL', () {
+      final channel = DistributionConfig.resolve(
+        distributionDefine: '',
+        legacyChannel: 'stable',
+        platform: TargetPlatform.iOS,
+      );
+      expect(channel, DistributionChannel.appStore);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+    });
+
+    test('iOS + CHANNEL=beta → yine appStore, updater kapalı', () {
+      final channel = DistributionConfig.resolve(
+        distributionDefine: '',
+        legacyChannel: 'beta',
+        platform: TargetPlatform.iOS,
+      );
+      expect(channel, DistributionChannel.appStore);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+      expect(
+        DistributionConfig.resolveReleaseNotesChannel(
+          legacyChannel: 'beta',
+          distributionChannel: channel,
+        ),
+        'stable',
+      );
+    });
+
+    test('iOS + yanlış/bilinmeyen define → appStore', () {
+      for (final define in [
+        'githubStable',
+        'githubBeta',
+        'windows',
+        'app-store',
+        'play',
+      ]) {
+        expect(
+          DistributionConfig.resolve(
+            distributionDefine: define,
+            legacyChannel: 'beta',
+            platform: TargetPlatform.iOS,
+          ),
+          DistributionChannel.appStore,
+          reason: "iOS derlemesi `$define` define'ıyla sideload kanalına düştü",
+        );
+      }
+    });
+
+    test('define=appStore başka platformda da updater kapatır', () {
+      final channel = DistributionConfig.resolve(
+        distributionDefine: 'appStore',
+        legacyChannel: 'stable',
+        platform: TargetPlatform.android,
+      );
+      expect(channel, DistributionChannel.appStore);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+      expect(
+        UpdaterService.offersSideloadPackage(channel: channel, isBeta: true),
+        isFalse,
+      );
+    });
+
+    test('web iOS kanalına düşmez (web kuralı korunur)', () {
+      expect(
+        DistributionConfig.resolve(
+          distributionDefine: '',
+          legacyChannel: 'stable',
+          isWeb: true,
+          platform: TargetPlatform.iOS,
+        ),
+        DistributionChannel.play,
+      );
+    });
+
+    test('Android/Windows varsayımları değişmedi', () {
+      expect(
+        DistributionConfig.resolve(
+          distributionDefine: '',
+          legacyChannel: 'stable',
+          platform: TargetPlatform.android,
+        ),
+        DistributionChannel.githubStable,
+      );
+      expect(
+        DistributionConfig.resolve(
+          distributionDefine: '',
+          legacyChannel: 'beta',
+          platform: TargetPlatform.android,
+        ),
+        DistributionChannel.githubBeta,
+      );
+      expect(
+        DistributionConfig.resolve(
+          distributionDefine: '',
+          legacyChannel: 'stable',
+          platform: TargetPlatform.windows,
+        ),
+        DistributionChannel.windows,
+      );
     });
   });
 

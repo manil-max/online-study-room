@@ -12,6 +12,7 @@ import '../../data/models/nudge.dart';
 import '../config/firebase_push_config.dart';
 import '../l10n/system_localizations.dart';
 import 'flutter_test_host.dart';
+import 'notification_platform.dart';
 import 'timer_sync_signal.dart';
 
 /// `initialize()`'ın kuracağı kanal türleri. `_channelFor` bu türleri kanal
@@ -111,11 +112,8 @@ class _FlutterAppLocalNotificationsAdapter
       >();
 
   @override
-  Future<void> initialize() => _plugin.initialize(
-    settings: const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    ),
-  );
+  Future<void> initialize() =>
+      _plugin.initialize(settings: kLocalNotificationInitSettings);
 
   @override
   Future<void> createChannels(List<AndroidNotificationChannel> channels) async {
@@ -126,12 +124,18 @@ class _FlutterAppLocalNotificationsAdapter
   }
 
   @override
-  Future<bool> notificationsEnabled() async =>
-      await _android?.areNotificationsEnabled() ?? false;
+  Future<bool> notificationsEnabled() async {
+    // WP-901: iOS'ta Android eklentisi yok; `?? false` iOS'u kalıcı olarak
+    // "bildirim kapalı" gösterirdi.
+    if (isIosTarget) return await darwinNotificationsEnabled(_plugin) ?? false;
+    return await _android?.areNotificationsEnabled() ?? false;
+  }
 
   @override
-  Future<bool> requestPermission() async =>
-      await _android?.requestNotificationsPermission() ?? true;
+  Future<bool> requestPermission() async {
+    if (isIosTarget) return requestDarwinNotificationPermission(_plugin);
+    return await _android?.requestNotificationsPermission() ?? true;
+  }
 
   @override
   Future<void> show({
@@ -179,6 +183,12 @@ class _NoopAppLocalNotificationsAdapter
 
 /// Sosyal/remote bildirimlerin tek local presentation koordinatörü.
 /// Alarm full-screen ve native timer FGS bilinçli olarak ayrı kalır.
+///
+/// WP-901: iOS'ta da çalışır. Dispatcher yalnız `data` mesajı gönderir (bkz.
+/// `dispatch-push` — `notification` bloğu bilerek yok); iOS'ta bu mesaj
+/// uygulama ÖNDEYKEN `onMessage`a düşer ve burada yerel bildirim olarak
+/// gösterilir. Android kanal kurulumu iOS'ta no-op'tur (Android eklentisi
+/// çözülmez).
 class AppNotificationCoordinator {
   AppNotificationCoordinator._(this._adapter) : _isAndroidOverride = null;
 
@@ -390,9 +400,13 @@ class AppNotificationCoordinator {
     );
   }
 
+  /// Tarihsel ad: artık "yerel sunum destekli platform" demektir (Android +
+  /// WP-901 iOS). Test tohumu `isAndroid` adını korur.
   bool get _isAndroid =>
       _isAndroidOverride ??
-      (!kIsWeb && defaultTargetPlatform == TargetPlatform.android);
+      (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS));
 }
 
 /// Firebase/FCM platform köprüsü. Config yoksa hiçbir plugin çağrısı yapmaz.
@@ -412,8 +426,13 @@ class AppPushNotificationService {
   bool _initialized = false;
   String? _errorCode;
 
+  /// WP-901: iOS da desteklenir; iOS değerleri eksikse
+  /// [FirebasePushConfig.isConfigured] false döner ve push Android'deki gibi
+  /// fail-closed kapanır.
   bool get isSupported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
   bool get isInitialized => _initialized;
 
   Stream<String> get tokenRefresh =>
@@ -427,7 +446,7 @@ class AppPushNotificationService {
     try {
       if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp(
-          options: FirebasePushConfig.androidOptions,
+          options: FirebasePushConfig.currentPlatformOptions,
         );
       }
       FirebaseMessaging.onBackgroundMessage(firebasePushBackgroundHandler);
@@ -563,7 +582,9 @@ class AppPushNotificationService {
 Future<void> firebasePushBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Firebase.apps.isEmpty && FirebasePushConfig.isConfigured) {
-    await Firebase.initializeApp(options: FirebasePushConfig.androidOptions);
+    await Firebase.initializeApp(
+      options: FirebasePushConfig.currentPlatformOptions,
+    );
   }
   await AppNotificationCoordinator.instance.showRemote(message);
 }
