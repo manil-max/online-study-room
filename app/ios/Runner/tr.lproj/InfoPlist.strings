@@ -1,0 +1,4 @@
+/* WP-900: yerellestirilmis uygulama adi ve izin metinleri (Turkce). */
+"CFBundleDisplayName" = "Odak Kampı";
+"CFBundleName" = "Odak Kampı";
+"NSPhotoLibraryUsageDescription" = "Odak Kampı fotoğraf arşivine yalnızca sen bir görsel seçtiğinde erişir: profil fotoğrafı, grup fotoğrafı ya da geri bildirime veya şikâyete eklenen ekran görüntüsü gibi.";

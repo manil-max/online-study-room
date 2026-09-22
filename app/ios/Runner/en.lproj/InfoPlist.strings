@@ -1,0 +1,4 @@
+/* WP-900: localized app name and permission texts (English). */
+"CFBundleDisplayName" = "Focus Camp";
+"CFBundleName" = "Focus Camp";
+"NSPhotoLibraryUsageDescription" = "Focus Camp uses your photo library only when you choose an image, such as a profile picture, a group photo, or a screenshot attached to feedback or a report.";
