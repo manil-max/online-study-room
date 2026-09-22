@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0144",
   "staging": {
-    "migration_head": "0143",
-    "deploy_enabled": false,
+    "migration_head": "0144",
+    "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "RE-LOCKED 2026-09-18 after the 0143 staging apply SUCCEEDED: run 35299629071, post-check printed 0143|0143|0143. First dry-run 35299032541 caught pgTAP 069's anon-grant assertion (Supabase default privileges), fixed in 7fdb9d6d; dry-run 35299387516 then replayed 73 files / 1069 assertions green."
+    "hold_reason": "OPEN 2026-09-22 for 0144 (push_ios_platform, WP-906): push_devices.platform accepts 'ios', register_push_device gains p_platform default 'android' (old 13-arg callers stay android), claim_push_deliveries returns platform. Owner order: 'her seyi hazirla' (iOS App Store prep). pgTAP 070 NOT run locally (no Docker); first replay is the CI validate job of the staging dry-run. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0143",
