@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0145",
   "staging": {
-    "migration_head": "0144",
-    "deploy_enabled": false,
+    "migration_head": "0145",
+    "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "RE-LOCKED 2026-09-22 after the 0144 staging apply SUCCEEDED: run 35770464584, post-check printed 0144|0144|0144, push health configured / 0 queued / 0 stuck. Dry-run 35770109022 was green first, listed only 0144_push_ios_platform.sql and replayed pgTAP (070 included) in CI."
+    "hold_reason": "OPEN 2026-09-24 for 0145 (default_daily_goal_two_hours, WP-922): profiles.daily_goal_minutes default 360 -> 120 for NEW rows only; existing rows untouched. Owner order: genel gelistirme + beta. pgTAP 071 NOT run locally (no Docker); first replay is the CI validate job of the staging dry-run. re-lock: deploy_enabled goes back to false the moment the staging post-check is read."
   },
   "production": {
     "migration_head": "0144",

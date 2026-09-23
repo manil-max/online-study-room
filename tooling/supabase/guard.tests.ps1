@@ -137,12 +137,12 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # 🔴 pgTAP YERELDE KOSMADI: Docker motoru bu hostta kalkmiyor. tests/055 ve
 # 056 yazildi ama kosturulmadi; bu OLCEMEDIM'dir, yesil degildir. Ilk gercek
 # replay CI database-gates icindedir.
-Assert-Equal $contract.staging.migration_head '0144' 'staging hedefi 0144: iOS push platformu (WP-906)'
+Assert-Equal $contract.staging.migration_head '0145' 'staging hedefi 0145: yeni hesap gunluk hedefi 2 saat (WP-922)'
 # 2026-08-19: sahip yayin emrini verdi ("gonder sen"); staging apply kapisi
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0144 staging apply KOSTU (run 35770464584, post-check 0144|0144|0144) ve kapi yeniden kilitlendi'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0145 staging apply icin kapi ACIK (sahip emri: genel gelistirme + beta); pgTAP 071 ilk kez CI dry-run icinde kosar'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'WP-844: GitHub kanali beta oldu (sahip karari 2026-09-18); beta staging uzerinden yayinlanir'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
