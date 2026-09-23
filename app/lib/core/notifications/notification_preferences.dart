@@ -21,10 +21,12 @@ class NotificationPreferences {
   final bool updatesEnabled;
   final bool quietHoursEnabled;
 
-  /// WP-153: seri koruma (varsayılan kapalı).
+  /// WP-153: seri koruma (varsayılan kapalı). WP-923: kullanıcı bildirim
+  /// iznini verince, anahtara hiç dokunmamışsa açılır
+  /// ([NotificationPreferencesNotifier.enableSmartRemindersAfterPermissionGrant]).
   final bool smartStreakReminderEnabled;
 
-  /// WP-153: haftalık özet (varsayılan kapalı).
+  /// WP-153: haftalık özet (varsayılan kapalı). WP-923: seri koruma ile aynı.
   final bool smartWeeklySummaryEnabled;
 
   /// Gün içi dakika cinsinden (0–1439) sessiz saat başlangıcı ve bitişi.
@@ -122,6 +124,29 @@ class NotificationPreferencesNotifier
   Future<void> setSmartWeeklySummaryEnabled(bool value) => _setBool(
       kSmartWeekly, value,
       () => state = state.copyWith(smartWeeklySummaryEnabled: value));
+
+  /// WP-923: onboarding "İstersen günlük hatırlatma al" diyordu ama izin
+  /// verildiğinde hiçbir hatırlatma açılmıyordu — seri koruma ve haftalık özet
+  /// opt-in olarak kapalı kalıyordu. Kullanıcı sistem bildirim iznini
+  /// **verdiği** anda çağrılır ve ikisini açar.
+  ///
+  /// 🔴 Yalnız anahtar hiç yazılmamışsa: Bildirim Merkezi'nde bilerek
+  /// kapatılmış bir tercih (anahtar `false` olarak kayıtlı) ezilmez. Açılan
+  /// değer de yazıldığı için ikinci bir izin olayı artık hiçbir şeyi değiştirmez.
+  /// İzin reddedilirse çağrılmaz; varsayılanlar kapalı kalır.
+  Future<void> enableSmartRemindersAfterPermissionGrant() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    var next = state;
+    if (!prefs.containsKey(kSmartStreak)) {
+      await prefs.setBool(kSmartStreak, true);
+      next = next.copyWith(smartStreakReminderEnabled: true);
+    }
+    if (!prefs.containsKey(kSmartWeekly)) {
+      await prefs.setBool(kSmartWeekly, true);
+      next = next.copyWith(smartWeeklySummaryEnabled: true);
+    }
+    state = next;
+  }
 
   Future<void> setQuietHours({required int startMinutes, required int endMinutes}) async {
     final prefs = ref.read(sharedPreferencesProvider);

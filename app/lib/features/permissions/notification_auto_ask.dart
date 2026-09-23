@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/notifications/notification_auto_ask_flag.dart';
+import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/reminder_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/time_engine/clock_permissions.dart';
@@ -28,6 +29,9 @@ export '../../core/notifications/notification_auto_ask_flag.dart';
 ///     bile bir sonraki açılışta ikinci kez sorulmaz.
 ///  5. İzin zaten verilmişse (Android 12 ve altı dahil — orada izin kurulumla
 ///     gelir, `getPermissionSnapshot` `true` döner) pencere açılmaz.
+///  6. WP-923: pencere açıldı ve kullanıcı izni **verdiyse** [onGranted]
+///     çağrılır (seri koruma + haftalık özet açılır). Zaten verilmiş izinde
+///     kullanıcı bir karar vermediği için çağrılmaz.
 Future<bool> maybeAutoAskNotificationPermission({
   required SharedPreferences prefs,
   required bool isAndroid,
@@ -35,6 +39,7 @@ Future<bool> maybeAutoAskNotificationPermission({
   required Future<bool> Function() request,
   bool deferredThisSession = false,
   bool isIos = false,
+  Future<void> Function()? onGranted,
 }) async {
   if (!isAndroid && !isIos) return false;
   // WP-873: onboarding'de "Şimdi değil" → bu açılışta sorma, bayrak da yazma;
@@ -47,7 +52,8 @@ Future<bool> maybeAutoAskNotificationPermission({
   }
   await markNotificationAutoAskDone(prefs);
   if (current.notifications) return false;
-  await request();
+  final granted = await request();
+  if (granted && onGranted != null) await onGranted();
   return true;
 }
 
@@ -86,6 +92,15 @@ final notificationAutoAskProvider = Provider<void>((ref) {
         request: ref
             .read(reminderNotificationServiceProvider)
             .requestPermissionIfNeeded,
+        // WP-923: tercih yazımı düşse bile push uzlaşması aşağıda sürer.
+        onGranted: () async {
+          if (!ref.mounted) return;
+          try {
+            await ref
+                .read(notificationPreferencesProvider.notifier)
+                .enableSmartRemindersAfterPermissionGrant();
+          } catch (_) {}
+        },
       );
       // İzin yeni verildiyse push cihaz kaydı beklemeden uzlaşsın (Bildirim
       // Merkezi'ndeki düğmenin yaptığının aynısı).

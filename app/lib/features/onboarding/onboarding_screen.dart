@@ -5,6 +5,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/l10n/app_locale.dart';
+import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/reminder_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../auth/entry_desktop_layout.dart';
@@ -78,7 +79,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // WP-848: pencere burada açıldıysa kabuk onu bir daha kendiliğinden
       // açmaz — "İzin verme" diyen kullanıcıya aynı soru ikinci kez gelmesin.
       await markNotificationAutoAskDone(ref.read(sharedPreferencesProvider));
-      await ReminderNotificationService.instance.requestPermissionIfNeeded();
+      final granted = await ref
+          .read(reminderNotificationServiceProvider)
+          .requestPermissionIfNeeded();
+      // WP-923: bu sayfa "İstersen günlük hatırlatma al" diyor; izin
+      // verildiyse seri koruma + haftalık özet açılır (bilerek kapatılmış
+      // tercih ezilmez). Red → hiçbir tercih değişmez.
+      if (granted) {
+        await ref
+            .read(notificationPreferencesProvider.notifier)
+            .enableSmartRemindersAfterPermissionGrant();
+      }
       if (mounted) _next();
     } catch (_) {
       // İzin reddi / hata → yine de devam (plan: red OK).
