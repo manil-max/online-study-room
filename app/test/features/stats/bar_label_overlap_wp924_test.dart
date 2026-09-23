@@ -8,6 +8,7 @@ import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
 import 'package:online_study_room/features/stats/widgets/daily_bar_chart.dart';
+import 'package:online_study_room/features/stats/widgets/daily_line_chart.dart';
 import 'package:online_study_room/features/stats/widgets/leaderboard_rank_chart.dart';
 import 'package:online_study_room/features/stats/widgets/personal_period_cards.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -319,4 +320,23 @@ void main() {
       'sıralama geçmişi',
     );
   });
+
+  for (final n in [3, 4, 7]) {
+    testWidgets('DailyLineChart $n gün (grup eğilimi): gün numarası bir kez '
+        '("21 21 22 22" değil)', (tester) async {
+      final days = [
+        for (var i = 0; i < n; i++)
+          DayTotal(DateTime(2026, 9, 21 + i), 3600 * (i + 1)),
+      ];
+      await _pump(tester, DailyLineChart(days: days));
+      final labels = {for (final d in days) '${d.day.day}'};
+      final texts = _axisTexts(tester, labels);
+      expect(texts, hasLength(n), reason: '${texts.map((t) => t.$1)}');
+      _expectAxisClean(
+        texts,
+        tester.getRect(find.byType(DailyLineChart)).inflate(8),
+        '$n gün çizgi',
+      );
+    });
+  }
 }

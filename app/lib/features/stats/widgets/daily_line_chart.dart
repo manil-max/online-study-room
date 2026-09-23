@@ -98,17 +98,24 @@ class DailyLineChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 22,
+                  // WP-924 ek: aralık verilmezse fl_chart kısa seride kesirli
+                  // adım seçiyor, `toInt()` aynı günü iki kez yazıyordu
+                  // (grup eğilimi 4 gün: "21 21 22 22 23 23 24").
+                  interval: 1,
                   getTitlesWidget: (value, meta) {
+                    if (value != value.roundToDouble()) {
+                      return const SizedBox.shrink();
+                    }
                     final i = value.toInt();
-                    if (i < 0 || i >= days.length) {
-                      return const SizedBox.shrink();
-                    }
                     // WP-237: yer varken her gün; dar seride çakışmayacak adım.
-                    if (i % labelStep != 0 && i != days.length - 1) {
+                    if (!axisLabelVisible(i, days.length, labelStep)) {
                       return const SizedBox.shrink();
                     }
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 4,
+                      // Son gün sağ kenardan taşmasın.
+                      fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                       child: Text(
                         '${days[i].day.day}',
                         style: theme.textTheme.bodySmall?.copyWith(
