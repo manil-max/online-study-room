@@ -10,6 +10,7 @@ import '../../core/desktop/desktop_layout.dart';
 import '../desktop/desktop_surface.dart';
 // WP-679: ortak masaustu olculeri (`ProfileDesktopBody`) Ayarlar'da durur.
 import 'settings_screen.dart';
+import 'appearance_preset_preview.dart';
 import 'theme_builder/theme_builder_screen.dart';
 
 /// Görünüm: kendi temaların (3 yuva) + hazır temalar + açık/koyu/sistem.
@@ -31,6 +32,13 @@ final List<ThemePreset> kAppearancePresetOrder = [
     if (p.id == kFirstRunFamilyId) p,
   for (final p in kThemePresets)
     if (p.id != kFirstRunFamilyId) p,
+];
+
+/// WP-921: bir bölümün temaları — [kAppearancePresetOrder] sırasıyla, yalnız
+/// verilen parlaklıktakiler. İki bölüm birlikte her temayı tam bir kez içerir.
+List<ThemePreset> appearancePresetsFor(Brightness brightness) => [
+  for (final p in kAppearancePresetOrder)
+    if (p.brightness == brightness) p,
 ];
 
 class AppearanceScreen extends ConsumerWidget {
@@ -210,39 +218,62 @@ class AppearanceScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    // WP-921: mod ile hazır tema ilişkisi görünmüyordu — tema
+                    // seçmek modu sessizce Koyu/Açık'a çeviriyordu
+                    // (`ThemeSettingsNotifier.setFamily`), karşı modda ise
+                    // tema `AppTheme.fromFamily` ile uyarlanıyordu. Tek satır
+                    // bu davranışı söyler; davranışın kendisi değişmez.
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.profileTemaModuAciklama,
+                      key: const ValueKey('appearance-mode-help'),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     Text(
                       l10n.profileHazirTemalar,
                       style: theme.textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: cols,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: desktop ? 2.15 : 1.75,
+                    // WP-921: açık ve koyu temalar ayrı bölümlerde; her
+                    // bölümde `kAppearancePresetOrder` sırası korunur (WP-855
+                    // karşılama teması açık bölümün başında kalır).
+                    for (final section in [
+                      (
+                        Brightness.light,
+                        l10n.profileAcikTemalar,
+                        Icons.light_mode_outlined,
                       ),
-                      itemCount: kAppearancePresetOrder.length,
-                      itemBuilder: (context, i) {
-                        final preset = kAppearancePresetOrder[i];
-                        return _PresetCard(
-                          preset: preset,
-                          selected:
-                              settings.activeCustomThemeId == null &&
-                              !settings.usePaletteColors &&
-                              preset.id == settings.familyId,
-                          onTap: () async {
-                            // Özel tema aktifken hazır tema seçimi ölü kalır —
-                            // `main.dart` sırası: özel tema > palet > aile.
-                            await notifier.setActiveCustomTheme(null);
-                            notifier.setFamily(preset.id);
-                          },
-                        );
-                      },
-                    ),
+                      (
+                        Brightness.dark,
+                        l10n.profileKoyuTemalar,
+                        Icons.dark_mode_outlined,
+                      ),
+                    ]) ...[
+                      const SizedBox(height: 12),
+                      _SectionLabel(
+                        key: ValueKey('appearance-section-${section.$1.name}'),
+                        icon: section.$3,
+                        label: section.$2,
+                      ),
+                      const SizedBox(height: 8),
+                      _PresetGrid(
+                        key: ValueKey('appearance-grid-${section.$1.name}'),
+                        presets: appearancePresetsFor(section.$1),
+                        columns: cols,
+                        isSelected: (preset) =>
+                            settings.activeCustomThemeId == null &&
+                            !settings.usePaletteColors &&
+                            preset.id == settings.familyId,
+                        onSelect: (preset) async {
+                          // Özel tema aktifken hazır tema seçimi ölü kalır —
+                          // `main.dart` sırası: özel tema > palet > aile.
+                          await notifier.setActiveCustomTheme(null);
+                          notifier.setFamily(preset.id);
+                        },
+                      ),
+                    ],
                     // WP-302: "Hazır Paletler" bölümü kaldırıldı. Palet yalnız
                     // iki rengi (primary/accent) değiştiren eski modeldi;
                     // hazır temalar ise tipografi, biçim, atmosfer ve hisle
@@ -348,8 +379,85 @@ class _ThemeSwatch extends StatelessWidget {
   }
 }
 
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({super.key, required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(color: color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PresetGrid extends StatelessWidget {
+  const _PresetGrid({
+    super.key,
+    required this.presets,
+    required this.columns,
+    required this.isSelected,
+    required this.onSelect,
+  });
+
+  final List<ThemePreset> presets;
+  final int columns;
+  final bool Function(ThemePreset preset) isSelected;
+  final void Function(ThemePreset preset) onSelect;
+
+  /// Minyatürün sabit yüksekliği; yazı ölçeğinden bağımsızdır (resimdir).
+  static const double previewHeight = 84;
+
+  @override
+  Widget build(BuildContext context) {
+    // Kart yüksekliği = minyatür + ölçeklenmiş tek satır ad. En-boy oranı
+    // yerine sabit uzunluk: dar telefonda kart ezilmez, geniş masaüstü
+    // bandında boşuna uzamaz; 1.5 yazı ölçeğinde ad satırı taşmaz.
+    final nameStyle = Theme.of(context).textTheme.bodyMedium;
+    final nameLine =
+        MediaQuery.textScalerOf(context).scale(nameStyle?.fontSize ?? 14) *
+        (nameStyle?.height ?? 1.43);
+    final extent = 8 + previewHeight + 6 + nameLine + 8 + 4 + 2;
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: extent,
+      ),
+      itemCount: presets.length,
+      itemBuilder: (context, i) {
+        final preset = presets[i];
+        return _PresetCard(
+          key: ValueKey('appearance-preset-${preset.id}'),
+          preset: preset,
+          selected: isSelected(preset),
+          onTap: () => onSelect(preset),
+        );
+      },
+    );
+  }
+}
+
 class _PresetCard extends StatelessWidget {
   const _PresetCard({
+    super.key,
     required this.preset,
     required this.selected,
     required this.onTap,
@@ -362,116 +470,61 @@ class _PresetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? preset.colors.primary.withValues(alpha: 0.1)
-              : theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected
-                ? preset.colors.primary
-                : theme.colorScheme.outlineVariant,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _PresetPalettePreview(preset: preset),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    preset.localizedName(AppLocalizations.of(context)),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: selected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (selected) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.check_circle,
-                    color: theme.colorScheme.primary,
-                    size: 18,
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Hazır tema kapağı, çalışma anındaki semantik renkleri küçük ölçekte gösterir.
-///
-/// Büyük alanlar uygulamanın gerçek scaffold ve yüzey hiyerarşisidir; primary ve
-/// accent yalnız kontrol/vurgu olarak kalır. Böylece kapak tema kimliğini iki
-/// küçük renk noktasına indirgemez.
-class _PresetPalettePreview extends StatelessWidget {
-  const _PresetPalettePreview({required this.preset});
-
-  final ThemePreset preset;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = preset.colors;
+    final name = preset.localizedName(AppLocalizations.of(context));
     return Semantics(
+      button: true,
+      selected: selected,
+      label: name,
       excludeSemantics: true,
-      child: SizedBox(
-        key: ValueKey('theme-preset-preview-${preset.id}'),
-        height: 38,
-        width: double.infinity,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Stack(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? preset.colors.primary.withValues(alpha: 0.1)
+                : theme.colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected
+                  ? preset.colors.primary
+                  : theme.colorScheme.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Positioned.fill(
-                child: ColoredBox(
-                  key: ValueKey('theme-preset-scaffold-${preset.id}'),
-                  color: colors.scaffold,
-                ),
+              SizedBox(
+                height: _PresetGrid.previewHeight,
+                child: AppearancePresetPreview(preset: preset),
               ),
-              Positioned.fill(
-                left: 4,
-                top: 4,
-                right: 4,
-                bottom: 4,
-                child: ColoredBox(
-                  key: ValueKey('theme-preset-surface-${preset.id}'),
-                  color: colors.surface1,
-                ),
-              ),
-              Positioned(
-                right: 7,
-                bottom: 7,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _PreviewAccent(
-                      key: ValueKey('theme-preset-primary-${preset.id}'),
-                      color: colors.primary,
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: selected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 3),
-                    _PreviewAccent(
-                      key: ValueKey('theme-preset-accent-${preset.id}'),
-                      color: colors.accent,
+                  ),
+                  if (selected) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.check_circle,
+                      key: const ValueKey('appearance-preset-selected'),
+                      color: theme.colorScheme.primary,
+                      size: 18,
                     ),
                   ],
-                ),
+                ],
               ),
             ],
           ),
@@ -479,14 +532,4 @@ class _PresetPalettePreview extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PreviewAccent extends StatelessWidget {
-  const _PreviewAccent({super.key, required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) =>
-      SizedBox(width: 12, height: 6, child: ColoredBox(color: color));
 }

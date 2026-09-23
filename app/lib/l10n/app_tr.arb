@@ -1377,6 +1377,18 @@
   "@profileHazirTemalar": {
     "description": "Appearance: section title for built-in themes."
   },
+  "profileAcikTemalar": "Açık temalar",
+  "@profileAcikTemalar": {
+    "description": "Appearance (WP-921): heading above the light built-in themes."
+  },
+  "profileKoyuTemalar": "Koyu temalar",
+  "@profileKoyuTemalar": {
+    "description": "Appearance (WP-921): heading above the dark built-in themes."
+  },
+  "profileTemaModuAciklama": "Tema seçince mod, temanın kendi açık ya da koyu hâline geçer. Modu sonra değiştirirsen tema o moda uyarlanır; Sistem telefonun ayarını izler.",
+  "@profileTemaModuAciklama": {
+    "description": "Appearance (WP-921): helper line under the Dark/Light/System selector explaining how it relates to the built-in themes."
+  },
   "profileTemaSlotlariDolu": "Üç tema yuvasının hepsi dolu. Yer açmak için birini sil veya düzenle.",
   "@profileTemaSlotlariDolu": {
     "description": "Appearance: all three custom theme slots are in use."

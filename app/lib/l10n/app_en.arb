@@ -5575,6 +5575,18 @@
   "@profileHazirTemalar": {
     "description": "Appearance: section title for built-in themes."
   },
+  "profileAcikTemalar": "Light themes",
+  "@profileAcikTemalar": {
+    "description": "Appearance (WP-921): heading above the light built-in themes."
+  },
+  "profileKoyuTemalar": "Dark themes",
+  "@profileKoyuTemalar": {
+    "description": "Appearance (WP-921): heading above the dark built-in themes."
+  },
+  "profileTemaModuAciklama": "Picking a theme switches the mode to that theme's own light or dark look. Change the mode later and the theme adapts to it; System follows your phone's setting.",
+  "@profileTemaModuAciklama": {
+    "description": "Appearance (WP-921): helper line under the Dark/Light/System selector explaining how it relates to the built-in themes."
+  },
   "profileTemaSlotlariDolu": "All three theme slots are full. Delete or edit one to make room.",
   "@profileTemaSlotlariDolu": {
     "description": "Appearance: all three custom theme slots are in use."

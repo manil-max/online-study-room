@@ -79,6 +79,12 @@ Future<void> _loadFonts() async {
     await _loadFont('MaterialIcons', '$root/$dir/materialicons-regular.otf');
   }
   await _loadFont('Inter', 'assets/fonts/Inter-Variable.ttf');
+  // WP-921: tema kartlarının minyatürü hazır temanın kendi yazı ailesini
+  // (`AppTypography.standard`: 'serif' / 'monospace') kullanır. Cihazda bunlar
+  // sistem fontuna çözülür; test motorunda karşılığı yok ve boş kutu çiziliyor.
+  // Uygulamanın paketlediği serif ve eş aralıklı font bu adlarla yüklenir.
+  await _loadFont('serif', 'assets/fonts/Literata-Variable.ttf');
+  await _loadFont('monospace', 'assets/fonts/JetBrainsMono-Variable.ttf');
   // WP-853: kamp ateşi rozetindeki ve kamp hayvanı satırındaki emoji'ler test
   // fontunda kutu çiziliyordu. Android'in kendi emoji fontu (Noto) Flutter
   // kaynağında var; yoksa Windows'unki denenir.

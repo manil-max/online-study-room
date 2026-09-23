@@ -19,7 +19,10 @@ Future<ProviderContainer> _container() async {
   );
 }
 
-Future<void> _pumpScreen(WidgetTester tester, ProviderContainer container) async {
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  ProviderContainer container,
+) async {
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
@@ -115,7 +118,11 @@ void main() {
     final notifier = container.read(themeSettingsProvider.notifier);
     for (var slot = 1; slot <= 3; slot++) {
       await notifier.saveCustomTheme(
-        _theme('custom_$slot', 'Tema $slot', updatedAt: DateTime(2026, 7, slot)),
+        _theme(
+          'custom_$slot',
+          'Tema $slot',
+          updatedAt: DateTime(2026, 7, slot),
+        ),
       );
     }
     await _pumpScreen(tester, container);
@@ -175,47 +182,38 @@ void main() {
       addTearDown(container.dispose);
       await _pumpScreen(tester, container);
 
+      // WP-921: kapak artık temanın gerçek minyatürü (degrade zemin, kart,
+      // buton hapı, vurgu çipi); anahtarlar aynı rollerde kaldı.
+      BoxDecoration deco(String part, String id) {
+        final widget = tester.widget(
+          find.byKey(ValueKey('theme-preset-$part-$id')),
+        );
+        return (widget is Container
+                ? widget.decoration
+                : (widget as DecoratedBox).decoration)
+            as BoxDecoration;
+      }
+
       for (final preset in kThemePresets) {
         final id = preset.id;
         expect(
-          tester
-              .widget<ColoredBox>(
-                find.byKey(ValueKey('theme-preset-scaffold-$id')),
-              )
-              .color,
+          deco('scaffold', id).color,
           preset.colors.scaffold,
           reason: '$id scaffold kapakta görünmeli',
         );
         expect(
-          tester
-              .widget<ColoredBox>(
-                find.byKey(ValueKey('theme-preset-surface-$id')),
-              )
-              .color,
+          // Cam atmosferinde yüzey yarı saydamdır; ton (RGB) aynı kalır.
+          deco('surface', id).color?.withValues(alpha: 1),
           preset.colors.surface1,
           reason: '$id surface kapakta görünmeli',
         );
         expect(
-          tester
-              .widget<ColoredBox>(
-                find.descendant(
-                  of: find.byKey(ValueKey('theme-preset-primary-$id')),
-                  matching: find.byType(ColoredBox),
-                ),
-              )
-              .color,
+          deco('primary', id).color,
           preset.colors.primary,
           reason: '$id primary yalnız vurgu olarak görünmeli',
         );
         expect(
-          tester
-              .widget<ColoredBox>(
-                find.descendant(
-                  of: find.byKey(ValueKey('theme-preset-accent-$id')),
-                  matching: find.byType(ColoredBox),
-                ),
-              )
-              .color,
+          deco('accent', id).color,
           preset.colors.accent,
           reason: '$id accent yalnız vurgu olarak görünmeli',
         );
@@ -225,6 +223,8 @@ void main() {
       expect(forest.colors.scaffold.g, greaterThan(forest.colors.scaffold.r));
       expect(forest.colors.surface1.g, greaterThan(forest.colors.surface1.r));
 
+      await tester.ensureVisible(find.text('Orman Kabini'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Orman Kabini'));
       await tester.pumpAndSettle();
 
