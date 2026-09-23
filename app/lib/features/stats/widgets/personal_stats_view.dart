@@ -225,6 +225,32 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final periodEnd = periodCalendarEnd(sel, now: now);
     final today = dayOf(now);
 
+    // 🔴 WP-927: dönem BUGÜNÜ içeriyorsa özet döşemeleri, Ana Sayfa'daki sayaç
+    // ve hedef kartıyla AYNI "bugün"ü sayar: kayıt + süregelen koşu
+    // ([todayLiveTotalProvider], WP-856 kuralının tek kaynağı). Eskiden sayaç
+    // 47 dk çalışırken Ana Sayfa "3sa 22dk · %84", İstatistik → Gün aynı anda
+    // "2sa 35dk · %65" yazıyordu. Yalnız henüz kaydedilmemiş kısım eklenir
+    // (`unrecordedSeconds`); kayıtlı kısım zaten [periodSessions]'tadır.
+    // Grafikler (saat/ders dağılımı…) kayıtlı oturumlardan çizilmeye devam
+    // eder; koşu kaydedildiği an onlar da güncellenir.
+    final periodHasToday =
+        !today.isBefore(dayOf(from)) && !today.isAfter(dayOf(to));
+    //
+    // Sayaç notifier'ı hiç kurulmadıysa sayaç çalışmıyordur ve kaydedilmemiş
+    // süre tanım gereği 0'dır (sağlayıcının kendi kuralı). O durumda sağlayıcı
+    // hiç izlenmez: izlemek oturum akışını ve gece yarısı yenileme
+    // zamanlayıcısını yalnız bu ekran için ayağa kaldırırdı.
+    final liveExtra = periodHasToday && ref.exists(studyTimerProvider)
+        ? (ref.watch(todayLiveTotalProvider)?.unrecordedSeconds ?? 0)
+        : 0;
+    final shownTotalSec = periodTotalSec + liveExtra;
+    final shownAvg = avgPeriod + liveExtra / statsDaySpan(avgWindow.from, to);
+    final shownSplit = liveExtra == 0
+        ? split
+        : today.weekday >= DateTime.saturday
+        ? (weekday: split.weekday, weekend: split.weekend + liveExtra)
+        : (weekday: split.weekday + liveExtra, weekend: split.weekend);
+
     // 🔴 WP-765 (1): oturum dağılımının penceresi artık dönemin KENDİSİ.
     //
     // WP-745 grafiğin bugünden geriye ikinci kez kırpmasını `days`i "dönemin
@@ -278,8 +304,8 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
       _StatCard(
         label: l10n.statsToplam,
         seconds: period == StatsPeriod.all && lifetime != null
-            ? lifetime
-            : periodTotalSec,
+            ? lifetime + liveExtra
+            : shownTotalSec,
         icon: Icons.timelapse,
       ),
       if (cardSet.showSessionCount)
@@ -300,24 +326,24 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
           // Hedef yoksa yüzde uydurulmaz; ölçüsüz kart "—" der.
           value: goalSeconds <= 0
               ? '—'
-              : '%${(periodTotalSec * 100 / goalSeconds).round()}',
+              : '%${(shownTotalSec * 100 / goalSeconds).round()}',
           icon: Icons.flag_outlined,
         ),
       if (cardSet.showDailyAverage)
         _StatCard(
           label: l10n.statsGunlukOrtalama,
-          seconds: avgPeriod.round(),
+          seconds: shownAvg.round(),
           icon: Icons.trending_up,
         ),
       if (cardSet.showWeekdaySplit) ...[
         _StatCard(
           label: l10n.statsHaftaIci,
-          seconds: split.weekday,
+          seconds: shownSplit.weekday,
           icon: Icons.work_outline,
         ),
         _StatCard(
           label: l10n.statsHaftaSonu,
-          seconds: split.weekend,
+          seconds: shownSplit.weekend,
           icon: Icons.weekend_outlined,
         ),
       ],
@@ -572,9 +598,9 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                 height: 200,
                 child: _PersonalRadar(
                   sessions: periodSessions,
-                  paceSeconds: avgPeriod.round(),
+                  paceSeconds: shownAvg.round(),
                   goalSeconds: goalSeconds,
-                  split: split,
+                  split: shownSplit,
                   consistencyDays: consistencyDays,
                 ),
               ),
