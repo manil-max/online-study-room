@@ -2756,6 +2756,10 @@
   "@homeAnaSayfayiSifirla": {
     "description": "Home user-facing text. Source: Ana Sayfa’yı sıfırla"
   },
+  "homeAnaSayfayiSifirlaAciklama": "Card positions, sizes and which cards are shown go back to the default. Your study records, goal and tasks are not deleted.",
+  "@homeAnaSayfayiSifirlaAciklama": {
+    "description": "Body of the reset-Home confirmation dialog: explains that only the card layout is reset and no data is deleted."
+  },
   "homeBirGrubaKatilincaBurada": "It appears here when you join a group.",
   "@homeBirGrubaKatilincaBurada": {
     "description": "Home user-facing text. Source: Bir gruba katılınca burada görünür."

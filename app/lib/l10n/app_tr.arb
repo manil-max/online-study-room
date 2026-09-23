@@ -647,6 +647,7 @@
   "homeAnaSayfaSifirlandi": "Ana Sayfa sıfırlandı",
   "homeAnaSayfanBos": "Ana Sayfan boş",
   "homeAnaSayfayiSifirla": "Ana Sayfa’yı sıfırla",
+  "homeAnaSayfayiSifirlaAciklama": "Kartların yeri, boyutu ve hangi kartların görüneceği varsayılana döner. Çalışma kayıtların, hedefin ve görevlerin silinmez.",
   "homeBirGrubaKatilincaBurada": "Bir gruba katılınca burada görünür.",
   "homeBitti": "Bitti",
   "homeBosluklariYukariTopla": "Boşlukları yukarı topla",

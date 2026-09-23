@@ -61,7 +61,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(context).homeAnaSayfayiSifirla),
-        content: Text(AppLocalizations.of(context).homeAnaSayfayiSifirla),
+        // WP-931: gövde başlığı tekrar ediyordu; neyin sıfırlandığını söyler.
+        content: Text(
+          AppLocalizations.of(context).homeAnaSayfayiSifirlaAciklama,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
