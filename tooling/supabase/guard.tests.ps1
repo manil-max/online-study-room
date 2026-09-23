@@ -142,7 +142,7 @@ Assert-Equal $contract.staging.migration_head '0145' 'staging hedefi 0145: yeni 
 # 0136 icin ACIK. Apply post-check okunur okunmaz yeniden kilitlenir ve bu
 # iddia $false'a doner. Tarihsel: 0135 staging apply run 31717110232,
 # post-check 0135|0135|0135.
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $true '0145 staging apply icin kapi ACIK (sahip emri: genel gelistirme + beta); pgTAP 071 ilk kez CI dry-run icinde kosar'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $false '0145 staging apply KOSTU (run 35934465021, post-check 0145|0145|0145) ve kapi yeniden kilitlendi'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'WP-844: GitHub kanali beta oldu (sahip karari 2026-09-18); beta staging uzerinden yayinlanir'
 # 🔴 WP-549 production apply BEKLIYOR (2026-08-09). Staging BITTI ve
 # KANITLANDI: run 31277610025 post-check'i her iki tarafta da 0124 verdi, purge
@@ -215,10 +215,10 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $true 'WP-844: GitHub kan
 # staging soak'unu atlamanin ~3 dakika kazandirdigi, 0126'nin tam bu sinif
 # yuzunden bir gece once uretime regresyon tasidigi (0128 ile onarildi)
 # kendisine soylendikten SONRA kararini yineledi.
-Assert-Equal $contract.production.migration_head '0144' 'production hedefi 0144: iOS push platformu (WP-906)'
+Assert-Equal $contract.production.migration_head '0145' 'production hedefi 0145: yeni hesap gunluk hedefi 2 saat (WP-922)'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0144 production apply KOSTU (run 35771413080, post-check 0144|0144|0144) ve kapi yeniden kilitlendi'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0145 production apply icin kapi ACIK (staging 35934465021 kanitli, yalniz varsayilan degisir)'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a
