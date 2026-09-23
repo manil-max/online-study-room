@@ -4,6 +4,19 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v88 / 1.0.88+88] - 2026-09-23
+
+### Yenilikler
+
+- Güncelleme artık uygulama içinde sunuluyor: yeni sürüm varsa Google'ın penceresi açılır, indirme arka planda olur, kurulumu "Kur" düğmesiyle sen başlatırsın.
+
+### Düzeltmeler
+
+- Bildirim iznini reddedene sayaç her başlatıldığında izin yeniden sorulmuyor; tanıtımda "Şimdi değil" denince pencere hemen ardından çıkmıyor.
+- Ayarlar tanıtımından geri çıkınca diğer ekranların tanıtımları kilitlenmiyor.
+- Aynı telefonda hesap değiştirince temalar karışmıyor; gece yarısında "bugün" süresi yeni güne geçiyor.
+- Hedef kartı yüzdesi sayaç kartıyla aynı anda değişiyor.
+
 ## [beta-v8710 / 1.0.87-beta.10+8710] - 2026-09-23
 
 ### Yenilikler

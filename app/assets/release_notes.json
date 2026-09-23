@@ -3,6 +3,34 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.88",
+      "buildNumber": 88,
+      "channel": "stable",
+      "date": "2026-09-23",
+      "title": "1.0.88: uygulama içi güncelleme ve düzeltmeler",
+      "highlights": [
+        "Yeni sürüm çıkınca güncelleme uygulama içinde sunuluyor; kurulumu sen başlatıyorsun."
+      ],
+      "fixes": [
+        "Bildirim izni reddedilince her sayaç başlatmada yeniden sorulmuyor.",
+        "Aynı telefonda hesap değiştirince temalar karışmıyor.",
+        "Gece yarısında \"bugün\" süresi yeni güne geçiyor.",
+        "Ayarlar tanıtımından geri çıkınca diğer tanıtımlar kilitlenmiyor."
+      ],
+      "notes": [],
+      "titleEn": "1.0.88: in-app updates and fixes",
+      "highlightsEn": [
+        "Updates are now offered inside the app; you start the install."
+      ],
+      "fixesEn": [
+        "If notification permission was denied, starting the timer no longer asks again.",
+        "Switching accounts on the same phone no longer mixes up themes.",
+        "\"Today\" rolls over to the new day at midnight.",
+        "Leaving the Settings tour no longer blocks other tours."
+      ],
+      "notesEn": []
+    },
+    {
       "versionName": "1.0.87-beta.10",
       "buildNumber": 8710,
       "channel": "beta",

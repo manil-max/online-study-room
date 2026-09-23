@@ -3,6 +3,26 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.88",
+      "buildNumber": 88,
+      "channel": "stable",
+      "date": "2026-09-23",
+      "title": "v88: WP-856..WP-914",
+      "highlights": [
+        "WP-913/914: Play in-app updates (flexible), Play+Android only, install user-triggered.",
+        "WP-866..871: Windows Google sign-in via system browser + loopback PKCE (stable/Store only).",
+        "WP-872/873: notification auto-ask flag honoured by the timer start path and onboarding 'not now'."
+      ],
+      "fixes": [
+        "WP-860..865: theme stamp bound to the account, remote custom theme slots, Istanbul midnight rollover, coarse-card refresh boundary.",
+        "WP-869: tour suspension when its screen is popped.",
+        "WP-875: loopback finish() shares the close future."
+      ],
+      "notes": [
+        "WP-900..912 iOS groundwork is in this build but the App Store release is separate."
+      ]
+    },
+    {
       "versionName": "1.0.87-beta.10",
       "buildNumber": 8710,
       "channel": "beta",
