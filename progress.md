@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-914** | v88 yayinda (run `35802025227`), Play production 88 **taslak** (run `35904248921`); beta-v8710. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| Son ayrılan WP | **WP-914** | ⚠️ 913/914 iOS bloğundan (900…919) yanlışlıkla alındı; iOS oturumu o ikisini KULLANMASIN. Bu oturumun sıradaki numarası **WP-920**. v88 yayinda (run `35802025227`), Play production 88 **taslak** (run `35904248921`); beta-v8710. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
 | iOS bloğu (ayrı oturum) | **WP-900…WP-919** | 2026-09-22 App Store hazırlığı paralel oturumda; bu aralık yalnız iOS işlerine ayrıldı (numara çakışmasın). Genel sayaç WP-875'ten devam eder |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
@@ -42,6 +42,7 @@ Sahip: "her şeyi hazırla, sadece gönderip test kalsın". Mac yok; derleme Git
 | WP-909 | Sayaç başlatma izin bayrağı yalnız Android'de | `1d0bde0c` |
 | WP-910 | Analiz `build/` dışarıda (macOS SPM kaynakları) — build-check 35767121106 | `b9180735` |
 | WP-911 | Hakkında testi kanalı sabitler (appStore koşumu) | `047ad9a1` |
+| WP-913/914 | (alt ajan + lider) Play sürümünde uygulama içi güncelleme (`in_app_update` 4.2.5, flexible): kapı `DistributionChannel.play` + Android, süreç başına tek kontrol, enjekte edilebilir geçit. Kurulum indirme biter bitmez çağrılıyordu → şeritteki "Kur" ile kullanıcı başlatır (koşan seans yeniden başlatılmaz). Gradle/manifest değişmedi. Kapı 22 yeşil + release-defines yeşil | `92a6216c` `023c42d8` |
 
 Açık (sahip): Apple Developer üyeliği + yol haritası adımları; destek sayfasına iletişim e-postası kararı. Açık (lider): değerler gelince repo değişkenleri/secret'lar, `supabase-auth-config.yml` Apple+Google iOS apply, TestFlight yüklemesi, demo hesap. iOS ana ekran widget'ı v1 dışı.
 
