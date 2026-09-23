@@ -22,6 +22,7 @@ import '../analytics/analytics_period.dart';
 import '../charts/area_line_chart.dart';
 import '../charts/radar_stat_chart.dart';
 import 'daily_bar_chart.dart';
+import 'period_chart_window.dart';
 import 'hour_activity_chart.dart';
 import 'personal_period_cards.dart';
 import 'session_scatter_chart.dart';
@@ -34,10 +35,20 @@ import '../stats_l10n.dart';
 /// Kişisel istatistik: sabit ListView bölümleri (WP-179; sürükle-grid yok).
 /// [sessions] sıcak pencere; [summary] yıl/ömür; uzun aralık RPC.
 class PersonalStatsView extends ConsumerStatefulWidget {
-  const PersonalStatsView({super.key, required this.sessions, this.summary});
+  const PersonalStatsView({
+    super.key,
+    required this.sessions,
+    this.summary,
+    this.clock,
+  });
 
   final List<StudySession> sessions;
   final UserStudySummary? summary;
+
+  /// Test dikişi: "şimdi"yi sabitler (gece yarısı / takvim sınırı iddiaları
+  /// gerçek saate bağlanmasın). Üretimde `null` → `DateTime.now()`.
+  @visibleForTesting
+  final DateTime Function()? clock;
 
   @override
   ConsumerState<PersonalStatsView> createState() => _PersonalStatsViewState();
@@ -71,7 +82,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final summary = widget.summary;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final now = DateTime.now();
+    final now = widget.clock?.call() ?? DateTime.now();
     final sel = ref.watch(statsPeriodProvider);
     final period = sel.period;
     final (from, to) = sel.range(now: now);
@@ -207,6 +218,12 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // hiç okumazdı. "Geçen hafta"da başlık geçen haftayı yazarken grafik bu
     // haftayı çiziyordu. Uç artık dönemin `to`suna bağlı.
     final chartEnd = dayOf(to);
+
+    // 🔴 WP-925: çubuk grafikler başlığın yazdığı TAKVİM dönemini çizer
+    // ("Bu hafta" = 21–27 Eyl, gelecek günler boş). Eskiden "Günlük dağılım"
+    // bugünde biten kayan 7/14/30 gündü: başlık 21–27 derken grafik 17–23'tü.
+    final periodEnd = periodCalendarEnd(sel, now: now);
+    final today = dayOf(now);
 
     // 🔴 WP-765 (1): oturum dağılımının penceresi artık dönemin KENDİSİ.
     //
@@ -356,12 +373,11 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
       // ---- Zaman serileri --------------------------------------------------
       if (cardSet.showDailyDistribution)
         StatsSection(
-          title: l10n.statsGunlukDagilim,
-          // Yerel 7/14/30 kalır; master period değişince otomatik senkron.
-          child: _TrendCard(
-            sessions: sessions,
-            totals: dailyTotalsMap,
-            end: chartEnd,
+          title: '${l10n.statsGunlukDagilim} · $periodLabel',
+          // 🔴 WP-925: yerel 7/14/30 seçici KALKTI. Pencere dönemin kendisidir;
+          // seçici dönemden bağımsız kayan bir pencere çizdiriyordu.
+          child: _DailyDistributionCard(
+            days: calendarDayTotals(dayOf(from), periodEnd, calendarTotals),
           ),
         ),
       if (cardSet.showMonthlyDistribution)
@@ -369,38 +385,42 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
           title: '${l10n.statsAylikDagilim} · $periodLabel$scopeSuffix',
           child: MonthlyDistributionCard(
             sessions: periodSessions,
-            endMonth: chartEnd,
+            // WP-925: "Yıl" = o yılın Ocak–Aralık'ı ("Bu yıl"da Eki 2025 –
+            // Eyl 2026 çiziliyordu). Tümü/Özel dönemin sonunda biter.
+            endMonth: sel.period == StatsPeriod.year
+                ? DateTime(dayOf(from).year, 12, 1)
+                : chartEnd,
           ),
         ),
       // P2 area trend (dönem serisi)
       if (cardSet.showTrend)
         StatsSection(
-          title: '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
+          title:
+              '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
           child: Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: SizedBox(
-                height: 140,
+                height: 160,
                 child: Builder(
                   builder: (context) {
-                    // 🔴 WP-561: pencere artık DÖNEME bağlı. Eskiden
-                    // `lastNDays(periodSessions, …, totals: dailyTotalsMap)`
-                    // çağrılıyordu: `totals` verildiği için `periodSessions`
-                    // argümanı **hiç okunmuyordu** (ölü parametre, üstelik iki
-                    // argüman birbiriyle çelişiyordu) ve pencere daima
-                    // `DateTime.now()`da bitiyordu — "Geçen ay"a gidildiğinde
-                    // başlık geçen ayı, grafik bu ayın son günlerini
-                    // gösteriyordu.
-                    final chartStart = chartEnd.subtract(
-                      Duration(days: period.chartDays() - 1),
+                    // 🔴 WP-925: seri DÖNEMİN KENDİSİDİR, kovası dönemin
+                    // uzunluğuna göre ([periodTrend]): Ay → günlük (ayın 1'inden
+                    // bugüne), Yıl → haftalık, Tümü → aylık. Eskiden her
+                    // dönemde `period.chartDays()` = son 30 gündü: "Yıl"da ve
+                    // "Tümü"de başlık yılı/tüm geçmişi, grafik 25/8–23/9'u
+                    // anlatıyordu; "Bu ay"da ağustosun son haftası da vardı.
+                    // Veri, takvim ısı haritasıyla aynı birleşik haritadır
+                    // (sıcak pencere + uzun dönemde sunucu oturumları).
+                    final trend = periodTrend(
+                      cardSet: cardSet,
+                      periodFrom: from,
+                      periodEnd: periodEnd,
+                      today: today,
+                      totals: calendarTotals,
                     );
-                    final series = dailyRange(
-                      sessions,
-                      chartStart,
-                      chartEnd,
-                      totals: dailyTotalsMap,
-                    );
-                    if (series.isEmpty || series.every((d) => d.seconds == 0)) {
+                    final series = trend.points;
+                    if (series.isEmpty || series.every((p) => p.seconds == 0)) {
                       return Center(
                         child: Text(
                           l10n.statsBuDonemdeCalismaKaydin,
@@ -409,12 +429,36 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                         ),
                       );
                     }
-                    return AreaLineChart(
-                      values: [for (final d in series) d.seconds / 3600.0],
-                      labels: [
-                        for (final d in series) '${d.day.day}/${d.day.month}',
+                    // Kovanın boyu yazılır: haftalık seride "29/12" bir gün
+                    // değil, o Pazartesi başlayan haftadır.
+                    final caption = switch (trend.bucket) {
+                      TrendBucket.day => l10n.statsEgilimGunlukToplam,
+                      TrendBucket.week => l10n.statsEgilimHaftalikToplam,
+                      TrendBucket.month => l10n.statsEgilimAylikToplam,
+                    };
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          caption,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: AreaLineChart(
+                            values: [
+                              for (final p in series) p.seconds / 3600.0,
+                            ],
+                            labels: [
+                              for (final p in series)
+                                trendPointLabel(l10n, trend.bucket, p.start),
+                            ],
+                            yUnit: l10n.statsSaatKisa,
+                          ),
+                        ),
                       ],
-                      yUnit: l10n.statsSaatKisa,
                     );
                   },
                 ),
@@ -560,8 +604,9 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
       child: ErrorRetryView(
         dense: true,
         message: l10n.homeVerilerYuklenemedi,
-        onRetry: () =>
-            ref.invalidate(analyticsUserSessionsInRangeProvider(analyticsPeriod)),
+        onRetry: () => ref.invalidate(
+          analyticsUserSessionsInRangeProvider(analyticsPeriod),
+        ),
       ),
     );
 
@@ -631,7 +676,9 @@ int _calendarWeeks({
     DateTime? earliest;
     for (final entry in totals.entries) {
       if (entry.value <= 0) continue;
-      if (earliest == null || entry.key.isBefore(earliest)) earliest = entry.key;
+      if (earliest == null || entry.key.isBefore(earliest)) {
+        earliest = entry.key;
+      }
     }
     start = earliest ?? sessionHotWindowStart(now: now);
   }
@@ -760,84 +807,27 @@ class _PersonalRadar extends StatelessWidget {
   }
 }
 
-/// Günlük çubuk grafiği + gün aralığı seçici (7 / 14 / 30 gün).
+/// "Günlük dağılım": seçili dönemin her takvim günü için bir çubuk.
 ///
-/// Yerel seçici kalır; üst [statsPeriodProvider] değişince en yakın
-/// seçeneğe otomatik senkronlanır (kullanıcı sonra yine yerel değiştirebilir).
-class _TrendCard extends ConsumerStatefulWidget {
-  const _TrendCard({required this.sessions, required this.end, this.totals});
+/// 🔴 WP-925: kartın kendi 7/14/30 seçicisi vardı ve pencere daima dönemin
+/// `to`sunda (bugünde) biten kayan bir aralıktı; "Bu hafta" başlığı 21–27 Eyl
+/// derken çubuklar 17–23 Eyl'di. Pencere artık dönemin kendisidir
+/// ([calendarDayTotals] + [periodCalendarEnd]) ve seçici yoktur — dönemi
+/// üstteki şerit seçer.
+class _DailyDistributionCard extends ConsumerWidget {
+  const _DailyDistributionCard({required this.days});
 
-  final List<StudySession> sessions;
-
-  /// 🔴 WP-745: pencerenin BİTİŞ günü. [lastNDays] `today` verilmediğinde
-  /// pencereyi `DateTime.now()`da bitirir ve `StatsPeriodSelection.offset`i hiç
-  /// okumaz: "Geçen hafta"da başlık geçen haftayı yazarken grafik BU haftayı
-  /// çiziyordu. Uç artık dönemin `to`sudur.
-  final DateTime end;
-
-  final Map<DateTime, int>? totals;
+  final List<DayTotal> days;
 
   @override
-  ConsumerState<_TrendCard> createState() => _TrendCardState();
-}
-
-class _TrendCardState extends ConsumerState<_TrendCard> {
-  static const _options = [7, 14, 30];
-  late int _days;
-
-  @override
-  void initState() {
-    super.initState();
-    // İlk açılış: mevcut master dönemle hizala.
-    _days = ref.read(statsPeriodProvider).period.chartDays(options: _options);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Master dönem değişince yerel 7/14/30'u güncelle; kullanıcı override edebilir.
-    ref.listen(statsPeriodProvider, (prev, next) {
-      if (prev?.period == next.period) return;
-      final mapped = next.period.chartDays(options: _options);
-      if (_days != mapped) setState(() => _days = mapped);
-    });
-
-    final series = lastNDays(
-      widget.sessions,
-      _days,
-      today: widget.end,
-      totals: widget.totals,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          children: [
-            SegmentedButton<int>(
-              segments: [
-                ButtonSegment(
-                  value: 7,
-                  label: Text(AppLocalizations.of(context).statsValue7Gun),
-                ),
-                ButtonSegment(
-                  value: 14,
-                  label: Text(AppLocalizations.of(context).statsValue14Gun),
-                ),
-                ButtonSegment(
-                  value: 30,
-                  label: Text(AppLocalizations.of(context).statsValue30Gun),
-                ),
-              ],
-              selected: {_days},
-              onSelectionChanged: (s) => setState(() => _days = s.first),
-              showSelectedIcon: false,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 180,
-              child: DailyBarChart(days: series, goalSeconds: goalSeconds),
-            ),
-          ],
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+        child: SizedBox(
+          height: 180,
+          child: DailyBarChart(days: days, goalSeconds: goalSeconds),
         ),
       ),
     );
@@ -1000,12 +990,8 @@ class _MiniMetric extends StatelessWidget {
 
 /// Tek bir istatistik kartı (etiket + süre).
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    this.seconds,
-    this.value,
-    this.icon,
-  }) : assert(seconds != null || value != null, 'stat tile needs a measure');
+  const _StatCard({required this.label, this.seconds, this.value, this.icon})
+    : assert(seconds != null || value != null, 'stat tile needs a measure');
 
   final String label;
   final int? seconds;

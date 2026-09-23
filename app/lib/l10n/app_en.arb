@@ -4064,6 +4064,18 @@
   "@statsSeciliTarihAraligi": {
     "description": "Stats user-facing text. Source: Seçili tarih aralığı"
   },
+  "statsEgilimGunlukToplam": "Daily total",
+  "@statsEgilimGunlukToplam": {
+    "description": "WP-925: caption under the stats trend chart when each point is one day."
+  },
+  "statsEgilimHaftalikToplam": "Weekly total",
+  "@statsEgilimHaftalikToplam": {
+    "description": "WP-925: caption under the stats trend chart when each point is one Monday-start week (year view)."
+  },
+  "statsEgilimAylikToplam": "Monthly total",
+  "@statsEgilimAylikToplam": {
+    "description": "WP-925: caption under the stats trend chart when each point is one calendar month (all-time view)."
+  },
   "statsSon30Gun": "Last 30 days",
   "@statsSon30Gun": {
     "description": "Stats user-facing text. Source: Son 30 gün"
