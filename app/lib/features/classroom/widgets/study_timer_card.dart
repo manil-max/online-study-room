@@ -391,6 +391,26 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           final core = heightBounded && availableHeight < kTimerCoreMaxHeight;
           final showSecondary =
               !heightBounded || availableHeight >= kTimerFullMinHeight;
+          // 🔴 WP-929 — telefonun varsayılan sayaç kartı (~286–316 px) tam
+          // bu aralıkta: ne çekirdek ne tam kart. Ders ve mod seçicileri
+          // yalnız tam kartta olduğu için HİÇBİR telefonda görünmüyordu; yeni
+          // kullanıcının bütün süresi "Genel"e yazılıyor, Pomodoro'yu hiç
+          // bulamıyordu. Bu aralıkta tek satırlık ders + mod çipi çizilir ve
+          // yer açmak için boşluklar sıkılaşır (kart içi kaydırma çıkmasın,
+          // WP-646).
+          final quickRow = !core && !showSecondary;
+          final todayLabel = Text(
+            AppLocalizations.of(context).classroomBugun,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          );
+          Widget todayValue(TextStyle? style) => Text(
+            // WP-817: sayı ancak ÖLÇÜLDÜYSE yazılır.
+            todayKnown ? formatHumanSeconds(todayTotal) : kUnknownMetric,
+            maxLines: 1,
+            style: style,
+          );
 
           // WP-496: kart artık `Stack` değil **akış**.
           //
@@ -549,32 +569,43 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   )
                 else
                   Padding(
-                    padding: EdgeInsets.fromLTRB(16, 4, 16, core ? 4 : 20),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      4,
+                      16,
+                      core ? 4 : (quickRow ? 8 : 20),
+                    ),
                     child: Column(
                       children: [
                         // "Bugün" toplamı ÇEKİRDEK değil: çekirdek, geçen süre +
                         // birincil eylemdir. 160 px'lik hücrede bu iki satır
                         // (etiket + headlineMedium) tek başına ~60 px yiyor.
                         if (!core) ...[
-                          Text(
-                            AppLocalizations.of(context).classroomBugun,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                          // WP-929: kısa kartta etiket ve toplam TEK satırda —
+                          // ders/mod çipine yer açan ana kazanç bu (~30 px).
+                          if (quickRow)
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  todayLabel,
+                                  const SizedBox(width: 8),
+                                  todayValue(theme.textTheme.titleLarge),
+                                ],
+                              ),
+                            )
+                          else ...[
+                            todayLabel,
+                            const SizedBox(height: 4),
+                            // Dar kartta taşmasın diye ölçekle.
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: todayValue(theme.textTheme.headlineMedium),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Dar kartta taşmasın diye ölçekle.
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              // WP-817: sayı ancak ÖLÇÜLDÜYSE yazılır.
-                              todayKnown
-                                  ? formatHumanSeconds(todayTotal)
-                                  : kUnknownMetric,
-                              maxLines: 1,
-                              style: theme.textTheme.headlineMedium,
-                            ),
-                          ),
+                          ],
                           // Hata kalıcıdır: burada susup yalnız "—" çizmek
                           // "yükleniyor" gibi okunur ve kullanıcı sonsuza kadar
                           // bekler. Tek satır, kontrolleri aşağı itmeyecek boy.
@@ -590,7 +621,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 16),
+                          SizedBox(height: quickRow ? 8 : 16),
                         ],
                         FittedBox(
                           fit: BoxFit.scaleDown,
@@ -613,7 +644,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             phase: timer.phase,
                           ),
                         ),
-                        SizedBox(height: core ? 8 : 16),
+                        SizedBox(height: core ? 8 : (quickRow ? 4 : 16)),
                         // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
                         // Faz göstergesi bir DURUM satırıdır (mola mı, çalışma mı),
                         // mod seçici ise bir kontrol — ilki orta hücrede kalır,
@@ -624,7 +655,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             const SizedBox(height: 8),
                             TimerVerificationNotice(timer: timer),
                             if (timer.mode != TimerMode.stopwatch)
-                              const SizedBox(height: 16),
+                              SizedBox(height: quickRow ? 8 : 16),
                           ] else if (showSecondary) ...[
                             const TimerModeControls(),
                             const SizedBox(height: 16),
@@ -648,6 +679,43 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             onSelect: notifier.selectSubject,
                           ),
                           const SizedBox(height: 16),
+                        ],
+                        if (quickRow) ...[
+                          // Kurallar tam kartla AYNI: çalışırken ders kilitli
+                          // etikettir, mod seçici yerine faz göstergesi durur.
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: _SubjectSelector(
+                                  key: const Key('timer-quick-subject'),
+                                  subjects: subjects,
+                                  selectedId: timer.subjectId,
+                                  running: timer.isRunning,
+                                  generalVisible: generalSubjectVisible,
+                                  onSelect: notifier.selectSubject,
+                                  centered: false,
+                                ),
+                              ),
+                              if (!timer.isRunning) ...[
+                                const SizedBox(width: 8),
+                                // Mod adı kısa ve sabit, ders adı uzun olabilir:
+                                // mod önce kendi boyunu alır (en çok %60),
+                                // kalan yeri ders hapı kullanır.
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: (constraints.maxWidth - 32) * 0.6,
+                                  ),
+                                  child: _ModeChip(
+                                    key: const Key('timer-quick-mode'),
+                                    mode: timer.mode,
+                                    onSelect: notifier.setMode,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                         ],
                         SizedBox(width: double.infinity, child: primaryAction),
                         if (showSecondary) ...[
@@ -807,11 +875,13 @@ class _StripActions extends StatelessWidget {
 /// Ders seçimi opsiyoneldir (§3.7).
 class _SubjectSelector extends StatelessWidget {
   const _SubjectSelector({
+    super.key,
     required this.subjects,
     required this.selectedId,
     required this.running,
     required this.generalVisible,
     required this.onSelect,
+    this.centered = true,
   });
 
   final List<Subject> subjects;
@@ -819,6 +889,10 @@ class _SubjectSelector extends StatelessWidget {
   final bool running;
   final bool generalVisible;
   final ValueChanged<String?> onSelect;
+
+  /// Kendini ortalar; kısa kartın çip satırında (WP-929) satır ortalar, hap
+  /// kendi boyunda kalır.
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
@@ -869,24 +943,16 @@ class _SubjectSelector extends StatelessWidget {
 
     // Çalışırken: kilitli etiket (değiştirilemez).
     if (running) {
-      return Center(child: content);
+      return centered ? Center(child: content) : content;
     }
 
     // Dururken: dokununca seçim alt sayfası.
-    return Center(
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _openPicker(context),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: content,
-          ),
-        ),
-      ),
+    final pill = _chipPill(
+      theme,
+      onTap: () => _openPicker(context),
+      child: content,
     );
+    return centered ? Center(child: pill) : pill;
   }
 
   Future<void> _openPicker(BuildContext context) async {
@@ -932,7 +998,14 @@ class _SubjectSelector extends StatelessWidget {
             children: [
               Icon(Icons.tune, size: 20),
               SizedBox(width: 12),
-              Text(AppLocalizations.of(context).classroomDersleriDuzenle),
+              // WP-929: menü artık telefondan da açılıyor; büyük yazıda
+              // satır kırpılmasın.
+              Flexible(
+                child: Text(
+                  AppLocalizations.of(context).classroomDersleriDuzenle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
@@ -948,6 +1021,91 @@ class _SubjectSelector extends StatelessWidget {
       return;
     }
     onSelect(result.subjectId);
+  }
+}
+
+/// Ders hapı ile mod çipinin ortak zemini — ikisi yan yana aynı görünür.
+Widget _chipPill(
+  ThemeData theme, {
+  required VoidCallback onTap,
+  required Widget child,
+}) => Material(
+  color: theme.colorScheme.surfaceContainerHighest,
+  borderRadius: BorderRadius.circular(20),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(20),
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: child,
+    ),
+  ),
+);
+
+/// WP-929: kısa kartın mod çipi — seçili modu gösterir, dokununca üç modu
+/// listeler ([StudyTimerNotifier.setMode]; o da çalışırken hiçbir şey
+/// yapmaz). Mod ayarları (dakikalar) tam kartta, burada varsayılanlarıyla.
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({super.key, required this.mode, required this.onSelect});
+
+  final TimerMode mode;
+  final ValueChanged<TimerMode> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return _chipPill(
+      theme,
+      onTap: () async {
+        final picked = await showAnchoredMenu<TimerMode>(
+          context: context,
+          items: [
+            for (final m in TimerMode.values)
+              PopupMenuItem<TimerMode>(
+                value: m,
+                child: Row(
+                  children: [
+                    Icon(timerModeIcon(m), size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        timerModeLabel(l10n, m),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (m == mode)
+                      Icon(
+                        Icons.check,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+        if (picked != null) onSelect(picked);
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(timerModeIcon(mode), size: 16, color: muted),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              timerModeLabel(l10n, mode),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Icon(Icons.keyboard_arrow_down, size: 18, color: muted),
+        ],
+      ),
+    );
   }
 }
 

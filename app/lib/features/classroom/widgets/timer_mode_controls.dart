@@ -8,6 +8,21 @@ import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../data/providers/study_providers.dart';
 
+/// Modun ikonu — segmentli seçici ve sayaç kartının kısa mod çipi (WP-929)
+/// aynı tanımı okur.
+IconData timerModeIcon(TimerMode mode) => switch (mode) {
+  TimerMode.stopwatch => Icons.timer_outlined,
+  TimerMode.countdown => Icons.hourglass_empty,
+  TimerMode.pomodoro => Icons.av_timer,
+};
+
+/// Modun görünen adı (bkz. [timerModeIcon]).
+String timerModeLabel(AppLocalizations l10n, TimerMode mode) => switch (mode) {
+  TimerMode.stopwatch => l10n.classroomKronometre,
+  TimerMode.countdown => l10n.classroomGeriSayim,
+  TimerMode.pomodoro => l10n.classroomPomodoro,
+};
+
 /// Sayaç modu seçimi + moda özel ayarlar (§2H). Yalnız sayaç **dururken**
 /// gösterilir/etkilidir: Kronometre / Geri sayım / Pomodoro seçilir, geri sayım
 /// dakikası veya pomodoro çalışma-mola-döngü ayarlanır. Ayarlar cihazda kalıcıdır.
@@ -25,33 +40,17 @@ class TimerModeControls extends ConsumerWidget {
           builder: (context, constraints) {
             // Dar kartta yalnız ikon (etiket taşmasın); genişte ikon+metin.
             final compact = constraints.maxWidth < 320;
+            final l10n = AppLocalizations.of(context);
             return SegmentedButton<TimerMode>(
               showSelectedIcon: false,
               segments: [
-                ButtonSegment(
-                  value: TimerMode.stopwatch,
-                  icon: const Icon(Icons.timer_outlined),
-                  label: compact
-                      ? null
-                      : Text(AppLocalizations.of(context).classroomKronometre),
-                  tooltip: AppLocalizations.of(context).classroomKronometre,
-                ),
-                ButtonSegment(
-                  value: TimerMode.countdown,
-                  icon: const Icon(Icons.hourglass_empty),
-                  label: compact
-                      ? null
-                      : Text(AppLocalizations.of(context).classroomGeriSayim),
-                  tooltip: AppLocalizations.of(context).classroomGeriSayim,
-                ),
-                ButtonSegment(
-                  value: TimerMode.pomodoro,
-                  icon: const Icon(Icons.av_timer),
-                  label: compact
-                      ? null
-                      : Text(AppLocalizations.of(context).classroomPomodoro),
-                  tooltip: AppLocalizations.of(context).classroomPomodoro,
-                ),
+                for (final mode in TimerMode.values)
+                  ButtonSegment(
+                    value: mode,
+                    icon: Icon(timerModeIcon(mode)),
+                    label: compact ? null : Text(timerModeLabel(l10n, mode)),
+                    tooltip: timerModeLabel(l10n, mode),
+                  ),
               ],
               selected: {timer.mode},
               onSelectionChanged: (s) => notifier.setMode(s.first),
