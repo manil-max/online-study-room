@@ -3,6 +3,40 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.88-beta.1",
+      "buildNumber": 8801,
+      "channel": "beta",
+      "date": "2026-09-24",
+      "title": "beta-v8801: tanıtım, tema, istatistik ve ana ekran",
+      "highlights": [
+        "Tanıtım kartları ekranı gerçekten anlatıyor.",
+        "Tema ekranında her temanın önizlemesi var.",
+        "Sayaç kartından ders ve Pomodoro seçilebiliyor."
+      ],
+      "fixes": [
+        "İstatistik grafikleri seçilen döneme uyuyor, yazılar üst üste binmiyor.",
+        "Yeni hesaplar 2 saatlik hedefle başlıyor.",
+        "İngilizce kalan yazılar Türkçe."
+      ],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı."
+      ],
+      "titleEn": "beta-v8801: tours, themes, stats and home",
+      "highlightsEn": [
+        "Tour cards now actually explain each screen.",
+        "Every theme shows a preview on the theme screen.",
+        "Pick a subject and Pomodoro right from the timer card."
+      ],
+      "fixesEn": [
+        "Stats charts follow the selected period and labels no longer overlap.",
+        "New accounts start with a 2-hour daily goal.",
+        "Leftover English text on Turkish screens is translated."
+      ],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta."
+      ]
+    },
+    {
       "versionName": "1.0.88",
       "buildNumber": 88,
       "channel": "stable",

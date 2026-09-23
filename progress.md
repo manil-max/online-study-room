@@ -13,11 +13,11 @@
 | Son kayıtlı yayın | **v88 · 1.0.88+88** + **beta-v8710**, etiket commit'i `1d4b0143` | 2026-09-23 sahip GO "testler bitince betaya koy play e yeni surum yukle"; kapı 22 yeşil + release-defines yeşil; ilk deneme `35801972493` etiket yokken düştü (yayın yok), ikinci `35802025227` 6/6 |
 | v87 release koşumu | **35351214943** (stable) + **35351213314** (beta): ikisi de 6/6 | İlk deneme 35346868347 KIRMIZI (WP-846 satırı CI manifestinde); düzeltme `3ab99b46` |
 | Play | **production 87, draft** (koşum `35357009125`) | Sahip Console'da incelemeye gönderecek. v86 taslağı/incelemesi v87 ile değişir |
-| Veritabanı | Repo, staging ve production head **0144** (WP-906 iOS push) | Staging dry-run `35770109022`, apply `35770464584`; production dry-run `35770977433`, apply `35771413080` (0144|0144|0144); dispatcher staging `35770922445`, production `35771818079`. Kapılar yeniden kilitli |
+| Veritabanı | Repo, staging ve production head **0145** (WP-922 yeni hesap hedefi 120 dk) | Staging dry-run `35934183562` (75 pgTAP / 1086 PASS), apply `35934465021`; production dry-run `35934772275`, apply `35935050810` (0145\|0145\|0145); kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-914** | ⚠️ 913/914 iOS bloğundan (900…919) yanlışlıkla alındı; iOS oturumu o ikisini KULLANMASIN. Bu oturumun sıradaki numarası **WP-920**. v88 yayinda (run `35802025227`), Play production 88 **taslak** (run `35904248921`); beta-v8710. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| Son ayrılan WP | **WP-937** | beta-v8801: WP-920…937 (tur metinleri, tema önizleme, istatistik, ana ekran, 0145). 913/914 iOS bloğundan alınmıştı (not). Play: v88 taslak — sahip göndermediyse v89 ile değiştirilecek (tek paket kuralı) |
 | iOS bloğu (ayrı oturum) | **WP-900…WP-919** | 2026-09-22 App Store hazırlığı paralel oturumda; bu aralık yalnız iOS işlerine ayrıldı (numara çakışmasın). Genel sayaç WP-875'ten devam eder |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
@@ -43,6 +43,13 @@ Sahip: "her şeyi hazırla, sadece gönderip test kalsın". Mac yok; derleme Git
 | WP-910 | Analiz `build/` dışarıda (macOS SPM kaynakları) — build-check 35767121106 | `b9180735` |
 | WP-911 | Hakkında testi kanalı sabitler (appStore koşumu) | `047ad9a1` |
 | WP-913/914 | (alt ajan + lider) Play sürümünde uygulama içi güncelleme (`in_app_update` 4.2.5, flexible): kapı `DistributionChannel.play` + Android, süreç başına tek kontrol, enjekte edilebilir geçit. Kurulum indirme biter bitmez çağrılıyordu → şeritteki "Kur" ile kullanıcı başlatır (koşan seans yeniden başlatılmaz). Gradle/manifest değişmedi. Kapı 22 yeşil + release-defines yeşil | `92a6216c` `023c42d8` |
+| WP-920 | Tur kartları zengin tek kart (sahip: 'çok karta gerek yok, bilgiyi arttır'); balon içi kaydırma, Atla örtülmez | `613f1c16` |
+| WP-921 | Tema ekranı: gerçek mini önizleme, Açık/Koyu bölümleri, mod açıklaması; 05-tema.png yenilendi | `0a360ac9` |
+| WP-922/923 | Yeni hesap hedefi 120 dk (0145) · izin verilince seri hatırlatması + haftalık özet açılır | `49956f31` `74330f23` |
+| WP-924…927 | İstatistik: etiket çakışması, döneme uyan grafikler, birimler, canlı toplam (WP-928 gerçek hata değil) | `7010abad`…`dfda6d29` |
+| WP-929…935 | Ana ekran: kısa kartta ders/mod satırı, hedef kartı dokunma, sıfırlama metni, kart açıklamaları, boyut etiketleri, Türkçe metinler, sahte Bronz Taç kutlaması | `e97e7875`…`296e5494` |
+| WP-936 | PostgREST 1000 satır sayfalama (aralık oturumları, 90 gün, group_daily_totals, dışa aktarma sırası) | `a93ace9b` `cd9e59bf` |
+| WP-937 | Dar grup kartı düğmeleri, hedef penceresi açıklaması, 360 yedek hedef → sabit. Kapı 22 yeşil + release-defines yeşil | `b1d6f1bd` `94d7a3f5` |
 
 Açık (sahip): Apple Developer üyeliği + yol haritası adımları; destek sayfasına iletişim e-postası kararı. Açık (lider): değerler gelince repo değişkenleri/secret'lar, `supabase-auth-config.yml` Apple+Google iOS apply, TestFlight yüklemesi, demo hesap. iOS ana ekran widget'ı v1 dışı.
 

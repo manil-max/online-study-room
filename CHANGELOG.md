@@ -4,6 +4,26 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8801 / 1.0.88-beta.1+8801] - 2026-09-24
+
+### Yenilikler
+
+- Tanıtım kartları ekranı gerçekten anlatıyor: her kartta ne yapılabildiği ve nasıl yapıldığı yazıyor.
+- Tema ekranı: her hazır temanın küçük bir uygulama önizlemesi var; temalar açık ve koyu diye ayrıldı.
+- Telefonda sayaç kartından ders ve mod (Kronometre, Geri sayım, Pomodoro) seçilebiliyor.
+- Günlük hedef kartına dokununca hedef değiştirilebiliyor.
+- Yeni hesaplar 2 saatlik günlük hedefle başlıyor; bildirim izni verilince seri hatırlatması ve haftalık özet açılıyor.
+
+### Düzeltmeler
+
+- İstatistik grafiklerinde süre yazıları üst üste binmiyor; grafikler seçilen döneme (hafta, ay, yıl, tümü) uyuyor.
+- İstatistik çalışan sayacı da sayıyor; ana ekranla aynı toplamı gösteriyor.
+- Çok oturumu olan hesaplarda grafiklerden oturum kaybolmuyor.
+- Birimler tutarlı (sa, dk, gün); Araçlar ve alarm ekranında İngilizce kalan yazılar Türkçe.
+- Kart boyutları "Küçük / Orta / Büyük" diye yazıyor; kart seçicide açıklamalar kartın ne gösterdiğini söylüyor.
+- Yeni kullanıcıya yersiz "Bronz Taç" kutlaması çıkmıyor.
+- Ana ekrandaki grup kartında düğmeler kesilmiyor.
+
 ## [v88 / 1.0.88+88] - 2026-09-23
 
 ### Yenilikler

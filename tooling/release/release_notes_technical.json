@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.88-beta.1",
+      "buildNumber": 8801,
+      "channel": "beta",
+      "date": "2026-09-24",
+      "title": "beta-v8801: WP-920..WP-937 + migration 0145",
+      "highlights": [
+        "WP-920 rich single-card tours (bubble scrolls, Atla never covered); WP-921 theme previews + light/dark sections.",
+        "WP-922 new-account daily goal 120 min (0145, staging 35934465021, production 35935050810); WP-923 reminders on permission grant.",
+        "WP-929 subject/mode row on the short timer card; WP-930 goal card opens the goal editor."
+      ],
+      "fixes": [
+        "WP-924..927 stats: label overlap, period-aligned charts, units, live running total.",
+        "WP-936 PostgREST 1000-row paging for session lists and group_daily_totals.",
+        "WP-931..935, WP-937 small UX fixes (reset dialog, card descriptions, size labels, Turkish strings, crown celebration, narrow group card)."
+      ],
+      "notes": []
+    },
+    {
       "versionName": "1.0.88",
       "buildNumber": 88,
       "channel": "stable",
