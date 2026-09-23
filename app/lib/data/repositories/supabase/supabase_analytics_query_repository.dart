@@ -4,6 +4,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../models/analytics_query_models.dart';
 import '../../models/study_session.dart';
 import '../analytics_query_repository.dart';
+import 'postgrest_paging.dart';
 
 class SupabaseAnalyticsQueryRepository implements AnalyticsQueryRepository {
   SupabaseAnalyticsQueryRepository(this._client);
@@ -41,16 +42,21 @@ class SupabaseAnalyticsQueryRepository implements AnalyticsQueryRepository {
   }) async {
     // WP-325: gün aralığı, start_time yeniden yorumlanarak değil sunucunun
     // kayda damgaladığı day sütunuyla seçilir.
-    final rows = await _client
-        .from('study_sessions')
-        .select()
-        .eq('user_id', userId)
-        .gte('day', _dateParam(from))
-        .lte('day', _dateParam(to))
-        .order('start_time', ascending: true);
-    final sessions = (rows as List<dynamic>)
-        .map((r) => StudySession.fromMap(Map<String, dynamic>.from(r as Map)))
-        .toList();
+    // WP-936: PostgREST yaniti max_rows (1000) ile sessizce keser; eskiden
+    // yeniye sirali tek istek Yil/Tumu doneminde EN YENI oturumlari
+    // dusuruyordu. Sayfalanir; `id` esit start_time'da sirayi kararli kilar.
+    final rows = await fetchAllPostgrestPages(
+      (start, end) => _client
+          .from('study_sessions')
+          .select()
+          .eq('user_id', userId)
+          .gte('day', _dateParam(from))
+          .lte('day', _dateParam(to))
+          .order('start_time', ascending: true)
+          .order('id', ascending: true)
+          .range(start, end),
+    );
+    final sessions = rows.map(StudySession.fromMap).toList();
     // Recorded day filteriyle aynı sözleşmeyi koruyan son savunma katmanı.
     return inRange(sessions, from, to).toList();
   }

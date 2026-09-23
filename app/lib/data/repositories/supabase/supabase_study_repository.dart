@@ -7,6 +7,7 @@ import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
 import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
+import 'postgrest_paging.dart';
 
 /// Supabase tabanlı çalışma oturumu deposu. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseStudyRepository implements StudyRepository {
@@ -171,15 +172,19 @@ class SupabaseStudyRepository implements StudyRepository {
 
   Future<List<StudySession>> _fetchHotWindowSessions(String userId) async {
     final cutoff = sessionHotWindowStart().toUtc().toIso8601String();
-    final rows = await _client
-        .from('study_sessions')
-        .select()
-        .eq('user_id', userId)
-        .gte('start_time', cutoff)
-        .order('start_time', ascending: false);
-    return (rows as List<dynamic>)
-        .map((r) => StudySession.fromMap(Map<String, dynamic>.from(r as Map)))
-        .toList();
+    // WP-936: 90 gunde 1000'i asan oturum max_rows ile sessizce kesilirdi
+    // (<=90 gunluk donem kirilimlari bu listeden beslenir). Sayfalanir.
+    final rows = await fetchAllPostgrestPages(
+      (start, end) => _client
+          .from('study_sessions')
+          .select()
+          .eq('user_id', userId)
+          .gte('start_time', cutoff)
+          .order('start_time', ascending: false)
+          .order('id', ascending: false)
+          .range(start, end),
+    );
+    return rows.map(StudySession.fromMap).toList();
   }
 
   @override
@@ -287,12 +292,18 @@ class SupabaseStudyRepository implements StudyRepository {
 
   /// Sunucuda toplanmış günlük veriyi `group_daily_totals` RPC'sinden çeker.
   Future<List<DailyStat>> _fetchDailyStats(String groupId) async {
-    final rows =
-        await _client.rpc('group_daily_totals', params: {'p_group_id': groupId})
-            as List<dynamic>;
-    return rows
-        .map((r) => DailyStat.fromMap(Map<String, dynamic>.from(r as Map)))
-        .toList();
+    // WP-936: RPC tum zamanlar x uye x gun satiri dondurur; 20 uyeli grup
+    // 50 gunde 1000'i gecer ve max_rows yaniti sessizce keserdi (sirasiz:
+    // rastgele gunler dusuyordu). (day, user_id) GROUP BY anahtari -> tekil,
+    // kararli sirayla sayfalanir.
+    final rows = await fetchAllPostgrestPages(
+      (start, end) => _client
+          .rpc('group_daily_totals', params: {'p_group_id': groupId})
+          .order('day', ascending: true)
+          .order('user_id', ascending: true)
+          .range(start, end),
+    );
+    return rows.map(DailyStat.fromMap).toList();
   }
 
   @override
