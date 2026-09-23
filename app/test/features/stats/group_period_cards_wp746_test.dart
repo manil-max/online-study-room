@@ -436,7 +436,9 @@ void main() {
       expect(container.read(statsPeriodProvider).offset, -1);
 
       final window = trendWindow(tester);
-      expect(window, hasLength(30));
+      // WP-925: pencere donemin KENDISI — Temmuz'un 31 gunu (eskiden sabit 30).
+      expect(window, hasLength(31));
+      expect(window.first.day, DateTime(2026, 7, 1));
       expect(
         window.last.day,
         DateTime(2026, 7, 31),

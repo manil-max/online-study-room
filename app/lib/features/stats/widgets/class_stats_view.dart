@@ -24,6 +24,7 @@ import '../charts/gauge_chart.dart';
 import 'daily_line_chart.dart';
 import 'leaderboard_rank_chart.dart';
 import 'member_chart_colors.dart';
+import 'personal_period_cards.dart' show statsDaySpan;
 import 'stats_desktop_layout.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
@@ -199,15 +200,14 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final memberCount = members.isEmpty ? 1 : members.length;
     final classAvg = classTotal ~/ memberCount;
     final maxSeconds = rows.isEmpty ? 0 : rows.first.seconds;
-    // Üst dönem → bar/çizgi penceresi (7 veya 30; yerelde ayrı seçici yok).
-    final chartDays = period.chartDays(options: const [7, 14, 30]);
-    final trendDays =
-        period == StatsPeriod.month ||
-            period == StatsPeriod.year ||
-            period == StatsPeriod.all ||
-            period == StatsPeriod.custom
-        ? 30
-        : chartDays;
+    // 🔴 WP-925: grup eğilimi (ve liderlik geçmişi) penceresi DÖNEMİN
+    // KENDİSİDİR. Eskiden `period.chartDays()` = bugünde biten kayan 7/30 gündü:
+    // "Bu hafta" (21–27 Eyl) başlığı altında grafik 17–23 Eyl'i, "Bu ay"da
+    // 25 Ağu–23 Eyl'i çiziyordu; hemen üstteki "Sıralama" o günleri saymıyordu.
+    // Dönem ≤31 günse pencere dönemin başından `to`ya (bugün / kapanış günü)
+    // kadardır; Yıl/Tümü/uzun Özel'de son 30 gün, başlıkta "30 gün" yazar.
+    final periodSpan = statsDaySpan(from, to);
+    final trendDays = periodSpan <= 31 ? periodSpan : 30;
     // WP-253: Sıralama satırından üye serisi rozeti kaldırıldı. Ateş ikonu
     // uygulamanın her yerinde "hedef tutturma serisi" demek (sayaç kartı,
     // grup hedefi başlığı); burada ise `studyStreak` = "üst üste en az 1 sn

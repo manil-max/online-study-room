@@ -3,13 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/core/stats/stats_period.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
+import 'package:online_study_room/data/models/daily_stat.dart';
+import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/models/subject.dart';
 import 'package:online_study_room/data/providers/stats_period_provider.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
+import 'package:online_study_room/features/stats/widgets/class_stats_view.dart';
 import 'package:online_study_room/features/stats/widgets/daily_bar_chart.dart';
+import 'package:online_study_room/features/stats/widgets/daily_line_chart.dart';
 import 'package:online_study_room/features/stats/widgets/period_chart_window.dart';
 import 'package:online_study_room/features/stats/widgets/personal_period_cards.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
@@ -152,6 +157,72 @@ void main() {
     expect(trend.labels.first, '1/9');
     expect(trend.labels.last, '23/9');
     expect(find.text('Günlük toplam'), findsOneWidget);
+  });
+
+  group('Grup günlük trendi (ClassStatsView, saat enjekte)', () {
+    Future<List<DayTotal>> pumpGroup(
+      WidgetTester tester,
+      StatsPeriod period,
+    ) async {
+      tester.view.physicalSize = const Size(2400, 12000);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.listen(statsPeriodProvider, (_, _) {});
+      container.read(statsPeriodProvider.notifier).setPeriod(period);
+      final members = [
+        Profile(id: 'u1', displayName: 'Ada', createdAt: DateTime(2026)),
+        Profile(id: 'u2', displayName: 'Bora', createdAt: DateTime(2026)),
+      ];
+      final stats = [
+        for (var d = 1; d <= 23; d++) ...[
+          DailyStat(userId: 'u1', day: DateTime(2026, 9, d), seconds: 3600),
+          DailyStat(userId: 'u2', day: DateTime(2026, 9, d), seconds: 1800),
+        ],
+        // Önceki hafta/ay: pencereye SIZMAMALI.
+        DailyStat(userId: 'u1', day: DateTime(2026, 8, 31), seconds: 9000),
+      ];
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('tr'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ClassStatsView(
+                stats: stats,
+                members: members,
+                currentUserId: 'u1',
+                groupGoalMinutes: 120,
+                clock: () => _now,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      return tester.widget<DailyLineChart>(find.byType(DailyLineChart)).days;
+    }
+
+    testWidgets('"Bu hafta": pencere Pazartesi 21 Eyl – bugün, önceki '
+        'haftaya taşmaz (kayan 7 gün değil)', (tester) async {
+      final days = await pumpGroup(tester, StatsPeriod.week);
+      expect(days.first.day, DateTime(2026, 9, 21));
+      expect(days.last.day, DateTime(2026, 9, 23));
+      expect(find.text('Grup günlük trendi · 3 gün'), findsOneWidget);
+    });
+
+    testWidgets('"Bu ay": pencere ayın 1\'i – bugün (ağustos yok)', (
+      tester,
+    ) async {
+      final days = await pumpGroup(tester, StatsPeriod.month);
+      expect(days.first.day, DateTime(2026, 9, 1));
+      expect(days.last.day, DateTime(2026, 9, 23));
+      expect(find.text('Grup günlük trendi · 23 gün'), findsOneWidget);
+    });
   });
 
   group('saf model (saat enjekte)', () {

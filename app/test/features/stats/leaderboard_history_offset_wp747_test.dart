@@ -187,11 +187,13 @@ void main() {
       expect(bars, hasLength(3));
       expect(
         bars.first.spots,
-        hasLength(30),
-        reason: 'Ay donemi 30 gunluk pencere cizer.',
+        // WP-925: pencere donemin KENDISI — Temmuz 31 gun (eskiden sabit 30,
+        // 1 Temmuz tohuma dusuyordu).
+        hasLength(31),
+        reason: 'Ay donemi ayin tamamini cizer.',
       );
 
-      // Gecen ay penceresinde (2 – 31 Temmuz) yalniz Ada calisti (5 Temmuz,
+      // Gecen ay penceresinde (1 – 31 Temmuz) yalniz Ada calisti (5 Temmuz,
       // 9000 sn). Bora'nin 15 Agustos'u ve Cem'in 19 Agustos'u DISARIDADIR,
       // yani ikisi de sifirda ve sirayi uye sirasi belirler.
       expect(
