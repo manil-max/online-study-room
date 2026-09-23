@@ -918,7 +918,11 @@ class _MatrixCardState extends State<_MatrixCard> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${widget.config.w}×${widget.config.h}',
+                      // WP-933: ızgara ölçüsü değil, insan diliyle boyut.
+                      widget.config.humanSizeLabel(
+                        AppLocalizations.of(context),
+                        widget.columns,
+                      ),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1065,9 +1069,12 @@ class _SizePanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  AppLocalizations.of(
-                    context,
-                  ).homeKartBoyutIpucu(config.w, config.h),
+                  AppLocalizations.of(context).homeKartBoyutEtiketi(
+                    config.humanSizeLabel(
+                      AppLocalizations.of(context),
+                      columns,
+                    ),
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(

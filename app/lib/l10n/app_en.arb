@@ -2816,6 +2816,10 @@
   "@homeGenel": {
     "description": "Home user-facing text. Source: Genel"
   },
+  "homeGenis": "Wide",
+  "@homeGenis": {
+    "description": "Home edit mode: human size label for a full-width, short card."
+  },
   "homeGithubTarziCalismaYogunlugu": "GitHub style study intensity heat map",
   "@homeGithubTarziCalismaYogunlugu": {
     "description": "Home user-facing text. Source: GitHub tarzı çalışma yoğunluğu ısı haritası"
@@ -2935,6 +2939,15 @@
   "homeKartAciklamaRitim": "Which days and hours of the week you study",
   "@homeKartAciklamaRitim": {
     "description": "Card picker description of the 'Weekly rhythm' card."
+  },
+  "homeKartBoyutEtiketi": "Size: {size}",
+  "@homeKartBoyutEtiketi": {
+    "description": "Home edit mode: size line in the resize panel; size is a human label (Small/Medium/Large/Wide).",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
   },
   "homeKartEkle": "Add card",
   "@homeKartEkle": {
@@ -6096,18 +6109,6 @@
     "placeholders": {
       "code": {
         "type": "String"
-      }
-    }
-  },
-  "homeKartBoyutIpucu": "Size {width}×{height} • tap to adjust",
-  "@homeKartBoyutIpucu": {
-    "description": "Home edit mode: card size hint under the card title.",
-    "placeholders": {
-      "width": {
-        "type": "int"
-      },
-      "height": {
-        "type": "int"
       }
     }
   },

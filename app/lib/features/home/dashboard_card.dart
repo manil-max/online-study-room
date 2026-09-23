@@ -402,6 +402,20 @@ class DashboardCardConfig {
     return DashboardCardSize.medium;
   }
 
+  /// 🔴 WP-933: düzenleme modu kartın boyutunu ızgara ölçüsüyle ("32×28")
+  /// yazıyordu — kullanıcı için anlamsız bir teknik sayı. İnsan diliyle tek
+  /// kelime: tam genişlikte ve kısa (yükseklik ≤ yarım ekran genişliği)
+  /// şerit "Geniş"; gerisi kapladığı alana göre Küçük / Orta / Büyük
+  /// (varsayılan sayaç 32×28 → Büyük, yarım kart 16×16 → Orta).
+  String humanSizeLabel(AppLocalizations l10n, int columns) {
+    final wide = w * 6 >= columns * 5;
+    if (wide && h * 2 <= columns) return l10n.homeGenis;
+    final area = (w * h) / (columns * columns);
+    if (area < 0.15) return l10n.homeKucuk;
+    if (area < 0.45) return l10n.homeOrta;
+    return l10n.homeBuyuk;
+  }
+
   /// R3'e kadar eski `SizedBox(height: ...)` kullanan render için hücre satırını
   /// nominal piksele çevirir. Kalıcı veri yine hücre tabanlıdır.
   double get effectiveHeight => h * _kLegacyNominalRowHeight;
