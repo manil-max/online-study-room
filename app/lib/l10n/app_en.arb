@@ -3550,6 +3550,8 @@
   "@profileGorunumAnaSayfaSayac": {
     "description": "Profile user-facing text. Source: Görünüm, Ana Sayfa, sayaç ve bildirimler"
   },
+  "profileGunlukHedefAciklama": "How long you want to study each day. Days you reach it grow your streak.",
+  "@profileGunlukHedefAciklama": {"description": "Body of the daily goal editor dialog (title is profileGunlukHedef)."},
   "profileGunlukHedef": "Daily goal",
   "@profileGunlukHedef": {
     "description": "Profile user-facing text. Source: Günlük hedef"

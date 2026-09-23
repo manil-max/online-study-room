@@ -68,6 +68,22 @@ Widget? groupCardGate(
   );
 }
 
+/// WP-937: bu genişliğin altında düğmeler tam genişlik ve tek satır dizilir.
+const double _narrowButtonsWidth = 260;
+
+final ButtonStyle _narrowButtonStyle = ButtonStyle(
+  minimumSize: WidgetStateProperty.all(const Size(0, 40)),
+  padding: WidgetStateProperty.all(
+    const EdgeInsets.symmetric(horizontal: 10),
+  ),
+  visualDensity: VisualDensity.compact,
+);
+
+Widget _singleLine(String text) => FittedBox(
+  fit: BoxFit.scaleDown,
+  child: Text(text, maxLines: 1, softWrap: false),
+);
+
 /// Grup kartları için "henüz grupta değilsin" yer tutucusu.
 class GroupCardShell extends StatelessWidget {
   const GroupCardShell({
@@ -131,26 +147,61 @@ class GroupCardShell extends StatelessWidget {
                 ),
               if (onCreateGroup != null || onJoinGroup != null) ...[
                 SizedBox(height: showBlurb ? 16 : 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (onCreateGroup != null)
-                      FilledButton.tonalIcon(
-                        onPressed: onCreateGroup,
-                        icon: const Icon(Icons.add),
-                        label: Text(
-                          AppLocalizations.of(context).homeGrupOlustur,
+                // WP-937: yarım genişlikli hücrede (360 dp telefonda ~150 dp
+                // içerik) `Wrap` düğmeleri alt alta dizip ETİKETLERİ iki satıra
+                // kırıyordu ("Grup / oluştur"); düğmeler 60 dp'ye uzuyor,
+                // ikincisi kartın altında kesiliyordu (UX denetimi e01).
+                // Dar hücrede düğmeler tam genişlik, tek satır, gerekirse
+                // yazı küçülür — asla kırılmaz, asla kesilmez.
+                if (constraints.maxWidth < _narrowButtonsWidth)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (onCreateGroup != null)
+                        FilledButton.tonalIcon(
+                          onPressed: onCreateGroup,
+                          style: _narrowButtonStyle,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: _singleLine(
+                            AppLocalizations.of(context).homeGrupOlustur,
+                          ),
                         ),
-                      ),
-                    if (onJoinGroup != null)
-                      OutlinedButton.icon(
-                        onPressed: onJoinGroup,
-                        icon: const Icon(Icons.login),
-                        label: Text(AppLocalizations.of(context).homeKodaKatil),
-                      ),
-                  ],
-                ),
+                      if (onCreateGroup != null && onJoinGroup != null)
+                        const SizedBox(height: 8),
+                      if (onJoinGroup != null)
+                        OutlinedButton.icon(
+                          onPressed: onJoinGroup,
+                          style: _narrowButtonStyle,
+                          icon: const Icon(Icons.login, size: 18),
+                          label: _singleLine(
+                            AppLocalizations.of(context).homeKodaKatil,
+                          ),
+                        ),
+                    ],
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (onCreateGroup != null)
+                        FilledButton.tonalIcon(
+                          onPressed: onCreateGroup,
+                          icon: const Icon(Icons.add),
+                          label: Text(
+                            AppLocalizations.of(context).homeGrupOlustur,
+                          ),
+                        ),
+                      if (onJoinGroup != null)
+                        OutlinedButton.icon(
+                          onPressed: onJoinGroup,
+                          icon: const Icon(Icons.login),
+                          label: Text(
+                            AppLocalizations.of(context).homeKodaKatil,
+                          ),
+                        ),
+                    ],
+                  ),
               ],
             ],
           );

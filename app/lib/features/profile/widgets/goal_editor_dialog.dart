@@ -46,8 +46,9 @@ class _GoalEditorDialogState extends State<_GoalEditorDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // WP-931 eşi: gövde başlığı tekrarlamaz, ne işe yaradığını söyler.
           Text(
-            l10n.profileGunlukHedef,
+            l10n.profileGunlukHedefAciklama,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

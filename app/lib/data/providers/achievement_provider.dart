@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 import '../models/achievement_ledger.dart';
 import '../models/achievement_metric_progress.dart';
+import '../models/profile.dart' show kDefaultDailyGoalMinutes;
 import '../models/study_session.dart';
 import '../repositories/achievement_repository.dart';
 import '../repositories/in_memory/in_memory_achievement_repository.dart';
@@ -105,7 +106,8 @@ final processAchievementEventProvider =
         final repo = ref.read(achievementRepositoryProvider);
 
         List<StudySession> sessions = const [];
-        var goalMinutes = 360;
+        // WP-922: kişisel varsayılan hedef tek kaynaktan (120 dk).
+        var goalMinutes = kDefaultDailyGoalMinutes;
         if (!SupabaseConfig.isConfigured) {
           // InMemory: metrik istemci oturumlarından (demo); XP yine engine ledger'da.
           try {
@@ -116,7 +118,7 @@ final processAchievementEventProvider =
           try {
             goalMinutes = ref.read(dailyGoalMinutesProvider);
           } catch (_) {
-            goalMinutes = 360;
+            goalMinutes = kDefaultDailyGoalMinutes;
           }
         }
 
