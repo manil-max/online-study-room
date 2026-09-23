@@ -12,6 +12,7 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import 'bar_value_labels.dart';
 
 /// WP-745 — Kişisel sekmesinin **dönem başına** kart kümesi ve o kümeye özgü
 /// yeni kartlar.
@@ -183,10 +184,15 @@ List<MonthTotal> monthlyTotals(
 /// Aylık dağılım çubuk grafiği (y: saat). [DailyBarChart] ile aynı hizadadır —
 /// aynı `BarChart`, aynı renk, aynı "boş kovada etiket yok" kuralı — yalnız
 /// kova gün değil AYdır, o yüzden alt eksende gün numarası değil ay adı yazar.
+/// WP-924: süre etiketi yalnız komşusuna değmeyen aylarda kalıcıdır
+/// ([pickBarValueLabels]); 12 dolu ayda "83sa 52dk" yazıları iç içe geçiyordu.
 class MonthlyBarChart extends StatelessWidget {
   const MonthlyBarChart({super.key, required this.months});
 
   final List<MonthTotal> months;
+
+  static const _barWidth = 10.0;
+  static const _bottomReserved = 28.0;
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +205,45 @@ class MonthlyBarChart extends StatelessWidget {
     // Kova ay olduğu için birim dakika değil SAAT: 12 aylık toplam dakikayla
     // çizilseydi eksen dört haneli olurdu.
     final maxY = maxSeconds <= 0 ? 1.0 : (maxSeconds / 3600) * 1.32;
+    final valueLabelStyle = theme.textTheme.labelSmall!.copyWith(
+      color: theme.colorScheme.onSurface,
+      fontWeight: FontWeight.w700,
+      fontSize: 9,
+    );
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelled = pickBarValueLabels(
+          labelSizes: [
+            for (final m in months)
+              m.seconds > 0
+                  ? measureChartLabel(
+                      context,
+                      formatHuman(m.seconds),
+                      valueLabelStyle,
+                    )
+                  : null,
+          ],
+          values: [for (final m in months) m.seconds / 3600],
+          maxY: maxY,
+          barWidth: _barWidth,
+          chartSize: Size(
+            constraints.maxWidth,
+            constraints.maxHeight - _bottomReserved,
+          ),
+        );
+        return _chart(theme, names, maxY, labelled, valueLabelStyle);
+      },
+    );
+  }
+
+  Widget _chart(
+    ThemeData theme,
+    List<String> names,
+    double maxY,
+    Set<int> labelled,
+    TextStyle valueLabelStyle,
+  ) {
     return BarChart(
       BarChartData(
         maxY: maxY,
@@ -210,17 +254,11 @@ class MonthlyBarChart extends StatelessWidget {
             getTooltipColor: (_) => Colors.transparent,
             tooltipPadding: EdgeInsets.zero,
             tooltipMargin: 2,
+            fitInsideHorizontally: true,
             getTooltipItem: (group, _, _, _) {
               final seconds = months[group.x].seconds;
               if (seconds <= 0) return null;
-              return BarTooltipItem(
-                formatHuman(seconds),
-                theme.textTheme.labelSmall!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 9,
-                ),
-              );
+              return BarTooltipItem(formatHuman(seconds), valueLabelStyle);
             },
           ),
         ),
@@ -237,7 +275,7 @@ class MonthlyBarChart extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 28,
+              reservedSize: _bottomReserved,
               getTitlesWidget: (value, meta) {
                 final i = value.toInt();
                 if (i < 0 || i >= months.length) return const SizedBox.shrink();
@@ -263,14 +301,14 @@ class MonthlyBarChart extends StatelessWidget {
           for (var i = 0; i < months.length; i++)
             BarChartGroupData(
               x: i,
-              showingTooltipIndicators: months[i].seconds > 0
+              showingTooltipIndicators: labelled.contains(i)
                   ? const [0]
                   : const [],
               barRods: [
                 BarChartRodData(
                   toY: months[i].seconds / 3600,
                   color: theme.colorScheme.primary,
-                  width: 10,
+                  width: _barWidth,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(3),
                   ),
@@ -440,7 +478,9 @@ class PersonalRecordsCard extends ConsumerWidget {
     DateTime? firstDay;
     for (final entry in totals.entries) {
       if (entry.value <= 0) continue;
-      if (firstDay == null || entry.key.isBefore(firstDay)) firstDay = entry.key;
+      if (firstDay == null || entry.key.isBefore(firstDay)) {
+        firstDay = entry.key;
+      }
     }
     final peak = peakDay(totals);
     // WP-804: döşeme ikonları kart yüzeyinde → zemin zorunlu.
