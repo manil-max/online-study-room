@@ -274,7 +274,7 @@ void main() {
             'hatanin yanindan geciyor.',
       );
       // Deger gercekten kaydedilmedi.
-      expect(auth.currentUser?.dailyGoalMinutes, 360);
+      expect(auth.currentUser?.dailyGoalMinutes, 120);
     });
 
     testWidgets('basaride hata CIKMAZ, deger yazilir', (tester) async {
@@ -284,7 +284,7 @@ void main() {
       await editGoal(tester);
 
       expect(auth.goalCalls, 1);
-      expect(auth.currentUser?.dailyGoalMinutes, 361);
+      expect(auth.currentUser?.dailyGoalMinutes, 121);
       expect(find.text(l10n.authBeklenmeyenBirHataOlustu), findsNothing);
     });
   });

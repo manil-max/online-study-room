@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/achievement_ledger.dart';
 import '../../models/achievement_metric_progress.dart';
+import '../../models/profile.dart' show kDefaultDailyGoalMinutes;
 import '../../models/study_session.dart';
 import '../achievement_repository.dart';
 
@@ -77,7 +78,7 @@ class SupabaseAchievementRepository implements AchievementRepository {
     required String eventType,
     Map<String, dynamic> payload = const {},
     List<StudySession> sessions = const [],
-    int dailyGoalMinutes = 360,
+    int dailyGoalMinutes = kDefaultDailyGoalMinutes,
     String? userId,
     DateTime? evaluationTime,
   }) async {

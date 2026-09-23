@@ -24,6 +24,10 @@ insert into auth.users(id, email, raw_user_meta_data)
 select user_id, route || '@equal-source.invalid',
   jsonb_build_object('display_name', 'Route ' || route)
 from route_fixture;
+-- WP-922 (0145): bu test 360 dk varsayilan hedefle yazildi; oturumlar
+-- yazilmadan once o degere sabitlenir (yeni varsayilan `071`de sinanir).
+update public.profiles set daily_goal_minutes = 360
+where id in (select user_id from route_fixture);
 
 insert into public.groups(id, name, invite_code, created_by, created_at)
 values (
@@ -129,6 +133,10 @@ insert into auth.users(id, email, raw_user_meta_data) values (
   'verified-native@equal-source.invalid',
   '{"display_name":"Verified Native"}'::jsonb
 );
+-- WP-922 (0145): bu test 360 dk varsayilan hedefle yazildi; oturumlar
+-- yazilmadan once o degere sabitlenir (yeni varsayilan `071`de sinanir).
+update public.profiles set daily_goal_minutes = 360
+where id = '10000000-0000-0000-0000-000000000016';
 insert into public.group_members(group_id, user_id, role, joined_at) values (
   '20000000-0000-0000-0000-000000000011',
   '10000000-0000-0000-0000-000000000016', 'member', now() - interval '60 days'
@@ -266,6 +274,13 @@ insert into auth.users(id, email, raw_user_meta_data) values
     '{"display_name":"Daily Leader"}'::jsonb),
   ('10000000-0000-0000-0000-000000000022', 'daily-follower@equal-source.invalid',
     '{"display_name":"Daily Follower"}'::jsonb);
+-- WP-922 (0145): bu test 360 dk varsayilan hedefle yazildi; oturumlar
+-- yazilmadan once o degere sabitlenir (yeni varsayilan `071`de sinanir).
+update public.profiles set daily_goal_minutes = 360
+where id in (
+  '10000000-0000-0000-0000-000000000021',
+  '10000000-0000-0000-0000-000000000022'
+);
 
 insert into public.groups(id, name, invite_code, created_by, created_at)
 values (

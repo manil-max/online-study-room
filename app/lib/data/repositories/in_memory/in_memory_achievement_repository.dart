@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../models/achievement_ledger.dart';
 import '../../models/achievement_metric_progress.dart';
+import '../../models/profile.dart' show kDefaultDailyGoalMinutes;
 import '../../models/study_session.dart';
 import '../achievement_repository.dart';
 
@@ -57,7 +58,7 @@ class InMemoryAchievementRepository implements AchievementRepository {
     required String eventType,
     Map<String, dynamic> payload = const {},
     List<StudySession> sessions = const [],
-    int dailyGoalMinutes = 360,
+    int dailyGoalMinutes = kDefaultDailyGoalMinutes,
     String? userId,
     DateTime? evaluationTime,
   }) async {

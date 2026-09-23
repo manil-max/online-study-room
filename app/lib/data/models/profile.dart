@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-/// Varsayılan günlük hedef (dakika) — 6 saat. Bkz. project.md §3.7.
-const int kDefaultDailyGoalMinutes = 360;
+/// Varsayılan günlük hedef (dakika) — 2 saat. Bkz. project.md §3.7.
+///
+/// WP-922: 6 saatti; yeni kullanıcı ilk gün "0sn / 6sa" görüp seriyi daha
+/// ilk gün kırıyordu. Sunucu eşi: `profiles.daily_goal_minutes default 120`
+/// (`0145`). Mevcut hesapların kayıtlı hedefi değişmez.
+const int kDefaultDailyGoalMinutes = 120;
 
 /// Kullanıcı profili. Supabase `profiles` tablosuna karşılık gelir (bkz. project.md §6).
 @immutable

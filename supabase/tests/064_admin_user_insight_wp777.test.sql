@@ -350,8 +350,8 @@ select is(
   'yalniz AKTIF uyelikler listelenir; ayrilinan grup gorunmez'
 );
 -- Seri, urunun TEK tanimindan (`_current_fire_streak_days`, 0136) gelir; burada
--- ikinci bir tanim yazilmadi. Sifir beklenir cunku gunluk hedef 360 dk
--- (`profiles.daily_goal_minutes` varsayilani, 0005) ve subject toplam 90 dk
+-- ikinci bir tanim yazilmadi. Sifir beklenir cunku gunluk hedef 120 dk
+-- (`profiles.daily_goal_minutes` varsayilani, 0145) ve subject toplam 90 dk
 -- calisti — yani hic tamamlanan gun yok, tetikleyici hic olay yazmadi.
 select is(
   (public.admin_user_insight(:'u_subject'::uuid) ->> 'current_streak_days')::int,

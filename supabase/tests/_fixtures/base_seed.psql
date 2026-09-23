@@ -15,6 +15,16 @@ values
   )
 on conflict (id) do nothing;
 
+-- WP-922 (0145): yeni hesabin varsayilan hedefi 360 -> 120 dk oldu. Fikstur
+-- hesaplarinin uzerine kurulu testlerin hedef aritmetigi 360 dk'ya dayanir;
+-- oturumlar yazilmadan ONCE (tamamlama tetikleyicisi insert'te kosar) eski
+-- degere sabitlenir. Yeni varsayilan `071_default_daily_goal_wp922` sinar.
+update public.profiles set daily_goal_minutes = 360
+where id in (
+  '10000000-0000-0000-0000-000000000001',
+  '10000000-0000-0000-0000-000000000002'
+);
+
 insert into public.groups (id, name, invite_code, created_by, created_at)
 values (
   '20000000-0000-0000-0000-000000000001',

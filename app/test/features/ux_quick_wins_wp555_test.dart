@@ -248,11 +248,12 @@ void main() {
     ) async {
       final auth = await pumpTimerCard(tester);
       expect(find.text('Günlük hedef'), findsOneWidget);
-      // Varsayilan 360 dk hedef satirinda okunur ("<bugun> / <hedef>").
-      // Beklenen metin kartla AYNI bicimlendiriciden uretilir; sabit '6sa'
+      // Varsayilan 120 dk hedef (WP-922; onceden 360) satirinda okunur
+      // ("<bugun> / <hedef>").
+      // Beklenen metin kartla AYNI bicimlendiriciden uretilir; sabit '2sa'
       // yazmak testi activeAppLocale genel durumuna bagimli kilardi.
       expect(
-        find.textContaining(formatHumanSeconds(360 * 60)),
+        find.textContaining(formatHumanSeconds(120 * 60)),
         findsWidgets,
       );
 
@@ -267,10 +268,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(auth.goalCalls, 1);
-      expect(auth.lastGoalMinutes, 361);
-      expect(auth.currentUser?.dailyGoalMinutes, 361);
+      expect(auth.lastGoalMinutes, 121);
+      expect(auth.currentUser?.dailyGoalMinutes, 121);
       expect(
-        find.textContaining(formatHumanSeconds(361 * 60)),
+        find.textContaining(formatHumanSeconds(121 * 60)),
         findsWidgets,
       );
     });
@@ -280,8 +281,8 @@ void main() {
       await tester.tap(find.text('Günlük hedef'));
       await tester.pumpAndSettle();
 
-      // 6 sa 0 dk -> 0 sa 0 dk.
-      for (var i = 0; i < 6; i++) {
+      // 2 sa 0 dk -> 0 sa 0 dk.
+      for (var i = 0; i < 2; i++) {
         await tester.tap(dialogIcon(Icons.remove).first);
         await tester.pumpAndSettle();
       }
@@ -293,7 +294,7 @@ void main() {
 
       expect(auth.goalCalls, 0);
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(auth.currentUser?.dailyGoalMinutes, 360);
+      expect(auth.currentUser?.dailyGoalMinutes, 120);
 
       await tester.tap(find.text('Vazgeç'));
       await tester.pumpAndSettle();
