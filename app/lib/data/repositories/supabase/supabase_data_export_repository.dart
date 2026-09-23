@@ -151,6 +151,9 @@ class SupabaseDataExportRepository implements DataExportRepository {
           : filter.gte('start_time', gte.toUtc().toIso8601String());
       final rows = await withTime
           .order('start_time', ascending: false)
+          // WP-936: aynı başlangıç saatli iki oturum sayfa sınırında
+          // tekrarlanmasın/atlanmasın — ikincil anahtar sabit sıra verir.
+          .order('id', ascending: false)
           .range(from, from + _pageSize - 1);
       final batch = (rows as List)
           .map((r) => StudySession.fromMap(Map<String, dynamic>.from(r as Map)))
