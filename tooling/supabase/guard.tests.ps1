@@ -218,7 +218,7 @@ Assert-Equal ([bool]$contract.staging.release_enabled) $true 'WP-844: GitHub kan
 Assert-Equal $contract.production.migration_head '0145' 'production hedefi 0145: yeni hesap gunluk hedefi 2 saat (WP-922)'
 # 0135 production apply KOSTU (run 31724163402, post-check 0135|0135|0135,
 # canli backfill 8 kullanici) ve deploy kapisi yeniden kilitlendi.
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true '0145 production apply icin kapi ACIK (staging 35934465021 kanitli, yalniz varsayilan degisir)'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false '0145 production apply KOSTU (run 35935050810, post-check 0145|0145|0145) ve kapi yeniden kilitlendi'
 # 2026-08-19 (WP-739): v70 YAYINLANDI (tag v70 + pubspec 1.0.70+70), yani
 # 2026-08-13'te acilan tek seferlik pencere TUKENDI. Kontratin kendi taahhudu
 # "Release Orchestrator kosar kosmaz yeniden kilitlenir ve bu iddia $false'a

@@ -9,7 +9,7 @@
   },
   "production": {
     "migration_head": "0145",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN 2026-09-24 for 0145 (default_daily_goal_two_hours, WP-922). Staging proven first (dry-run 35934183562, apply 35934465021, post-check 0145|0145|0145). Default-only change: existing profiles keep their goal. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. re-lock: deploy_enabled goes back to false the moment the production post-check is read."
+    "hold_reason": "RE-LOCKED 2026-09-24 after the 0145 production apply SUCCEEDED: run 35935050810, post-check printed 0145|0145|0145 on jiphfrpzvkpzubbkhrwb. Staging proven first (dry-run 35934183562, apply 35934465021); production dry-run 35934772275 listed only 0145. Applied with NO BACKUP (free plan, no PITR) - owner standing acceptance 2026-07-27. release_enabled stays OPEN; the release GO string is separate and must be typed fresh."
   }
 }
