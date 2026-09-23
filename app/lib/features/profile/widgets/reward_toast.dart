@@ -76,7 +76,14 @@ class _RewardToastState extends State<RewardToast> {
     }
 
     final nextRank = widget.crownRank;
-    if (_lastRank != null && nextRank != null && nextRank != _lastRank) {
+    // 🔴 WP-935: ham metin karşılaştırılıyordu. Satır yokken istemci
+    // varsayılanı eski ad `'bronze'`, ilk oturumdan sonra sunucu
+    // `'bronze_beginner'` yazıyor → yeni kullanıcı en alt rütbe için
+    // "Bronz Taç" kutlaması görüyordu. Yalnız kademe YÜKSELİNCE kutlanır:
+    // aynı rütbenin iki adı ve düşüş kutlama değildir.
+    if (_lastRank != null &&
+        nextRank != null &&
+        crownTierIndex(nextRank) > crownTierIndex(_lastRank!)) {
       _celebrationTimer?.cancel();
       setState(() => _celebratingRank = nextRank);
       _celebrationTimer = Timer(const Duration(milliseconds: 1800), () {
