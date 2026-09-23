@@ -85,12 +85,15 @@ void main() {
       await tester.pumpAndSettle();
 
       if (locale.languageCode == 'tr') {
-        expect(find.text('Günlük hedef'), findsNWidgets(2));
+        // WP-937: gövde başlığı tekrar etmez, açıklama yazar.
+        expect(find.text('Günlük hedef'), findsOneWidget);
+        expect(find.textContaining('serini büyütür'), findsOneWidget);
         expect(find.text('Saat'), findsOneWidget);
         expect(find.text('Dakika'), findsOneWidget);
         expect(find.text('Kaydet'), findsOneWidget);
       } else {
-        expect(find.text('Daily goal'), findsNWidgets(2));
+        expect(find.text('Daily goal'), findsOneWidget);
+        expect(find.textContaining('grow your streak'), findsOneWidget);
         // WP-222: saat birimi etiketi "Clock" → "Hours" (classroomSaat).
         expect(find.text('Hours'), findsOneWidget);
         expect(find.text('Minute'), findsOneWidget);
