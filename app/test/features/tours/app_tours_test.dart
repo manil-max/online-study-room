@@ -47,9 +47,19 @@ void main() {
   // ekranı birer balon kazandı. Her yeni tur **tek adım**; sayı hâlâ sabit.
   //
   // 🔴 WP-849 (sahip): yedinci tur Ayarlar. Sahip "tek kart, sığmazsa 2. kart"
-  // dedi; üç yer (görünüm, izinler, hesap) aşağıdaki iki satır kapısına tek
-  // balonda sığmadı, bu yüzden tam olarak iki adım.
-  test('seven tours have stable versioned ids and short readable steps', () {
+  // dedi; üç yer (görünüm, izinler, hesap) tek balona sığmadı, bu yüzden
+  // tam olarak iki adım.
+  //
+  // 🔴 WP-920 (sahip): *"kartlardaki bilgiler çok az, hiçbir şeyi anlatmıyor
+  // … çok karta gerek yok, karttaki bilgileri arttır."* Kart SAYILARI aynı
+  // kaldı; değişen gövdenin kapısı. Eski kapı "en fazla iki satır, 110
+  // karakter"di ve turları telgraf üslubuna zorluyordu. Yeni kapı iki yönlü:
+  //   - ÜST sınır: cihazda en fazla 7 satır / 280 karakter (360 dp telefonda
+  //     balon ekranın yarısını geçmesin; küçük ekranda büyük yazı için balon
+  //     içinde kaydırma var, bkz. `rich_tours_wp920_test.dart`).
+  //   - ALT sınır: en az 120 karakter. Tek kısa cümle geri gelirse bu kapı
+  //     kırılır — sahibin şikâyeti tam olarak oydu.
+  test('seven tours have stable versioned ids and rich readable steps', () {
     final overflowingSteps = <String>[];
     for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
       for (final hasContent in [true, false]) {
@@ -58,17 +68,19 @@ void main() {
         // WP-799: ilk balon artık kart düzenlemeyi değil sayacı öğretiyor → v3.
         // 🔴 `stats` sürüm 2'den başlar: `stats.v1` WP-324'te gerçekten
         // yayınlanmış ve WP-417'de kaldırılmıştı, o anahtar hâlâ cihazlarda.
+        // 🔴 WP-920: metinlerin hepsi değişti → her tur bir sürüm ileri.
         expect(tours.map((tour) => tour.storageId), [
-          'home.v4',
-          'dashboard_edit.v1',
-          'stats.v2',
-          'groups.v1',
-          'campfire.v1',
-          'profile.v1',
-          'settings.v1',
+          'home.v5',
+          'dashboard_edit.v2',
+          'stats.v3',
+          'groups.v2',
+          'campfire.v2',
+          'profile.v2',
+          'settings.v2',
         ]);
         expect(tours.last.steps, hasLength(2));
         // 🔴 WP-837 sahip şartı: üç yüzeyin her birinde **tek** kart.
+        // WP-920 bunu değiştirmedi ("çok karta gerek yok").
         for (final single in tours.take(3)) {
           expect(single.steps, hasLength(1), reason: single.storageId);
         }
@@ -77,47 +89,49 @@ void main() {
 
         for (final tour in tours) {
           expect(tour.steps, isNotEmpty);
-          expect(tour.steps.length, lessThanOrEqualTo(4));
+          expect(tour.steps.length, lessThanOrEqualTo(2));
           expect(
             tour.steps.map((step) => step.id).toSet(),
             hasLength(tour.steps.length),
           );
           for (final step in tour.steps) {
+            final where = '${l10n.localeName}:${tour.storageId}/${step.id}';
             expect(step.text.trim(), isNotEmpty);
             expect(step.text, isNot(contains('\n')));
-            expect(step.text.length, lessThanOrEqualTo(110));
+            expect(step.text.length, lessThanOrEqualTo(280), reason: where);
+            expect(
+              step.text.length,
+              greaterThanOrEqualTo(120),
+              reason: '$where: tek kısa cümle geri geldi (WP-920)',
+            );
+            expect(step.title, isNotNull, reason: where);
             // 🔴 WP-837 — ÖLÇÜM GENİŞLİĞİ KALİBRE EDİLDİ (288 → 576).
             //
             // Balonun gerçek içerik genişliği 360 dp ekranda 288 dp'dir
-            // (`_TourBubbleLayout` 328 dp tavan − 2×20 dp iç boşluk) ve bu
-            // sayı DOĞRU. Yanlış olan fonttu: `flutter test` her glifi
-            // `fontSize` kadar KARE çizer, yani 14 px'te satır başına ~20
-            // karakter sayar; cihazdaki orantılı font (Roboto 14 sp, ortalama
-            // ~7 dp) aynı 288 dp'ye ~41 karakter sığdırır. Kapı bu yüzden
-            // cihazda iki satıra rahat sığan metni "taştı" diye reddediyordu
-            // ve turları telgraf üslubuna zorluyordu.
+            // (balon 328 dp tavan − 2×20 dp iç boşluk) ve bu sayı DOĞRU.
+            // Yanlış olan fonttu: `flutter test` her glifi `fontSize` kadar
+            // KARE çizer, yani 14 px'te satır başına ~20 karakter sayar;
+            // cihazdaki orantılı font (Roboto 14 sp, ortalama ~7 dp) aynı
+            // 288 dp'ye ~41 karakter sığdırır. Ölçüm genişliği iki katına
+            // alınarak font farkı düzeltilir.
             //
-            // Ölçüm genişliği iki katına alınarak font farkı düzeltilir;
-            // iddia hâlâ "gövde CİHAZDA iki satırı geçmesin"dir. Üstteki 110
-            // karakterlik sert tavan da yerinde duruyor.
+            // WP-920: iddia artık "gövde CİHAZDA yedi satırı geçmesin".
             final bodyLayout = TextPainter(
               text: TextSpan(
                 text: step.text,
                 style: const TextStyle(fontSize: 14),
               ),
               textDirection: TextDirection.ltr,
-              maxLines: 2,
+              maxLines: 7,
             )..layout(maxWidth: 288 * 2);
             if (bodyLayout.didExceedMaxLines) {
-              overflowingSteps.add(
-                '${l10n.localeName}:${tour.storageId}/${step.id}',
-              );
+              overflowingSteps.add(where);
             }
           }
         }
       }
     }
-    expect(overflowingSteps, isEmpty, reason: 'Tour body exceeds two lines');
+    expect(overflowingSteps, isEmpty, reason: 'Tour body exceeds seven lines');
   });
 
   // 🔴 WP-799 — ÖLÇÜLEN ŞEY BAĞLANTI, TANIM DEĞİL.

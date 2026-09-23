@@ -3,10 +3,20 @@ import 'package:flutter/widgets.dart';
 import '../../core/tour/tour_models.dart';
 import '../../l10n/app_localizations.dart';
 
-/// WP-324: ürün yüzeylerinin kısa, sürümlü ve yerelleştirilmiş tur içerikleri.
+/// WP-324: ürün yüzeylerinin sürümlü ve yerelleştirilmiş tur içerikleri.
 ///
 /// Motor [TourDefinition] dışında ürün bilgisi taşımaz. Böylece metin, boş
 /// durum ve hedef seçimi feature katmanında kalır.
+///
+/// 🔴 WP-920 (sahip, bu dosyadaki eski "kısa tut" kararlarının ÜSTÜNDE):
+/// *"kartlardaki bilgiler çok az, hiçbir şeyi anlatmıyor … çok karta gerek
+/// yok, karttaki bilgileri arttır; ekrana yetmezse yeni kart ekle."*
+/// Kart SAYISI değişmedi; her kartın gövdesi ekranın ne olduğunu, orada ne
+/// yapılabildiğini ve nasıl yapıldığını anlatan birkaç cümle oldu. Her iddia
+/// koddan doğrulandı (ekran dosyaları her tanımın yorumunda). Metin değiştiği
+/// için **her turun sürümü bir arttı** — eski turu görmüş kullanıcı yenisini
+/// bir kez görür. Kapılar: `app_tours_test.dart` (satır/karakter tavanı ve
+/// alt sınırı), `rich_tours_wp920_test.dart` (320×568, yazı ölçeği 2.0).
 abstract final class AppTours {
   /// Ana ekran turu — **tek adım**.
   ///
@@ -21,9 +31,14 @@ abstract final class AppTours {
   /// düştü: tek cümle iki durumda da doğru — pano boşken "kart ekle",
   /// doluyken "yerlerini değiştir" aynı cümlenin içinde. Sürüm artışı şart,
   /// metin değişti.
+  ///
+  /// WP-920 (sürüm 4 → 5): tek kart kaldı ama artık panoyu, sayaç kartını
+  /// (ders + mod seçimi, "Çalışmaya başla", hedefe dokunup değiştirme —
+  /// `classroom/widgets/study_timer_card.dart`) ve uzun basınca açılan
+  /// düzenlemeyi (`home_screen.dart` `_MatrixCard.onLongPress`) anlatıyor.
   static TourDefinition home(AppLocalizations l10n) => TourDefinition(
     id: 'home',
-    version: 4,
+    version: 5,
     steps: [
       TourStep(
         id: 'overview',
@@ -38,9 +53,14 @@ abstract final class AppTours {
   /// Karta uzun basınca açılan mod bugüne dek hiç tanıtılmıyordu: kullanıcı
   /// kendini ızgaralı, tutamaçlı bir ekranın içinde buluyordu. Balon çapasız:
   /// mod ekranın tamamını değiştiriyor, işaret edilecek tek bir öğe yok.
+  ///
+  /// WP-920 (sürüm 1 → 2): taşıma (`LongPressDraggable`), köşe tutamaçları ve
+  /// alttaki −/+ boyut paneli, kırmızı "Kaldır", üst şeritteki "+ Kart ekle",
+  /// otomatik kayıt (`dashboardLayoutProvider.setBounds(persist: true)`) ve
+  /// "Bitti" (✓) ile çıkış — hepsi `home_screen.dart` içinde.
   static TourDefinition dashboardEdit(AppLocalizations l10n) => TourDefinition(
     id: 'dashboard_edit',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: 'arrange',
@@ -56,9 +76,15 @@ abstract final class AppTours {
   /// kullanıldı (WP-324 dönem tanıtımı) ve WP-417'de kaldırıldı; o turu görmüş
   /// kullanıcının cihazında `tour.stats.v1.<uid>` anahtarı hâlâ duruyor. v1
   /// denseydi bu WP'nin balonu tam da eski kullanıcılara hiç görünmezdi.
+  ///
+  /// WP-920 (sürüm 2 → 3, yine ileri — hiçbir zaman geri ya da atlanmış bir
+  /// numaraya değil): dönem çipleri (`stats_period_bar.dart`), oklar ve
+  /// başlıktan tarih seçme (`stats_range_navigator.dart`), Kişisel/Grup
+  /// sekmeleri ve rekorların yalnız "Tümü"de çıkması
+  /// (`personal_period_cards.dart` `showRecords`).
   static TourDefinition stats(AppLocalizations l10n) => TourDefinition(
     id: 'stats',
-    version: 2,
+    version: 3,
     steps: [
       TourStep(
         id: 'overview',
@@ -75,9 +101,14 @@ abstract final class AppTours {
   /// kapısına (`app_tours_test.dart`) sığmadı; bu yüzden iki balon. Çapasız:
   /// Ayarlar masaüstünde de mobilde de farklı dizilir, işaret edilecek sabit
   /// bir öğe yok.
+  ///
+  /// WP-920 (sürüm 1 → 2): iki kart kaldı — bölümler (Görünüm, Bildirimler,
+  /// İzinler, Hesap, Gizlilik, Hakkında, Yardım; `settings_screen.dart`) tek
+  /// balonun satır tavanına sığmıyor. İkinci kartın başlığı artık yalnız
+  /// "Hesap" değil, anlattığı üç bölümün adı.
   static TourDefinition settings(AppLocalizations l10n) => TourDefinition(
     id: 'settings',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: 'overview',
@@ -86,12 +117,16 @@ abstract final class AppTours {
       ),
       TourStep(
         id: 'account',
-        title: l10n.settingsSectionAccount,
+        title: l10n.tourSettingsMoreTitle,
         text: l10n.tourSettingsAccount,
       ),
     ],
   );
 
+  /// WP-920 (sürüm 1 → 2): grup odasının içeriği (kamp ateşi, kamp hayvanı,
+  /// grup hedefi, sıralama, trend; başlıktaki sohbet ve dişli — dişli davet
+  /// kodunu taşıyan `ClassDetailScreen`'i açar) ve değiştiricinin aynı
+  /// menüdeki oluştur/katıl/keşfet seçenekleri (`class_switcher.dart`).
   static TourDefinition groups(
     AppLocalizations l10n, {
     required GlobalKey contentAnchor,
@@ -99,7 +134,7 @@ abstract final class AppTours {
     required bool hasGroup,
   }) => TourDefinition(
     id: 'groups',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: hasGroup ? 'overview' : 'empty',
@@ -117,13 +152,16 @@ abstract final class AppTours {
     ],
   );
 
+  /// WP-920 (sürüm 1 → 2): çalışanın parlak, diğerlerinin soluk çizilmesi,
+  /// yerel saate bağlı gök ve hayvana dokununca açılan kampçı sayfası (bugünkü
+  /// süre, seri, profil, dürtme) — `classroom/widgets/campfire_scene.dart`.
   static TourDefinition campfire(
     AppLocalizations l10n, {
     required GlobalKey? campfireAnchor,
     required bool hasGroup,
   }) => TourDefinition(
     id: 'campfire',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: hasGroup ? 'overview' : 'empty',
@@ -140,13 +178,16 @@ abstract final class AppTours {
   // çapalı adım değil, ekranın ne olduğunu söyleyen tek çapasız balon.
   // Tanımı için yukarıdaki [stats].
 
+  /// WP-920 (sürüm 1 → 2): fotoğraf/ad düzenleme, Başarılar kartı (taç, XP,
+  /// rozetler; `profile/widgets/gamification_card.dart`), çalışma kayıtları
+  /// ve Ayarlar satırları (`profile_screen.dart`).
   static TourDefinition profile(
     AppLocalizations l10n, {
     required GlobalKey identityAnchor,
     required GlobalKey actionsAnchor,
   }) => TourDefinition(
     id: 'profile',
-    version: 1,
+    version: 2,
     steps: [
       TourStep(
         id: 'identity',
@@ -156,7 +197,7 @@ abstract final class AppTours {
       ),
       TourStep(
         id: 'actions',
-        title: l10n.profileAyarlar,
+        title: l10n.tourProfileActionsTitle,
         text: l10n.tourProfileActions,
         anchor: actionsAnchor,
       ),

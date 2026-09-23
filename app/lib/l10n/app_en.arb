@@ -6306,49 +6306,45 @@
   "@groupTimeZoneUpdated": {
     "description": "Confirmation after changing a study group's time zone."
   },
-  "tourHomeEdit": "Press and hold a card to edit.",
-  "@tourHomeEdit": {
-    "description": "Home introduction tour edit-card guidance."
-  },
-  "tourHomeOverview": "This is your own board. Add cards and move them around.",
+  "tourHomeOverview": "This is your board. On the timer card, pick a subject and a mode (stopwatch, countdown or Pomodoro), then tap Start studying; tap the daily goal to change it. Press and hold any card to edit: add, move and resize cards.",
   "@tourHomeOverview": {
-    "description": "Home introduction tour: what the home screen is and that cards can be arranged."
+    "description": "WP-920: home tour (single card). What the board is, how the timer card works (subject, mode, start, daily goal) and that a long press opens card editing."
   },
-  "tourDashboardEditOverview": "Drag a card to move it. Pull its corners to resize.",
+  "tourDashboardEditOverview": "Press, hold and drag a card to move it. To resize, pull its corners, or tap the card and use the − and + buttons below. The red minus removes a card; + at the top adds one. Changes save automatically; tap Finished (✓) at the top when you're done.",
   "@tourDashboardEditOverview": {
-    "description": "Dashboard edit mode introduction tour: how to move and resize cards."
+    "description": "WP-920: dashboard edit mode tour (single card). How to move, resize, remove and add cards, that changes save automatically and how to finish."
   },
-  "tourStatsOverview": "Your study time collects here. Pick a period to see your progress.",
+  "tourStatsOverview": "Pick a period at the top: Day, Week, Month, Year, All or Custom. Use the arrows to go back, or tap the title to pick a date. Personal shows your total by hour and subject, with records under All. Group shows your group's total and ranking.",
   "@tourStatsOverview": {
-    "description": "Statistics introduction tour: what the statistics screen shows."
+    "description": "WP-920: statistics tour (single card). Period chips, arrows and date picker, what the Personal and Group tabs show."
   },
-  "tourGroupsOverview": "Campfire, goal, and ranking are here.",
+  "tourGroupsOverview": "This is your group's room. The campfire shows the members; below it are your camp animal, the group goal, today's ranking and the daily trend. In the header, the chat icon opens group chat and the gear opens the invite code and group settings.",
   "@tourGroupsOverview": {
-    "description": "Groups introduction tour overview."
+    "description": "WP-920: groups tour, first card when the user has a group. What the group screen holds and what the header chat and gear icons open."
   },
-  "tourGroupsEmpty": "Create, join, or discover a group.",
+  "tourGroupsEmpty": "You're not in a group yet. Create one and send the invite code to friends, join with a code you got, or find one with Discover groups. In a group you study together and share a goal and a ranking.",
   "@tourGroupsEmpty": {
-    "description": "Groups introduction tour guidance when the user has no group."
+    "description": "WP-920: groups tour when the user has no group. Create, join with a code or discover a group, and why."
   },
-  "tourGroupsSwitch": "Switch groups from here.",
+  "tourGroupsSwitch": "If you're in more than one group, switch between them here. The same menu lets you create a group, join one with an invite code, or use Discover groups to find public ones.",
   "@tourGroupsSwitch": {
-    "description": "Groups introduction tour switcher guidance."
+    "description": "WP-920: groups tour, second card pointing at the group switcher. Switching groups and the create/join/discover options in the same menu."
   },
-  "tourCampfireOverview": "See who is studying and the local sky.",
+  "tourCampfireOverview": "Everyone in your group sits by the fire as an animal. People studying right now look bright, others faded, and the sky follows your local time. Tap an animal to see that person's time today and streak, open their profile or nudge them.",
   "@tourCampfireOverview": {
-    "description": "Campfire introduction tour overview."
+    "description": "WP-920: campfire tour. Members as animals, bright when studying, the sky follows local time, tapping an animal shows details and the nudge action."
   },
-  "tourCampfireEmpty": "Join a group around the campfire.",
+  "tourCampfireEmpty": "The campfire is where you study with your group. Once you join one, members gather around the fire as animals and you can see at a glance who is studying right now.",
   "@tourCampfireEmpty": {
-    "description": "Campfire introduction tour guidance when the user has no group."
+    "description": "WP-920: campfire tour when the user has no group. What the campfire becomes after joining a group."
   },
-  "tourProfileOverview": "See your avatar and awards.",
+  "tourProfileOverview": "Use the camera icon to change your photo and the pencil to change your name. The Achievements card shows your crown, XP and badges: every full hour of study earns XP, and more XP raises your crown. Tap it to see all achievements and collect rewards.",
   "@tourProfileOverview": {
-    "description": "Profile introduction tour overview."
+    "description": "WP-920: profile tour, first card pointing at the avatar. Photo and name editing, the Achievements card with crown, XP and badges."
   },
-  "tourProfileActions": "Open History or Settings.",
+  "tourProfileActions": "My study records lists your past sessions: add time you forgot to track, or fix or delete a wrong entry. Settings holds appearance, notifications, permissions and your account. Use Sign Out at the bottom to leave your account.",
   "@tourProfileActions": {
-    "description": "Profile introduction tour history and settings guidance."
+    "description": "WP-920: profile tour, second card pointing at the records and settings rows. What each row does and where Sign Out is."
   },
   "wp295PreviewTitle": "WP-295 · Campfire parametric preview",
   "@wp295PreviewTitle": {
@@ -7492,8 +7488,12 @@
   "@permissionsRevokeHint": {"description": "WP-852: how to revoke a permission (moved from the widget tab guide)."},
   "permissionsRevokeHintIos": "To take back a permission, tap its row and turn it off in iOS Settings.",
   "@permissionsRevokeHintIos": {"description": "WP-907: iOS variant of the revoke hint on the Permissions screen."},
-  "tourSettingsOverview": "Theme is in Appearance. Permissions keep timers and alarms on time.",
-  "@tourSettingsOverview": {"description": "WP-849: settings tour, where appearance and permissions are."},
-  "tourSettingsAccount": "Manage your account and download your data in the Account section.",
-  "@tourSettingsAccount": {"description": "WP-849: settings tour, where account and data export are."}
+  "tourSettingsMoreTitle": "Account, privacy and help",
+  "@tourSettingsMoreTitle": {"description": "WP-920: title of the second settings tour card (account, privacy and help sections)."},
+  "tourProfileActionsTitle": "Records and settings",
+  "@tourProfileActionsTitle": {"description": "WP-920: title of the profile tour card about the records and settings rows."},
+  "tourSettingsOverview": "In Appearance, pick a ready-made theme, light or dark mode and the app language, or create your own theme. Use the Notification Center for pokes, reminders and quiet hours. Keep Permissions on, or the timer and alarms may not fire on time while your phone is locked.",
+  "@tourSettingsOverview": {"description": "WP-920: settings tour, first card. Appearance (themes, mode, language), Notification Center and why Permissions matter."},
+  "tourSettingsAccount": "In Account, change your email and password or export your data. Manage blocked people in Privacy & security, and write to us through Feedback. Help, at the very bottom, has the FAQ and a button that shows these introductions again.",
+  "@tourSettingsAccount": {"description": "WP-920: settings tour, second card. Account, data export, privacy, feedback, FAQ and resetting introductions."}
 }

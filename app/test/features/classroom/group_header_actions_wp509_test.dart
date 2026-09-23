@@ -30,7 +30,9 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_group_re
 import 'package:online_study_room/features/classroom/classroom_screen.dart';
 import 'package:online_study_room/features/classroom/widgets/class_chat_card.dart';
 import 'package:online_study_room/features/classroom/widgets/class_detail_screen.dart';
+import 'package:online_study_room/features/tours/app_tours.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Durum çubuğu payı; şerit gittiğinde bunu **gövde** taşımak zorunda.
@@ -41,6 +43,16 @@ final _viewer = Profile(
   displayName: 'Ben',
   createdAt: DateTime(2026, 1, 1),
 );
+
+/// WP-920: Gruplar turunun kalıcı kimliği tanımın kendisinden türer. Sabit
+/// yazılan `groups.v1` sürüm artınca turu yeniden açıyor, balonun bariyeri
+/// de testin dokunuşlarını yutuyordu.
+final _groupsTourId = AppTours.groups(
+  AppLocalizationsTr(),
+  contentAnchor: GlobalKey(),
+  switcherAnchor: GlobalKey(),
+  hasGroup: true,
+).storageId;
 
 final _group = StudyGroup(
   id: 'g1',
@@ -63,7 +75,7 @@ Future<void> _pumpGroups(
 }) async {
   SharedPreferences.setMockInitialValues(
     tourSeen
-        ? {tourSeenKey(storageId: 'groups.v1', userId: _viewer.id): true}
+        ? {tourSeenKey(storageId: _groupsTourId, userId: _viewer.id): true}
         : <String, Object>{},
   );
   final prefs = await SharedPreferences.getInstance();

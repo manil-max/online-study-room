@@ -127,19 +127,25 @@ void main() {
     // ana ekran icin bunu istedi: ekranin NE OLDUGU + kartlarin
     // duzenlenebildigi. Yani olculen sey artik tek bir eylem degil, ekranin
     // tanimi. `isEmpty` catali da dustu: tek cumle iki durumda da dogru.
-    test('iki dilde de metin panoyu ve kart düzenlemeyi anlatıyor', () {
+    //
+    // 🔴 WP-920 (sahip): "kartlardaki bilgiler cok az". Kart yine TEK, ama
+    // govde artik uc seyi birden anlatiyor: pano, sayac karti ve uzun basinca
+    // acilan duzenleme. Uc parcanin her biri ayri olculur.
+    test('iki dilde de metin panoyu, sayacı ve kart düzenlemeyi anlatıyor', () {
       final tr = AppTours.home(AppLocalizationsTr());
       final en = AppTours.home(AppLocalizationsEn());
       expect(tr.steps.single.text, contains('panon'));
-      expect(tr.steps.single.text, contains('Kart'));
+      expect(tr.steps.single.text, contains('Sayaç kartında'));
+      expect(tr.steps.single.text, contains('uzun bas'));
       expect(en.steps.single.text, contains('board'));
-      expect(en.steps.single.text, contains('cards'));
+      expect(en.steps.single.text, contains('timer card'));
+      expect(en.steps.single.text, contains('hold'));
     });
 
     test('tur sürümü ilerledi: metin değiştiği için yeniden gösterilir', () {
       // v3 -> v4: metin degisti, turu daha once gormus kullanici yenisini
-      // gormeli.
-      expect(AppTours.home(AppLocalizationsTr()).version, 4);
+      // gormeli. WP-920: v4 -> v5, ayni gerekce.
+      expect(AppTours.home(AppLocalizationsTr()).version, 5);
     });
   });
 }

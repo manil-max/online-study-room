@@ -77,7 +77,9 @@ void main() {
   test('Ayarlar turu en fazla iki kart, sayaç ve ünlem yok', () {
     for (final l10n in [_tr, AppLocalizationsEn()]) {
       final tour = AppTours.settings(l10n);
-      expect(tour.storageId, 'settings.v1');
+      // WP-920: metinler zenginleşti → sürüm 2 (eski turu görenler yenisini
+      // bir kez görür). Kart sayısı değişmedi.
+      expect(tour.storageId, 'settings.v2');
       expect(tour.steps, hasLength(2));
       for (final step in tour.steps) {
         expect(step.text, isNot(contains('!')));

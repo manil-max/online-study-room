@@ -1851,17 +1851,16 @@
       "offset": {}
     }
   },
-  "tourHomeEdit": "Karta uzun bas: düzenleme açılır.",
-  "tourHomeOverview": "Burası senin panon. Kart ekleyip yerlerini değiştirebilirsin.",
-  "tourDashboardEditOverview": "Kartı tutup sürükleyerek taşı. Köşelerinden çekerek boyutlandır.",
-  "tourStatsOverview": "Çalışmaların burada toplanır. Dönem seçip ilerlemeni görebilirsin.",
-  "tourGroupsOverview": "Ateş, hedef ve sıralama burada.",
-  "tourGroupsEmpty": "Grup oluştur, katıl veya keşfet.",
-  "tourGroupsSwitch": "Başka grubuna buradan geç.",
-  "tourCampfireOverview": "Çalışanları ve yerel göğü gör.",
-  "tourCampfireEmpty": "Gruba katıl, ateş başında buluş.",
-  "tourProfileOverview": "Avatarın ve başarımların burada.",
-  "tourProfileActions": "Kayıtları veya Ayarlar’ı aç.",
+  "tourHomeOverview": "Burası senin panon. Sayaç kartında dersini ve kronometre, geri sayım ya da Pomodoro modunu seç, Çalışmaya başla'ya bas; günlük hedefe dokunup hedefini değiştir. Bir karta uzun basınca düzenleme açılır: kart ekler, taşır, boyutlandırırsın.",
+  "tourDashboardEditOverview": "Kartı basılı tutup sürükleyerek taşı. Boyut için köşelerini çek ya da karta dokunup alttaki − ve + düğmelerini kullan. Kırmızı eksi kartı kaldırır, üstteki + yeni kart ekler. Her değişiklik kendiliğinden kaydedilir; bitince üstteki Bitti (✓) düğmesine bas.",
+  "tourStatsOverview": "Üstten dönemi seç: Gün, Hafta, Ay, Yıl, Tümü ya da Özel; oklarla geçmişe git, başlığa dokunup tarih seç. Kişisel sekmesi toplamını, saatlere ve derslere göre dağılımını gösterir; rekorlar Tümü'nde çıkar. Grup sekmesi grubun toplamını ve sıralamasını gösterir.",
+  "tourGroupsOverview": "Grubunun odası burası. Kamp ateşinde üyeleri, altında seni temsil eden hayvanı, grup hedefini, bugünkü sıralamayı ve günlük trendi görürsün. Başlıktaki baloncuk simgesi grup sohbetini, dişli simgesi davet kodunu ve grup ayarlarını açar.",
+  "tourGroupsEmpty": "Henüz bir grupta değilsin. Grup oluşturup davet kodunu arkadaşlarına gönderebilir, sana gelen kodla katılabilir ya da Grupları keşfet ile yeni bir grup bulabilirsin. Grupta birlikte çalışır, ortak hedefi ve sıralamayı paylaşırsınız.",
+  "tourGroupsSwitch": "Birden fazla gruptaysan aralarında buradan geçersin. Aynı menüden yeni bir grup kurabilir, davet koduyla bir gruba katılabilir ya da Grupları keşfet ile herkese açık grupları bulabilirsin.",
+  "tourCampfireOverview": "Grubundaki herkes burada bir hayvanla ateşin başında. Şu an çalışanlar canlı, diğerleri soluk görünür; gökyüzü yerel saatine göre değişir. Bir hayvana dokununca o kişinin bugünkü süresini ve serisini görür, profiline gidebilir ya da onu dürtebilirsin.",
+  "tourCampfireEmpty": "Kamp ateşi, grubunla birlikte çalıştığın yer. Bir gruba katılınca üyeler burada hayvanlarıyla ateşin çevresinde toplanır; kimin şu an çalıştığını bir bakışta görürsün.",
+  "tourProfileOverview": "Kamera simgesiyle fotoğrafını, kalemle adını değiştir. Başarılar kartında tacın, XP'n ve rozetlerin durur: her tam çalışma saati XP kazandırır, XP arttıkça tacın yükselir. Karta dokununca tüm başarımlarını görür, ödüllerini toplarsın.",
+  "tourProfileActions": "Çalışma kayıtlarım'da geçmiş oturumlarını görürsün; unuttuğun süreyi elle ekler, yanlış kaydı düzeltir ya da silersin. Ayarlar'da görünüm, bildirimler, izinler ve hesabın var. Hesaptan çıkmak için en alttaki Çıkış Yap düğmesini kullan.",
   "wp295PreviewTitle": "WP-295 · Kamp ateşi parametrik önizleme",
   "wp295PreviewStatus": "{members} üye · {working} çalışıyor · {minutes} dk döngü",
   "wp295PreviewMemberCount": "Düzenlenecek kişi sayısı",
@@ -2526,6 +2525,8 @@
   "clockIzinlerEkraniniAc": "İzinler ekranını aç",
   "permissionsRevokeHint": "Verdiğin bir izni geri almak için satırına dokun ve açılan Android ayarından kapat. Android izinleri yalnız oradan geri alınır.",
   "permissionsRevokeHintIos": "Verdiğin izni geri almak için satıra dokun ve iOS Ayarlar'dan kapat.",
-  "tourSettingsOverview": "Tema Görünüm'de. Sayaç ve alarm zamanında çalışsın diye İzinler'e bak.",
-  "tourSettingsAccount": "Hesabını yönetmek ve verilerini indirmek için Hesap bölümüne gir."
+  "tourSettingsMoreTitle": "Hesap, gizlilik ve yardım",
+  "tourProfileActionsTitle": "Kayıtlar ve ayarlar",
+  "tourSettingsOverview": "Görünüm'de hazır temaları, açık ya da koyu modu ve uygulama dilini seçer, kendi temanı oluşturursun. Bildirim Merkezi'nden dürtme, hatırlatıcı ve sessiz saatleri yönet. İzinler'i açık tut; yoksa telefon kilitliyken sayaç ve alarm zamanında çalışmayabilir.",
+  "tourSettingsAccount": "Hesap'ta e-posta ve şifreni değiştirir, verilerini dışa aktarırsın. Gizlilik ve güvenlik'te engellediğin kişileri yönetirsin. Geri bildirim ile bize yazabilirsin. En alttaki Yardım'da sık sorulan sorular ve bu tanıtımları yeniden gösteren sıfırlama düğmesi var."
 }

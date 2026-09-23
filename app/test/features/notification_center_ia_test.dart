@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/tour/tour_prefs.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/features/notifications/announcements_screen.dart';
 import 'package:online_study_room/features/notifications/notification_center_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
+import 'package:online_study_room/features/tours/app_tours.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// WP-304: Bildirim Merkezi bir **ayar** ekranıdır. Beta 1 raporu:
@@ -17,7 +20,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   Future<void> pump(WidgetTester tester, Widget home) async {
     // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
-    SharedPreferences.setMockInitialValues({'tour.settings.v1.u1': true});
+    // WP-920: Ayarlar turu kimligi tanimdan turer (surum artinca kirilmaz).
+    SharedPreferences.setMockInitialValues({
+      tourSeenKey(
+        storageId: AppTours.settings(AppLocalizationsTr()).storageId,
+        userId: 'u1',
+      ): true,
+    });
     final prefs = await SharedPreferences.getInstance();
     tester.view.physicalSize = const Size(1080, 12000);
     tester.view.devicePixelRatio = 3.0;

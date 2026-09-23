@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/notifications/notification_preferences.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/tour/tour_prefs.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
@@ -12,7 +13,9 @@ import 'package:online_study_room/features/notifications/notification_permission
 import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/features/support/faq_screen.dart';
+import 'package:online_study_room/features/tours/app_tours.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -22,7 +25,11 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'onboarding.completed_v1.u1': true,
       // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
-      'tour.settings.v1.u1': true,
+      // WP-920: Ayarlar turu kimligi tanimdan turer (surum artinca kirilmaz).
+      tourSeenKey(
+        storageId: AppTours.settings(AppLocalizationsTr()).storageId,
+        userId: 'u1',
+      ): true,
     });
     final prefs = await SharedPreferences.getInstance();
     final adminRepo = InMemoryAdminRepository();

@@ -39,8 +39,20 @@ import 'package:online_study_room/features/home/widgets/dday_card.dart';
 import 'package:online_study_room/features/onboarding/onboarding_prefs.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/features/profile/widgets/camp_animal_picker.dart';
+import 'package:online_study_room/features/tours/app_tours.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// WP-920: Gruplar turunun kalıcı kimliği tanımın kendisinden türer. Sabit
+/// yazılan `groups.v1` sürüm artınca turu yeniden açıyor, balonun bariyeri
+/// de testin dokunuşlarını yutuyordu.
+final _groupsTourId = AppTours.groups(
+  AppLocalizationsTr(),
+  contentAnchor: GlobalKey(),
+  switcherAnchor: GlobalKey(),
+  hasGroup: true,
+).storageId;
 
 final _group = StudyGroup(
   id: 'g1',
@@ -79,7 +91,11 @@ Future<InMemoryAuthRepository> _pumpSettings(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({
     onboardingCompletedKeyFor(auth.currentUser!.id): true,
     // WP-849: Ayarlar turu gorulmus; aksi hâlde balon dokunuslari yutar.
-    tourSeenKey(storageId: 'settings.v1', userId: auth.currentUser!.id): true,
+    // WP-920: kimlik tur taniminin kendisinden turer; surum artinca kirilmaz.
+    tourSeenKey(
+      storageId: AppTours.settings(AppLocalizationsTr()).storageId,
+      userId: auth.currentUser!.id,
+    ): true,
   });
   final prefs = await SharedPreferences.getInstance();
 
@@ -118,7 +134,7 @@ Future<InMemoryAuthRepository> _pumpGroups(
   // Tur anahtari da HESAP BASINA. Sabit bir id yazmak turu "gorulmemis"
   // birakir; tanitim orgusu ekrani kaplar ve her dokunusu YUTAR.
   SharedPreferences.setMockInitialValues({
-    tourSeenKey(storageId: 'groups.v1', userId: auth.currentUser!.id): true,
+    tourSeenKey(storageId: _groupsTourId, userId: auth.currentUser!.id): true,
   });
   final prefs = await SharedPreferences.getInstance();
 

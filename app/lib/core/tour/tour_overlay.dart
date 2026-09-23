@@ -199,60 +199,89 @@ class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
             onTap: widget.onNext,
             child: CustomPaint(painter: _SpotlightPainter(anchor)),
           ),
-          SafeArea(
-            child: Align(
-              // Sağ üstteki hedef denetimlerle (özellikle kart düzenleme ve
-              // grup değiştiriciyle) aynı dokunma alanını paylaşma.
-              alignment: Alignment.topLeft,
-              child: Semantics(
-                button: true,
-                label: widget.strings.skip,
-                child: TextButton(
-                  key: const Key('tour-skip-button'),
-                  onPressed: widget.onSkip,
-                  child: Text(widget.strings.skip),
-                ),
-              ),
-            ),
-          ),
-          CustomSingleChildLayout(
-            delegate: _TourBubbleLayout(anchor),
-            child: Semantics(
-              container: true,
-              child: Material(
-                key: const Key('tour-bubble'),
-                color: scheme.surface,
-                elevation: 12,
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.step.title case final title?) ...[
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      Text(widget.step.text),
-                      const SizedBox(height: 16),
-                      // Sayaç kalktığı için satırda tek şey var: devam düğmesi.
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: FilledButton(
-                          key: const Key('tour-next-button'),
-                          onPressed: widget.onNext,
-                          child: Text(widget.strings.next),
-                        ),
-                      ),
-                    ],
+          // 🔴 WP-920: "Atla" ile balon ARTIK AYNI yerleşimde. Eskiden balon
+          // ayrı bir katmandaydı ve yalnız 16 dp kenar payıyla sınırlanıyordu;
+          // gövde birkaç satıra çıkınca (küçük telefon, büyük yazı) balon
+          // ekranın tepesine dayanıp sol üstteki "Atla"nın ÜSTÜNE biniyor,
+          // düğme dokunulamaz oluyordu. Şimdi önce "Atla" ölçülür, balon
+          // onun altındaki alana sığdırılır.
+          CustomMultiChildLayout(
+            delegate: _TourLayout(anchor),
+            children: [
+              LayoutId(
+                id: _TourLayout.skipId,
+                child: SafeArea(
+                  // Sağ üstteki hedef denetimlerle (özellikle kart düzenleme
+                  // ve grup değiştiriciyle) aynı dokunma alanını paylaşma.
+                  child: Semantics(
+                    button: true,
+                    label: widget.strings.skip,
+                    child: TextButton(
+                      key: const Key('tour-skip-button'),
+                      onPressed: widget.onSkip,
+                      child: Text(widget.strings.skip),
+                    ),
                   ),
                 ),
               ),
-            ),
+              LayoutId(
+                id: _TourLayout.bubbleId,
+                child: Semantics(
+                  container: true,
+                  child: Material(
+                    key: const Key('tour-bubble'),
+                    color: scheme.surface,
+                    elevation: 12,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 🔴 WP-920 (sahip): gövde artık birkaç cümle. Cihazda
+                          // normal yazı boyunda sığar; kaydırma yalnız çok
+                          // büyük yazı ölçeği + küçük ekran için emniyet ağı.
+                          // Başlık da kaydırılanın içinde: sabit kalan tek şey
+                          // devam düğmesidir, o hiçbir koşulda ekrandan çıkmaz.
+                          Flexible(
+                            child: SingleChildScrollView(
+                              key: const Key('tour-bubble-scroll'),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (widget.step.title case final title?) ...[
+                                    Text(
+                                      title,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  Text(widget.step.text),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Sayaç kalktığı için satırda tek şey var: devam
+                          // düğmesi.
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: FilledButton(
+                              key: const Key('tour-next-button'),
+                              onPressed: widget.onNext,
+                              child: Text(widget.strings.next),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -282,51 +311,69 @@ class _SpotlightPainter extends CustomPainter {
       oldDelegate.anchor != anchor;
 }
 
-class _TourBubbleLayout extends SingleChildLayoutDelegate {
-  const _TourBubbleLayout(this.anchor);
+/// "Atla" düğmesini sol üste, balonu hedefin yanına yerleştirir.
+///
+/// WP-920: balonun üst sınırı sabit 16 dp değil, "Atla" satırının alt
+/// kenarıdır (durum çubuğu payı dahil). Böylece iki düğme de her ekran boyu
+/// ve yazı ölçeğinde dokunulabilir kalır.
+class _TourLayout extends MultiChildLayoutDelegate {
+  _TourLayout(this.anchor);
+
+  static const skipId = 'skip';
+  static const bubbleId = 'bubble';
 
   final Rect? anchor;
 
   @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    final maxWidth = math.max(0.0, math.min(360.0, constraints.maxWidth - 32));
-    final maxHeight = math.max(0.0, constraints.maxHeight - 32);
-    return BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight);
+  void performLayout(Size size) {
+    const margin = 16.0;
+    var reservedTop = 0.0;
+    if (hasChild(skipId)) {
+      final skip = layoutChild(skipId, BoxConstraints.loose(size));
+      positionChild(skipId, Offset.zero);
+      reservedTop = skip.height;
+    }
+    if (!hasChild(bubbleId)) return;
+
+    final top = math.max(margin, reservedTop);
+    final maxWidth = math.max(0.0, math.min(360.0, size.width - 32));
+    final maxHeight = math.max(0.0, size.height - top - margin);
+    final child = layoutChild(
+      bubbleId,
+      BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+    );
+    positionChild(bubbleId, _bubblePosition(size, child, top));
   }
 
-  @override
-  Offset getPositionForChild(Size size, Size childSize) {
+  Offset _bubblePosition(Size size, Size childSize, double top) {
     const margin = 16.0;
     final target = anchor;
+    final horizontal = target == null
+        ? (size.width - childSize.width) / 2
+        : (target.center.dx - childSize.width / 2).clamp(
+            margin,
+            math.max(margin, size.width - childSize.width - margin),
+          );
+    final double vertical;
     if (target == null) {
-      return Offset(
-        (size.width - childSize.width) / 2,
-        (size.height - childSize.height) / 2,
-      );
+      vertical = (size.height - childSize.height) / 2;
+    } else {
+      final below = target.bottom + margin;
+      final above = target.top - childSize.height - margin;
+      vertical = below + childSize.height <= size.height - margin
+          ? below
+          : above >= top
+          ? above
+          : (size.height - childSize.height) / 2;
     }
-    final horizontal = (target.center.dx - childSize.width / 2).clamp(
-      margin,
-      math.max(margin, size.width - childSize.width - margin),
-    );
-    final below = target.bottom + margin;
-    final above = target.top - childSize.height - margin;
-    final vertical = below + childSize.height <= size.height - margin
-        ? below
-        : above >= margin
-        ? above
-        : (size.height - childSize.height) / 2;
     return Offset(
       horizontal.toDouble(),
       vertical
-          .clamp(
-            margin,
-            math.max(margin, size.height - childSize.height - margin),
-          )
+          .clamp(top, math.max(top, size.height - childSize.height - margin))
           .toDouble(),
     );
   }
 
   @override
-  bool shouldRelayout(_TourBubbleLayout oldDelegate) =>
-      oldDelegate.anchor != anchor;
+  bool shouldRelayout(_TourLayout oldDelegate) => oldDelegate.anchor != anchor;
 }
