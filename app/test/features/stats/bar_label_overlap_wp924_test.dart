@@ -4,7 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/study_stats.dart';
+import 'package:online_study_room/data/models/daily_stat.dart';
+import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
 import 'package:online_study_room/features/stats/widgets/daily_bar_chart.dart';
+import 'package:online_study_room/features/stats/widgets/leaderboard_rank_chart.dart';
 import 'package:online_study_room/features/stats/widgets/personal_period_cards.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -134,6 +138,43 @@ void _expectNoOverlap(List<Rect> rects, double chartWidth, String label) {
   }
 }
 
+/// Ekranda çizilen, [labels] kümesindeki metinlerin dikdörtgenleri.
+List<(String, Rect)> _axisTexts(WidgetTester tester, Set<String> labels) {
+  final out = <(String, Rect)>[];
+  for (final element in find.byType(Text).evaluate()) {
+    final text = (element.widget as Text).data;
+    if (text == null || !labels.contains(text)) continue;
+    out.add((
+      text,
+      tester.getRect(find.byElementPredicate((e) => e == element)),
+    ));
+  }
+  return out;
+}
+
+void _expectAxisClean(List<(String, Rect)> texts, Rect bounds, String label) {
+  final names = [for (final t in texts) t.$1];
+  expect(names.toSet(), hasLength(names.length), reason: '$label: $names');
+  for (var a = 0; a < texts.length; a++) {
+    for (var b = a + 1; b < texts.length; b++) {
+      final o = texts[a].$2.intersect(texts[b].$2);
+      expect(
+        o.width > 0.5 && o.height > 0.5,
+        isFalse,
+        reason:
+            '$label: "${texts[a].$1}" ${texts[a].$2} ile "${texts[b].$1}" ${texts[b].$2} üst üste',
+      );
+    }
+  }
+  for (final t in texts) {
+    expect(
+      t.$2.left >= bounds.left - 0.5 && t.$2.right <= bounds.right + 0.5,
+      isTrue,
+      reason: '$label: "${t.$1}" ${t.$2} grafik dışına taşıyor ($bounds)',
+    );
+  }
+}
+
 void main() {
   for (final count in [7, 14, 30]) {
     for (final goal in [null, 4 * 3600]) {
@@ -175,5 +216,107 @@ void main() {
     final rects = _paintedLabelRects(tester);
     expect(rects, isNotEmpty);
     _expectNoOverlap(rects, width, '12 ay');
+  });
+
+  // ---- Eksen etiketleri (WP-924 ek: yeniden çizimde görüldü) --------------
+
+  testWidgets('DailyBarChart 30 gün: son gün yazılır, ona yapışık hizalı '
+      'gün yazılmaz ("2930" yok)', (tester) async {
+    // Test yazı tipi her glifi 1 em çizer (gerçek fonttan ~2 kat geniş); bu
+    // yüzden iddia geometrik değil yapısaldır: 30 günde adım 2, hizalı son
+    // gün 29 (indeks 28) son gün 30'un hemen yanıdır ve çizilmemelidir.
+    final days = [
+      for (var i = 0; i < 30; i++)
+        DayTotal(DateTime(2026, 9, 1 + i), i < 23 ? 3600 : 0),
+    ];
+    await _pump(tester, DailyBarChart(days: days));
+    expect(find.text('30'), findsOneWidget);
+    expect(find.text('29'), findsNothing);
+    expect(find.text('27'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('DailyBarChart ay görünümü: bugünün (son dolu gün) süresi '
+      'yazılır, arkada boş günler olsa da', (tester) async {
+    // 1–30 Eylül, 24'ünden sonrası gelecek (0). Eskiden "son çubuk" 30
+    // Eylül sayıldığı için bugünün etiketi hiç aday olmuyordu.
+    final days = [
+      for (var i = 0; i < 30; i++)
+        DayTotal(
+          DateTime(2026, 9, 1 + i),
+          i < 23 ? 4 * 3600 + i * 60 : (i == 23 ? 24 * 60 : 0),
+        ),
+    ];
+    await _pump(tester, DailyBarChart(days: days, goalSeconds: 4 * 3600));
+    final chart = tester.widget<BarChart>(find.byType(BarChart));
+    final shown = [
+      for (final g in chart.data.barGroups)
+        if (g.showingTooltipIndicators.isNotEmpty) g.x,
+    ];
+    expect(shown, contains(23), reason: 'bugünün (24 Eyl) etiketi yok: $shown');
+    expect(shown, contains(22), reason: 'en yüksek gün etiketi yok: $shown');
+  });
+
+  for (final n in [4, 12, 23, 39]) {
+    testWidgets('AreaLineChart $n nokta: X etiketleri tekil, çakışmaz, '
+        'grafik içinde', (tester) async {
+      final labels = [
+        for (var i = 0; i < n; i++)
+          '${DateTime(2026, 1, 1 + 7 * i).day}/${DateTime(2026, 1, 1 + 7 * i).month}',
+      ];
+      await _pump(
+        tester,
+        AreaLineChart(
+          values: [for (var i = 0; i < n; i++) (i % 5) + 1.0],
+          labels: labels,
+          yUnit: 'sa',
+        ),
+      );
+      final texts = _axisTexts(tester, labels.toSet());
+      expect(texts.map((t) => t.$1), contains(labels.last));
+      _expectAxisClean(
+        texts,
+        tester.getRect(find.byType(AreaLineChart)),
+        '$n nokta',
+      );
+    });
+  }
+
+  testWidgets('LeaderboardRankChart 4 günlük pencere: gün numarası bir kez '
+      '("21 22 22 23 23 24 24" değil)', (tester) async {
+    final members = [
+      Profile(id: 'a', displayName: 'Ada', createdAt: DateTime(2026)),
+      Profile(id: 'b', displayName: 'Bora', createdAt: DateTime(2026)),
+    ];
+    await _pump(
+      tester,
+      LeaderboardRankChart(
+        members: members,
+        memberColors: const {'a': Colors.red, 'b': Colors.blue},
+        stats: [
+          for (var d = 21; d <= 24; d++) ...[
+            DailyStat(userId: 'a', day: DateTime(2026, 9, d), seconds: 3600),
+            DailyStat(
+              userId: 'b',
+              day: DateTime(2026, 9, d),
+              seconds: 1800 * d % 7200,
+            ),
+          ],
+        ],
+        days: 7,
+        startDay: DateTime(2026, 9, 21),
+        endDay: DateTime(2026, 9, 24),
+        currentUserId: 'a',
+        emptyLabel: '-',
+        namelessLabel: '?',
+      ),
+    );
+    final texts = _axisTexts(tester, {'21', '22', '23', '24'});
+    expect(texts, hasLength(4), reason: '${texts.map((t) => t.$1)}');
+    _expectAxisClean(
+      texts,
+      tester.getRect(find.byType(LeaderboardRankChart)),
+      'sıralama geçmişi',
+    );
   });
 }

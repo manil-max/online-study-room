@@ -19,6 +19,21 @@ int axisLabelStep(int count, double maxWidth, {double labelWidth = 22}) {
   return (count / capacity).ceil();
 }
 
+/// X ekseninde [i]. etiket çizilsin mi?
+///
+/// Adım hizasındaki ([step]) etiketler ve HER ZAMAN son etiket çizilir. 🔴
+/// WP-924 ek: son etiket adım hizasında değilse bir önceki hizalı etiketle
+/// yan yana düşebiliyordu — 30 günlük seride "29" ile "30" iç içe ("2930"),
+/// eğilim grafiğinde "22/9" ile "23/9". Son etikete [minGapToLast] noktadan
+/// yakın hizalı etiket artık atlanır (varsayılan: bir adım).
+bool axisLabelVisible(int i, int count, int step, {int? minGapToLast}) {
+  if (i < 0 || i >= count) return false;
+  final last = count - 1;
+  if (i == last) return true;
+  if (step > 1 && i % step != 0) return false;
+  return last - i >= (minGapToLast ?? step);
+}
+
 /// Y ekseni için ~4–5 yatay çizgi verecek "yuvarlak" dakika aralığı.
 ///
 /// [maxMinutes] serideki en yüksek değerdir (dakika). Dönen aralık dakika

@@ -84,11 +84,20 @@ class DailyBarChart extends StatelessWidget {
         // olduğu için ~26 px yer varsayılıyor, 14 günlük seride adım 2'ye
         // çıkıyor ve tarihler gün aşırı yazılıyordu. Tek satır gün numarası
         // ~14 px'e sığar → 7/14 günde adım 1.
+        const dayLabelWidth = 14.0;
         final labelStep = axisLabelStep(
           days.length,
           constraints.maxWidth,
-          labelWidth: 14,
+          labelWidth: dayLabelWidth,
         );
+        final pxPerBar = days.length > 1
+            ? (constraints.maxWidth - barWidth) / (days.length - 1)
+            : constraints.maxWidth;
+        // WP-924 ek: son gün her zaman yazılır; ona bir etiket genişliğinden
+        // yakın hizalı gün atlanır (30 günde "29" ile "30" iç içe: "2930").
+        final minGapToLast = pxPerBar <= 0
+            ? labelStep
+            : (dayLabelWidth / pxPerBar).ceil();
         // WP-924: kalıcı süre etiketi yalnız komşusuna ve "Hedef" yazısına
         // değmeyen çubuklarda. 10 günden uzun seride yalnız en yüksek gün ve
         // bugün yazılır; diğerleri dokununca.
@@ -185,10 +194,12 @@ class DailyBarChart extends StatelessWidget {
                   reservedSize: 40,
                   getTitlesWidget: (value, meta) {
                     final i = value.toInt();
-                    if (i < 0 || i >= days.length) {
-                      return const SizedBox.shrink();
-                    }
-                    if (i % labelStep != 0 && i != days.length - 1) {
+                    if (!axisLabelVisible(
+                      i,
+                      days.length,
+                      labelStep,
+                      minGapToLast: minGapToLast,
+                    )) {
                       return const SizedBox.shrink();
                     }
                     final d = days[i].day;

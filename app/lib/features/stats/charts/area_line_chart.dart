@@ -1,6 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/bar_value_labels.dart';
+import '../widgets/chart_axis.dart';
+
 /// Alan dolgulu çizgi (LineChart belowBarData) + eksenler (WP-203).
 ///
 /// Sol Y ekseni ([yUnit] son ekiyle), yatay ızgara ve — [labels] verilirse —
@@ -56,6 +59,63 @@ class AreaLineChart extends StatelessWidget {
       fontSize: 9,
     );
 
+    // Sol eksen etiketlerine ayrılan genişlik; X ekseni bunun sağındadır.
+    const leftReserved = 30.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 🔴 WP-924 ek: X etiketleri ölçülerek seyreltilir. Eskiden adım sabit
+        // "~4 tik"ti ve `interval` verilmediği için fl_chart kesirli değerlerde
+        // de başlık istiyor, `round()` aynı etiketi iki kez yazıyordu
+        // ("7/9 7/9", "21/9 21/9"); son etiket bir öncekiyle çakışıyor, sağ
+        // kenardan taşıyordu ("24/9" yarım).
+        final axisWidth = constraints.maxWidth - leftReserved;
+        var widest = 0.0;
+        for (final l in labels) {
+          final w = measureChartLabel(context, l, labelStyle).width;
+          if (w > widest) widest = w;
+        }
+        final labelWidth = widest + 6;
+        final step = axisLabelStep(
+          labels.length,
+          axisWidth,
+          labelWidth: labelWidth,
+        );
+        final pxPerPoint = labels.length > 1
+            ? axisWidth / (labels.length - 1)
+            : axisWidth;
+        // Uç etiketler `fitInside` ile eksenin İÇİNE kaydırılır (kenardan
+        // ~6 px), yani merkezleri yarım etiket + 6 px içeri kayar. Uca komşu
+        // hizalı etiket bu kaymayı da karşılayacak kadar uzakta olmalı.
+        final edgeGap = pxPerPoint <= 0
+            ? step
+            : ((1.5 * widest + 12) / pxPerPoint).ceil();
+        return _chart(
+          scheme: scheme,
+          maxY: maxY,
+          interval: interval,
+          spots: spots,
+          yLabel: yLabel,
+          labelStyle: labelStyle,
+          leftReserved: leftReserved,
+          xLabelVisible: (i) =>
+              axisLabelVisible(i, labels.length, step, minGapToLast: edgeGap) &&
+              (i == 0 || i == labels.length - 1 || i >= edgeGap),
+        );
+      },
+    );
+  }
+
+  Widget _chart({
+    required ColorScheme scheme,
+    required double maxY,
+    required double interval,
+    required List<FlSpot> spots,
+    required String Function(double) yLabel,
+    required TextStyle? labelStyle,
+    required double leftReserved,
+    required bool Function(int) xLabelVisible,
+  }) {
     return LineChart(
       LineChartData(
         minY: 0,
@@ -90,7 +150,7 @@ class AreaLineChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30,
+              reservedSize: leftReserved,
               interval: interval,
               getTitlesWidget: (value, meta) {
                 if (value <= 0 || value > maxY) {
@@ -107,18 +167,18 @@ class AreaLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: labels.isNotEmpty,
               reservedSize: 18,
+              interval: 1,
               getTitlesWidget: (value, meta) {
+                if (value != value.roundToDouble()) {
+                  return const SizedBox.shrink();
+                }
                 final i = value.round();
-                if (i < 0 || i >= labels.length) {
-                  return const SizedBox.shrink();
-                }
-                // Seyrek etiket: ~4 tik + son gün.
-                final step = (labels.length / 4).ceil().clamp(1, 1 << 30);
-                if (i % step != 0 && i != labels.length - 1) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                if (!xLabelVisible(i)) return const SizedBox.shrink();
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 4,
+                  // Uç etiketler eksenin içine kaydırılır (sağda yarım kalmaz).
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                   child: Text(labels[i], style: labelStyle),
                 );
               },

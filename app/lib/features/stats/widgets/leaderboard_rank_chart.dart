@@ -253,16 +253,25 @@ class LeaderboardRankChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 18,
+                        // WP-924 ek: aralık verilmezse fl_chart kendi (kesirli)
+                        // adımını seçiyor, `round()` aynı günü iki kez
+                        // yazıyordu ("21 22 22 23 23 24 24").
+                        interval: 1,
                         getTitlesWidget: (value, meta) {
+                          if (value != value.roundToDouble()) {
+                            return const SizedBox.shrink();
+                          }
                           final i = value.round();
-                          if (i < 0 || i >= window.length) {
+                          if (!axisLabelVisible(i, window.length, labelStep)) {
                             return const SizedBox.shrink();
                           }
-                          if (i % labelStep != 0 && i != window.length - 1) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 4,
+                            // Son gün sağ kenardan taşmasın (yarım "24").
+                            fitInside: SideTitleFitInsideData.fromTitleMeta(
+                              meta,
+                            ),
                             child: Text(
                               '${window[i].day}',
                               style: theme.textTheme.labelSmall?.copyWith(

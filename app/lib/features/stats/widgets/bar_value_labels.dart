@@ -14,8 +14,8 @@ import 'package:flutter/widgets.dart';
 /// Kural: etiketler öncelik sırasıyla yerleştirilir ve daha önce kabul edilmiş
 /// bir dikdörtgenle (ya da [reserved] ile, ör. "Hedef" yazısı) kesişen etiket
 /// **çizilmez** — o çubuğun değeri dokununca görünür (fl_chart dokunma
-/// balonu). Öncelik: en yüksek çubuk → son çubuk (bugün / içinde bulunulan
-/// dönem) → [keyBarsOnly] değilse kalanlar büyükten küçüğe.
+/// balonu). Öncelik: en yüksek çubuk → en yeni dolu çubuk (bugün / içinde
+/// bulunulan dönem) → [keyBarsOnly] değilse kalanlar büyükten küçüğe.
 ///
 /// Geometri fl_chart 1.2'nin kendisidir (`BarChartAlignment.spaceBetween`,
 /// `bar_chart_data_extension.dart` `calculateGroupsX`; balon yerleşimi
@@ -73,9 +73,12 @@ Set<int> pickBarValueLabels({
       final c = values[b].compareTo(values[a]);
       return c != 0 ? c : b.compareTo(a);
     });
+  // "Son" = en yeni DOLU çubuk (bugün). Dönem grafiğinde (WP-925) bugünden
+  // sonraki günler boş çubuktur; son indeks o boş gün olurdu ve bugünün
+  // etiketi hiç aday olmazdı.
   final order = <int>[byValue.first];
   final last = candidates.last;
-  if (last == n - 1 && !order.contains(last)) order.add(last);
+  if (!order.contains(last)) order.add(last);
   if (!keyBarsOnly) {
     for (final i in byValue) {
       if (!order.contains(i)) order.add(i);
