@@ -3,6 +3,20 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.87-beta.10",
+      "buildNumber": 8710,
+      "channel": "beta",
+      "date": "2026-09-23",
+      "title": "beta-v8710: WP-900..WP-914",
+      "highlights": [
+        "WP-913: Play in-app updates (flexible), gated to DistributionChannel.play + Android; injectable gateway, one check per process.",
+        "WP-914: completeFlexibleUpdate is user-triggered from the snackbar action (a restart must not land mid-session).",
+        "WP-900..912: iOS/App Store groundwork (project skeleton, Apple sign-in, iOS push platform in 0144, release-defines appStore channel)."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.87-beta.9",
       "buildNumber": 8709,
       "channel": "beta",

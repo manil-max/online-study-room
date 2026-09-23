@@ -4,6 +4,13 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8710 / 1.0.87-beta.10+8710] - 2026-09-23
+
+### Yenilikler
+
+- Play sürümünde uygulama içi güncelleme: yeni sürüm varsa Google'ın penceresi açılır, indirme arka planda olur, kurulumu kullanıcı "Kur" ile başlatır.
+- iOS hazırlığı: proje iskeleti, Apple ile giriş, iOS bildirimleri (App Store sürümü henüz yayında değil).
+
 ## [beta-v8709 / 1.0.87-beta.9+8709] - 2026-09-19
 
 beta-v8708 derleme testinde durdu ve yayınlanmadı; içeriği bu sürümdedir.

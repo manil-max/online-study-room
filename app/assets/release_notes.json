@@ -3,6 +3,30 @@
   "source": "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
   "releases": [
     {
+      "versionName": "1.0.87-beta.10",
+      "buildNumber": 8710,
+      "channel": "beta",
+      "date": "2026-09-23",
+      "title": "beta-v8710: Play içi güncelleme + iOS hazırlığı",
+      "highlights": [
+        "Play sürümünde güncelleme uygulama içinde sunuluyor; kurulumu sen başlatıyorsun."
+      ],
+      "fixes": [],
+      "notes": [
+        "Beta test sunucusunu kullanır; Google ile giriş beta'da kapalı.",
+        "Uygulama içi güncelleme yalnız Play'den kurulan sürümde çalışır."
+      ],
+      "titleEn": "beta-v8710: in-app updates + iOS groundwork",
+      "highlightsEn": [
+        "The Play build offers updates inside the app; you start the install."
+      ],
+      "fixesEn": [],
+      "notesEn": [
+        "Beta uses the test server; Google sign-in is off on beta.",
+        "In-app updates only work in the Play build."
+      ]
+    },
+    {
       "versionName": "1.0.87-beta.9",
       "buildNumber": 8709,
       "channel": "beta",
