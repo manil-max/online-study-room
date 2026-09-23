@@ -127,7 +127,7 @@ class StudyRecords extends ConsumerWidget {
     // Rekor seri / en verimli gün / aktif gün / en çok ders SICAK PENCEREdir
     // ve pencerenin dışına çıkamaz (rekor seri 90'ı hiçbir zaman aşamaz).
     final windowScope = windowLimited
-        ? ' · ${AppLocalizations.of(context).statsStreakGun(kUserSessionsHotWindowDays.toString())}'
+        ? ' · ${AppLocalizations.of(context).commonDayCount(kUserSessionsHotWindowDays)}'
         : '';
     final totalScope = lifetimeSeconds == null ? windowScope : '';
     // 🔴 WP-637: "Rekor seri" GÜNLÜK HEDEF serisidir. Eskiden "o gün en az 1

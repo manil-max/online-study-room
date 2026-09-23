@@ -77,14 +77,15 @@ Future<void> _pumpLine(WidgetTester tester, List<DayTotal> days) async {
 
 /// Y ekseni etiketlerinin dikdörtgenleri, yukarıdan aşağıya.
 ///
-/// Y etiketleri birim son ekiyle biter ("30dk", "1.5s"); alt eksendeki gün
+/// Y etiketleri birim son ekiyle biter ("30dk", "1.5sa" — WP-926'dan beri saat
+/// "sa"); alt eksendeki gün
 /// numaraları çıplak sayıdır, bu yüzden karışmaz.
 List<Rect> _yLabelRects(WidgetTester tester) {
   final rects = <Rect>[];
   for (final element in find.byType(Text).evaluate()) {
     final text = (element.widget as Text).data;
     if (text == null) continue;
-    if (!text.endsWith('dk') && !text.endsWith('s')) continue;
+    if (!text.endsWith('dk') && !text.endsWith('sa')) continue;
     rects.add(tester.getRect(find.byElementPredicate((e) => e == element)));
   }
   rects.sort((a, b) => a.top.compareTo(b.top));

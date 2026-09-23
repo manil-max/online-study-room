@@ -520,7 +520,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                   // hangi dönemde olunduğunu üstteki gezinme çubuğu yazar.
                   child: Text(
                     '${AppLocalizations.of(context).homeGrupGunlukTrendi} · '
-                    '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())}',
+                    '${AppLocalizations.of(context).commonDayCount(trendDays)}',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),

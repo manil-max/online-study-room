@@ -210,7 +210,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     final avgPeriod = dailyAverageSeconds(periodSessions, avgWindow.from, to);
     final periodLabel = statsPeriodLabel(l10n, period);
     final scopeSuffix = hotLimited
-        ? ' · ${l10n.statsStreakGun(kUserSessionsHotWindowDays.toString())}'
+        ? ' · ${l10n.commonDayCount(kUserSessionsHotWindowDays)}'
         : '';
 
     // 🔴 WP-745 (1): "Günlük dağılım" (S1) penceresinin SONU daima `bugün`dü —
@@ -507,7 +507,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${formatHuman(map.values.fold<int>(0, (a, b) => a + b))} · ${days.length}d',
+                        '${formatHuman(map.values.fold<int>(0, (a, b) => a + b))} · ${l10n.commonDayCount(days.length)}',
                         style: theme.textTheme.labelMedium,
                       ),
                       const SizedBox(height: 8),

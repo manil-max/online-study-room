@@ -18,7 +18,8 @@ class AreaLineChart extends StatelessWidget {
   /// X ekseni etiketleri (values ile aynı uzunlukta olmalı); boşsa X gizli.
   final List<String> labels;
 
-  /// Y ekseni birim son eki (ör. 's' = saat). Boşsa yalın sayı.
+  /// Y ekseni birim son eki (ör. `statsSaatKisa`: TR "sa", EN "h"). Boşsa
+  /// yalın sayı.
   final String yUnit;
 
   @override
@@ -29,8 +30,16 @@ class AreaLineChart extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final maxV = values.fold<double>(0, (m, v) => v > m ? v : m);
-    final maxY = maxV <= 0 ? 1.0 : maxV * 1.15;
-    final interval = _niceInterval(maxY);
+    // 🔴 WP-926: üst sınır ARALIĞIN KATINA yuvarlanır. Eskiden
+    // `maxV × 1.15` idi (ör. 5.3 sa → 6.095): fl_chart sınır için ayrıca bir
+    // etiket üretir (`maxIncluded`), tepede "6sa" ile "6.1sa" üst üste
+    // biniyor, üstteki yarım kesiliyordu. Aynı hatanın çubuk/çizgi grafikteki
+    // eşi WP-499'da `minuteAxis` ile kapatıldı; sıra aynı: önce aralık, sonra
+    // o aralığın üst katı.
+    final raw = maxV <= 0 ? 1.0 : maxV * 1.15;
+    final interval = _niceInterval(raw);
+    final steps = (raw / interval - 1e-9).ceil();
+    final maxY = (steps < 1 ? 1 : steps) * interval;
     final spots = [
       for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i]),
     ];
