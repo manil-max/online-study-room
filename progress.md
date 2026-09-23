@@ -10,14 +10,14 @@
 
 | Konu | Doğrulanmış durum | Kanıt / sınır |
 |---|---|---|
-| Son kayıtlı yayın | **v87 · 1.0.87+87** + **beta-v8701**, etiket commit'i `3ab99b46` | 2026-09-18 sahip GO "bunları v87'de çıkar"; aşağıdaki v87 yayın kaydı. Önceki v86 `bd6690eb` |
+| Son kayıtlı yayın | **v88 · 1.0.88+88** + **beta-v8710**, etiket commit'i `1d4b0143` | 2026-09-23 sahip GO "testler bitince betaya koy play e yeni surum yukle"; kapı 22 yeşil + release-defines yeşil; ilk deneme `35801972493` etiket yokken düştü (yayın yok), ikinci `35802025227` 6/6 |
 | v87 release koşumu | **35351214943** (stable) + **35351213314** (beta): ikisi de 6/6 | İlk deneme 35346868347 KIRMIZI (WP-846 satırı CI manifestinde); düzeltme `3ab99b46` |
 | Play | **production 87, draft** (koşum `35357009125`) | Sahip Console'da incelemeye gönderecek. v86 taslağı/incelemesi v87 ile değişir |
 | Veritabanı | Repo, staging ve production head **0144** (WP-906 iOS push) | Staging dry-run `35770109022`, apply `35770464584`; production dry-run `35770977433`, apply `35771413080` (0144|0144|0144); dispatcher staging `35770922445`, production `35771818079`. Kapılar yeniden kilitli |
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-875** | beta-v8709 (v8708 CI'da WP-866 testinde düştü, yayınlanmadı → WP-875). ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
+| Son ayrılan WP | **WP-914** | v88 yayinda (run `35802025227`), Play production 88 **taslak** (run `35904248921`); beta-v8710. ⚠️ WP-833 iki kez kullanıldı (Google kapısı / Store logosu) |
 | iOS bloğu (ayrı oturum) | **WP-900…WP-919** | 2026-09-22 App Store hazırlığı paralel oturumda; bu aralık yalnız iOS işlerine ayrıldı (numara çakışmasın). Genel sayaç WP-875'ten devam eder |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
