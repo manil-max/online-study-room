@@ -885,7 +885,7 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: l10n.taskListRemaining,
-                  suffixText: 'h',
+                  suffixText: l10n.clockSaatKisa,
                   border: const OutlineInputBorder(),
                 ),
               ),

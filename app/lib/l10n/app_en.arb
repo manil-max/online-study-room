@@ -1628,6 +1628,10 @@
   "@clockSaat": {
     "description": "Clock user-facing text. Source: Saat"
   },
+  "clockSaatKisa": "h",
+  "@clockSaatKisa": {
+    "description": "Tasks editor: unit suffix of the remaining-hours field (short for hours)."
+  },
   "clockSaatMerkezi": "Clock Center",
   "@clockSaatMerkezi": {
     "description": "Clock user-facing text. Source: Saat Merkezi"

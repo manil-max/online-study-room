@@ -126,7 +126,8 @@ void main() {
 
     expect(find.text('Yeni alarm'), findsOneWidget);
     expect(find.text('Kaydet'), findsOneWidget);
-    expect(find.text('Anti-snooze'), findsOneWidget);
+    // WP-934: Turkce arayuzde Ingilizce "Anti-snooze" kalmisti.
+    expect(find.text('Erteleme engeli'), findsOneWidget);
     expect(find.text('Kademeli ses (30 sn)'), findsOneWidget);
   });
 }

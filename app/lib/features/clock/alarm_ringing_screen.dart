@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../data/models/alarm_rule.dart';
@@ -151,7 +152,10 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${(_level * 100).round()}%',
+                  // WP-934: "50%" değil, dilin biçimi (TR "%50").
+                  NumberFormat.percentPattern(
+                    Localizations.localeOf(context).toString(),
+                  ).format(_level),
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
