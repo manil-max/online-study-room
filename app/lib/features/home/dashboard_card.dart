@@ -81,6 +81,8 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.dday => AppLocalizations.of(context).homeSinavGeriSayimi,
   };
 
+  /// Kart seçicideki tek satır: kartın NE gösterdiği. 🔴 WP-932: yedi kartta
+  /// başlığın aynısıydı ("Dönem özeti / Dönem özeti").
   String description(BuildContext context) => switch (this) {
     DashboardCardType.timer => AppLocalizations.of(
       context,
@@ -91,19 +93,27 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.today => AppLocalizations.of(
       context,
     ).homeBugunkuToplamVeDers,
-    DashboardCardType.weekly => AppLocalizations.of(context).homeCalismaGrafigi,
-    DashboardCardType.line => AppLocalizations.of(context).homeEgilimGrafigi,
-    DashboardCardType.monthly => AppLocalizations.of(context).homeDonemOzeti,
+    DashboardCardType.weekly => AppLocalizations.of(
+      context,
+    ).homeKartAciklamaHaftalik,
+    DashboardCardType.line => AppLocalizations.of(
+      context,
+    ).homeKartAciklamaEgilim,
+    DashboardCardType.monthly => AppLocalizations.of(
+      context,
+    ).homeKartAciklamaDonem,
     DashboardCardType.weekdayWeekend => AppLocalizations.of(
       context,
     ).homeHaftaIciIleHafta,
     DashboardCardType.hours => AppLocalizations.of(
       context,
     ).homeGununHangiSaatlerindeCalistigin,
-    DashboardCardType.rhythm => AppLocalizations.of(context).homeHaftalikRitim,
+    DashboardCardType.rhythm => AppLocalizations.of(
+      context,
+    ).homeKartAciklamaRitim,
     DashboardCardType.scatter => AppLocalizations.of(
       context,
-    ).homeOturumDagilimi,
+    ).homeKartAciklamaOturum,
     DashboardCardType.records => AppLocalizations.of(
       context,
     ).homeToplamRekorSeriEn,
@@ -113,13 +123,15 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.leaderboard => AppLocalizations.of(
       context,
     ).homeAktifGrubunBugunkuSiralamasi,
-    DashboardCardType.groupGoal => AppLocalizations.of(context).homeGrupHedefi,
+    DashboardCardType.groupGoal => AppLocalizations.of(
+      context,
+    ).homeKartAciklamaGrupHedefi,
     DashboardCardType.groupTrend => AppLocalizations.of(
       context,
     ).homeGrubunSonGunlerdekiToplam,
     DashboardCardType.activeMembers => AppLocalizations.of(
       context,
-    ).homeSuAnCalisanlar,
+    ).homeKartAciklamaCalisanlar,
     DashboardCardType.tasks => AppLocalizations.of(context).taskListSubtitle,
     DashboardCardType.dday => AppLocalizations.of(
       context,
