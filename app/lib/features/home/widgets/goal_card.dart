@@ -9,6 +9,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/models/goal_streak.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../classroom/widgets/study_timer_card.dart';
 import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
 import 'card_data_gate.dart';
@@ -145,8 +146,9 @@ class _GoalCardState extends ConsumerState<GoalCard>
     // Sıra bozulursa kutlama geri gelir — ölçülüyor:
     // `test/features/home/goal_celebration_wp817_test.dart`.
     //
-    // Tam kart kapısı burada güvenlidir: kart tamamen bilgilendiricidir, tek
-    // etkileşimi yoktur. (Sayaç kartı aynı çareyi ALAMAZ; oradaki gerekçe
+    // Tam kart kapısı burada güvenlidir: kartın tek etkileşimi hedef
+    // düzenlemedir (WP-930) ve hedef sayaç kartından da düzenlenebilir.
+    // (Sayaç kartı aynı çareyi ALAMAZ; oradaki gerekçe
     // `study_timer_card.dart` içinde yazılı.)
     final sessionsAsync = ref.watch(userSessionsProvider);
     final gate = cardDataGate(
@@ -198,51 +200,113 @@ class _GoalCardState extends ConsumerState<GoalCard>
     // tamamlandığını söyleyen TEK görsel sinyal buydu.
     final doneGreen = subjectColor('chart-2', on: theme.colorScheme.surface);
     final ringColor = reached ? doneGreen : theme.colorScheme.primary;
+    // 🔴 WP-930: karta dokunmak hiçbir şey yapmıyordu; hedefi değiştirmenin
+    // tek yolu telefonda görünmeyen sayaç kartı çubuğuydu. Aynı akış açılır.
+    // Pano düzenleme modunda kart `IgnorePointer` altındadır, dokunuş gelmez.
     return Card(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 220;
-          final isLarge = constraints.maxWidth >= 400;
-          final ringSize = isCompact ? 64.0 : (isLarge ? 116.0 : 84.0);
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => editDailyGoalFlow(context, ref, goalMinutes),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 220;
+            final isLarge = constraints.maxWidth >= 400;
+            final ringSize = isCompact ? 64.0 : (isLarge ? 116.0 : 84.0);
 
-          final ring = SizedBox(
-            width: ringSize,
-            height: ringSize,
-            child: Stack(
-              alignment: Alignment.center,
-              // Vurgu halkası halkanın DIŞINA taşar; kırpılırsa kutlama
-              // görünmez olur. Taşma payı kartın 16 px iç boşluğunun altında.
-              clipBehavior: Clip.none,
-              children: [
-                SizedBox.expand(child: _ringHalo(doneGreen)),
-                SizedBox.expand(
-                  child: CircularProgressIndicator(
-                    value: pct,
-                    strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+            final ring = SizedBox(
+              width: ringSize,
+              height: ringSize,
+              child: Stack(
+                alignment: Alignment.center,
+                // Vurgu halkası halkanın DIŞINA taşar; kırpılırsa kutlama
+                // görünmez olur. Taşma payı kartın 16 px iç boşluğunun altında.
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox.expand(child: _ringHalo(doneGreen)),
+                  SizedBox.expand(
+                    child: CircularProgressIndicator(
+                      value: pct,
+                      strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                    ),
+                  ),
+                  Text(
+                    '%${(pct * 100).round()}',
+                    style:
+                        (isLarge
+                                ? theme.textTheme.headlineSmall
+                                : theme.textTheme.titleMedium)
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            );
+
+            // WP-508: sığan içerikte kaydırıcı kurulmaz (dış sayfa akar), taşarsa
+            // kart içinde kayar. Sınırsız yükseklikte (Gruplar listesi) hiç
+            // kaydırıcı olmaz — bu kart komşularındaki kontrolü hiç yapmıyordu.
+            final unbounded = !constraints.maxHeight.isFinite;
+            Widget maybeScroll(Widget child) =>
+                unbounded ? child : cardScrollIfOverflows(child: child);
+
+            if (isCompact) {
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: maybeScroll(
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              AppLocalizations.of(context).homeGunlukHedef,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (reached)
+                            _pulsed(
+                              Icon(
+                                Icons.check_circle,
+                                color: doneGreen,
+                                size: 16,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Center(child: ring),
+                      const SizedBox(height: 12),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${formatHuman(recorded)} / ${formatHuman(goalSeconds)}',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Minik kartta rozet tam sığmıyor; içerik kırpılmak yerine
+                      // ölçekleniyor. (WP-496'dan sonra rozette yazı yok; kapsam
+                      // bilgisi `Semantics` etiketinde duruyor.)
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: GoalStreakBadge(
+                          scope: streakScope,
+                          size: GoalStreakFlameSize.compact,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '%${(pct * 100).round()}',
-                  style:
-                      (isLarge
-                              ? theme.textTheme.headlineSmall
-                              : theme.textTheme.titleMedium)
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-          );
+              );
+            }
 
-          // WP-508: sığan içerikte kaydırıcı kurulmaz (dış sayfa akar), taşarsa
-          // kart içinde kayar. Sınırsız yükseklikte (Gruplar listesi) hiç
-          // kaydırıcı olmaz — bu kart komşularındaki kontrolü hiç yapmıyordu.
-          final unbounded = !constraints.maxHeight.isFinite;
-          Widget maybeScroll(Widget child) =>
-              unbounded ? child : cardScrollIfOverflows(child: child);
-
-          if (isCompact) {
             return Padding(
               padding: const EdgeInsets.all(16),
               child: maybeScroll(
@@ -257,107 +321,53 @@ class _GoalCardState extends ConsumerState<GoalCard>
                             AppLocalizations.of(context).homeGunlukHedef,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelMedium,
+                            style: theme.textTheme.titleMedium,
                           ),
                         ),
                         const Spacer(),
                         if (reached)
-                          _pulsed(
-                            Icon(
-                              Icons.check_circle,
-                              color: doneGreen,
-                              size: 16,
-                            ),
-                          ),
+                          _pulsed(Icon(Icons.check_circle, color: doneGreen)),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Center(child: ring),
-                    const SizedBox(height: 12),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '${formatHuman(recorded)} / ${formatHuman(goalSeconds)}',
-                        style: theme.textTheme.titleSmall,
-                      ),
+                    Row(
+                      children: [
+                        ring,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${formatHuman(recorded)} / ${formatHuman(goalSeconds)}',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                reached
+                                    ? AppLocalizations.of(context).homeBitti
+                                    // 🔴 WP-854: etiket "Günlük hedef" idi ama değer
+                                    // KALAN süreydi (hedef 4 sa iken "Günlük hedef:
+                                    // 1h 25m"). Mağaza karesinde ölçüldü.
+                                    : '${AppLocalizations.of(context).statsHedefeKalan}: '
+                                          '${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    // Minik kartta rozet tam sığmıyor; içerik kırpılmak yerine
-                    // ölçekleniyor. (WP-496'dan sonra rozette yazı yok; kapsam
-                    // bilgisi `Semantics` etiketinde duruyor.)
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: GoalStreakBadge(
-                        scope: streakScope,
-                        size: GoalStreakFlameSize.compact,
-                      ),
-                    ),
+                    const SizedBox(height: 16),
+                    GoalStreakBadge(scope: streakScope),
                   ],
                 ),
               ),
             );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: maybeScroll(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          AppLocalizations.of(context).homeGunlukHedef,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (reached)
-                        _pulsed(Icon(Icons.check_circle, color: doneGreen)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ring,
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${formatHuman(recorded)} / ${formatHuman(goalSeconds)}',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              reached
-                                  ? AppLocalizations.of(context).homeBitti
-                                  // 🔴 WP-854: etiket "Günlük hedef" idi ama değer
-                                  // KALAN süreydi (hedef 4 sa iken "Günlük hedef:
-                                  // 1h 25m"). Mağaza karesinde ölçüldü.
-                                  : '${AppLocalizations.of(context).statsHedefeKalan}: '
-                                        '${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  GoalStreakBadge(scope: streakScope),
-                ],
-              ),
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }

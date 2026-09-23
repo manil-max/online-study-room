@@ -119,46 +119,6 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     }
   }
 
-  Future<void> _editGoal(BuildContext context, int currentMinutes) async {
-    final result = await showGoalEditorDialog(
-      context,
-      initialMinutes: currentMinutes,
-    );
-    if (result == null) return;
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    // 🔴 WP-715 (ek) — WP-710 günlük hedef ayarını Ayarlar'dan kaldırdı; o
-    // yolda kayıt başarılı olunca `profileGunlukHedefGuncellendi` onayı
-    // çıkıyordu. Tek düzenleme yüzeyi bu karta indi ve onay birlikte kayboldu:
-    // kullanıcı yalnız hata görüyor, başarıyı görmüyordu. Anahtar zaten
-    // katalogda vardı ve `lib/` içinde ölü duruyordu.
-    final savedMessage = AppLocalizations.of(
-      context,
-    ).profileGunlukHedefGuncellendi;
-    // 🔴 WP-619: yakalama dalı `on AuthException` idi ve `updateDailyGoal` bu
-    // türü HİÇ atmaz — ağ/sunucu hatası `PostgrestException` /
-    // `ClientException` / `SocketException` olarak gelir, dalın yanından geçip
-    // global yutucuya giderdi. Kullanıcı hedefini değiştiriyor, hiçbir şey
-    // olmuyor, eski hedef sessizce duruyordu.
-    //
-    // WP-610 aynı hatayı Ayarlar ve Profil'de kapattı ama burayı kapatamadı
-    // (o turda bu dosya başka bir ajandaydı) ve **kullanıcı hedefini en çok
-    // buradan değiştiriyor** — sayaç kartı ana yüzey.
-    //
-    // Günlük hedef seriyi (streak) ve ilerleme halkasını besliyor: sessizce
-    // eski hedefte kalan kullanıcı hedefi tutup tutmadığını da yanlış görür.
-    try {
-      await ref.read(authRepositoryProvider).updateDailyGoal(result);
-      ref.invalidate(authStateProvider);
-      messenger.showSnackBar(SnackBar(content: Text(savedMessage)));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
-  }
-
   // WP-613: Durdur kuralı (ayna onayı + hata şeridi) artık
   // `stopTimerFromSurface` içinde, tam ekran odak ekranıyla ORTAK. Burada
   // kopyası durduğu sürece birini düzeltip diğerini unutmak serbestti; odak
@@ -668,7 +628,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                             pct: pct,
                             reached: reached,
                             known: todayKnown,
-                            onEdit: () => _editGoal(context, goalMinutes),
+                            onEdit: () =>
+                                editDailyGoalFlow(context, ref, goalMinutes),
                           ),
                           const SizedBox(height: 16),
                           _SubjectSelector(
@@ -740,6 +701,55 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
       ),
     );
     return compact ? Align(alignment: Alignment.topCenter, child: card) : card;
+  }
+}
+
+/// Günlük hedefi düzenleme akışı: pencere → kayıt → onay/hata şeridi.
+///
+/// WP-930: sayaç kartının hedef çubuğu ve Ana Sayfa'nın hedef kartı AYNI
+/// akışı çağırır — iki kopya olsaydı biri düzeltilip diğeri unutulurdu
+/// (WP-613 dersi; bu akışın yakalama dalı WP-619'da tam böyle geride kaldı).
+Future<void> editDailyGoalFlow(
+  BuildContext context,
+  WidgetRef ref,
+  int currentMinutes,
+) async {
+  final result = await showGoalEditorDialog(
+    context,
+    initialMinutes: currentMinutes,
+  );
+  if (result == null) return;
+  if (!context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final genericError = AppLocalizations.of(
+    context,
+  ).authBeklenmeyenBirHataOlustu;
+  // 🔴 WP-715 (ek) — WP-710 günlük hedef ayarını Ayarlar'dan kaldırdı; o
+  // yolda kayıt başarılı olunca `profileGunlukHedefGuncellendi` onayı
+  // çıkıyordu. Tek düzenleme yüzeyi bu karta indi ve onay birlikte kayboldu:
+  // kullanıcı yalnız hata görüyor, başarıyı görmüyordu. Anahtar zaten
+  // katalogda vardı ve `lib/` içinde ölü duruyordu.
+  final savedMessage = AppLocalizations.of(
+    context,
+  ).profileGunlukHedefGuncellendi;
+  // 🔴 WP-619: yakalama dalı `on AuthException` idi ve `updateDailyGoal` bu
+  // türü HİÇ atmaz — ağ/sunucu hatası `PostgrestException` /
+  // `ClientException` / `SocketException` olarak gelir, dalın yanından geçip
+  // global yutucuya giderdi. Kullanıcı hedefini değiştiriyor, hiçbir şey
+  // olmuyor, eski hedef sessizce duruyordu.
+  //
+  // WP-610 aynı hatayı Ayarlar ve Profil'de kapattı ama burayı kapatamadı
+  // (o turda bu dosya başka bir ajandaydı) ve **kullanıcı hedefini en çok
+  // buradan değiştiriyor** — sayaç kartı ana yüzey.
+  //
+  // Günlük hedef seriyi (streak) ve ilerleme halkasını besliyor: sessizce
+  // eski hedefte kalan kullanıcı hedefi tutup tutmadığını da yanlış görür.
+  try {
+    await ref.read(authRepositoryProvider).updateDailyGoal(result);
+    ref.invalidate(authStateProvider);
+    messenger.showSnackBar(SnackBar(content: Text(savedMessage)));
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(genericError)));
   }
 }
 
