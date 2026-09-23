@@ -133,7 +133,15 @@ void main() {
     await _pump(tester, StatsPeriod.week);
     // 22 Eyl 1sa + 23 Eyl 2sa 35dk kayıtlı + 47 dk canlı; ikisi de hafta içi.
     final expected = formatHuman(3600 + _recorded + _live);
-    expect(find.text(expected), findsNWidgets(2), reason: 'Toplam + Hafta içi');
+    // Toplam + Hafta içi + "Seçili hafta vs önceki" kartındaki "Bu hafta".
+    // (WP-927 ilk hâlinde kıyas kartı canlıyı saymıyordu: aynı ekranda
+    // "Toplam 14sa 46dk" ile "Bu hafta 13sa 59dk" yan yana çıktı.)
+    await tester.scrollUntilVisible(
+      find.text(expected).last,
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text(expected), findsNWidgets(3));
   });
 
   testWidgets('geçmiş gün (dün): canlı koşu EKLENMEZ', (tester) async {

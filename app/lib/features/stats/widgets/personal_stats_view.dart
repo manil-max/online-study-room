@@ -559,6 +559,7 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             sessions: sessions,
             selection: sel,
             now: now,
+            liveExtra: liveExtra,
           ),
         ),
 
@@ -872,11 +873,17 @@ class _WeekComparisonCard extends StatelessWidget {
     required this.sessions,
     required this.selection,
     required this.now,
+    this.liveExtra = 0,
   });
 
   final List<StudySession> sessions;
   final StatsPeriodSelection selection;
   final DateTime now;
+
+  /// WP-927: içinde bulunulan haftanın henüz kaydedilmemiş canlı süresi.
+  /// Üstteki "Toplam" döşemesi onu sayarken bu kart saymazsa aynı ekranda
+  /// "Toplam 14sa 46dk" ile "Bu hafta 13sa 59dk" yan yana çıkar.
+  final int liveExtra;
 
   @override
   Widget build(BuildContext context) {
@@ -891,7 +898,7 @@ class _WeekComparisonCard extends StatelessWidget {
       // (WP-561 — aksi hâlde Salı günü kullanıcı matematiksel olarak her zaman
       // "kötüye gidiyorum" görüyordu).
       final wow = weekOverWeekSeconds(sessions, now: now);
-      thisWeek = wow.thisWeek;
+      thisWeek = wow.thisWeek + liveExtra;
       lastWeek = wow.lastWeek;
     } else {
       // Kapalı hafta: iki taraf da TAM 7 gündür, kırpmaya gerek yok.
