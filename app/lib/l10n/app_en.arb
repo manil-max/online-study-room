@@ -2916,27 +2916,27 @@
   "@homeKapat": {
     "description": "Home user-facing text. Source: Kapat"
   },
-  "homeKartAciklamaCalisanlar": "Group members studying right now, with live timers",
+  "homeKartAciklamaCalisanlar": "Group members studying now, live",
   "@homeKartAciklamaCalisanlar": {
     "description": "Card picker description of the 'Currently studying' card."
   },
-  "homeKartAciklamaDonem": "Today, this week, month or year: total, daily average and active days",
+  "homeKartAciklamaDonem": "Totals and daily average by period",
   "@homeKartAciklamaDonem": {
     "description": "Card picker description of the 'Period summary' card."
   },
-  "homeKartAciklamaEgilim": "Is your study time going up or down over the last 14–90 days",
+  "homeKartAciklamaEgilim": "Is your study time going up or down?",
   "@homeKartAciklamaEgilim": {
     "description": "Card picker description of the 'Trend chart' card."
   },
-  "homeKartAciklamaGrupHedefi": "Your group's total today, its daily goal and group streak",
+  "homeKartAciklamaGrupHedefi": "Group total today, goal and streak",
   "@homeKartAciklamaGrupHedefi": {
     "description": "Card picker description of the 'Group goal' card."
   },
-  "homeKartAciklamaHaftalik": "Daily study time for the last 7–30 days, with your goal line",
+  "homeKartAciklamaHaftalik": "Daily study time with your goal line",
   "@homeKartAciklamaHaftalik": {
     "description": "Card picker description of the 'Weekly chart' card."
   },
-  "homeKartAciklamaOturum": "Each recent session as a dot: day, length and subject",
+  "homeKartAciklamaOturum": "Each session as a dot: day, length, subject",
   "@homeKartAciklamaOturum": {
     "description": "Card picker description of the 'Session distribution' card."
   },
