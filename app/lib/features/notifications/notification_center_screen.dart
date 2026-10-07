@@ -12,6 +12,7 @@ import '../../data/providers/push_notification_providers.dart';
 import '../../data/models/push_notification.dart';
 import '../../l10n/app_localizations.dart';
 import '../permissions/permissions_screen.dart';
+import '../session_summary/session_summary_preference.dart';
 
 /// WP-683 — masaüstünde bir bildirim bloğunun genişlik tavanı.
 ///
@@ -562,6 +563,19 @@ class _TypesCard extends ConsumerWidget {
           ),
           value: deliverySupported && prefs.updatesEnabled,
           onChanged: !deliverySupported ? null : notifier.setUpdatesEnabled,
+        ),
+        const Divider(height: 1),
+        // WP-939: sayaç uygulama içinden durdurulunca açılan kısa özet.
+        // Uygulama içi bir yüzeydir; masaüstünde de çalışır, kapı yok.
+        SwitchListTile(
+          key: const Key('notification_session_summary_switch'),
+          secondary: const Icon(Icons.summarize_outlined),
+          title: Text(l10n.sessionSummarySettingTitle),
+          subtitle: Text(l10n.sessionSummarySettingSubtitle),
+          value: ref.watch(sessionSummaryEnabledProvider),
+          onChanged: ref
+              .read(sessionSummaryEnabledProvider.notifier)
+              .setEnabled,
         ),
       ],
     );

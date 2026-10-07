@@ -10,6 +10,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import '../../session_summary/session_summary_sheet.dart';
 import 'clock_style.dart';
 import 'timer_mode_controls.dart';
 
@@ -126,7 +127,14 @@ Future<void> stopTimerFromSurface(BuildContext context, WidgetRef ref) async {
   HapticFeedback.mediumImpact();
   final notifier = ref.read(studyTimerProvider.notifier);
   if (!ref.read(studyTimerProvider).isGlobalTimerMirror) {
+    // WP-939: durdurma ÖNCESİ durum, özetin "bu durdurma oturum yazdı mı"
+    // kararına girer. Özet yalnız bu yüzeyden (uygulama içi Durdur) açılır;
+    // bildirim/widget/rutin durdurmaları buradan geçmez.
+    final before = ref.read(studyTimerProvider);
     await notifier.stop();
+    if (context.mounted) {
+      unawaited(presentSessionSummary(context, ref, before: before));
+    }
     return;
   }
   final confirmed = await showDialog<bool>(

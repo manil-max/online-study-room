@@ -666,6 +666,8 @@ void main() {
         tr.notificationsGuncellemeBildirimleri,
         tr.notificationsSessizSaatler,
         tr.notificationsSessizSaatleriEtkinlestir,
+        // WP-939: seans sonu ozeti anahtari.
+        tr.sessionSummarySettingTitle,
         // 🔴 "Bildirim sagligi" tani karti bu listede YOK ve bu WP-683'un
         // sonucu DEGIL. `AppPushNotificationService.isSupported`
         // (`app_push_notification_service.dart:374`) `defaultTargetPlatform ==
@@ -682,8 +684,8 @@ void main() {
       }
       expect(
         find.byType(SwitchListTile),
-        findsNWidgets(6),
-        reason: 'Alti tercih anahtarindan biri kayboldu.',
+        findsNWidgets(7),
+        reason: 'Yedi tercih anahtarindan biri kayboldu.',
       );
       // Anahtar GERCEKTEN calisiyor: duyuru tercihi kapatilabiliyor.
       final announcements = find.ancestor(

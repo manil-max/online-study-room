@@ -2545,5 +2545,14 @@
   "streamErrorCauseNetwork": "Bağlantı sorunu (ağ)",
   "streamErrorCauseAuth": "Oturum veya yetki sorunu",
   "streamErrorCauseServer": "Sunucu hatası ({code})",
-  "streamErrorCauseApp": "Uygulama hatası"
+  "streamErrorCauseApp": "Uygulama hatası",
+  "sessionSummarySaved": "{duration} {subject} kaydedildi",
+  "sessionSummarySavedNoSubject": "{duration} kaydedildi",
+  "sessionSummaryGoalProgress": "Günlük hedef: %{percent} ({total} / {goal})",
+  "sessionSummaryGoalReached": "Hedef tamam! 🎉 ({total} / {goal})",
+  "sessionSummaryStreak": "{days, plural, other{Seri: {days} gün}}",
+  "sessionSummaryOk": "Tamam",
+  "sessionSummaryGoToStats": "İstatistiğe git",
+  "sessionSummarySettingTitle": "Seans sonu özeti göster",
+  "sessionSummarySettingSubtitle": "Sayacı durdurunca kısa bir özet açılır"
 }

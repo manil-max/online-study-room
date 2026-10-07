@@ -7555,5 +7555,52 @@
     }
   },
   "streamErrorCauseApp": "App error",
-  "@streamErrorCauseApp": {"description": "WP-938: short diagnosis hint under a generic load error when the cause is inside the app (no network or server reason)."}
+  "@streamErrorCauseApp": {"description": "WP-938: short diagnosis hint under a generic load error when the cause is inside the app (no network or server reason)."},
+  "sessionSummarySaved": "{duration} of {subject} saved",
+  "@sessionSummarySaved": {
+    "description": "WP-939: headline of the short summary shown after the user stops the timer in the app and the session is saved. duration is a short formatted time like 47m, subject is the subject name.",
+    "placeholders": {
+      "duration": {"type": "String"},
+      "subject": {"type": "String"}
+    }
+  },
+  "sessionSummarySavedNoSubject": "{duration} saved",
+  "@sessionSummarySavedNoSubject": {
+    "description": "WP-939: session summary headline when the session has no subject. duration is a short formatted time like 47m.",
+    "placeholders": {
+      "duration": {"type": "String"}
+    }
+  },
+  "sessionSummaryGoalProgress": "Daily goal: {percent}% ({total} / {goal})",
+  "@sessionSummaryGoalProgress": {
+    "description": "WP-939: session summary line showing today's total against the daily goal, same percentage as the home goal card. total and goal are short formatted times.",
+    "placeholders": {
+      "percent": {"type": "int"},
+      "total": {"type": "String"},
+      "goal": {"type": "String"}
+    }
+  },
+  "sessionSummaryGoalReached": "Goal complete! 🎉 ({total} / {goal})",
+  "@sessionSummaryGoalReached": {
+    "description": "WP-939: session summary line when today's total has reached the daily goal. total and goal are short formatted times.",
+    "placeholders": {
+      "total": {"type": "String"},
+      "goal": {"type": "String"}
+    }
+  },
+  "sessionSummaryStreak": "{days, plural, =1{Streak: 1 day} other{Streak: {days} days}}",
+  "@sessionSummaryStreak": {
+    "description": "WP-939: session summary line with the current personal goal streak in days.",
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "sessionSummaryOk": "OK",
+  "@sessionSummaryOk": {"description": "WP-939: primary button that closes the session summary."},
+  "sessionSummaryGoToStats": "Go to stats",
+  "@sessionSummaryGoToStats": {"description": "WP-939: secondary session summary button that opens the Stats tab."},
+  "sessionSummarySettingTitle": "Show session summary",
+  "@sessionSummarySettingTitle": {"description": "WP-939: settings switch title for the short summary shown after stopping the timer."},
+  "sessionSummarySettingSubtitle": "A short summary opens when you stop the timer",
+  "@sessionSummarySettingSubtitle": {"description": "WP-939: settings switch subtitle explaining the session summary."}
 }
