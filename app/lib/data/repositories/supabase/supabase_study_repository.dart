@@ -8,6 +8,7 @@ import '../../models/study_session.dart';
 import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
 import 'postgrest_paging.dart';
+import 'resilient_stream.dart';
 
 /// Supabase tabanlı çalışma oturumu deposu. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseStudyRepository implements StudyRepository {
@@ -191,7 +192,37 @@ class SupabaseStudyRepository implements StudyRepository {
   Stream<List<StudySession>> watchUserSessions(String userId) {
     // Sıcak pencere (90g): select + kullanıcı filtreli realtime yenileme.
     // Tüm geçmişi stream ile indirmez → RAM/CPU (OPT N2).
-    late final StreamController<List<StudySession>> controller;
+    // WP-938: kanal koparsa REST yoklamasıyla devam eder
+    // (`resilient_stream.dart`); ilk çekimi de o yapar.
+    return resilientRealtimeStream<List<StudySession>>(
+      realtime: () => _changeDrivenRealtime<List<StudySession>>(
+        channelName: 'user_sessions_hot_$userId',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'user_id',
+          value: userId,
+        ),
+        debounceDelay: const Duration(milliseconds: 400),
+        fetch: () => _fetchHotWindowSessions(userId),
+      ),
+      fetch: () => _fetchHotWindowSessions(userId),
+    );
+  }
+
+  /// `study_sessions` değişikliklerinde [fetch]'i yeniden çağıran elle kurulmuş
+  /// kanal akışı (WP-543 köprüsüyle).
+  ///
+  /// WP-938: ilk REST çekimini burası YAPMAZ; [resilientRealtimeStream] yapar.
+  /// Kanal hatası (`timedOut`/`channelError`/`closed`) yine akışa düşer —
+  /// sessiz ölüm yasak — ama onu ekrana değil sarmalayıcıya iletir: sarmalayıcı
+  /// son veriyi tutar, REST yoklamasına geçer ve kanalı yeniden kurar.
+  Stream<T> _changeDrivenRealtime<T>({
+    required String channelName,
+    required PostgresChangeFilter? filter,
+    required Duration debounceDelay,
+    required Future<T> Function() fetch,
+  }) {
+    late final StreamController<T> controller;
     RealtimeChannel? channel;
     Timer? debounce;
     var refreshSeq = 0;
@@ -200,9 +231,9 @@ class SupabaseStudyRepository implements StudyRepository {
     Future<void> refresh() async {
       final seq = ++refreshSeq;
       try {
-        final rows = await _fetchHotWindowSessions(userId);
+        final value = await fetch();
         if (!controller.isClosed && seq == refreshSeq) {
-          controller.add(rows);
+          controller.add(value);
         }
       } catch (e, st) {
         if (!controller.isClosed && seq == refreshSeq) {
@@ -213,25 +244,20 @@ class SupabaseStudyRepository implements StudyRepository {
 
     void scheduleRefresh() {
       debounce?.cancel();
-      debounce = Timer(const Duration(milliseconds: 400), () {
+      debounce = Timer(debounceDelay, () {
         unawaited(refresh());
       });
     }
 
-    controller = StreamController<List<StudySession>>(
+    controller = StreamController<T>(
       onListen: () {
-        unawaited(refresh());
         channel = _client
-            .channel('user_sessions_hot_$userId')
+            .channel(channelName)
             .onPostgresChanges(
               event: PostgresChangeEvent.all,
               schema: 'public',
               table: 'study_sessions',
-              filter: PostgresChangeFilter(
-                type: PostgresChangeFilterType.eq,
-                column: 'user_id',
-                value: userId,
-              ),
+              filter: filter,
               callback: (_) => scheduleRefresh(),
             )
             // Yeniden baglanmada tazele; sessiz sokete hata yay (WP-543).
@@ -312,63 +338,16 @@ class SupabaseStudyRepository implements StudyRepository {
     // dayanamaz; tüm study_sessions değişikliklerinde RPC'yi yeniden çağırırız
     // (RPC zaten group_id parametresiyle sunucuda süzüyor — K6 kararı).
     // OPT N1: debounce — her satır değişiminde tam RPC fırtınasını keser.
-    late final StreamController<List<DailyStat>> controller;
-    RealtimeChannel? channel;
-    Timer? debounce;
-    var refreshSeq = 0;
-    var disposed = false;
-
-    Future<void> refresh() async {
-      final seq = ++refreshSeq;
-      try {
-        final stats = await _fetchDailyStats(groupId);
-        if (!controller.isClosed && seq == refreshSeq) {
-          controller.add(stats);
-        }
-      } catch (e, st) {
-        if (!controller.isClosed && seq == refreshSeq) {
-          controller.addError(e, st);
-        }
-      }
-    }
-
-    void scheduleRefresh() {
-      debounce?.cancel();
-      debounce = Timer(const Duration(milliseconds: 900), () {
-        unawaited(refresh());
-      });
-    }
-
-    controller = StreamController<List<DailyStat>>(
-      onListen: () {
-        unawaited(refresh());
-        channel = _client
-            .channel('group_daily_$groupId')
-            .onPostgresChanges(
-              event: PostgresChangeEvent.all,
-              schema: 'public',
-              table: 'study_sessions',
-              callback: (_) => scheduleRefresh(),
-            )
-            // Yeniden baglanmada tazele; sessiz sokete hata yay (WP-543).
-            .subscribe(
-              _realtimeStatusBridge(
-                onResubscribed: () => unawaited(refresh()),
-                onFailure: (error, stackTrace) {
-                  if (!controller.isClosed) {
-                    controller.addError(error, stackTrace);
-                  }
-                },
-                isDisposed: () => disposed || controller.isClosed,
-              ),
-            );
-      },
-      onCancel: () async {
-        disposed = true;
-        debounce?.cancel();
-        if (channel != null) await _client.removeChannel(channel!);
-      },
+    // WP-938: liderlik/grup hedefi/grup trendi kanal koparsa REST yoklamasıyla
+    // devam eder (`resilient_stream.dart`).
+    return resilientRealtimeStream<List<DailyStat>>(
+      realtime: () => _changeDrivenRealtime<List<DailyStat>>(
+        channelName: 'group_daily_$groupId',
+        filter: null,
+        debounceDelay: const Duration(milliseconds: 900),
+        fetch: () => _fetchDailyStats(groupId),
+      ),
+      fetch: () => _fetchDailyStats(groupId),
     );
-    return controller.stream;
   }
 }

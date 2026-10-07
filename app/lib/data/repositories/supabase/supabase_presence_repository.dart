@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 
 import '../../models/presence.dart';
 import '../presence_repository.dart';
+import 'resilient_stream.dart';
 
 /// Supabase tabanlı presence deposu. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabasePresenceRepository implements PresenceRepository {
@@ -112,20 +113,29 @@ class SupabasePresenceRepository implements PresenceRepository {
     }
   }
 
+  // WP-938: iki akış da canlı akış koparsa REST yedeğiyle devam eder
+  // (`resilient_stream.dart`); kamp ateşi ve "şu an çalışanlar" hata yerine
+  // son bilinen durumu gösterir ve yoklamayla tazelenir.
   Stream<List<Presence>> _watchLegacyGroupPresence(String groupId) {
-    return _client
-        .from('presence')
-        .stream(primaryKey: ['user_id'])
-        .eq('group_id', groupId)
-        .map((rows) => rows.map(Presence.fromMap).toList());
+    return resilientTableStream<List<Presence>>(
+      client: _client,
+      table: 'presence',
+      primaryKey: const ['user_id'],
+      eqColumn: 'group_id',
+      eqValue: groupId,
+      map: (rows) => rows.map(Presence.fromMap).toList(),
+    );
   }
 
   Stream<List<Presence>> _watchProjectionGroupPresence(String groupId) {
-    return _client
-        .from('group_live_presence')
-        .stream(primaryKey: ['group_id', 'user_id'])
-        .eq('group_id', groupId)
-        .map((rows) => rows.map(Presence.fromMap).toList());
+    return resilientTableStream<List<Presence>>(
+      client: _client,
+      table: 'group_live_presence',
+      primaryKey: const ['group_id', 'user_id'],
+      eqColumn: 'group_id',
+      eqValue: groupId,
+      map: (rows) => rows.map(Presence.fromMap).toList(),
+    );
   }
 
   Stream<List<Presence>> _watchDualGroupPresence(String groupId) {

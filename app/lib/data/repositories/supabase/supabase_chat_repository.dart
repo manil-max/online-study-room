@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/chat_message.dart';
 import '../../models/profile.dart';
 import '../chat_repository.dart';
+import 'resilient_stream.dart';
 
 class SupabaseChatRepository implements ChatRepository {
   SupabaseChatRepository(this._client);
@@ -11,11 +12,15 @@ class SupabaseChatRepository implements ChatRepository {
 
   @override
   Stream<List<ChatMessage>> watchGroupMessages(String groupId) {
-    return _client
-        .from('class_messages')
-        .stream(primaryKey: ['id'])
-        .eq('group_id', groupId)
-        .asyncMap(_hydrateMessages);
+    // WP-938: canli akis koparsa REST yedegiyle devam eder.
+    return resilientTableStream<List<ChatMessage>>(
+      client: _client,
+      table: 'class_messages',
+      primaryKey: const ['id'],
+      eqColumn: 'group_id',
+      eqValue: groupId,
+      map: _hydrateMessages,
+    );
   }
 
   @override

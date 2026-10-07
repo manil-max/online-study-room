@@ -7,6 +7,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/animals/camp_animal.dart';
 import '../../../core/desktop/desktop_layout.dart';
+import '../../../core/l10n/group_error_text.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/time_engine/sky_phase.dart';
@@ -105,15 +106,28 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
         height: widget.tuning.sceneHeight,
         child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => _SceneFrame(
+      error: (error, _) => _SceneFrame(
         sky: sky,
         height: widget.tuning.sceneHeight,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+                  textAlign: TextAlign.center,
+                ),
+                // WP-938: sebep sınıfı — ekran görüntüsünden teşhis için.
+                const SizedBox(height: 4),
+                Text(
+                  loadErrorCauseHint(error, AppLocalizations.of(context)),
+                  key: kLoadErrorCauseHintKey,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
         ),

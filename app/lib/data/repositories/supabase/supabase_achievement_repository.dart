@@ -5,6 +5,7 @@ import '../../models/achievement_metric_progress.dart';
 import '../../models/profile.dart' show kDefaultDailyGoalMinutes;
 import '../../models/study_session.dart';
 import '../achievement_repository.dart';
+import 'resilient_stream.dart';
 
 class SupabaseAchievementRepository implements AchievementRepository {
   SupabaseAchievementRepository(this._client);
@@ -41,16 +42,17 @@ class SupabaseAchievementRepository implements AchievementRepository {
 
   @override
   Stream<List<AchievementMetricProgress>> watchMetricProgress(String userId) {
-    return _client
-        .from('achievement_metric_progress')
-        .stream(primaryKey: ['user_id', 'achievement_id'])
-        .eq('user_id', userId)
-        .order('achievement_id')
-        .map(
-          (rows) => rows
-              .map(AchievementMetricProgress.fromMap)
-              .toList(growable: false),
-        );
+    // WP-938: canli akis koparsa REST yedegiyle devam eder.
+    return resilientTableStream<List<AchievementMetricProgress>>(
+      client: _client,
+      table: 'achievement_metric_progress',
+      primaryKey: const ['user_id', 'achievement_id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      orderBy: 'achievement_id',
+      map: (rows) =>
+          rows.map(AchievementMetricProgress.fromMap).toList(growable: false),
+    );
   }
 
   @override
@@ -60,17 +62,18 @@ class SupabaseAchievementRepository implements AchievementRepository {
   ) {
     // Supabase realtime akışı tek `eq` filtresi kabul eder; grup süzgeci
     // istemcide uygulanır. Satırlar zaten RLS ile kendi kullanıcısına kilitli.
-    return _client
-        .from('group_achievement_metric_progress')
-        .stream(primaryKey: ['user_id', 'group_id', 'achievement_id'])
-        .eq('user_id', userId)
-        .order('achievement_id')
-        .map(
-          (rows) => rows
-              .where((row) => row['group_id'] == groupId)
-              .map(AchievementMetricProgress.fromMap)
-              .toList(growable: false),
-        );
+    return resilientTableStream<List<AchievementMetricProgress>>(
+      client: _client,
+      table: 'group_achievement_metric_progress',
+      primaryKey: const ['user_id', 'group_id', 'achievement_id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      orderBy: 'achievement_id',
+      map: (rows) => rows
+          .where((row) => row['group_id'] == groupId)
+          .map(AchievementMetricProgress.fromMap)
+          .toList(growable: false),
+    );
   }
 
   @override

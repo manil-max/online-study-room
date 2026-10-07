@@ -2542,5 +2542,10 @@
   "tourSettingsMoreTitle": "Hesap, gizlilik ve yardım",
   "tourProfileActionsTitle": "Kayıtlar ve ayarlar",
   "tourSettingsOverview": "Görünüm'de hazır temaları, açık ya da koyu modu ve uygulama dilini seçer, kendi temanı oluşturursun. Bildirim Merkezi'nden dürtme, hatırlatıcı ve sessiz saatleri yönet. İzinler'i açık tut; yoksa telefon kilitliyken sayaç ve alarm zamanında çalışmayabilir.",
-  "tourSettingsAccount": "Hesap'ta e-posta ve şifreni değiştirir, verilerini dışa aktarırsın. Gizlilik ve güvenlik'te engellediğin kişileri yönetirsin. Geri bildirim ile bize yazabilirsin. En alttaki Yardım'da sık sorulan sorular ve bu tanıtımları yeniden gösteren sıfırlama düğmesi var."
+  "tourSettingsAccount": "Hesap'ta e-posta ve şifreni değiştirir, verilerini dışa aktarırsın. Gizlilik ve güvenlik'te engellediğin kişileri yönetirsin. Geri bildirim ile bize yazabilirsin. En alttaki Yardım'da sık sorulan sorular ve bu tanıtımları yeniden gösteren sıfırlama düğmesi var.",
+  "streamErrorCauseRealtime": "Bağlantı sorunu (canlı güncelleme)",
+  "streamErrorCauseNetwork": "Bağlantı sorunu (ağ)",
+  "streamErrorCauseAuth": "Oturum veya yetki sorunu",
+  "streamErrorCauseServer": "Sunucu hatası ({code})",
+  "streamErrorCauseApp": "Uygulama hatası"
 }

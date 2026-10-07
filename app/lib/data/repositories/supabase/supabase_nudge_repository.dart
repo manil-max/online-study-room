@@ -4,6 +4,7 @@ import '../../models/nudge.dart';
 import '../../models/nudge_mute.dart';
 import '../../models/profile.dart';
 import '../nudge_repository.dart';
+import 'resilient_stream.dart';
 
 class SupabaseNudgeRepository implements NudgeRepository {
   SupabaseNudgeRepository(this._client);
@@ -31,13 +32,17 @@ class SupabaseNudgeRepository implements NudgeRepository {
 
   @override
   Stream<List<Nudge>> watchReceivedNudges(String userId) {
-    return _client
-        .from('nudges')
-        .stream(primaryKey: ['id'])
-        .eq('recipient_id', userId)
-        .order('created_at')
-        .limit(kNudgeWindow)
-        .asyncMap(_hydrateNudges);
+    // WP-938: canli akis koparsa REST yedegiyle devam eder.
+    return resilientTableStream<List<Nudge>>(
+      client: _client,
+      table: 'nudges',
+      primaryKey: const ['id'],
+      eqColumn: 'recipient_id',
+      eqValue: userId,
+      orderBy: 'created_at',
+      limit: kNudgeWindow,
+      map: _hydrateNudges,
+    );
   }
 
   @override

@@ -29,6 +29,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -124,54 +125,79 @@ void main() {
       },
     );
 
-    // 🔴 Sessiz olum yasak: ust kattaki yeniden dinleme dongusu
-    // (`offline_first_study_repository.watchGroupDailyStats`) YALNIZ akis
-    // hata yayarsa uyaniyor.
-    test('kanal hatasi akisa duser, sessizce yutulmaz', () async {
+    // 🔴 Sessiz olum yasak — ama ekrana da dusmez (WP-938).
+    //
+    // WP-543'te kanal hatasi akisa HATA olarak yaziliyordu ki ust kat
+    // yeniden dinlesin. WP-938 sahadaki bedelini olctu: cache'i olmayan
+    // ekran (ilk acilis) bu hatayi "Beklenmeyen bir hata" olarak gosteriyordu.
+    // Yeni sozlesme ayni olumu SESSIZ birakmiyor, kendisi ele aliyor: kanal
+    // birakilir, REST hemen tazelenir, 30 sn yoklama baslar ve kanal geri
+    // cekilmeyle (5 sn) yeniden kurulur. Ekrana hata yalniz REST'in kendi
+    // arizasinda duser.
+    test('kanal hatasi ekrana dusmez; kanal birakilir, REST tazelenir, '
+        'kanal yeniden kurulur (WP-938)', () {
       final harness = _RealtimeHarness()..dailyRows = [_dailyRow(1200)];
       final repo = SupabaseStudyRepository(harness.client);
 
-      final errors = <Object>[];
-      final sub = repo
-          .watchGroupDailyStats('g1')
-          .listen((_) {}, onError: errors.add);
-      addTearDown(sub.cancel);
-      await pumpEventQueue();
+      fakeAsync((async) {
+        final seen = <List<DailyStat>>[];
+        final errors = <Object>[];
+        final sub = repo
+            .watchGroupDailyStats('g1')
+            .listen(seen.add, onError: errors.add);
+        async.flushMicrotasks();
+        expect(harness.dailyTotalsCount, 1);
+        final first = harness.channels.single;
 
-      harness.channels.single.emitStatus(
-        RealtimeSubscribeStatus.channelError,
-        'socket dropped',
-      );
-      await pumpEventQueue();
+        harness.dailyRows = [_dailyRow(1800)];
+        first.emitStatus(
+          RealtimeSubscribeStatus.channelError,
+          'socket dropped',
+        );
+        async.flushMicrotasks();
 
-      expect(errors, hasLength(1));
-      expect(errors.single, isA<RealtimeSubscribeException>());
-      expect(
-        (errors.single as RealtimeSubscribeException).status,
-        RealtimeSubscribeStatus.channelError,
-      );
+        expect(errors, isEmpty);
+        expect(harness.removedChannels, contains(first));
+        expect(harness.dailyTotalsCount, 2, reason: 'kopuklukta hemen REST');
+        expect(seen.last.single.seconds, 1800);
+
+        async.elapse(const Duration(seconds: 5));
+        expect(harness.channels, hasLength(2), reason: 'kanal yeniden kuruldu');
+
+        sub.cancel();
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isEmpty);
+      });
     });
 
-    test('zaman asimi da akisa duser (kullanici oturumlari)', () async {
+    test('zaman asimi da ekrana dusmez; yoklama tazeler (kullanici '
+        'oturumlari, WP-938)', () {
       final harness = _RealtimeHarness()
         ..sessionRows = [_sessionRow('s1', 600)];
       final repo = SupabaseStudyRepository(harness.client);
 
-      final errors = <Object>[];
-      final sub = repo
-          .watchUserSessions('u1')
-          .listen((_) {}, onError: errors.add);
-      addTearDown(sub.cancel);
-      await pumpEventQueue();
+      fakeAsync((async) {
+        final seen = <List<StudySession>>[];
+        final errors = <Object>[];
+        final sub = repo
+            .watchUserSessions('u1')
+            .listen(seen.add, onError: errors.add);
+        async.flushMicrotasks();
 
-      harness.channels.single.emitStatus(RealtimeSubscribeStatus.timedOut);
-      await pumpEventQueue();
+        harness.channels.single.emitStatus(RealtimeSubscribeStatus.timedOut);
+        async.flushMicrotasks();
+        expect(errors, isEmpty);
 
-      expect(errors, hasLength(1));
-      expect(
-        (errors.single as RealtimeSubscribeException).status,
-        RealtimeSubscribeStatus.timedOut,
-      );
+        // Kanal yine dusuk kalsa da 30 sn yoklama baska cihazin oturumunu getirir.
+        harness.sessionRows = [_sessionRow('s1', 600), _sessionRow('s2', 1800)];
+        async.elapse(const Duration(seconds: 30));
+        expect(seen.last.map((s) => s.id), containsAll(<String>['s1', 's2']));
+        expect(errors, isEmpty);
+
+        sub.cancel();
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isEmpty);
+      });
     });
 
     // Teardown'un kendi urettigi `closed` hata sayilmamali; iptalden sonra

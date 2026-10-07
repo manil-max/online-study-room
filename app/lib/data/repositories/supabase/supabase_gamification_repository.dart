@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/achievement.dart';
 import '../../models/gamification_profile.dart';
 import '../gamification_repository.dart';
+import 'resilient_stream.dart';
 
 class SupabaseGamificationRepository implements GamificationRepository {
   SupabaseGamificationRepository(this._client);
@@ -11,14 +12,18 @@ class SupabaseGamificationRepository implements GamificationRepository {
 
   @override
   Stream<GamificationProfile> watchProfile(String userId) {
-    return _client
-        .from('gamification_profiles')
-        .stream(primaryKey: ['user_id'])
-        .eq('user_id', userId)
-        .map((rows) {
-          if (rows.isEmpty) return GamificationProfile.initial(userId);
-          return GamificationProfile.fromMap(rows.first);
-        });
+    // WP-938: canli akis koparsa REST yedegiyle devam eder.
+    return resilientTableStream<GamificationProfile>(
+      client: _client,
+      table: 'gamification_profiles',
+      primaryKey: const ['user_id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      map: (rows) {
+        if (rows.isEmpty) return GamificationProfile.initial(userId);
+        return GamificationProfile.fromMap(rows.first);
+      },
+    );
   }
 
   @override
@@ -36,11 +41,14 @@ class SupabaseGamificationRepository implements GamificationRepository {
 
   @override
   Stream<List<UserAchievement>> watchUserAchievements(String userId) {
-    return _client
-        .from('user_achievements')
-        .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .map((rows) => rows.map((e) => UserAchievement.fromMap(e)).toList());
+    return resilientTableStream<List<UserAchievement>>(
+      client: _client,
+      table: 'user_achievements',
+      primaryKey: const ['id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      map: (rows) => rows.map((e) => UserAchievement.fromMap(e)).toList(),
+    );
   }
 
   @override

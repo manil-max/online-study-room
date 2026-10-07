@@ -1,4 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../data/repositories/group_repository.dart';
+import '../../data/repositories/supabase/resilient_stream.dart';
 import '../../l10n/app_localizations.dart';
 
 // WP-551: `groupActionErrorText` bu dosyaya `class_detail_screen.dart`ten
@@ -48,4 +55,51 @@ String groupActionErrorText(Object error, AppLocalizations l10n) {
     return l10n.profileOturumBulunamadiGirisYap;
   }
   return l10n.authBeklenmeyenBirHataOlustu;
+}
+
+/// WP-938: genel yükleme hatasının altındaki teşhis ipucunun kimliği.
+const Key kLoadErrorCauseHintKey = Key('loadErrorCauseHint');
+
+/// Sunucunun "yetki/oturum" anlamına gelen PostgREST/Postgres kodları.
+const Set<String> _authErrorCodes = {
+  '401',
+  '403',
+  '42501', // insufficient_privilege (RLS)
+  'PGRST301', // JWT süresi dolmuş / geçersiz
+  'PGRST302',
+};
+
+/// WP-938: yükleme hatasının **kaynak sınıfı** — genel hata cümlesinin altına
+/// konan kısa ipucu.
+///
+/// 🔴 Neden var: sahip "Beklenmeyen bir hata oluştu" ekran görüntüsünden
+/// sebebi okuyamıyordu; kök neden Realtime soketiydi, REST sağlıklıydı ve bu
+/// ancak sunucu taraması ile bulundu. Bir sonraki sefer ekran görüntüsü tek
+/// başına "canlı güncelleme mi, ağ mı, yetki mi, sunucu mu" sorusunu cevaplar.
+///
+/// `SocketException`/`HandshakeException` `dart:io` türleridir ve web derlemesi
+/// bu dosyayı da derler; o yüzden tür adıyla tanınırlar.
+String loadErrorCauseHint(Object? error, AppLocalizations l10n) {
+  if (error == null) return l10n.streamErrorCauseApp;
+  if (isRealtimeTransportError(error)) return l10n.streamErrorCauseRealtime;
+  if (error is AuthException) return l10n.streamErrorCauseAuth;
+  if (error is PostgrestException) {
+    final code = error.code ?? '';
+    if (_authErrorCodes.contains(code)) return l10n.streamErrorCauseAuth;
+    return l10n.streamErrorCauseServer(code.isEmpty ? '?' : code);
+  }
+  if (error is http.ClientException || error is TimeoutException) {
+    return l10n.streamErrorCauseNetwork;
+  }
+  final type = error.runtimeType.toString();
+  if (type.contains('SocketException') || type.contains('HandshakeException')) {
+    return l10n.streamErrorCauseNetwork;
+  }
+  if (error is GroupException) {
+    if (error.message.contains('not_authenticated')) {
+      return l10n.streamErrorCauseAuth;
+    }
+    return l10n.streamErrorCauseServer('group');
+  }
+  return l10n.streamErrorCauseApp;
 }

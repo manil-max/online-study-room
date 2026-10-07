@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/group_error_text.dart';
 import '../../../core/widgets/app_pull_to_refresh.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../../data/models/study_group.dart';
@@ -56,11 +57,26 @@ Widget? groupCardGate(
     child: groupAsync.hasError
         ? Consumer(
             builder: (context, ref, _) => Center(
-              child: ErrorRetryView(
-                message: AppLocalizations.of(
-                  context,
-                ).homeGrupBilgisiYuklenemedi,
-                onRetry: () => refreshAppData(ref),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ErrorRetryView(
+                    message: AppLocalizations.of(
+                      context,
+                    ).homeGrupBilgisiYuklenemedi,
+                    onRetry: () => refreshAppData(ref),
+                  ),
+                  // WP-938: sebep sınıfı — ekran görüntüsünden teşhis için.
+                  Text(
+                    loadErrorCauseHint(
+                      groupAsync.error,
+                      AppLocalizations.of(context),
+                    ),
+                    key: kLoadErrorCauseHintKey,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
             ),
           )

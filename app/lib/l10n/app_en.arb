@@ -7546,5 +7546,22 @@
   "tourSettingsOverview": "In Appearance, pick a ready-made theme, light or dark mode and the app language, or create your own theme. Use the Notification Center for pokes, reminders and quiet hours. Keep Permissions on, or the timer and alarms may not fire on time while your phone is locked.",
   "@tourSettingsOverview": {"description": "WP-920: settings tour, first card. Appearance (themes, mode, language), Notification Center and why Permissions matter."},
   "tourSettingsAccount": "In Account, change your email and password or export your data. Manage blocked people in Privacy & security, and write to us through Feedback. Help, at the very bottom, has the FAQ and a button that shows these introductions again.",
-  "@tourSettingsAccount": {"description": "WP-920: settings tour, second card. Account, data export, privacy, feedback, FAQ and resetting introductions."}
+  "@tourSettingsAccount": {"description": "WP-920: settings tour, second card. Account, data export, privacy, feedback, FAQ and resetting introductions."},
+  "streamErrorCauseRealtime": "Connection problem (live updates)",
+  "@streamErrorCauseRealtime": {"description": "WP-938: short diagnosis hint under a generic load error when the cause was the live-update (Realtime websocket) connection."},
+  "streamErrorCauseNetwork": "Connection problem (network)",
+  "@streamErrorCauseNetwork": {"description": "WP-938: short diagnosis hint under a generic load error when the server could not be reached (offline, DNS, timeout)."},
+  "streamErrorCauseAuth": "Session or permission problem",
+  "@streamErrorCauseAuth": {"description": "WP-938: short diagnosis hint under a generic load error when the server rejected the request (expired session or missing permission)."},
+  "streamErrorCauseServer": "Server error ({code})",
+  "@streamErrorCauseServer": {
+    "description": "WP-938: short diagnosis hint under a generic load error when the server answered with an error. code is the technical error code, e.g. 500 or PGRST116.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "streamErrorCauseApp": "App error",
+  "@streamErrorCauseApp": {"description": "WP-938: short diagnosis hint under a generic load error when the cause is inside the app (no network or server reason)."}
 }

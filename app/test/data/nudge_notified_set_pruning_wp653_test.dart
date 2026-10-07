@@ -189,19 +189,41 @@ void main() {
       source.indexOf('Stream<List<Nudge>> watchReceivedNudges'),
       source.indexOf('Future<Nudge> sendNudge'),
     );
+    // WP-938: akis `resilientTableStream` ile kurulur; limit/siralama
+    // parametre olarak verilir ve yardimci IKI yola da (canli `.stream()` +
+    // REST yedegi) uygular — asagida yardimcinin kendisi de olculur.
     expect(
       watch,
-      contains('.limit('),
+      contains('limit: kNudgeWindow'),
       reason:
           'Sorguda limit yok: kullanici omur boyu aldigi TUM durtme satirlarini '
           'her acilista ve her realtime degisiminde cekiyor.',
     );
     expect(
       watch,
-      contains(".order('created_at')"),
+      contains("orderBy: 'created_at'"),
       reason:
           'Limit var ama siralama yok: hangi 50 satirin gelecegi belirsiz, '
           'yani en yeni durtme pencereye girmeyebilir.',
+    );
+    final helper = _stripComments(
+      File(
+        'lib/data/repositories/supabase/resilient_stream.dart',
+      ).readAsStringSync(),
+    );
+    final table = helper.substring(
+      helper.indexOf('Stream<T> resilientTableStream'),
+    );
+    expect(
+      '.limit('.allMatches(table).length,
+      greaterThanOrEqualTo(4),
+      reason:
+          'limit hem canli hem REST yolunda (siralamali/siralamasiz) uygulanmali',
+    );
+    expect(
+      '.order('.allMatches(table).length,
+      greaterThanOrEqualTo(2),
+      reason: 'siralama hem canli hem REST yolunda uygulanmali',
     );
   });
 }

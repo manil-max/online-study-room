@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../group_repository.dart';
+import 'resilient_stream.dart';
 
 /// Supabase tabanlı sınıf (grup) deposu. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseGroupRepository implements GroupRepository {
@@ -220,40 +221,53 @@ class SupabaseGroupRepository implements GroupRepository {
     }
   }
 
+  /// WP-938: canli akis koparsa REST yedegiyle devam eder
+  /// (`resilient_stream.dart`). Soket kurulamayan agda Gruplar sekmesi artik
+  /// "Beklenmeyen bir hata" demez; liste REST'ten dolar ve yoklamayla tazelenir.
   @override
   Stream<List<StudyGroup>> watchUserGroups(String userId) {
-    return _client
-        .from('group_members')
-        .stream(primaryKey: ['group_id', 'user_id'])
-        .eq('user_id', userId)
-        .asyncMap((rows) async {
-          final activeRows = rows.where((row) => row['left_at'] == null);
-          if (activeRows.isEmpty) return <StudyGroup>[];
-          final ids = activeRows.map((r) => r['group_id'] as String).toList();
-          final gs = await _client.from('groups').select().inFilter('id', ids);
-          final list = gs.map<StudyGroup>(StudyGroup.fromMap).toList()
-            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          return list;
-        });
+    return resilientTableStream<List<StudyGroup>>(
+      client: _client,
+      table: 'group_members',
+      primaryKey: const ['group_id', 'user_id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      map: _groupsForMembershipRows,
+    );
+  }
+
+  Future<List<StudyGroup>> _groupsForMembershipRows(
+    List<Map<String, dynamic>> rows,
+  ) async {
+    final activeRows = rows.where((row) => row['left_at'] == null);
+    if (activeRows.isEmpty) return <StudyGroup>[];
+    final ids = activeRows.map((r) => r['group_id'] as String).toList();
+    final gs = await _client.from('groups').select().inFilter('id', ids);
+    final list = gs.map<StudyGroup>(StudyGroup.fromMap).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return list;
   }
 
   @override
   Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(String userId) {
-    return _client
-        .from('user_group_preferences')
-        .stream(primaryKey: ['user_id'])
-        .eq('user_id', userId)
-        .map((rows) {
-          if (rows.isEmpty) {
-            return const PrimaryGroupPreference(
-              primaryGroupId: null,
-              selectionRevision: 0,
-            );
-          }
-          return PrimaryGroupPreference.fromMap(
-            Map<String, dynamic>.from(rows.single),
+    return resilientTableStream<PrimaryGroupPreference>(
+      client: _client,
+      table: 'user_group_preferences',
+      primaryKey: const ['user_id'],
+      eqColumn: 'user_id',
+      eqValue: userId,
+      map: (rows) {
+        if (rows.isEmpty) {
+          return const PrimaryGroupPreference(
+            primaryGroupId: null,
+            selectionRevision: 0,
           );
-        });
+        }
+        return PrimaryGroupPreference.fromMap(
+          Map<String, dynamic>.from(rows.single),
+        );
+      },
+    );
   }
 
   @override
@@ -284,28 +298,33 @@ class SupabaseGroupRepository implements GroupRepository {
     }
   }
 
+  /// WP-938: kamp ateşi ve grup detayının üye listesi; canlı akış koparsa
+  /// REST yedeğiyle devam eder (`resilient_stream.dart`).
   @override
   Stream<List<Profile>> watchMembers(String groupId) {
-    return _client
-        .from('group_members')
-        .stream(primaryKey: ['group_id', 'user_id'])
-        .eq('group_id', groupId)
-        .asyncMap((rows) async {
-          if (rows.isEmpty) return <Profile>[];
-          // WP-413: profil satırları artık `profiles`ten okunmaz. `profiles`
-          // RLS'i engellenen çifti reddettiği için doğrudan okuma engellenen
-          // üyeyi listeden **düşürür** ve kamp ateşinde katılımcı sayısını
-          // bozardı. `group_member_directory` satırı korur, yalnız kimliği
-          // (ad/avatar/hayvan) sunucuda boşaltır → üye anonimleşir, kaybolmaz.
-          final directory = await _client.rpc(
-            'group_member_directory',
-            params: {'p_group_id': groupId},
-          );
-          return [
-            for (final raw in directory as List)
-              Profile.fromMap(Map<String, dynamic>.from(raw as Map)),
-          ];
-        });
+    return resilientTableStream<List<Profile>>(
+      client: _client,
+      table: 'group_members',
+      primaryKey: const ['group_id', 'user_id'],
+      eqColumn: 'group_id',
+      eqValue: groupId,
+      map: (rows) async {
+        if (rows.isEmpty) return <Profile>[];
+        // WP-413: profil satırları artık `profiles`ten okunmaz. `profiles`
+        // RLS'i engellenen çifti reddettiği için doğrudan okuma engellenen
+        // üyeyi listeden **düşürür** ve kamp ateşinde katılımcı sayısını
+        // bozardı. `group_member_directory` satırı korur, yalnız kimliği
+        // (ad/avatar/hayvan) sunucuda boşaltır → üye anonimleşir, kaybolmaz.
+        final directory = await _client.rpc(
+          'group_member_directory',
+          params: {'p_group_id': groupId},
+        );
+        return [
+          for (final raw in directory as List)
+            Profile.fromMap(Map<String, dynamic>.from(raw as Map)),
+        ];
+      },
+    );
   }
 
   @override

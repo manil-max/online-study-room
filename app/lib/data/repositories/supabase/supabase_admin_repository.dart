@@ -13,6 +13,7 @@ import '../../models/profile.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 import 'report_attachment_upload.dart';
+import 'resilient_stream.dart';
 
 /// Postgres "permission denied for function" SQLSTATE'i.
 const String _kPermissionDeniedCode = '42501';
@@ -496,20 +497,21 @@ class SupabaseAdminRepository implements AdminRepository {
     required String userId,
     required String ticketId,
   }) {
-    return _client
-        .from('feedback_ticket_messages')
-        .stream(primaryKey: ['id'])
-        .eq('ticket_id', ticketId)
-        .order('message_seq')
-        .map(
-          (rows) => rows
-              .map(
-                (row) => FeedbackTicketMessage.fromMap(
-                  Map<String, dynamic>.from(row),
-                ),
-              )
-              .toList(growable: false),
-        );
+    // WP-938: canli akis koparsa REST yedegiyle devam eder.
+    return resilientTableStream<List<FeedbackTicketMessage>>(
+      client: _client,
+      table: 'feedback_ticket_messages',
+      primaryKey: const ['id'],
+      eqColumn: 'ticket_id',
+      eqValue: ticketId,
+      orderBy: 'message_seq',
+      map: (rows) => rows
+          .map(
+            (row) =>
+                FeedbackTicketMessage.fromMap(Map<String, dynamic>.from(row)),
+          )
+          .toList(growable: false),
+    );
   }
 
   @override

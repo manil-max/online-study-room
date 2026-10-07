@@ -7,6 +7,7 @@ import '../../../core/stats/goal_streak_projection.dart';
 import '../../../core/stats/istanbul_calendar.dart';
 import '../../models/goal_streak.dart';
 import '../goal_streak_repository.dart';
+import 'resilient_stream.dart';
 
 /// WP-453 Faz 2: seri durumu **sunucudan** okunur.
 ///
@@ -55,31 +56,19 @@ class SupabaseGoalStreakRepository implements GoalStreakRepository {
     GoalStreakScope scope, {
     DateTime? asOfDay,
   }) {
-    late final StreamController<GoalStreakProjection> controller;
-    StreamSubscription<List<Map<String, dynamic>>>? subscription;
-
-    Future<void> emit() async {
-      try {
-        controller.add(await readProjection(scope, asOfDay: asOfDay));
-      } catch (error, stack) {
-        controller.addError(error, stack);
-      }
-    }
-
-    controller = StreamController<GoalStreakProjection>(
-      onListen: () {
-        unawaited(emit());
-        subscription = _client
-            .from('goal_progress_events')
-            .stream(primaryKey: ['event_key'])
-            .listen((_) => unawaited(emit()));
-      },
-      onCancel: () async {
-        await subscription?.cancel();
-        subscription = null;
-      },
+    // WP-938: `goal_progress_events` yalniz tetiktir; veri RPC'den okunur.
+    // Canli akis koparsa REST yedegi (ayni RPC) yoklamayla devam eder; eskiden
+    // kanal hatasi `listen` icinde onError olmadigi icin yakalanmamis hataya
+    // dusuyordu.
+    Future<GoalStreakProjection> read() =>
+        readProjection(scope, asOfDay: asOfDay);
+    return resilientRealtimeStream<GoalStreakProjection>(
+      realtime: () => _client
+          .from('goal_progress_events')
+          .stream(primaryKey: ['event_key'])
+          .asyncMap((_) => read()),
+      fetch: read,
     );
-    return controller.stream;
   }
 
   /// RPC parametreleri tek kaynaktan üretilir; sözleşme testi bu fonksiyonu

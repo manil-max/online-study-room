@@ -29,7 +29,8 @@ void main() {
     expect(repository, contains("'apply_multi_group_presence_state'"));
     expect(repository, contains("'heartbeat_multi_group_presence'"));
     expect(repository, contains("'group_live_presence'"));
-    expect(repository, contains("primaryKey: ['group_id', 'user_id']"));
+    // WP-938: akis `resilientTableStream` ile kurulur (const liste).
+    expect(repository, contains("primaryKey: const ['group_id', 'user_id']"));
     expect(repository, contains('_watchDualGroupPresence'));
   });
 

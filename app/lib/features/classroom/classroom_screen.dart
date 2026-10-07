@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_layout.dart';
+import '../../core/l10n/group_error_text.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/tour/tour_controller.dart';
@@ -130,7 +131,7 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
         // sonra kullanıcının tek çaresi uygulamayı öldürüp yeniden açmaktı.
         // Kaynak `userGroupsProvider`; `userGroupProvider` ondan türeyen sade
         // bir `Provider` olduğu için onu geçersiz kılmak yeni istek doğurmaz.
-        error: (_, _) => RefreshableBody(
+        error: (error, _) => RefreshableBody(
           child: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -140,6 +141,17 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
                   Text(
                     l10n.authBeklenmeyenBirHataOlustu,
                     textAlign: TextAlign.center,
+                  ),
+                  // WP-938: sebep sınıfı (canlı güncelleme / ağ / yetki /
+                  // sunucu) — ekran görüntüsünden teşhis için.
+                  const SizedBox(height: 4),
+                  Text(
+                    loadErrorCauseHint(error, l10n),
+                    key: kLoadErrorCauseHintKey,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   FilledButton(
