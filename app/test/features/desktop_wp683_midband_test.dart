@@ -360,7 +360,8 @@ void main() {
       await pumpPersonal(tester, window: const Size(1920, 1400));
       wide = titles(tester);
     });
-    expect(mid.length, greaterThan(5), reason: 'Orta bant taramasi cilizdi.');
+    // WP-940: Hafta görünümü sadeleşti (radar + tekrar eden grafik kalktı) → 5 bölüm.
+    expect(mid.length, greaterThanOrEqualTo(5), reason: 'Orta bant taramasi cilizdi.');
     expect(
       mid,
       equals(wide),
