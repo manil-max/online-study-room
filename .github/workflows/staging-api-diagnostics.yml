@@ -1,0 +1,70 @@
+name: Staging API Diagnostics
+
+# Read-only: staging'in son 24 saatlik API hata ozetini basar (yol + durum kodu
+# + sayi, Postgres hata mesajlari). Repo HERKESE ACIK: cikti yalnizca toplu
+# sayidir; UUID, e-posta ve sayilar disindaki tirnakli degerler maskelenir.
+# Kisisel veri basilmaz. Production'a bakmaz.
+
+on:
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: Kac saat geriye bakilsin (1-24)
+        required: false
+        default: '24'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  logs:
+    name: Read-only staging API error summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Query management logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$REF" ] || { echo "token/ref yok"; exit 1; }
+          H='${{ inputs.hours }}'
+          case "$H" in ''|*[!0-9]*) H=24;; esac
+          [ "$H" -ge 1 ] && [ "$H" -le 24 ] || H=24
+          END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          START=$(date -u -d "-$H hours" +%Y-%m-%dT%H:%M:%SZ)
+          mask() { sed -E \
+            -e 's/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/<uuid>/g' \
+            -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g' \
+            -e "s/=\([^)]*\)/=(<deger>)/g" \
+            -e "s/(eq|neq|gt|gte|lt|lte|like|ilike|in)\.[^&\"]*/\1.<deger>/g"; }
+          q() {
+            curl -sS -G "https://api.supabase.com/v1/projects/$REF/analytics/endpoints/logs.all" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              --data-urlencode "iso_timestamp_start=$START" \
+              --data-urlencode "iso_timestamp_end=$END" \
+              --data-urlencode "sql=$1"
+          }
+          echo "Pencere: $START .. $END"
+          echo "=== REST/RPC 4xx-5xx (yol, durum, sayi) ==="
+          q "select r.path as path, s.status_code as status, count(*) as n
+             from edge_logs
+             cross join unnest(metadata) as m
+             cross join unnest(m.request) as r
+             cross join unnest(m.response) as s
+             where s.status_code >= 400 and r.path like '/rest/v1/%'
+             group by path, status order by n desc limit 40" \
+            | jq -r '.result[]? | "\(.n)\t\(.status)\t\(.path)"' | mask || true
+          echo "=== Postgres ERROR mesajlari (sayi, mesaj) ==="
+          q "select event_message as msg, count(*) as n
+             from postgres_logs
+             cross join unnest(metadata) as m
+             cross join unnest(m.parsed) as p
+             where p.error_severity in ('ERROR','FATAL')
+             group by msg order by n desc limit 40" \
+            | jq -r '.result[]? | "\(.n)\t\(.msg)"' | cut -c1-300 | mask || true
