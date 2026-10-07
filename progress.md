@@ -17,7 +17,7 @@
 | Kapılar | staging deploy/release **false/false**; production deploy/release **false/true** | Kodda doğrulandı. Production release için ayrı somut GO gerekir; açık bayrak tek başına izin değildir |
 | Son yayımlanan Edge düzeltmesi | Yönetimde ad sıfırlamayı geri alma | Staging `34158924034`, production `34158977501`; önceki yayın kaydı, bu tur yeniden deploy yok |
 | Çalışma modeli | Tek lider + atanan ayrık dosyalarda alt ajan | Tek dal `main`; 2026-09-14 sahip emriyle push, DB deploy ve v84 yayını yapıldı |
-| Son ayrılan WP | **WP-937** | beta-v8801: WP-920…937 (tur metinleri, tema önizleme, istatistik, ana ekran, 0145). 913/914 iOS bloğundan alınmıştı (not). Play: v88 taslak — sahip göndermediyse v89 ile değiştirilecek (tek paket kuralı) |
+| Son ayrılan WP | **WP-941** | beta-v8802 (v8801 CI'da WP-929 Roboto yüzünden düştü). Play: v88 production'da; v89 = tek paket (sahip onayı bekleniyor) |
 | iOS bloğu (ayrı oturum) | **WP-900…WP-919** | 2026-09-22 App Store hazırlığı paralel oturumda; bu aralık yalnız iOS işlerine ayrıldı (numara çakışmasın). Genel sayaç WP-875'ten devam eder |
 
 **Kanıt sınırı:** Kod/test/yayın başarısı cihaz kabulü değildir. Bu tur başlarken
@@ -50,6 +50,10 @@ Sahip: "her şeyi hazırla, sadece gönderip test kalsın". Mac yok; derleme Git
 | WP-929…935 | Ana ekran: kısa kartta ders/mod satırı, hedef kartı dokunma, sıfırlama metni, kart açıklamaları, boyut etiketleri, Türkçe metinler, sahte Bronz Taç kutlaması | `e97e7875`…`296e5494` |
 | WP-936 | PostgREST 1000 satır sayfalama (aralık oturumları, 90 gün, group_daily_totals, dışa aktarma sırası) | `a93ace9b` `cd9e59bf` |
 | WP-937 | Dar grup kartı düğmeleri, hedef penceresi açıklaması, 360 yedek hedef → sabit. Kapı 22 yeşil + release-defines yeşil | `b1d6f1bd` `94d7a3f5` |
+| WP-938 | Realtime koparsa grup/kamp/ana ekran akışları REST + 30 sn yoklama + geri bağlanma ile sürer; hata ekranına sebep satırı. Sahip beta'da 'An unexpected error occurred' gördü; staging sağlıklı (teşhis iş akışı `staging-api-diagnostics.yml`) | `ea51a5b3` |
+| WP-939 | Seans sonu özeti (süre, hedef %, seri; kutlamayla üst üste binmez; Bildirim Merkezi'nden kapatılır) | `df3ce7e4` |
+| WP-940 | İstatistik sadeleşti (radar kalktı, tekrar eden grafik birleşti) | `36a4361c` `9d0282fb` |
+| WP-941 | Play'de 5. ≥20 dk seanstan sonra in_app_review (120 gün, en fazla 3) | `d4133ada` |
 
 Açık (sahip): Apple Developer üyeliği + yol haritası adımları; destek sayfasına iletişim e-postası kararı. Açık (lider): değerler gelince repo değişkenleri/secret'lar, `supabase-auth-config.yml` Apple+Google iOS apply, TestFlight yüklemesi, demo hesap. iOS ana ekran widget'ı v1 dışı.
 

@@ -3,6 +3,20 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.88-beta.2",
+      "buildNumber": 8802,
+      "channel": "beta",
+      "date": "2026-10-07",
+      "title": "beta-v8802: WP-938..WP-941 (+ unreleased beta-v8801)",
+      "highlights": [
+        "beta-v8801 CI failed (Roboto missing on runner in WP-929 test, fixed with Inter fallback 19a363f0) and was never published.",
+        "WP-938 resilient Realtime streams (REST fallback + polling + resubscribe backoff), cause hint on error UIs.",
+        "WP-939 session-end summary; WP-940 stats simplification (radar removed, duplicate charts merged); WP-941 Play in-app review."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.88-beta.1",
       "buildNumber": 8801,
       "channel": "beta",

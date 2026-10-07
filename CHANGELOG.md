@@ -4,6 +4,20 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8802 / 1.0.88-beta.2+8802] - 2026-10-07
+
+beta-v8801 derleme testinde durdu ve yayınlanmadı; içeriği bu sürümdedir.
+
+### Yenilikler
+
+- Seans bitince kısa özet: kaç dakika hangi ders kaydedildi, günlük hedefin yüzdesi, seri. Bildirim Merkezi'nden kapatılabilir.
+- İstatistik ekranı sadeleşti: anlamsız özet grafiği kalktı, aynı veriyi gösteren grafikler birleşti.
+- Play sürümünde uygun anda Google'ın puan verme penceresi.
+
+### Düzeltmeler
+
+- Canlı bağlantı koparsa gruplar, kamp ateşi ve ana ekran kartları hata vermiyor; veriler normal yoldan gelmeye devam ediyor. Hata olursa altında kısa sebebi yazıyor.
+
 ## [beta-v8801 / 1.0.88-beta.1+8801] - 2026-09-24
 
 ### Yenilikler
