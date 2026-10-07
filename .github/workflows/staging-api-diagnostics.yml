@@ -59,7 +59,7 @@ jobs:
              cross join unnest(m.response) as s
              where s.status_code >= 400 and r.path like '/rest/v1/%'
              group by path, status order by n desc limit 40" \
-            | jq -r '.result[]? | "\(.n)\t\(.status)\t\(.path)"' | mask || true
+            | jq -r 'if .error then "SORGU HATASI: \(.error|tostring)" else ((.result // []) as $r | if ($r|length)==0 then "(kayit yok)" else ($r[] | "\(.n)\t\(.status)\t\(.path)") end) end' | cut -c1-400 | mask || true
           echo "=== Postgres ERROR mesajlari (sayi, mesaj) ==="
           q "select event_message as msg, count(*) as n
              from postgres_logs
@@ -67,4 +67,4 @@ jobs:
              cross join unnest(m.parsed) as p
              where p.error_severity in ('ERROR','FATAL')
              group by msg order by n desc limit 40" \
-            | jq -r '.result[]? | "\(.n)\t\(.msg)"' | cut -c1-300 | mask || true
+            | jq -r 'if .error then "SORGU HATASI: \(.error|tostring)" else ((.result // []) as $r | if ($r|length)==0 then "(kayit yok)" else ($r[] | "\(.n)\t\(.msg)") end) end' | cut -c1-300 | mask || true
