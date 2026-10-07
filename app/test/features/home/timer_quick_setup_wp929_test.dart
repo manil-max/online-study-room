@@ -61,11 +61,17 @@ class _RunningTimer extends StudyTimerNotifier {
 /// Roboto yüklenir, cihazdaki satır boyları ölçülür.
 Future<void> _loadRoboto() async {
   final root = Platform.environment['FLUTTER_ROOT'];
-  final file = File(
+  var file = File(
     '$root/bin/cache/artifacts/material_fonts/roboto-regular.ttf',
   );
+  // beta-v8801 CI: GitHub runner'da material_fonts önbelleği yok ve test
+  // `fail` ile düşüyordu. Yedek: repoda gömülü orantılı Inter (Roboto'ya
+  // yakın metrik). İkisi de yoksa ölçüm yapılamaz — o zaman düş.
   if (root == null || !file.existsSync()) {
-    fail('Roboto bulunamadi (FLUTTER_ROOT=$root); olcum yapilamaz.');
+    file = File('assets/fonts/Inter-Variable.ttf');
+  }
+  if (!file.existsSync()) {
+    fail('Roboto/Inter bulunamadi (FLUTTER_ROOT=$root); olcum yapilamaz.');
   }
   final loader = FontLoader('Roboto')
     ..addFont(file.readAsBytes().then((b) => ByteData.view(b.buffer)));
