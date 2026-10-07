@@ -66,6 +66,10 @@ dependencies:
   # YALNIZ `DistributionChannel.play` + Android'de çağrılır; GitHub sideload ve
   # App Store yolları bu pakete hiç dokunmaz (features/updater/play_in_app_update.dart).
   in_app_update: ^4.2.5
+  # WP-941: Play sürümünde Google'ın kendi "puan ver" sayfası (in-app review).
+  # YALNIZ `DistributionChannel.play` + Android'de çağrılır; diğer kanallar bu
+  # pakete hiç dokunmaz (features/updater/play_review.dart).
+  in_app_review: ^2.0.12
 
   # Masaüstü (WP-11): pencere boyutu/başlık + "üstte kalan mini pencere".
   # Yalnız Windows/macOS/Linux'ta kullanılır; web'de koşullu import ile devre dışı.

@@ -25,6 +25,7 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
 import '../../features/updater/play_in_app_update.dart';
+import '../../features/updater/play_review.dart';
 import '../desktop/desktop_window.dart';
 import '../widgets/app_pull_to_refresh.dart';
 import 'nav_index.dart';
@@ -140,6 +141,10 @@ class HomeShell extends ConsumerWidget {
     // sideload, Windows, Microsoft Store, App Store) provider hiçbir şey
     // yapmaz; kural `features/updater/play_in_app_update.dart`ta.
     ref.watch(playInAppUpdateProvider);
+    // WP-941: Play sürümünde 5. uzun seanstan sonra Google'ın kendi puan
+    // sayfası (en fazla 120 günde bir, toplam 3). Play dışı her kanalda
+    // provider hiçbir şey yapmaz; kural `features/updater/play_review.dart`ta.
+    ref.watch(playReviewProvider);
     // WP-914: indirme bitti; kurulum uygulamayı yeniden başlatacağı için
     // KULLANICI başlatır. Koşan bir seansın ortasında kendiliğinden yeniden
     // başlamak bu uygulamada veri değil, güven kaybıdır.
