@@ -51,6 +51,21 @@ jobs:
               --data-urlencode "sql=$1"
           }
           echo "Pencere: $START .. $END"
+          echo "=== Tum trafik (durum, sayi) — sorgu dogrulamasi ==="
+          q "select s.status_code as status, count(*) as n
+             from edge_logs
+             cross join unnest(metadata) as m
+             cross join unnest(m.response) as s
+             group by status order by n desc limit 20" \
+            | jq -r 'if .error then "SORGU HATASI: \(.error|tostring)" else ((.result // []) as $r | if ($r|length)==0 then "(kayit yok)" else ($r[] | "\(.n)\t\(.status)") end) end' | cut -c1-400 || true
+          echo "=== En cok cagrilan REST/RPC yollari (yol, sayi) ==="
+          q "select r.path as path, count(*) as n
+             from edge_logs
+             cross join unnest(metadata) as m
+             cross join unnest(m.request) as r
+             where r.path like '/rest/v1/rpc/%'
+             group by path order by n desc limit 25" \
+            | jq -r 'if .error then "SORGU HATASI: \(.error|tostring)" else ((.result // []) as $r | if ($r|length)==0 then "(kayit yok)" else ($r[] | "\(.n)\t\(.path)") end) end' | cut -c1-400 | mask || true
           echo "=== REST/RPC 4xx-5xx (yol, durum, sayi) ==="
           q "select r.path as path, s.status_code as status, count(*) as n
              from edge_logs
