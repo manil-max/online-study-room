@@ -102,7 +102,9 @@ void main() {
     }
   });
 
-  testWidgets('"Tümü" / Seçili tarih aralığı: gün sayısı yerelleştirilmiş '
+  // WP-940: ayrı "Seçili tarih aralığı" kartı kalktı; toplam · gün satırı
+  // artık eğilim kartının üst satırıdır. İddia aynen durur.
+  testWidgets('"Tümü" / eğilim kartı: gün sayısı yerelleştirilmiş '
       '("54 gün", "54d" değil)', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();

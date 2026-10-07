@@ -171,7 +171,9 @@ void main() {
     (tester) async => onPlatform(TargetPlatform.windows, () async {
       await pumpStats(tester, window: const Size(1920, 1080));
 
-      final left = find.byKey(const ValueKey('${kStatsSectionColumnKeyPrefix}0'));
+      final left = find.byKey(
+        const ValueKey('${kStatsSectionColumnKeyPrefix}0'),
+      );
       final right = find.byKey(
         const ValueKey('${kStatsSectionColumnKeyPrefix}1'),
       );
@@ -300,7 +302,13 @@ void main() {
         desktop = titles(tester);
       });
 
-      expect(mobile.length, greaterThan(5), reason: 'Mobil tarama caliskadi.');
+      // WP-940: "Hafta" kumesi 5 bolumdur (radar kalkti): gunluk dagilim,
+      // hafta kiyasi, ders, saatler, oturum dagilimi. Taban o kumenin kendisi.
+      expect(
+        mobile.length,
+        greaterThanOrEqualTo(5),
+        reason: 'Mobil tarama caliskadi.',
+      );
       expect(
         desktop,
         equals(mobile),

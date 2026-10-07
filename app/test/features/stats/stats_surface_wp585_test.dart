@@ -435,15 +435,17 @@ void main() {
 
     // ...ve bunu SOYLUYOR. Eski hal: view `serverSessions != null` gordugu icin
     // "veri geldi" sanip tam donem basligi yaziyordu.
+    // WP-940: ders dagilimi artik calisma saatlerinin USTUNDE; kaydirma
+    // yalniz asagi gittigi icin once o aranir.
+    await _scrollTo(tester, find.textContaining('Ders bazında dağılım'));
+    expect(find.text('Ders bazında dağılım · Tümü · 90 gün'), findsOneWidget);
+
     await _scrollTo(tester, find.textContaining('Çalışma saatleri'));
     expect(
       find.text('Çalışma saatleri · Tümü · 90 gün'),
       findsOneWidget,
       reason: 'Eksik veriyi tam gostermek sessiz yalandir.',
     );
-
-    await _scrollTo(tester, find.textContaining('Ders bazında dağılım'));
-    expect(find.text('Ders bazında dağılım · Tümü · 90 gün'), findsOneWidget);
   });
 
   testWidgets('(3) sunucu DOLU donunce kapsam etiketi yazilmaz', (

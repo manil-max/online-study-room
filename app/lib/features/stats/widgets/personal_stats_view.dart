@@ -20,7 +20,6 @@ import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../analytics/analytics_period.dart';
 import '../charts/area_line_chart.dart';
-import '../charts/radar_stat_chart.dart';
 import 'daily_bar_chart.dart';
 import 'period_chart_window.dart';
 import 'hour_activity_chart.dart';
@@ -91,9 +90,11 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // (bkz. [PersonalCardSet]). Önceden altı dönem düğmesi de aşağıya aynı 25
     // kartı seriyordu; yalnız sayılar değişiyordu.
     final cardSet = PersonalCardSet.of(sel, now: now);
-    // "Seçili tarih aralığı" (S10) yalnız Yıl/Tümü'de var; kart yokken RPC de
-    // açılmaz. Çizilmeyen kartın verisini çekmek ölü bir okumadır.
-    final longTotalsAsync = cardSet.showRangeTotals
+    // Dönem gün toplamları (RPC) yalnız Yıl/Tümü'de okunur: eğilim kartının
+    // üst satırı ("715sa 26dk · 251 gün"). WP-940: eskiden ayrı bir "Seçili
+    // tarih aralığı" kartıydı ve aynı seriyi günlük çizgi olarak ikinci kez
+    // çiziyordu. Kart yokken RPC de açılmaz.
+    final longTotalsAsync = cardSet.showTrend
         ? ref.watch(analyticsUserDayTotalsProvider(analyticsPeriod))
         : null;
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
@@ -261,12 +262,6 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     // sol yarıya sıkışıyordu. İki uç da tek kaynaktan gelir: `sel.range()`.
     final scatterDays = statsDaySpan(from, chartEnd);
 
-    // 🔴 WP-745 (3): radar "tutarlılık" ekseninin paydası SABİT 14 gündü, yani
-    // "Hafta"da en iyi ihtimalle 7/14 = 0.5 çıkıyordu — kısa dönem hep dipte.
-    // Payda artık verinin gerçekten bulunduğu ufuktur ([averageWindow]), yani
-    // "Günlük ortalama" döşemesiyle AYNI payda.
-    final consistencyDays = statsDaySpan(avgWindow.from, to);
-
     // 🔴 WP-745 (4): "Çalışma takvimi" SABİT 13 hafta çiziyordu; "Yıl"/"Tümü"de
     // de son 13 haftayı gösteriyordu. Harita bugünde biter, o yüzden pencere
     // dönemin başından bugüne uzatılır; "Tümü"de veri ufkunun tamamını alır.
@@ -350,53 +345,28 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
     ];
 
     // ---- Bağımsız bölümler -------------------------------------------------
-    // Sıra ve içerik WP-673 öncesiyle aynıdır; yalnız her başlık+kart çifti bir
-    // [StatsSection]'a sarıldı ki masaüstünde iki sütuna akıtılabilsin. Hiçbir
-    // metrik, grafik ya da katlanır blok kaldırılmadı (SPEC §7).
+    // 🔴 WP-940 (UX denetimi: ekran fazla uzun). Sıra KULLANIŞA göredir:
+    //   özet döşemeleri → ana zaman grafiği → ders dağılımı → çalışma saatleri
+    //   → çalışma takvimi → haftalık ritim → oturum dağılımı.
+    // - "Özet" radarı KALKTI: eksenleri birbiriyle ilgisiz, açıklamasız 0–1
+    //   skorlardı ("Rekorlar" ekseni aslında tutarlılıktı, "Hafta içi" ekseni
+    //   denge); kullanıcıya hiçbir şey anlatmıyordu.
+    // - Ana zaman grafiği dönem başına TEKTİR. "Ay"da "Günlük dağılım" çubukları
+    //   ile "Eğilim grafiği" aynı günlük seriyi iki kez çiziyordu; Hafta/Ay'da
+    //   hedef çizgili günlük çubuklar, Yıl/Tümü'de WP-925 eğilimi (haftalık /
+    //   aylık) kalır. Yıl/Tümü'deki "Seçili tarih aralığı" kartı aynı seriyi
+    //   üçüncü kez (günlük çizgi) çiziyordu; toplamı ve gün sayısı eğilim
+    //   kartının üst satırına taşındı. "Tümü"de "Aylık dağılım" son 12 ayı,
+    //   eğilim ise tüm ayları çiziyordu (aynı kova) — orada eğilim kalır.
+    // Her başlık+kart çifti bir [StatsSection]'dır ki masaüstünde iki sütuna
+    // akıtılabilsin (WP-673).
     final sections = <Widget>[
-      // ---- Ana içerik ------------------------------------------------------
+      // ---- Ana zaman grafiği ---------------------------------------------
       if (cardSet.showSessionSchedule)
         StatsSection(
           title: l10n.statsOturumCizelgesi,
           child: SessionScheduleCard(sessions: periodSessions),
         ),
-      StatsSection(
-        title: '${l10n.statsCalismaSaatleri} · $periodLabel$scopeSuffix',
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: HourActivityChart(hourly: hourlyTotals(periodSessions)),
-          ),
-        ),
-      ),
-      StatsSection(
-        title: '${l10n.statsDersBazindaDagilimSon} · $periodLabel$scopeSuffix',
-        child: _SubjectBreakdownCard(sessions: periodSessions),
-      ),
-      if (cardSet.showSessionScatter)
-        StatsSection(
-          title: '${l10n.statsOturumDagilimi} · $periodLabel$scopeSuffix',
-          // P10 scatter — varsayılan katlı (WP ürün kararı)
-          child: _CollapsibleSection(
-            title: l10n.statsOturumDagilimi,
-            initiallyExpanded: false,
-            child: periodSessions.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      l10n.statsBuDonemdeCalismaKaydin,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  )
-                : SessionScatterChart(
-                    sessions: periodSessions,
-                    days: scatterDays,
-                    endDay: chartEnd,
-                  ),
-          ),
-        ),
-
-      // ---- Zaman serileri --------------------------------------------------
       if (cardSet.showDailyDistribution)
         StatsSection(
           title: '${l10n.statsGunlukDagilim} · $periodLabel',
@@ -406,150 +376,34 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             days: calendarDayTotals(dayOf(from), periodEnd, calendarTotals),
           ),
         ),
+      if (cardSet.showTrend)
+        StatsSection(
+          title: '${l10n.homeEgilimGrafigi} · $periodLabel',
+          child: _PeriodTrendCard(
+            // 🔴 WP-925: seri DÖNEMİN KENDİSİDİR, kovası dönemin uzunluğuna
+            // göre ([periodTrend]): Yıl → haftalık, Tümü → aylık. Veri, takvim
+            // ısı haritasıyla aynı birleşik haritadır (sıcak pencere + uzun
+            // dönemde sunucu oturumları).
+            trend: periodTrend(
+              cardSet: cardSet,
+              periodFrom: from,
+              periodEnd: periodEnd,
+              today: today,
+              totals: calendarTotals,
+            ),
+            rangeTotals: longTotalsAsync?.value,
+          ),
+        ),
       if (cardSet.showMonthlyDistribution)
         StatsSection(
           title: '${l10n.statsAylikDagilim} · $periodLabel$scopeSuffix',
           child: MonthlyDistributionCard(
             sessions: periodSessions,
             // WP-925: "Yıl" = o yılın Ocak–Aralık'ı ("Bu yıl"da Eki 2025 –
-            // Eyl 2026 çiziliyordu). Tümü/Özel dönemin sonunda biter.
+            // Eyl 2026 çiziliyordu). Uzun Özel aralık dönemin sonunda biter.
             endMonth: sel.period == StatsPeriod.year
                 ? DateTime(dayOf(from).year, 12, 1)
                 : chartEnd,
-          ),
-        ),
-      // P2 area trend (dönem serisi)
-      if (cardSet.showTrend)
-        StatsSection(
-          title:
-              '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: SizedBox(
-                height: 160,
-                child: Builder(
-                  builder: (context) {
-                    // 🔴 WP-925: seri DÖNEMİN KENDİSİDİR, kovası dönemin
-                    // uzunluğuna göre ([periodTrend]): Ay → günlük (ayın 1'inden
-                    // bugüne), Yıl → haftalık, Tümü → aylık. Eskiden her
-                    // dönemde `period.chartDays()` = son 30 gündü: "Yıl"da ve
-                    // "Tümü"de başlık yılı/tüm geçmişi, grafik 25/8–23/9'u
-                    // anlatıyordu; "Bu ay"da ağustosun son haftası da vardı.
-                    // Veri, takvim ısı haritasıyla aynı birleşik haritadır
-                    // (sıcak pencere + uzun dönemde sunucu oturumları).
-                    final trend = periodTrend(
-                      cardSet: cardSet,
-                      periodFrom: from,
-                      periodEnd: periodEnd,
-                      today: today,
-                      totals: calendarTotals,
-                    );
-                    final series = trend.points;
-                    if (series.isEmpty || series.every((p) => p.seconds == 0)) {
-                      return Center(
-                        child: Text(
-                          l10n.statsBuDonemdeCalismaKaydin,
-                          style: theme.textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }
-                    // Kovanın boyu yazılır: haftalık seride "29/12" bir gün
-                    // değil, o Pazartesi başlayan haftadır.
-                    final caption = switch (trend.bucket) {
-                      TrendBucket.day => l10n.statsEgilimGunlukToplam,
-                      TrendBucket.week => l10n.statsEgilimHaftalikToplam,
-                      TrendBucket.month => l10n.statsEgilimAylikToplam,
-                    };
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          caption,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: AreaLineChart(
-                            values: [
-                              for (final p in series) p.seconds / 3600.0,
-                            ],
-                            labels: [
-                              for (final p in series)
-                                trendPointLabel(l10n, trend.bucket, p.start),
-                            ],
-                            yUnit: l10n.statsSaatKisa,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-      // P11 detaylı geçmiş (RPC / uzun aralık)
-      if (longTotalsAsync != null)
-        StatsSection(
-          title: l10n.statsSeciliTarihAraligi,
-          child: longTotalsAsync.when(
-            loading: () => const Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            ),
-            error: (_, _) => Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  l10n.authBeklenmeyenBirHataOlustu,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-            ),
-            data: (map) {
-              if (map.isEmpty) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      l10n.statsBuDonemdeCalismaKaydin,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                );
-              }
-              final days = map.keys.toList()..sort();
-              final vals = [for (final d in days) (map[d] ?? 0) / 3600.0];
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${formatHuman(map.values.fold<int>(0, (a, b) => a + b))} · ${l10n.commonDayCount(days.length)}',
-                        style: theme.textTheme.labelMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 120,
-                        child: AreaLineChart(
-                          values: vals,
-                          labels: [for (final d in days) '${d.day}/${d.month}'],
-                          yUnit: l10n.statsSaatKisa,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
           ),
         ),
       if (cardSet.showWeekComparison)
@@ -563,7 +417,22 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
           ),
         ),
 
-      // ---- Desenler --------------------------------------------------------
+      // ---- Kırılımlar ----------------------------------------------------
+      StatsSection(
+        title: '${l10n.statsDersBazindaDagilimSon} · $periodLabel$scopeSuffix',
+        child: _SubjectBreakdownCard(sessions: periodSessions),
+      ),
+      StatsSection(
+        title: '${l10n.statsCalismaSaatleri} · $periodLabel$scopeSuffix',
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HourActivityChart(hourly: hourlyTotals(periodSessions)),
+          ),
+        ),
+      ),
+
+      // ---- Desenler ------------------------------------------------------
       if (cardSet.showCalendar)
         StatsSection(
           title: '${l10n.homeCalismaTakvimi} · $periodLabel$scopeSuffix',
@@ -588,24 +457,30 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             ),
           ),
         ),
-      // P12 radar — basit türetilmiş skorlar
-      if (cardSet.showRadar)
+      if (cardSet.showSessionScatter)
         StatsSection(
-          title: l10n.analyticsCardInsight,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                height: 200,
-                child: _PersonalRadar(
-                  sessions: periodSessions,
-                  paceSeconds: shownAvg.round(),
-                  goalSeconds: goalSeconds,
-                  split: shownSplit,
-                  consistencyDays: consistencyDays,
-                ),
-              ),
-            ),
+          title: '${l10n.statsOturumDagilimi} · $periodLabel$scopeSuffix',
+          // P10 scatter — varsayılan katlı (WP ürün kararı).
+          // 🔴 WP-940: katlanır satır bölüm başlığını İKİNCİ kez yazıyordu
+          // ("Oturum dağılımı · Ay" altında "Oturum dağılımı ⌄"). Satır artık
+          // içeriği özetler: dönemdeki oturum sayısı.
+          child: _CollapsibleSection(
+            key: const Key('stats-session-scatter-toggle'),
+            title: l10n.commonSessionCount(periodSessions.length),
+            initiallyExpanded: false,
+            child: periodSessions.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      l10n.statsBuDonemdeCalismaKaydin,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  )
+                : SessionScatterChart(
+                    sessions: periodSessions,
+                    days: scatterDays,
+                    endDay: chartEnd,
+                  ),
           ),
         ),
       if (cardSet.showRecords)
@@ -718,6 +593,7 @@ int _calendarWeeks({
 
 class _CollapsibleSection extends StatefulWidget {
   const _CollapsibleSection({
+    super.key,
     required this.title,
     required this.child,
     this.initiallyExpanded = true,
@@ -757,79 +633,85 @@ class _CollapsibleSectionState extends State<_CollapsibleSection> {
   }
 }
 
-/// Basit 5 eksen radar (tempo, tutarlılık, çeşitlilik, süre, odak saati).
-class _PersonalRadar extends StatelessWidget {
-  const _PersonalRadar({
-    required this.sessions,
-    required this.paceSeconds,
-    required this.goalSeconds,
-    required this.split,
-    required this.consistencyDays,
-  });
+/// Yıl/Tümü'nün ana zaman grafiği: WP-925 eğilimi (haftalık / aylık kova).
+///
+/// 🔴 WP-940: eskiden üç ayrı kart aynı seriyi çiziyordu — "Eğilim grafiği",
+/// "Seçili tarih aralığı" (aynı dönemin GÜNLÜK çizgisi, ~250 noktalık gürültü)
+/// ve "Ay"da "Günlük dağılım". Seçili aralığın tek ek bilgisi (sunucudan dönem
+/// toplamı ve çalışılan gün sayısı) bu kartın üst satırına taşındı.
+class _PeriodTrendCard extends StatelessWidget {
+  const _PeriodTrendCard({required this.trend, this.rangeTotals});
 
-  final List<StudySession> sessions;
+  final ({TrendBucket bucket, List<TrendPoint> points}) trend;
 
-  /// 🔴 WP-765 (2): "Günlük hedef" ekseninin PAYI.
-  ///
-  /// Önceden `secondsOnDay(sessions, DateTime.now())` idi — dönem ne olursa
-  /// olsun **bugünün** saniyesi. "Geçen ay" seçiliyken radarın bu köşesi geçen
-  /// ayı değil bugünü anlatıyordu: bugün hiç çalışılmadıysa köşe tabana
-  /// yapışıyordu (`RadarEntry` alt kırpması 0.05), oysa o ay hedefin üstünde
-  /// kapanmış olabilirdi. Pay artık dönemin **günlük ortalamasıdır**: ekrandaki
-  /// "Günlük ortalama" döşemesiyle aynı sayı, aynı payda ([averageWindow]).
-  final int paceSeconds;
-
-  final int goalSeconds;
-  final ({int weekday, int weekend}) split;
-
-  /// 🔴 WP-745: "tutarlılık" ekseninin **paydası**. Sabit `14` idi: "Hafta"da
-  /// en iyi ihtimalle 7/14 = 0.5, yani kısa dönemler yapısal olarak hep dipte
-  /// görünüyordu. Payda artık verinin bulunduğu ufuktur ([averageWindow]) —
-  /// "Günlük ortalama" döşemesinin paydasıyla aynı sayı.
-  final int consistencyDays;
+  /// Dönemin sunucu gün toplamları ([analyticsUserDayTotalsProvider]).
+  /// Yüklenirken / hata verdiğinde `null`: üst satır çizilmez, grafik
+  /// zaten kendi verisiyle durur.
+  final Map<DateTime, int>? rangeTotals;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    if (sessions.isEmpty) {
-      return Center(
-        child: Text(
-          l10n.statsBuDonemdeCalismaKaydin,
-          style: Theme.of(context).textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-    final total = totalSeconds(sessions).toDouble();
-    final tempo = goalSeconds <= 0
-        ? 0.5
-        : (paceSeconds / goalSeconds).clamp(0.0, 1.0);
-    final days = dailyTotals(sessions).values.where((s) => s > 0).length;
-    final consistency = consistencyDays <= 0
-        ? 0.0
-        : (days / consistencyDays).clamp(0.0, 1.0);
-    final subjects = <String>{
-      for (final s in sessions)
-        if (s.subjectId != null) s.subjectId!,
+    final series = trend.points;
+    final totals = rangeTotals;
+    final empty = series.isEmpty || series.every((p) => p.seconds == 0);
+    // Kovanın boyu yazılır: haftalık seride "29/12" bir gün değil, o
+    // Pazartesi başlayan haftadır.
+    final caption = switch (trend.bucket) {
+      TrendBucket.day => l10n.statsEgilimGunlukToplam,
+      TrendBucket.week => l10n.statsEgilimHaftalikToplam,
+      TrendBucket.month => l10n.statsEgilimAylikToplam,
     };
-    final variety = (subjects.length / 5.0).clamp(0.0, 1.0);
-    final durationScore = (total / (10 * 3600)).clamp(0.0, 1.0);
-    final balance = total <= 0
-        ? 0.5
-        : (1.0 - ((split.weekday - split.weekend).abs() / total)).clamp(
-            0.0,
-            1.0,
-          );
-
-    return RadarStatChart(
-      values: [tempo, consistency, variety, durationScore, balance],
-      labels: [
-        l10n.homeGunlukHedef,
-        l10n.statsRekorlar,
-        l10n.statsDersBazindaDagilimSon,
-        l10n.statsToplam,
-        l10n.statsHaftaIci,
-      ],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (totals != null && totals.isNotEmpty) ...[
+              // WP-926: gün sayısı yerelleştirilmiş birimle ("54 gün").
+              Text(
+                '${formatHuman(totals.values.fold<int>(0, (a, b) => a + b))}'
+                ' · ${l10n.commonDayCount(totals.length)}',
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 4),
+            ],
+            if (empty)
+              SizedBox(
+                height: 120,
+                child: Center(
+                  child: Text(
+                    l10n.statsBuDonemdeCalismaKaydin,
+                    style: theme.textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else ...[
+              Text(
+                caption,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 160,
+                child: AreaLineChart(
+                  values: [for (final p in series) p.seconds / 3600.0],
+                  labels: [
+                    for (final p in series)
+                      trendPointLabel(l10n, trend.bucket, p.start),
+                  ],
+                  yUnit: l10n.statsSaatKisa,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

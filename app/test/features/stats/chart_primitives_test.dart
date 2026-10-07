@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
 import 'package:online_study_room/features/stats/charts/gauge_chart.dart';
-import 'package:online_study_room/features/stats/charts/radar_stat_chart.dart';
 import 'package:online_study_room/features/stats/charts/series_palette.dart';
 
 void main() {
@@ -27,23 +26,6 @@ void main() {
       ),
     );
     expect(find.byType(AreaLineChart), findsOneWidget);
-  });
-
-  testWidgets('RadarStatChart builds', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: RadarStatChart(
-              values: [0.5, 0.8, 0.3, 0.6],
-              labels: ['A', 'B', 'C', 'D'],
-            ),
-          ),
-        ),
-      ),
-    );
-    expect(find.byType(RadarStatChart), findsOneWidget);
   });
 
   test('SeriesPalette cycles colors and patterns', () {

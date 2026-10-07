@@ -114,6 +114,22 @@ class _Keep extends ConsumerWidget {
   }
 }
 
+/// Listeyi sonuna kadar kaydırır; [finder] bir karede bile monte olduysa
+/// `true` (ListView tembel: tek karelik bakış kanıt değildir).
+Future<bool> _seenWhileScrolling(WidgetTester tester, Finder finder) async {
+  var seen = finder.evaluate().isNotEmpty;
+  for (var i = 0; i < 30 && !seen; i++) {
+    await tester.drag(
+      find.byType(ListView).first,
+      const Offset(0, -400),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    seen = finder.evaluate().isNotEmpty;
+  }
+  return seen;
+}
+
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
   await tester.scrollUntilVisible(
     finder,
@@ -143,20 +159,40 @@ void main() {
     );
   });
 
-  testWidgets('"Bu ay": Günlük dağılım 1–30 Eyl, eğilim 1–23 Eyl (ağustos '
-      'yok)', (tester) async {
+  // 🔴 WP-940: "Ay"da "Eğilim grafiği" (1–23 Eyl günlük çizgi) ile "Günlük
+  // dağılım" (1–30 Eyl çubuk) AYNI günlük seriydi; ekranda tek ana grafik
+  // kalır — hedef çizgili çubuklar. Eğilim Yıl/Tümü'nün ana grafiğidir.
+  testWidgets('"Bu ay": Günlük dağılım 1–30 Eyl (ağustos yok), hedef çizgisi '
+      'yerinde; aynı seriyi ikinci kez çizen eğilim YOK', (tester) async {
     await _pump(tester, StatsPeriod.month);
     await _scrollTo(tester, find.byType(DailyBarChart));
-    final days = tester.widget<DailyBarChart>(find.byType(DailyBarChart)).days;
+    final chart = tester.widget<DailyBarChart>(find.byType(DailyBarChart));
+    final days = chart.days;
     expect(days.first.day, DateTime(2026, 9, 1));
     expect(days.last.day, DateTime(2026, 9, 30));
+    expect(days.fold<int>(0, (s, d) => s + d.seconds), 23 * 3600);
+    expect(chart.goalSeconds, 120 * 60, reason: 'hedef çizgisi kayboldu');
 
+    expect(
+      await _seenWhileScrolling(tester, find.byType(AreaLineChart)),
+      isFalse,
+      reason: '"Ay"da eğilim çizgisi çubuklarla aynı seriyi tekrar çiziyor',
+    );
+    expect(find.text('Günlük toplam'), findsNothing);
+  });
+
+  testWidgets('"Bu yıl": ana grafik HAFTALIK eğilim (29/12 – 21/9), günlük '
+      'çubuk yok', (tester) async {
+    await _pump(tester, StatsPeriod.year);
     await _scrollTo(tester, find.byType(AreaLineChart));
     final trend = tester.widget<AreaLineChart>(find.byType(AreaLineChart));
-    expect(trend.values, hasLength(23), reason: '1–23 Eylül günlük');
-    expect(trend.labels.first, '1/9');
-    expect(trend.labels.last, '23/9');
-    expect(find.text('Günlük toplam'), findsOneWidget);
+    expect(trend.values, hasLength(39), reason: '29 Ara – 21 Eyl haftaları');
+    expect(trend.labels.first, '29/12');
+    expect(trend.labels.last, '21/9');
+    // 21–23 Eylül haftası: 3 gün × 1 saat.
+    expect(trend.values.last, closeTo(3.0, 1e-9));
+    expect(find.text('Haftalık toplam'), findsOneWidget);
+    expect(find.byType(DailyBarChart), findsNothing);
   });
 
   group('Grup günlük trendi (ClassStatsView, saat enjekte)', () {

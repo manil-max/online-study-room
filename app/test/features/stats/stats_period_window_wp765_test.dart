@@ -16,17 +16,14 @@
 //    noktalar x ∈ [0, 30] araligina, yani grafigin sol yarisina sikisiyordu;
 //    sag %47 kalici olarak bostu.
 //
-// 2) S9 radarin "Gunluk hedef" ekseni donem ne olursa olsun BUGUNU okuyordu:
-//    `personal_stats_view.dart` eski `final today = secondsOnDay(sessions, now)`
-//    → `_PersonalRadar.today` → `tempo = today / goalSeconds`. "Gecen ay"
-//    seciliyken bugun hic calisilmadiysa kose tabana yapisiyordu
-//    (`RadarEntry` alt kirpmasi 0.05), oysa o ay hedefin ustunde kapanmis
-//    olabilir.
+// 2) (WP-940: kaldirildi) S9 radarin "Gunluk hedef" ekseni bugunu okuyordu.
+//    Radar artik yok — eksenleri birbiriyle ilgisiz, aciklamasiz 0–1
+//    skorlardi; iddiasi da onunla birlikte kalkti.
 //
 // ============================== DISIPLIN =====================================
 //
-// * Iddialar KULLANICININ GORDUGU seyi olcer: alt eksende YAZAN tarihler,
-//   cizilen noktalarin eksendeki yeri ve radarin cizdigi kose degeri. Saf
+// * Iddialar KULLANICININ GORDUGU seyi olcer: alt eksende YAZAN tarihler ve
+//   cizilen noktalarin eksendeki yeri. Saf
 //   fonksiyon iddiasi tek basina yeterli degil — bu depoda "dogruluk kaynagi
 //   dogru ama ekran yanlis" tekrar eden kusur.
 // * Fikstur ISTANBUL gununden kurulur (`dayOf`), cihazin yerel gununden DEGIL.
@@ -70,8 +67,7 @@ const _historyDays = 420;
 /// Sicak pencere (istemcinin elindeki liste) gun sayisi.
 const _hotDays = 89;
 
-/// Her calisilan gun BIR saat. Radar iddiasi bu sabitten turer:
-/// gunluk ortalama 3600 sn, hedef 7200 sn → tempo tam 0.5.
+/// Her calisilan gun BIR saat (hedef 2 saat).
 const _secondsPerDay = 3600;
 const _goalMinutes = 120;
 
@@ -82,7 +78,12 @@ final _profile = Profile(
 );
 
 const _subjects = <Subject>[
-  Subject(id: 'matematik', userId: _userId, name: 'Matematik', color: 'chart-1'),
+  Subject(
+    id: 'matematik',
+    userId: _userId,
+    name: 'Matematik',
+    color: 'chart-1',
+  ),
 ];
 
 /// [i] gun once — takvim aritmetigi (`Duration` ile gun sayilmaz).
@@ -102,10 +103,8 @@ StudySession _session(DateTime day, int index) => StudySession(
 
 /// Sunucudaki tam gecmis + istemcideki sicak pencere.
 ///
-/// 🔴 BUGUN bilerek BOSTUR (`i` 1'den baslar). Radar iddiasinin ayirt edici
-/// gucu buradan gelir: duzeltme oncesi "Gunluk hedef" kosesi bugunu okudugu
-/// icin sifira (kirpmayla 0.05'e) dusuyor, dogrusunda donemin gunluk
-/// ortalamasini okuyup 0.5 veriyor.
+/// 🔴 BUGUN bilerek BOSTUR (`i` 1'den baslar): "bugunu okuyan" bir grafik
+/// gecen donemde bos/yanlis cizilir (WP-940'a kadar radarin iddiasiydi).
 ({List<StudySession> all, List<StudySession> hot}) _history() {
   final todayKey = dayOf(_now);
   final all = <StudySession>[];
@@ -255,18 +254,17 @@ void main() {
           period: StatsPeriod.month,
           offset: offset,
         );
-        final (from, to) = container
-            .read(statsPeriodProvider)
-            .range(now: _now);
+        final (from, to) = container.read(statsPeriodProvider).range(now: _now);
         final periodFrom = dayOf(from);
         final periodTo = dayOf(to);
         final periodSpan = statsDaySpan(periodFrom, periodTo);
 
         // Kart varsayilan KATLI (WP urun karari): acmadan grafik monte olmaz.
-        // Bolum basligi kapsam eki tasidigi icin tam esitlik yalniz katlanir
-        // baslige uyar.
-        await scrollTo(tester, find.text(tr.statsOturumDagilimi));
-        await tester.tap(find.text(tr.statsOturumDagilimi));
+        // WP-940: katlanir satir artik bolum basligini tekrarlamaz (oturum
+        // sayisini yazar); anahtariyla bulunur.
+        final toggle = find.byKey(const Key('stats-session-scatter-toggle'));
+        await scrollTo(tester, toggle);
+        await tester.tap(toggle);
         await tester.pumpAndSettle();
         await scrollTo(tester, find.byType(SessionScatterChart));
 
@@ -351,44 +349,4 @@ void main() {
       },
     );
   }
-
-  // ===========================================================================
-  // 2) RADAR — "Gunluk hedef" kosesi DONEMI okur, bugunu degil
-  // ===========================================================================
-
-  testWidgets(
-    'WP-765 (2) "Ay" offset -1: radarin "Gunluk hedef" kosesi donemi okur',
-    (tester) async {
-      // Fiksturde BUGUN bostur; gecen ayin her gunu 1 saattir.
-      // Duzeltme oncesi: tempo = bugunun saniyesi / hedef = 0 → kirpmayla 0.05.
-      // Dogrusu: donemin gunluk ortalamasi (3600) / hedef (7200) = 0.5.
-      await pump(tester, period: StatsPeriod.month, offset: -1);
-
-      await scrollTo(tester, find.byType(RadarChart));
-      final data = tester.widget<RadarChart>(find.byType(RadarChart)).data;
-
-      // Iddia dogru kosayi olctugunden emin ol: 0. eksen "Gunluk hedef".
-      expect(
-        data.getTitle?.call(0, 0).text,
-        tr.homeGunlukHedef,
-        reason: 'Radarin 0. ekseni "Gunluk hedef" degil; iddia kaymis.',
-      );
-
-      final tempo = data.dataSets.first.dataEntries.first.value;
-      expect(
-        tempo,
-        greaterThan(0.05),
-        reason:
-            'Kose tabanda ($tempo): eksen hala BUGUNU okuyor. Fiksturde bugun '
-            'bos, gecen ay ise her gun 1 saat.',
-      );
-      expect(
-        tempo,
-        closeTo(0.5, 0.02),
-        reason:
-            'Beklenen 0.5 (gunluk ortalama 3600 sn / hedef 7200 sn), olculen '
-            '$tempo.',
-      );
-    },
-  );
 }

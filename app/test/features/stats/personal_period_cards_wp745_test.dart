@@ -70,7 +70,12 @@ final _profile = Profile(
 );
 
 const _subjects = <Subject>[
-  Subject(id: 'matematik', userId: _userId, name: 'Matematik', color: 'chart-1'),
+  Subject(
+    id: 'matematik',
+    userId: _userId,
+    name: 'Matematik',
+    color: 'chart-1',
+  ),
 ];
 
 /// [i] gun once. Takvim aritmetigi: yaz saati uygulayan bir kosum makinesinde
@@ -123,6 +128,11 @@ void main() {
   final tr = AppLocalizationsTr();
 
   // ── Beklenen kart kumeleri (gorev tablosuyla BIREBIR) ────────────────────
+  // 🔴 WP-940: "Ozet" radari (analyticsCardInsight) HICBIR donemde yok; "Ay"da
+  // egilim, "Gunluk dagilim" ile ayni gunluk seriydi; Yil/Tumu'de "Secili
+  // tarih araligi" ayni seriyi gunluk cizgiyle ucuncu kez ciziyordu (toplam/gun
+  // satiri egilim kartina tasindi); "Tumu"de "Aylik dagilim" aylik egilimin
+  // son 12 ayiydi.
   final expected = <PersonalCardSet, Set<String>>{
     PersonalCardSet.day: {
       tr.statsOturumCizelgesi,
@@ -136,37 +146,29 @@ void main() {
       tr.statsOturumDagilimi,
       tr.statsGunlukDagilim,
       tr.statsSeciliHaftaVsOnceki,
-      tr.analyticsCardInsight,
     },
     PersonalCardSet.month: {
       tr.statsCalismaSaatleri,
       tr.statsDersBazindaDagilimSon,
       tr.statsOturumDagilimi,
       tr.statsGunlukDagilim,
-      tr.homeEgilimGrafigi,
       tr.homeCalismaTakvimi,
       tr.statsHaftalikRitim,
-      tr.analyticsCardInsight,
     },
     PersonalCardSet.year: {
       tr.statsCalismaSaatleri,
       tr.statsDersBazindaDagilimSon,
       tr.statsAylikDagilim,
       tr.homeEgilimGrafigi,
-      tr.statsSeciliTarihAraligi,
       tr.homeCalismaTakvimi,
       tr.statsHaftalikRitim,
-      tr.analyticsCardInsight,
     },
     PersonalCardSet.all: {
       tr.statsCalismaSaatleri,
       tr.statsDersBazindaDagilimSon,
-      tr.statsAylikDagilim,
       tr.homeEgilimGrafigi,
-      tr.statsSeciliTarihAraligi,
       tr.homeCalismaTakvimi,
       tr.statsHaftalikRitim,
-      tr.analyticsCardInsight,
       tr.statsRekorlar,
     },
   };
@@ -429,9 +431,10 @@ void main() {
         );
         expect(find.text(tr.statsGrafikIcin45Gunden), findsNothing);
         // "Secili tarih aralligi" basligi eskiden IKI kez vardi (S10 + S11).
+        // WP-940: o kart da kalkti (seri egilim kartinda); baslik HIC yok.
         expect(
-          titles.where((t) => t == tr.statsSeciliTarihAraligi).length,
-          lessThanOrEqualTo(1),
+          titles.where((t) => t == 'Seçili tarih aralığı'),
+          isEmpty,
           reason: 'Ayni baslik iki kartta birden duruyor.',
         );
       },
@@ -536,19 +539,17 @@ void main() {
     // takvim penceresinde tesadufen dogru sonuc verir ve iddia hicbir sey
     // olcmezdi (olculdu: sabotajda YESIL kaldi). -3 her takvimde 30 gunun
     // otesindedir (en kisa hal: subat + ocak = 58 gun).
-    final container = await pump(
-      tester,
-      period: StatsPeriod.month,
-      offset: -3,
-    );
+    final container = await pump(tester, period: StatsPeriod.month, offset: -3);
     final (periodFrom, _) = container
         .read(statsPeriodProvider)
         .range(now: DateTime.now());
 
     // Kart varsayilan KATLI (WP urun karari) — acmadan icindeki grafik monte
-    // olmaz. Baslik metni tam esitle bulunur: bolum basligi kapsam eki tasir.
-    await scrollTo(tester, find.text(tr.statsOturumDagilimi));
-    await tester.tap(find.text(tr.statsOturumDagilimi));
+    // olmaz. WP-940: katlanir satir artik basligi tekrarlamaz (oturum sayisini
+    // yazar); anahtariyla bulunur.
+    final toggle = find.byKey(const Key('stats-session-scatter-toggle'));
+    await scrollTo(tester, toggle);
+    await tester.tap(toggle);
     await tester.pumpAndSettle();
 
     final scatter = tester.widget<SessionScatterChart>(

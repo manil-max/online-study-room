@@ -89,17 +89,20 @@ enum PersonalCardSet {
       this == PersonalCardSet.month;
 
   // ---- Zaman serileri -----------------------------------------------------
+  // 🔴 WP-940: ana zaman grafiği dönem başına TEKTİR. Hafta/Ay → hedef çizgili
+  // günlük çubuklar ("Günlük dağılım"); Yıl/Tümü → WP-925 eğilimi (haftalık /
+  // aylık kova). "Ay"da eğilim, çubuklarla aynı günlük seriyi ikinci kez
+  // çiziyordu; "Seçili tarih aralığı" ise Yıl/Tümü'de aynı seriyi üçüncü kez
+  // (günlük çizgi) — onun toplam/gün satırı eğilim kartına taşındı.
   bool get showDailyDistribution =>
       this == PersonalCardSet.week || this == PersonalCardSet.month;
-  bool get showMonthlyDistribution =>
-      this == PersonalCardSet.year || this == PersonalCardSet.all;
 
-  /// Haftada S1 ile aynı 7 günü çizerdi — tekrar.
+  /// Yalnız Yıl: eğilim haftalık, bu kart AYLIK kova (Oca–Ara, ay başına
+  /// süre etiketi) — farklı çözünürlük. "Tümü"de eğilim zaten aylıktır ve
+  /// tüm ayları çizer; son 12 ayı ikinci kez çizmek tekrar olurdu.
+  bool get showMonthlyDistribution => this == PersonalCardSet.year;
+
   bool get showTrend =>
-      this == PersonalCardSet.month ||
-      this == PersonalCardSet.year ||
-      this == PersonalCardSet.all;
-  bool get showRangeTotals =>
       this == PersonalCardSet.year || this == PersonalCardSet.all;
   bool get showWeekComparison => this == PersonalCardSet.week;
 
@@ -109,7 +112,6 @@ enum PersonalCardSet {
       this == PersonalCardSet.year ||
       this == PersonalCardSet.all;
   bool get showWeekRhythm => showCalendar;
-  bool get showRadar => !_isDay;
   bool get showRecords => this == PersonalCardSet.all;
 }
 

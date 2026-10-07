@@ -4111,10 +4111,6 @@
   "@statsSec": {
     "description": "Stats user-facing text. Source: Seç"
   },
-  "statsSeciliTarihAraligi": "Selected date range",
-  "@statsSeciliTarihAraligi": {
-    "description": "Stats user-facing text. Source: Seçili tarih aralığı"
-  },
   "statsEgilimGunlukToplam": "Daily total",
   "@statsEgilimGunlukToplam": {
     "description": "WP-925: caption under the stats trend chart when each point is one day."
@@ -5019,10 +5015,6 @@
   "analyticsCardPeriodCompare": "Period compare",
   "@analyticsCardPeriodCompare": {
     "description": "Analytics card title: period comparison"
-  },
-  "analyticsCardInsight": "Insight",
-  "@analyticsCardInsight": {
-    "description": "Analytics card title: insight strip"
   },
   "analyticsCardGroupTotal": "Group total",
   "@analyticsCardGroupTotal": {

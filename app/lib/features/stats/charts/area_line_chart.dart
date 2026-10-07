@@ -60,7 +60,15 @@ class AreaLineChart extends StatelessWidget {
     );
 
     // Sol eksen etiketlerine ayrılan genişlik; X ekseni bunun sağındadır.
-    const leftReserved = 30.0;
+    // 🔴 WP-940: sabit 30 px idi; "Tümü"nün aylık eğiliminde üç haneli tepe
+    // ("104sa") sığmıyor, "104s / a" diye iki satıra kırılıp kartın üst
+    // satırına biniyordu. Genişlik en geniş etiketten (tepe) ölçülür.
+    final topLabelWidth = measureChartLabel(
+      context,
+      yLabel(maxY),
+      labelStyle,
+    ).width;
+    final leftReserved = topLabelWidth + 6 > 30 ? topLabelWidth + 6 : 30.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -158,7 +166,12 @@ class AreaLineChart extends StatelessWidget {
                 }
                 return Padding(
                   padding: const EdgeInsets.only(right: 4),
-                  child: Text(yLabel(value), style: labelStyle),
+                  child: Text(
+                    yLabel(value),
+                    style: labelStyle,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
                 );
               },
             ),

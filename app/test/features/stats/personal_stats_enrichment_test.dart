@@ -8,7 +8,6 @@ import 'package:online_study_room/data/providers/stats_period_provider.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
-import 'package:online_study_room/features/stats/charts/radar_stat_chart.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,8 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('PersonalStatsView mounts area/radar sections (WP-203)',
-      (tester) async {
+  testWidgets('PersonalStatsView mounts area section (WP-203)', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
@@ -37,8 +35,11 @@ void main() {
     // 🔴 WP-745: kart kümesi artık DÖNEME bağlı. "Hafta"da alan (area) grafiği
     // çizilmez — S5 "Eğilim grafiği" o dönemde S1 "Günlük dağılım" ile aynı 7
     // günü çiziyordu (aynı veri, iki grafik) ve kaldırıldı. Bu testin ölçtüğü
-    // şey "area/radar monte oluyor mu"dur; o yüzden iddia gevşetilmedi, dönem
-    // area grafiğinin YAŞADIĞI döneme (Ay) sabitlendi.
+    // şey "area monte oluyor mu"dur; o yüzden iddia gevşetilmedi, dönem
+    // area grafiğinin YAŞADIĞI döneme sabitlendi.
+    // 🔴 WP-940: "Ay"da da eğilim, "Günlük dağılım" çubuklarıyla aynı günlük
+    // seriyi çiziyordu ve kaldırıldı; area grafiği artık Yıl/Tümü'nün ana
+    // zaman grafiğidir. "Özet" radarı da kaldırıldı (anlamsız 0–1 skorlar).
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
@@ -48,7 +49,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.month);
+    container.read(statsPeriodProvider.notifier).setPeriod(StatsPeriod.year);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -57,9 +58,7 @@ void main() {
           locale: const Locale('tr'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: PersonalStatsView(sessions: sessions),
-          ),
+          home: Scaffold(body: PersonalStatsView(sessions: sessions)),
         ),
       ),
     );
@@ -69,7 +68,7 @@ void main() {
     expect(find.byType(PersonalStatsView), findsOneWidget);
     // Ön koşul: dönem gerçekten uygulandı (Riverpod 3'te dinleyicisiz provider
     // her `read`de yeniden kurulur; aksi hâlde ölçüm sessizce "Hafta"ya döner).
-    expect(container.read(statsPeriodProvider).period, StatsPeriod.month);
+    expect(container.read(statsPeriodProvider).period, StatsPeriod.year);
     // ListView tembel — hedefe kadar kaydır.
     await tester.scrollUntilVisible(
       find.byType(AreaLineChart),
@@ -78,22 +77,5 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(AreaLineChart), findsWidgets);
-  });
-
-  testWidgets('RadarStatChart renders complete insight values', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: RadarStatChart(
-              values: [0.2, 0.4, 0.6, 0.8, 1],
-              labels: ['Tempo', 'Seri', 'Ders', 'Süre', 'Denge'],
-            ),
-          ),
-        ),
-      ),
-    );
-    expect(find.byType(RadarStatChart), findsOneWidget);
   });
 }
