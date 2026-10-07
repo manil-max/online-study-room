@@ -13,6 +13,11 @@ on:
         required: false
         default: '24'
         type: string
+      restore:
+        description: Staging duraklatilmissa geri ac (yalniz staging)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -50,6 +55,15 @@ jobs:
               --data-urlencode "iso_timestamp_end=$END" \
               --data-urlencode "sql=$1"
           }
+          echo "=== Proje durumu ==="
+          STATUS=$(curl -sS "https://api.supabase.com/v1/projects/$REF" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '.status // "bilinmiyor"')
+          echo "status=$STATUS"
+          if [ '${{ inputs.restore }}' = 'true' ] && [ "$STATUS" != "ACTIVE_HEALTHY" ]; then
+            echo "Duraklatilmis staging geri aciliyor (restore)..."
+            curl -sS -X POST "https://api.supabase.com/v1/projects/$REF/restore" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -o /dev/null -w "restore HTTP %{http_code}\n"
+          fi
           echo "Pencere: $START .. $END"
           echo "=== Tum trafik (durum, sayi) — sorgu dogrulamasi ==="
           q "select s.status_code as status, count(*) as n
