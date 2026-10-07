@@ -41,6 +41,8 @@ const Map<String, String> _tolerated = {
       'Yazma-önce kuyruğu günle ilgilenmez; 25 dk sadece bir süre.',
   'test/features/desktop_wp683_midband_test.dart':
       'Düzen (orta bant) ölçülür; hangi güne düştüğü iddiaya girmez.',
+  'test/features/updater/play_review_wp941_test.dart':
+      'Puan isteme "son 15 dk içinde biten" göreli penceresine bakar; gün sınırı iddiaya girmez.',
   'test/features/profile/data_export_test.dart':
       'Dışa aktarım satır SAYISINI ölçer, bugünün toplamını değil.',
   'test/features/stats/personal_stats_enrichment_test.dart':
