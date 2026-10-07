@@ -32,6 +32,8 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+      STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
     steps:
       - name: Query management logs
         shell: bash
@@ -64,6 +66,13 @@ jobs:
             curl -sS -X POST "https://api.supabase.com/v1/projects/$REF/restore" \
               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -o /dev/null -w "restore HTTP %{http_code}\n"
           fi
+          echo "=== Beta istemcisinin gordugu uc (anon anahtarla) ==="
+          for path in "auth/v1/health" "rest/v1/"; do
+            code=$(curl -sS -o /tmp/probe.json -w "%{http_code}" "$STAGING_SUPABASE_URL/$path" \
+              -H "apikey: $STAGING_SUPABASE_ANON_KEY" -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" || echo ERR)
+            msg=$(jq -r '.message // .msg // .error // empty' /tmp/probe.json 2>/dev/null | head -c 200)
+            echo "$path -> HTTP $code ${msg}"
+          done
           echo "Pencere: $START .. $END"
           echo "=== Tum trafik (durum, sayi) — sorgu dogrulamasi ==="
           q "select s.status_code as status, count(*) as n
