@@ -35,6 +35,30 @@ jobs:
       STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
       STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
     steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Realtime yayini ve abonelikler (salt okuma SQL)
+        shell: bash
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/proj && cd /tmp/proj && supabase init --force >/dev/null 2>&1 || true
+          supabase link --project-ref "$REF" -p "$SUPABASE_DB_PASSWORD" >/dev/null
+          run() { echo "--- $1"; supabase db query --linked "$2" 2>&1 | tail -n +1 | head -60; }
+          run "supabase_realtime yayinindaki tablolar" \
+            "select schemaname||'.'||tablename as t from pg_publication_tables where pubname='supabase_realtime' order by 1"
+          run "yayin var mi / ayarlar" \
+            "select pubname, puballtables, pubinsert, pubupdate, pubdelete from pg_publication where pubname='supabase_realtime'"
+          run "aktif realtime abonelikleri (tablo, sayi)" \
+            "select entity::text as tablo, count(*) as n from realtime.subscription group by 1 order by 2 desc"
+          run "group_members / groups replica identity" \
+            "select relname, relreplident from pg_class where relname in ('group_members','groups','user_group_preferences') and relnamespace='public'::regnamespace"
+          run "group_members RLS select politikalari" \
+            "select polname, polcmd from pg_policy where polrelid='public.group_members'::regclass order by 1"
+
       - name: Query management logs
         shell: bash
         run: |
